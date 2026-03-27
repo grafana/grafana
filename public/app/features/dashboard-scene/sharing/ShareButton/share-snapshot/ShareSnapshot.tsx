@@ -3,7 +3,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, Spinner, Stack, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -173,6 +173,7 @@ const UpsertSnapshotActions = ({
         variant="primary"
         fill="outline"
         getText={() => url}
+        onClipboardCopy={() => reportInteraction('sharing_publish_snapshot')}
         data-testid={selectors.copyUrlButton}
       >
         <Trans i18nKey="snapshot.share.copy-link-button">Copy link</Trans>

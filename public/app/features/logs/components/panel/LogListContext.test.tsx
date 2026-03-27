@@ -59,3 +59,12 @@ test('Allows to tell if a log is not permalinked', () => {
 
   expect(result.current).toBe(false);
 });
+
+test('Identifies custom grammar', () => {
+  const customWrapper = ({ children }: { children: ReactNode }) => (
+    <LogListContext.Provider value={{ ...value, isCustomGrammar: true }}>{children}</LogListContext.Provider>
+  );
+  const { result } = renderHook(() => useLogListContext(), { wrapper: customWrapper });
+
+  expect(result.current.isCustomGrammar).toBe(true);
+});

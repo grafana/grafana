@@ -122,15 +122,6 @@ Compares resource counts between legacy SQL and unified storage. Accounts for re
 
 Verifies folder parent-child relationships are preserved after migration by comparing parent maps built from both legacy and unified storage.
 
-## Configuration
-
-To enable migrations, set the following in your Grafana configuration:
-
-```ini
-[unified_storage]
-disable_data_migrations = false
-```
-
 ## Monitoring
 
 ### Log messages

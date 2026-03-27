@@ -76,6 +76,20 @@ export async function getPanelPluginMetasMap(): Promise<PanelPluginMetas> {
   return structuredClone(panels);
 }
 
+/**
+ * Get a map of panel plugins keyed by plugin id.
+ * This is a synchronous function that should only be used as an escape hatch in cases where the caller is guaranteed to be called after the panel plugins have been initialized.
+ * In other cases, getPanelPluginMetasMap() should be used instead to ensure the panel plugins have been initialized before accessing them.
+ * @throws Error if the panel plugins have not been initialized yet
+ * @returns a map of panel plugins keyed by plugin id
+ */
+export function getPanelPluginMetasMapSync(): PanelPluginMetas {
+  if (!initialized() && process.env.NODE_ENV === 'development') {
+    throw new Error('getPanelPluginMetasMapSync() was called before panel plugins map was initialized!');
+  }
+  return structuredClone(panels);
+}
+
 export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginMeta | null> {
   if (!initialized()) {
     await initPanelPluginMetas();

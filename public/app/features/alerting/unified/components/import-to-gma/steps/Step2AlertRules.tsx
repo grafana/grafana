@@ -220,7 +220,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
               label={t('alerting.import-to-gma.step2.policy-tree', 'Policy tree')}
               description={t(
                 'alerting.import-to-gma.step2.policy-tree-desc',
-                'Select a notification policy tree to route alerts'
+                'Select a notification policy tree to route the imported alerts'
               )}
               noMargin
             >

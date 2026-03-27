@@ -12,7 +12,7 @@ import {
   useGetShapshotListQuery,
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
-} from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { AlertVariant, Box, Stack, Text } from '@grafana/ui';

@@ -36,7 +36,6 @@ const mockPlugin: CatalogPlugin = {
   isInstalled: true,
   isDisabled: false,
   isDeprecated: false,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   isPublished: true,
   name: 'Test Plugin',
@@ -95,6 +94,10 @@ const mockPlugin: CatalogPlugin = {
   isFullyInstalled: true,
   accessControl: {},
   url: 'https://github.com/grafana/test-plugin',
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 const mockInfo = [

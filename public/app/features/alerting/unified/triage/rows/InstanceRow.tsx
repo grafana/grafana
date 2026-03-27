@@ -132,6 +132,7 @@ export function InstanceRow({
           />
         }
         depth={depth}
+        showIndentBorder
       />
 
       {isDrawerOpen && (

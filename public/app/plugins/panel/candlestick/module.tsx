@@ -146,7 +146,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, true);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
     addAnnotationOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true })

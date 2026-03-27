@@ -11,7 +11,8 @@ import (
 	"k8s.io/utils/ptr"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -98,7 +99,15 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		}
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
-		// Noop for V2
+	case *dashboardV2.Dashboard:
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+			v.Spec.Layout.GridLayoutKind = &dashboardV2.DashboardGridLayoutKind{
+				Kind: "GridLayout",
+				Spec: dashboardV2.DashboardGridLayoutSpec{},
+			}
+		}
+		resourceInfo = dashboardV2.DashboardResourceInfo
+
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
 	}

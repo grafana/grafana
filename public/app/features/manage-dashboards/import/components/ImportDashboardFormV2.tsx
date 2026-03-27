@@ -9,7 +9,8 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DashboardInput, DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
-import { validateTitle } from '../utils/validation';
+import { getUidFieldDescription, getUidFieldLabel } from '../utils/uidFieldText';
+import { validateTitle, validateUid } from '../utils/validation';
 
 interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'control' | 'getValues' | 'watch'> {
   inputs: DashboardInputs;
@@ -30,6 +31,7 @@ export const ImportDashboardFormV2 = ({
   hasFloatGridItems,
 }: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
+  const [uidReset, setUidReset] = useState(false);
   const [selectedDataSources, setSelectedDataSources] = useState<Record<string, DatasourceSelection>>({});
 
   /*
@@ -81,6 +83,38 @@ export const ImportDashboardFormV2 = ({
           name="folderUid"
           control={control}
         />
+      </Field>
+
+      <Field
+        label={getUidFieldLabel()}
+        description={getUidFieldDescription()}
+        invalid={!!errors.k8s?.name}
+        error={errors.k8s?.name?.message}
+        noMargin
+      >
+        <>
+          {!uidReset ? (
+            <Input
+              disabled
+              {...register('k8s.name', {
+                validate: async (v) => (!v ? true : await validateUid(String(v))),
+              })}
+              addonAfter={
+                !uidReset && (
+                  <Button type="button" onClick={() => setUidReset(true)}>
+                    <Trans i18nKey="manage-dashboards.import-dashboard-form.change-uid">Change uid</Trans>
+                  </Button>
+                )
+              }
+            />
+          ) : (
+            <Input
+              {...register('k8s.name', {
+                validate: async (v) => (!v ? true : await validateUid(String(v))),
+              })}
+            />
+          )}
+        </>
       </Field>
 
       {inputs.dataSources &&

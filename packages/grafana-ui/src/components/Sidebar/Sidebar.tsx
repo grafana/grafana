@@ -78,14 +78,12 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
     <div className={cx(styles.toolbar, context.compact && styles.toolbarIconsOnly)}>
       {children}
       <div className={styles.flexGrow} />
-      {context.hasOpenPane && (
-        <SidebarButton
-          icon={'web-section-alt'}
-          onClick={context.onToggleDock}
-          title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
-          data-testid={selectors.components.Sidebar.dockToggle}
-        />
-      )}
+      <SidebarButton
+        icon={'web-section-alt'}
+        onClick={context.onToggleDock}
+        title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
+        data-testid={selectors.components.Sidebar.dockToggle}
+      />
     </div>
   );
 }

@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "Kund-ID",
       "aria-label-client-secret": "Kundhemlighet",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "Kundhemlighet",
       "aria-label-tenant-id": "Tenant ID",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "Program- (klient-) ID",
       "label-client-secret": "Kundhemlighet",
+      "label-private-key": "",
       "label-symbol-client-secret": "Kundhemlighet",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "Katalog- (klientorganisations-) ID",
       "placeholder-symbol-client-secret": "konfigurerad",
       "reset-symbol-client-secret": "Återställ"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Välj typ av autentisering till Azure-tjänster",
-      "label-authentication": "Autentisering",
+      "label-authentication": "",
       "title-authentication": "Autentisering"
     },
     "basic-logs-toggle": {

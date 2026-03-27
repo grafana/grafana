@@ -14,7 +14,7 @@ import { BaseProvisionedFormData } from '../../types/form';
 import { useGetActiveJob } from '../../useGetActiveJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 
 interface FixFolderMetadataDrawerProps {
   repositoryName: string;
@@ -80,7 +80,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
   const defaultWorkflow = getDefaultWorkflow(repository);
 
   const defaultValues: BaseProvisionedFormData = {
-    ref: repository.branch ?? '',
+    ref: getDefaultRef(repository, 'fix-folder-ids'),
     path: '',
     comment: '',
     repo: repositoryName,

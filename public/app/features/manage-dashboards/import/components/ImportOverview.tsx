@@ -8,13 +8,14 @@ import { ImportOverviewV2 } from './ImportOverviewV2';
 
 type Props = {
   dashboard: unknown;
+  dashboardUid?: string;
   inputs: DashboardInputs;
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
   onCancel: () => void;
 };
 
-export function ImportOverview({ dashboard, inputs, meta, source, onCancel }: Props) {
+export function ImportOverview({ dashboard, dashboardUid, inputs, meta, source, onCancel }: Props) {
   const searchObj = locationService.getSearchObject();
   const folderUid = searchObj.folderUid ? String(searchObj.folderUid) : '';
 
@@ -22,6 +23,7 @@ export function ImportOverview({ dashboard, inputs, meta, source, onCancel }: Pr
     return (
       <ImportOverviewV2
         dashboard={dashboard}
+        dashboardUid={dashboardUid}
         inputs={inputs}
         meta={meta}
         source={source}

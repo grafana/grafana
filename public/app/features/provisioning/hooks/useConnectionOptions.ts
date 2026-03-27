@@ -83,6 +83,7 @@ export function useConnectionOptions(enabled: boolean) {
             ? t('provisioning.connection-options.repos-truncated', '{{shown}} +{{count}} more', {
                 shown,
                 count: remaining,
+                interpolation: { escapeValue: false },
               })
             : shown;
         descriptionParts.push(repoText);

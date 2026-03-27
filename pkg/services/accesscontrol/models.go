@@ -449,6 +449,16 @@ const (
 	// Alerting Notification actions (legacy)
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
+	// ActionAlertingNotificationsConfigHistoryRead gates read access to the raw Alertmanager config blob
+	// (GET /config/api/v1/alerts) and config history (GET /config/history).
+	// Restricted to admin-only in v13; endpoints will be removed in v14.
+	ActionAlertingNotificationsConfigHistoryRead = "alert.notifications.config-history:read"
+	// ActionAlertingNotificationsConfigHistoryWrite gates write access to config history
+	// (POST /config/history/{id}/_activate).
+	// Restricted to admin-only in v13; endpoint will be removed in v14.
+	ActionAlertingNotificationsConfigHistoryWrite = "alert.notifications.config-history:write"
+	// ActionAlertingNotificationSystemStatus gates access to alertmanager status API
+	ActionAlertingNotificationSystemStatus = "alert.notifications.system-status:read"
 
 	// Alerting notifications template actions
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
@@ -529,6 +539,9 @@ const (
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"
+
+	// Live (Grafana Live) actions
+	ActionLivePush = "live:push"
 )
 
 var (

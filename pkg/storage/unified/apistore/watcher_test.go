@@ -130,7 +130,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		// Issue a health check to ensure the server is initialized
-		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
+		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 		require.NoError(t, err)
 	case StorageTypeUnified:
 		testutil.SkipIntegrationTestInShortMode(t)
@@ -144,6 +144,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		ret, err := sql.NewBackend(sql.BackendOptions{
 			DBProvider:      eDB,
 			PollingInterval: time.Millisecond, // Keep this fast
+			DisablePruner:   infraDB.IsTestDbSQLite(),
 		})
 		require.NoError(t, err)
 		require.NotNil(t, ret)

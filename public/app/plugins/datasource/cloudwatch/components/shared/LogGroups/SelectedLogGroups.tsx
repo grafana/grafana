@@ -78,7 +78,6 @@ export const SelectedLogGroups = ({
         body="Are you sure you want to clear all log groups?"
         confirmText="Yes"
         dismissText="No"
-        icon="exclamation-triangle"
         onConfirm={() => {
           setShowConfirm(false);
           onChange([]);

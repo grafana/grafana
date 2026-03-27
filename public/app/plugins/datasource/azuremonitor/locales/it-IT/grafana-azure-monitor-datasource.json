@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "ID client",
       "aria-label-client-secret": "Segreto client",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "Segreto client",
       "aria-label-tenant-id": "ID Tenant",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "ID applicazione (client)",
       "label-client-secret": "Segreto client",
+      "label-private-key": "",
       "label-symbol-client-secret": "Segreto client",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "ID directory (tenant)",
       "placeholder-symbol-client-secret": "configurato",
       "reset-symbol-client-secret": "Ripristina"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Scegli il tipo di autenticazione per i servizi di Azure",
-      "label-authentication": "Autenticazione",
+      "label-authentication": "",
       "title-authentication": "Autenticazione"
     },
     "basic-logs-toggle": {

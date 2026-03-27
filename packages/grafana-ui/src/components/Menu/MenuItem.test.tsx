@@ -110,4 +110,30 @@ describe('MenuItem', () => {
 
     expect(onClick).toHaveBeenCalled();
   });
+
+  describe('iconColor', () => {
+    it('passes the color string directly to the icon style', () => {
+      render(getMenuItem({ iconColor: '#B877D9' }));
+      const icon = screen.getByLabelText(selectors.components.Menu.MenuItem('Test')).querySelector('svg');
+      expect(icon).toHaveStyle({ color: '#B877D9' });
+    });
+
+    it('does not apply iconColor when destructive is true', () => {
+      render(getMenuItem({ iconColor: '#B877D9', destructive: true }));
+      const icon = screen.getByLabelText(selectors.components.Menu.MenuItem('Test')).querySelector('svg');
+      expect(icon).not.toHaveStyle({ color: '#B877D9' });
+    });
+
+    it('does not apply iconColor when disabled is true', () => {
+      render(getMenuItem({ iconColor: '#B877D9', disabled: true }));
+      const icon = screen.getByLabelText(selectors.components.Menu.MenuItem('Test')).querySelector('svg');
+      expect(icon).not.toHaveStyle({ color: '#B877D9' });
+    });
+
+    it('does not apply inline color style when iconColor is not set', () => {
+      render(getMenuItem());
+      const icon = screen.getByLabelText(selectors.components.Menu.MenuItem('Test')).querySelector('svg');
+      expect(icon).not.toHaveAttribute('style');
+    });
+  });
 });

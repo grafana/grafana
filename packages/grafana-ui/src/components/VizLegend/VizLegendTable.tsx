@@ -31,6 +31,7 @@ export const VizLegendTable = <T extends unknown>({
   readonly,
   isSortable,
   limit = 0,
+  filterAction,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles);
   const header: Record<string, string> = {
@@ -59,12 +60,10 @@ export const VizLegendTable = <T extends unknown>({
     let sortMult = sortDesc ? -1 : 1;
 
     if (sortKey === nameSortKey) {
-      // string sort
       items.sort((a, b) => {
         return sortMult * naturalCompare(a.label, b.label);
       });
     } else {
-      // numeric sort
       items.sort((a, b) => {
         const aVal = itemVals.get(a) ?? 0;
         const bVal = itemVals.get(b) ?? 0;
@@ -112,6 +111,12 @@ export const VizLegendTable = <T extends unknown>({
                 }
               }}
             >
+              {columnTitle === nameSortKey && filterAction && (
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
+                  {filterAction}
+                </span>
+              )}
               {columnTitle}
               {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
             </th>
@@ -155,11 +160,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'left',
     paddingLeft: '30px',
   }),
-  // This needs to be padding-right - icon size(xs==12) to avoid jumping
   withIcon: css({
     paddingRight: '4px',
   }),
   headerSortable: css({
     cursor: 'pointer',
+  }),
+  filterAction: css({
+    marginLeft: theme.spacing(0.5),
+    display: 'inline-flex',
+    verticalAlign: 'middle',
   }),
 });

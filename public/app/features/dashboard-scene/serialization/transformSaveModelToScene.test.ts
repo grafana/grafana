@@ -1,6 +1,7 @@
 import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   behaviors,
@@ -320,6 +321,10 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('when organizing panels as scene children', () => {
+    beforeEach(() => {
+      setPanelPluginMetas({});
+    });
+
     it('should leave panels outside second row if it is collapsed', () => {
       const panel1 = createPanelSaveModel({
         title: 'test1',
@@ -684,9 +689,11 @@ describe('transformSaveModelToScene', () => {
         targets: [{ refId: 'A' }],
       };
 
-      config.panels['text-plugin-34'] = getPanelPlugin({
-        skipDataQuery: true,
-      }).meta;
+      setPanelPluginMetas({
+        'text-plugin-34': getPanelPlugin({
+          skipDataQuery: true,
+        }).meta,
+      });
 
       const { vizPanel } = buildGridItemForTest(panel);
 

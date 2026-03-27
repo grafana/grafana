@@ -108,8 +108,8 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
 
     getDashboardAPI()
-      .listDashboardHistory(uid, options)
-      .then((result) => {
+      .then(async (api) => {
+        const result = await api.listDashboardHistory(uid, options);
         const versions = this.transformToRevisionModels(result.items);
         this.setState({
           isLoading: false,

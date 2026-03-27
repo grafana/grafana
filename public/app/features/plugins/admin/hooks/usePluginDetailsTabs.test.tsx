@@ -34,7 +34,6 @@ const mockPlugin: CatalogPlugin = {
   isDeprecated: false,
   isEnterprise: false,
   isFullyInstalled: true,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   hasUpdate: false,
   info: {
@@ -51,6 +50,7 @@ const mockPlugin: CatalogPlugin = {
   publishedAt: '2023-01-01',
   angularDetected: false,
   accessControl: {},
+  managed: { enabled: false, strategy: undefined },
 };
 
 const mockPluginConfig = {

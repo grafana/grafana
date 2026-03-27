@@ -10,7 +10,7 @@ export const EditSchemaV2Button = ({ dashboard }: ToolbarActionProps) => {
       variant="secondary"
       tooltip={t('dashboard.toolbar.new.edit-dashboard-v2-schema.tooltip', 'Edit dashboard v2 schema')}
       icon={<Icon name="brackets-curly" size="lg" type="default" />}
-      onClick={() => dashboard.openV2SchemaEditor()}
+      onClick={() => dashboard.state.editPane.openPane('code')}
     />
   );
 };

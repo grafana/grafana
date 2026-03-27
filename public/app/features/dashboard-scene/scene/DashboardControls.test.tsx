@@ -228,6 +228,7 @@ describe('DashboardControls', () => {
         '_dash.hideVariables',
         '_dash.hideLinks',
         '_dash.hideDashboardControls',
+        '_dash.hidePlaylistNav',
       ]);
     });
 
@@ -239,6 +240,7 @@ describe('DashboardControls', () => {
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       expect(scene.getUrlState()).toEqual({});
     });
@@ -250,21 +252,25 @@ describe('DashboardControls', () => {
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
         '_dash.hideDashboardControls': 'true',
+        '_dash.hidePlaylistNav': 'true',
       });
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
       expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
       scene.updateFromUrl({
         '_dash.hideTimePicker': '',
         '_dash.hideVariables': '',
         '_dash.hideLinks': '',
         '_dash.hideDashboardControls': '',
+        '_dash.hidePlaylistNav': '',
       });
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
       expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
     });
 
     it('should not override state if no new state comes from url', () => {
@@ -273,12 +279,14 @@ describe('DashboardControls', () => {
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       scene.updateFromUrl({});
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
       expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
     });
 
     it('should not call setState if no changes', () => {
@@ -287,6 +295,7 @@ describe('DashboardControls', () => {
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       const setState = jest.spyOn(scene, 'setState');
 
@@ -295,6 +304,7 @@ describe('DashboardControls', () => {
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
         '_dash.hideDashboardControls': 'true',
+        '_dash.hidePlaylistNav': 'true',
       });
 
       expect(setState).toHaveBeenCalledTimes(0);
@@ -350,7 +360,32 @@ describe('DashboardControls', () => {
       render(<controls.Component model={controls} />);
 
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
+    });
+
+    it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
+
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      render(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
+    });
+
+    it('should hide playlist nav buttons when hidePlaylistNav is true', async () => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
+
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      controls.setState({ hidePlaylistNav: true });
+      render(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
     });
   });
 });

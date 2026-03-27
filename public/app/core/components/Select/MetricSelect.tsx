@@ -18,7 +18,7 @@ export interface Props {
 
 export const MetricSelect = (props: Props) => {
   const { value, placeholder, className, isSearchable, onChange } = props;
-  const options = useSelectOptions(props);
+  const options = useMatcherSelectOptions(props);
   const selected = useSelectedOption(options, value);
   const onChangeValue = useCallback((selectable: SelectableValue<string>) => onChange(selectable.value), [onChange]);
 
@@ -39,7 +39,7 @@ export const MetricSelect = (props: Props) => {
   );
 };
 
-const useSelectOptions = ({ variables = [], options }: Props): Array<SelectableValue<string>> => {
+const useMatcherSelectOptions = ({ variables = [], options }: Props): Array<SelectableValue<string>> => {
   return useMemo(() => {
     if (!Array.isArray(variables) || variables.length === 0) {
       return options;

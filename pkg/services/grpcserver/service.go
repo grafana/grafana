@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -215,6 +216,9 @@ func (s *gPRCServerService) GetAddress() string {
 type DSKitService struct {
 	*services.BasicService
 	Provider
+
+	// Health is the gRPC health server registered on this service.
+	Health *HealthService
 }
 
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
@@ -234,8 +238,17 @@ func ProvideDSKitService(
 	if err != nil {
 		return nil, err
 	}
-	svc := &DSKitService{Provider: grpcService}
-	svc.BasicService = services.NewBasicService(nil, grpcService.Run, func(_ error) error {
+
+	hs := newHealthService()
+	hs.setServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	grpc_health_v1.RegisterHealthServer(grpcService.GetServer(), hs)
+
+	svc := &DSKitService{Provider: grpcService, Health: hs}
+	svc.BasicService = services.NewBasicService(func(context.Context) error {
+		hs.start()
+		return nil
+	}, grpcService.Run, func(_ error) error {
+		hs.Shutdown()
 		grpcService.shutdown()
 		return nil
 	}).WithName(serviceName)

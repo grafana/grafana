@@ -308,7 +308,7 @@ export const isDataFrameWithValue = (data: unknown): data is DataFrameWithValue 
 export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
     // DataFrameDTO does not have length
-    if ('length' in data && data.fields[0]?.values?.get) {
+    if ('length' in data && data.fields[0]?.values) {
       return data;
     }
 

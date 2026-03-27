@@ -172,10 +172,10 @@ composableKinds: DataQuery: {
 				#ResultFormat:   "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
 				#LogsEditorMode: "builder" | "raw"                          @cuetsy(kind="enum", memberNames="Builder|Raw")
 
-				#BuilderQueryEditorExpressionType: "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" | "order_by" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And|OrderBy")
-				#BuilderQueryEditorPropertyType:   "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval"               @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
-				#BuilderQueryEditorOrderByOptions: "asc" | "desc"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
-				#BuilderQueryEditorReduceParameterTypes: "generic" | "numeric"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
+				#BuilderQueryEditorExpressionType:       "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" | "order_by" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And|OrderBy")
+				#BuilderQueryEditorPropertyType:         "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval"               @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
+				#BuilderQueryEditorOrderByOptions:       "asc" | "desc"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
+				#BuilderQueryEditorReduceParameterTypes: "generic" | "numeric"                                                                              @cuetsy(kind="enum", memberNames:"Asc|Desc")
 
 				#BuilderQueryEditorProperty: {
 					type: #BuilderQueryEditorPropertyType
@@ -276,7 +276,7 @@ composableKinds: DataQuery: {
 					timeFilter?:  #BuilderQueryEditorWhereExpressionArray
 				} @cuetsy(kind="interface")
 
-				#ARGScope:   "subscription" | "directory" @cuetsy(kind="enum", memberNames="Subscription|Directory")
+				#ARGScope: "subscription" | "directory" @cuetsy(kind="enum", memberNames="Subscription|Directory")
 				#AzureResourceGraphQuery: {
 					// Azure Resource Graph KQL query to be executed.
 					query?: string
@@ -311,28 +311,28 @@ composableKinds: DataQuery: {
 					...
 				} @cuetsy(kind="interface")
 				#UnknownQuery: #BaseGrafanaTemplateVariableQuery & {
-								kind: "UnknownQuery"
-				}                            @cuetsy(kind="interface")
+					kind: "UnknownQuery"
+				} @cuetsy(kind="interface")
 				#AppInsightsMetricNameQuery: #BaseGrafanaTemplateVariableQuery & {
-								kind: "AppInsightsMetricNameQuery"
-				}                         @cuetsy(kind="interface")
+					kind: "AppInsightsMetricNameQuery"
+				} @cuetsy(kind="interface")
 				#AppInsightsGroupByQuery: #BaseGrafanaTemplateVariableQuery & {
-							kind:       "AppInsightsGroupByQuery"
-							metricName: string
-				}                    @cuetsy(kind="interface")
+					kind:       "AppInsightsGroupByQuery"
+					metricName: string
+				} @cuetsy(kind="interface")
 				#SubscriptionsQuery: #BaseGrafanaTemplateVariableQuery & {
-							kind: "SubscriptionsQuery"
-				}                     @cuetsy(kind="interface")
+					kind: "SubscriptionsQuery"
+				} @cuetsy(kind="interface")
 				#ResourceGroupsQuery: #BaseGrafanaTemplateVariableQuery & {
-							kind:         "ResourceGroupsQuery"
-							subscription: string
-				}                    @cuetsy(kind="interface")
+					kind:         "ResourceGroupsQuery"
+					subscription: string
+				} @cuetsy(kind="interface")
 				#ResourceNamesQuery: #BaseGrafanaTemplateVariableQuery & {
-							kind:            "ResourceNamesQuery"
-							subscription:    string
-							resourceGroup:   string
-							metricNamespace: string
-				}                      @cuetsy(kind="interface")
+					kind:            "ResourceNamesQuery"
+					subscription:    string
+					resourceGroup:   string
+					metricNamespace: string
+				} @cuetsy(kind="interface")
 				#MetricNamespaceQuery: #BaseGrafanaTemplateVariableQuery & {
 					kind:             "MetricNamespaceQuery"
 					subscription:     string
@@ -343,19 +343,19 @@ composableKinds: DataQuery: {
 
 				// @deprecated Use MetricNamespaceQuery instead
 				#MetricDefinitionsQuery: #BaseGrafanaTemplateVariableQuery & {
-							kind:             "MetricDefinitionsQuery"
-							subscription:     string
-							resourceGroup:    string
-							metricNamespace?: string
-							resourceName?:    string
-				}                  @cuetsy(kind="interface")
+					kind:             "MetricDefinitionsQuery"
+					subscription:     string
+					resourceGroup:    string
+					metricNamespace?: string
+					resourceName?:    string
+				} @cuetsy(kind="interface")
 				#MetricNamesQuery: #BaseGrafanaTemplateVariableQuery & {
-							kind:            "MetricNamesQuery"
-							subscription:    string
-							resourceGroup:   string
-							resourceName:    string
-							metricNamespace: string
-				}                 @cuetsy(kind="interface")
+					kind:            "MetricNamesQuery"
+					subscription:    string
+					resourceGroup:   string
+					resourceName:    string
+					metricNamespace: string
+				} @cuetsy(kind="interface")
 				#WorkspacesQuery: #BaseGrafanaTemplateVariableQuery & {
 					kind:         "WorkspacesQuery"
 					subscription: string

@@ -68,7 +68,7 @@ The following table highlights the key differences between mute timings and sile
 ## Add time intervals
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
-1. Click **Notification policies** and then the **Time intervals** tab.
+1. Click **Notification configuration**, then select the **Time intervals** tab.
 1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. Click **+ New time interval**.
 1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute timing or active time interval.
@@ -77,7 +77,7 @@ The following table highlights the key differences between mute timings and sile
 ## Assign a time interval to a notification policy
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
-1. Click **Notification policies** and make sure you are on the **Notification Policies** tab.
+1. Click **Notification configuration**, then select the **Notification policies** tab.
 1. Find the notification policy you would like to add the time intervals to and click **...** -> **Edit**.
 1. From either the **Mute timings** or **Active time intervals** dropdowns, choose the time intervals you would like to add to the policy.
 1. Save your changes.

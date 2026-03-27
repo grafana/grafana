@@ -364,7 +364,7 @@ const DEFAULT_THRESHOLDS: FieldConfig['thresholds'] = {
 
 export function RadialGaugeExample({
   color,
-  seriesName = 'Server A',
+  seriesName,
   value = 70,
   shape = 'circle',
   min = 0,
@@ -410,7 +410,7 @@ export function RadialGaugeExample({
         },
       },
       {
-        name: seriesName,
+        name: 'Value',
         type: FieldType.number,
         values: [40, 45, 20, 25, 30, 28, 27, 30, 31, 26, 50, 55, 52, 20, 25, 30, 60, value],
         config: {
@@ -420,6 +420,7 @@ export function RadialGaugeExample({
           decimals: decimals,
           color: { mode: colorScheme, fixedColor: color ? theme.visualization.getColorByName(color) : undefined },
           thresholds,
+          displayName: seriesName,
         },
         // Add state and getLinks
         state: {},

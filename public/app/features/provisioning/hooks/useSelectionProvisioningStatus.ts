@@ -71,7 +71,8 @@ export function useSelectionProvisioningStatus(
         return dashboardCache[uid];
       }
       try {
-        const dto = await getDashboardAPI().getDashboardDTO(uid);
+        const api = await getDashboardAPI();
+        const dto = await api.getDashboardDTO(uid);
         const result = isProvisionedDashboardFromMeta(dto);
         setDashboardCache((prev) => ({ ...prev, [uid]: result }));
         return result;

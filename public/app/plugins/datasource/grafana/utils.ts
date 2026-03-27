@@ -24,7 +24,6 @@ export function onUpdatePanelSnapshotData(panel: PanelModel, frames: DataFrame[]
         title: 'Change to panel embedded data',
         text: 'If you want to change the data shown in this panel Grafana will need to remove the panels current query and replace it with a snapshot of the current data. This enables you to edit the data.',
         yesText: 'Continue',
-        icon: 'pen',
         onConfirm: () => {
           updateSnapshotData(frames, panel);
           resolve(true);

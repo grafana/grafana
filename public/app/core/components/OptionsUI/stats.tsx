@@ -9,11 +9,11 @@ export const StatsPickerEditor = ({
 }: StandardEditorProps<string[], StatsPickerConfigSettings>) => {
   return (
     <StatsPicker
+      id={id}
       stats={value}
       onChange={onChange}
       allowMultiple={!!item.settings?.allowMultiple}
       defaultStat={item.settings?.defaultStat}
-      inputId={id}
     />
   );
 };

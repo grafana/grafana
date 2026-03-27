@@ -19,7 +19,7 @@ func NewNullable[T any](val T) Nullable[T] {
 // Options holds the general options for each version that may be different.
 type Options struct {
 	Constraint Nullable[string]
-	// CombinedExecutable was introduced in Grafana 9.4; it combined the `grafana-server` and `grafana-cli` commands into one `grafana` executable.
+	// CombinedExecutable was introduced in Grafana 9.4; it combined the separate `server` and `cli` commands into one `grafana` executable.
 	CombinedExecutable Nullable[bool]
 	// DebPreRM defines the 'prerm' script in the debian installer, introduced by this PR: https://github.com/grafana/grafana/pull/59580 in v9.5.0. Versions before v9.5.0 do not have the 'prerm' script in the grafana package.
 	DebPreRM Nullable[bool]

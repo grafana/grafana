@@ -433,9 +433,11 @@ export function useCreateFolder() {
     };
 
     const result = await createFolder(apiPayload);
-    refresh({ childrenOf: folder.parentUid });
-    deletedDashboardsCache.clear();
-    invalidateQuotaUsage(dispatch);
+    if (!result.error) {
+      refresh({ childrenOf: folder.parentUid });
+      deletedDashboardsCache.clear();
+      invalidateQuotaUsage(dispatch);
+    }
 
     return {
       ...result,

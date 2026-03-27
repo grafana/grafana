@@ -12,10 +12,6 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-var (
-	defaultWriteTimeout = 15 * time.Second
-)
-
 // AfterResourcePermissionCreate is a post-create hook that writes the resource permission to Zanzana (openFGA)
 func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj runtime.Object, _ *metav1.CreateOptions) {
 	if b.zClient == nil {
@@ -35,7 +31,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
-	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
+	HooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
 
 	go func(rp *iamv0.ResourcePermission) {
 		start := time.Now()
@@ -45,8 +41,8 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 			// Release the ticket after write is done
 			<-b.zTickets
 			// Record operation duration and count
-			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
-			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
+			HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			HooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		resource := rp.Spec.Resource
@@ -82,7 +78,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 			"operationsCount", len(operations),
 		)
 
-		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 		defer cancel()
 
 		err := b.zClient.Mutate(ctx, &v1.MutateRequest{
@@ -99,7 +95,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionCreate(obj r
 			)
 		} else {
 			// Record successful tuple writes
-			hooksTuplesCounter.WithLabelValues(resourceType, operation, "write").Add(float64(len(operations)))
+			HooksTuplesCounter.WithLabelValues(resourceType, operation, "write").Add(float64(len(operations)))
 		}
 	}(rp.DeepCopy()) // Pass a copy of the object
 }
@@ -181,7 +177,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginResourcePermissionUpdate(ctx c
 		// This limits the amount of concurrent connections to Zanzana
 		wait := time.Now()
 		b.zTickets <- true
-		hooksWaitHistogram.WithLabelValues("resourcepermission", "update").Observe(time.Since(wait).Seconds())
+		HooksWaitHistogram.WithLabelValues("resourcepermission", "update").Observe(time.Since(wait).Seconds())
 
 		go func() {
 			start := time.Now()
@@ -190,8 +186,8 @@ func (b *IdentityAccessManagementAPIBuilder) BeginResourcePermissionUpdate(ctx c
 			defer func() {
 				<-b.zTickets
 				// Record operation duration and count
-				hooksDurationHistogram.WithLabelValues("resourcepermission", "update", status).Observe(time.Since(start).Seconds())
-				hooksOperationCounter.WithLabelValues("resourcepermission", "update", status).Inc()
+				HooksDurationHistogram.WithLabelValues("resourcepermission", "update", status).Observe(time.Since(start).Seconds())
+				HooksOperationCounter.WithLabelValues("resourcepermission", "update", status).Inc()
 			}()
 
 			b.logger.Debug("updating resource permission in zanzana",
@@ -200,7 +196,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginResourcePermissionUpdate(ctx c
 				"newPermissionsCnt", len(newRP.Spec.Permissions),
 			)
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 			defer cancel()
 
 			// Prepare write request
@@ -239,10 +235,10 @@ func (b *IdentityAccessManagementAPIBuilder) BeginResourcePermissionUpdate(ctx c
 				} else {
 					// Record successful tuple operations
 					if len(deleteOperations) > 0 {
-						hooksTuplesCounter.WithLabelValues("resourcepermission", "update", "delete").Add(float64(len(deleteOperations)))
+						HooksTuplesCounter.WithLabelValues("resourcepermission", "update", "delete").Add(float64(len(deleteOperations)))
 					}
 					if len(createOperations) > 0 {
-						hooksTuplesCounter.WithLabelValues("resourcepermission", "update", "write").Add(float64(len(createOperations)))
+						HooksTuplesCounter.WithLabelValues("resourcepermission", "update", "write").Add(float64(len(createOperations)))
 					}
 				}
 			} else {
@@ -271,7 +267,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionDelete(obj r
 	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
-	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
+	HooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds()) // Record wait time
 
 	go func(rp *iamv0.ResourcePermission) {
 		start := time.Now()
@@ -281,8 +277,8 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionDelete(obj r
 			// Release the ticket after write is done
 			<-b.zTickets
 			// Record operation duration and count
-			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
-			hooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
+			HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			HooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		resource := rp.Spec.Resource
@@ -320,7 +316,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionDelete(obj r
 			"operationsCount", len(deleteOperations),
 		)
 
-		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 		defer cancel()
 
 		err := b.zClient.Mutate(ctx, &v1.MutateRequest{
@@ -337,7 +333,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterResourcePermissionDelete(obj r
 			)
 		} else {
 			// Record successful tuple deletions
-			hooksTuplesCounter.WithLabelValues(resourceType, operation, "delete").Add(float64(len(deleteOperations)))
+			HooksTuplesCounter.WithLabelValues(resourceType, operation, "delete").Add(float64(len(deleteOperations)))
 		}
 	}(rp.DeepCopy()) // Pass a copy of the object
 }

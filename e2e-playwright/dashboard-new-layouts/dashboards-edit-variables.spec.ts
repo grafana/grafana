@@ -13,6 +13,14 @@ test.use({
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
 
+const variableWithDefaults = (custom?: Partial<Variable>): Variable => ({
+  type: 'textbox',
+  name: 'VariableUnderTest',
+  value: 'foo',
+  label: 'VariableUnderTestLabel',
+  ...custom,
+});
+
 test.describe(
   'Dashboard edit - variables',
   {
@@ -23,12 +31,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      const variable: Variable = {
-        type: 'constant',
-        name: 'VariableUnderTest',
-        value: 'foo',
-        label: 'VariableUnderTest', // constant doesn't really need a label
-      };
+      const variable = variableWithDefaults({ type: 'constant' });
 
       // common steps to add a new variable
       await flows.newEditPaneVariableClick(dashboardPage, selectors);
@@ -56,12 +59,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      const variable: Variable = {
-        type: 'textbox',
-        name: 'VariableUnderTest',
-        value: 'foo',
-        label: 'VariableUnderTest',
-      };
+      const variable = variableWithDefaults();
 
       await flows.addNewTextBoxVariable(dashboardPage, variable);
 
@@ -84,12 +82,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      const variable: Variable = {
-        type: 'interval',
-        name: 'VariableUnderTest',
-        value: '1m',
-        label: 'VariableUnderTest',
-      };
+      const variable = variableWithDefaults({ type: 'interval', value: '1m' });
 
       // common steps to add a new variable
       await flows.newEditPaneVariableClick(dashboardPage, selectors);
@@ -114,7 +107,7 @@ test.describe(
 
       // select the variable in the dashboard and set the Auto option
       const variableDropdown = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.name!)
+        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label)
       );
       const nextElement = variableDropdown.locator('+ *');
       await expect(nextElement).toHaveText('1m');
@@ -127,13 +120,7 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: 10m');
     });
     test('can make a hidden variable visible', async ({ dashboardPage, selectors, page }) => {
-      const variable: Variable = {
-        type: 'textbox',
-        name: 'VariableUnderTest',
-        value: 'foo',
-        label: 'VariableUnderTest',
-        display: 'Hidden',
-      };
+      const variable = variableWithDefaults({ display: 'Hidden' });
 
       await saveDashboard(dashboardPage, page, selectors, 'can make a hidden variable visible');
       await flows.addNewTextBoxVariable(dashboardPage, variable);
@@ -173,13 +160,9 @@ test.describe(
       ).toBeVisible();
     });
 
-    test.skip('can hide variable under the controls menu', async ({ dashboardPage, selectors, page }) => {
-      const variable: Variable = {
-        type: 'textbox',
-        name: 'VariableUnderTest',
-        value: 'foo',
-        label: 'VariableUnderTest',
-      };
+    test('can hide variable under the controls menu', async ({ dashboardPage, selectors, page }) => {
+      const variable = variableWithDefaults();
+
       await saveDashboard(dashboardPage, page, selectors, 'can hide a variable in controls menu');
 
       await flows.addNewTextBoxVariable(dashboardPage, variable);

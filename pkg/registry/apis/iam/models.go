@@ -6,11 +6,13 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
@@ -20,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -30,10 +33,6 @@ var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
-
-// CoreRoleStorageBackend uses the resource.StorageBackend interface to provide storage for core roles.
-// Used by wire to identify the storage backend for core roles.
-type CoreRoleStorageBackend interface{ resource.StorageBackend }
 
 // RoleStorageBackend uses the resource.StorageBackend interface to provide storage for custom roles.
 // Used by wire to identify the storage backend for custom roles.
@@ -57,12 +56,12 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyTeamStore                  *team.LegacyStore
 	teamBindingLegacyStore           *teambinding.LegacyBindingStore
 	ssoLegacyStore                   *sso.LegacyStore
-	coreRolesStorage                 CoreRoleStorageBackend
 	roleApiInstaller                 RoleApiInstaller
 	globalRoleApiInstaller           GlobalRoleApiInstaller
 	teamLBACApiInstaller             TeamLBACApiInstaller
 	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
 	resourcePermissionsStorage       resource.StorageBackend
+	mappers                          *resourcepermission.MappersRegistry
 	roleBindingsStorage              RoleBindingStorageBackend
 
 	// Required for resource permissions authorization
@@ -91,6 +90,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	userSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearch                        *TeamSearchHandler
+	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
 	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
@@ -113,4 +113,14 @@ type IdentityAccessManagementAPIBuilder struct {
 	features featuremgmt.FeatureToggles
 
 	tracing tracing.Tracer
+
+	cfgProvider    configprovider.ConfigProvider
+	settingService settingsvc.Service
+
+	apiConfig Config
+}
+
+// Config holds IAM-specific configuration
+type Config struct {
+	SingleOrganization bool
 }

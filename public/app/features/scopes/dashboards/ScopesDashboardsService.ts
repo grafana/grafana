@@ -201,12 +201,19 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     let subScopeFolders: SuggestedNavigationsFoldersMap | undefined;
 
     try {
-      // Fetch navigations for this subScope
-      const fetchNavigations = config.featureToggles.useScopesNavigationEndpoint
-        ? this.apiClient.fetchScopeNavigations
-        : this.apiClient.fetchDashboards;
-
-      const subScopeItems = await fetchNavigations([subScopeName]);
+      // Fetch navigations for this subScope.
+      // path includes the root key ('') at index 0, so path.length - 1 gives the
+      // nesting depth: ['', folderA] → depth 1, ['', folderA, folderB] → depth 2.
+      // rootScope is always the top-level scope (forScopeNames[0]), regardless of UI
+      // navigation state — it identifies the root of the navigation tree being built.
+      const rootScope = this.state.forScopeNames[0];
+      const depth = path.length - 1;
+      const subScopeItems = config.featureToggles.useScopesNavigationEndpoint
+        ? await this.apiClient.fetchScopeNavigations([subScopeName], {
+            ...(depth > 0 && { depth }),
+            ...(rootScope && { rootScope }),
+          })
+        : await this.apiClient.fetchDashboards([subScopeName]);
 
       // Filter out items that have a subScope matching any subScope already in the path
       // This prevents infinite loops when a subScope returns items with the same subScope
@@ -304,11 +311,9 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     this.updateState({ forScopeNames, loading: true });
 
-    const fetchNavigations = config.featureToggles.useScopesNavigationEndpoint
-      ? this.apiClient.fetchScopeNavigations
-      : this.apiClient.fetchDashboards;
-
-    const res = await fetchNavigations(forScopeNames);
+    const res = config.featureToggles.useScopesNavigationEndpoint
+      ? await this.apiClient.fetchScopeNavigations(forScopeNames)
+      : await this.apiClient.fetchDashboards(forScopeNames);
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
       const folders = this.groupSuggestedItems(res);

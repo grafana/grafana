@@ -109,7 +109,7 @@ func TestSearchFallback(t *testing.T) {
 		}
 	})
 
-	t.Run("should hit unified storage search handler on mode 3", func(t *testing.T) {
+	t.Run("should hit legacy search handler on mode 3", func(t *testing.T) {
 		mockClient := &MockClient{}
 		mockLegacyClient := &MockClient{}
 
@@ -128,11 +128,11 @@ func TestSearchFallback(t *testing.T) {
 
 		searchHandler.DoSearch(rr, req)
 
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
+		if mockClient.LastSearchRequest != nil {
 			t.Fatalf("expected Search NOT to be called, but it was")
+		}
+		if mockLegacyClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
 		}
 	})
 

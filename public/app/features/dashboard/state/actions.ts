@@ -26,7 +26,8 @@ export function importDashboard(data: any, dashboardTitle: string): ThunkResult<
 
 export function removeDashboard(uid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getDashboardAPI().deleteDashboard(uid, false);
+    const api = await getDashboardAPI();
+    await api.deleteDashboard(uid, false);
     dispatch(loadPluginDashboards());
   };
 }

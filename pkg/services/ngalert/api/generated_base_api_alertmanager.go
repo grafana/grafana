@@ -23,7 +23,6 @@ type AlertmanagerApi interface {
 	RouteCreateGrafanaSilence(*contextmodel.ReqContext) response.Response
 	RouteCreateSilence(*contextmodel.ReqContext) response.Response
 	RouteDeleteAlertingConfig(*contextmodel.ReqContext) response.Response
-	RouteDeleteGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
 	RouteDeleteGrafanaSilence(*contextmodel.ReqContext) response.Response
 	RouteDeleteSilence(*contextmodel.ReqContext) response.Response
 	RouteGetAMAlertGroups(*contextmodel.ReqContext) response.Response
@@ -69,9 +68,6 @@ func (f *AlertmanagerApiHandler) RouteDeleteAlertingConfig(ctx *contextmodel.Req
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteDeleteAlertingConfig(ctx, datasourceUIDParam)
-}
-func (f *AlertmanagerApiHandler) RouteDeleteGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
-	return f.handleRouteDeleteGrafanaAlertingConfig(ctx)
 }
 func (f *AlertmanagerApiHandler) RouteDeleteGrafanaSilence(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -218,18 +214,6 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 				http.MethodDelete,
 				"/api/alertmanager/{DatasourceUID}/config/api/v1/alerts",
 				api.Hooks.Wrap(srv.RouteDeleteAlertingConfig),
-				m,
-			),
-		)
-		group.Delete(
-			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
-			requestmeta.SetOwner(requestmeta.TeamAlerting),
-			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
-			api.authorize(http.MethodDelete, "/api/alertmanager/grafana/config/api/v1/alerts"),
-			metrics.Instrument(
-				http.MethodDelete,
-				"/api/alertmanager/grafana/config/api/v1/alerts",
-				api.Hooks.Wrap(srv.RouteDeleteGrafanaAlertingConfig),
 				m,
 			),
 		)

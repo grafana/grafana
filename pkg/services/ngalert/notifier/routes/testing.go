@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -23,7 +24,7 @@ func NewFakeService(config legacy_storage.ConfigRevision) *FakeService {
 	}
 }
 
-func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string) (legacy_storage.ManagedRoute, error) {
+func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string, _ identity.Requester) (legacy_storage.ManagedRoute, error) {
 	r := f.Config.GetManagedRoute(name)
 	if r == nil {
 		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
@@ -33,7 +34,7 @@ func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string) (
 	}
 	return *r, nil
 }
-func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64) (legacy_storage.ManagedRoutes, error) {
+func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Requester) (legacy_storage.ManagedRoutes, error) {
 	routes := f.Config.GetManagedRoutes(f.IncludeManagedRoutes)
 	for _, r := range routes {
 		if p, ok := f.Provenances[r.Name]; ok {

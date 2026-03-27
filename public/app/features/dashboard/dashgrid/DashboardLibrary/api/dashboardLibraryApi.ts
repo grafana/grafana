@@ -1,4 +1,4 @@
-import { getBackendSrv, logWarning } from '@grafana/runtime';
+import { getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -99,6 +99,14 @@ export async function fetchCommunityDashboards(
   });
 
   if (result && Array.isArray(result.items)) {
+    logInfo('Fetched community dashboards', {
+      searchParams: searchParams.toString(),
+      dataSourceType: params.dataSourceSlugIn ?? '',
+      total: result.items.length,
+      page: result.page,
+      pages: result.pages,
+    });
+
     const dashboards = filterNonSafeDashboards(result.items, params.dataSourceSlugIn);
 
     return {
@@ -147,11 +155,12 @@ const filterNonSafeDashboards = (dashboards: GnetDashboard[], dataSourceType?: s
   let lowDownloadsCount = 0;
 
   const filteredDashboards = dashboards.filter((item: GnetDashboard) => {
-    const hasUnsafePanelTypes = item.panelTypeSlugs?.some((slug: string) => UNSAFE_PANEL_TYPE_SLUGS.includes(slug));
+    const unsafePanelTypes =
+      item.panelTypeSlugs?.filter((slug: string) => UNSAFE_PANEL_TYPE_SLUGS.includes(slug)) ?? [];
     const hasLowDownloads = typeof item.downloads === 'number' && item.downloads < MIN_DOWNLOADS_FILTER;
 
-    if (hasUnsafePanelTypes || hasLowDownloads) {
-      if (hasUnsafePanelTypes) {
+    if (unsafePanelTypes.length > 0 || hasLowDownloads) {
+      if (unsafePanelTypes.length > 0) {
         unsafeDashboardsCount++;
       }
       if (hasLowDownloads) {
@@ -168,6 +177,7 @@ const filterNonSafeDashboards = (dashboards: GnetDashboard[], dataSourceType?: s
         minAllowedDownloads: MIN_DOWNLOADS_FILTER.toString(),
         downloads: item.downloads.toString(),
         panelTypes: item.panelTypeSlugs?.join(', ') ?? '',
+        unsafePanelTypes: unsafePanelTypes.join(', '),
       });
       return false;
     }

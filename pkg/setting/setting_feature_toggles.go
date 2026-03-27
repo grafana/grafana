@@ -18,6 +18,9 @@ const DefaultVariantName = "default"
 // Deprecated: should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 	section := iniFile.Section("feature_toggles")
+	if section.Key("enable").String() != "" {
+		cfg.Logger.Warn("[Deprecated] The feature_toggles.enable configuration setting is deprecated. Use individual feature toggle entries (e.g. featureName = true) instead.")
+	}
 	toggles, err := ReadFeatureTogglesFromInitFile(section)
 	if err != nil {
 		return err

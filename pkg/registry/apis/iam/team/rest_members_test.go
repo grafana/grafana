@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -24,7 +23,7 @@ import (
 func TestTeamMembersREST_Connect(t *testing.T) {
 	t.Run("should create handler with default pagination", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -51,7 +50,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("should parse limit query parameter", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -72,7 +71,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("should parse offset query parameter and calculate page", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -95,7 +94,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("should parse page query parameter and calculate offset", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -118,7 +117,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("should parse explain query parameter", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -139,7 +138,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("should not enable explain when explain=false", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -160,7 +159,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("should return error when identity is missing", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := context.Background()
 		responder := &mockResponder{}
@@ -183,7 +182,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		mockClient := &MockClient{
 			MockError: errors.New("search failed"),
 		}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -237,7 +236,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 				},
 			},
 		}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -271,7 +270,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("should include correct fields in search request", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings))
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -303,7 +302,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("should return 403 when feature flag is disabled", func(t *testing.T) {
 		mockClient := &MockClient{}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), types.FixedAccessClient(true))
+		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -322,42 +321,6 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		require.True(t, responder.called)
 		require.NotNil(t, responder.err)
 		require.Contains(t, responder.err.Error(), "functionality not available")
-	})
-
-	t.Run("should return 403 when user doesn't have the required action on team", func(t *testing.T) {
-		mockClient := &MockClient{}
-		accessClient := &fakeAccessClient{
-			checkFunc: func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
-				// First call is for team access check
-				require.Equal(t, "test-namespace", req.Namespace)
-				require.Equal(t, iamv0alpha1.TeamResourceInfo.GroupResource().Group, req.Group)
-				require.Equal(t, iamv0alpha1.TeamResourceInfo.GroupResource().Resource, req.Resource)
-				require.Equal(t, "get_permissions", req.Verb)
-				require.Equal(t, "testteam", req.Name)
-				return types.CheckResponse{Allowed: false}, nil
-			},
-		}
-		handler := NewTeamMembersREST(mockClient, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamBindings), accessClient)
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "testteam", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/members", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.True(t, responder.called)
-		require.NotNil(t, responder.err)
-		require.Contains(t, responder.err.Error(), "forbidden")
-		require.True(t, accessClient.checkCalled)
-		require.Equal(t, 1, accessClient.checkCallCount)
 	})
 }
 
@@ -622,27 +585,4 @@ func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsR
 
 func (m *MockClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
 	return nil, nil
-}
-
-var _ types.AccessClient = (*fakeAccessClient)(nil)
-
-// fakeAccessClient is a mock implementation of types.AccessClient for testing access control
-type fakeAccessClient struct {
-	checkCalled    bool
-	checkCallCount int
-	checkFunc      func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error)
-}
-
-func (m *fakeAccessClient) Check(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
-	m.checkCalled = true
-	m.checkCallCount++
-	return m.checkFunc(id, &req, folder)
-}
-
-func (m *fakeAccessClient) Compile(ctx context.Context, id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
-	return nil, types.NoopZookie{}, nil
-}
-
-func (m *fakeAccessClient) BatchCheck(ctx context.Context, id types.AuthInfo, req types.BatchCheckRequest) (types.BatchCheckResponse, error) {
-	return types.BatchCheckResponse{}, nil
 }

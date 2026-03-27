@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -33,25 +33,25 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client, err := v0alpha1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	newRule := &v0alpha1.InhibitionRule{
+	newRule := &v1beta1.InhibitionRule{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 			Name:      "test-rule",
 		},
-		Spec: v0alpha1.InhibitionRuleSpec{
-			SourceMatchers: []v0alpha1.InhibitionRuleMatcher{
+		Spec: v1beta1.InhibitionRuleSpec{
+			SourceMatchers: []v1beta1.InhibitionRuleMatcher{
 				{
-					Type:  v0alpha1.InhibitionRuleMatcherTypeEqual,
+					Type:  v1beta1.InhibitionRuleMatcherTypeEqual,
 					Label: "alertname",
 					Value: "SourceAlert",
 				},
 			},
-			TargetMatchers: []v0alpha1.InhibitionRuleMatcher{
+			TargetMatchers: []v1beta1.InhibitionRuleMatcher{
 				{
-					Type:  v0alpha1.InhibitionRuleMatcherTypeEqual,
+					Type:  v1beta1.InhibitionRuleMatcherTypeEqual,
 					Label: "alertname",
 					Value: "TargetAlert",
 				},
@@ -81,7 +81,7 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
 	})
 
-	var existingRule *v0alpha1.InhibitionRule
+	var existingRule *v1beta1.InhibitionRule
 	t.Run("create should succeed if inhibition rule doesn't exist", func(t *testing.T) {
 		var err error
 		existingRule, err = client.Create(ctx, newRule, resource.CreateOptions{})
@@ -109,8 +109,8 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 	var updatedRuleIdentifier resource.Identifier
 	t.Run("update should keep stable UID and change version", func(t *testing.T) {
 		updated := existingRule.DeepCopy()
-		updated.Spec.SourceMatchers = append(updated.Spec.SourceMatchers, v0alpha1.InhibitionRuleMatcher{
-			Type:  v0alpha1.InhibitionRuleMatcherTypeEqual,
+		updated.Spec.SourceMatchers = append(updated.Spec.SourceMatchers, v1beta1.InhibitionRuleMatcher{
+			Type:  v1beta1.InhibitionRuleMatcherTypeEqual,
 			Label: "severity",
 			Value: "critical",
 		})
@@ -207,25 +207,25 @@ func TestIntegrationAccessControl(t *testing.T) {
 	}
 
 	// Create a test rule via admin
-	adminClient, err := v0alpha1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	testRule := &v0alpha1.InhibitionRule{
+	testRule := &v1beta1.InhibitionRule{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: apis.DefaultNamespace,
 			Name:      "test-permission-rule",
 		},
-		Spec: v0alpha1.InhibitionRuleSpec{
-			SourceMatchers: []v0alpha1.InhibitionRuleMatcher{
+		Spec: v1beta1.InhibitionRuleSpec{
+			SourceMatchers: []v1beta1.InhibitionRuleMatcher{
 				{
-					Type:  v0alpha1.InhibitionRuleMatcherTypeEqual,
+					Type:  v1beta1.InhibitionRuleMatcherTypeEqual,
 					Label: "alertname",
 					Value: "SourceAlert",
 				},
 			},
-			TargetMatchers: []v0alpha1.InhibitionRuleMatcher{
+			TargetMatchers: []v1beta1.InhibitionRuleMatcher{
 				{
-					Type:  v0alpha1.InhibitionRuleMatcherTypeEqual,
+					Type:  v1beta1.InhibitionRuleMatcherTypeEqual,
 					Label: "alertname",
 					Value: "TargetAlert",
 				},
@@ -241,7 +241,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client, err := v0alpha1.NewInhibitionRuleClientFromGenerator(tc.user.GetClientRegistry())
+			client, err := v1beta1.NewInhibitionRuleClientFromGenerator(tc.user.GetClientRegistry())
 			require.NoError(t, err)
 
 			t.Run("list", func(t *testing.T) {

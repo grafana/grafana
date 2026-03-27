@@ -59,7 +59,7 @@ describe('Query Reducer', () => {
 
       reducerTester<ElasticsearchDataQuery['query']>()
         .givenReducer(queryReducer, initialQuery)
-        .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+        .whenActionIsDispatched(changeEditorTypeAndResetQuery({ editorType: 'code', queryType: 'dsl' }))
         .thenStateShouldEqual('');
     });
   });
@@ -130,7 +130,7 @@ describe('Alias Pattern Reducer', () => {
 
       reducerTester<ElasticsearchDataQuery['alias']>()
         .givenReducer(aliasPatternReducer, initialAlias)
-        .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+        .whenActionIsDispatched(changeEditorTypeAndResetQuery({ editorType: 'code', queryType: 'dsl' }))
         .thenStateShouldEqual('');
     });
   });
@@ -151,7 +151,7 @@ describe('Query Type Reducer', () => {
 
     reducerTester<ElasticsearchDataQuery['queryType']>()
       .givenReducer(queryTypeReducer, initialQueryType)
-      .whenActionIsDispatched(changeEditorTypeAndResetQuery('builder'))
+      .whenActionIsDispatched(changeEditorTypeAndResetQuery({ editorType: 'builder', queryType: 'lucene' }))
       .thenStateShouldEqual('lucene');
   });
 
@@ -160,8 +160,17 @@ describe('Query Type Reducer', () => {
 
     reducerTester<ElasticsearchDataQuery['queryType']>()
       .givenReducer(queryTypeReducer, initialQueryType)
-      .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+      .whenActionIsDispatched(changeEditorTypeAndResetQuery({ editorType: 'code', queryType: 'dsl' }))
       .thenStateShouldEqual('dsl');
+  });
+
+  it('Should set to esql when switching to code editor', () => {
+    const initialQueryType: ElasticsearchDataQuery['queryType'] = 'lucene';
+
+    reducerTester<ElasticsearchDataQuery['queryType']>()
+      .givenReducer(queryTypeReducer, initialQueryType)
+      .whenActionIsDispatched(changeEditorTypeAndResetQuery({ editorType: 'code', queryType: 'esql' }))
+      .thenStateShouldEqual('esql');
   });
 
   it('Should default to lucene on init if not set', () => {

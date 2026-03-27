@@ -29,7 +29,12 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'Respond with only the title of the dashboard.';
 
 export const GenAIDashTitleButton = ({ onGenerate }: GenAIDashTitleButtonProps) => {
-  const dashboard = getDashboardSrv().getCurrent()!;
+  const dashboard = getDashboardSrv().getCurrent();
+
+  if (!dashboard) {
+    return null;
+  }
+
   const panelStrings = getPanelStrings(dashboard);
 
   return (

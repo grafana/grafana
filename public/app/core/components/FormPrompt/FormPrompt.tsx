@@ -101,7 +101,6 @@ const UnsavedChangesModal = ({ onDiscard, onBackToForm, isOpen }: UnsavedChanges
       isOpen={isOpen}
       title={t('form-prompt.title', 'Leave page?')}
       onDismiss={onBackToForm}
-      icon="exclamation-triangle"
       className={css({ width: '500px' })}
     >
       <h5>

@@ -55,13 +55,7 @@ export function SaveBeforeShareModal({ dashboard, onContinue, onDismiss, title, 
   }
 
   return (
-    <Modal
-      isOpen={true}
-      title={title ?? defaultTitle}
-      onDismiss={onDismiss}
-      icon="exclamation-triangle"
-      className={css({ width: '500px' })}
-    >
+    <Modal isOpen={true} title={title ?? defaultTitle} onDismiss={onDismiss} className={css({ width: '500px' })}>
       <h5>{message ?? defaultMessage}</h5>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onCancel} fill="outline">

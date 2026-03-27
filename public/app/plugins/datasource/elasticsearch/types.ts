@@ -211,6 +211,7 @@ export interface ElasticDatasourceLike extends DataSourceApi<ElasticsearchDataQu
   query(request: DataQueryRequest<ElasticsearchDataQuery>): Observable<DataQueryResponse>;
   getDatabaseVersion(useCachedData?: boolean): Promise<SemVer | null>;
   getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]>;
+  index?: string;
 }
 
 export const isElasticsearchResponseWithAggregations = (res: unknown): res is ElasticsearchResponseWithAggregations => {

@@ -3,7 +3,7 @@ import { useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
+import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -22,21 +22,31 @@ import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import RulesFilter from './filter/RulesFilter';
+import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
+  const filterV2Enabled = config.featureToggles.alertingFilterV2;
+
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
-      <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
-      {viewMode === 'list' ? (
-        <FilterView filterState={filterState} />
-      ) : (
-        <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
-      )}
+      <Stack direction="column" gap={2}>
+        <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+        <Stack direction="row" grow={1} minHeight={0}>
+          {filterV2Enabled && <RulesFilterSidebar />}
+          <Box flex={1} minWidth={0} paddingLeft={filterV2Enabled ? 2 : undefined}>
+            {viewMode === 'list' ? (
+              <FilterView filterState={filterState} />
+            ) : (
+              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+            )}
+          </Box>
+        </Stack>
+      </Stack>
     </Stack>
   );
 }

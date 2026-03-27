@@ -17,6 +17,7 @@ import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
+import { useExplorePageContext } from './hooks/useExplorePageContext';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
@@ -60,6 +61,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   }, [chrome, navModel]);
 
   useKeyboardShortcuts();
+  useExplorePageContext(panes);
 
   return (
     <div
@@ -68,7 +70,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
       })}
     >
       <h1 className="sr-only">
-        <Trans i18nKey="nav.explore.title" />
+        <Trans i18nKey="nav.explore.title">Explore</Trans>
       </h1>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}

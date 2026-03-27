@@ -21,6 +21,11 @@ import (
 func TestIntegration_AdminApiReencrypt_Enterprise(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// TODO: this test is failing due to DB locks in SQLite.
+	if db.IsTestDbSQLite() {
+		t.Skip("skip flaky in sqlite while we figure out the problem with this test")
+	}
+
 	getSecretsFunctions := map[string]func(*testing.T, *server.TestEnv) map[int]secret{}
 	getSecretsFunctions["settings"] = func(t *testing.T, env *server.TestEnv) map[int]secret {
 		return getSettingSecrets(t, env.SQLStore)

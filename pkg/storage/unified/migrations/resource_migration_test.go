@@ -10,13 +10,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/stretchr/testify/mock"
@@ -501,32 +505,67 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 
 // TestIntegrationRun_SQLiteRetryReleasesLock verifies that MigrationRunner.Run's
 // SQLite retry path (parquet buffer fallback) works correctly when the first
-// migration attempt fails.
+// migration attempt fails. It runs for both SQL and KV backends.
 func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	if !db.IsTestDbSQLite() {
 		t.Skip("SQLite-only")
 	}
 
-	env := newTestEnv(t)
+	t.Run("SQL", func(t *testing.T) {
+		env := newTestEnv(t)
+		eDB, err := dbimpl.ProvideResourceDB(env.store, setting.NewCfg(), nil)
+		require.NoError(t, err)
 
-	// Create a DB provider that shares the Grafana engine (required for SQLite tx sharing).
-	eDB, err := dbimpl.ProvideResourceDB(env.store, setting.NewCfg(), nil)
-	require.NoError(t, err)
+		backend, err := sqlBackend.NewBackend(sqlBackend.BackendOptions{
+			DBProvider: eDB,
+			IsHA:       false,
+		})
+		require.NoError(t, err)
 
-	backend, err := sqlBackend.NewBackend(sqlBackend.BackendOptions{
-		DBProvider: eDB,
-		IsHA:       false,
+		ctx := testutil.NewTestContext(t, time.Now().Add(1*time.Minute))
+		svc, ok := backend.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+		t.Cleanup(func() {
+			_ = services.StopAndAwaitTerminated(context.Background(), svc)
+		})
+
+		testSQLiteRetryReleasesLock(t, env, backend, "test-retry")
 	})
-	require.NoError(t, err)
 
-	ctx := testutil.NewTestContext(t, time.Now().Add(1*time.Minute))
-	svc, ok := backend.(services.Service)
-	require.True(t, ok)
-	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
-	t.Cleanup(func() {
-		_ = services.StopAndAwaitTerminated(context.Background(), svc)
+	t.Run("KV", func(t *testing.T) {
+		env := newTestEnv(t)
+		eDB, err := dbimpl.ProvideResourceDB(env.store, setting.NewCfg(), nil)
+		require.NoError(t, err)
+
+		resDB, err := eDB.Init(context.Background())
+		require.NoError(t, err)
+
+		kvStore, err := kv.NewSQLKV(resDB.SqlDB(), resDB.DriverName())
+		require.NoError(t, err)
+
+		rvMgr, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+			Dialect: sqltemplate.SQLite,
+			DB:      resDB,
+		})
+		require.NoError(t, err)
+
+		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+			KvStore:       kvStore,
+			RvManager:     rvMgr,
+			DBKeepAlive:   eDB,
+			DisablePruner: true,
+			Log:           log.New("test.kv.retry"),
+		})
+		require.NoError(t, err)
+
+		testSQLiteRetryReleasesLock(t, env, backend, "test-retry-kv")
 	})
+}
+
+func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.StorageBackend, id string) {
+	t.Helper()
 
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
@@ -540,8 +579,8 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 
 	registry := NewMigrationRegistry()
 	registry.Register(MigrationDefinition{
-		ID:          "test-retry",
-		MigrationID: "test retry migration",
+		ID:          id,
+		MigrationID: id,
 		Resources:   []ResourceInfo{{GroupResource: gr}},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
@@ -570,8 +609,8 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 	wrapped := &retryAwareMigrator{real: realMigrator}
 
 	def := MigrationDefinition{
-		ID:          "test-retry",
-		MigrationID: "test retry migration",
+		ID:          id,
+		MigrationID: id,
 		Resources:   []ResourceInfo{{GroupResource: gr}},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },

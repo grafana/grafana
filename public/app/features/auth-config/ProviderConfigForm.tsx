@@ -246,7 +246,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       {resetConfig && (
         <ConfirmModal
           isOpen
-          icon="trash-alt"
           title={t('auth-config.provider-config-form.title-reset', 'Reset')}
           body={
             <Stack direction={'column'} gap={3}>

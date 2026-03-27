@@ -22,7 +22,7 @@ import { NEW_LINK } from './utils';
 
 // Default to dropdown for new links because if a dashboard has a lot of links,
 // the side pane will be pushed down the page and be unscrollable
-function createDefaultLink(): DashboardLink {
+export function createDefaultLink(): DashboardLink {
   return { ...NEW_LINK, asDropdown: true };
 }
 
@@ -62,7 +62,11 @@ function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   return link?.type === type;
 }
 
-function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): OptionsPaneCategoryDescriptor[] {
+function useEditPaneOptions(
+  this: LinkEditEditableElement,
+  linkEdit: LinkEdit,
+  isNewElement: boolean
+): OptionsPaneCategoryDescriptor[] {
   const basicCategoryId = useId();
   const titleId = useId();
   const typeId = useId();
@@ -84,7 +88,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
         new OptionsPaneItemDescriptor({
           title: '',
           id: titleId,
-          render: () => <LinkTextInput linkEdit={linkEdit} prop="title" />,
+          render: () => <LinkTextInput linkEdit={linkEdit} prop="title" autoFocus={isNewElement} />,
         })
       )
       .addItem(
@@ -126,7 +130,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
           render: () => <LinkIconSelect linkEdit={linkEdit} />,
         })
       );
-  }, [basicCategoryId, titleId, typeId, tagsId, urlId, tooltipId, iconId, linkEdit]);
+  }, [basicCategoryId, titleId, typeId, tagsId, urlId, tooltipId, iconId, linkEdit, isNewElement]);
 
   const optionsCategory = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({

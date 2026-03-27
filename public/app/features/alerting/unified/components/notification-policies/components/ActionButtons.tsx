@@ -8,6 +8,7 @@ import { AlertmanagerAction, useAlertmanagerAbilities } from '../../../hooks/use
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
+import { trackNotificationPolicyExported } from '../notificationPolicyAnalytics';
 import { useExportRoutingTree } from '../useExportRoutingTree';
 import { isRouteProvisioned, useDeleteRoutingTree } from '../useNotificationPolicyRoute';
 
@@ -64,7 +65,10 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
         size="sm"
         data-testid="export-action"
         disabled={!exportPoliciesAllowed}
-        onClick={() => showExportDrawer(route.name ?? '')}
+        onClick={() => {
+          trackNotificationPolicyExported({ isDefaultPolicy: route.name === ROOT_ROUTE_NAME });
+          showExportDrawer(route.name ?? '');
+        }}
       >
         <Trans i18nKey="alerting.common.export">Export</Trans>
       </LinkButton>

@@ -396,7 +396,7 @@ describe('loadDefaultTriageSavedSearch', () => {
 
     expect(result).not.toBeNull();
     expect(result?.id).toBe(TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID);
-    expect(result?.id).toBe('triage-predefined-folder-only');
+    expect(result?.id).toBe('triage-predefined-folder-firing');
   });
 
   it('should return default predefined (grouped by folder) when storage is empty', async () => {

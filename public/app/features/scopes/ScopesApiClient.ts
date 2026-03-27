@@ -148,7 +148,7 @@ export class ScopesApiClient {
           query: options.query,
           limit,
         },
-        { subscribe: false, forceRefetch: true } // Froce refetch for search. Revisit this when necessary
+        { subscribe: false, forceRefetch: true } // Force refetch for search. Revisit this when necessary
       )
     );
     try {
@@ -196,10 +196,8 @@ export class ScopesApiClient {
 
   public fetchDashboards = async (scopeNames: string[]): Promise<ScopeDashboardBinding[]> => {
     const subscription = dispatch(
-      // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
       scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate(
         {
-          name: '',
           scope: scopeNames,
         },
         { subscribe: false }
@@ -230,13 +228,16 @@ export class ScopesApiClient {
     }
   };
 
-  public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
+  public fetchScopeNavigations = async (
+    scopeNames: string[],
+    options?: { depth?: number; rootScope?: string }
+  ): Promise<ScopeNavigation[]> => {
     const subscription = dispatch(
-      // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
       scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate(
         {
-          name: '',
           scope: scopeNames,
+          ...(options?.depth && { depth: options.depth }),
+          ...(options?.rootScope && { rootScope: options.rootScope }),
         },
         { subscribe: false }
       )

@@ -165,7 +165,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
   };
 
-  onSeriesVisibilityChange = (label: string, mode: SeriesVisibilityChangeMode) => {
+  onSeriesVisibilityChange = (label: string | string[] | null, mode: SeriesVisibilityChangeMode) => {
+    if (typeof label !== 'string') {
+      return;
+    }
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );

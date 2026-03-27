@@ -10,7 +10,6 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
@@ -33,31 +32,20 @@ type ResourcePermSqlBackend struct {
 	dbProvider    legacysql.LegacyDatabaseProvider
 	identityStore IdentityStore
 	logger        log.Logger
-
-	mappers        map[schema.GroupResource]Mapper // group/resource -> rbac mapper
-	reverseMappers map[string]schema.GroupResource // rbac kind -> group/resource
+	mappers       *MappersRegistry
 
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *ResourcePermSqlBackend {
+func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers *MappersRegistry) *ResourcePermSqlBackend {
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
 		identityStore: idStore.NewLegacySQLStores(dbProvider),
 		logger:        log.New("resourceperm_storage_backend"),
-
-		mappers: map[schema.GroupResource]Mapper{
-			{Group: "folder.grafana.app", Resource: "folders"}:       NewMapper("folders", defaultLevels),
-			{Group: "dashboard.grafana.app", Resource: "dashboards"}: NewMapper("dashboards", defaultLevels),
-		},
-		reverseMappers: map[string]schema.GroupResource{
-			"folders":    {Group: "folder.grafana.app", Resource: "folders"},
-			"dashboards": {Group: "dashboard.grafana.app", Resource: "dashboards"},
-		},
-
-		subscribers: make([]chan *resource.WrittenEvent, 0),
-		mutex:       sync.Mutex{},
+		mappers:       mappers,
+		subscribers:   make([]chan *resource.WrittenEvent, 0),
+		mutex:         sync.Mutex{},
 	}
 }
 
@@ -105,6 +93,10 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+			logger.Warn("Namespace not found", "error", err)
+			return 0, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), opts.Key.Namespace)
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return 0, apierrors.NewInternalError(errDatabaseHelper)
 	}
@@ -154,8 +146,12 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	ctx = request.WithNamespace(ctx, ns.Value)
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+			logger.Warn("Namespace not found", "error", err)
+			rsp.Error = resource.AsErrorResult(apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), req.Key.Namespace))
+			return rsp
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return rsp
 	}
@@ -230,8 +226,11 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	ctx = request.WithNamespace(ctx, ns.Value)
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+			logger.Warn("Namespace not found", "error", err)
+			return 0, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), event.Key.Namespace)
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return 0, errDatabaseHelper
 	}

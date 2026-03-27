@@ -1,12 +1,12 @@
 import { isEmpty } from 'lodash';
 
+import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import {
   API_GROUP as DASHBOARD_API_GROUP,
   BASE_URL as v0alphaBaseURL,
   ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
-import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
+import { arrayToDataFrame, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
@@ -25,7 +25,7 @@ import {
   SearchQuery,
   SearchResultMeta,
 } from './types';
-import { filterSearchResults, replaceCurrentFolderQuery } from './utils';
+import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
@@ -159,6 +159,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return this.fallbackSearcher.search(query);
     }
 
+    // We add parent folder information into meta.custom of the data frame. This is loaded separately in
+    // loadLocationInfo. Used to show parent information upstream.
     const customMeta = first.meta?.custom;
     const meta: SearchResultMeta = {
       count: customMeta?.count ?? first.length,
@@ -186,6 +188,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
     let loadMax = 0;
     let pending: Promise<void> | undefined = undefined;
+
+    // This is the frame we will return. We keep this in closure of the getNextPage function, which may be appending
+    // to it if called upstream.
+    const view = new DataFrameView<DashboardQueryResult>(first);
+
     const getNextPage = async () => {
       while (loadMax > view.dataFrame.length) {
         const offset = view.dataFrame.length;
@@ -199,21 +206,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
           console.log('no results', frame);
           return;
         }
-        if (frame.fields.length !== view.dataFrame.fields.length) {
-          console.log('invalid shape', frame, view.dataFrame);
-          return;
-        }
 
-        // Append the raw values to the same array buffer
-        const length = frame.length + view.dataFrame.length;
-        frame.fields.forEach((f) => {
-          const field = view.dataFrame.fields.find((vf) => vf.name === f.name);
-          if (field) {
-            field.values.push(...f.values);
-          }
-        });
-
-        view.dataFrame.length = length;
+        // We append the frames and align the fields here, but if there are new fields, view won't know about them
+        // and won't be accessible by doing `view.get(0).newField` for example
+        appendFrame(view.dataFrame, frame);
 
         // Add all the location lookup info
         const submeta = frame.meta?.custom;
@@ -228,10 +224,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
       pending = undefined;
     };
 
-    const view = new DataFrameView<DashboardQueryResult>(first);
     return {
       totalRows: meta.count ?? first.length,
+
+      // This will be mutated when loadMoreItems is called.
       view,
+
+      // Not using the startIndex because it is required to satisfy the typing that is shared between this and SQL
+      // searcher. The SQL searcher though does not support loadMoreItems at all though so I guess it's just weird.
+      // TODO: maybe we can just remove it. SearchResultsTable seems to be using it but obviously it does not do
+      //  anything.
       loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
         loadMax = Math.max(loadMax, stopIndex + 1);
         if (!pending) {
@@ -239,6 +241,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
         }
         return pending;
       },
+
       isItemLoaded: (index: number): boolean => {
         return index < view.dataFrame.length;
       },
@@ -246,7 +249,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   async fetchResponse(uri: string) {
+    // TODO: use API client for this
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+
+    // we check the locationInfo staleness by whether we have all the folders info. This does not mean though
+    // that we actually have the latest info about the folders (like changed labels). Also we will never actually
+    // have folder access to folders in "shared with me" folder. We deal with it here, but it triggers a
+    // loadLocationInfo that is unneccessary.
+
     const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
     if (!isFolderCacheStale) {
       return rsp;
@@ -420,7 +430,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       ...field,
     };
   });
-  const frame = toDataFrame(dashboardHits);
+  const frame = arrayToDataFrame(dashboardHits);
   frame.meta = {
     custom: {
       count: rsp.totalHits,
@@ -439,8 +449,10 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
 }
 
 async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
-  // TODO: use proper pagination for search.
-  const uri = `${searchURI}?type=folders&limit=100000`;
+  // TODO: use proper pagination and API client for search.
+  // TODO: This tries to load all the folders upfront even though it may not be neccessary if user does not render all
+  //  the search results.
+  const uri = `${searchURI}?type=folder&limit=100000`;
   const rsp = getBackendSrv()
     .get<SearchAPIResponse>(uri)
     .then((rsp) => {
@@ -448,7 +460,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
         general: {
           kind: 'folder',
           name: 'Dashboards',
-          url: '/dashboards',
+          url: `${config.appSubUrl}/dashboards`,
         }, // share location info with everyone
         sharedwithme: {
           kind: 'sharedwithme',
@@ -470,8 +482,8 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
 
 function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
-    return `/dashboards/f/${name}`;
+    return `${config.appSubUrl}/dashboards/f/${name}`;
   }
   const slug = kbn.slugifyForUrl(title);
-  return `/d/${name}/${slug}`;
+  return `${config.appSubUrl}/d/${name}/${slug}`;
 }

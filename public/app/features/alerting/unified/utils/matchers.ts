@@ -262,3 +262,12 @@ export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatc
     value,
   };
 }
+
+export function labelsToMatchersParam(labels: Labels): string | undefined {
+  const entries = Object.entries(labels);
+  if (entries.length === 0) {
+    return undefined;
+  }
+  const parts = entries.map(([k, v]) => `${k}=${quoteWithEscape(v)}`);
+  return `{${parts.join(',')}}`;
+}

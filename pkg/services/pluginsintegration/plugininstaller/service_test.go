@@ -19,24 +19,45 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test if the service is disabled
 func TestService_IsDisabled(t *testing.T) {
-	// Create a new service
-	s, err := ProvideService(
-		&setting.Cfg{
-			PreinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
+	tests := []struct {
+		name                   string
+		preinstallPluginsSync  []setting.InstallPlugin
+		preinstallPluginsAsync []setting.InstallPlugin
+		expectedDisabled       bool
+	}{
+		{
+			name:                   "enabled when async plugins are configured",
+			preinstallPluginsAsync: []setting.InstallPlugin{{ID: "myplugin"}},
+			expectedDisabled:       false,
 		},
-		pluginstore.New(registry.NewInMemory(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}),
-		&pluginfakes.FakePluginInstaller{},
-		prometheus.NewRegistry(),
-		&pluginfakes.FakePluginRepo{},
-		&pluginchecker.FakePluginUpdateChecker{},
-	)
-	require.NoError(t, err)
+		{
+			name:                  "enabled when only sync plugins are configured",
+			preinstallPluginsSync: []setting.InstallPlugin{{ID: "myplugin"}},
+			expectedDisabled:      false,
+		},
+		{
+			name:             "disabled when no plugins are configured",
+			expectedDisabled: true,
+		},
+	}
 
-	// Check if the service is disabled
-	if s.IsDisabled() {
-		t.Error("Service should be enabled")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := ProvideService(
+				&setting.Cfg{
+					PreinstallPluginsSync:  tt.preinstallPluginsSync,
+					PreinstallPluginsAsync: tt.preinstallPluginsAsync,
+				},
+				pluginstore.New(registry.NewInMemory(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}),
+				&pluginfakes.FakePluginInstaller{},
+				prometheus.NewRegistry(),
+				&pluginfakes.FakePluginRepo{},
+				&pluginchecker.FakePluginUpdateChecker{},
+			)
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedDisabled, s.IsDisabled())
+		})
 	}
 }
 

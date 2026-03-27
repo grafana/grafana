@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Themeable2 } from '@grafana/ui';
 
+import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export interface Props extends Themeable2 {
@@ -28,8 +29,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
     }),
   };
 });
-
-export const LOG_LINE_BODY_FIELD_NAME = '___LOG_LINE_BODY___';
 
 export const LogDetailsBody = (props: Props) => {
   const showField = () => {

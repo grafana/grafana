@@ -10,7 +10,6 @@ import { CellProps, Column, InteractiveTable, Stack, useStyles2, Carousel } from
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
-import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds, Screenshots } from '../types';
 
@@ -65,12 +64,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div>
-        <VersionList
-          pluginId={plugin.id}
-          versions={plugin.details?.versions}
-          installedVersion={plugin.installedVersion}
-          disableInstallation={shouldDisablePluginInstall(plugin)}
-        />
+        <VersionList plugin={plugin} />
       </div>
     );
   }

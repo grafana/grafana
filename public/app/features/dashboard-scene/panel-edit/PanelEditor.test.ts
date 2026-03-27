@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin } from '@grafana/data';
+import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
 import {
@@ -31,6 +31,8 @@ import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
+import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
+import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
 import { buildPanelEditScene } from './PanelEditor';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
@@ -333,10 +335,12 @@ describe('PanelEditor', () => {
   describe('Query editor version toggle', () => {
     describe('when queryEditorNext feature toggle is enabled', () => {
       beforeEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
         setTestFlags({ queryEditorNext: true });
       });
 
       afterEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
         setTestFlags({});
       });
 
@@ -362,6 +366,30 @@ describe('PanelEditor', () => {
 
         expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
       });
+
+      it('should use v2 when stored preference is true', async () => {
+        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, true);
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
+      });
+
+      it('should use v1 when stored preference is false (user downgraded)', async () => {
+        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, false);
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
+
+      it('should persist the preference to local storage when toggled', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        panelEditor.onToggleQueryEditorVersion(); // v2 -> v1
+        expect(getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)).toBe(false);
+
+        panelEditor.onToggleQueryEditorVersion(); // v1 -> v2
+        expect(getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)).toBe(true);
+      });
     });
 
     describe('when queryEditorNext feature toggle is disabled', () => {
@@ -369,7 +397,19 @@ describe('PanelEditor', () => {
         setTestFlags({});
       });
 
+      afterEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      });
+
       it('should use the v1 query editor experience', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
+
+      it('should ignore a stored v2 preference and use the v1 query editor experience', async () => {
+        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, true);
+
         const { panelEditor } = await setup({ pluginSkipDataQuery: false });
 
         expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);

@@ -23,6 +23,7 @@ export const moveRowCommand: MutationCommand<MoveRowPayload> = {
 
   payloadSchema: payloads.moveRow,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -71,9 +72,16 @@ export const moveRowCommand: MutationCommand<MoveRowPayload> = {
       const basePath = toParent ?? (path.substring(0, path.lastIndexOf('/rows/')) || '/');
       const newPath = basePath === '/' ? `/rows/${insertIndex}` : `${basePath}/rows/${insertIndex}`;
 
+      const rowSpec = {
+        title: row.state.title,
+        collapse: row.state.collapse,
+        hideHeader: row.state.hideHeader,
+        fillScreen: row.state.fillScreen,
+      };
+
       return {
         success: true,
-        data: { path: newPath },
+        data: { path: newPath, row: { kind: 'RowsLayoutRow', spec: rowSpec } },
         changes: [{ path, previousValue: path, newValue: newPath }],
       };
     } catch (error) {

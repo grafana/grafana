@@ -35,7 +35,7 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 		}
 		if hs.Cfg.CSPEnabled {
 			data["CSPEnabled"] = true
-			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
+			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, []string{}, c.RequestNonce)
 		}
 
 		c.HTML(http.StatusOK, "swagger", data)

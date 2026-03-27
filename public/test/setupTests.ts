@@ -29,6 +29,15 @@ i18next.use(initReactI18next).init({
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
 });
 
+// Pre-resolve dashboard API version resolver with beta defaults so tests
+// don't trigger real network requests via getDashboardAPI() -> resolve().
+// Tests that need to test the resolver itself should call reset() in beforeEach.
+jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => {
+  const actual = jest.requireActual('app/features/dashboard/api/DashboardAPIVersionResolver');
+  actual.dashboardAPIVersionResolver.set({ v1: 'v1beta1', v2: 'v2beta1' });
+  return actual;
+});
+
 // mock out the worker that detects changes in the dashboard
 // The mock is needed because JSDOM does not support workers and
 // the factory uses import.meta.url so we can't use it in CommonJS modules.

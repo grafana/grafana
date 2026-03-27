@@ -4,9 +4,9 @@ import { expect } from '@grafana/plugin-e2e';
 
 export const getCell = (loc: Page | Locator, rowIdx: number, colIdx: number) =>
   loc
-    .getByRole('row')
+    .locator('> [role="row"]')
     .nth(rowIdx)
-    .getByRole(rowIdx === 0 ? 'columnheader' : 'gridcell')
+    .locator(rowIdx === 0 ? '> [role="columnheader"]' : '> [role="gridcell"]')
     .nth(colIdx);
 
 export const getCellHeight = async (loc: Page | Locator, rowIdx: number, colIdx: number) => {

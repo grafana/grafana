@@ -66,7 +66,12 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     let shareUrl = createDashboardShareUrl(dashboard, opts, panel);
 
     if (useShortUrl) {
-      shareUrl = await createShortLink(shareUrl);
+      try {
+        shareUrl = await createShortLink(shareUrl);
+      } catch {
+        this.setState({ isBuildUrlLoading: false });
+        return;
+      }
     }
 
     const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);

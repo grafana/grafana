@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react';
 
+import { t } from '@grafana/i18n';
 import { LineStyle } from '@grafana/schema';
 
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
@@ -30,7 +31,7 @@ export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly
   if (seriesName && onSeriesColorChange && color && !readonly) {
     return (
       <SeriesColorPicker color={color} onChange={onChange} enableNamedColors>
-        {({ ref, showColorPicker, hideColorPicker }) => {
+        {({ ref, showColorPicker, hideColorPicker, isOpen }) => {
           function handleKeyDown(e: React.KeyboardEvent<HTMLSpanElement>) {
             if (e.key === ' ' || e.key === 'Enter') {
               e.preventDefault();
@@ -41,6 +42,9 @@ export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly
             <SeriesIcon
               tabIndex={0}
               role="button"
+              aria-label={t('grafana-ui.viz-legend.color-picker', 'Edit color for {{seriesName}}', { seriesName })}
+              aria-haspopup="menu"
+              aria-expanded={isOpen}
               color={color}
               className="pointer"
               ref={ref}

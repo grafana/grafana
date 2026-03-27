@@ -356,6 +356,8 @@ type GetDashboardQuery struct {
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+	// k8s version to try first when loading (e.g. v1beta1). empty uses the default. on error, falls back to default
+	K8sGetAPIVersion string
 }
 
 type DashboardTagCloudItem struct {

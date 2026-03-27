@@ -79,13 +79,16 @@ jobs:
             -e PROMETHEUS_URL="$PROMETHEUS_URL" \
             -e PROMETHEUS_USER="$PROMETHEUS_USER" \
             -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.1 report \
-              --grafana-url "http://fsperfbaseline.grafana-dev.net" \
-              --test-suite-name "FrontendPerfTests" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.2 report \
+              --service grafana \
+              --service-url "https://fsperfbaseline.grafana-dev.net" \
+              --service-version "rrc-instant" \
+              --suite-name "FrontendPerfTests" \
               --report-input playwright \
               --report-output log \
               --prometheus-metrics \
               --run-metrics-file "/metrics.txt" \
+              --run-stage rrc \
               --log-level DEBUG \
               /pw-results.json
 
@@ -101,13 +104,16 @@ jobs:
             -e PROMETHEUS_URL="$PROMETHEUS_URL" \
             -e PROMETHEUS_USER="$PROMETHEUS_USER" \
             -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.1 report \
-              --grafana-url "http://fsperf.grafana-dev.net" \
-              --test-suite-name "FrontendPerfTests" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.2 report \
+              --service grafana \
+              --service-url "https://fsperf.grafana-dev.net" \
+              --service-version "rrc-instant" \
+              --suite-name "FrontendPerfTests" \
               --report-input playwright \
               --report-output log \
               --prometheus-metrics \
               --run-metrics-file "/metrics.txt" \
+              --run-stage rrc \
               --log-level DEBUG \
               /pw-results.json
 

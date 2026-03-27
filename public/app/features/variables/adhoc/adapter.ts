@@ -22,7 +22,7 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
       'variables.create-ad-hoc-variable-adapter.description.add-keyvalue-filters-on-the-fly',
       'Add key/value filters on the fly.'
     ),
-    name: 'Ad hoc filters',
+    name: 'Filter',
     initialState: initialAdHocVariableModelState,
     reducer: adHocVariableReducer,
     picker: AdHocPicker,

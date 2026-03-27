@@ -15,10 +15,9 @@ export interface DashboardMutationResult {
 }
 
 export interface DashboardMutationAPI {
-  // Execute a mutation on the active dashboard. Rejects if no dashboard is loaded.
   execute(mutation: { type: string; payload: unknown }): Promise<DashboardMutationResult>;
-  // Get the Zod payload schema for a command (e.g. "ADD_VARIABLE"). Returns null if unknown.
   getPayloadSchema(commandId: string): ZodSchema | null;
+  getAvailableCommands(): string[];
 }
 
 export interface RestrictedGrafanaApisContextTypeInternal {

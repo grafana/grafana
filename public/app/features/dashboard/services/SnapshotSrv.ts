@@ -152,6 +152,7 @@ class K8sAPI implements DashboardSnapshotSrv {
       dashboard: dashboardResponse.data.spec,
       meta: {
         isSnapshot: true,
+        version: 0,
         k8s: snapshotResponse.data.metadata,
       },
     };

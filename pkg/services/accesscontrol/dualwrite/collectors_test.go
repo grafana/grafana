@@ -56,7 +56,7 @@ func setupTestEnv(t *testing.T) *testEnv {
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 
-	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
+	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
@@ -64,7 +64,7 @@ func setupTestEnv(t *testing.T) *testEnv {
 
 	userService, err := userimpl.ProvideService(
 		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 

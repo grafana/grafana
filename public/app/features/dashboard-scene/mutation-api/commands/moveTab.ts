@@ -23,6 +23,7 @@ export const moveTabCommand: MutationCommand<MoveTabPayload> = {
 
   payloadSchema: payloads.moveTab,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -70,9 +71,11 @@ export const moveTabCommand: MutationCommand<MoveTabPayload> = {
       const basePath = toParent ?? (path.substring(0, path.lastIndexOf('/tabs/')) || '/');
       const newPath = basePath === '/' ? `/tabs/${insertIndex}` : `${basePath}/tabs/${insertIndex}`;
 
+      const tabSpec = { title: tab.state.title };
+
       return {
         success: true,
-        data: { path: newPath },
+        data: { path: newPath, tab: { kind: 'TabsLayoutTab', spec: tabSpec } },
         changes: [{ path, previousValue: path, newValue: newPath }],
       };
     } catch (error) {

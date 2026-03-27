@@ -9,6 +9,7 @@ import {
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
+import { resetHistorianState } from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 import { DashboardDTO } from 'app/types/dashboard';
 import { FolderDTO } from 'app/types/folders';
@@ -262,6 +263,7 @@ export function setupMswServer() {
     setupAlertmanagerStatusMapDefaultState();
     resetRoutingTreeMap();
     resetUserStorage();
+    resetHistorianState();
   });
 
   return server;

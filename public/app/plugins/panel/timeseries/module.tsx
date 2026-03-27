@@ -18,7 +18,20 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
+
+    const legendCategory = [t('timeseries.legend.category', 'Legend')];
+
+    if (config.featureToggles.vizLegendFacetedFilter) {
+      builder.addBooleanSwitch({
+        path: 'legend.enableFacetedFilter',
+        name: t('timeseries.legend.name-faceted-filter', 'Faceted filter'),
+        category: legendCategory,
+        description: t('timeseries.legend.description-faceted-filter', 'Show series visibility filter based on labels'),
+        defaultValue: true,
+        showIf: (c) => c.legend.showLegend,
+      });
+    }
 
     builder.addCustomEditor({
       id: 'timezone',

@@ -27,7 +27,7 @@ describe('ElasticsearchVariableSupport', () => {
       expect(defaultQuery).toEqual({
         refId: 'ElasticsearchVariableQueryEditor-VariableQuery',
         query: '',
-        metrics: [{ type: 'raw_document', id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
       });
     });
   });
@@ -117,18 +117,7 @@ describe('ElasticsearchVariableSupport', () => {
     });
 
     it('should handle string query migration', (done) => {
-      const mockResponse: DataQueryResponse = {
-        data: [
-          {
-            name: 'test',
-            refId: 'A',
-            length: 1,
-            fields: [{ name: 'field', type: FieldType.string, config: {}, values: ['value'] }],
-          },
-        ],
-      };
-
-      mockDatasource.query.mockReturnValue(of(mockResponse));
+      mockDatasource.metricFindQuery = jest.fn().mockResolvedValue([{ text: 'value1', value: 'value1' }]);
 
       const request: DataQueryRequest<ElasticsearchDataQuery> = {
         targets: ['test query' as unknown as ElasticsearchDataQuery],
@@ -148,10 +137,12 @@ describe('ElasticsearchVariableSupport', () => {
 
       variableSupport.query(request).subscribe({
         next: (response) => {
-          expect(mockDatasource.query).toHaveBeenCalled();
-          const calledRequest = mockDatasource.query.mock.calls[0][0];
-          expect(calledRequest.targets[0].query).toBe('test query');
-          expect(calledRequest.targets[0].metrics).toEqual([{ type: 'raw_document', id: '1' }]);
+          expect(mockDatasource.metricFindQuery).toHaveBeenCalledWith('test query', { range: request.range });
+          expect(response.data).toHaveLength(1);
+          expect(response.data[0].fields[0].name).toBe('text');
+          expect(response.data[0].fields[0].values).toEqual(['value1']);
+          expect(response.data[0].fields[1].name).toBe('value');
+          expect(response.data[0].fields[1].values).toEqual(['value1']);
           done();
         },
         error: done,

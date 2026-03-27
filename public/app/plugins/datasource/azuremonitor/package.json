@@ -5,6 +5,7 @@
   "version": "13.0.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
+    "@grafana/azure-sdk": "0.1.0",
     "@grafana/data": "13.0.0-pre",
     "@grafana/i18n": "13.0.0-pre",
     "@grafana/plugin-ui": "^0.13.1",

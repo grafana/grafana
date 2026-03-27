@@ -33,11 +33,11 @@ type api struct {
 	service            *Service
 	permissions        []string
 	features           featuremgmt.FeatureToggles
-	restConfigProvider apiserver.RestConfigProvider
+	restConfigProvider apiserver.DirectRestConfigProvider
 	logger             log.Logger
 }
 
-func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) *api {
+func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider apiserver.DirectRestConfigProvider) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
 	for i := len(manager.permissions) - 1; i >= 0; i-- {
@@ -210,7 +210,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) &&
 		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
-		k8sPermissions, err := a.getResourcePermissionsFromK8s(c.Req.Context(), c.Namespace, resourceID)
+		k8sPermissions, err := a.getResourcePermissionsFromK8s(c, c.Namespace, resourceID)
 		if err == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "get", a.service.options.Resource, "success").Inc()
 			return response.JSON(http.StatusOK, k8sPermissions)
@@ -332,7 +332,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	}
 
 	if a.shouldUseK8sAPIs() {
-		err := a.setUserPermissionToK8s(c.Req.Context(), c.Namespace, resourceID, userID, cmd.Permission)
+		err := a.setUserPermissionToK8s(c, c.Namespace, resourceID, userID, cmd.Permission)
 		if err == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
 			return permissionSetResponse(cmd)
@@ -404,7 +404,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	}
 
 	if a.shouldUseK8sAPIs() {
-		err := a.setTeamPermissionToK8s(c.Req.Context(), c.Namespace, resourceID, teamID, cmd.Permission)
+		err := a.setTeamPermissionToK8s(c, c.Namespace, resourceID, teamID, cmd.Permission)
 		if err == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_team", a.service.options.Resource, "success").Inc()
 			return permissionSetResponse(cmd)
@@ -473,7 +473,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 	}
 
 	if a.shouldUseK8sAPIs() {
-		err := a.setBuiltInRolePermissionToK8s(c.Req.Context(), c.Namespace, resourceID, builtInRole, cmd.Permission)
+		err := a.setBuiltInRolePermissionToK8s(c, c.Namespace, resourceID, builtInRole, cmd.Permission)
 		if err == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_builtin_role", a.service.options.Resource, "success").Inc()
 			return permissionSetResponse(cmd)
@@ -534,7 +534,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	}
 
 	if a.shouldUseK8sAPIs() {
-		err := a.setResourcePermissionsToK8s(c.Req.Context(), c.Namespace, resourceID, cmd.Permissions)
+		err := a.setResourcePermissionsToK8s(c, c.Namespace, resourceID, cmd.Permissions)
 		if err == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", a.service.options.Resource, "success").Inc()
 			return response.Success("Permissions updated")

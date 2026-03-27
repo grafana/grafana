@@ -141,3 +141,53 @@ export function trackRenameInitiated() {
     item_type: QueryEditorType.Query,
   });
 }
+
+const INTERCOM_APP_ID = 'agpb1wfw';
+const INTERCOM_SURVEY_ID = '59003702';
+
+function getIntercom(): ((command: string, ...args: unknown[]) => void) | undefined {
+  if ('Intercom' in window && typeof window.Intercom === 'function') {
+    return window.Intercom;
+  }
+  return undefined;
+}
+
+let intercomLoadPromise: Promise<void> | null = null;
+
+function ensureIntercomLoaded(): Promise<void> {
+  if (typeof getIntercom() === 'function') {
+    return Promise.resolve();
+  }
+
+  if (intercomLoadPromise) {
+    return intercomLoadPromise;
+  }
+
+  intercomLoadPromise = new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `https://widget.intercom.io/widget/${INTERCOM_APP_ID}`;
+    script.async = true;
+    script.onload = () => {
+      getIntercom()?.('boot', { app_id: INTERCOM_APP_ID, hide_default_launcher: true });
+      resolve();
+    };
+    script.onerror = () => {
+      intercomLoadPromise = null;
+      reject(new Error('Failed to load Intercom'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return intercomLoadPromise;
+}
+
+export function startIntercomSurvey(): void {
+  ensureIntercomLoaded()
+    .then(() => {
+      getIntercom()?.('startSurvey', INTERCOM_SURVEY_ID);
+    })
+    .catch(() => {
+      // Intercom blocked or unavailable — silently ignore.
+      // The survey is non-critical; the editor remains fully functional.
+    });
+}

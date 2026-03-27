@@ -571,7 +571,7 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 		frames = append(frames, frame)
 
 		if len(exemplars) > 0 {
-			frame := exemplar.CreateExemplarFrame(labels, exemplars, resp.Units)
+			frame := exemplar.CreateExemplarFrame(labels, exemplars, displayUnit)
 			frames = append(frames, frame)
 		}
 	}

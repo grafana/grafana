@@ -54,38 +54,39 @@ type RuleAccessControlService interface {
 
 // API handlers.
 type API struct {
-	Cfg                  *setting.Cfg
-	DatasourceCache      datasources.CacheService
-	DatasourceService    datasources.DataSourceService
-	RouteRegister        routing.RouteRegister
-	QuotaService         quota.Service
-	TransactionManager   provisioning.TransactionManager
-	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            RuleStore
-	AlertingStore        store.AlertingStore
-	AdminConfigStore     store.AdminConfigurationStore
-	DataProxy            *datasourceproxy.DataSourceProxyService
-	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
-	StateManager         state.AlertInstanceManager
-	RuleStatusReader     apiprometheus.StatusReader
-	AccessControl        ac.AccessControl
-	ReceiverService      *notifier.ReceiverService
-	ReceiverTestService  *notifier.ReceiverTestingService
-	RouteService         *routes.Service
-	Policies             *provisioning.NotificationPolicyService
-	ContactPointService  *provisioning.ContactPointService
-	Templates            *provisioning.TemplateService
-	MuteTimings          *provisioning.MuteTimingService
-	InhibitionRules      *inhibition_rules.Service
-	AlertRules           *provisioning.AlertRuleService
-	AlertsRouter         *sender.AlertsRouter
-	EvaluatorFactory     eval.EvaluatorFactory
-	ConditionValidator   *eval.ConditionValidator
-	FeatureManager       featuremgmt.FeatureToggles
-	Historian            Historian
-	Tracer               tracing.Tracer
-	AppUrl               *url.URL
-	UserService          user.Service
+	Cfg                   *setting.Cfg
+	DatasourceCache       datasources.CacheService
+	DatasourceService     datasources.DataSourceService
+	RouteRegister         routing.RouteRegister
+	QuotaService          quota.Service
+	TransactionManager    provisioning.TransactionManager
+	ProvenanceStore       provisioning.ProvisioningStore
+	RuleStore             RuleStore
+	AlertingStore         store.AlertingStore
+	AdminConfigStore      store.AdminConfigurationStore
+	DataProxy             *datasourceproxy.DataSourceProxyService
+	MultiOrgAlertmanager  *notifier.MultiOrgAlertmanager
+	StateManager          state.AlertInstanceManager
+	RuleStatusReader      apiprometheus.StatusReader
+	AccessControl         ac.AccessControl
+	ReceiverService       *notifier.ReceiverService
+	ReceiverTestService   *notifier.ReceiverTestingService
+	RouteService          *routes.Service
+	Policies              *provisioning.NotificationPolicyService
+	ContactPointService   *provisioning.ContactPointService
+	Templates             *provisioning.TemplateService
+	MuteTimings           *provisioning.MuteTimingService
+	InhibitionRules       *inhibition_rules.Service
+	AlertRules            *provisioning.AlertRuleService
+	AlertsRouter          *sender.AlertsRouter
+	EvaluatorFactory      eval.EvaluatorFactory
+	ConditionValidator    *eval.ConditionValidator
+	FeatureManager        featuremgmt.FeatureToggles
+	Historian             Historian
+	Tracer                tracing.Tracer
+	AppUrl                *url.URL
+	UserService           user.Service
+	SilenceLimitsProvider notifier.LimitsProvider
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -127,6 +128,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 				api.MultiOrgAlertmanager,
 				api.RuleStore,
 				ruleAuthzService,
+				api.SilenceLimitsProvider,
 			),
 			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
 		},
@@ -185,7 +187,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterProvisioningApiEndpoints(NewProvisioningApi(&ProvisioningSrv{
 		log:                 logger,
 		policies:            api.Policies,
-		routeService:        api.RouteService,
 		contactPointService: api.ContactPointService,
 		templates:           api.Templates,
 		muteTimings:         api.MuteTimings,

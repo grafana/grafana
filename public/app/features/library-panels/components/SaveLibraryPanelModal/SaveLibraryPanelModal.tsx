@@ -60,7 +60,7 @@ export const SaveLibraryPanelModal = ({
   const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 
   return (
-    <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
+    <Modal title={title} onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
           <Trans

@@ -1014,8 +1014,8 @@ func createService(store *fakes.RuleStore, _userService *usertest.FakeUserServic
 type fakeAMRefresher struct {
 }
 
-func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) error {
-	return nil
+func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) (bool, error) {
+	return true, nil
 }
 
 func (f *fakeAMRefresher) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
@@ -191,6 +191,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}
@@ -239,6 +240,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}
@@ -289,6 +291,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}
@@ -511,6 +514,72 @@ describe('Logs', () => {
 
       const table = screen.getByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
+    });
+  });
+  describe('with table panel visualisation', () => {
+    let originalVisualisationTypeValue = config.featureToggles.logsTablePanelNG;
+    let origResizeObserver = global.ResizeObserver;
+
+    beforeEach(() => {
+      origResizeObserver = global.ResizeObserver;
+      // Mock ResizeObserver
+      global.ResizeObserver = class ResizeObserver {
+        constructor(callback: unknown) {
+          // Store the callback
+          this.callback = callback;
+        }
+        callback: unknown;
+        observe() {
+          // Do nothing
+        }
+        unobserve() {
+          // Do nothing
+        }
+        disconnect() {
+          // Do nothing
+        }
+      };
+    });
+
+    afterEach(() => {
+      global.ResizeObserver = origResizeObserver;
+    });
+
+    beforeAll(() => {
+      originalVisualisationTypeValue = config.featureToggles.logsTablePanelNG;
+      config.featureToggles.logsTablePanelNG = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.logsTablePanelNG = originalVisualisationTypeValue;
+    });
+
+    it('should show table', async () => {
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'table',
+          },
+        },
+      });
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      const logs = screen.queryByTestId('logRows');
+      expect(logs).not.toBeInTheDocument();
+    });
+
+    it('should show logs', async () => {
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'logs',
+          },
+        },
+      });
+
+      await waitFor(() => expect(screen.getByText('Download')).toBeInTheDocument());
+      const logs = await screen.findByTestId('logRows');
+      expect(logs).toBeInTheDocument();
+      expect(screen.getByText('log message 3')).toBeVisible();
     });
   });
 });

@@ -12,6 +12,14 @@ import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
 import { NotificationPoliciesErrorAlert } from '../PolicyUpdateErrorAlert';
+import {
+  trackNotificationPolicyCreateError,
+  trackNotificationPolicyCreated,
+  trackNotificationPolicyDeleteError,
+  trackNotificationPolicyDeleted,
+  trackNotificationPolicyReset,
+  trackNotificationPolicyResetError,
+} from '../notificationPolicyAnalytics';
 
 export interface DeleteModalProps {
   isOpen: boolean;
@@ -33,9 +41,13 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName
     setIsDeleting(true);
     onConfirm()
       .then(() => {
+        trackNotificationPolicyDeleted();
         onDeleteDismiss();
       })
-      .catch(setError)
+      .catch((err) => {
+        trackNotificationPolicyDeleteError({ error: stringifyErrorLike(err) });
+        setError(err);
+      })
       .finally(() => {
         setIsDeleting(false);
       });
@@ -104,9 +116,13 @@ export const ResetModal = React.memo(
       setIsResetting(true);
       onConfirm()
         .then(() => {
+          trackNotificationPolicyReset();
           onResetDismiss();
         })
-        .catch(setError)
+        .catch((err) => {
+          trackNotificationPolicyResetError({ error: stringifyErrorLike(err) });
+          setError(err);
+        })
         .finally(() => {
           setIsResetting(false);
         });
@@ -189,9 +205,14 @@ export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismi
       setError(undefined);
       onConfirm(newRoute)
         .then(() => {
+          trackNotificationPolicyCreated({
+            hasCustomTimings: newRoute.overrideTimings ?? false,
+            hasCustomGrouping: newRoute.overrideGrouping ?? false,
+          });
           onCreateDismiss();
         })
         .catch((err) => {
+          trackNotificationPolicyCreateError({ error: stringifyErrorLike(err) });
           setError(err);
         })
         .finally(() => {

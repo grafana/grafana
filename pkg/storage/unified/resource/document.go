@@ -185,18 +185,21 @@ func (m ResourceReferences) Less(i, j int) bool {
 	return strings.Compare(a, b) > 0
 }
 
-// Create a new indexable document based on a generic k8s resource
-func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.GrafanaMetaAccessor) *IndexableDocument {
-	title := obj.FindTitle(key.Name)
-	if title == key.Name {
-		// TODO: something wrong with FindTitle
-		spec, err := obj.GetSpec()
-		if err == nil {
-			specValue, ok := spec.(map[string]any)
-			if ok {
-				specTitle, ok := specValue["title"].(string)
+// NewIndexableDocument creates a new indexable document based on a generic k8s resource
+// If title is empty, resolve it by calling obj.FindTitle and obj.GetSpec (in that order)
+func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.GrafanaMetaAccessor, title string) *IndexableDocument {
+	if title == "" {
+		title = obj.FindTitle(key.Name)
+		if title == key.Name {
+			// TODO: something wrong with FindTitle
+			spec, err := obj.GetSpec()
+			if err == nil {
+				specValue, ok := spec.(map[string]any)
 				if ok {
-					title = specTitle
+					specTitle, ok := specValue["title"].(string)
+					if ok {
+						title = specTitle
+					}
 				}
 			}
 		}
@@ -258,7 +261,7 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 		return nil, err
 	}
 
-	doc := NewIndexableDocument(key, rv, obj)
+	doc := NewIndexableDocument(key, rv, obj, "")
 
 	sfKey := strings.ToLower(key.GetGroup() + "/" + key.GetResource())
 	doc.SelectableFields = getSelectableFieldsFromObject(tmp, s.selectableFields[sfKey])

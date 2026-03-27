@@ -83,7 +83,6 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
               )
         }
         confirmText={t('alerting.use-delete-modal.modal.confirmText-yes-delete', 'Yes, delete')}
-        icon="exclamation-triangle"
         onConfirm={deleteRule}
         onDismiss={dismissModal}
       />

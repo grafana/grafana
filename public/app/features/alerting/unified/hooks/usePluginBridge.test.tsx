@@ -38,7 +38,7 @@ describe('useIrmPlugin', () => {
       return {
         data: undefined,
         isLoading: false,
-        error: new Error('Plugin not found'),
+        error: { status: 404, data: { message: 'Plugin not found' } },
         refetch: jest.fn(),
       } as PluginQueryResult;
     });
@@ -67,7 +67,7 @@ describe('useIrmPlugin', () => {
       return {
         data: undefined,
         isLoading: false,
-        error: new Error('Plugin not found'),
+        error: { status: 404, data: { message: 'Plugin not found' } },
         refetch: jest.fn(),
       } as PluginQueryResult;
     });
@@ -96,7 +96,7 @@ describe('useIrmPlugin', () => {
       return {
         data: undefined,
         isLoading: false,
-        error: new Error('Plugin not found'),
+        error: { status: 404, data: { message: 'Plugin not found' } },
         refetch: jest.fn(),
       } as PluginQueryResult;
     });
@@ -126,11 +126,30 @@ describe('useIrmPlugin', () => {
     expect(result.current.installed).toBeUndefined();
   });
 
-  it('should return installed undefined when neither plugin is installed', async () => {
+  it('should return installed false when neither plugin is installed (404)', async () => {
     mockedUseGetPluginSettingsQuery.mockReturnValue({
       data: undefined,
       isLoading: false,
-      error: new Error('Plugin not found'),
+      error: { status: 404, data: { message: 'Plugin not found' } },
+      refetch: jest.fn(),
+    } as PluginQueryResult);
+
+    const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.pluginId).toBe(SupportedPlugin.OnCall);
+    expect(result.current.installed).toBe(false);
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('should propagate error when plugin check fails with a non-404 error', async () => {
+    mockedUseGetPluginSettingsQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: { status: 500, data: { message: 'Internal server error' } },
       refetch: jest.fn(),
     } as PluginQueryResult);
 
@@ -142,6 +161,7 @@ describe('useIrmPlugin', () => {
 
     expect(result.current.pluginId).toBe(SupportedPlugin.OnCall);
     expect(result.current.installed).toBeUndefined();
+    expect(result.current.error).toBeDefined();
   });
 
   it('should return IRM plugin ID when both IRM and OnCall are installed', async () => {
@@ -165,7 +185,7 @@ describe('useIrmPlugin', () => {
       return {
         data: undefined,
         isLoading: false,
-        error: new Error('Plugin not found'),
+        error: { status: 404, data: { message: 'Plugin not found' } },
         refetch: jest.fn(),
       } as PluginQueryResult;
     });
@@ -202,7 +222,7 @@ describe('useIrmPlugin', () => {
       return {
         data: undefined,
         isLoading: false,
-        error: new Error('Plugin not found'),
+        error: { status: 404, data: { message: 'Plugin not found' } },
         refetch: jest.fn(),
       } as PluginQueryResult;
     });

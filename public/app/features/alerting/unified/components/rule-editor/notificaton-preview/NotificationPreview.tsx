@@ -23,6 +23,7 @@ interface NotificationPreviewProps {
   folder?: Folder;
   alertName?: string;
   alertUid?: string;
+  policyName?: string;
 }
 
 const { preview } = alertRuleApi.endpoints;
@@ -36,6 +37,7 @@ export const NotificationPreview = ({
   folder,
   alertName,
   alertUid,
+  policyName,
 }: NotificationPreviewProps) => {
   const styles = useStyles2(getStyles);
 
@@ -151,12 +153,14 @@ export const NotificationPreview = ({
                   <NotificationPreviewForGrafanaManaged
                     alertManagerSource={alertManagerSource}
                     instances={potentialInstances}
+                    policyName={policyName}
                   />
                 </NotificationPreviewGrafanaPermissionCheck>
               ) : (
                 <NotificationPreviewByAlertManager
                   alertManagerSource={alertManagerSource}
                   instances={potentialInstances}
+                  policyName={policyName}
                 />
               )}
             </Fragment>

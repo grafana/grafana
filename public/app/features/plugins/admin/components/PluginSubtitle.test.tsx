@@ -35,7 +35,6 @@ describe('PluginSubtitle', () => {
     isDisabled: false,
     isDeprecated: false,
     isPublished: true,
-    isManaged: false,
     isPreinstalled: { found: false, withVersion: false },
     info: {
       logos: {
@@ -45,6 +44,7 @@ describe('PluginSubtitle', () => {
       keywords: ['test', 'plugin'],
     },
     popularity: 0,
+    managed: { enabled: false, strategy: undefined },
   };
 
   beforeEach(() => {});

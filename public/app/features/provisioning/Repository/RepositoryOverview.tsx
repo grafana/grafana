@@ -8,9 +8,10 @@ import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, 
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
-import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { useRepoMetadataStatus } from '../hooks/useRepoMetadataStatus';
+import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -32,8 +33,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   const { status: folderMetadataStatus } = useRepoMetadataStatus(showFolderMetadataCheck ? repoName : '');
 
   const status = repo.status;
+  const { conditions, quota } = status ?? {};
   const webhookURL = getWebhookURL(repo);
-  const { lgColumn, xxlColumn } = getColumnCount(Boolean(repo.status?.webhook));
+  const { lgColumn, xxlColumn } = getColumnCount(Boolean(status?.webhook));
 
   const resourceColumns = useMemo(
     () => [
@@ -69,16 +71,18 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
               <Card.Description>
-                {repo.status?.stats ? (
+                {status?.stats ? (
                   <InteractiveTable
                     columns={resourceColumns}
-                    data={repo.status.stats}
+                    data={status.stats}
                     getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
                   />
                 ) : null}
-                <Box paddingTop={2}>
-                  <FreeTierLimitNote limitType="resource" />
-                </Box>
+                {isQuotaReachedOrExceeded(conditions, 'ResourceQuota') && (
+                  <Box paddingTop={2}>
+                    <QuotaLimitNote maxResourcesPerRepository={quota?.maxResourcesPerRepository} />
+                  </Box>
+                )}
               </Card.Description>
               <Card.Actions className={styles.actions}>
                 <LinkButton size="md" href={getFolderURL(repo)} icon="folder-open" variant="secondary">
@@ -88,14 +92,14 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             </Card>
           </div>
 
-          {repo.status?.health && (
+          {status?.health && (
             <div className={styles.cardContainer}>
               <RepositoryHealthCard repo={repo} />
             </div>
           )}
 
           {/* Webhook */}
-          {repo.status?.webhook && (
+          {status?.webhook && (
             <div className={styles.cardContainer}>
               <Card noMargin className={styles.card}>
                 <Card.Heading>
@@ -144,7 +148,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           <div
             className={cx(
               styles.pullStatusCard,
-              repo.status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
+              status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
             )}
           >
             <RepositoryPullStatusCard repo={repo} />

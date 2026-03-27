@@ -53,7 +53,7 @@ In Grafana Cloud, SMTP configuration is not required.
 
 To create a contact point with a email integration, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ New contact point**.
 1. Enter a name for the contact point.
 1. From the **Integration** list, select **Email**.

@@ -34,7 +34,7 @@ connection: {
 					// The app clientID
 					clientID: string
 				}
-        #HealthStatus: {
+				#HealthStatus: {
 					// When not healthy, requests will not be executed
 					healthy: bool
 					// When the health was checked last time
@@ -68,4 +68,3 @@ connection: {
 		}
 	}
 }
-

@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -629,7 +628,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{dashboard.UID, dashboard.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard WHERE id = ?", args: []any{dashboard.ID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(dashboard.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{dashboard.ID}},
@@ -698,15 +696,6 @@ func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards
 		{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{cmd.ID, cmd.OrgID}},
 	}
 
-	// After migration to unified storage, playlist_item may have been renamed
-	// to playlist_item_legacy or removed entirely.
-	if playlistItemTbl := d.findTable("playlist_item"); playlistItemTbl != "" {
-		sqlStatements = append(sqlStatements, statement{
-			SQL:  "DELETE FROM " + playlistItemTbl + " WHERE type = 'dashboard_by_id' AND value = ?",
-			args: []any{strconv.FormatInt(cmd.ID, 10)}, // Column has TEXT type.
-		})
-	}
-
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 			for _, stmnt := range sqlStatements {
@@ -747,23 +736,6 @@ func (d *dashboardStore) deleteResourcePermissions(sess *db.Session, orgID int64
 	// delete the permissions
 	_, err = sess.In("id", permissionIDs).Delete(&ac.Permission{})
 	return err
-}
-
-// findTable returns the actual table name for a base name that may have been
-// renamed to <base>_legacy after unified storage migration. Returns "" if
-// neither variant exists.
-func (d *dashboardStore) findTable(base string) string {
-	for _, name := range []string{base, base + "_legacy"} {
-		exists, err := d.store.GetEngine().IsTableExist(name)
-		if err != nil {
-			d.log.Warn("Failed to check table existence", "table", name, "error", err)
-			continue
-		}
-		if exists {
-			return name
-		}
-	}
-	return ""
 }
 
 func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, dashboard *dashboards.Dashboard) error {
@@ -938,7 +910,12 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
 
 	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
+	sb := &searchstore.Builder{
+		Dialect:                  d.store.GetDialect(),
+		Filters:                  filters,
+		Features:                 d.features,
+		ForceDashboardTitleIndex: d.cfg.DatabaseForceDashboardTitleIndex,
+	}
 
 	limit := query.Limit
 	if limit < 1 {

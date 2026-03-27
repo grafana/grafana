@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.describe('Login', { tag: ['@acceptance', '@login'] }, () => {
+test.describe('Login', { tag: ['@login'] }, () => {
   test('a11y', { tag: ['@a11y'] }, async ({ selectors, page, scanForA11yViolations }) => {
     await page.goto(selectors.pages.Login.url);
     await expect(page.getByTestId(selectors.pages.Login.username)).toBeVisible();
@@ -25,30 +25,38 @@ test.describe('Login', { tag: ['@acceptance', '@login'] }, () => {
     }
   );
 
-  test('Can login successfully', async ({ selectors, page, grafanaAPICredentials }) => {
-    test.skip(grafanaAPICredentials.password === 'admin', 'Does not run with default password');
+  test(
+    'Can login successfully',
+    { tag: ['@acceptance', '@cloud-acceptance'] },
+    async ({ selectors, page, grafanaAPICredentials }) => {
+      test.skip(grafanaAPICredentials.password === 'admin', 'Does not run with default password');
 
-    await page.goto(selectors.pages.Login.url);
+      await page.goto(selectors.pages.Login.url);
 
-    await page.getByTestId(selectors.pages.Login.username).fill(grafanaAPICredentials.user);
-    await page.getByTestId(selectors.pages.Login.password).fill(grafanaAPICredentials.password);
+      await page.getByTestId(selectors.pages.Login.username).fill(grafanaAPICredentials.user);
+      await page.getByTestId(selectors.pages.Login.password).fill(grafanaAPICredentials.password);
 
-    await page.getByTestId(selectors.pages.Login.submit).click();
+      await page.getByTestId(selectors.pages.Login.submit).click();
 
-    await expect(page.getByTestId(selectors.components.NavToolbar.commandPaletteTrigger)).toBeVisible();
-  });
+      await expect(page.getByTestId(selectors.components.NavToolbar.commandPaletteTrigger)).toBeVisible();
+    }
+  );
 
-  test('Can login successfully and skip password change', async ({ selectors, page, grafanaAPICredentials }) => {
-    test.skip(grafanaAPICredentials.password !== 'admin', 'Only runs with the default password');
+  test(
+    'Can login successfully and skip password change',
+    { tag: ['@acceptance'] },
+    async ({ selectors, page, grafanaAPICredentials }) => {
+      test.skip(grafanaAPICredentials.password !== 'admin', 'Only runs with the default password');
 
-    await page.goto(selectors.pages.Login.url);
+      await page.goto(selectors.pages.Login.url);
 
-    await page.getByTestId(selectors.pages.Login.username).fill(grafanaAPICredentials.user);
-    await page.getByTestId(selectors.pages.Login.password).fill(grafanaAPICredentials.password);
+      await page.getByTestId(selectors.pages.Login.username).fill(grafanaAPICredentials.user);
+      await page.getByTestId(selectors.pages.Login.password).fill(grafanaAPICredentials.password);
 
-    await page.getByTestId(selectors.pages.Login.submit).click();
-    await page.getByTestId(selectors.pages.Login.skip).click();
+      await page.getByTestId(selectors.pages.Login.submit).click();
+      await page.getByTestId(selectors.pages.Login.skip).click();
 
-    await expect(page.getByTestId(selectors.components.NavToolbar.commandPaletteTrigger)).toBeVisible();
-  });
+      await expect(page.getByTestId(selectors.components.NavToolbar.commandPaletteTrigger)).toBeVisible();
+    }
+  );
 });

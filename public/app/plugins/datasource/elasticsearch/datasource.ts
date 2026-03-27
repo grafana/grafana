@@ -617,6 +617,8 @@ export class ElasticDatasource
           metrics: [{ type: 'count', id: '1' }],
           timeField,
           bucketAggs,
+          queryType: query.queryType,
+          editorType: query.editorType,
         };
 
       case SupplementaryQueryType.LogsSample:
@@ -631,6 +633,8 @@ export class ElasticDatasource
             refId: `${REF_ID_STARTER_LOG_SAMPLE}${query.refId}`,
             query: query.query,
             metrics: [{ type: 'logs', id: '1', settings: { limit: options.limit.toString() } }],
+            queryType: query.queryType,
+            editorType: query.editorType,
           };
         }
 
@@ -638,6 +642,8 @@ export class ElasticDatasource
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${query.refId}`,
           query: query.query,
           metrics: [{ type: 'logs', id: '1' }],
+          queryType: query.queryType,
+          editorType: query.editorType,
         };
 
       default:
@@ -1154,12 +1160,19 @@ export class ElasticDatasource
     const expandedQuery = {
       ...query,
       datasource: this.getRef(),
-      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars), filters),
+      query:
+        query.queryType === 'esql'
+          ? this.addAdHocFilters(this.interpolateEsqlQuery(query.query || '', scopedVars), filters)
+          : this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars), filters),
       bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
     };
 
     const finalQuery = JSON.parse(this.templateSrv.replace(JSON.stringify(expandedQuery), scopedVars));
     return finalQuery;
+  }
+
+  private interpolateEsqlQuery(esqlQuery: string, scopedVars?: ScopedVars): string {
+    return this.templateSrv.replace(esqlQuery, scopedVars);
   }
 
   // Private method used in the `getDatabaseVersion` to get the database version from the Elasticsearch API.

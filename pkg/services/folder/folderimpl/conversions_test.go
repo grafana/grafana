@@ -103,9 +103,7 @@ func TestFolderListConversions(t *testing.T) {
 			"creationTimestamp": "2022-12-02T02:02:02Z",
 			"generation": 1,
 			"labels": {
-			  "grafana.app/deprecatedInternalID": "4",
-			  "grafana.app/fullpath": "somefullpath",
-			  "grafana.app/fullpathUIDs": "somefullpathuids"
+			  "grafana.app/deprecatedInternalID": "4"
 			},
 			"name": "foldername1",
 			"namespace": "default",

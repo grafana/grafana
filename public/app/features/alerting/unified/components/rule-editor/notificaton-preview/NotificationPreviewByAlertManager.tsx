@@ -17,13 +17,16 @@ const UNKNOWN_RECEIVER = 'unknown';
 function NotificationPreviewByAlertManager({
   alertManagerSource,
   instances,
+  policyName,
 }: {
   alertManagerSource: AlertManagerDataSource;
   instances: Labels[];
+  policyName?: string;
 }) {
   const { treeMatchingResults, isLoading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
-    instances
+    instances,
+    policyName
   );
 
   if (error) {

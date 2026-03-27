@@ -237,6 +237,7 @@ Field-specific variables are available under `__field` namespace:
 | Variable                 | Description                                                                                         |
 | ------------------------ | --------------------------------------------------------------------------------------------------- |
 | `__field.name`           | The name of the field                                                                               |
+| `__field.displayName`    | The display name of the field. Use this for renamed field names.                                    |
 | `__field.labels.<LABEL>` | Label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax. |
 
 ### Value variables

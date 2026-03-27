@@ -20,7 +20,7 @@ import {
   VariableRefresh,
   VariableWithOptions,
 } from '@grafana/data';
-import { config, locationService, logWarning } from '@grafana/runtime';
+import { config, locationService, logWarning, reportInteraction } from '@grafana/runtime';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -644,6 +644,7 @@ export const variableUpdated = (
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
+        reportInteraction('grafana_dashboards_variable_changed');
         events.publish(new VariablesChanged(event));
         locationService.partial(getQueryWithVariables(rootStateKey, getState));
       }

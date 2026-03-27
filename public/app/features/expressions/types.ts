@@ -179,7 +179,7 @@ export interface ClassicCondition {
   query: {
     params: string[];
   };
-  reducer: {
+  reducer?: {
     params: [];
     type: ReducerType;
   };

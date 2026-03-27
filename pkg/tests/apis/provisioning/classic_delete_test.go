@@ -12,7 +12,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_ClassicDashboardDeletion verifies that classic-format dashboards
@@ -21,9 +20,7 @@ import (
 // and lacked the ReadClassicResource fallback, causing "no object found" errors when deleting
 // classic dashboards.
 func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	t.Run("classic dashboard deleted via filesystem removal and sync", func(t *testing.T) {
 		const repo = "classic-delete-repo"

@@ -1,6 +1,5 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { SortOrder } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
@@ -78,7 +77,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, false, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, false, true);
 
     builder.addMultiSelect({
       name: t('piechart.name-legend-values', 'Legend values'),

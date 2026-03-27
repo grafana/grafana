@@ -14,7 +14,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     divider: css({
       height: 1,
       backgroundColor: theme.colors.border.weak,
-      margin: theme.spacing(0.5, 0),
+      margin: theme.spacing(1, 0),
     }),
   };
 };

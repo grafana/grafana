@@ -31,6 +31,7 @@ type ColorPickerTriggerRenderer = (props: {
   ref: RefObject<any>;
   showColorPicker: () => void;
   hideColorPicker: () => void;
+  isOpen: boolean;
 }) => ReactNode;
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
@@ -73,6 +74,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                   ref: pickerTriggerRef,
                   showColorPicker: showPopper,
                   hideColorPicker: hidePopper,
+                  isOpen: popperProps.show,
                 })
               ) : (
                 <ColorSwatch

@@ -1,6 +1,5 @@
 import { Field, FieldType, PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { GraphDrawStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
@@ -30,7 +29,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .setSuggestionsSupplier((ds) => {
     if (

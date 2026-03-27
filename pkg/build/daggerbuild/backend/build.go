@@ -91,8 +91,6 @@ func Build(
 
 	cmd := []string{
 		"grafana",
-		"grafana-server",
-		"grafana-cli",
 		"grafana-example-apiserver",
 	}
 

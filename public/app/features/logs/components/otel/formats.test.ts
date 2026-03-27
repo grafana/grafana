@@ -1,4 +1,4 @@
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
 import {
@@ -7,7 +7,6 @@ import {
   getSuggestedFieldsForLogs,
   identifyOTelLanguage,
   identifyOTelLanguages,
-  OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME,
   OTEL_LANGUAGE_UNKNOWN,
   OTEL_PROBE_FIELD,
 } from './formats';

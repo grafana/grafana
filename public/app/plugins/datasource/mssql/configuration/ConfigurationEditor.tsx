@@ -13,8 +13,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { ConnectionLimits, useMigrateDatabaseFields } from '@grafana/sql';
-import { NumberInput } from '@grafana/sql/src/components/configuration/NumberInput';
+import { ConnectionLimits, NumberInput, useMigrateDatabaseFields } from '@grafana/sql';
 import {
   Alert,
   FieldSet,

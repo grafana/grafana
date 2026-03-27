@@ -1,9 +1,9 @@
 import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine, createLogRow } from '../mocks/logRow';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
+import { OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';

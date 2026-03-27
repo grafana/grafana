@@ -145,8 +145,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 className={cx(clearStyles, styles.rowTitleButton)}
                 aria-label={
                   isCollapsed
-                    ? t('dashboard.rows-layout.row.expand', 'Expand row')
-                    : t('dashboard.rows-layout.row.collapse', 'Collapse row')
+                    ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
+                    : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
                 }
                 data-testid={selectors.components.DashboardRow.toggle(title)}
               >

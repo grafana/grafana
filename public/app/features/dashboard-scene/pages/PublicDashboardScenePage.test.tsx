@@ -7,6 +7,7 @@ import { getDefaultTimeRange, LoadingState, PanelData, PanelProps } from '@grafa
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -92,7 +93,13 @@ const panelPlugin = getPanelPlugin(
   CustomVizPanel
 );
 
-config.panels['custom-viz-panel'] = panelPlugin.meta;
+beforeEach(() => {
+  setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
+});
+
+afterEach(() => {
+  setPanelPluginMetas({});
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(panelPlugin),

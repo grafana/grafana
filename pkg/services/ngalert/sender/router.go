@@ -105,20 +105,25 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 			continue
 		}
 
-		if disableExternal && cfg.SendAlertsTo != models.InternalAlertmanager {
-			d.logger.Warn("Alertmanager choice in configuration will be ignored due to feature flags", "org", cfg.OrgID, "choice", cfg.SendAlertsTo)
-			cfg.SendAlertsTo = models.InternalAlertmanager
+		var sendAlertsTo models.AlertmanagersChoice
+		if cfg.SendAlertsTo != nil {
+			sendAlertsTo = *cfg.SendAlertsTo
+		}
+
+		if disableExternal && sendAlertsTo != models.InternalAlertmanager {
+			d.logger.Warn("Alertmanager choice in configuration will be ignored due to feature flags", "org", cfg.OrgID, "choice", sendAlertsTo)
+			sendAlertsTo = models.InternalAlertmanager
 		}
 
 		// Update the Alertmanagers choice for the organization.
-		d.sendAlertsTo[cfg.OrgID] = cfg.SendAlertsTo
+		d.sendAlertsTo[cfg.OrgID] = sendAlertsTo
 
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which externalAlertmanagers we need to keep.
 
 		existing, ok := d.externalAlertmanagers[cfg.OrgID]
 
 		//  We have no running sender and alerts are handled internally, no-op.
-		if !ok && cfg.SendAlertsTo == models.InternalAlertmanager {
+		if !ok && sendAlertsTo == models.InternalAlertmanager {
 			d.logger.Debug("Grafana is configured to send alerts to the internal alertmanager only. Skipping synchronization with external alertmanager", "org", cfg.OrgID)
 			continue
 		}

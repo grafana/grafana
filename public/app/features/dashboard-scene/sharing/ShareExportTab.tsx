@@ -139,7 +139,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     initialSaveModelVersion: 'v1' | 'v2';
   }> => {
     try {
-      const dto = await getDashboardAPI('v1').getDashboardDTO(uid);
+      const api = await getDashboardAPI('v1');
+      const dto = await api.getDashboardDTO(uid);
       const spec = dto.dashboard;
 
       if (isSharingExternally) {
@@ -179,7 +180,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     initialSaveModelVersion: 'v1' | 'v2';
   }> => {
     try {
-      const resource = await getDashboardAPI('v2').getDashboardDTO(uid);
+      const api = await getDashboardAPI('v2');
+      const resource = await api.getDashboardDTO(uid);
       const spec = resource.spec;
       const hasLibraryPanels =
         'elements' in spec

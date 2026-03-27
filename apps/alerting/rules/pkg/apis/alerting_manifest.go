@@ -30,6 +30,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "alerting",
+	AppDisplayName:   "alerting",
 	Group:            "rules.alerting.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{

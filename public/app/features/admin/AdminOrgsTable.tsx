@@ -63,7 +63,6 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
       {deleteOrg && (
         <ConfirmModal
           isOpen
-          icon="trash-alt"
           title={t('admin.admin-orgs-table.title-delete', 'Delete')}
           body={
             <div>

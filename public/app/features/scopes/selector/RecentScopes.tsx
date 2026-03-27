@@ -29,7 +29,7 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
         >
           <Icon name={expanded ? 'angle-down' : 'angle-right'} />
           <Text variant="body">
-            <Trans i18nKey="command-palette.section.recent-scopes" />
+            <Trans i18nKey="command-palette.section.recent-scopes">Recent scopes</Trans>
           </Text>
         </button>
       </legend>

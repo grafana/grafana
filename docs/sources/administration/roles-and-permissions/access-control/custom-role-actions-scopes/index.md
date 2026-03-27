@@ -7,9 +7,9 @@ labels:
   products:
     - cloud
     - enterprise
-menuTitle: RBAC permissions, actions, and scopes
-title: Grafana RBAC permissions, actions, and scopes
-weight: 80
+menuTitle: RBAC permission actions and scopes
+title: Grafana RBAC permission actions and scopes
+weight: 30
 refs:
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
@@ -23,27 +23,20 @@ refs:
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/#fixed-roles
 ---
 
-# RBAC permissions, actions, and scopes
+# Grafana RBAC permission actions and scopes
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
-A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resources on which they can perform those actions.
-
-To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
-
-{{< admonition type="note" >}}
-**Before creating custom roles**, consider whether you can meet your access requirements using:
-
-- **[Folder permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/folder-access-control/)**: Control access to dashboards, alert rules, and other resources by folder
-- **[Fixed roles](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/)**: Pre-built roles for common access patterns
-
-Custom roles are most useful when you need fine-grained control that these options don't provide.
-{{< /admonition >}}
+An RBAC permission comprises an action and a scope:
 
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
+
+To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
+
+If you're using Grafana Enterprise or Grafana Cloud, you can create **custom roles** with specific sets of permissions. Refer to [Create custom roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/create-custom-roles) to learn how.
 
 ## Action definitions
 
@@ -250,7 +243,7 @@ The following list contains role-based access control scopes.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-## Discovering plugin actions
+## Discover plugin actions
 
 The action definitions table above lists actions for core Grafana features. App plugins can define their own actions, which follow the pattern `<plugin-id>.<resource>:<operation>`.
 
@@ -263,4 +256,4 @@ curl -X GET "https://your-grafana-instance/api/access-control/roles/basic_admin"
 
 The response includes all permissions granted to that role, including plugin-specific actions. Plugin actions typically use `None` for their scope because they operate at the organization level.
 
-For a centralized reference of plugin roles and their default permissions, refer to [Grafana Cloud app plugin role definitions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/).
+For a centralized reference of plugin roles and their default permissions, refer to [Grafana Cloud app plugin role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/).

@@ -89,7 +89,7 @@ export const RadialArcPathEndpointMarks = memo(
             fill="none"
             strokeWidth={barWidth}
             stroke={endpointMarkerGlowFilter}
-            strokeLinecap={roundedBars ? 'round' : 'butt'}
+            strokeLinecap="round"
             filter={glowFilter}
           />
         );

@@ -71,7 +71,6 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           'Are you sure you want to permanently delete your query history?'
         ),
         yesText: t('explore.rich-history-settings-tab.delete-confirm', 'Delete'),
-        icon: 'trash-alt',
         onConfirm: () => {
           deleteRichHistory();
           dispatch(

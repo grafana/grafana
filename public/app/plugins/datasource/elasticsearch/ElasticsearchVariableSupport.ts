@@ -8,6 +8,8 @@ import {
   DataQueryResponse,
   DataFrame,
   DataSourceApi,
+  FieldType,
+  MetricFindValue,
   QueryEditorProps,
 } from '@grafana/data';
 
@@ -30,6 +32,11 @@ export class ElasticsearchVariableSupport<
       throw new Error('no variable query found');
     }
     const updatedQuery = migrateVariableQuery(request.targets[0]);
+
+    if (updatedQuery.queryType === 'legacy_variable') {
+      return this.legacyQuery(updatedQuery, request);
+    }
+
     return from(this.datasource.query({ ...request, targets: [updatedQuery] })).pipe(
       map((d: DataQueryResponse) => {
         return {
@@ -40,11 +47,43 @@ export class ElasticsearchVariableSupport<
     );
   }
 
+  private legacyQuery(
+    query: ElasticsearchDataQuery,
+    request: DataQueryRequest<ElasticsearchDataQuery>
+  ): Observable<DataQueryResponse> {
+    if (!this.datasource.metricFindQuery) {
+      return from(Promise.resolve({ data: [] }));
+    }
+    return from(this.datasource.metricFindQuery(query.query || '', { range: request.range })).pipe(
+      map((values: MetricFindValue[]) => {
+        const frame: DataFrame = {
+          fields: [
+            {
+              name: 'text',
+              type: FieldType.string,
+              config: {},
+              values: values.map((v) => String(v.text)),
+            },
+            {
+              name: 'value',
+              type: FieldType.string,
+              config: {},
+              values: values.map((v) => String(v.value ?? v.text)),
+            },
+          ],
+          length: values.length,
+        };
+        const response: DataQueryResponse = { data: [frame] };
+        return response;
+      })
+    );
+  }
+
   getDefaultQuery(): Partial<ElasticsearchDataQuery> {
     return {
       refId,
       query: '',
-      metrics: [{ type: 'raw_document', id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
     };
   }
 }

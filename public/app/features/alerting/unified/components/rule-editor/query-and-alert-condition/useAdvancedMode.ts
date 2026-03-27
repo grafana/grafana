@@ -6,8 +6,9 @@ import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { areQueriesTransformableToSimpleCondition } from '../../../rule-editor/formProcessing';
+import { SimpleCondition } from '../../../types/rule-form';
 
-import { SimpleCondition, getSimpleConditionFromExpressions } from './SimpleCondition';
+import { getSimpleConditionFromExpressions } from './SimpleCondition';
 
 function initializeSimpleCondition(
   isGrafanaAlertingType: boolean,

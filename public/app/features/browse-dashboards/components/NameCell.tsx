@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { getIconForItem } from 'app/features/search/service/utils';
 
@@ -28,6 +28,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
+  const ownerReference = item.kind !== 'ui' ? item.ownerReference : undefined;
 
   if (item.kind === 'ui') {
     return (
@@ -110,6 +111,15 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
         </Text>
 
         <FolderRepo folder={item} />
+
+        {ownerReference && (
+          <div className={styles.ownerReference}>
+            {ownerReference.avatarUrl && <Avatar src={ownerReference.avatarUrl} alt={ownerReference.title} />}
+            <Text truncate color="secondary" variant="bodySmall">
+              {ownerReference.title}
+            </Text>
+          </div>
+        )}
       </div>
     </>
   );
@@ -139,6 +149,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         textDecoration: 'underline',
       },
+    }),
+    ownerReference: css({
+      display: 'flex',
+      marginLeft: theme.spacing(1),
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      flex: '0 1 auto',
     }),
   };
 };

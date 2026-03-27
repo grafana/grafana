@@ -52,17 +52,17 @@ func (_m *FakePublicDashboardService) Create(ctx context.Context, u *user.Signed
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: ctx, uid, dashboardUid
-func (_m *FakePublicDashboardService) Delete(ctx context.Context, uid string, dashboardUid string) error {
-	ret := _m.Called(ctx, uid, dashboardUid)
+// Delete provides a mock function with given fields: ctx, orgId, uid, dashboardUid
+func (_m *FakePublicDashboardService) Delete(ctx context.Context, orgId int64, uid string, dashboardUid string) error {
+	ret := _m.Called(ctx, orgId, uid, dashboardUid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, uid, dashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string) error); ok {
+		r0 = rf(ctx, orgId, uid, dashboardUid)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -98,9 +98,9 @@ func (_m *FakePublicDashboardService) ExistsEnabledByAccessToken(ctx context.Con
 	return r0, r1
 }
 
-// ExistsEnabledByDashboardUid provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
-	ret := _m.Called(ctx, dashboardUid)
+// ExistsEnabledByDashboardUid provides a mock function with given fields: ctx, orgId, dashboardUid
+func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (bool, error) {
+	ret := _m.Called(ctx, orgId, dashboardUid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ExistsEnabledByDashboardUid")
@@ -108,17 +108,17 @@ func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Co
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
-		return rf(ctx, dashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (bool, error)); ok {
+		return rf(ctx, orgId, dashboardUid)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
-		r0 = rf(ctx, dashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) bool); ok {
+		r0 = rf(ctx, orgId, dashboardUid)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, dashboardUid)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgId, dashboardUid)
 	} else {
 		r1 = ret.Error(1)
 	}

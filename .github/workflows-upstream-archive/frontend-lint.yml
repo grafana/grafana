@@ -83,6 +83,8 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
     - uses: actions/checkout@v5
       with:
@@ -101,6 +103,8 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
     - uses: actions/checkout@v5
       with:
@@ -309,6 +313,8 @@ jobs:
     if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
     runs-on: ubuntu-x64-small
     name: Validate yarn install
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v5
       with:

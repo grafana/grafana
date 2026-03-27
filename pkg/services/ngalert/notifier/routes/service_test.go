@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -87,6 +88,8 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 func TestGetManagedRoute(t *testing.T) {
 	orgID := int64(1)
 
+	user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{}}
+
 	t.Run("imported route preserves provenance and does not query provenance store", func(t *testing.T) {
 		rev := configRevisionWithImportedRoute()
 		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
@@ -102,7 +105,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features)
 
-		route, err := sut.GetManagedRoute(context.Background(), orgID, "imported")
+		route, err := sut.GetManagedRoute(context.Background(), orgID, "imported", user)
 		require.NoError(t, err)
 
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, route.Provenance)
@@ -133,7 +136,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features)
 
-		route, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName)
+		route, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
 		require.NoError(t, err)
 
 		assert.Equal(t, models.ProvenanceAPI, route.Provenance)
@@ -162,7 +165,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features)
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName)
+		_, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -181,10 +184,10 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features)
 
-		singleRoute, err := sut.GetManagedRoute(context.Background(), orgID, "imported")
+		singleRoute, err := sut.GetManagedRoute(context.Background(), orgID, "imported", user)
 		require.NoError(t, err)
 
-		allRoutes, err := sut.GetManagedRoutes(context.Background(), orgID)
+		allRoutes, err := sut.GetManagedRoutes(context.Background(), orgID, user)
 		require.NoError(t, err)
 
 		var listRoute *legacy_storage.ManagedRoute
@@ -215,7 +218,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features)
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, "does-not-exist")
+		_, err := sut.GetManagedRoute(context.Background(), orgID, "does-not-exist", user)
 		require.ErrorIs(t, err, models.ErrRouteNotFound)
 	})
 }

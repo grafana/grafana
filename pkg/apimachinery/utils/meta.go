@@ -65,12 +65,6 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
-// Only used in modes 0-2 (legacy db) for returning the folder fullpath
-
-const LabelGetFullpath = "grafana.app/fullpath"
-const AnnoKeyFullpath = "grafana.app/fullpath"
-const AnnoKeyFullpathUIDs = "grafana.app/fullpathUIDs"
-
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
@@ -859,6 +853,12 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 				create, _, _ := unstructured.NestedString(sv, "create")
 				if create != "" {
 					inline.Create = common.NewSecretValue(create)
+
+					if rawDesc, _, _ := unstructured.NestedFieldNoCopy(sv, "description"); rawDesc != nil {
+						if desc, ok := rawDesc.(*string); ok && desc != nil && *desc != "" {
+							inline.Description = desc
+						}
+					}
 				}
 			}
 			vals[k] = inline

@@ -55,7 +55,7 @@ func (s *legacySQLStore) GetServiceAccountInternalID(
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (s *legacySQLStore) ListServiceAccounts(ctx context.Context, ns claims.Name
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +263,7 @@ func (s *legacySQLStore) ListServiceAccountTokens(ctx context.Context, ns claims
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -343,7 +343,7 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +402,7 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 }
 
 func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
 	}

@@ -58,6 +58,10 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 // If the parameter is not supplied then it returns immediate subfolders under the root
 // that the authenticated user has permission to view.
 //
+// Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders
+//
+// Deprecated: true
+//
 // Responses:
 // 200: getFoldersResponse
 // 401: unauthorisedError
@@ -102,6 +106,10 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 //
 // Get folder by uid.
 //
+// Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}
+//
+// Deprecated: true
+//
 // Responses:
 // 200: folderResponse
 // 401: unauthorisedError
@@ -123,21 +131,12 @@ func (hs *HTTPServer) GetFolderByUID(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, folderDTO)
 }
 
-// swagger:route GET /folders/id/{folder_id} folders getFolderByID
-//
 // Get folder by id.
 //
 // Returns the folder identified by id. This is deprecated.
 // Please refer to [updated API](#/folders/getFolderByUID) instead
 //
 // Deprecated: true
-//
-// Responses:
-// 200: folderResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
 func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
@@ -162,6 +161,10 @@ func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Respons
 // Create folder.
 //
 // If nested folders are enabled then it additionally expects the parent folder UID.
+//
+// Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}
+//
+// Deprecated: true
 //
 // Responses:
 // 200: folderResponse
@@ -196,6 +199,11 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 //
 // Move folder.
 //
+// Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid},
+// Changing the parent folder annotation
+//
+// Deprecated: true
+//
 // Responses:
 // 200: folderResponse
 // 401: unauthorisedError
@@ -227,6 +235,10 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
 //
 // Update folder.
+//
+// Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}
+//
+// Deprecated: true
 //
 // Responses:
 // 200: folderResponse
@@ -264,6 +276,10 @@ func (hs *HTTPServer) UpdateFolder(c *contextmodel.ReqContext) response.Response
 // Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
 // If nested folders are enabled then it also deletes all the subfolders.
 //
+// Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}
+//
+// Deprecated: true
+//
 // Responses:
 // 200: deleteFolderResponse
 // 400: badRequestError
@@ -289,6 +305,10 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 // swagger:route GET /folders/{folder_uid}/counts folders getFolderDescendantCounts
 //
 // Gets the count of each descendant of a folder by kind. The folder is identified by UID.
+//
+// Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getFolderDescendantCountsResponse

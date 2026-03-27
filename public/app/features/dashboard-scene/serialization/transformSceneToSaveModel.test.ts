@@ -8,6 +8,7 @@ import {
   dateTime,
   FieldType,
   PanelData,
+  PanelPluginMeta,
   standardTransformersRegistry,
   StandardVariableQuery,
   toDataFrame,
@@ -15,6 +16,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   CustomVariable,
   MultiValueVariable,
@@ -143,9 +145,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    panels: {
-      text: { skipDataQuery: true },
-    },
     featureToggles: {
       dataTrails: false,
     },
@@ -171,6 +170,14 @@ jest.mock('@grafana/scenes', () => ({
     registerVariableMacro: jest.fn(),
   },
 }));
+
+beforeEach(() => {
+  setPanelPluginMetas({ text: { skipDataQuery: true } as PanelPluginMeta });
+});
+
+afterEach(() => {
+  setPanelPluginMetas({});
+});
 
 describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with custom settings', () => {

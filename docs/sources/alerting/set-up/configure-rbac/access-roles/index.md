@@ -18,13 +18,11 @@ weight: 100
 
 # Manage access using roles
 
-In Grafana Enterprise and Grafana Cloud, there are Basic, Fixed, and Custom roles.
+In Grafana Enterprise and Grafana Cloud there are Basic, Fixed, and Custom roles.
 
 ## Basic roles
 
-There are four basic roles: Admin, Editor, Viewer, and No basic role. Each basic role contains a number of fixed roles.
-
-The No basic role allows you to further customize access by assigning fixed roles to users, which you can also modify. You can also create and assign custom roles to a user with No basic role.
+There are four basic roles: `Admin`, `Editor`, `Viewer`, and `None`. Each basic role contains a number of fixed roles.
 
 Details of the basic roles and the access they provide for Grafana Alerting are below.
 

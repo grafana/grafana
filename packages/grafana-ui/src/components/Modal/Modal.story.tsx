@@ -3,7 +3,6 @@ import { StoryFn, Meta } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
 import { useState } from 'react';
 
-import { getAvailableIcons } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { TabContent } from '../Tabs/TabContent';
 
@@ -34,12 +33,6 @@ const meta: Meta = {
     amet.`),
   },
   argTypes: {
-    icon: {
-      control: {
-        type: 'select',
-        options: getAvailableIcons(),
-      },
-    },
     title: {
       control: {
         type: 'text',
@@ -63,10 +56,8 @@ export const Basic: StoryFn = ({ body, title, ...args }) => {
 };
 Basic.args = {
   title: 'My Modal',
-  icon: 'exclamation-triangle',
   isOpen: true,
   closeOnEscape: false,
-  iconTooltip: 'icon tooltip',
 };
 
 const tabs = [
@@ -80,7 +71,6 @@ export const WithTabs: StoryFn = (args) => {
   const modalHeader = (
     <ModalTabsHeader
       title={args.title}
-      icon={args.icon}
       tabs={tabs}
       activeTab={activeTab}
       onChangeTab={(t) => {
@@ -120,10 +110,8 @@ export const UsingContentClassName: StoryFn = ({ title, body, ...args }) => {
 };
 UsingContentClassName.args = {
   title: 'Using contentClassName to override background',
-  icon: 'exclamation-triangle',
   isOpen: true,
   closeOnEscape: false,
-  iconTooltip: 'icon tooltip',
 };
 
 export default meta;

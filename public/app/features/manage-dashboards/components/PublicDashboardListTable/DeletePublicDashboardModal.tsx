@@ -32,7 +32,6 @@ export const DeletePublicDashboardModal = ({
       onConfirm={onConfirm}
       onDismiss={onDismiss}
       title={translatedRevocationModalText}
-      icon="trash-alt"
       confirmText={translatedRevocationModalText}
     />
   );

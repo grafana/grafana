@@ -10,14 +10,15 @@ import {
 import { config } from '@grafana/runtime';
 
 import { dataFrameToLogsModel } from '../../logsModel';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { getDisplayedFieldsForLogs, identifyOTelLanguages, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import { getDisplayedFieldsForLogs, identifyOTelLanguages } from '../otel/formats';
 
 import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: true,
     openAssistant: jest.fn(),
   }),

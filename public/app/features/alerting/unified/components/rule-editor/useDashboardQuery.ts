@@ -29,8 +29,8 @@ export function useDashboardQuery(dashboardUid?: string) {
     if (dashboardUid) {
       setIsFetching(true);
       getDashboardAPI()
-        .getDashboardDTO(dashboardUid)
-        .then((dashboardDTO) => {
+        .then(async (api) => {
+          const dashboardDTO = await api.getDashboardDTO(dashboardUid);
           if ('dashboard' in dashboardDTO) {
             setDashboard(ensureV1PanelsHaveIds(dashboardDTO));
           } else if (isDashboardV2Resource(dashboardDTO)) {
@@ -38,6 +38,11 @@ export function useDashboardQuery(dashboardUid?: string) {
           } else {
             console.error('Something went wrong, unexpected dashboard format');
           }
+        })
+        .catch((error) => {
+          console.error('Failed to fetch dashboard', error);
+        })
+        .finally(() => {
           setIsFetching(false);
         });
     }

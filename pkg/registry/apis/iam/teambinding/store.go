@@ -37,14 +37,13 @@ var (
 	_ rest.CollectionDeleter    = (*LegacyBindingStore)(nil)
 )
 
-func NewLegacyBindingStore(store legacy.LegacyIdentityStore, enableAuthnMutation bool, tracer trace.Tracer) *LegacyBindingStore {
-	return &LegacyBindingStore{store, enableAuthnMutation, tracer}
+func NewLegacyBindingStore(store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyBindingStore {
+	return &LegacyBindingStore{store, tracer}
 }
 
 type LegacyBindingStore struct {
-	store               legacy.LegacyIdentityStore
-	enableAuthnMutation bool
-	tracer              trace.Tracer
+	store  legacy.LegacyIdentityStore
+	tracer trace.Tracer
 }
 
 // Destroy implements rest.Storage.
@@ -78,10 +77,6 @@ func (l *LegacyBindingStore) ConvertToTable(ctx context.Context, object runtime.
 func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	ctx, span := l.tracer.Start(ctx, "teambinding.update")
 	defer span.End()
-
-	if !l.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "update")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -134,10 +129,6 @@ func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteVali
 	ctx, span := l.tracer.Start(ctx, "teambinding.delete")
 	defer span.End()
 
-	if !l.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "delete")
-	}
-
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
@@ -171,10 +162,6 @@ func (l *LegacyBindingStore) DeleteCollection(ctx context.Context, deleteValidat
 func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	ctx, span := l.tracer.Start(ctx, "teambinding.create")
 	defer span.End()
-
-	if !l.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "create")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {

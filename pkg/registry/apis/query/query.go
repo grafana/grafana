@@ -130,7 +130,12 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
-		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
+		connectLogger := b.log.New(
+			"traceId", traceId.String(),
+			"rule_uid", httpreq.Header.Get("X-Rule-Uid"),
+			"caller", getCaller(ctx),
+		)
+		connectLogger.Debug("received query-service request")
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode *int, obj runtime.Object) {
 				if *statusCode/100 == 4 {
@@ -200,6 +205,19 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
 
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				connectLogger.Warn(
+					"query-service request deadline exceeded",
+					"ctx_err", ctx.Err(),
+					"cause", context.Cause(ctx),
+				)
+			} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+				connectLogger.Warn(
+					"query-service request cancelled",
+					"ctx_err", ctx.Err(),
+					"cause", context.Cause(ctx),
+				)
+			}
 			connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
 			logEmptyRefids(raw.Queries, connectLogger)
 			if qdr != nil { // if we have a response, we assume the err is set in the response

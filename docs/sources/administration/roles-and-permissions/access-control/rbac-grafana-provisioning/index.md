@@ -9,7 +9,7 @@ labels:
     - enterprise
 menuTitle: Provisioning RBAC with Grafana
 title: Provisioning RBAC with Grafana
-weight: 60
+weight: 300
 refs:
   api-rbac-create-and-manage-custom-roles:
     - pattern: /docs/grafana/

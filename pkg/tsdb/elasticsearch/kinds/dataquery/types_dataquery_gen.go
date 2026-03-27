@@ -499,6 +499,7 @@ type QueryType string
 const (
 	QueryTypeLucene QueryType = "lucene"
 	QueryTypeDsl    QueryType = "dsl"
+	QueryTypeEsql   QueryType = "esql"
 )
 
 type BaseBucketAggregation struct {

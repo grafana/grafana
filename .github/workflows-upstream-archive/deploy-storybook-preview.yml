@@ -85,5 +85,5 @@ jobs:
         env:
           STORYBOOK_URL: ${{ steps.storybook-url.outputs.url }}
         run: |
-          echo "## Storybook preview deployed! 🚀" >> $GITHUB_STEP_SUMMARY
-          echo "Check it out at ${STORYBOOK_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "## Storybook preview deployed! 🚀" >> "$GITHUB_STEP_SUMMARY"
+          echo "Check it out at ${STORYBOOK_URL}" >> "$GITHUB_STEP_SUMMARY"

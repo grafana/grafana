@@ -8,7 +8,6 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
@@ -19,6 +18,7 @@ import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
 import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
+import { barchartPresetsSupplier } from './presets';
 import { barchartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
@@ -255,10 +255,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
     commonOptionsBuilder.addTextSizeOptions(builder, { withValue: true });
   })
-  .setSuggestionsSupplier(barchartSuggestionsSupplier);
+  .setSuggestionsSupplier(barchartSuggestionsSupplier)
+  .setPresetsSupplier(barchartPresetsSupplier);
 
 function countNumberFields(data?: DataFrame[]): number {
   let count = 0;

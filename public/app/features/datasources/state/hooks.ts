@@ -100,7 +100,6 @@ export const useDeleteLoadedDataSource = () => {
         title: t('datasources.use-delete-loaded-data-source.title.delete', 'Delete'),
         text: `Are you sure you want to delete the "${name}" data source?`,
         yesText: 'Delete',
-        icon: 'trash-alt',
         onConfirm: () => dispatch(deleteLoadedDataSource()),
       })
     );

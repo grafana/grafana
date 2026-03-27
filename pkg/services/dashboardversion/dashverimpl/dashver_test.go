@@ -612,13 +612,11 @@ func TestListDashboardVersions(t *testing.T) {
 }
 
 func TestRestoreVersion(t *testing.T) {
-	t.Run("should use k8s restoration when feature toggles are enabled", func(t *testing.T) {
+	t.Run("should always use k8s restoration", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
-			dashSvc:  dashboardService,
-			features: features,
-			log:      log.New("dashboard-version"),
+			dashSvc: dashboardService,
+			log:     log.New("dashboard-version"),
 		}
 		mockCli := new(client.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
@@ -682,71 +680,9 @@ func TestRestoreVersion(t *testing.T) {
 		mockCli.AssertExpectations(t)
 	})
 
-	t.Run("should use legacy restoration when k8s feature toggles are disabled", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures() // No k8s features enabled
-		dashboardVersionService := Service{
-			dashSvc:  dashboardService,
-			features: features,
-			log:      log.New("dashboard-version"),
-		}
-
-		// Mock dashboard service calls
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
-			ID:      1,
-			UID:     "test-uid",
-			Version: 5,
-			Data:    simplejson.NewFromAny(map[string]any{"title": "Current Dashboard"}),
-		}, nil)
-
-		// Mock version data
-		versionObj := &unstructured.Unstructured{
-			Object: map[string]any{
-				"apiVersion": "dashboard.grafana.app/v2alpha1",
-				"metadata": map[string]any{
-					"name":       "test-uid",
-					"generation": int64(3),
-				},
-				"spec": map[string]any{
-					"title": "Version 3 Dashboard",
-					"data":  map[string]any{"panels": []any{}},
-				},
-			},
-		}
-
-		// Mock k8s client calls
-		mockCli := new(client.MockK8sHandler)
-		dashboardVersionService.k8sclient = mockCli
-		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(&unstructured.UnstructuredList{
-			Items: []unstructured.Unstructured{*versionObj},
-		}, nil)
-		mockCli.On("GetUsersFromMeta", mock.Anything, mock.AnythingOfType("[]string")).Return(map[string]*user.User{}, nil)
-
-		// Mock legacy restoration - this would call the existing postDashboard logic
-		dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).Return(&dashboards.Dashboard{
-			ID:      1,
-			UID:     "test-uid",
-			Version: 6,
-			Data:    simplejson.NewFromAny(map[string]any{"title": "Legacy Restored Dashboard"}),
-		}, nil)
-
-		cmd := &dashver.RestoreVersionCommand{
-			Requester:    createMockRequester(1, 1),
-			DashboardUID: "test-uid",
-			Version:      3,
-		}
-
-		result, err := dashboardVersionService.RestoreVersion(context.Background(), cmd)
-		require.NoError(t, err)
-		require.NotNil(t, result)
-		require.Equal(t, "test-uid", result.UID)
-
-		dashboardService.AssertExpectations(t)
-	})
-
 	t.Run("should return error when dashboard not found", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
@@ -777,7 +713,7 @@ func TestRestoreVersion(t *testing.T) {
 
 	t.Run("should return error when version not found", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
@@ -822,7 +758,7 @@ func TestRestoreVersion(t *testing.T) {
 
 	t.Run("should skip restoration when dashboard data is identical", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,

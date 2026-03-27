@@ -14,6 +14,7 @@ import {
   ImportDashboardDTO,
   LibraryPanelInputState,
 } from '../../types';
+import { getUidFieldDescription, getUidFieldLabel } from '../utils/uidFieldText';
 import { validateTitle, validateUid } from '../utils/validation';
 
 import { LibraryPanelsList } from './LibraryPanelsList';
@@ -87,11 +88,8 @@ export function ImportForm({
           />
         </Field>
         <Field
-          label={t('manage-dashboards.import-dashboard-form.label-unique-identifier-uid', 'Unique identifier (UID)')}
-          description={t(
-            'manage-dashboards.import-dashboard-form.description-unique-identifier-uid',
-            'The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.'
-          )}
+          label={getUidFieldLabel()}
+          description={getUidFieldDescription()}
           invalid={!!errors.uid}
           error={errors.uid?.message}
           noMargin

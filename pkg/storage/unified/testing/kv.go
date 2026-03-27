@@ -235,22 +235,20 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 	})
 
-	t.Run("save key with no data", func(t *testing.T) {
+	t.Run("save key with no data fails", func(t *testing.T) {
 		emptyKey := namespacedKey(nsPrefix, "empty-key")
 
 		// Save a key with empty data
-		saveKVHelper(t, kv, ctx, testSection, emptyKey, strings.NewReader(""))
+		writer, err := kv.Save(ctx, testSection, emptyKey)
+		require.NoError(t, err)
+		err = writer.Close()
+		assert.Error(t, err)
+		assert.Equal(t, kvpkg.ErrEmptyValue, err)
 
-		// Verify it was saved with empty data
-		reader, err := kv.Get(ctx, testSection, emptyKey)
-		require.NoError(t, err)
-
-		value, err := io.ReadAll(reader)
-		require.NoError(t, err)
-		assert.Equal(t, "", string(value))
-		assert.Len(t, value, 0)
-		err = reader.Close()
-		require.NoError(t, err)
+		// Verify it was NOT saved
+		_, err = kv.Get(ctx, testSection, emptyKey)
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
 	})
 }
 

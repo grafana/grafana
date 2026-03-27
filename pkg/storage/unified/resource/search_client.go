@@ -37,7 +37,6 @@ var (
 )
 
 type DualWriter interface {
-	IsEnabled(schema.GroupResource) bool
 	ReadFromUnified(context.Context, schema.GroupResource) (bool, error)
 	Status(ctx context.Context, gr schema.GroupResource) (dualwrite.StorageStatus, error)
 }

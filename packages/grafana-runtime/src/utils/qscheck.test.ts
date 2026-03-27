@@ -37,7 +37,7 @@ describe('qscheck', () => {
       name: 'no queries',
       ds: [],
       flag: { types: ['prometheus', 'loki'] },
-      expected: true,
+      expected: false,
       errorLogs: 0,
     },
     {

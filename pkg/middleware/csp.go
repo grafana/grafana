@@ -45,7 +45,7 @@ func nonceMiddleware(next http.Handler, logger log.Logger) http.Handler {
 func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		policy := ReplacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, ctx.RequestNonce)
+		policy := ReplacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, []string{}, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy", policy)
 		next.ServeHTTP(rw, req)
 	})
@@ -54,17 +54,28 @@ func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.
 func cspReportOnlyMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		policy := ReplacePolicyVariables(cfg.CSPReportOnlyTemplate, cfg.AppURL, ctx.RequestNonce)
+		policy := ReplacePolicyVariables(cfg.CSPReportOnlyTemplate, cfg.AppURL, []string{}, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy-Report-Only", policy)
 		next.ServeHTTP(rw, req)
 	})
 }
 
-func ReplacePolicyVariables(policyTemplate, appURL, nonce string) string {
+func ReplacePolicyVariables(policyTemplate, appURL string, frameAncestorHosts []string, nonce string) string {
 	policy := strings.ReplaceAll(policyTemplate, "$NONCE", fmt.Sprintf("'nonce-%s'", nonce))
 	re := regexp.MustCompile(`^\w+:(//)?`)
 	rootPath := re.ReplaceAllString(appURL, "")
 	policy = strings.ReplaceAll(policy, "$ROOT_PATH", rootPath)
+
+	// If the CSP directive has a $ALLOW_EMBEDDING_HOSTS variable, and the frameAncestorHosts is empty
+	// then we deny all embedding by setting it to 'none'.
+	var hostList string
+	if len(frameAncestorHosts) == 0 {
+		hostList = "'none'"
+	} else {
+		hostList = strings.Join(frameAncestorHosts, " ")
+	}
+	policy = strings.ReplaceAll(policy, "$ALLOW_EMBEDDING_HOSTS", hostList)
+
 	return policy
 }
 

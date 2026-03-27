@@ -186,6 +186,9 @@ func (p *termsParser) Parse(id, aggType string, aggValue map[string]any) (*dslAg
 			orderJSON := p.extractor.getString(order, k)
 			settings["order"] = orderJSON
 		}
+	} else {
+		settings["orderBy"] = "_key"
+		settings["order"] = "desc"
 	}
 
 	if minDocCount := p.extractor.getInt(aggValue, "min_doc_count"); minDocCount != 0 {

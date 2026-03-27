@@ -15,13 +15,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_MoveJob(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	const repo = "move-test-repo"
 	testRepo := common.TestRepo{
@@ -136,20 +133,25 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.True(t, foundPaths["archived/folder/dashboard3.json"], "should have dashboard3 in archived nested location")
 	})
 
-	t.Run("move non-existent file", func(t *testing.T) {
-		helper.DebugState(t, repo, "BEFORE MOVE NON-EXISTENT FILE")
-
-		spec := provisioning.JobSpec{
+	t.Run("move non-existent file is rejected", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
 				Paths:      []string{"non-existent.json"},
 				TargetPath: "moved/",
 			},
-		}
+		})
 
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := common.MustNestedString(job.Object, "status", "state")
-		require.Equal(t, "error", state, "move job should have failed due to non-existent file")
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		require.Error(t, result.Error(), "move job for non-existent file should be rejected at creation")
 	})
 
 	t.Run("move non-existent uid", func(t *testing.T) {

@@ -11,6 +11,7 @@ describe('ElasticsearchVariableUtils', () => {
       expect(result).toEqual({
         refId,
         query: 'test query',
+        queryType: 'legacy_variable',
         metrics: [{ type: 'raw_document', id: '1' }],
       });
     });
@@ -96,6 +97,22 @@ describe('ElasticsearchVariableUtils', () => {
       expect(result[1].values).toEqual([1, 2, 3]);
       // Other fields are preserved
       expect(result.some((f) => f.name === 'other')).toBe(true);
+    });
+
+    it('should fall through to legacy fallback when meta is an empty object', () => {
+      const fields = [
+        { name: 'field1', type: FieldType.string, config: {}, values: ['a', 'b'] },
+        { name: 'field2', type: FieldType.string, config: {}, values: ['c', 'd'] },
+      ];
+
+      // meta={} is truthy but has no textField/valueField — must behave identically to meta=undefined
+      const resultEmptyMeta = convertFieldsToVariableFields(fields, {});
+      const resultNoMeta = convertFieldsToVariableFields(fields);
+
+      expect(resultEmptyMeta[0].values).toEqual(resultNoMeta[0].values);
+      expect(resultEmptyMeta[1].values).toEqual(resultNoMeta[1].values);
+      // Should use the Scenario 4 fallback: concatenate all field values
+      expect(resultEmptyMeta[0].values).toEqual(['a', 'b', 'c', 'd']);
     });
 
     it('should use textField for both when valueField not specified', () => {

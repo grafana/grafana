@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { memo, ReactElement, useCallback, useMemo } from 'react';
 
-import { FeatureState, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Dropdown, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
 const EXPRESSION_ICON_MAP = {
@@ -46,7 +46,6 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect, disa
           >
             <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} aria-hidden="true" />
             {label}
-            {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.preview} />}
           </div>
           <Tooltip placement="right" content={tooltipContent!}>
             <Icon className={styles.infoIcon} name="info-circle" />

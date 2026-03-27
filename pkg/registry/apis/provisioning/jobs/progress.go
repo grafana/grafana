@@ -53,17 +53,21 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
+	failedUpdates       []string // Tracks resource paths that failed to be updated
 	resultReasons       map[string]struct{}
+	metrics             *JobMetrics
+	action              provisioning.JobAction
 }
 
-func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
+func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
-		started: time.Now(),
-		// Have a faster notifier for messages and total
-		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
-		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
+		started:             time.Now(),
+		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, progressFn),
+		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, progressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
 		resultReasons:       make(map[string]struct{}),
+		metrics:             metrics,
+		action:              action,
 	}
 }
 
@@ -102,14 +106,33 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		}
 
 		// Track failed deletions, any deletion will stop the deletion of the parent folder (as it won't be empty)
-
 		if result.Action() == repository.FileActionDeleted {
 			r.failedDeletions = append(r.failedDeletions, result.Path())
 		}
+
+		// Track failed updates/renames so we can block folder cleanup when child re-parenting fails.
+		// A rename is a move operation; if it fails the child stays under the old folder.
+		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
+			r.failedUpdates = append(r.failedUpdates, result.Path())
+			if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+				r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+			}
+		}
 	} else if result.Warning() != nil {
-		// Still track failed deletions in case we get a warning
-		if result.Action() == repository.FileActionDeleted {
-			r.failedDeletions = append(r.failedDeletions, result.Path())
+		// Track failed deletions/updates/renames with warnings — these still represent
+		// operations that did not fully succeed and may block parent folder removal.
+		// Non-failing warnings (e.g. missing/invalid folder metadata) are excluded
+		// because the underlying resource operation succeeded.
+		if !isNonFailingWarning(result.Warning()) {
+			if result.Action() == repository.FileActionDeleted {
+				r.failedDeletions = append(r.failedDeletions, result.Path())
+			}
+			if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
+				r.failedUpdates = append(r.failedUpdates, result.Path())
+				if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+					r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+				}
+			}
 		}
 
 		if reason := result.WarningReason(); reason != "" {
@@ -122,6 +145,10 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 
 	r.updateSummary(result)
 	r.mu.Unlock()
+
+	if r.metrics != nil {
+		r.metrics.RecordResourceOperation(r.action, result)
+	}
 
 	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
 	if shouldLogError {
@@ -146,6 +173,7 @@ func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 	r.errors = nil
 	r.failedCreations = nil
 	r.failedDeletions = nil
+	r.failedUpdates = nil
 
 	summaries := make(map[string]*provisioning.JobResourceSummary)
 	for k, summary := range r.summaries {
@@ -204,8 +232,13 @@ func (r *jobProgressRecorder) StrictMaxErrors(maxErrors int) {
 }
 
 func (r *jobProgressRecorder) TooManyErrors() error {
-	if r.maxErrors > 0 && r.errorCount >= r.maxErrors {
-		return fmt.Errorf("too many errors: %d", r.errorCount)
+	r.mu.RLock()
+	maxErrors := r.maxErrors
+	errorCount := r.errorCount
+	r.mu.RUnlock()
+
+	if maxErrors > 0 && errorCount >= maxErrors {
+		return fmt.Errorf("too many errors: %d", errorCount)
 	}
 
 	return nil
@@ -395,6 +428,34 @@ func (r *jobProgressRecorder) HasDirPathFailedDeletion(folderPath string) bool {
 
 	for _, failedDeletion := range r.failedDeletions {
 		if safepath.InDir(failedDeletion, folderPath) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasChildPathFailedCreation checks if any folder creation failed inside folderPath.
+// This is the descendant counterpart of HasDirPathFailedCreation (which checks ancestors).
+func (r *jobProgressRecorder) HasChildPathFailedCreation(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedCreation := range r.failedCreations {
+		if safepath.InDir(failedCreation, folderPath) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasChildPathFailedUpdate checks if any resource update failed inside folderPath.
+// Used to block old-folder deletion when child re-parenting (synthetic updates) fails.
+func (r *jobProgressRecorder) HasChildPathFailedUpdate(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedUpdate := range r.failedUpdates {
+		if safepath.InDir(failedUpdate, folderPath) {
 			return true
 		}
 	}

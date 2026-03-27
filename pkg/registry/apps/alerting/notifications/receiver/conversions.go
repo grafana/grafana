@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -75,6 +75,10 @@ func convertToK8sResource(
 	}
 
 	r := &model.Receiver{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(receiver.GetUID()), // This is needed to make PATCH work
 			Name:            receiver.GetUID(),

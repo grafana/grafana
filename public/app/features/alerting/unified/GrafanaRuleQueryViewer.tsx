@@ -6,7 +6,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, urlUtil } from '@
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
-import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
+import { Preview } from '@grafana/sql';
 import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 

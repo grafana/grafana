@@ -1,10 +1,10 @@
 import { config } from '@grafana/runtime';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { getSuggestedFieldsForLogs } from '../otel/formats';
 import { LogListModel } from '../panel/processing';
 
 import { FieldWithStats } from './FieldSelector';
+import { LOG_LINE_BODY_FIELD_NAME } from './logFields';
 
 /**
  *

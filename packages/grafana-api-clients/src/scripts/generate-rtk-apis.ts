@@ -111,6 +111,7 @@ const config: ConfigFile = {
     ...createAPIConfig('provisioning', 'v0alpha1'),
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
+    ...createAPIConfig('notifications.alerting', 'v1beta1'),
     ...createAPIConfig('rules.alerting', 'v0alpha1'),
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
     ...createAPIConfig('logsdrilldown', 'v1beta1'),

@@ -38,7 +38,7 @@ func (a *RoleBindingAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Ob
 	return a.beforeWrite(ctx, obj)
 }
 
-func (a *RoleBindingAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (a *RoleBindingAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return a.beforeWrite(ctx, obj)
 }
 
@@ -96,7 +96,7 @@ func (d *DenyCustomRoleRefsAuthorizer) BeforeCreate(ctx context.Context, obj run
 	return d.beforeWrite(ctx, obj)
 }
 
-func (d *DenyCustomRoleRefsAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (d *DenyCustomRoleRefsAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return d.beforeWrite(ctx, obj)
 }
 

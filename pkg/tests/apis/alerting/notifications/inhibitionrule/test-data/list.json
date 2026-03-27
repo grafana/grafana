@@ -1,13 +1,15 @@
 {
   "kind": "InhibitionRuleList",
-  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
   "metadata": {},
   "items": [
     {
+      "kind": "InhibitionRule",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "integration-test-imported-inhibition-rule-0",
         "namespace": "default",
-        "uid": "6l9FtSak11LLD4VZEKotOiV1sWRgt9W8ToWy2dWNLRQX",
+        "uid": "h0TQAizskYafx9XXyN4XeuE12Ua7r46FDTXu86hVOoIX",
         "resourceVersion": "fa1ddb8baf6c4173",
         "annotations": {
           "grafana.com/provenance": "converted_prometheus"
@@ -44,10 +46,12 @@
       }
     },
     {
+      "kind": "InhibitionRule",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "integration-test-imported-inhibition-rule-1",
         "namespace": "default",
-        "uid": "zZ7kSZEGBQGRuY74Qp0nJLg8fWXVWSAkPWKvQWbGXVAX",
+        "uid": "B08XJbB5wzcX0VG2yXuMGZvbmi3ENl4X7LJXKWhpB5sX",
         "resourceVersion": "b3e5c88931ea4509",
         "annotations": {
           "grafana.com/provenance": "converted_prometheus"

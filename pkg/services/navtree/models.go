@@ -18,6 +18,7 @@ const (
 	WeightExplore
 	WeightDrilldown
 	WeightAssistant
+	WeightSigil
 	WeightAlerting
 	WeightAlertsAndIncidents
 	WeightAIAndML

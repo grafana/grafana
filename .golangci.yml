@@ -196,15 +196,6 @@ linters:
               desc: Use github.com/google/uuid instead, which we already depend on.
             - pkg: github.com/bmizerany/assert
               desc: Use github.com/stretchr/testify/assert instead, which we already depend on.
-        promlib:
-          list-mode: lax
-          files:
-            - '**/pkg/promlib/**/*'
-          allow:
-            - github.com/grafana/grafana/pkg/promlib
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: promlib is not allowed to import grafana core
         storage-unified-apistore:
           list-mode: lax
           files:

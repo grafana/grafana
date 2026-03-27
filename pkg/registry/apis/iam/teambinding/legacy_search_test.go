@@ -148,8 +148,13 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		require.Contains(t, err.Error(), "invalid page number")
 	})
 
-	t.Run("should return error when page is less than 1", func(t *testing.T) {
-		mockStore := &mockLegacyStore{}
+	t.Run("should default page to 1 when less than 1", func(t *testing.T) {
+		mockStore := &mockLegacyStore{
+			listTeamBindingsFunc: func(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamBindingsQuery) (*legacy.ListTeamBindingsResult, error) {
+				require.Equal(t, int64(1), query.Pagination.Limit)
+				return &legacy.ListTeamBindingsResult{Bindings: []legacy.TeamMember{}}, nil
+			},
+		}
 		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -158,7 +163,8 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		})
 
 		req := &resourcepb.ResourceSearchRequest{
-			Page: 0,
+			Page:  0,
+			Limit: 1,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: "test-namespace",
@@ -175,9 +181,8 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 		}
 
 		resp, err := client.Search(ctx, req)
-		require.Error(t, err)
-		require.Nil(t, resp)
-		require.Contains(t, err.Error(), "invalid page number")
+		require.NoError(t, err)
+		require.NotNil(t, resp)
 	})
 
 	t.Run("should cap limit at 100", func(t *testing.T) {

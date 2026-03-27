@@ -29,7 +29,12 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'Respond with only the description of the dashboard.';
 
 export const GenAIDashDescriptionButton = ({ onGenerate }: GenAIDashDescriptionButtonProps) => {
-  const dashboard = getDashboardSrv().getCurrent()!;
+  const dashboard = getDashboardSrv().getCurrent();
+
+  if (!dashboard) {
+    return null;
+  }
+
   const panelStrings = getPanelStrings(dashboard);
 
   return (

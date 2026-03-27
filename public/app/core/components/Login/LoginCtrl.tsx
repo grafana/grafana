@@ -1,35 +1,19 @@
 import { memo, useState, useCallback, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
-import { FetchError, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 import config from 'app/core/config';
 
-import { LoginDTO, AuthNRedirectDTO } from './types';
+import { LoginDTO } from './types';
 
 const isOauthEnabled = () => {
   return !!config.oauth && Object.keys(config.oauth).length > 0;
-};
-
-const showPasswordlessConfirmation = () => {
-  const queryValues = locationService.getSearch();
-  return !!queryValues.get('code');
 };
 
 export interface FormModel {
   user: string;
   password: string;
   email: string;
-}
-
-export interface PasswordlessFormModel {
-  email: string;
-}
-
-export interface PasswordlessConfirmationFormModel {
-  code: string;
-  confirmationCode: string;
-  username?: string;
-  name?: string;
 }
 
 interface Props {
@@ -41,9 +25,6 @@ interface Props {
     isChangingPassword: boolean;
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
-    passwordlessStart: (data: PasswordlessFormModel) => void;
-    passwordlessConfirm: (data: PasswordlessConfirmationFormModel) => void;
-    showPasswordlessConfirmation: boolean;
     disableLoginForm: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
@@ -143,44 +124,6 @@ export const LoginCtrl = memo(({ resetCode, children }: Props) => {
     [toGrafana, changeView]
   );
 
-  const passwordlessStart = useCallback((formModel: PasswordlessFormModel) => {
-    setLoginErrorMessage(undefined);
-    setIsLoggingIn(true);
-
-    getBackendSrv()
-      .post<AuthNRedirectDTO>('/api/login/passwordless/start', formModel, { showErrorAlert: false })
-      .then((result) => {
-        window.location.assign(result.URL);
-        return;
-      })
-      .catch((err) => {
-        const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
-        setIsLoggingIn(false);
-        setLoginErrorMessage(fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'));
-      });
-  }, []);
-
-  const passwordlessConfirm = useCallback(
-    (formModel: PasswordlessConfirmationFormModel) => {
-      setLoginErrorMessage(undefined);
-      setIsLoggingIn(true);
-
-      getBackendSrv()
-        .post<LoginDTO>('/api/login/passwordless/authenticate', formModel, { showErrorAlert: false })
-        .then((result) => {
-          setResult(result);
-          toGrafana();
-          return;
-        })
-        .catch((err) => {
-          const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
-          setIsLoggingIn(false);
-          setLoginErrorMessage(fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'));
-        });
-    },
-    [toGrafana]
-  );
-
   const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
 
   return (
@@ -192,9 +135,6 @@ export const LoginCtrl = memo(({ resetCode, children }: Props) => {
         disableLoginForm,
         disableUserSignUp,
         login,
-        passwordlessStart,
-        passwordlessConfirm,
-        showPasswordlessConfirmation: showPasswordlessConfirmation(),
         isLoggingIn,
         changePassword,
         skipPasswordChange: toGrafana,

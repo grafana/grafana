@@ -87,7 +87,7 @@ export const ActionRow = ({
   const isFilteredByMe = state.createdBy === createdByMe;
 
   return (
-    <Stack justifyContent="space-between" alignItems="center">
+    <Stack justifyContent="space-between" alignItems="center" wrap={true}>
       <Stack alignItems="center">
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {config.featureToggles.panelTitleSearch && (
@@ -135,7 +135,7 @@ export const ActionRow = ({
         )}
       </Stack>
 
-      <Stack gap={2}>
+      <Stack gap={2} wrap={true}>
         {showLayout && (
           <RadioButtonGroup
             options={getLayoutOptions()}

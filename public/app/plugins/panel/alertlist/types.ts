@@ -1,3 +1,6 @@
+import { ThresholdsConfig, ThresholdsMode, ValueMapping } from '@grafana/data';
+import { BigValueColorMode } from '@grafana/ui';
+
 export enum SortOrder {
   AlphaAsc = 1,
   AlphaDesc,
@@ -40,4 +43,15 @@ export interface UnifiedAlertListOptions {
   datasource: string;
   viewMode: ViewMode;
   showInactiveAlerts: boolean;
+  statColorMode: BigValueColorMode;
+  statThresholds: ThresholdsConfig;
+  statValueMappings: ValueMapping[];
 }
+
+export const STAT_THRESHOLDS_DEFAULT: ThresholdsConfig = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 80, color: 'red' },
+  ],
+};

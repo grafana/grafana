@@ -4,15 +4,15 @@ import { memo, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Props, StatsPicker } from './StatsPicker';
+import { StatsPickerProps, StatsPicker } from './StatsPicker';
 
-const WrapperWithState = memo<Props>(({ placeholder, allowMultiple, menuPlacement, width }) => {
+const WrapperWithState = memo<StatsPickerProps>(({ placeholder, allowMultiple, width }) => {
   const [stats, setStats] = useState<string[]>([]);
 
   return (
     <Field label="Pick stats">
       <StatsPicker
-        inputId="stats-picker"
+        id="stats-picker"
         placeholder={placeholder}
         allowMultiple={allowMultiple}
         stats={stats}
@@ -20,7 +20,6 @@ const WrapperWithState = memo<Props>(({ placeholder, allowMultiple, menuPlacemen
           action('Picked:')(newStats);
           setStats(newStats);
         }}
-        menuPlacement={menuPlacement}
         width={width}
       />
     </Field>
@@ -34,7 +33,7 @@ const meta: Meta<typeof StatsPicker> = {
   component: StatsPicker,
   parameters: {
     controls: {
-      exclude: ['onChange', 'stats', 'defaultStat', 'className'],
+      exclude: ['onChange', 'stats', 'defaultStat'],
     },
   },
 };
@@ -49,7 +48,6 @@ export const Picker: StoryFn<typeof StatsPicker> = (args) => {
 Picker.args = {
   placeholder: 'placeholder',
   allowMultiple: false,
-  menuPlacement: 'auto',
   width: 10,
 };
 

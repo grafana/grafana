@@ -26,4 +26,7 @@ AND p.scope = {{ .Arg (index .Query.Scopes 0) }}
 {{ else if gt (len .Query.Scopes) 1 }}
 AND p.scope IN ({{ .ArgList .Query.Scopes }})
 {{ end }}
+{{ if .Query.SubjectUID }}
+AND (u.uid = {{ .Arg .Query.SubjectUID }} OR t.uid = {{ .Arg .Query.SubjectUID }} OR br.role = {{ .Arg .Query.SubjectUID }})
+{{ end }}
 ORDER BY p.scope

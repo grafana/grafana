@@ -75,6 +75,34 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
 	})
 
+	t.Run("should override allow_embedding_hosts from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			AllowEmbeddingHosts: nil,
+		}
+
+		iniFile := ini.Empty()
+		securitySection, _ := iniFile.NewSection("security")
+		_, _ = securitySection.NewKey("allow_embedding_hosts", "wiki.example.com foo.example.com")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"wiki.example.com", "foo.example.com"}, config.AllowEmbeddingHosts)
+	})
+
+	t.Run("should override allow_embedding_hosts with wildcard from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			AllowEmbeddingHosts: nil,
+		}
+
+		iniFile := ini.Empty()
+		securitySection, _ := iniFile.NewSection("security")
+		_, _ = securitySection.NewKey("allow_embedding_hosts", "*")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"*"}, config.AllowEmbeddingHosts)
+	})
+
 	t.Run("should apply multiple CSP overrides at once", func(t *testing.T) {
 		config := FSRequestConfig{
 			FSFrontendSettings: FSFrontendSettings{

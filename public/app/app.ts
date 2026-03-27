@@ -43,6 +43,7 @@ import {
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
+  getPanelPluginMetas,
   initOpenFeature,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
@@ -261,6 +262,7 @@ export class GrafanaApp {
       }
 
       getPluginExtensionRegistries();
+      await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);

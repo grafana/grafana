@@ -298,6 +298,8 @@ export interface Spec {
 	translations?: Record<string, string>;
 	// +listType=atomic
 	children?: string[];
+	// +listType=atomic
+	aliasIds?: string[];
 }
 
 export const defaultSpec = (): Spec => ({

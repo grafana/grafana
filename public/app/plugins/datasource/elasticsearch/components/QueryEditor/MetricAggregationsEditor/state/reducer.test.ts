@@ -260,7 +260,7 @@ describe('Metric Aggregations Reducer', () => {
 
       reducerTester<ElasticsearchDataQuery['metrics']>()
         .givenReducer(reducer, initialState)
-        .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+        .whenActionIsDispatched(changeEditorTypeAndResetQuery({ editorType: 'code', queryType: 'dsl' }))
         .thenStateShouldEqual([defaultMetricAgg('1')]);
     });
   });

@@ -38,10 +38,12 @@ export interface SearchQuery {
   withAllowedActions?: boolean;
   accessInfo?: boolean;
   limit?: number;
+  // Used for pagination. See also offset param.
   from?: number;
   starred?: boolean;
   permission?: PermissionLevel;
   deleted?: boolean;
+  // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
   offset?: number;
 }
 

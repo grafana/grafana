@@ -212,14 +212,12 @@ export function preparePlotData2(
       let firstVal = vals[firstValIdx];
       vals = Array(vals.length).fill(undefined);
       vals[firstValIdx] = firstVal;
-    } else {
+    } else if (custom.transform === GraphTransform.NegativeY) {
       vals = vals.slice();
 
-      if (custom.transform === GraphTransform.NegativeY) {
-        for (let i = 0; i < vals.length; i++) {
-          if (vals[i] != null) {
-            vals[i] *= -1;
-          }
+      for (let i = 0; i < vals.length; i++) {
+        if (vals[i] != null) {
+          vals[i] *= -1;
         }
       }
     }

@@ -13,7 +13,8 @@ import { DashboardModel } from '../../state/DashboardModel';
 const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
   // Skip the watcher logic for this save since it's handled by the hook
   dashboardWatcher.ignoreNextSave();
-  return await getDashboardAPI().restoreDashboardVersion(dashboard.uid, version);
+  const api = await getDashboardAPI();
+  return await api.restoreDashboardVersion(dashboard.uid, version);
 };
 
 export const useDashboardRestore = (id: number, version: number) => {

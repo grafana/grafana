@@ -627,6 +627,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAdhocVariableSpec(ref common.Re
 							Format:  "",
 						},
 					},
+					"enableGroupBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the group-by operator is enabled in the ad hoc filter combobox.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"name", "baseFilters", "filters", "defaultKeys", "hide", "skipUrlSync", "allowCustomValue"},
 			},
@@ -3028,6 +3035,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardMatcherConfig(ref common.Refere
 						SchemaProps: spec.SchemaProps{
 							Description: "The matcher id. This is used to find the matcher implementation from registry.",
 							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If set, limits this matcher to fields of that type. If not set, \"series\" mode is used.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

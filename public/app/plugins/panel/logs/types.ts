@@ -1,3 +1,4 @@
+import type { Grammar } from 'prismjs';
 import React, { ReactNode } from 'react';
 
 import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
@@ -73,4 +74,8 @@ export function isCoreApp(app: unknown): app is CoreApp {
 
 export function isLogLineMenuCustomItems(items: unknown): items is LogLineMenuCustomItem[] {
   return Array.isArray(items) && items.every((item) => 'divider' in item || ('onClick' in item && 'label' in item));
+}
+
+export function isGrammar(grammar: unknown): grammar is Grammar {
+  return grammar != null && typeof grammar === 'object' && !Array.isArray(grammar);
 }

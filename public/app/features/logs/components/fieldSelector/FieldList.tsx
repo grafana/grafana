@@ -12,12 +12,23 @@ interface Props {
   activeFields: string[];
   clear: () => void;
   fields: FieldWithStats[];
+  logLevelActive?: boolean;
   reorder: (columns: string[]) => void;
   suggestedFields: FieldWithStats[];
   toggle: (columnName: string) => void;
+  toggleLevel?: () => void;
 }
 
-export const FieldList = ({ activeFields, clear, fields, reorder, suggestedFields, toggle }: Props) => {
+export const FieldList = ({
+  activeFields,
+  clear,
+  fields,
+  logLevelActive,
+  reorder,
+  suggestedFields,
+  toggle,
+  toggleLevel,
+}: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -29,9 +40,11 @@ export const FieldList = ({ activeFields, clear, fields, reorder, suggestedField
           activeFields={activeFields}
           clear={clear}
           fields={fields}
+          logLevelActive={logLevelActive}
           reorder={reorder}
           suggestedFields={suggestedFields}
           toggle={toggle}
+          toggleLevel={toggleLevel}
         />
 
         <div className={styles.columnHeader}>

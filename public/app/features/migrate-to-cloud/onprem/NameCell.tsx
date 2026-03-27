@@ -5,7 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 import {
   useGetDashboardByUidQuery,
   useGetLibraryElementByUidQuery,
-} from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

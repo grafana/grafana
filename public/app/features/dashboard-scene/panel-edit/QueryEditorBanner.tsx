@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Icon, IconButton, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_BANNER_FEEDBACK_URL, getQueryEditorBannerColors } from './PanelEditNext/constants';
-import { trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
+import { getQueryEditorBannerColors } from './PanelEditNext/constants';
+import { startIntercomSurvey, trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
 
 interface Props {
   useQueryExperienceNext: boolean;
@@ -40,21 +40,30 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
       </div>
       <div className={styles.right}>
         {useQueryExperienceNext && (
-          <LinkButton
+          <Button
             variant="primary"
             fill="text"
             size="sm"
-            icon="external-link-alt"
-            href={QUERY_EDITOR_BANNER_FEEDBACK_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={trackFeedbackClick}
+            icon="comment-alt-message"
+            onClick={() => {
+              trackFeedbackClick();
+              startIntercomSurvey();
+            }}
           >
             {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
-          </LinkButton>
+          </Button>
         )}
         {useQueryExperienceNext ? (
-          <Button variant="secondary" fill="text" size="sm" icon="arrow-left" onClick={onToggle}>
+          <Button
+            variant="secondary"
+            fill="text"
+            size="sm"
+            icon="arrow-left"
+            onClick={() => {
+              startIntercomSurvey();
+              onToggle();
+            }}
+          >
             {t('dashboard-scene.query-editor-banner.go-back', 'Back to classic')}
           </Button>
         ) : (

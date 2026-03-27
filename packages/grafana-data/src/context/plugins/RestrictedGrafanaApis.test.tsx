@@ -15,6 +15,7 @@ const mockAlertRuleFormSchema = {
 const mockDashboardMutationAPI = {
   execute: jest.fn(async () => ({ success: true, changes: [] })),
   getPayloadSchema: jest.fn(() => null),
+  getAvailableCommands: jest.fn(() => []),
 };
 
 describe('RestrictedGrafanaApis', () => {

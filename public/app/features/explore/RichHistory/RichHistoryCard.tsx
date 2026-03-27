@@ -198,7 +198,6 @@ export function RichHistoryCard(props: Props) {
             'Are you sure you want to permanently delete your starred query?'
           ),
           yesText: t('explore.rich-history-card.confirm-delete', 'Delete'),
-          icon: 'trash-alt',
           onConfirm: () => performDelete(queryHistoryItem.id),
         })
       );

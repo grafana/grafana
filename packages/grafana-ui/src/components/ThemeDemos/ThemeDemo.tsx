@@ -3,7 +3,14 @@ import { css, cx } from '@emotion/css';
 import { useId, useState } from 'react';
 import * as React from 'react';
 
-import { colorManipulator, GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
+import {
+  colorManipulator,
+  FieldColorModeId,
+  fieldColorModeRegistry,
+  GrafanaTheme2,
+  ThemeRichColor,
+  ThemeVizHue,
+} from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { allButtonVariants, Button } from '../Button/Button';
@@ -77,6 +84,14 @@ export const ThemeDemo = () => {
   const inlineId = useId();
   const inlineDisabledId = useId();
 
+  const getColors = (mode: FieldColorModeId) => {
+    const modeInstance = fieldColorModeRegistry.get(mode);
+    if (!modeInstance || !modeInstance.getColors) {
+      return [];
+    }
+    return modeInstance.getColors(t).map((colorName) => t.visualization.getColorByName(colorName));
+  };
+
   const richColors = [
     t.colors.primary,
     t.colors.secondary,
@@ -87,6 +102,15 @@ export const ThemeDemo = () => {
   ];
 
   const vizColors = t.visualization.hues;
+
+  const classicPalette = getColors(FieldColorModeId.PaletteClassic);
+  const continuousPalettes = [
+    getColors(FieldColorModeId.ContinuousGrYlRd),
+    getColors(FieldColorModeId.ContinuousBlYlRd),
+    getColors(FieldColorModeId.ContinuousYlRd),
+    getColors(FieldColorModeId.ContinuousBlPu),
+    getColors(FieldColorModeId.ContinuousYlBl),
+  ];
 
   const selectOptions = [
     { label: 'Item 1', value: 'Item 1' },
@@ -175,6 +199,24 @@ export const ThemeDemo = () => {
                 ))}
               </tbody>
             </table>
+          </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Palettes" isOpen={true}>
+          <DemoBox bg="primary" scrollable>
+            <Stack direction="column">
+              <Stack gap={0}>
+                {classicPalette.map((color) => {
+                  return <div style={{ backgroundColor: color, height: '40px', flex: 1 }} key={color} />;
+                })}
+              </Stack>
+              {continuousPalettes.map((palette, index) => (
+                <Stack key={index} gap={0}>
+                  <div
+                    style={{ background: `linear-gradient(90deg, ${palette.join(', ')} )`, height: '40px', flex: 1 }}
+                  />
+                </Stack>
+              ))}
+            </Stack>
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Forms" isOpen={true}>

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"regexp"
-	"sort"
 
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -14,8 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -35,6 +34,13 @@ var (
 	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
 	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
 	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
+
+	userSortFieldMapping = map[string]string{
+		fieldLastSeenAt:             "lastSeenAtAge",
+		resource.SEARCH_FIELD_TITLE: "name",
+		fieldLogin:                  "login",
+		fieldEmail:                  "email",
+	}
 )
 
 // UserLegacySearchClient is a client for searching for users in the legacy search engine.
@@ -84,7 +90,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		req.Page = 1
 	}
 
-	legacySortOptions := convertToSortOptions(req.SortBy)
+	legacySortOptions := legacysort.ConvertToSortOptions(req.SortBy, userSortFieldMapping, sortopts.SortOptionsByQueryParam)
 
 	query := &org.SearchOrgUsersQuery{
 		OrgID:    signedInUser.GetOrgID(),
@@ -222,36 +228,4 @@ func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 		}
 	}
 	return cells
-}
-
-func convertToSortOptions(sortBy []*resourcepb.ResourceSearchRequest_Sort) []model.SortOption {
-	opts := []model.SortOption{}
-	for _, s := range sortBy {
-		field := s.Field
-		// Handle mapping if necessary
-		switch field {
-		case fieldLastSeenAt:
-			field = "lastSeenAtAge"
-		case resource.SEARCH_FIELD_TITLE:
-			field = "name"
-		case fieldLogin:
-			field = "login"
-		case fieldEmail:
-			field = "email"
-		}
-
-		suffix := "asc"
-		if s.Desc {
-			suffix = "desc"
-		}
-		key := fmt.Sprintf("%s-%s", field, suffix)
-
-		if opt, ok := sortopts.SortOptionsByQueryParam[key]; ok {
-			opts = append(opts, opt)
-		}
-	}
-	sort.Slice(opts, func(i, j int) bool {
-		return opts[i].Index < opts[j].Index || (opts[i].Index == opts[j].Index && opts[i].Name < opts[j].Name)
-	})
-	return opts
 }

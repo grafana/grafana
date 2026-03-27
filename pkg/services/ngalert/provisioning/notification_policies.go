@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -15,6 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type managedRoutesService interface {
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
+}
+
 type NotificationPolicyService struct {
 	configStore     alertmanagerConfigStore
 	provenanceStore ProvisioningStore
@@ -22,10 +27,11 @@ type NotificationPolicyService struct {
 	log             log.Logger
 	settings        setting.UnifiedAlertingSettings
 	validator       validation.ProvenanceStatusTransitionValidator
+	routeService    managedRoutesService
 }
 
 func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningStore,
-	xact TransactionManager, settings setting.UnifiedAlertingSettings, log log.Logger) *NotificationPolicyService {
+	xact TransactionManager, routeService managedRoutesService, settings setting.UnifiedAlertingSettings, log log.Logger) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		configStore:     am,
 		provenanceStore: prov,
@@ -33,6 +39,7 @@ func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningS
 		log:             log,
 		settings:        settings,
 		validator:       validation.ValidateProvenanceRelaxed,
+		routeService:    routeService,
 	}
 }
 
@@ -164,4 +171,10 @@ func (nps *NotificationPolicyService) checkOptimisticConcurrency(current definit
 		return ErrVersionConflict.Errorf("provided version %s of routing tree does not match current version %s", desiredVersion, currentVersion)
 	}
 	return nil
+}
+
+// GetManagedRoute returns managed route by name.
+func (nps *NotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+	// This is a workaround for exporting managed routes to include provisioning permissions to access authorization.
+	return nps.routeService.GetManagedRoute(ctx, orgID, name, user)
 }

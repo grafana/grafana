@@ -10,7 +10,6 @@ import {
   DataFrameType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { commonOptionsBuilder, getGraphFieldOptions, LegendDisplayMode } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';
 
@@ -78,7 +77,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .useFieldConfig({
     standardOptions: {

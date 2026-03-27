@@ -9,9 +9,9 @@ GlobalRoleSpec: {
 	}
 
 	// Display name of the role
-	title: string
+	title:       string
 	description: string
-	group: string
+	group:       string
 
 	// Permissions for this role
 	permissions?: [...#Permission]

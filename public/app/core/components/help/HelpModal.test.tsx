@@ -24,6 +24,7 @@ describe('useShortcuts', () => {
 
   it('should return shortcuts without assistant shortcut when assistant is not available', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       toggleAssistant: jest.fn(),
     } as unknown as ReturnType<typeof useAssistant>);
@@ -42,6 +43,7 @@ describe('useShortcuts', () => {
 
   it('should return shortcuts with assistant shortcut when assistant is available', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -63,6 +65,7 @@ describe('useShortcuts', () => {
 
   it('should include all expected shortcut categories', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -85,6 +88,7 @@ describe('useShortcuts', () => {
 
   it('should use the correct modKey in shortcuts', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -105,6 +109,7 @@ describe('useShortcuts', () => {
 
   it('should memoize results when dependencies do not change', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -123,6 +128,7 @@ describe('useShortcuts', () => {
 
   it('should update when assistant availability changes', () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -134,6 +140,7 @@ describe('useShortcuts', () => {
 
     // Change assistant availability
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -153,6 +160,7 @@ describe('useShortcuts', () => {
   describe('time range zoom shortcuts with feature toggle', () => {
     beforeEach(() => {
       mockUseAssistant.mockReturnValue({
+        isLoading: false,
         isAvailable: false,
         openAssistant: jest.fn(),
         closeAssistant: jest.fn(),

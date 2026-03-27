@@ -239,7 +239,7 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 	kindRepository := provisioningv1.GROUP + "/" + provisioningv1.RepositoryResourceInfo.GroupResource().Resource
 	kindPlaylist := playlistv1.APIGroup + "/playlists"
 	unifiedKinds := []string{kindRepository}
-	if ss.cfg.UnifiedStorageConfig(setting.PlaylistResource).DualWriterMode >= rest.Mode3 {
+	if ss.cfg.UnifiedStorageConfig(setting.PlaylistResource).DualWriterMode >= rest.Mode4 {
 		unifiedKinds = append(unifiedKinds, kindPlaylist)
 	}
 

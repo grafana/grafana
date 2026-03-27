@@ -49,7 +49,7 @@ export const DashboardFiltersOverview = ({
   });
 
   if (!hasAdhocFilters) {
-    return <div>{t('dashboard.filters-overview.missing-adhoc', 'No ad hoc filters available')}</div>;
+    return <div>{t('dashboard.filters-overview.missing-adhoc', 'No filters available')}</div>;
   }
 
   if (loading) {

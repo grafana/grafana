@@ -1,0 +1,6 @@
+package v1beta1
+
+const InternalPrefix = "grafana.com/"
+const ProvenanceStatusAnnotationKey = InternalPrefix + "provenance"
+const ProvenanceStatusNone = "none"
+const CanUseAnnotationKey = InternalPrefix + "canUse"

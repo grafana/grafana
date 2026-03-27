@@ -261,22 +261,17 @@ func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 
 	deadline := time.Now().Add(20 * time.Second)
 	for {
-		conn, err := net.DialTimeout("tcp", testServer.grpcAddress, 1*time.Second)
-		if err == nil {
-			_ = conn.Close()
+		res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
+		if err == nil && res.Status == grpc_health_v1.HealthCheckResponse_SERVING {
 			break
 		}
 
 		if time.Now().After(deadline) {
-			t.Fatal("server failed to become ready: ", testServer.id)
+			t.Fatal("server failed to become healthy: ", testServer.id)
 		}
 
 		time.Sleep(1 * time.Second)
 	}
-
-	res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
-	require.NoError(t, err)
-	require.Equal(t, res.Status, grpc_health_v1.HealthCheckResponse_SERVING)
 }
 
 type testModuleServer struct {
@@ -403,6 +398,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
+	cfg.DisablePruner = dbType == "sqlite3"
 	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer, false)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)

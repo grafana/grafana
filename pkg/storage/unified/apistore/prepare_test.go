@@ -3,6 +3,7 @@ package apistore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"math/rand/v2"
 	"strings"
 	"testing"
@@ -16,10 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -401,6 +403,256 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	meta, err := utils.MetaAccessor(out)
 	require.NoError(t, err)
 	return meta
+}
+
+func failingDynClient(err error) func(context.Context) (dynamic.Interface, error) {
+	return func(context.Context) (dynamic.Interface, error) { return nil, err }
+}
+
+func TestEnsureRepoManagedByParentFolder(t *testing.T) {
+	makeDashboard := func(t *testing.T, folder string, mgr *utils.ManagerProperties) utils.GrafanaMetaAccessor {
+		t.Helper()
+		obj := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-dash", Namespace: "default"}}
+		acc, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		if folder != "" {
+			acc.SetFolder(folder)
+		}
+		if mgr != nil {
+			acc.SetManagerProperties(*mgr)
+		}
+		return acc
+	}
+
+	t.Run("skips when folder support is disabled", func(t *testing.T) {
+		s := &Storage{opts: StorageOptions{EnableFolderSupport: false}}
+		obj := makeDashboard(t, "some-folder", nil)
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+	})
+
+	t.Run("skips when folder annotation is empty", func(t *testing.T) {
+		s := &Storage{opts: StorageOptions{EnableFolderSupport: true}}
+		obj := makeDashboard(t, "", nil)
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+	})
+
+	t.Run("skips when getDynClient is nil", func(t *testing.T) {
+		s := &Storage{opts: StorageOptions{EnableFolderSupport: true}}
+		obj := makeDashboard(t, "some-folder", nil)
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+	})
+
+	t.Run("returns error when folder read fails", func(t *testing.T) {
+		s := &Storage{
+			opts:         StorageOptions{EnableFolderSupport: true},
+			getDynClient: failingDynClient(errors.New("rest config unavailable")),
+		}
+		obj := makeDashboard(t, "some-folder", nil)
+		err := s.ensureRepoManagedByParentFolder(context.Background(), obj)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "rest config unavailable")
+	})
+
+	t.Run("create: dashboard in folder works when getDynClient is nil", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:        dashv1.DashboardResourceInfo.GroupResource(),
+			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake: node,
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash-in-folder"}}
+		meta, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		meta.SetFolder("my-folder")
+
+		_, err = s.prepareObjectForStorage(ctx, dash)
+		require.NoError(t, err, "create should succeed when getDynClient is nil")
+	})
+
+	t.Run("create: fails when folder read fails", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:           dashv1.DashboardResourceInfo.GroupResource(),
+			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake:    node,
+			getDynClient: failingDynClient(errors.New("no config")),
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash-in-folder"}}
+		meta, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		meta.SetFolder("my-folder")
+
+		_, err = s.prepareObjectForStorage(ctx, dash)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "no config")
+	})
+
+	t.Run("update: manager removal in same folder triggers check", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:           dashv1.DashboardResourceInfo.GroupResource(),
+			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake:    node,
+			getDynClient: failingDynClient(errors.New("no config")),
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name: "dash",
+			Annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+				utils.AnnoKeyManagerIdentity: "my-kubectl",
+			},
+		}}
+		oldMeta, err := utils.MetaAccessor(oldDash)
+		require.NoError(t, err)
+		oldMeta.SetFolder("same-folder")
+
+		newDash := oldDash.DeepCopy()
+		newMeta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		newMeta.SetAnnotation(utils.AnnoKeyManagerKind, "")
+		newMeta.SetAnnotation(utils.AnnoKeyManagerIdentity, "")
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.Error(t, err, "manager removal in managed folder should be blocked")
+		require.ErrorContains(t, err, "no config")
+	})
+
+	t.Run("update: manager addition in same folder triggers check", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:           dashv1.DashboardResourceInfo.GroupResource(),
+			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake:    node,
+			getDynClient: failingDynClient(errors.New("no config")),
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldMeta, err := utils.MetaAccessor(oldDash)
+		require.NoError(t, err)
+		oldMeta.SetFolder("same-folder")
+
+		newDash := oldDash.DeepCopy()
+		newMeta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		newMeta.SetAnnotation(utils.AnnoKeyManagerKind, string(utils.ManagerKindKubectl))
+		newMeta.SetAnnotation(utils.AnnoKeyManagerIdentity, "my-kubectl")
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.Error(t, err, "manager addition in same folder should trigger folder check")
+		require.ErrorContains(t, err, "no config")
+	})
+
+	t.Run("update: no manager change in same folder skips check", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:        dashv1.DashboardResourceInfo.GroupResource(),
+			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake: node,
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldMeta, err := utils.MetaAccessor(oldDash)
+		require.NoError(t, err)
+		oldMeta.SetFolder("same-folder")
+
+		newDash := oldDash.DeepCopy()
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.NoError(t, err, "same manager and folder should not trigger folder check")
+	})
+
+	t.Run("update: folder change fails when folder read fails", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:           dashv1.DashboardResourceInfo.GroupResource(),
+			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake:    node,
+			getDynClient: failingDynClient(errors.New("no config")),
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldMeta, err := utils.MetaAccessor(oldDash)
+		require.NoError(t, err)
+		oldMeta.SetFolder("folder-a")
+
+		newDash := oldDash.DeepCopy()
+		newMeta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		newMeta.SetFolder("folder-b")
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "no config")
+	})
 }
 
 func TestPrepareLargeObjectForStorage(t *testing.T) {

@@ -14,16 +14,15 @@ interface ModalTab {
 }
 
 interface Props {
-  icon: IconName;
   title: string;
   tabs: ModalTab[];
   activeTab: string;
   onChangeTab(tab: ModalTab): void;
 }
 
-export const ModalTabsHeader = ({ icon, title, tabs, activeTab, onChangeTab }: Props) => {
+export const ModalTabsHeader = ({ title, tabs, activeTab, onChangeTab }: Props) => {
   return (
-    <ModalHeader icon={icon} title={title}>
+    <ModalHeader title={title}>
       <TabsBar hideBorder={true}>
         {tabs.map((t, index) => {
           return (

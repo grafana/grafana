@@ -18,7 +18,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 //go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go
@@ -40,8 +39,13 @@ var client = &http.Client{
 // It validates the user and dashboard exist before creating the snapshot.
 // This mode supports both local and external snapshots.
 func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSharingOptions, cmd CreateDashboardSnapshotCommand, svc Service) {
+	// perform all validations in the beginning
 	if !cfg.SnapshotsEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+		return
+	}
+	if cmd.External && !cfg.ExternalEnabled {
+		c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 		return
 	}
 
@@ -67,19 +71,9 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 	cmd.OrgID = user.GetOrgID()
 	cmd.UserID, _ = identity.UserIdentifier(user.GetID())
 
-	if cmd.Name == "" {
-		cmd.Name = "Unnamed snapshot"
-	}
-
 	var snapshotURL string
 
 	if cmd.External {
-		// Handle external snapshot creation
-		if !cfg.ExternalEnabled {
-			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
-			return
-		}
-
 		resp, err := createExternalDashboardSnapshot(cmd, cfg.ExternalSnapshotURL)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
@@ -96,13 +90,13 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 		metrics.MApiDashboardSnapshotExternal.Inc()
 	} else {
 		// Handle local snapshot creation
-		originalDashboardURL, err := createOriginalDashboardURL(&cmd)
+		originalDashboardURL, err := CreateOriginalDashboardURL(&cmd)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)
 			return
 		}
 
-		snapshotURL, err = prepareLocalSnapshot(&cmd, originalDashboardURL)
+		snapshotURL, err = PrepareLocalSnapshot(&cmd, originalDashboardURL)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
 			return
@@ -123,11 +117,7 @@ func CreateDashboardSnapshotPublic(c *contextmodel.ReqContext, cfg snapshot.Snap
 		return
 	}
 
-	if cmd.Name == "" {
-		cmd.Name = "Unnamed snapshot"
-	}
-
-	snapshotURL, err := prepareLocalSnapshot(&cmd, "")
+	snapshotURL, err := PrepareLocalSnapshot(&cmd, "")
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
 		return
@@ -136,29 +126,6 @@ func CreateDashboardSnapshotPublic(c *contextmodel.ReqContext, cfg snapshot.Snap
 	metrics.MApiDashboardSnapshotCreate.Inc()
 
 	saveAndRespond(c, svc, cmd, snapshotURL)
-}
-
-// prepareLocalSnapshot prepares the command for a local snapshot and returns the snapshot URL.
-func prepareLocalSnapshot(cmd *CreateDashboardSnapshotCommand, originalDashboardURL string) (string, error) {
-	cmd.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
-
-	if cmd.Key == "" {
-		key, err := util.GetRandomString(32)
-		if err != nil {
-			return "", err
-		}
-		cmd.Key = key
-	}
-
-	if cmd.DeleteKey == "" {
-		deleteKey, err := util.GetRandomString(32)
-		if err != nil {
-			return "", err
-		}
-		cmd.DeleteKey = deleteKey
-	}
-
-	return setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key), nil
 }
 
 // saveAndRespond saves the snapshot and sends the response.
@@ -213,8 +180,14 @@ func DeleteExternalDashboardSnapshot(externalUrl string) error {
 
 func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externalSnapshotUrl string) (*CreateExternalSnapshotResponse, error) {
 	var createSnapshotResponse CreateExternalSnapshotResponse
+
+	name := cmd.Name
+	if name == "" {
+		name = "Unnamed snapshot"
+	}
+
 	message := map[string]any{
-		"name":      cmd.Name,
+		"name":      name,
 		"expires":   cmd.Expires,
 		"dashboard": cmd.Dashboard,
 		"key":       cmd.Key,
@@ -245,15 +218,6 @@ func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externa
 	}
 
 	return &createSnapshotResponse, nil
-}
-
-func createOriginalDashboardURL(cmd *CreateDashboardSnapshotCommand) (string, error) {
-	dashUID := cmd.Dashboard.GetNestedString("uid")
-	if ok := util.IsValidShortUID(dashUID); !ok {
-		return "", fmt.Errorf("invalid dashboard UID")
-	}
-
-	return fmt.Sprintf("/d/%v", dashUID), nil
 }
 
 func DeleteWithKey(ctx context.Context, key string, svc Service) error {

@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react';
+import { act, cleanup } from '@testing-library/react';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -147,6 +147,18 @@ describe('setRedirectEnabled', () => {
     await enterEditMode(dashboardScene);
     act(() => {
       dashboardScene.exitEditMode({ skipConfirm: true });
+    });
+
+    expect(spy).toHaveBeenCalledWith(true);
+  });
+
+  it('Re-enables redirects when component unmounts while still in edit mode', async () => {
+    await enterEditMode(dashboardScene);
+
+    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
+
+    act(() => {
+      cleanup();
     });
 
     expect(spy).toHaveBeenCalledWith(true);

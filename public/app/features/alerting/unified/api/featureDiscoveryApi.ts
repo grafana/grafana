@@ -26,6 +26,7 @@ export interface RulesSourceFeatures {
 export const featureDiscoveryApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     discoverAmFeatures: build.query<AlertmanagerApiFeatures, { amSourceName: string }>({
+      keepUnusedDataFor: 3600,
       queryFn: async ({ amSourceName }) => {
         try {
           const amFeatures = await discoverAlertmanagerFeatures(amSourceName);
@@ -37,6 +38,7 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
     }),
 
     discoverDsFeatures: build.query<RulesSourceFeatures, { rulesSourceName: string } | { uid: RulesSourceUid }>({
+      keepUnusedDataFor: 3600,
       queryFn: async (rulesSourceIdentifier) => {
         const dataSourceUID = getDataSourceUID(rulesSourceIdentifier);
         if (!dataSourceUID) {

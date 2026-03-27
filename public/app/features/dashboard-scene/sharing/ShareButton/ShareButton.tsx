@@ -20,7 +20,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
 
-  const [_, buildUrl] = useAsyncFn(async () => {
+  const [{ loading }, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
     await buildShareUrl(dashboard, panel);
   }, [dashboard, panel]);
@@ -42,6 +42,8 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
         size="sm"
         tooltip={t('share-dashboard.share-button-tooltip', 'Copy link')}
         onClick={buildUrl}
+        icon={loading ? 'spinner' : undefined}
+        disabled={loading}
       >
         <Trans i18nKey="share-dashboard.share-button">Share</Trans>
       </Button>

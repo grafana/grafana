@@ -194,7 +194,7 @@ describe('Bucket Aggregations Reducer', () => {
 
       reducerTester<ElasticsearchDataQuery['bucketAggs']>()
         .givenReducer(createReducer(defaultTimeField), initialState)
-        .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+        .whenActionIsDispatched(changeEditorTypeAndResetQuery({ editorType: 'code', queryType: 'dsl' }))
         .thenStateShouldEqual([{ ...defaultBucketAgg('2'), field: defaultTimeField }]);
     });
   });

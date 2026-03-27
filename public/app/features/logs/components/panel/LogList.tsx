@@ -164,7 +164,7 @@ export const LogList = ({
   setDisplayedFields,
   showControls,
   showFieldSelector,
-  showLevel = true,
+  showLevel,
   showLogAttributes,
   showTime,
   showUniqueLabels,
@@ -185,6 +185,7 @@ export const LogList = ({
       filterLevels={filterLevels}
       fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
+      isCustomGrammar={grammar !== undefined}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}
@@ -521,7 +522,6 @@ const LogListComponent = ({
               </>
             }
             confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
-            icon="exclamation-triangle"
             onConfirm={onDisableConfirm}
             onDismiss={onDisableCancel}
           />
@@ -550,11 +550,9 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
-                detailsMode,
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
-                showDetails,
                 showTime,
                 wrap: wrapLogMessage,
               })}

@@ -1007,18 +1007,6 @@ func TestService_Check(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name: "should error if an unknown group is provided",
-			req: &authzv1.CheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "unknown.grafana.app",
-				Resource:  "unknown",
-				Verb:      "get",
-				Name:      "u1",
-			},
-			expectErr: true,
-		},
-		{
 			name: "should error if an unknown verb is provided",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -1264,7 +1252,9 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "should deny rendering access to another app resources",
+			// Unregistered groups fall back to the K8s-native mapping. The renderer has no
+			// permissions for K8s-native actions, so the check is denied without an error.
+			name: "should deny rendering access to unregistered app resources",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
 				Subject:   "render:0",
@@ -1273,8 +1263,7 @@ func TestService_Check(t *testing.T) {
 				Verb:      "get",
 				Name:      "dash1",
 			},
-			expected:  false,
-			expectErr: true,
+			expected: false,
 		},
 	}
 	t.Run("Rendering permission check", func(t *testing.T) {
@@ -1292,6 +1281,102 @@ func TestService_Check(t *testing.T) {
 				assert.Equal(t, tc.expected, resp.Allowed)
 			})
 		}
+	})
+}
+
+func TestService_K8sNativeFallback(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	setup := func(permissions []accesscontrol.Permission) *Service {
+		s := setupService()
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fStore := &fakeStore{userID: userID, userPermissions: permissions}
+		s.store = fStore
+		s.permissionStore = fStore
+		s.identityStore = &fakeIdentityStore{}
+		return s
+	}
+
+	ctx := types.WithAuthInfo(context.Background(), callingService)
+
+	t.Run("Check: unregistered group denied when no permissions", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{})
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+			Name:      "w1",
+		})
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed)
+	})
+
+	t.Run("Check: unregistered group allowed with K8s-native action", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w1"},
+		})
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+			Name:      "w1",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+
+	t.Run("Check: unknown verb still errors", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{})
+		_, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "unknownverb",
+			Name:      "w1",
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("List: unregistered group returns empty without error", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{})
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+		})
+		require.NoError(t, err)
+		assert.Empty(t, resp.Items)
+		assert.Empty(t, resp.Folders)
+		assert.False(t, resp.All)
+	})
+
+	t.Run("List: unregistered group returns items with K8s-native action", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w1"},
+			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w2"},
+		})
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+		})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"w1", "w2"}, resp.Items)
 	})
 }
 
@@ -1488,17 +1573,6 @@ func TestService_List(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name: "should error if an unknown group is provided",
-			req: &authzv1.ListRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "unknown.grafana.app",
-				Resource:  "unknown",
-				Verb:      "get",
-			},
-			expectErr: true,
-		},
-		{
 			name: "should error if an unknown verb is provided",
 			req: &authzv1.ListRequest{
 				Namespace: "org-12",
@@ -1685,7 +1759,9 @@ func TestService_List(t *testing.T) {
 			},
 		},
 		{
-			name: "should deny rendering access to another app resources",
+			// Unregistered groups fall back to the K8s-native mapping. The renderer has no
+			// permissions for K8s-native actions, so the list is empty rather than an error.
+			name: "should deny rendering access to unregistered app resources",
 			req: &authzv1.ListRequest{
 				Namespace: "org-12",
 				Subject:   "render:0",
@@ -1693,7 +1769,7 @@ func TestService_List(t *testing.T) {
 				Resource:  "dashboards",
 				Verb:      "get",
 			},
-			expectErr: true,
+			expected: &authzv1.ListResponse{},
 		},
 	}
 	t.Run("Rendering permission list", func(t *testing.T) {
@@ -2257,7 +2333,9 @@ func TestService_BatchCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "should handle invalid group in one check",
+			// An unregistered group falls back to the K8s-native mapping and is denied
+			// (no permissions in the store) rather than returning an error.
+			name: "should handle unregistered group in one check",
 			req: &authzv1.BatchCheckRequest{
 				Namespace: "org-12",
 				Subject:   "user:test-uid",
@@ -2271,10 +2349,10 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check2",
-						Group:         "invalid.grafana.app",
-						Resource:      "invalid",
+						Group:         "unregistered.grafana.app",
+						Resource:      "widgets",
 						Verb:          "get",
-						Name:          "invalid1",
+						Name:          "widget1",
 					},
 				},
 			},
@@ -2283,9 +2361,7 @@ func TestService_BatchCheck(t *testing.T) {
 			},
 			expected: map[string]bool{
 				"check1": true,
-			},
-			expectErr: map[string]bool{
-				"check2": true,
+				"check2": false, // denied: no permissions granted for this group/resource
 			},
 		},
 		{

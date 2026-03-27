@@ -68,6 +68,16 @@ describe('generatePath', () => {
 
     expect(result).toBe('my-dashboard.json');
   });
+
+  it('should normalize folderPath with trailing slash', () => {
+    const result = generatePath({
+      timestamp,
+      slug: 'my-dashboard',
+      folderPath: 'team-alpha/',
+    });
+
+    expect(result).toBe('team-alpha/my-dashboard.json');
+  });
 });
 
 describe('splitPath', () => {

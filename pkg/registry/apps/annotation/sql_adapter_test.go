@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -85,9 +84,6 @@ func (f *fakeRepo) FindTags(ctx context.Context, query *annotations.TagsQuery) (
 }
 
 func TestSQLAdapter_ListPagination(t *testing.T) {
-	cfg := &setting.Cfg{}
-	nsMapper := request.GetNamespaceMapper(cfg)
-
 	// create 5 test annotations
 	repo := newFakeRepo()
 	for i := 0; i < 5; i++ {
@@ -97,7 +93,7 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 		})
 	}
 
-	adapter := NewSQLAdapter(repo, nil, nsMapper, cfg)
+	adapter := NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgID: 1,
@@ -208,7 +204,7 @@ func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
 		dashSvc,
 		nil,
 	)
-	adapter := NewSQLAdapter(repo, nil, request.GetNamespaceMapper(cfg), cfg)
+	adapter := NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgID: 1,

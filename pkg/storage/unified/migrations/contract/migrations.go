@@ -53,8 +53,8 @@ func (m StorageMode) String() string {
 // legacy storage, dual-write mode, or unified storage.
 //
 // Resolution priority:
-//  1. Config Mode1 (or Mode2/Mode3 for backward compat) → DualWrite
-//  2. Migration log entry exists → Unified
+//  1. Migration log entry exists → Unified
+//  2. Config Mode1 (or Mode2/Mode3 for backward compat) → DualWrite
 //  3. Config Mode4/Mode5 → Unified (temporary fallback for cloud backfill transition)
 //  4. Otherwise → Legacy
 type MigrationStatusReader interface {

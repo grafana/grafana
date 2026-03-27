@@ -465,6 +465,7 @@ describe('when creating variables objects', () => {
       $behaviors: undefined,
       defaultKeys: undefined,
       drilldownRecommendationsEnabled: undefined,
+      enableGroupBy: false,
       layout: 'combobox',
     });
   });
@@ -554,6 +555,7 @@ describe('when creating variables objects', () => {
       collapsible: undefined,
       $behaviors: undefined,
       drilldownRecommendationsEnabled: undefined,
+      enableGroupBy: false,
       layout: 'combobox',
     });
   });

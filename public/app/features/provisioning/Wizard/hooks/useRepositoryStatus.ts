@@ -17,6 +17,8 @@ export function useRepositoryStatus(repoName?: string) {
   const repository = query.data?.items?.[0];
   const { healthy: rawIsHealthy, message: healthMessage } = repository?.status?.health || {};
   const fieldErrors = repository?.status?.fieldErrors;
+  const quota = repository?.status?.quota;
+  const conditions = repository?.status?.conditions;
 
   const isReconciled = isResourceReconciled(repository);
   const isReady = Boolean(repoName) && query.isSuccess;
@@ -35,6 +37,8 @@ export function useRepositoryStatus(repoName?: string) {
     healthMessage,
     healthStatusNotReady, // true when waiting for reconciliation
     fieldErrors,
+    quota,
+    conditions,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     hasError: query.isError,

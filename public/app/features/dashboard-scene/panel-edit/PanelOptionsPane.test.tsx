@@ -206,8 +206,8 @@ describe('PanelOptionsPane', () => {
       expect(mergedConfig.overrides[0].matcher).toEqual({ id: 'byName', options: 'A-series' });
       expect(mergedConfig.overrides[0].properties[0].id).toBe('displayName');
 
-      // Should use the new fieldConfig defaults
-      expect(mergedConfig.defaults.unit).toBe('percent');
+      // Should preserve the user's existing standard options
+      expect(mergedConfig.defaults.unit).toBe('bytes');
     });
 
     it('Should not call onFieldConfigChange when no fieldConfig provided', () => {

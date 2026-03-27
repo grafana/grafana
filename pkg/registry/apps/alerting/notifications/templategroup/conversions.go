@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -28,6 +28,10 @@ func convertToK8sResources(orgID int64, list []definitions.NotificationTemplate,
 
 func convertToK8sResource(orgID int64, template definitions.NotificationTemplate, namespacer request.NamespaceMapper) *model.TemplateGroup {
 	result := &model.TemplateGroup{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(template.UID),
 			Name:            template.UID,

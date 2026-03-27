@@ -23,6 +23,17 @@ export enum SelectedView {
   Both = 'both',
 }
 
+export enum ViewMode {
+  Single = 'single',
+  Split = 'split',
+}
+
+export enum PaneView {
+  TopTable = 'topTable',
+  FlameGraph = 'flameGraph',
+  CallTree = 'callTree',
+}
+
 export interface TableData {
   self: number;
   total: number;

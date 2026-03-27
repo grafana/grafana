@@ -78,7 +78,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
     }
 
     editableElement.scrollIntoView?.();
-    DashboardInteractions.outlineItemClicked({ index, depth });
+    DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
   };
 
   const onToggleCollapse = (evt: React.MouseEvent) => {

@@ -102,7 +102,6 @@ export const SnapshotListTable = () => {
 
       <ConfirmModal
         isOpen={!!removeSnapshot}
-        icon="trash-alt"
         title={t('manage-dashboards.snapshot-list-table.title-delete', 'Delete')}
         body={t(
           'manage-dashboards.snapshot-list-table.body-delete',

@@ -93,13 +93,13 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 }
 
 func resourceRequest(req *http.Request) (*http.Request, error) {
-	idx := strings.LastIndex(req.URL.Path, "/resource")
+	idx := strings.LastIndex(req.URL.Path, "/resources")
 	if idx < 0 {
 		return nil, fmt.Errorf("expected resource path") // 400?
 	}
 
 	clonedReq := req.Clone(req.Context())
-	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resource"):], "/")
+	rawURL := strings.TrimLeft(req.URL.Path[idx+len("/resources"):], "/")
 
 	clonedReq.URL = &url.URL{
 		Path:     rawURL,

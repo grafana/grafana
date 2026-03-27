@@ -9,6 +9,7 @@ import datasourcesHandlers from 'app/features/alerting/unified/mocks/server/hand
 import evalHandlers from 'app/features/alerting/unified/mocks/server/handlers/eval';
 import folderHandlers from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import grafanaRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import historianHandlers from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import inhibitionRulesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/inhibitionRules.k8s';
 import integrationTypeSchemasK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/integrationTypeSchemas.k8s';
 import receiverK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
@@ -31,6 +32,7 @@ import userStorageHandlers from 'app/features/alerting/unified/mocks/server/hand
 export const alertingHandlers = [
   ...alertNotifierHandlers,
   ...grafanaRulerHandlers,
+  ...historianHandlers,
   ...mimirRulerHandlers,
   ...alertmanagerHandlers,
   ...silenceHandlers,

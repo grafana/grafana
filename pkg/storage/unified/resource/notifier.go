@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultSettleDelay = 1 * time.Second
+	defaultSettleDelay = 3 * time.Second
 	defaultMinBackoff  = 100 * time.Millisecond
 	defaultMaxBackoff  = 5 * time.Second
 	defaultBufferSize  = 10000
@@ -114,7 +114,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 		defer close(out)
 		var buffer []Event
 
-		ticker := time.NewTicker(opts.SettleDelay)
+		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 
 		for {

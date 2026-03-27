@@ -6,6 +6,39 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
+// deprecatedRuleProvisioningResponse sets deprecation notice headers on the
+// response per the API deprecation checklist. The X-API-Replacement path
+// currently points to the v0alpha1 app-platform resource; update it when the
+// API graduates to beta or stable.
+func deprecatedRuleProvisioningResponse(resp response.Response, replacement string) response.Response {
+	if nr, ok := resp.(*response.NormalResponse); ok {
+		nr.SetHeader("Warning", `299 - "Deprecated API: use the Grafana App Platform alerting API instead."`)
+		nr.SetHeader("X-API-Deprecation-Date", "2026-03-10")
+		if replacement != "" {
+			nr.SetHeader("X-API-Replacement", replacement)
+		}
+	}
+	// For non-NormalResponse types (e.g. streaming), set headers via the
+	// http.ResponseWriter on the request context. This path is uncommon for
+	// these endpoints but keeps the contract safe.
+	return resp
+}
+
+const (
+	appPlatformBase = "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}"
+
+	// replacementAlertRules lists the app-platform collection endpoints
+	// that replace the legacy provisioning list/create/group endpoints.
+	// TODO: update when the API moves to beta.
+	replacementAlertRules = appPlatformBase + "/alertrules, " + appPlatformBase + "/recordingrules"
+
+	// replacementAlertRuleByUID lists the app-platform single-resource
+	// endpoints that replace the legacy provisioning get/update/delete
+	// endpoints.
+	// TODO: update when the API moves to beta.
+	replacementAlertRuleByUID = appPlatformBase + "/alertrules/{name}, " + appPlatformBase + "/recordingrules/{name}"
+)
+
 type ProvisioningApiHandler struct {
 	svc *ProvisioningSrv
 }
@@ -85,11 +118,11 @@ func (f *ProvisioningApiHandler) handleRouteDeleteMuteTiming(ctx *contextmodel.R
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRules(ctx *contextmodel.ReqContext) response.Response {
-	return f.svc.RouteGetAlertRules(ctx)
+	return deprecatedRuleProvisioningResponse(f.svc.RouteGetAlertRules(ctx), replacementAlertRules)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRule(ctx *contextmodel.ReqContext, UID string) response.Response {
-	return f.svc.RouteRouteGetAlertRule(ctx, UID)
+	return deprecatedRuleProvisioningResponse(f.svc.RouteRouteGetAlertRule(ctx, UID), replacementAlertRuleByUID)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRuleExport(ctx *contextmodel.ReqContext, UID string) response.Response {
@@ -101,15 +134,15 @@ func (f *ProvisioningApiHandler) handleRouteGetAlertRulesExport(ctx *contextmode
 }
 
 func (f *ProvisioningApiHandler) handleRoutePostAlertRule(ctx *contextmodel.ReqContext, ar apimodels.ProvisionedAlertRule) response.Response {
-	return f.svc.RoutePostAlertRule(ctx, ar)
+	return deprecatedRuleProvisioningResponse(f.svc.RoutePostAlertRule(ctx, ar), replacementAlertRules)
 }
 
 func (f *ProvisioningApiHandler) handleRoutePutAlertRule(ctx *contextmodel.ReqContext, ar apimodels.ProvisionedAlertRule, UID string) response.Response {
-	return f.svc.RoutePutAlertRule(ctx, ar, UID)
+	return deprecatedRuleProvisioningResponse(f.svc.RoutePutAlertRule(ctx, ar, UID), replacementAlertRuleByUID)
 }
 
 func (f *ProvisioningApiHandler) handleRouteDeleteAlertRule(ctx *contextmodel.ReqContext, UID string) response.Response {
-	return f.svc.RouteDeleteAlertRule(ctx, UID)
+	return deprecatedRuleProvisioningResponse(f.svc.RouteDeleteAlertRule(ctx, UID), replacementAlertRuleByUID)
 }
 
 func (f *ProvisioningApiHandler) handleRouteResetPolicyTree(ctx *contextmodel.ReqContext) response.Response {
@@ -117,7 +150,7 @@ func (f *ProvisioningApiHandler) handleRouteResetPolicyTree(ctx *contextmodel.Re
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRuleGroup(ctx *contextmodel.ReqContext, folder, group string) response.Response {
-	return f.svc.RouteGetAlertRuleGroup(ctx, folder, group)
+	return deprecatedRuleProvisioningResponse(f.svc.RouteGetAlertRuleGroup(ctx, folder, group), replacementAlertRules)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRuleGroupExport(ctx *contextmodel.ReqContext, folder, group string) response.Response {
@@ -125,7 +158,7 @@ func (f *ProvisioningApiHandler) handleRouteGetAlertRuleGroupExport(ctx *context
 }
 
 func (f *ProvisioningApiHandler) handleRoutePutAlertRuleGroup(ctx *contextmodel.ReqContext, ag apimodels.AlertRuleGroup, folder, group string) response.Response {
-	return f.svc.RoutePutAlertRuleGroup(ctx, ag, folder, group)
+	return deprecatedRuleProvisioningResponse(f.svc.RoutePutAlertRuleGroup(ctx, ag, folder, group), replacementAlertRules)
 }
 
 func (f *ProvisioningApiHandler) handleRouteExportMuteTiming(ctx *contextmodel.ReqContext, name string) response.Response {
@@ -137,5 +170,5 @@ func (f *ProvisioningApiHandler) handleRouteExportMuteTimings(ctx *contextmodel.
 }
 
 func (f *ProvisioningApiHandler) handleRouteDeleteAlertRuleGroup(ctx *contextmodel.ReqContext, folderUID, group string) response.Response {
-	return f.svc.RouteDeleteAlertRuleGroup(ctx, folderUID, group)
+	return deprecatedRuleProvisioningResponse(f.svc.RouteDeleteAlertRuleGroup(ctx, folderUID, group), replacementAlertRules)
 }

@@ -24,7 +24,6 @@ export function ExplainScorePopup({ name, explain, frame, row }: Props) {
   const modalHeader = (
     <ModalTabsHeader
       title={name}
-      icon={'info'}
       tabs={tabs}
       activeTab={activeTab}
       onChangeTab={(t) => {

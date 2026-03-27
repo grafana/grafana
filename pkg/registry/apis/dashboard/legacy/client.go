@@ -45,7 +45,7 @@ func (d *directResourceClient) GetStats(ctx context.Context, in *resourcepb.Reso
 
 // IsHealthy implements ResourceClient.
 func (d *directResourceClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
-	return d.server.IsHealthy(ctx, in)
+	return d.server.IsHealthy(ctx, in) //nolint:staticcheck
 }
 
 // List implements ResourceClient.

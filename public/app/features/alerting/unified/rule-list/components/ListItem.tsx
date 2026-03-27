@@ -78,13 +78,14 @@ const Separator = () => (
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({
-    position: 'relative',
     listStyle: 'none',
+    position: 'relative',
 
     padding: theme.spacing(1),
 
     '&:hover': {
       background: theme.colors.action.hover,
+      borderRadius: theme.shape.radius.default,
     },
   }),
   textOverflow: css({

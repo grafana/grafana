@@ -1068,6 +1068,8 @@ Content-Length: 97
 
 Will return the dashboard given the dashboard unique identifier (uid). Information about the unique identifier of a folder containing the requested dashboard might be found in the metadata.
 
+Optional query parameter **`apiVersion`** requests which API version Grafana tries first when loading the dashboard (for example `v1beta1`). If that request fails, Grafana retries using the default version. When omitted, only the default is used.
+
 **Required permissions**
 
 See note in the [introduction](#dashboard-api) for an explanation.
@@ -1085,6 +1087,14 @@ See note in the [introduction](#dashboard-api) for an explanation.
 GET /api/dashboards/uid/cIBgcSjkk HTTP/1.1
 Accept: application/json
 Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+Example with an explicit API version:
+
+```http
+GET /api/dashboards/uid/cIBgcSjkk?apiVersion=v1beta1 HTTP/1.1
+Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 

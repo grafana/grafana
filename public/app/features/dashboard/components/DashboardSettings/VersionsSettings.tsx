@@ -59,8 +59,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
       : { limit: VERSIONS_FETCH_LIMIT };
 
     getDashboardAPI()
-      .listDashboardHistory(this.props.dashboard.uid, options)
-      .then((result) => {
+      .then(async (api) => {
+        const result = await api.listDashboardHistory(this.props.dashboard.uid, options);
         const versions = this.transformToRevisionModels(result.items);
         this.setState({
           isLoading: false,

@@ -3,7 +3,10 @@ import { memo } from 'react';
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import {
+  RepoViewStatus,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getManagedByRepositoryTooltip, getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -21,13 +24,25 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance({ skip: canSkipEarly });
   const skipRender = canSkipEarly || isProvisionedInstance;
 
-  const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({
+  const { isReadOnlyRepo, repoType, repository, status } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
     skipQuery: skipRender,
   });
 
   if (skipRender) {
     return null;
+  }
+
+  const isOrphaned = status === RepoViewStatus.Orphaned;
+
+  if (isOrphaned) {
+    return (
+      <Badge
+        color="orange"
+        icon="exclamation-triangle"
+        tooltip={t('folder-repo.repository-not-found-tooltip', 'Repository not found')}
+      />
+    );
   }
 
   const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);

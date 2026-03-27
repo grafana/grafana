@@ -41,9 +41,6 @@ func (k EventKey) String() string {
 }
 
 func (k EventKey) Validate() error {
-	if k.Namespace == "" {
-		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
-	}
 	if k.ResourceVersion < 0 {
 		return errors.New(ErrResourceVersionInvalid)
 	}
@@ -51,9 +48,8 @@ func (k EventKey) Validate() error {
 		return NewValidationError("action", string(k.Action), ErrActionRequired)
 	}
 
-	// Validate each field against the naming rules
 	// Validate naming conventions for all required fields
-	if k.Namespace != clusterScopeNamespace {
+	if k.Namespace != "" {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}

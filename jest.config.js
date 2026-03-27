@@ -4,7 +4,6 @@
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
 const esModules = [
-  '@glideapps/glide-data-grid',
   '@wojtekmaj/date-utils',
   'ol',
   'd3',

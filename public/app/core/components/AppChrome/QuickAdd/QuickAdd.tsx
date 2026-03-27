@@ -1,8 +1,10 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
+import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
@@ -16,7 +18,7 @@ export interface Props {}
 export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
-
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const createActions = useMemo(() => {
     const createActions = findCreateActions(navBarTree);
 
@@ -28,17 +30,22 @@ export const QuickAdd = ({}: Props) => {
           text: t('navigation.quick-add.new-template-dashboard-button', 'Dashboard from template'),
           url: '/dashboards?templateDashboards=true&source=quickAdd',
           onClick: () => {
-            DashboardLibraryInteractions.entryPointClicked({
-              entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
-              contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-            });
+            isAnalyticsFrameworkEnabled
+              ? NewDashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                })
+              : DashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                });
           },
         });
       }
     }
 
     return createActions;
-  }, [navBarTree]);
+  }, [isAnalyticsFrameworkEnabled, navBarTree]);
   const showQuickAdd = createActions.length > 0;
 
   if (!showQuickAdd) {

@@ -19,7 +19,7 @@ import { TabItem } from './TabItem';
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, isDropTarget, layout, key, repeatSourceKey } = model.useState();
   const parentLayout = model.getParentLayout();
-  const { currentTabSlug } = parentLayout.useState();
+  const { currentTabSlug, isDropTarget: isParentDropTarget } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
@@ -72,8 +72,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             truncate
             className={cx(
               isConditionallyHidden && styles.hidden,
-              isSelectable && !isSelected && !isSourceSelected && 'dashboard-selectable-element',
-              (isSelected || isSourceSelected) && 'dashboard-selected-element',
+              // !isParentDropTarget prevents highlighting tabs during drag (we use a placeholder instead)
+              isSelectable && !isSelected && !isSourceSelected && !isParentDropTarget && 'dashboard-selectable-element',
+              (isSelected || isSourceSelected) && !isParentDropTarget && 'dashboard-selected-element',
               (isSelected || isSourceSelected) && styles.selectedTab,
               isDropTarget && 'dashboard-drop-target'
             )}

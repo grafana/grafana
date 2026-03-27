@@ -114,29 +114,6 @@ func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context
 	return key, nil
 }
 
-type longLivedRenderKeyProvider struct {
-	cache       *remotecache.RemoteCache
-	log         log.Logger
-	renderKey   string
-	authOpts    AuthOpts
-	sessionOpts SessionOpts
-}
-
-func (rs *RenderingService) CreateRenderingSession(ctx context.Context, opts AuthOpts, sessionOpts SessionOpts) (Session, error) {
-	renderKey, err := generateAndSetRenderKey(rs.RemoteCacheService, ctx, opts, sessionOpts.Expiry)
-	if err != nil {
-		return nil, err
-	}
-
-	return &longLivedRenderKeyProvider{
-		log:         rs.log,
-		renderKey:   renderKey,
-		cache:       rs.RemoteCacheService,
-		authOpts:    opts,
-		sessionOpts: sessionOpts,
-	}, nil
-}
-
 func deleteRenderKey(cache *remotecache.RemoteCache, log log.Logger, ctx context.Context, renderKey string) {
 	err := cache.Delete(ctx, fmt.Sprintf(renderKeyPrefix, renderKey))
 	if err != nil {
@@ -156,25 +133,6 @@ func (r *perRequestRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (s
 
 func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, _ AuthOpts, renderKey string) {
 	deleteRenderKey(r.cache, r.log, ctx, renderKey)
-}
-
-func (r *longLivedRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
-	if r.sessionOpts.RefreshExpiryOnEachRequest {
-		err := setRenderKey(r.cache, ctx, opts, r.renderKey, r.sessionOpts.Expiry)
-		if err != nil {
-			r.log.Error("Failed to refresh render key", "error", err, "renderKey", r.renderKey)
-		}
-	}
-	return r.renderKey, nil
-}
-
-func (r *longLivedRenderKeyProvider) afterRequest(_ context.Context, _ AuthOpts, _ string) {
-	// do nothing - renderKey from longLivedRenderKeyProvider is deleted only after session expires
-	// or someone calls session.Dispose()
-}
-
-func (r *longLivedRenderKeyProvider) Dispose(ctx context.Context) {
-	deleteRenderKey(r.cache, r.log, ctx, r.renderKey)
 }
 
 type jwtRenderKeyProvider struct {

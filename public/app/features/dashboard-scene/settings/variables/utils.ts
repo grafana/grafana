@@ -97,7 +97,7 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
     getOptions: getDataSourceVariableOptions,
   },
   adhoc: {
-    name: t('dashboard-scene.get-editable-variables.name.ad-hoc-filters', 'Ad hoc filters'),
+    name: t('dashboard-scene.get-editable-variables.name.ad-hoc-filters', 'Filter'),
     description: t(
       'dashboard-scene.get-editable-variables.description.add-keyvalue-filters-on-the-fly',
       'Add key/value filters on the fly'
@@ -162,12 +162,16 @@ export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVa
     description: editableVariables[variableType].description,
   }));
 
-  if (!config.featureToggles.groupByVariable) {
-    // Remove group by variable type if feature toggle is off
-    return results.filter((option) => option.value !== 'groupby');
-  }
+  return results.filter((option) => {
+    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
+      return false;
+    }
+    if (config.featureToggles.dashboardUnifiedDrilldownControls && option.value === 'adhoc') {
+      return false;
+    }
 
-  return results;
+    return true;
+  });
 }
 
 export function getVariableEditor(type: EditableVariableType) {
@@ -222,7 +226,10 @@ export function getVariableDefault(variables: Array<SceneVariable<SceneVariableS
   return getVariableScene('query', { name: nextVariableIdName });
 }
 
-export function getNextAvailableId(type: VariableType, variables: Array<SceneVariable<SceneVariableState>>): string {
+export function getNextAvailableId(
+  type: VariableType | string,
+  variables: Array<SceneVariable<SceneVariableState>>
+): string {
   let counter = 0;
   let nextId = `${type}${counter}`;
 

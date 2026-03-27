@@ -10,7 +10,7 @@ import {
   RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
 
-export type JobType = 'sync' | 'delete' | 'move' | 'fix';
+export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';
 
 // Repository type definition - extracted from API client
 export type RepositoryType = RepositorySpec['type'];

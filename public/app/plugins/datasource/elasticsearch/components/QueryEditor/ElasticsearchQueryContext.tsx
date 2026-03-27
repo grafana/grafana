@@ -8,7 +8,7 @@ import { ElasticDatasourceLike } from '../../types';
 
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
-import { aliasPatternReducer, queryReducer, queryTypeReducer, editorTypeReducer, initQuery } from './state';
+import { aliasPatternReducer, queryReducer, editorTypeReducer, initQuery, queryTypeReducer } from './state';
 
 const DatasourceContext = createContext<ElasticDatasourceLike | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchDataQuery | undefined>(undefined);

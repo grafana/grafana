@@ -275,6 +275,7 @@
       "items": {
         "type": "object",
         "additionalItems": false,
+        "required": ["type"],
         "properties": {
           "uid": {
             "type": "string",

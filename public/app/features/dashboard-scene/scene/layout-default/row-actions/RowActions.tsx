@@ -64,7 +64,6 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
           'Are you sure you want to remove this row and all its panels?'
         ),
         altActionText: t('dashboard.default-layout.row-actions.modal.alt-action', 'Delete row only'),
-        icon: 'trash-alt',
         onConfirm: () => this.removeRow(true),
         onAltAction: () => this.removeRow(),
       })

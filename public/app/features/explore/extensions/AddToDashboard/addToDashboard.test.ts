@@ -9,6 +9,40 @@ describe('buildDashboardPanelFromExploreState', () => {
     jest.resetAllMocks();
   });
 
+  it('sets transforms with deprecated columns state', () => {
+    const result = buildDashboardPanelFromExploreState({
+      queries: [],
+      queryResponse: createEmptyQueryResponse(),
+      datasource: { type: 'loki', uid: 'someUid' },
+      panelState: {
+        logs: {
+          columns: ['field1', 'field2'],
+        },
+      },
+    });
+    expect(result?.transformations?.[0]).toEqual({
+      id: 'organize',
+      options: { includeByName: { field1: true, field2: true }, indexByName: { field1: 0, field2: 1 } },
+    });
+  });
+
+  it('sets transforms with new displayed fields', () => {
+    const result = buildDashboardPanelFromExploreState({
+      queries: [],
+      queryResponse: createEmptyQueryResponse(),
+      datasource: { type: 'loki', uid: 'someUid' },
+      panelState: {
+        logs: {
+          displayedFields: ['field1', 'field2'],
+        },
+      },
+    });
+    expect(result?.transformations?.[0]).toEqual({
+      id: 'organize',
+      options: { includeByName: { field1: true, field2: true }, indexByName: { field1: 0, field2: 1 } },
+    });
+  });
+
   it('Correct datasource ref is used', () => {
     const result = buildDashboardPanelFromExploreState({
       queries: [],

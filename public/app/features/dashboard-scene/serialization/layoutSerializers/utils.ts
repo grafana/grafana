@@ -1,5 +1,6 @@
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getPanelPluginMetasMapSync, PanelPluginMetas } from '@grafana/runtime/internal';
 import {
   SceneDataProvider,
   SceneDataQuery,
@@ -165,7 +166,10 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   return new VizPanel(vizPanelState);
 }
 
-export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
+export function createPanelDataProvider(
+  panelKind: PanelKind,
+  panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
+): SceneDataProvider | undefined {
   const panel = panelKind.spec;
 
   const targets =
@@ -179,7 +183,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.vizConfig?.group]?.skipDataQuery) {
+  if (panelMetas[panel.vizConfig?.group]?.skipDataQuery) {
     return undefined;
   }
 
@@ -394,7 +398,7 @@ export function ensureUniqueRefIds(queries: PanelQueryKind[]): PanelQueryKind[] 
   return queries;
 }
 
-function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
+export function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   // Add datasource to match Go backend V2→V1 conversion:
   // - If explicit UID (datasource.name) exists → add { uid, type }
   // - If only type (group) exists → add { type } only

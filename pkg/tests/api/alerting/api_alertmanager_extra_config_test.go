@@ -1,8 +1,6 @@
 package alerting
 
 import (
-	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,7 +31,6 @@ func TestIntegrationAlertmanagerExtraConfigMerging(t *testing.T) {
 
 	t.Run("retrieve merged configuration via extra config datasource", func(t *testing.T) {
 		// first upload standard alertmanager configuration
-		baseConfig := apimodels.PostableUserConfig{}
 		baseConfigJSON := `{
 			"alertmanager_config": {
 				"route": {
@@ -54,11 +51,8 @@ func TestIntegrationAlertmanagerExtraConfigMerging(t *testing.T) {
 				"base.tmpl": "{{ define \"base.template\" }}Base Template{{ end }}"
 			}
 		}`
-		err := json.Unmarshal([]byte(baseConfigJSON), &baseConfig)
-		require.NoError(t, err)
 
-		err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, baseConfig)
-		require.NoError(t, err)
+		saveAndApplyAlertmanagerConfiguration(t, env, 1, baseConfigJSON)
 
 		//now add extra configuration
 		extraHeaders := map[string]string{

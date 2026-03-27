@@ -178,6 +178,7 @@ export const updateLayoutCommand: MutationCommand<UpdateLayoutPayload> = {
 
   payloadSchema: payloads.updateLayout,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context: MutationContext) => {
     const { scene } = context;

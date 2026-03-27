@@ -147,6 +147,11 @@ type ReceiverPermissionsService interface {
 	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
 }
 
+type RoutePermissionsService interface {
+	PermissionsService
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, name string) error
+}
+
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)

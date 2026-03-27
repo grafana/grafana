@@ -31,6 +31,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "playlist",
+	AppDisplayName:   "playlist",
 	Group:            "playlist.grafana.app",
 	PreferredVersion: "v1",
 	Versions: []app.ManifestVersion{

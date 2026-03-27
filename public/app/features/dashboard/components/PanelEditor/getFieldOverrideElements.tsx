@@ -15,13 +15,27 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { MatcherScope } from '@grafana/schema';
+import {
+  fieldMatchersUI,
+  getUniqueMatcherScopes,
+  MatcherScopeSelector,
+  buildScopeOptions,
+  useStyles2,
+  ValuePicker,
+} from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
+
+const ALLOWED_SCOPES: MatcherScope[] = ['series'];
+if (config.featureToggles.nestedFramesFieldOverrides) {
+  ALLOWED_SCOPES.push('nested');
+}
 
 // [FIXME] Is there something else we need to do in here?
 
@@ -72,6 +86,8 @@ export function getFieldOverrideCategories(
     isOverride: true,
   };
 
+  const uniqueMatcherScopes = getUniqueMatcherScopes(data);
+
   /**
    * Main loop through all override rules
    */
@@ -105,8 +121,12 @@ export function getFieldOverrideCategories(
       },
     });
 
-    const onMatcherConfigChange = (options: unknown) => {
-      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, options } });
+    const onMatcherConfigChange = (options: unknown, scope: MatcherScope | undefined = override.matcher.scope) => {
+      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope, options } });
+    };
+
+    const onMatcherScopeChange = (scope: MatcherScope) => {
+      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope } });
     };
 
     const onDynamicConfigValueAdd = (override: ConfigOverrideRule, value: SelectableValue<string>) => {
@@ -119,10 +139,34 @@ export function getFieldOverrideCategories(
       onOverrideChange(idx, { ...override, properties });
     };
 
-    /**
-     * Add override matcher UI element
-     */
+    const hasInvalidScope = override.matcher.scope && !uniqueMatcherScopes.has(override.matcher.scope);
+    const scopeOptions = buildScopeOptions(uniqueMatcherScopes, override.matcher.scope, ALLOWED_SCOPES);
+    const shouldShowScopeSelector = scopeOptions.length > 1 || hasInvalidScope;
+
     const htmlId = `${overrideId}-matcher`;
+    if (shouldShowScopeSelector) {
+      const scopeId = `${overrideId}-scope`;
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          id: scopeId,
+          title: t('grafana-ui.field-name-by-regex-matcher.scope', 'Target fields'),
+          // @todo tooltips should be possible to add to an OptionsPanelItemDescriptor
+          // tooltip: t('grafana-ui.field-name-by-regex-matcher.scope-tooltip', 'To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default "dataframe" scope is applied if no scope is selected.'),
+          render: function renderMatcherScopeEditor() {
+            return (
+              <MatcherScopeSelector
+                id={scopeId}
+                value={override.matcher.scope}
+                scopes={uniqueMatcherScopes}
+                onChange={onMatcherScopeChange}
+                allowedScopes={ALLOWED_SCOPES}
+              />
+            );
+          },
+        })
+      );
+    }
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         id: htmlId,
@@ -133,6 +177,7 @@ export function getFieldOverrideCategories(
               id={htmlId}
               matcher={matcherUi.matcher}
               data={data ?? []}
+              scope={override.matcher.scope}
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
             />

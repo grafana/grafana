@@ -239,8 +239,10 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
     'name',
     'manualRouting',
   ]);
+  const selectedPolicy = watch('selectedPolicy');
 
   const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
+  const policyRoutingSettingsEnabled = config.featureToggles.alertingPolicyRoutingSettings ?? false;
 
   return (
     <Stack direction="column" gap={2}>
@@ -252,13 +254,14 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
         folder={folder}
         alertName={alertName}
         alertUid={alertUid}
+        policyName={policyRoutingSettingsEnabled ? selectedPolicy : undefined}
       />
     </Stack>
   );
 }
 
 // Auxiliar components to build the texts and descriptions in the NotificationsStep
-function NeedHelpInfoForNotificationPolicy() {
+export function NeedHelpInfoForNotificationPolicy() {
   return (
     <NeedHelpInfo
       contentText={
