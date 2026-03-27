@@ -55,7 +55,14 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
           </LinkButton>
         )}
         {shouldShowDeclareIncident && (
-          <LinkButton href={incidentURL} icon="fire" variant="secondary" size="sm">
+          <LinkButton
+            href={incidentURL}
+            icon="fire"
+            variant="secondary"
+            size="sm"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">Declare incident</Trans>
           </LinkButton>
         )}
