@@ -52,7 +52,7 @@ func ProvideRoutePermissionsService(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*RoutePermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "routes",
+		Resource:          accesscontrol.AlertingManagedRoutesResource,
 		ResourceAttribute: "uid",
 		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 			return resourceID, nil
@@ -77,7 +77,7 @@ func ProvideRoutePermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.routes")}, nil
+	return &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions." + accesscontrol.AlertingManagedRoutesResource)}, nil
 }
 
 var _ accesscontrol.RoutePermissionsService = new(RoutePermissionsService)
