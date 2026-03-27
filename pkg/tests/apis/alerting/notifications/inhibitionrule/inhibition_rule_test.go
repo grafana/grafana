@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -297,6 +298,93 @@ func TestIntegrationAccessControl(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestIntegrationInhibitionRuleProvisioning(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient, err := v1beta1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	// A user with write permissions but without alert.provisioning.provenance:write.
+	// Used to verify that provisioned resources are protected from callers that lack the permission.
+	writer := helper.CreateUser("InhibitionRulesProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingNotificationsInhibitionRulesRead,
+			accesscontrol.ActionAlertingNotificationsInhibitionRulesWrite,
+			accesscontrol.ActionAlertingNotificationsInhibitionRulesDelete,
+		),
+	})
+	writerClient, err := v1beta1.NewInhibitionRuleClientFromGenerator(writer.GetClientRegistry())
+	require.NoError(t, err)
+
+	created, err := adminClient.Create(ctx, &v1beta1.InhibitionRule{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: apis.DefaultNamespace,
+			Name:      "test-provisioning-rule",
+		},
+		Spec: v1beta1.InhibitionRuleSpec{
+			SourceMatchers: []v1beta1.InhibitionRuleMatcher{
+				{
+					Type:  v1beta1.InhibitionRuleMatcherTypeEqual,
+					Label: "alertname",
+					Value: "SourceAlert",
+				},
+			},
+			TargetMatchers: []v1beta1.InhibitionRuleMatcher{
+				{
+					Type:  v1beta1.InhibitionRuleMatcherTypeEqual,
+					Label: "alertname",
+					Value: "TargetAlert",
+				},
+			},
+			Equal: []string{"instance"},
+		},
+	}, resource.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "none", created.GetProvenanceStatus())
+
+	t.Run("should not let update provenance if provisioned without set-status permission", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.InhibitionRule)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	})
+
+	t.Run("should let update provenance if provisioned with set-status permission", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.InhibitionRule)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+
+		got, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
+	})
+
+	t.Run("should let update spec if provisioned without set-status permission", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.InhibitionRule)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+		updated.Spec.Equal = append(updated.Spec.Equal, "extra-label")
+
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should not let update provenance back to none without set-status permission", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.InhibitionRule)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceNone))
+
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	})
+
+	t.Run("should let delete if provisioned without set-status permission", func(t *testing.T) {
+		err := writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		require.NoError(t, err)
+	})
 }
 
 func createWildcardPermission(actions ...string) resourcepermissions.SetResourcePermissionCommand {
