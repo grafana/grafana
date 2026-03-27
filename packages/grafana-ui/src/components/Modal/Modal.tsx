@@ -72,7 +72,6 @@ export function Modal(props: PropsWithChildren<Props>) {
   });
 
   const dismiss = useDismiss(context, {
-    enabled: closeOnEscape,
     escapeKey: closeOnEscape,
     // outsidePress intercepts clicks before they reach the DOM — use a function
     // to honour closeOnBackdropClick and forward to onClickBackdrop in one place.
