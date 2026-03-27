@@ -328,7 +328,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
     },
     requestOptions?: Partial<BackendSrvRequest>
   ): Promise<DetectedFieldsResult> {
-    console.log(queryOptions);
     const interpolatedExpr =
       queryOptions.expr && queryOptions.expr !== EMPTY_SELECTOR
         ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
@@ -614,6 +613,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     response.hasLogfmt = fields.some((field) => field.parsers && field.parsers.includes('logfmt'));
     response.extractedLabelKeys = fields.map((field) => field.label);
     response.structuredMetadataKeys = fields.filter((field) => field.parsers === null).map((field) => field.label);
+    // See https://github.com/grafana/grafana/blob/722aac6cbac64b84c4424d1194661c5c32b2f8ca/public/app/plugins/datasource/loki/responseUtils.ts#L84
+    response.unwrapLabelKeys = fields.filter((field) => field.type !== 'string').map((field) => field.label);
 
     return response;
   }
