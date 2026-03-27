@@ -302,50 +302,64 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	// A user with write permissions but without alert.provisioning.provenance:write.
+	// Used to verify that provisioned resources are protected from callers that lack the permission.
+	writer := helper.CreateUser("RoutingTreeProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingManagedRoutesRead,
+				accesscontrol.ActionAlertingManagedRoutesWrite,
+				accesscontrol.ActionAlertingManagedRoutesDelete,
+			},
+		},
+	})
+	writerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(writer.GetClientRegistry())
 	require.NoError(t, err)
 
 	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
 	require.NoError(t, err)
 	require.Equal(t, "none", current.GetProvenanceStatus())
 
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.Route{}, admin.Identity.GetOrgID(), "API"))
-
-		got, err := adminClient.Get(ctx, current.GetStaticMetadata().Identifier())
-		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
-	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
+	t.Run("should not let update provenance if provisioned without set-status permission", func(t *testing.T) {
 		updated := current.Copy().(*v1beta1.RoutingTree)
-		updated.Spec.Routes = []v1beta1.RoutingTreeRoute{
-			{
-				Matchers: []v1beta1.RoutingTreeMatcher{
-					{
-						Label: "test",
-						Type:  v1beta1.RoutingTreeMatcherTypeNotEqual,
-						Value: "123",
-					},
-				},
-			},
-		}
+		updated.SetProvenanceStatus(string(models.ProvenanceAPI))
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Error(t, err)
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, current.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+	t.Run("should let update provenance if provisioned with set-status permission", func(t *testing.T) {
+		updated := current.Copy().(*v1beta1.RoutingTree)
+		updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+
+		got, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(models.ProvenanceAPI), got.GetProvenanceStatus())
+	})
+
+	t.Run("should let update spec if provisioned without set-status permission", func(t *testing.T) {
+		updated := current.Copy().(*v1beta1.RoutingTree)
+		updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+		updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "test-label")
+
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should not let update provenance back to none without set-status permission", func(t *testing.T) {
+		updated := current.Copy().(*v1beta1.RoutingTree)
+		updated.SetProvenanceStatus(string(models.ProvenanceNone))
+
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	})
+
+	t.Run("should let delete if provisioned without set-status permission", func(t *testing.T) {
+		err := writerClient.Delete(ctx, current.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		require.NoError(t, err)
 	})
 }
 
