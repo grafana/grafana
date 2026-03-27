@@ -29,6 +29,35 @@ GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	$(if $(ENTERPRISE_COMMIT_SHA),-X main.enterpriseCommit=$(ENTERPRISE_COMMIT_SHA)) \
 	$(if $(LDFLAGS),-extldflags \"$(LDFLAGS)\")
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
+GO_BUILD_DEV_ENABLED := $(filter 1 dev,$(GO_BUILD_DEV))
+GO_BUILD_GCFLAGS_EFFECTIVE := $(if $(GO_BUILD_GCFLAGS),$(GO_BUILD_GCFLAGS),$(if $(GO_BUILD_DEV_ENABLED),all=-N -l))
+GO_BUILD_TRIMPATH_FLAG := $(if $(GO_BUILD_DEV_ENABLED),,-trimpath)
+GO_BUILD_ENV = \
+	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) \
+	GOOS=$(OS) \
+	GOARCH=$(ARCH) \
+	$(if $(ARM),GOARM=$(ARM))
+GO_BUILD_ARGS = \
+	-buildvcs=false \
+	$(GO_BUILD_TRIMPATH_FLAG) \
+	$(GO_RACE_FLAG) \
+	$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
+	$(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") \
+	-ldflags "$(GO_LDFLAGS)" \
+	-o ./bin/$(OS)/$(ARCH)/grafana \
+	./pkg/cmd/grafana
+ifeq ($(filter undefined environment environment\ override,$(origin OS)),)
+else
+OS := $(or $(GOOS),$(shell $(GO) env GOOS))
+endif
+ifeq ($(filter undefined environment environment\ override,$(origin ARCH)),)
+else
+ARCH := $(or $(GOARCH),$(shell $(GO) env GOARCH))
+endif
+ifeq ($(filter undefined environment environment\ override,$(origin ARM)),)
+else
+ARM := $(GOARM)
+endif
 GIT_BASE = remotes/origin/main
 
 CUE_VERSION = v0.16.0
@@ -298,15 +327,23 @@ gen-jsonnet:
 gen-themes:
 	GOOS=$(GO_HOST_OS) GOARCH=$(GO_HOST_ARCH) $(GO) generate ./pkg/services/preference
 
+pkg/services/preference/themes_generated.go:
+	$(MAKE) gen-themes
+
 .PHONY: update-workspace
 update-workspace: gen-go
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-themes ## Build the Grafana binary.
-	@echo "build go binaries"
-	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) $(if $(GO_BUILD_OS),GOOS=$(GO_BUILD_OS)) $(if $(GO_BUILD_ARCH),GOARCH=$(GO_BUILD_ARCH)) $(GO) build -buildvcs=false $(if $(GO_BUILD_DEV),-gcflags "all=-N -l",-trimpath) $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
+build-go: pkg/services/preference/themes_generated.go
+	@echo "build go binaries ($(OS)/$(ARCH))"
+	$(GO_BUILD_ENV) \
+	$(GO) build $(GO_BUILD_ARGS)
+	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
+
+bin/$(OS)/$(ARCH)/grafana:
+	$(MAKE) build-go
 
 .PHONY: build-backend
 build-backend: build-go
@@ -319,6 +356,9 @@ build-air: build-go
 build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
+
+public/build:
+	$(MAKE) build-js
 
 PLUGIN_ID ?=
 
@@ -334,6 +374,19 @@ build-plugin-go: ## Build decoupled plugins
 
 .PHONY: build
 build: build-go build-js ## Build backend and frontend.
+
+# Tar.gz packaging variables (aligned with pkg/build/daggerbuild/packages)
+TARGZ_PACKAGE_NAME ?= grafana
+
+.PHONY: build-targz
+build-targz: | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (same layout as daggerbuild).
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	GO="$(GO)" \
+	bash scripts/build-targz.sh
 
 .PHONY: run
 run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
@@ -480,7 +533,7 @@ DOCKER_JS_YARN_BUILD_FLAG = build
 DOCKER_JS_YARN_INSTALL_FLAG = --immutable
 #
 # if go is in dev mode, also build node in dev mode
-ifeq ($(GO_BUILD_DEV), dev)
+ifneq ($(filter 1 dev,$(GO_BUILD_DEV)),)
   DOCKER_JS_NODE_ENV_FLAG = dev
   DOCKER_JS_YARN_BUILD_FLAG = dev
 	DOCKER_JS_YARN_INSTALL_FLAG =

@@ -2,7 +2,7 @@ import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 
-export const requiredFeatureToggles: Array<keyof FeatureToggles> = ['kubernetesDashboards'];
+export const requiredFeatureToggles: Array<keyof FeatureToggles> = []; // none!
 
 /**
  * Checks if all required feature toggles are enabled

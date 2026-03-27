@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Változó leírásának módosítása"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Változó elrejtési opciójának módosítása"
       },
@@ -6646,9 +6647,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Eseti beállítások",
-      "alert-not-supported": "Ez az adatforrás nem támogatja az alkalmi szűrőket",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Lehetővé teszi a felhasználók számára, hogy egyéni értékeket adjanak a listához",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Méretek megadása CSV-ként: {{name}}, {{value}}",
@@ -7013,7 +7018,7 @@
         "values-timespans": "Az értékek időtartamok, pl. 1 hónap, 1 óra, 1 nap"
       },
       "name": {
-        "ad-hoc-filters": "Eseti szűrők",
+        "ad-hoc-filters": "",
         "constant": "Konstans",
         "custom": "Egyéni",
         "data-source": "Adatforrás",
@@ -7266,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -8007,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Csillagozott"
     },
     "new-data-source-view": {
@@ -10347,6 +10357,7 @@
         "expander-column-name": "",
         "no-data": "Nincs adat"
       },
+      "no-rows": "",
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
       "sort-by-column": "",
@@ -11004,24 +11015,14 @@
     },
     "forgot-password": "Elfelejtette jelszavát?",
     "form": {
-      "confirmation-code": "Visszaigazolási kód megadása kötelező",
-      "confirmation-code-label": "Visszaigazolási kód",
-      "confirmation-code-placeholder": "visszaigazolási kód",
-      "email-label": "E-mail",
-      "email-placeholder": "e-mail",
-      "email-required": "Az e-mail-cím megadása kötelező",
-      "name-label": "Név",
       "password-label": "Jelszó",
       "password-placeholder": "jelszó",
       "password-required": "A jelszó megadása kötelező",
-      "passwordless-username-label": "Felhasználónév",
       "submit-label": "Bejelentkezés",
       "submit-loading-label": "Bejelentkezés...",
       "username-label": "E-mail-cím vagy felhasználónév",
       "username-placeholder": "e-mail vagy felhasználónév",
-      "username-required": "Az e-mail-cím vagy a felhasználónév megadása kötelező",
-      "verify-email-label": "Ellenőrző e-mail küldése",
-      "verify-email-loading-label": "E-mail küldése..."
+      "username-required": "Az e-mail-cím vagy a felhasználónév megadása kötelező"
     },
     "layout": {
       "update-password": "Frissítse a jelszavát"
@@ -14940,6 +14941,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Fejléc szövegének tördelése",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "automatikus",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",

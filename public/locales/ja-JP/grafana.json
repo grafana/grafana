@@ -6442,6 +6442,7 @@
       "description": {
         "action": "変数の説明を変更"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "変数の非表示オプションを変更"
       },
@@ -6614,9 +6615,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "アドホックオプション",
-      "alert-not-supported": "このデータソースはアドホックフィルターをサポートしていません",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "ユーザーがリストにカスタム値を追加できるようにします",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "CSV形式で次のように次元を指定：{{name}}, {{value}}",
@@ -6978,7 +6983,7 @@
         "values-timespans": "値は時間範囲です。例：1m、1h、1d"
       },
       "name": {
-        "ad-hoc-filters": "アドホックフィルター",
+        "ad-hoc-filters": "",
         "constant": "定数",
         "custom": "カスタム",
         "data-source": "データソース",
@@ -7228,6 +7233,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -7964,6 +7970,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "スター付き"
     },
     "new-data-source-view": {
@@ -10292,6 +10302,7 @@
         "expander-column-name": "",
         "no-data": "データなし"
       },
+      "no-rows": "",
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
       "sort-by-column": "",
@@ -10944,24 +10955,14 @@
     },
     "forgot-password": "パスワードを忘れましたか？",
     "form": {
-      "confirmation-code": "確認コードが必要です",
-      "confirmation-code-label": "確認コード",
-      "confirmation-code-placeholder": "確認コード",
-      "email-label": "メール",
-      "email-placeholder": "メールアドレス",
-      "email-required": "メールアドレスを入力してください",
-      "name-label": "名前",
       "password-label": "パスワード",
       "password-placeholder": "パスワード",
       "password-required": "パスワードは必須です",
-      "passwordless-username-label": "ユーザー名",
       "submit-label": "ログイン",
       "submit-loading-label": "ログイン中…",
       "username-label": "メールアドレスまたはユーザー名",
       "username-placeholder": "メールアドレスまたはユーザー名",
-      "username-required": "メールアドレスまたはユーザー名が必要です",
-      "verify-email-label": "確認メールを送信",
-      "verify-email-loading-label": "メールを送信中…"
+      "username-required": "メールアドレスまたはユーザー名が必要です"
     },
     "layout": {
       "update-password": "パスワードを更新"
@@ -14852,6 +14853,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "ヘッダーテキストの折り返し",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "自動",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
