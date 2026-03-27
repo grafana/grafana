@@ -609,11 +609,15 @@ func (a *api) getPermissionName(ctx context.Context, perm accesscontrol.SetResou
 // Teams-specific redirect functions using TeamBinding K8s API
 
 func (a *api) getTeamPermissionsFromTeamBindings(c *contextmodel.ReqContext, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
-	ctx := c.Req.Context()
 	dynamicClient, err := a.getDynamicClient(c)
 	if err != nil {
 		return nil, err
 	}
+	return a.listTeamBindingPermissions(c, dynamicClient, namespace, resourceID)
+}
+
+func (a *api) listTeamBindingPermissions(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
+	ctx := c.Req.Context()
 
 	teamID, err := strconv.ParseInt(resourceID, 10, 64)
 	if err != nil {
@@ -627,12 +631,6 @@ func (a *api) getTeamPermissionsFromTeamBindings(c *contextmodel.ReqContext, nam
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team details: %w", err)
 	}
-
-	namespaceInfo, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
-	}
-	orgID := namespaceInfo.OrgID
 
 	teamBindingResource := dynamicClient.Resource(iamv0.TeamBindingResourceInfo.GroupVersionResource()).Namespace(namespace)
 	listResult, err := teamBindingResource.List(ctx, metav1.ListOptions{
@@ -671,7 +669,7 @@ func (a *api) getTeamPermissionsFromTeamBindings(c *contextmodel.ReqContext, nam
 			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
 			permDTO.IsServiceAccount = userDetails.IsServiceAccount
 			permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
-			permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
+			permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, c.GetOrgID())
 		}
 
 		dto = append(dto, permDTO)
@@ -681,11 +679,15 @@ func (a *api) getTeamPermissionsFromTeamBindings(c *contextmodel.ReqContext, nam
 }
 
 func (a *api) setUserPermissionViaTeamBinding(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {
-	ctx := c.Req.Context()
 	dynamicClient, err := a.getDynamicClient(c)
 	if err != nil {
 		return err
 	}
+	return a.createOrDeleteTeamBinding(c, dynamicClient, namespace, resourceID, userID, permission)
+}
+
+func (a *api) createOrDeleteTeamBinding(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string, userID int64, permission string) error {
+	ctx := c.Req.Context()
 
 	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {

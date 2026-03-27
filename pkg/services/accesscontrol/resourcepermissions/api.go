@@ -207,6 +207,8 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	// Teams-specific redirect: read team permissions from TeamBinding K8s API instead of
+	// the generic resource permissions API. Falls back to legacy on failure.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.service.options.Resource == "teams" && a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsRedirect) {
 		teamPermissions, err := a.getTeamPermissionsFromTeamBindings(c, c.Namespace, resourceID)
@@ -346,20 +348,22 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	// Teams-specific dual-write: write to TeamBinding K8s API first, then fall through
+	// to the legacy path so both systems stay in sync during migration.
+	// If the K8s write fails, skip the legacy write and return the error.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.service.options.Resource == "teams" && a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsRedirect) {
-		// Dual-write: write to teambindings K8s API, then always fall through to legacy
 		err := a.setUserPermissionViaTeamBinding(c, c.Namespace, resourceID, userID, cmd.Permission)
-		if err == nil {
-			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
-		} else {
+		if err != nil {
 			span.RecordError(err)
 			if errors.Is(err, ErrRestConfigNotAvailable) {
-				a.logger.Debug("k8s API not available for team permissions via teambindings, continuing with legacy", "error", err, "resourceID", resourceID)
+				a.logger.Debug("k8s API not available for team permissions via teambindings", "error", err, "resourceID", resourceID)
 			} else {
-				a.logger.Warn("Failed to set user permission via teambinding k8s API, continuing with legacy", "error", err, "resourceID", resourceID)
+				a.logger.Warn("Failed to set user permission via teambinding k8s API", "error", err, "resourceID", resourceID)
 			}
+			return response.Err(err)
 		}
+		metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
 	}
 
 	if a.shouldUseK8sAPIs() {
