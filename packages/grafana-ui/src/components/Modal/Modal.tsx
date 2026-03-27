@@ -76,9 +76,17 @@ export function Modal(props: PropsWithChildren<Props>) {
     },
   });
 
+  // outsidePress intercepts clicks before they reach the DOM — use a function
+  // to honour closeOnBackdropClick and forward to onClickBackdrop in one place.
   const dismiss = useDismiss(context, {
     enabled: closeOnEscape,
-    outsidePress: false,
+    outsidePress: () => {
+      if (onClickBackdrop) {
+        onClickBackdrop();
+        return false;
+      }
+      return closeOnBackdropClick;
+    },
   });
 
   const role = useRole(context, {
@@ -98,7 +106,6 @@ export function Modal(props: PropsWithChildren<Props>) {
       <div
         role="presentation"
         className={styles.modalBackdrop}
-        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
       />
       <FloatingFocusManager context={context} modal={trapFocus} getInsideElements={() => [getPortalContainer()]}>
         <div
