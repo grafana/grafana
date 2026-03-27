@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -190,7 +190,7 @@ func requireValidFolderMetadata(t *testing.T, ctx context.Context, h *common.Pro
 	require.NoError(t, err, "%s: _folder.json should be readable via the files endpoint", filePath)
 
 	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-	require.Equal(t, "folder.grafana.app/v1", apiVersion, "%s: unexpected apiVersion", filePath)
+	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion, "%s: unexpected apiVersion", filePath)
 	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
 	require.Equal(t, "Folder", kind, "%s: unexpected kind", filePath)
 
