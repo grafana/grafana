@@ -6,7 +6,6 @@ import { getPanelDataSummary, PanelDataSummary } from '../panel/suggestions/getP
 
 import { DataFrame } from './dataFrame';
 import { FieldConfigSource } from './fieldOverrides';
-import { PanelData } from './panel';
 
 /**
  * @internal
@@ -87,7 +86,7 @@ export interface VisualizationSuggestion<TOptions = {}, TFieldConfig extends {} 
      * Transforms the panel data before passing it to the preview renderer.
      * Applied after maxSeries and maxRows. Useful for downsampling dense time series data.
      */
-    transformPreviewData?: (data: PanelData) => PanelData;
+    transformPreviewData?: <T extends { series: DataFrame[] }>(data: T) => T;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */
     icon?: string;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */
