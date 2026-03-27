@@ -832,6 +832,7 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		c.teamSvc,
 		c.userSvc,
 		resourcepermissions.NewActionSetService(),
+		nil,
 	)
 	require.NoError(c.t, err)
 
