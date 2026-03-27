@@ -1718,7 +1718,8 @@ describe('LokiDatasource', () => {
     });
 
     it('keeps all labels when no labels are loaded', async () => {
-      ds.getResource = <T>() => Promise.resolve({ data: [] } as T);
+      ds.getResource = <T>(url: string) =>
+        url === 'detected_labels' ? Promise.reject('Error') : Promise.resolve({ data: [] } as T);
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -1732,7 +1733,8 @@ describe('LokiDatasource', () => {
     });
 
     it('filters out non existing labels', async () => {
-      ds.getResource = <T>() => Promise.resolve({ data: ['foo'] } as T);
+      ds.getResource = <T>(url: string) =>
+        url === 'detected_labels' ? Promise.reject('Error') : Promise.resolve({ data: ['foo'] } as T);
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
