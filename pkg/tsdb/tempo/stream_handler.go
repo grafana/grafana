@@ -42,6 +42,9 @@ func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamReque
 func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	s.logger.Debug("New stream call", "path", request.Path)
 	tempoDatasource, dsInfoErr := s.getDSInfo(ctx, request.PluginContext)
+	if dsInfoErr != nil {
+		return backend.DownstreamErrorf("failed to get datasource information: %w", dsInfoErr)
+	}
 
 	// get incoming and team http headers and append to stream request.
 	headers, err := stream_utils.GetHeadersFromIncomingContext(ctx, s.logger)
@@ -51,14 +54,12 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	request.Headers = headers
 
 	// add them to the outgoing context.
+	// this is mainly needed for the api server as in that case, the outgoing context is empty and it is the incoming context that contains the metadata (if any)
 	for key, value := range headers {
 		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
 	}
 
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
-		if dsInfoErr != nil {
-			return backend.DownstreamErrorf("failed to get datasource information: %w", dsInfoErr)
-		}
 		if err = s.runSearchStream(ctx, request, sender, tempoDatasource); err != nil {
 			return sendError(err, sender)
 		} else {
@@ -66,9 +67,6 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 		}
 	}
 	if strings.HasPrefix(request.Path, MetricsPathPrefix) {
-		if dsInfoErr != nil {
-			return backend.DownstreamErrorf("failed to get datasource information: %w", dsInfoErr)
-		}
 		if err = s.runMetricsStream(ctx, request, sender, tempoDatasource); err != nil {
 			return sendError(err, sender)
 		} else {
