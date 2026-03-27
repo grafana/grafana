@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderDTO } from 'app/types/folders';
 
 import {
@@ -27,7 +27,7 @@ jest.mock('react-redux', () => {
 });
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useCreateRepositoryFilesWithPathMutation: jest.fn(),
+  useReplaceRepositoryFilesWithPathMutation: jest.fn(),
   provisioningAPI: {
     endpoints: {
       listRepository: {
@@ -54,14 +54,14 @@ jest.mock('app/core/navigation/hooks', () => ({
   useUrlParams: () => [new URLSearchParams(), jest.fn()],
 }));
 
-const mockUseCreateRepositoryFilesMutation = useCreateRepositoryFilesWithPathMutation as jest.MockedFunction<
-  typeof useCreateRepositoryFilesWithPathMutation
+const mockUseReplaceRepositoryFilesMutation = useReplaceRepositoryFilesWithPathMutation as jest.MockedFunction<
+  typeof useReplaceRepositoryFilesWithPathMutation
 >;
 const mockUseProvisionedFolderFormData = useProvisionedFolderFormData as jest.MockedFunction<
   typeof useProvisionedFolderFormData
 >;
 
-const mockCreateFile = jest.fn();
+const mockReplaceFile = jest.fn();
 
 const mockFolder: FolderDTO = {
   id: 1,
@@ -126,12 +126,12 @@ function setup(
     error: null,
   }
 ) {
-  const mockMutationResult = [mockCreateFile, requestState] as unknown as ReturnType<
-    typeof useCreateRepositoryFilesWithPathMutation
+  const mockMutationResult = [mockReplaceFile, requestState] as unknown as ReturnType<
+    typeof useReplaceRepositoryFilesWithPathMutation
   >;
   const mockHookResult = hookData as ReturnType<typeof useProvisionedFolderFormData>;
 
-  mockUseCreateRepositoryFilesMutation.mockReturnValue(mockMutationResult);
+  mockUseReplaceRepositoryFilesMutation.mockReturnValue(mockMutationResult);
   mockUseProvisionedFolderFormData.mockReturnValue(mockHookResult);
 
   const onDismiss = jest.fn();
@@ -150,7 +150,7 @@ function setup(
   return {
     ...renderResult,
     onDismiss,
-    mockCreateFile,
+    mockReplaceFile,
     clickRenameButton,
   };
 }
@@ -185,7 +185,7 @@ describe('RenameProvisionedFolderForm', () => {
   });
 
   describe('form submission', () => {
-    it('should call createFile with correct parameters (move operation)', async () => {
+    it('should call replaceFile with folder metadata body for branch workflow', async () => {
       const branchFormData = {
         ...mockFormData,
         workflow: 'branch' as const,
@@ -196,31 +196,63 @@ describe('RenameProvisionedFolderForm', () => {
       await clickRenameButton();
 
       await waitFor(() => {
-        expect(mockCreateFile).toHaveBeenCalledWith({
-          ref: 'my-branch',
+        expect(mockReplaceFile).toHaveBeenCalledWith({
           name: 'test-repo',
-          path: 'folders/Test Folder/',
-          originalPath: 'folders/test-folder/',
+          path: 'folders/test-folder/',
+          ref: 'my-branch',
           message: 'Rename folder',
-          body: {},
+          body: {
+            metadata: { name: 'folder-uid' },
+            spec: { title: 'Test Folder' },
+          },
         });
       });
     });
 
-    it('should call createFile with ref for branch workflow', async () => {
-      const branchFormData = {
+    it('should clear ref for write workflow', async () => {
+      const writeFormData = {
         ...mockFormData,
-        workflow: 'branch' as const,
-        ref: 'feature-branch',
+        workflow: 'write' as const,
+        ref: 'main',
       };
-      const { clickRenameButton } = setup({}, { ...defaultHookData, initialValues: branchFormData });
+      const { clickRenameButton } = setup({}, { ...defaultHookData, initialValues: writeFormData });
 
       await clickRenameButton();
 
       await waitFor(() => {
-        expect(mockCreateFile).toHaveBeenCalledWith(
+        expect(mockReplaceFile).toHaveBeenCalledWith(
           expect.objectContaining({
-            ref: 'feature-branch',
+            ref: undefined,
+          })
+        );
+      });
+    });
+
+    it('should keep path unchanged (no path calculation)', async () => {
+      const branchFormData = {
+        ...mockFormData,
+        workflow: 'branch' as const,
+        ref: 'my-branch',
+      };
+      setup({}, { ...defaultHookData, initialValues: branchFormData });
+
+      // Change the title — path should NOT change
+      const input = screen.getByDisplayValue('Test Folder');
+      await userEvent.clear(input);
+      await userEvent.type(input, 'New Folder Name');
+
+      const renameButton = screen.getByRole('button', { name: /^rename$/i });
+      await userEvent.click(renameButton);
+
+      await waitFor(() => {
+        expect(mockReplaceFile).toHaveBeenCalledWith(
+          expect.objectContaining({
+            // Path stays the same — only the title in the body changes
+            path: 'folders/test-folder/',
+            body: {
+              metadata: { name: 'folder-uid' },
+              spec: { title: 'New Folder Name' },
+            },
           })
         );
       });
@@ -236,7 +268,7 @@ describe('RenameProvisionedFolderForm', () => {
       await clickRenameButton();
 
       await waitFor(() => {
-        expect(mockCreateFile).toHaveBeenCalledWith(
+        expect(mockReplaceFile).toHaveBeenCalledWith(
           expect.objectContaining({
             message: 'Custom rename message',
           })
@@ -250,32 +282,7 @@ describe('RenameProvisionedFolderForm', () => {
       await clickRenameButton();
 
       await waitFor(() => {
-        expect(mockCreateFile).not.toHaveBeenCalled();
-      });
-    });
-
-    it('should submit with updated title and correct new path', async () => {
-      const branchFormData = {
-        ...mockFormData,
-        workflow: 'branch' as const,
-        ref: 'my-branch',
-      };
-      setup({}, { ...defaultHookData, initialValues: branchFormData });
-
-      const input = screen.getByDisplayValue('Test Folder');
-      await userEvent.clear(input);
-      await userEvent.type(input, 'New Folder Name');
-
-      const renameButton = screen.getByRole('button', { name: /^rename$/i });
-      await userEvent.click(renameButton);
-
-      await waitFor(() => {
-        expect(mockCreateFile).toHaveBeenCalledWith(
-          expect.objectContaining({
-            path: 'folders/New Folder Name/',
-            originalPath: 'folders/test-folder/',
-          })
-        );
+        expect(mockReplaceFile).not.toHaveBeenCalled();
       });
     });
   });

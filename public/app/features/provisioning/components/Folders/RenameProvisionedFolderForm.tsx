@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Field, Input, Stack } from '@grafana/ui';
-import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { FolderDTO } from 'app/types/folders';
 
@@ -15,7 +15,7 @@ import { BaseProvisionedFormData } from '../../types/form';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
-import { splitPath } from '../utils/path';
+import { buildNewPullRequestUrl } from '../utils/url';
 
 interface FormProps extends RenameProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
@@ -29,7 +29,7 @@ interface RenameProvisionedFolderFormProps {
 
 function FormContent({ initialValues, folder, repository, onDismiss }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
-  const [createFile, request] = useCreateRepositoryFilesWithPathMutation();
+  const [replaceFile, request] = useReplaceRepositoryFilesWithPathMutation();
 
   const methods = useForm<BaseProvisionedFormData>({
     defaultValues: initialValues,
@@ -50,31 +50,42 @@ function FormContent({ initialValues, folder, repository, onDismiss }: FormProps
 
   const [, updateUrlParams] = useUrlParams();
 
-  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
-    const prUrl = urls?.newPullRequestURL;
-    const params: Record<string, string> = {};
+  const onBranchSuccess = (
+    { ref: branchRef, urls }: { ref: string; path: string; urls?: Record<string, string> },
+    info: ProvisionedOperationInfo
+  ) => {
+    // Prefer the backend-provided PR URL; construct one client-side as a fallback
+    const prUrl =
+      urls?.newPullRequestURL ??
+      buildNewPullRequestUrl({
+        repoUrl: repository?.url,
+        repoType: info.repoType,
+        baseBranch: repository?.branch,
+        headBranch: branchRef,
+      });
 
-    if (prUrl) {
-      // Backend returned a PR creation URL — show the "Open pull request" banner
-      params.new_pull_request_url = prUrl;
-    } else if (repository?.url) {
-      // No PR URL (backend bug: moveDirectory doesn't populate URLs yet).
-      // Fall back to repo_url which shows the "behind branch" banner variant.
-      params.repo_url = repository.url;
-    }
-    if (info.repoType) {
-      params.repo_type = info.repoType;
-    }
+    // locationService.partial merges with existing params, so explicitly clear
+    // competing banner params to avoid stale state from previous attempts.
+    const params: Record<string, string | null> = {
+      new_pull_request_url: prUrl ?? null,
+      repo_url: null,
+      resource_pushed_to: null,
+      pull_request_url: null,
+      repo_type: info.repoType ?? null,
+    };
 
-    if (Object.keys(params).length > 0) {
-      updateUrlParams(params);
-    }
+    updateUrlParams(params);
+  };
+
+  const onWriteSuccess = () => {
+    onDismiss?.();
   };
 
   useProvisionedRequestHandler({
     request,
     workflow,
     resourceType: 'folder',
+    folderUID: folder.uid,
     repository,
     selectedBranch: ref,
     successMessage: t(
@@ -83,43 +94,42 @@ function FormContent({ initialValues, folder, repository, onDismiss }: FormProps
     ),
     handlers: {
       onDismiss,
+      onWriteSuccess,
       onBranchSuccess,
       onError: showError,
     },
   });
 
-  const doSave = async ({ ref, title, comment }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
-    const originalPath = initialValues.path;
+    const folderPath = initialValues.path;
 
-    if (!title || !repoName || !originalPath) {
+    if (!title || !repoName || !folderPath) {
       showError(t('browse-dashboards.rename-provisioned-folder-form.missing-info', 'Missing required fields'));
       return;
     }
 
-    // Build the new path: same parent directory, new folder name.
-    // splitPath handles root-level folders (no parent dir) correctly.
-    const pathWithoutTrailingSlash = originalPath.replace(/\/+$/, '');
-    const { directory: parentDir } = splitPath(pathWithoutTrailingSlash);
-    const newPath = parentDir ? `${parentDir}/${title}/` : `${title}/`;
-    const currentPath = pathWithoutTrailingSlash + '/';
+    // For write workflow, clear ref so it writes to the configured branch
+    if (workflow === 'write') {
+      ref = undefined;
+    }
 
     reportInteraction('grafana_provisioning_folder_rename_submitted', {
-      workflow: 'branch',
+      workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    // Rename is a move operation: POST with originalPath (current) and path (new).
-    // Only branch workflow is supported for directory moves.
-    createFile({
-      ref,
+    replaceFile({
       name: repoName,
-      path: newPath,
-      originalPath: currentPath,
+      path: folderPath,
+      ref,
       message: comment || t('browse-dashboards.rename-provisioned-folder-form.commit', 'Rename folder'),
-      body: {}, // Backend ignores body for directory moves
+      body: {
+        metadata: { name: folder.uid },
+        spec: { title },
+      },
     });
   };
 
@@ -174,6 +184,7 @@ export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisi
   const { repository, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: folder.uid,
     title: folder.title,
+    branchPrefix: 'folder-rename',
   });
 
   if (isReadOnlyRepo || !initialValues) {

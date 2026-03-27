@@ -48,7 +48,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     isReadOnlyRepo,
     status: repoViewStatus,
     orphanedRepoName,
-    repository,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
@@ -125,10 +124,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const [showRenameDrawer, setShowRenameDrawer] = useState(false);
-  // Rename requires branch workflow (directory moves are not supported on configured branch)
-  const hasBranchWorkflow = repository?.workflows?.includes('branch') ?? false;
-  const canRenameProvisioned =
-    canEditFolders && !!folderUID && isProvisionedFolder && !isReadOnlyRepo && hasBranchWorkflow;
+  const canRenameProvisioned = canEditFolders && !!folderUID && isProvisionedFolder && !isReadOnlyRepo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
   const permissions = {
     canEditFolders,
