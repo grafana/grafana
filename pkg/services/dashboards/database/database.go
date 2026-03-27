@@ -913,7 +913,12 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
 
 	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
+	sb := &searchstore.Builder{
+		Dialect:                  d.store.GetDialect(),
+		Filters:                  filters,
+		Features:                 d.features,
+		ForceDashboardTitleIndex: d.cfg.DatabaseForceDashboardTitleIndex,
+	}
 
 	limit := query.Limit
 	if limit < 1 {
