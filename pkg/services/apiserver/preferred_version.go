@@ -39,12 +39,12 @@ func applyPreferredAPIVersions(logger log.Logger, cfg *setting.Cfg, scheme *runt
 }
 
 func parseGroupVersionSetting(s string) (schema.GroupVersion, error) {
-	idx := strings.Index(s, "/")
-	if idx <= 0 || idx == len(s)-1 {
+	parts := strings.Split(s, "/")
+	if len(parts) != 2 {
 		return schema.GroupVersion{}, fmt.Errorf(
 			"invalid preferred_api_version entry %q (expected format is group/version, e.g. dashboard.grafana.app/v1)", s)
 	}
-	return schema.GroupVersion{Group: s[:idx], Version: s[idx+1:]}, nil
+	return schema.GroupVersion{Group: parts[0], Version: parts[1]}, nil
 }
 
 func applyPreferredForGroup(logger log.Logger, scheme *runtime.Scheme, apiResourceConfig *serverstorage.ResourceConfig, preferred schema.GroupVersion) error {
