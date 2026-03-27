@@ -217,4 +217,44 @@ describe('LogsTable', () => {
       );
     });
   });
+
+  describe('custom cell renderer', () => {
+    it('when level is the second column, renders exactly one custom cell per data row', async () => {
+      const onOptionsChange = jest.fn();
+      const { container } = setUp(
+        { onOptionsChange },
+        {
+          showInspectLogLine: true,
+        }
+      );
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers).toHaveLength(3);
+      expect(headers[0].textContent).toEqual('timestamp');
+      expect(headers[1].textContent).toEqual('level');
+
+      // Two log rows; inspect control exists only in the custom timestamp column (one per row).
+      expect(screen.getAllByLabelText('View log line')).toHaveLength(2);
+    });
+
+    it('when level is the first column, renders exactly one custom cell per data row', async () => {
+      const onOptionsChange = jest.fn();
+      const { container } = setUp(
+        { onOptionsChange },
+        {
+          showInspectLogLine: true,
+          displayedFields: ['level', LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME],
+        }
+      );
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers).toHaveLength(3);
+      expect(headers[0].textContent).toEqual('level');
+      expect(headers[1].textContent).toEqual('timestamp');
+
+      expect(screen.getAllByLabelText('View log line')).toHaveLength(2);
+    });
+  });
 });

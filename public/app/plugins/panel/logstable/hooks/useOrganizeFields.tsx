@@ -117,12 +117,14 @@ const organizeFields = async (
     const frame = organizedFrame[frameIndex];
 
     const levelField = frame.fields.find((f) => f.name === levelFieldName);
+    let isLevelFirstField = false;
     if (levelField) {
       normalizeLogLevelFieldInPlace(levelField);
+      isLevelFirstField = frame.fields.indexOf(levelField) === 0;
     }
 
     for (const [fieldIndex, field] of frame.fields.entries()) {
-      const isFirstField = fieldIndex === 0;
+      const isFirstField = (!isLevelFirstField && fieldIndex === 0) || (isLevelFirstField && fieldIndex === 1);
       const baseConfig = {
         ...fieldConfig.defaults,
         ...field.config,
@@ -139,6 +141,11 @@ const organizeFields = async (
           ...(levelEnhancements?.width !== undefined ? { width: levelEnhancements.width } : {}),
         },
       };
+
+      // We are mutating fields. Would it be possible to avoid it?
+      if (configAfterLevel.custom?.cellOptions?.cellComponent) {
+        configAfterLevel.custom.cellOptions.cellComponent = undefined;
+      }
 
       field.config = {
         ...configAfterLevel,
