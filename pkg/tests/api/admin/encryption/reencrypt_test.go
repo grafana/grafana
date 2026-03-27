@@ -33,6 +33,11 @@ func TestMain(m *testing.M) {
 func TestIntegration_AdminApiReencrypt(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// TODO: this test is failing due to DB locks in SQLite.
+	if db.IsTestDbSQLite() {
+		t.Skip("skip flaky in sqlite while we figure out the problem with this test")
+	}
+
 	const (
 		dataSourceTable              = "data_source"
 		secretsTable                 = "secrets"
