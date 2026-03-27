@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Dashboard controls
-description: Create and edit a dashboard
+description: Add and manage a dashboard controls
 weight: 200
 ---
 
