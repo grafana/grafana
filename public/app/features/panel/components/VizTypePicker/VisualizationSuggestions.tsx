@@ -213,6 +213,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
         data={data!}
         onItemClick={(item) => handleSuggestionClick(item, suggestionIndexMap.get(item.hash) ?? -1)}
         getItemKey={(item) => item.hash}
+        selectedKey={firstCardHash ?? undefined}
       />
     </>
   );
