@@ -51,26 +51,6 @@ export function getLogLevelColumnEnhancements(field: Field, levelFieldName: stri
   return Object.keys(out).length ? out : undefined;
 }
 
-function levelIsLogLevel(level: unknown): level is LogLevel {
-  return (
-    typeof level === 'string' &&
-    (level === LogLevel.emerg ||
-      level === LogLevel.fatal ||
-      level === LogLevel.alert ||
-      level === LogLevel.crit ||
-      level === LogLevel.critical ||
-      level === LogLevel.warn ||
-      level === LogLevel.warning ||
-      level === LogLevel.err ||
-      level === LogLevel.eror ||
-      level === LogLevel.error ||
-      level === LogLevel.info ||
-      level === LogLevel.information ||
-      level === LogLevel.informational ||
-      level === LogLevel.notice ||
-      level === LogLevel.dbug ||
-      level === LogLevel.debug ||
-      level === LogLevel.trace ||
-      level === LogLevel.unknown)
-  );
+function levelIsLogLevel(level: unknown): level is keyof typeof LogLevel {
+  return typeof level === 'string' && level in LogLevel;
 }
