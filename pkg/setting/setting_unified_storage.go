@@ -227,13 +227,16 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Index snapshot settings
 	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
 	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
-	cfg.IndexSnapshotRemoteThreshold = section.Key("index_snapshot_remote_threshold").MustInt(5000)
-	cfg.IndexSnapshotUploadInterval = section.Key("index_snapshot_upload_interval").MustDuration(1 * time.Hour)
-	cfg.IndexSnapshotUploadDocThreshold = section.Key("index_snapshot_upload_doc_threshold").MustInt(1000)
-	cfg.IndexSnapshotCleanupInterval = section.Key("index_snapshot_cleanup_interval").MustDuration(6 * time.Hour)
+	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
+	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
+		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)
+		cfg.IndexSnapshotThreshold = cfg.IndexFileThreshold
+	}
 	cfg.IndexSnapshotMaxAge = section.Key("index_snapshot_max_age").MustDuration(7 * 24 * time.Hour)
-	cfg.IndexSnapshotLockTTL = section.Key("index_snapshot_lock_ttl").MustDuration(3 * time.Minute)
-	cfg.IndexSnapshotMinKeep = section.Key("index_snapshot_min_keep").MustInt(3)
+	if cfg.IndexSnapshotMaxAge < cfg.MaxFileIndexAge {
+		cfg.Logger.Warn("index_snapshot_max_age is smaller than max_file_index_age, overriding", "configured", cfg.IndexSnapshotMaxAge, "max_file_index_age", cfg.MaxFileIndexAge)
+		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
+	}
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

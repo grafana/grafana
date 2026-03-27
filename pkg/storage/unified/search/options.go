@@ -3,12 +3,29 @@ package search
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Masterminds/semver"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+)
+
+// Default values for index snapshot settings that are not exposed in config.
+// These can be overridden in tests via SearchOptions fields.
+const (
+	// DefaultSnapshotMinDocChanges is the minimum number of document changes
+	// since the last snapshot before a new upload is triggered.
+	DefaultSnapshotMinDocChanges = 1000
+	// DefaultSnapshotUploadInterval is the minimum time between snapshot uploads.
+	DefaultSnapshotUploadInterval = 1 * time.Hour
+	// DefaultSnapshotCleanupInterval is how often old snapshots are cleaned up.
+	DefaultSnapshotCleanupInterval = 6 * time.Hour
+	// DefaultSnapshotLockTTL is the TTL for the distributed lock used during upload/cleanup.
+	DefaultSnapshotLockTTL = 3 * time.Minute
+	// DefaultSnapshotMinKeep is the minimum number of snapshots retained regardless of age.
+	DefaultSnapshotMinKeep = 3
 )
 
 func NewSearchOptions(
@@ -68,13 +85,13 @@ func NewSearchOptions(
 
 			IndexSnapshotEnabled:         cfg.IndexSnapshotEnabled,
 			IndexSnapshotBucketURL:       cfg.IndexSnapshotBucketURL,
-			IndexSnapshotThreshold:       cfg.IndexSnapshotRemoteThreshold,
+			IndexSnapshotThreshold:       cfg.IndexSnapshotThreshold,
 			IndexSnapshotMaxAge:          cfg.IndexSnapshotMaxAge,
-			IndexSnapshotMinDocChanges:   cfg.IndexSnapshotUploadDocThreshold,
-			IndexSnapshotUploadInterval:  cfg.IndexSnapshotUploadInterval,
-			IndexSnapshotLockTTL:         cfg.IndexSnapshotLockTTL,
-			IndexSnapshotMinKeep:         cfg.IndexSnapshotMinKeep,
-			IndexSnapshotCleanupInterval: cfg.IndexSnapshotCleanupInterval,
+			IndexSnapshotMinDocChanges:   DefaultSnapshotMinDocChanges,
+			IndexSnapshotUploadInterval:  DefaultSnapshotUploadInterval,
+			IndexSnapshotLockTTL:         DefaultSnapshotLockTTL,
+			IndexSnapshotMinKeep:         DefaultSnapshotMinKeep,
+			IndexSnapshotCleanupInterval: DefaultSnapshotCleanupInterval,
 		}, nil
 	}
 	return resource.SearchOptions{
