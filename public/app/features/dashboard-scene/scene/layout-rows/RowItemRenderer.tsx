@@ -16,7 +16,7 @@ import { useSoloPanelContext } from '../SoloPanelContext';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
-import { RowItem } from './RowItem';
+import type { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const {
