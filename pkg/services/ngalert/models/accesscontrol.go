@@ -11,7 +11,7 @@ import (
 
 const (
 	ScopeReceiversRoot       = "receivers"
-	ScopeRoutesRoot          = "routes"
+	ScopeRoutesRoot          = accesscontrol.AlertingManagedRoutesResource
 	ScopeInhibitionRulesRoot = "inhibition-rules"
 	AlertRolesGroup          = "Alerting"
 

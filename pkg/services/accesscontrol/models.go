@@ -493,15 +493,16 @@ const (
 	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
 	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
 
+	AlertingManagedRoutesResource = "alert.routes"
 	// Alerting managed routes actions (new, scoped per-resource)
-	ActionAlertingManagedRoutesRead   = "alert.notifications.routes.managed:read"
-	ActionAlertingManagedRoutesWrite  = "alert.notifications.routes.managed:write"
-	ActionAlertingManagedRoutesCreate = "alert.notifications.routes.managed:create"
-	ActionAlertingManagedRoutesDelete = "alert.notifications.routes.managed:delete"
+	ActionAlertingManagedRoutesRead   = "alert.routes:read"
+	ActionAlertingManagedRoutesWrite  = "alert.routes:write"
+	ActionAlertingManagedRoutesCreate = "alert.routes:create"
+	ActionAlertingManagedRoutesDelete = "alert.routes:delete"
 
-	// Alerting routes permissions actions
-	ActionAlertingRoutesPermissionsRead  = "routes.permissions:read"
-	ActionAlertingRoutesPermissionsWrite = "routes.permissions:write"
+	// Alerting routes permissions actions. Should match the resource name (see	https://github.com/grafana/grafana/blob/15c4cd5135056f50c75cfd1d872b11988fffad53/pkg/services/accesscontrol/resourcepermissions/api.go#L102 )
+	ActionAlertingRoutesPermissionsRead  = AlertingManagedRoutesResource + ".permissions:read"
+	ActionAlertingRoutesPermissionsWrite = AlertingManagedRoutesResource + ".permissions:write"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
