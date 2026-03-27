@@ -918,13 +918,11 @@ func TestIntegrationProvisioning(t *testing.T) {
 	// A user with write permissions but without alert.provisioning.provenance:write.
 	// Used to verify that provisioned resources are protected from callers that lack the permission.
 	writer := helper.CreateUser("ReceiversProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-		{
-			Actions: []string{
-				accesscontrol.ActionAlertingReceiversRead,
-				accesscontrol.ActionAlertingReceiversUpdate,
-				accesscontrol.ActionAlertingReceiversDelete,
-			},
-		},
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversDelete,
+		),
 	})
 	writerClient, err := v1beta1.NewReceiverClientFromGenerator(writer.GetClientRegistry())
 	require.NoError(t, err)
