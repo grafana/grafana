@@ -2164,7 +2164,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 			expectedPermission []accesscontrol.SetResourcePermissionCommand
 		}{
 			{
-				name:       "with kubernetesDashboards feature in root folder",
+				name:       "in root folder",
 				rootFolder: true,
 				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
