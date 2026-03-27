@@ -24,6 +24,11 @@ DIR="${STAGING}/${ROOT}"
 
 echo "build tar.gz: ${FILENAME}"
 
+if [[ ! -d "${REPO_ROOT}/conf" ]]; then
+  echo "error: ${REPO_ROOT}/conf is missing; cannot package" >&2
+  exit 1
+fi
+
 rm -rf "${STAGING}"
 mkdir -p "${DIR}/tools" "${DIR}/docs" "${DIR}/packaging"
 
@@ -32,6 +37,8 @@ cp LICENSE NOTICE.md README.md Dockerfile "${DIR}/"
 cp "$("${GO}" env GOROOT)/lib/time/zoneinfo.zip" "${DIR}/tools/"
 
 cp -r conf "${DIR}/conf"
+mkdir -p "${DIR}/data/plugins-bundled"
+
 cp -r docs/sources "${DIR}/docs/sources"
 cp -r packaging/deb "${DIR}/packaging/deb"
 cp -r packaging/rpm "${DIR}/packaging/rpm"
@@ -42,13 +49,6 @@ mkdir -p "${DIR}/bin"
 cp "bin/${OS}/${ARCH}/"* "${DIR}/bin/"
 cp -r public "${DIR}/public"
 find "${DIR}/public" -type d -name node_modules -print0 | xargs -0 rm -rf 2>/dev/null || true
-
-if [ -d plugins-bundled ]; then
-  cp -r plugins-bundled "${DIR}/plugins-bundled"
-  find "${DIR}/plugins-bundled" -type d -name node_modules -print0 | xargs -0 rm -rf 2>/dev/null || true
-else
-  mkdir -p "${DIR}/plugins-bundled"
-fi
 
 mkdir -p dist
 (cd "${STAGING}" && tar -czf "${REPO_ROOT}/dist/${FILENAME}" "${ROOT}")

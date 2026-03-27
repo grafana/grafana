@@ -137,6 +137,7 @@ jobs:
           path: _backend
       - name: Assemble workspace from split artifacts
         run: |
+          set -euo pipefail
           rm -rf public
           mkdir -p public
           cp -R _frontend/. public/

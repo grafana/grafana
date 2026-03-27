@@ -379,7 +379,7 @@ build: build-go build-js ## Build backend and frontend.
 TARGZ_PACKAGE_NAME ?= grafana
 
 .PHONY: build-targz
-build-targz: | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (same layout as daggerbuild).
+build-targz: | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, data)
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
