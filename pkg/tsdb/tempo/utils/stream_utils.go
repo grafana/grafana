@@ -57,9 +57,6 @@ func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.Plugi
 
 	headers := map[string]string{}
 	for headerKey, headerVals := range md {
-		if len(headerVals) == 0 {
-			continue
-		}
 		joined := strings.Join(headerVals, ",")
 		if headerKey == TeamHttpHeaderKeyLower {
 			headers[TeamHttpHeaderKeyCamel] = joined
@@ -78,9 +75,8 @@ func getClientOptionsHeaders(ctx context.Context, plugin backend.PluginContext) 
 	}
 
 	for name, values := range opts.Header {
-		for _, value := range values {
-			headers[name] = value
-		}
+		joined := strings.Join(values, ",")
+		headers[name] = joined
 	}
 	return headers, nil
 }

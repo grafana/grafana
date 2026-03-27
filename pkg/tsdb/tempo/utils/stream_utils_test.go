@@ -109,15 +109,15 @@ func TestGetHeadersFromIncomingContext_WithoutFeatureFlag_OnlyClientHeaders(t *t
 func TestGetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *testing.T) {
 	jsonData := []byte(`{
 		"httpHeaderName1": "X-Client",
-		"httpHeaderName2": "X-Shared"
+		"httpHeaderName2": "X-Client"
 	}`)
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 			JSONData:         jsonData,
 			BasicAuthEnabled: true,
 			DecryptedSecureJSONData: map[string]string{
-				"httpHeaderValue1": "client-value",
-				"httpHeaderValue2": "client-overridden",
+				"httpHeaderValue1": "client-value-a",
+				"httpHeaderValue2": "client-value-b",
 			},
 		},
 	}
@@ -135,22 +135,21 @@ func TestGetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *te
 
 	assert.Equal(t, "policy-a,policy-b", headers[TeamHttpHeaderKeyCamel])
 	assert.Equal(t, "extra", headers["x-custom-forward"])
-	assert.Equal(t, "client-value", headers["X-Client"])
-	assert.Equal(t, "client-overridden", headers["X-Shared"])
+	assert.Equal(t, "client-value-a,client-value-b", headers["X-Client"])
 }
 
 func TestGetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *testing.T) {
 	jsonData := []byte(`{
 		"httpHeaderName1": "X-Client",
-		"httpHeaderName2": "X-Shared"
+		"httpHeaderName2": "X-Client"
 	}`)
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 			JSONData:         jsonData,
 			BasicAuthEnabled: true,
 			DecryptedSecureJSONData: map[string]string{
-				"httpHeaderValue1": "client-value",
-				"httpHeaderValue2": "client-overridden",
+				"httpHeaderValue1": "client-value-a",
+				"httpHeaderValue2": "client-value-b",
 			},
 		},
 	}
@@ -169,23 +168,23 @@ func TestGetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *te
 
 	assert.Equal(t, "policy-a,policy-b", headers[TeamHttpHeaderKeyCamel])
 	assert.Equal(t, "extra", headers["x-custom-forward"])
-	assert.Equal(t, "client-value", headers["X-Client"])
-	assert.Equal(t, "client-overridden", headers["X-Shared"])
+	assert.Equal(t, "client-value-a,client-value-b", headers["X-Client"])
 }
 
 func TestGetClientOptionsHeaders_ParsesHeaders(t *testing.T) {
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			JSONData: []byte(`{"httpHeaderName1": "X-Client"}`),
+			JSONData: []byte(`{"httpHeaderName1": "X-Client", "httpHeaderName2": "X-Client"}`),
 			DecryptedSecureJSONData: map[string]string{
-				"httpHeaderValue1": "client-value",
+				"httpHeaderValue1": "client-value-a",
+				"httpHeaderValue2": "client-value-b",
 			},
 		},
 	}
 
 	headers, err := getClientOptionsHeaders(context.Background(), pluginCtx)
 	require.NoError(t, err)
-	assert.Equal(t, map[string]string{"X-Client": "client-value"}, headers)
+	assert.Equal(t, map[string]string{"X-Client": "client-value-a,client-value-b"}, headers)
 }
 
 func TestGetClientOptionsHeaders_InvalidJSON(t *testing.T) {
