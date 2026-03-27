@@ -110,7 +110,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
   private async checkDetectedLabelsExists(timeRange: TimeRange): Promise<void> {
     try {
       const { start, end } = this.datasource.getTimeRangeParams(timeRange);
-      const res = await this.request('detected_labels', { start, end });
+      const res = await this.request('detected_labels', { start, end }, false, {
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      });
       this.detectedEndpointsSupported = Array.isArray(res);
     } catch (e) {
       this.detectedEndpointsSupported = false;
@@ -599,7 +602,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
       expr: queryOptions.expr,
       timeRange: queryOptions?.timeRange,
       limit: queryOptions?.limit,
-    });
+    },  {
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      });
 
     const response: ParserAndLabelKeysResult = {
       extractedLabelKeys: [],
