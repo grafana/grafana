@@ -101,6 +101,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         language: state.language,
       });
     } else {
+      // eslint-disable-next-line no-restricted-syntax
       reportInteraction('grafana_preferences_save_button_clicked', {
         preferenceType: props.preferenceType,
         theme: state.theme,
@@ -137,6 +138,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         preferenceType: props.preferenceType,
       });
     } else {
+      // eslint-disable-next-line no-restricted-syntax
       reportInteraction('grafana_preferences_theme_changed', {
         toTheme: value.value,
         preferenceType: props.preferenceType,
@@ -171,6 +173,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         preferenceType: props.preferenceType,
       });
     } else {
+      // eslint-disable-next-line no-restricted-syntax
       reportInteraction('grafana_preferences_language_changed', {
         toLanguage: language,
         preferenceType: props.preferenceType,
@@ -186,6 +189,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         preferenceType: props.preferenceType,
       });
     } else {
+      // eslint-disable-next-line no-restricted-syntax
       reportInteraction('grafana_preferences_regional_format_changed', {
         toRegionalFormat: regionalFormat,
         preferenceType: props.preferenceType,
