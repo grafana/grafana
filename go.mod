@@ -97,7 +97,7 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20251127154401-74f93547077b // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.51.4 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.52.1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.51.4 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.4.3 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // @grafana/partner-datasources
@@ -191,7 +191,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.65.0 // @grafana/sharing-squad
 	go.opentelemetry.io/contrib/propagators/jaeger v1.40.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.34.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/otel v1.40.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/otel v1.42.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.15.0 // indirect; @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0 // @grafana/grafana-backend-group
@@ -199,7 +199,7 @@ require (
 	go.opentelemetry.io/otel/log v0.15.0 // indirect; @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/sdk v1.40.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk/log v0.15.0 // indirect; @grafana/grafana-operator-experience-squad
-	go.opentelemetry.io/otel/trace v1.40.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/otel/trace v1.42.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect; @grafana/grafana-operator-experience-squad
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-backend
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
@@ -223,11 +223,11 @@ require (
 	google.golang.org/protobuf v1.36.11 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.1 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
-	k8s.io/api v0.35.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.35.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apiextensions-apiserver v0.35.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.35.1 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.35.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.35.1 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.35.1 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.35.3 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.35.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.35.0 // @grafana/grafana-app-platform-squad
@@ -671,7 +671,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.15.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.39.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.39.0 // indirect
-	go.opentelemetry.io/otel/metric v1.40.0 // indirect
+	go.opentelemetry.io/otel/metric v1.42.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect

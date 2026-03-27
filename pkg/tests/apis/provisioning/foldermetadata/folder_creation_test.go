@@ -11,13 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
@@ -45,7 +42,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.NoError(t, err, "_folder.json should be readable via the files endpoint")
 
 		apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-		require.Equal(t, "folder.grafana.app/v1beta1", apiVersion)
+		require.Equal(t, "folder.grafana.app/v1", apiVersion)
 		kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
 		require.Equal(t, "Folder", kind)
 		folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
@@ -80,7 +77,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.NotEqual(t, parentUID, childUID, "each folder gets a distinct UID")
 
 		childAPIVersion, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "apiVersion")
-		require.Equal(t, "folder.grafana.app/v1beta1", childAPIVersion)
+		require.Equal(t, "folder.grafana.app/v1", childAPIVersion)
 		childTitle, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "spec", "title")
 		require.Equal(t, "child-folder", childTitle)
 
