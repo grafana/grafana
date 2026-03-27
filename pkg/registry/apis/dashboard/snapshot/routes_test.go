@@ -161,6 +161,271 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	}
 }
 
+func TestCreateExternalSnapshot(t *testing.T) {
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	t.Run("sends request to external server K8s endpoint with Bearer token", func(t *testing.T) {
+		var receivedReq *http.Request
+		var receivedBody map[string]any
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedReq = r
+			_ = json.NewDecoder(r.Body).Decode(&receivedBody)
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(dashv0.DashboardCreateResponse{
+				Key:       "ext-key",
+				DeleteKey: "ext-delete-key",
+				URL:       "https://external.example.com/snapshots/ext-key",
+				DeleteURL: "https://external.example.com/api/snapshots-delete/ext-delete-key",
+			})
+		}))
+		defer externalServer.Close()
+
+		options := dashv0.SnapshotSharingOptions{
+			SnapshotsEnabled:      true,
+			ExternalEnabled:       true,
+			ExternalSnapshotURL:   externalServer.URL,
+			ExternalSnapshotToken: "test-token-123",
+		}
+
+		snapshotService := dashboardsnapshots.NewMockService(t)
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+			UID:   "dash-1",
+			OrgID: orgID,
+		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
+
+		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&dashv0.Snapshot{}, nil)
+
+		routes := GetRoutes(
+			snapshotService,
+			options,
+			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return mockStorage },
+			dashboardService,
+		)
+
+		body, _ := json.Marshal(map[string]any{
+			"dashboard": map[string]any{"uid": "dash-1", "title": "test"},
+			"name":      "external snapshot",
+			"expires":   3600,
+			"external":  true,
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+
+		// Verify the external server received the correct request
+		assert.Equal(t, "Bearer test-token-123", receivedReq.Header.Get("Authorization"))
+		assert.Equal(t, "application/json", receivedReq.Header.Get("Content-Type"))
+		assert.Contains(t, receivedReq.URL.Path, "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/create")
+		assert.Equal(t, "external snapshot", receivedBody["name"])
+
+		// Verify the response — URL should come from external server
+		var resp dashv0.DashboardCreateResponse
+		require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
+		assert.Equal(t, "ext-delete-key", resp.DeleteKey)
+		assert.Equal(t, "https://external.example.com/snapshots/ext-key", resp.URL)
+
+		// Verify storage was called (local record created)
+		mockStorage.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("returns 502 on auth failure from external server", func(t *testing.T) {
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		defer externalServer.Close()
+
+		options := dashv0.SnapshotSharingOptions{
+			SnapshotsEnabled:      true,
+			ExternalEnabled:       true,
+			ExternalSnapshotURL:   externalServer.URL,
+			ExternalSnapshotToken: "bad-token",
+		}
+
+		snapshotService := dashboardsnapshots.NewMockService(t)
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+			UID:   "dash-1",
+			OrgID: orgID,
+		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
+
+		routes := GetRoutes(
+			snapshotService,
+			options,
+			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return nil },
+			dashboardService,
+		)
+
+		body, _ := json.Marshal(map[string]any{
+			"dashboard": map[string]any{"uid": "dash-1", "title": "test"},
+			"name":      "external snapshot",
+			"external":  true,
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusBadGateway, recorder.Code)
+	})
+
+	t.Run("returns 502 on unexpected status from external server", func(t *testing.T) {
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer externalServer.Close()
+
+		options := dashv0.SnapshotSharingOptions{
+			SnapshotsEnabled:      true,
+			ExternalEnabled:       true,
+			ExternalSnapshotURL:   externalServer.URL,
+			ExternalSnapshotToken: "test-token",
+		}
+
+		snapshotService := dashboardsnapshots.NewMockService(t)
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+			UID:   "dash-1",
+			OrgID: orgID,
+		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
+
+		routes := GetRoutes(
+			snapshotService,
+			options,
+			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return nil },
+			dashboardService,
+		)
+
+		body, _ := json.Marshal(map[string]any{
+			"dashboard": map[string]any{"uid": "dash-1", "title": "test"},
+			"name":      "external snapshot",
+			"external":  true,
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusBadGateway, recorder.Code)
+	})
+
+	t.Run("rejects external snapshot when external is disabled", func(t *testing.T) {
+		options := dashv0.SnapshotSharingOptions{
+			SnapshotsEnabled: true,
+			ExternalEnabled:  false,
+		}
+
+		snapshotService := dashboardsnapshots.NewMockService(t)
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		routes := GetRoutes(
+			snapshotService,
+			options,
+			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return nil },
+			dashboardService,
+		)
+
+		body, _ := json.Marshal(map[string]any{
+			"dashboard": map[string]any{"uid": "dash-1", "title": "test"},
+			"name":      "external snapshot",
+			"external":  true,
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusForbidden, recorder.Code)
+	})
+
+	t.Run("sends no Authorization header when token is empty", func(t *testing.T) {
+		var receivedReq *http.Request
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedReq = r
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(dashv0.DashboardCreateResponse{Key: "k"})
+		}))
+		defer externalServer.Close()
+
+		options := dashv0.SnapshotSharingOptions{
+			SnapshotsEnabled:      true,
+			ExternalEnabled:       true,
+			ExternalSnapshotURL:   externalServer.URL,
+			ExternalSnapshotToken: "",
+		}
+
+		snapshotService := dashboardsnapshots.NewMockService(t)
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+			UID:   "dash-1",
+			OrgID: orgID,
+		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
+
+		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&dashv0.Snapshot{}, nil)
+
+		routes := GetRoutes(
+			snapshotService,
+			options,
+			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return mockStorage },
+			dashboardService,
+		)
+
+		body, _ := json.Marshal(map[string]any{
+			"dashboard": map[string]any{"uid": "dash-1", "title": "test"},
+			"external":  true,
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		assert.Empty(t, receivedReq.Header.Get("Authorization"))
+	})
+}
+
 // testAttributes implements authorizer.Attributes for testing
 type testAttributes struct {
 	verb        string

@@ -1,9 +1,12 @@
 package snapshot
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +18,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -27,6 +31,57 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+var externalHTTPClient = &http.Client{Timeout: 5 * time.Second}
+
+// createExternalSnapshot sends a snapshot creation request to the external snapshot server's K8s API.
+func createExternalSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand, options dashv0.SnapshotSharingOptions) (*dashv0.DashboardCreateResponse, error) {
+	externalURL := strings.TrimRight(options.ExternalSnapshotURL, "/") +
+		"/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/snapshots/create"
+
+	name := cmd.Name
+	if name == "" {
+		name = "Unnamed snapshot"
+	}
+
+	body, err := json.Marshal(map[string]any{
+		"name":      name,
+		"expires":   cmd.Expires,
+		"dashboard": cmd.Dashboard,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal snapshot request: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, externalURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if options.ExternalSnapshotToken != "" {
+		req.Header.Set("Authorization", "Bearer "+options.ExternalSnapshotToken)
+	}
+
+	resp, err := externalHTTPClient.Do(req)
+	if err != nil {
+		return nil, dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("failed to contact external snapshot server: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return nil, dashboardsnapshots.ErrExternalSnapshotAuthFailed.Errorf("external snapshot server returned %d", resp.StatusCode)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("external snapshot server returned status code %d", resp.StatusCode)
+	}
+
+	var result dashv0.DashboardCreateResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode external snapshot response: %w", err)
+	}
+
+	return &result, nil
+}
 
 func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
@@ -177,22 +232,37 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					cmd.OrgID = user.GetOrgID()
 					cmd.UserID, _ = identity.UserIdentifier(user.GetID())
 
-					// TODO: add logic for external and internal snapshots
-					//if cmd.External {
-					//	// TODO: if it is an external dashboard make a POST to the public snapshot server
-					//}
+					var snapshotURL string
 
-					// Handle local snapshot creation
-					originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
-					if err != nil {
-						errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
-						return
-					}
+					if cmd.External {
+						resp, err := createExternalSnapshot(&cmd, options)
+						if err != nil {
+							errhttp.Write(ctx, err, w)
+							return
+						}
 
-					snapshotURL, err := dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)
-					if err != nil {
-						errhttp.Write(ctx, fmt.Errorf("could not generate random string: %w", err), w)
-						return
+						cmd.Key = resp.Key
+						cmd.DeleteKey = resp.DeleteKey
+						cmd.ExternalURL = resp.URL
+						cmd.ExternalDeleteURL = resp.DeleteURL
+						cmd.Dashboard = &commonv0.Unstructured{}
+						snapshotURL = resp.URL
+
+						metrics.MApiDashboardSnapshotExternal.Inc()
+					} else {
+						originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
+						if err != nil {
+							errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
+							return
+						}
+
+						snapshotURL, err = dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)
+						if err != nil {
+							errhttp.Write(ctx, fmt.Errorf("could not generate random string: %w", err), w)
+							return
+						}
+
+						metrics.MApiDashboardSnapshotCreate.Inc()
 					}
 
 					storage := storageGetter()
@@ -222,8 +292,6 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						errhttp.Write(ctx, err, w)
 						return
 					}
-
-					metrics.MApiDashboardSnapshotCreate.Inc()
 
 					// Build response
 					response := dashv0.DashboardCreateResponse{
