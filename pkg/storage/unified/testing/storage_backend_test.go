@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -69,40 +70,30 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 
 	// Launch 10 concurrent creates for the same resource name.
 	const numConcurrent = 10
-	type result struct {
-		rv  int64
-		err error
-	}
-	results := make([]result, numConcurrent)
+	errors := make([]error, numConcurrent)
 
 	var wg sync.WaitGroup
+	var successes atomic.Int64
 	for i := range numConcurrent {
 		wg.Go(func() {
-			rv, writeErr := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
+			_, writeErr := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
 				WithNamespace(ns),
 				WithValue(fmt.Sprintf("create-%d", i)))
-			results[i] = result{rv: rv, err: writeErr}
+			errors[i] = writeErr
+			if writeErr == nil {
+				successes.Add(1)
+			}
 		})
 	}
 	wg.Wait()
 
-	var successes int
-	var errs []error
-	for _, res := range results {
-		if res.err == nil {
-			successes++
-		} else {
-			errs = append(errs, res.err)
-		}
-	}
-
-	require.LessOrEqual(t, successes, 1, "at most one create should succeed")
+	require.LessOrEqual(t, successes.Load(), int64(1), "at most one create should succeed")
 
 	// When no resource was actually created, the errors should not claim it
 	// already exists — that would be a false positive from optimistic
 	// concurrency control.
-	if successes == 0 {
-		for _, e := range errs {
+	if successes.Load() == 0 {
+		for _, e := range errors {
 			require.NotErrorIs(t, e, resource.ErrResourceAlreadyExists,
 				"should not receive ErrResourceAlreadyExists when no resource is created")
 		}
