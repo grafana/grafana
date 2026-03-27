@@ -59,7 +59,10 @@ export interface GroupToNestedTableTransformerOptionsV2 {
 export function isV1Options(
   opts: GroupToNestedTableTransformerOptions | GroupToNestedTableTransformerOptionsV2
 ): opts is GroupToNestedTableTransformerOptions {
-  return 'fields' in opts;
+  // A config is V1 only if it has `fields` but NOT `rules`.
+  // After a shallow merge of defaultOptions (which has `fields: {}`) with a V2 config
+  // (which has `rules`), both keys will be present — we treat that as V2.
+  return 'fields' in opts && !('rules' in opts);
 }
 
 /**

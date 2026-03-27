@@ -3,10 +3,17 @@ import { FieldType, type Field } from '../../types/dataFrame';
 import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
+import { FieldMatcherID } from '../matchers/ids';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { GroupByOperationID, type GroupByTransformerOptions } from './groupBy';
-import { groupToNestedTable, type GroupToNestedTableTransformerOptions } from './groupToNestedTable';
+import {
+  type GroupToNestedTableTransformerOptions,
+  type GroupToNestedTableTransformerOptionsV2,
+  groupToNestedTable,
+  isV1Options,
+  migrateGroupToNestedTableOptions,
+} from './groupToNestedTable';
 import { DataTransformerID } from './ids';
 
 describe('GroupToSubframe transformer', () => {
@@ -339,6 +346,199 @@ describe('GroupToSubframe transformer', () => {
       ];
 
       expect(result[0].fields).toEqual(expected);
+    });
+  });
+});
+
+describe('GroupToSubframe transformer - V2 migration', () => {
+  it('migrateGroupToNestedTableOptions should convert V1 fields record to V2 rules array', () => {
+    const v1Options: GroupToNestedTableTransformerOptions = {
+      showSubframeHeaders: false,
+      fields: {
+        message: {
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+        values: {
+          operation: GroupByOperationID.aggregate,
+          aggregations: [ReducerID.sum, ReducerID.mean],
+        },
+      },
+    };
+
+    const v2 = migrateGroupToNestedTableOptions(v1Options);
+
+    expect(v2.showSubframeHeaders).toBe(false);
+    expect(v2.rules).toHaveLength(2);
+
+    const groupByRule = v2.rules.find((r) => r.matcher.options === 'message');
+    expect(groupByRule).toBeDefined();
+    expect(groupByRule!.matcher.id).toBe(FieldMatcherID.byName);
+    expect(groupByRule!.operation).toBe(GroupByOperationID.groupBy);
+    expect(groupByRule!.aggregations).toEqual([]);
+
+    const calcRule = v2.rules.find((r) => r.matcher.options === 'values');
+    expect(calcRule).toBeDefined();
+    expect(calcRule!.matcher.id).toBe(FieldMatcherID.byName);
+    expect(calcRule!.operation).toBe(GroupByOperationID.aggregate);
+    expect(calcRule!.aggregations).toEqual([ReducerID.sum, ReducerID.mean]);
+  });
+
+  it('isV1Options should return true for V1 config and false for V2 config', () => {
+    const v1: GroupToNestedTableTransformerOptions = {
+      fields: { message: { operation: GroupByOperationID.groupBy, aggregations: [] } },
+    };
+    const v2: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'message' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      ],
+    };
+
+    expect(isV1Options(v1)).toBe(true);
+    expect(isV1Options(v2)).toBe(false);
+  });
+});
+
+describe('GroupToSubframe transformer - V2 native config', () => {
+  it('should group values using a V2 byName matcher rule', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000] },
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      // Outer frame should have 2 rows (one per unique group)
+      expect(result[0].length).toBe(2);
+      // First field is the grouped field
+      expect(result[0].fields[0].name).toBe('message');
+      expect(result[0].fields[0].values).toEqual(['one', 'two']);
+      // Last field is nested frames
+      const nestedField = result[0].fields.find((f: Field) => f.name === '__nestedFrames');
+      expect(nestedField).toBeDefined();
+      expect(nestedField!.values).toHaveLength(2);
+    });
+  });
+
+  it('should group by name and aggregate by name using V2 rules', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'values' },
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0].length).toBe(3);
+
+      const messageField = result[0].fields.find((f: Field) => f.name === 'message');
+      expect(messageField!.values).toEqual(['one', 'two', 'three']);
+
+      const sumField = result[0].fields.find((f: Field) => f.name === 'values (sum)');
+      expect(sumField).toBeDefined();
+      expect(sumField!.values).toEqual([1, 4, 9]);
+    });
+  });
+
+  it('should group by type using a V2 byType matcher rule', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000] },
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            // Groups on the string field (message) by type
+            matcher: { id: FieldMatcherID.byType, options: 'string' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0].length).toBe(2); // 'one', 'two' are the unique string groups
+      expect(result[0].fields[0].name).toBe('message');
+      expect(result[0].fields[0].values).toEqual(['one', 'two']);
+    });
+  });
+
+  it('should not process frames when no group-by rule exists in V2 config', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000] },
+        { name: 'values', type: FieldType.number, values: [1] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'values' },
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      // Should return the original data unchanged since no group-by rule
+      expect(received[0]).toEqual([testSeries]);
     });
   });
 });
