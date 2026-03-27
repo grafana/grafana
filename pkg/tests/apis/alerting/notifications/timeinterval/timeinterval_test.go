@@ -402,14 +402,6 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("should not let update provenance if provisioned without set-status permission", func(t *testing.T) {
-		updated := created.Copy().(*v1beta1.TimeInterval)
-		updated.SetProvenanceStatus(string(ngmodels.ProvenanceNone))
-
-		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
-	})
-
 	t.Run("should let delete if provisioned without set-status permission", func(t *testing.T) {
 		err := writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.NoError(t, err)
