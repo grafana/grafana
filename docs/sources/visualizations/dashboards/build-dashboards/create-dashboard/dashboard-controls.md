@@ -145,7 +145,7 @@ To add a URL link to your dashboard, follow these steps:
 
 To add a filter, follow these steps:
 
-vale Grafana.Spelling = NO
+<!-- vale Grafana.Spelling = NO
 
 {{< docs/list >}}
 
@@ -163,8 +163,7 @@ vale Grafana.Spelling = NO
 
 {{< /docs/list >}}
 
-vale Grafana.Spelling = YES
--->
+<!-- vale Grafana.Spelling = YES -->
 
 ## Manage dashboard controls
 
