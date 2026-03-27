@@ -10,6 +10,7 @@ import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runti
 import { Box, Grid, Modal, Text, useStyles2 } from '@grafana/ui';
 
 import { DashboardCard } from './DashboardCard';
+import { NewTemplateDashboardInteractions } from './analytics/main';
 import {
   CONTENT_KINDS,
   DISCOVERY_METHODS,
@@ -36,6 +37,7 @@ export const TemplateDashboardModal = () => {
     'assistant.frontend.tools.dashboardTemplates',
     false
   );
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
 
@@ -48,17 +50,27 @@ export const TemplateDashboardModal = () => {
 
   const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
     const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
-
-    TemplateDashboardInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-      datasourceTypes: [String(testDataSource?.type)],
-      libraryItemId: String(dashboard.id),
-      libraryItemTitle: dashboard.name,
-      sourceEntryPoint,
-      eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-      discoveryMethod: DISCOVERY_METHODS.BROWSE,
-      action: customizeWithAssistant ? 'assistant' : 'view_template',
-    });
+    isAnalyticsFrameworkEnabled
+      ? NewTemplateDashboardInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+          datasourceTypes: [String(testDataSource?.type)],
+          libraryItemId: String(dashboard.id),
+          libraryItemTitle: dashboard.name,
+          sourceEntryPoint,
+          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+          action: customizeWithAssistant ? 'assistant' : 'view_template',
+        })
+      : TemplateDashboardInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+          datasourceTypes: [String(testDataSource?.type)],
+          libraryItemId: String(dashboard.id),
+          libraryItemTitle: dashboard.name,
+          sourceEntryPoint,
+          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+          action: customizeWithAssistant ? 'assistant' : 'view_template',
+        });
 
     const templateUrl = getTemplateDashboardUrl(
       dashboard,
@@ -92,15 +104,23 @@ export const TemplateDashboardModal = () => {
 
   useEffect(() => {
     if (isOpen && !loading && dashboards.length > 0) {
-      TemplateDashboardInteractions.loaded({
-        numberOfItems: dashboards.length,
-        contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
-        datasourceTypes: [String(testDataSource?.type)],
-        sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
-        eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewTemplateDashboardInteractions.loaded({
+            numberOfItems: dashboards.length,
+            contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+            datasourceTypes: [String(testDataSource?.type)],
+            sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
+            eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+          })
+        : TemplateDashboardInteractions.loaded({
+            numberOfItems: dashboards.length,
+            contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+            datasourceTypes: [String(testDataSource?.type)],
+            sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
+            eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+          });
     }
-  }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading]);
+  }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading, isAnalyticsFrameworkEnabled]);
 
   if (!testDataSource || (dashboards.length === 0 && !loading)) {
     return null;

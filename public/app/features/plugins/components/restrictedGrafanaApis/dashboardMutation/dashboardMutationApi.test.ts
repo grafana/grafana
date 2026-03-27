@@ -1,7 +1,7 @@
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 
-import { dashboardMutationApi, setDashboardMutationClient } from './dashboardMutationApi';
+import { dashboardMutationApi, setDashboardMutationClientForTests } from './dashboardMutationApi';
 
 function createMockClient(): MutationClient {
   return {
@@ -17,7 +17,7 @@ function createMockClient(): MutationClient {
 
 describe('dashboardMutationApi', () => {
   afterEach(() => {
-    setDashboardMutationClient(null);
+    setDashboardMutationClientForTests(null);
   });
 
   describe('execute', () => {
@@ -29,7 +29,7 @@ describe('dashboardMutationApi', () => {
 
     it('delegates to the registered client', async () => {
       const client = createMockClient();
-      setDashboardMutationClient(client);
+      setDashboardMutationClientForTests(client);
 
       const result = await dashboardMutationApi.execute({ type: 'LIST_VARIABLES', payload: {} });
       expect(result.success).toBe(true);
@@ -38,8 +38,8 @@ describe('dashboardMutationApi', () => {
 
     it('throws after client is unregistered', async () => {
       const client = createMockClient();
-      setDashboardMutationClient(client);
-      setDashboardMutationClient(null);
+      setDashboardMutationClientForTests(client);
+      setDashboardMutationClientForTests(null);
 
       await expect(dashboardMutationApi.execute({ type: 'LIST_VARIABLES', payload: {} })).rejects.toThrow(
         'Dashboard Mutation API is not available'
@@ -80,7 +80,7 @@ describe('dashboardMutationApi', () => {
   describe('security: no scene leakage', () => {
     it('should not expose mutation client on window', () => {
       const client = createMockClient();
-      setDashboardMutationClient(client);
+      setDashboardMutationClientForTests(client);
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- checking window global doesn't leak
       expect((window as Record<string, unknown>).__grafanaDashboardMutationAPI).toBeUndefined();

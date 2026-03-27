@@ -30,7 +30,6 @@ export function DashboardChangedModal({ onDismiss, event }: Props) {
     <Modal
       isOpen={true}
       title={t('live.dashboard-changed-modal.title-dashboard-changed', 'Dashboard changed')}
-      icon="copy"
       onDismiss={onDismiss}
       onClickBackdrop={() => {}}
       className={styles.modal}

@@ -55,20 +55,18 @@ const RecentlyDeletedPage = memo(() => {
         {hasSelection ? (
           <RecentlyDeletedActions />
         ) : (
-          <div className={styles.filters}>
-            <ActionRow
-              state={searchState}
-              getTagOptions={stateManager.getTagOptions}
-              getSortOptions={stateManager.getSortOptions}
-              sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-              onLayoutChange={stateManager.onLayoutChange}
-              onSortChange={stateManager.onSortChange}
-              onTagFilterChange={stateManager.onTagFilterChange}
-              onDatasourceChange={stateManager.onDatasourceChange}
-              onPanelTypeChange={stateManager.onPanelTypeChange}
-              onSetIncludePanels={stateManager.onSetIncludePanels}
-            />
-          </div>
+          <ActionRow
+            state={searchState}
+            getTagOptions={stateManager.getTagOptions}
+            getSortOptions={stateManager.getSortOptions}
+            sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
+            onLayoutChange={stateManager.onLayoutChange}
+            onSortChange={stateManager.onSortChange}
+            onTagFilterChange={stateManager.onTagFilterChange}
+            onDatasourceChange={stateManager.onDatasourceChange}
+            onPanelTypeChange={stateManager.onPanelTypeChange}
+            onSetIncludePanels={stateManager.onSetIncludePanels}
+          />
         )}
 
         <div className={styles.subView}>
@@ -101,14 +99,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // AutoSizer needs an element to measure the full height available
   subView: css({
     height: '100%',
-  }),
-
-  filters: css({
-    display: 'none',
-
-    [theme.breakpoints.up('md')]: {
-      display: 'block',
-    },
+    minHeight: '300px',
   }),
 });
 

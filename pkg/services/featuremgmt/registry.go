@@ -141,14 +141,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:            "kubernetesStars",
-			Description:     "Routes stars requests from /api to the /apis endpoint",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-		},
-		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -249,11 +241,11 @@ var (
 		},
 		{
 			Name:            "provisioning",
-			Description:     "Next generation provisioning... and git",
-			Stage:           FeatureStageExperimental,
+			Description:     "Enables Git Sync and as-code provisioning for Grafana resources",
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "provisioningFolderMetadata",
@@ -288,13 +280,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:        "queryCacheRequestDeduplication",
-			Description: "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
-			Stage:       FeatureStageExperimental,
-			Expression:  "false", // enabled by default
-			Owner:       grafanaOperatorExperienceSquad,
-		},
-		{
 			Name:            "configurableSchedulerTick",
 			Description:     "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
 			Stage:           FeatureStageExperimental,
@@ -325,6 +310,14 @@ var (
 			Description:  "Enables CSV encoding options in the reporting feature",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "reportingHeaderSettings",
+			Description:  "Enables configuration of PDF report settings",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
 		},
@@ -365,14 +358,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
 			Expression:      "false",
-		},
-		{
-			Name:         "kubernetesDashboards",
-			Description:  "Use the kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: false,  // The backend changes permission behavior based on this flag
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:            "kubernetesShortURLs",
@@ -532,8 +517,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourcesApiServerEnableResourceEndpointFrontend",
-			Description:     "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+			Name:            "datasourcesApiserverEnableResourceEndpointRedirect",
+			Description:     "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: false,
@@ -704,6 +689,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "feedbackButton",
+			Description:  "Enables the feedback button in the dashboard edit sidebar",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "true",
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
@@ -861,10 +854,10 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "sqlExpressionsColumnAutoComplete",
@@ -992,6 +985,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "playlistsRBAC",
+			Description:  "Enables RBAC for playlists",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "savedQueriesRBAC",
 			Description:  "Enables Saved queries (query library) RBAC permissions",
 			Stage:        FeatureStagePublicPreview,
@@ -1074,10 +1075,10 @@ var (
 		{
 			Name:         "alertingNavigationV2",
 			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: false,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingSavedSearches",
@@ -1352,14 +1353,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-		},
-		{
-			Name:         "passwordlessMagicLinkAuthentication",
-			Description:  "Enable passwordless login via magic link authentication",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
@@ -2189,14 +2182,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "newGauge",
-			Description:  "Enable new gauge visualization",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "newVizSuggestions",
 			Description:  "Enable new visualization suggestions",
 			Stage:        FeatureStagePublicPreview,
@@ -2410,10 +2395,10 @@ var (
 		{
 			Name:         "multiPropsVariables",
 			Description:  "Enables support for variables whose values can have multiple properties",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSectionVariables",
@@ -2720,7 +2705,8 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
-		}, {
+		},
+		{
 			Name:            "colorblindThemes",
 			Description:     "Enables the new colorblind-friendly themes",
 			Stage:           FeatureStageGeneralAvailability,
@@ -2728,6 +2714,60 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
+		}, {
+			Name:         "yAxisTickControl",
+			Description:  "Enables fine-grained Y-axis tick options beyond the auto-ticks",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "logsTablePanelNG",
+			Description:  "Enables the logs tableNG panel to replace existing tableRT",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "useMTPluginSettings",
+			Description:  "Enables plugins setting from new apis",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "frontendServiceSSOAutoLogin",
+			Description:  "Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "splashScreen",
+			Description:  "Enables the splash screen modal for introducing new Grafana features on first session",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:        "lokiAlignedQuerySplitting",
+			Description: "Aligns query splitting chunks with UTC midnight",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryFetchConfigFromSettingsService",
+			Description: "Enables the query service to fetch the configuration from the settings service",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
 		},
 	}
 )

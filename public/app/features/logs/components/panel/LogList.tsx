@@ -164,7 +164,7 @@ export const LogList = ({
   setDisplayedFields,
   showControls,
   showFieldSelector,
-  showLevel = true,
+  showLevel,
   showLogAttributes,
   showTime,
   showUniqueLabels,
@@ -522,7 +522,6 @@ const LogListComponent = ({
               </>
             }
             confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
-            icon="exclamation-triangle"
             onConfirm={onDisableConfirm}
             onDismiss={onDisableCancel}
           />
