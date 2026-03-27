@@ -382,8 +382,14 @@ func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 		assert.Equal(t, "move", resource["action"], "resource action should be 'move'")
 
 		// Verify the directory was actually moved on the branch
-		_, err = helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "renamed", "dashboard.json")
-		require.NoError(t, err, "dashboard should exist at new location on branch")
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repoName).
+			SubResource("files", "renamed", "dashboard.json").
+			Param("ref", branchName).
+			Do(ctx)
+		require.NoError(t, result.Error(), "dashboard should exist at new location on branch")
 	})
 }
 
