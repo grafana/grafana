@@ -81,6 +81,31 @@ Since Grafana 10.2, the endpoint to check compatible versions when installing a 
 
 We _do not_ recommend installing plugins declared as incompatible. However, if you need to force install a plugin despite it being declared as incompatible, refer to the [Installing a plugin from a ZIP](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-a-plugin-from-a-zip-file) guidance.
 
+### Alert state compression enabled by default
+
+**Review your alerting state save configuration if you use batch-based periodic saves**
+
+Starting in Grafana v12.0, the `alertingSaveStateCompressed` feature flag is enabled by default. Compressed state storage performs one SQL update per alert rule after each evaluation, grouping all alert instances belonging to the rule together.
+
+In Grafana v12.0 through v12.3, compressed state storage and batch-based periodic saves (`alertingSaveStatePeriodic`) are mutually exclusive — compression takes precedence. If you previously configured batch-based periodic saves with settings such as `state_periodic_save_interval` and `state_periodic_save_batch_size`, those settings become a no-op after upgrading to v12.0.
+
+#### How do I know if I'm affected?
+
+You're affected if both of the following are true:
+
+- You enabled `alertingSaveStatePeriodic` and configured batch save settings (such as `state_periodic_save_interval` or `state_periodic_save_batch_size`) prior to upgrading.
+- You haven't explicitly set `alertingSaveStateCompressed` in your feature toggles (meaning it defaults to `true`).
+
+In this case, your batch settings are silently ignored after the upgrade and alert state is saved after every evaluation instead of periodically. This can lead to increased database connections and load, especially in environments with a high number of alert rules.
+
+#### What should I do?
+
+You have two options:
+
+1. **Disable compression and keep batching (v12.0–v12.3):** Explicitly disable the `alertingSaveStateCompressed` feature flag while keeping `alertingSaveStatePeriodic` enabled. This restores the pre-v12.0 batch save behavior. For more information, refer to [Batch-based periodic saves]({{< relref "../../alerting/set-up/performance-limitations#batch-based-periodic-saves" >}}).
+
+1. **Upgrade to v12.4 to combine both:** Grafana v12.4 supports combining compressed state storage with periodic batch saves and jitter. If you can upgrade, this is the recommended path. For more information, refer to [Compressed periodic saves]({{< relref "../../alerting/set-up/performance-limitations#compressed-periodic-saves" >}}).
+
 ### Annotation table migration
 
 **Plan for increased disk usage when upgrading from Grafana v11.x**
