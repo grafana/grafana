@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
-import { trackCreateDashboardClicked, trackDsConfigClicked } from '../tracking';
+import { trackBuildDashboardDropdownClicked, trackCreateDashboardClicked, trackDsConfigClicked } from '../tracking';
 
 import { BuildDashboardButton } from './BuildDashboardButton';
 import { type SuggestedDashboardsLoaderChildProps } from './SuggestedDashboardsLoader';
@@ -18,6 +18,7 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/interactions', () =>
 }));
 
 jest.mock('../tracking', () => ({
+  trackBuildDashboardDropdownClicked: jest.fn(),
   trackDsConfigClicked: jest.fn(),
   trackCreateDashboardClicked: jest.fn(),
 }));
@@ -144,12 +145,18 @@ describe('BuildDashboardButton', () => {
       expect(screen.queryByRole('link', { name: /Build a dashboard/i })).not.toBeInTheDocument();
     });
 
-    it('should call triggerFetch when dropdown is opened', () => {
+    it('should call triggerFetch and fire tracking when dropdown is opened', () => {
       render(<BuildDashboardButton {...defaultProps} />);
 
       fireEvent.click(screen.getByRole('button', { name: /Build a dashboard/i }));
 
       expect(mockTriggerFetch).toHaveBeenCalled();
+      expect(trackBuildDashboardDropdownClicked).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasource_uid: 'test-uid',
+          plugin_name: 'TestDS',
+        })
+      );
     });
 
     it('should show "From suggestions" as disabled while loading', () => {

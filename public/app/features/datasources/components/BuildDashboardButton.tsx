@@ -105,23 +105,17 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
           }
           onVisibleChange={(isOpen) => {
             if (isOpen) {
-              triggerFetch();
-            }
-          }}
-        >
-          <Button
-            size={size}
-            variant="secondary"
-            fill={fill}
-            onClick={() => {
               trackBuildDashboardDropdownClicked({
                 grafana_version: config.buildInfo.version,
                 datasource_uid: dataSource.uid,
                 plugin_name: dataSource.typeName,
                 path: window.location.pathname,
               });
-            }}
-          >
+              triggerFetch();
+            }
+          }}
+        >
+          <Button size={size} variant="secondary" fill={fill}>
             <Trans i18nKey="datasources.build-a-dashboard-button.build-a-dashboard">Build a dashboard</Trans>
             <Icon name="angle-down" />
           </Button>
