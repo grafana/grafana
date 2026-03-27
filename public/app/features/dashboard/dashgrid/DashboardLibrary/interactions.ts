@@ -1,6 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
 
-import { ContentKind, DiscoveryMethod, EventLocation, FEATURE_VARIANTS, SourceEntryPoint } from './constants';
+import { ContentKind, DiscoveryMethod, EventLocation, SourceEntryPoint } from './constants';
 import { isTemplateDashboardAssistantEnabled } from './utils/assistantHelpers';
 
 const SCHEMA_VERSION = 1;
@@ -73,8 +73,13 @@ export const DashboardLibraryInteractions = {
     datasourceType: string;
     triggerMethod: 'manual' | 'auto_initial_load';
     eventLocation: EventLocation;
+    sourceEntryPoint: SourceEntryPoint;
   }) => {
     reportDashboardLibraryInteraction('compatibility_check_triggered', properties);
+  },
+
+  createFromScratchClicked: (properties: { eventLocation: EventLocation }) => {
+    reportDashboardLibraryInteraction('create_from_scratch_clicked', properties);
   },
 
   compatibilityCheckCompleted: (properties: {
@@ -86,6 +91,7 @@ export const DashboardLibraryInteractions = {
     metricsTotal: number;
     triggerMethod: 'manual' | 'auto_initial_load';
     eventLocation: EventLocation;
+    sourceEntryPoint: SourceEntryPoint;
   }) => {
     reportDashboardLibraryInteraction('compatibility_check_completed', properties);
   },
@@ -111,38 +117,6 @@ export const TemplateDashboardInteractions = {
     reportDashboardLibraryInteraction('loaded', {
       ...properties,
       isDashboardTemplatesAssistantEnabled,
-    });
-  },
-};
-
-export const SuggestedDashboardInteractions = {
-  ...DashboardLibraryInteractions,
-  loaded: (properties: LoadedInteractionProperties) => {
-    reportDashboardLibraryInteraction('loaded', {
-      ...properties,
-      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
-    });
-  },
-  itemClicked: (properties: ItemClickedInteractionProperties) => {
-    reportDashboardLibraryInteraction('item_clicked', {
-      ...properties,
-      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
-    });
-  },
-};
-
-export const BasicProvisionedDashboardInteractions = {
-  ...DashboardLibraryInteractions,
-  loaded: (properties: LoadedInteractionProperties) => {
-    reportDashboardLibraryInteraction('loaded', {
-      ...properties,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    });
-  },
-  itemClicked: (properties: ItemClickedInteractionProperties) => {
-    reportDashboardLibraryInteraction('item_clicked', {
-      ...properties,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
     });
   },
 };

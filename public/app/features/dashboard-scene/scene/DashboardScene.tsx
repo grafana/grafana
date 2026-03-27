@@ -126,9 +126,16 @@ type CopiedPanelStyles = {
   styles: PanelStyles;
 };
 
+export interface DashboardScenePreferences {
+  defaultLayoutTemplate?: DashboardLayoutManager;
+}
+
 export interface DashboardSceneState extends SceneObjectState {
   /** @deprecated */
   id?: number | undefined;
+
+  /** Dashboard-specific preferences **/
+  preferences?: DashboardScenePreferences;
 
   /** The title */
   title: string;
@@ -228,11 +235,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([]),
+      body:
+        state.body ?? state.preferences?.defaultLayoutTemplate?.clone() ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
+      preferences: state.preferences ?? {},
     });
 
     this.serializer =
@@ -360,7 +369,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             'dashboard-scene.dashboard-scene.modal.text.save-changes-question',
             'Do you want to save your changes?'
           ),
-          icon: 'trash-alt',
           altActionText: t('dashboard-scene.dashboard-scene.modal.save', 'Save'),
           noText: t('dashboard-scene.dashboard-scene.modal.cancel', 'Cancel'),
           yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
@@ -384,7 +392,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             'dashboard-scene.dashboard-scene.title.discard-changes-to-dashboard',
             'Discard changes to dashboard?'
           ),
-          icon: 'trash-alt',
           text: t(
             'dashboard-scene.dashboard-scene.title.unsaved-changes-question',
             'You have unsaved changes to this dashboard. Are you sure you want to discard them?'
@@ -1255,6 +1262,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private hasVariableErrors(): boolean {
     return Boolean(this.state.$variables?.state.variables.find((v) => Boolean(v.state.error)));
+  }
+
+  /**
+   * Default layout used for new Tab and Row containers
+   * Undefined if default layout is not set in preferences
+   */
+  getDefaultLayout() {
+    if (this.state.preferences?.defaultLayoutTemplate) {
+      return this.state.preferences.defaultLayoutTemplate.clone();
+    }
+    return undefined;
+  }
+
+  getDefaultLayoutType() {
+    return this.state.preferences?.defaultLayoutTemplate?.descriptor?.id;
+  }
+
+  updateDefaultLayoutTemplate(template: DashboardLayoutManager) {
+    this.setState({
+      preferences: {
+        ...this.state.preferences,
+        defaultLayoutTemplate: template.clone(),
+      },
+    });
   }
 }
 

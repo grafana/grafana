@@ -8,9 +8,10 @@ import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
-import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
+import { trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
+import { BuildDashboardButton } from './BuildDashboardButton';
 import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 export interface Props {
@@ -42,22 +43,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
       </Card.Meta>
       <Card.Tags>
         {/* Build Dashboard */}
-        <LinkButton
-          icon="apps"
-          fill="outline"
-          variant="secondary"
-          href={`dashboard/new-with-ds/${dataSource.uid}`}
-          onClick={() => {
-            trackCreateDashboardClicked({
-              grafana_version: config.buildInfo.version,
-              datasource_uid: dataSource.uid,
-              plugin_name: dataSource.typeName,
-              path: window.location.pathname,
-            });
-          }}
-        >
-          <Trans i18nKey="datasources.data-sources-list-card.build-a-dashboard">Build a dashboard</Trans>
-        </LinkButton>
+        <BuildDashboardButton dataSource={dataSource} size="md" fill="outline" context="datasource_list" />
 
         {/* Explore */}
         {hasExploreRights && (

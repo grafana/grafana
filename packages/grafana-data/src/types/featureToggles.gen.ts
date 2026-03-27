@@ -239,11 +239,6 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Use the kubernetes API in the frontend for dashboards
-  * @default true
-  */
-  kubernetesDashboards?: boolean;
-  /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
   */
@@ -408,6 +403,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enables default layout selector in dashboard settings
+  * @default false
+  */
+  dashboardDefaultLayoutSelector?: boolean;
   /**
   * Enables the assistant prompt popover on panel click in dashboard view mode
   * @default false
@@ -869,11 +869,6 @@ export interface FeatureToggles {
   * @default false
   */
   playlistsReconciler?: boolean;
-  /**
-  * Enable passwordless login via magic link authentication
-  * @default false
-  */
-  passwordlessMagicLinkAuthentication?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
@@ -1740,6 +1735,16 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceSSOAutoLogin?: boolean;
+  /**
+  * Enables the splash screen modal for introducing new Grafana features on first session
+  * @default false
+  */
+  splashScreen?: boolean;
+  /**
+  * Enables forwarding team headers from tempo for streaming requests with LBAC rules
+  * @default false
+  */
+  streamingForwardTeamHeadersTempo?: boolean;
   /**
   * Aligns query splitting chunks with UTC midnight
   * @default false

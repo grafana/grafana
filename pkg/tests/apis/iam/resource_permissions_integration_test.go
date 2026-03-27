@@ -133,8 +133,6 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-					// Prevents nested folders from having default permissions
-					featuremgmt.FlagKubernetesDashboards,
 				},
 			})
 

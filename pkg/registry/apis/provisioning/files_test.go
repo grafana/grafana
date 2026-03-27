@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -22,7 +23,6 @@ func TestCheckQuota(t *testing.T) {
 		isCreate   bool
 		expectErr  bool
 	}{
-		// No conditions (no quota configured)
 		{
 			name:       "no conditions allows create",
 			conditions: nil,
@@ -35,8 +35,6 @@ func TestCheckQuota(t *testing.T) {
 			isCreate:   false,
 			expectErr:  false,
 		},
-
-		// Unlimited quota
 		{
 			name: "unlimited quota allows create",
 			conditions: []metav1.Condition{
@@ -61,8 +59,6 @@ func TestCheckQuota(t *testing.T) {
 			isCreate:  false,
 			expectErr: false,
 		},
-
-		// Within quota
 		{
 			name: "within quota allows create",
 			conditions: []metav1.Condition{
@@ -87,8 +83,6 @@ func TestCheckQuota(t *testing.T) {
 			isCreate:  false,
 			expectErr: false,
 		},
-
-		// Quota reached (at limit)
 		{
 			name: "quota reached blocks create",
 			conditions: []metav1.Condition{
@@ -113,8 +107,6 @@ func TestCheckQuota(t *testing.T) {
 			isCreate:  false,
 			expectErr: false,
 		},
-
-		// Quota exceeded (over limit)
 		{
 			name: "quota exceeded blocks create",
 			conditions: []metav1.Condition{
@@ -225,7 +217,8 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 				require.Error(t, err)
 				assert.True(t, apierrors.IsForbidden(err))
 			} else {
-				// Guard does not fire; code reaches nil dualReadWriter and panics.
+				// Guard does not fire; code proceeds past it and panics on nil dualReadWriter.
+				// This is intentional: we only test the guard logic here, not the downstream handlers.
 				require.Panics(t, func() {
 					//nolint:errcheck
 					_, _ = connector.handleMethodRequest(context.Background(), req, opts, false, nil)
@@ -233,4 +226,99 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandlePut_DirectoryRouting(t *testing.T) {
+	tests := []struct {
+		name                   string
+		path                   string
+		isDir                  bool
+		folderMetadataEnabled  bool
+		expectMethodNotAllowed bool
+	}{
+		{
+			name:                  "directory with flag on routes to folder metadata update",
+			path:                  "myfolder/",
+			isDir:                 true,
+			folderMetadataEnabled: true,
+		},
+		{
+			name:                   "directory with flag off returns method not supported",
+			path:                   "myfolder/",
+			isDir:                  true,
+			folderMetadataEnabled:  false,
+			expectMethodNotAllowed: true,
+		},
+		{
+			name:                  "file path with flag on routes to normal update",
+			path:                  "myfolder/dashboard.json",
+			isDir:                 false,
+			folderMetadataEnabled: true,
+		},
+		{
+			name:                  "file path with flag off routes to normal update",
+			path:                  "myfolder/dashboard.json",
+			isDir:                 false,
+			folderMetadataEnabled: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			connector := &filesConnector{folderMetadataEnabled: tc.folderMetadataEnabled}
+			body := strings.NewReader(`{"spec":{"title":"Test"}}`)
+			req := httptest.NewRequest(http.MethodPut, "/", body)
+			opts := resources.DualWriteOptions{Path: tc.path}
+
+			if tc.expectMethodNotAllowed {
+				_, err := connector.handlePut(context.Background(), req, opts, tc.isDir, nil)
+				require.Error(t, err)
+				assert.True(t, apierrors.IsMethodNotSupported(err), "expected MethodNotSupported, got: %v", err)
+				return
+			}
+
+			// Non-error cases proceed into the handler which dereferences the nil
+			// dualReadWriter. The panic confirms the routing decision was correct.
+			require.Panics(t, func() {
+				//nolint:errcheck
+				_, _ = connector.handlePut(context.Background(), req, opts, tc.isDir, nil)
+			}, "should proceed past routing and panic on nil dualReadWriter")
+		})
+	}
+}
+
+func TestHandleMethodRequest_PutDirectoryRouting(t *testing.T) {
+	t.Run("PUT to directory with flag on passes guard and reaches handlePut", func(t *testing.T) {
+		connector := &filesConnector{folderMetadataEnabled: true}
+		body := strings.NewReader(`{"spec":{"title":"Test"}}`)
+		req := httptest.NewRequest(http.MethodPut, "/", body)
+		opts := resources.DualWriteOptions{Path: "myfolder/"}
+
+		require.Panics(t, func() {
+			//nolint:errcheck
+			_, _ = connector.handleMethodRequest(context.Background(), req, opts, true, nil)
+		})
+	})
+
+	t.Run("PUT to directory with flag off returns method not supported", func(t *testing.T) {
+		connector := &filesConnector{folderMetadataEnabled: false}
+		body := strings.NewReader(`{"spec":{"title":"Test"}}`)
+		req := httptest.NewRequest(http.MethodPut, "/", body)
+		opts := resources.DualWriteOptions{Path: "myfolder/"}
+
+		_, err := connector.handleMethodRequest(context.Background(), req, opts, true, nil)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsMethodNotSupported(err))
+	})
+
+	t.Run("PUT to folder path without flag is method not supported", func(t *testing.T) {
+		connector := &filesConnector{folderMetadataEnabled: false}
+		body := strings.NewReader(`{"spec":{"title":"Test"}}`)
+		req := httptest.NewRequest(http.MethodPut, "/", body)
+		opts := resources.DualWriteOptions{Path: "nested/folder/"}
+
+		_, err := connector.handlePut(context.Background(), req, opts, true, nil)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsMethodNotSupported(err), "expected MethodNotSupported, got: %v", err)
+	})
 }

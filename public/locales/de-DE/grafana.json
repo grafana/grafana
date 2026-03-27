@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Variablenbeschreibung ändern"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Option zum Ausblenden von Variablen ändern"
       },
@@ -6646,9 +6647,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Ad-hoc-Optionen",
-      "alert-not-supported": "Diese Datenquelle unterstützt keine Ad-hoc-Filter",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Ermöglicht Nutzern, individuelle Werte zur Liste hinzuzufügen",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Dimensionen als CSV angeben: {{name}}, {{value}}",
@@ -7013,7 +7018,7 @@
         "values-timespans": "Werte sind Zeitspannen, z. B. 1 m, 1 h, 1 T"
       },
       "name": {
-        "ad-hoc-filters": "Ad-hoc-Filter",
+        "ad-hoc-filters": "",
         "constant": "Konstant",
         "custom": "Benutzerdefiniert",
         "data-source": "Datenquelle",
@@ -7266,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -8007,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Mit Stern versehen"
     },
     "new-data-source-view": {
@@ -10347,6 +10357,7 @@
         "expander-column-name": "",
         "no-data": "Keine Daten"
       },
+      "no-rows": "",
       "no-values-label": "Keine Werte",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen",
       "sort-by-column": "",
@@ -11004,24 +11015,14 @@
     },
     "forgot-password": "Passwort vergessen?",
     "form": {
-      "confirmation-code": "Bestätigungscode ist erforderlich",
-      "confirmation-code-label": "Bestätigungscode",
-      "confirmation-code-placeholder": "Bestätigungscode",
-      "email-label": "E-Mail-Adresse",
-      "email-placeholder": "E-Mail-Adresse",
-      "email-required": "E-Mail-Adresse ist erforderlich",
-      "name-label": "Name",
       "password-label": "Passwort",
       "password-placeholder": "Passwort",
       "password-required": "Passwort ist erforderlich",
-      "passwordless-username-label": "Benutzername",
       "submit-label": "Einloggen",
       "submit-loading-label": "Einloggen...",
       "username-label": "E-Mail oder Benutzername",
       "username-placeholder": "E-Mail oder Benutzername",
-      "username-required": "E-Mail oder Benutzername ist erforderlich",
-      "verify-email-label": "Verifizierungs-E-Mail senden",
-      "verify-email-loading-label": "E-Mail wird gesendet …"
+      "username-required": "E-Mail oder Benutzername ist erforderlich"
     },
     "layout": {
       "update-password": "Aktualisieren Sie Ihr Passwort"
@@ -14940,6 +14941,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Kopfzeilentext umbrechen",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
