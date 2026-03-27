@@ -11,7 +11,7 @@ export function createMetadataRequest(
   return async function metadataRequestMock(url: string, params?: Record<string, string | number>) {
     if (url === 'detected_labels') {
       // Empty array: endpoint exists; language provider treats non-array / errors as unsupported.
-      return [];
+      return null;
     }
     if (url === lokiLabelsEndpoint) {
       return labels;
