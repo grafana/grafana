@@ -1,6 +1,10 @@
 package validation
 
 import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -26,12 +30,34 @@ func CanUpdateProvenanceInRuleGroup(storedProvenance, provenance models.Provenan
 	return false
 }
 
-type ProvenanceStatusTransitionValidator = func(from, to models.Provenance) error
+type ProvenanceStatusTransitionValidator = func(ctx context.Context, from, to models.Provenance) error
+
+// NewPermissionAwareValidator returns a ProvenanceStatusTransitionValidator that gates only
+// None → non-None transitions on the SetProvisioningStatus permission. All other
+// transitions (non-None → anything, any → None) are allowed unconditionally.
+func NewPermissionAwareValidator(ac accesscontrol.AccessControl) ProvenanceStatusTransitionValidator {
+	return func(ctx context.Context, from, to models.Provenance) error {
+		if from == models.ProvenanceNone && to != models.ProvenanceNone {
+			user, err := identity.GetRequester(ctx)
+			if err != nil {
+				return err
+			}
+			ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningSetStatus))
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return MakeErrProvenanceChangeNotAllowed(from, to)
+			}
+		}
+		return nil
+	}
+}
 
 // ValidateProvenanceRelaxed checks if the transition of provenance status from `from` to `to` is allowed.
 // Applies relaxed checks that prevents only transition from any status to `none`.
 // Returns ErrProvenanceChangeNotAllowed if transition is not allowed
-func ValidateProvenanceRelaxed(from, to models.Provenance) error {
+func ValidateProvenanceRelaxed(_ context.Context, from, to models.Provenance) error {
 	if from == models.ProvenanceNone { // allow any transition from none
 		return nil
 	}
