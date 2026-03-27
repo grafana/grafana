@@ -345,6 +345,7 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 
 func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 	helper := sharedGitHelper(t)
+	ctx := context.Background()
 
 	repoName := "test-move-dir"
 	initialContent := map[string][]byte{
@@ -354,7 +355,7 @@ func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 	_, _ = helper.CreateGitRepo(t, repoName, initialContent, "write", "branch")
 	helper.SyncAndWait(t, repoName)
 
-	t.Run("move directory on branch returns URLs in response", func(t *testing.T) {
+	t.Run("move directory on branch succeeds with correct response", func(t *testing.T) {
 		branchName := "move-dir-branch"
 
 		resp := helper.PostFilesRequest(t, repoName, common.FilesPostOptions{
@@ -373,9 +374,16 @@ func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 		var wrapper map[string]interface{}
 		require.NoError(t, json.Unmarshal(body, &wrapper))
 
-		urls, ok := wrapper["urls"].(map[string]interface{})
-		require.True(t, ok, "response should contain urls object, got: %s", string(body))
-		assert.NotEmpty(t, urls["newPullRequestURL"], "newPullRequestURL should be populated")
+		assert.Equal(t, "renamed/", wrapper["path"], "response path should be the target directory")
+		assert.Equal(t, branchName, wrapper["ref"], "response ref should match the requested branch")
+
+		resource, ok := wrapper["resource"].(map[string]interface{})
+		require.True(t, ok, "response should contain resource object")
+		assert.Equal(t, "move", resource["action"], "resource action should be 'move'")
+
+		// Verify the directory was actually moved on the branch
+		_, err = helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "renamed", "dashboard.json")
+		require.NoError(t, err, "dashboard should exist at new location on branch")
 	})
 }
 
