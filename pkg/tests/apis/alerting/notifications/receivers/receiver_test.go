@@ -912,14 +912,21 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
 	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+
+	// A user with write permissions but without alert.provisioning.provenance:write.
+	// Used to verify that provisioned resources are protected from callers that lack the permission.
+	writer := helper.CreateUser("ReceiversProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingReceiversRead,
+				accesscontrol.ActionAlertingReceiversUpdate,
+				accesscontrol.ActionAlertingReceiversDelete,
+			},
+		},
+	})
+	writerClient, err := v1beta1.NewReceiverClientFromGenerator(writer.GetClientRegistry())
 	require.NoError(t, err)
 
 	created, err := adminClient.Create(ctx, &v1beta1.Receiver{
@@ -936,29 +943,45 @@ func TestIntegrationProvisioning(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "none", created.GetProvenanceStatus())
 
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
-			UID: *created.Spec.Integrations[0].Uid,
-		}, admin.Identity.GetOrgID(), "API"))
+	t.Run("should not let update provenance if provisioned without set-status permission", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.Receiver)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
 
-		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
-		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 
-	t.Run("should not let update if provisioned", func(t *testing.T) {
+	t.Run("should let update provenance if provisioned with set-status permission", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.Receiver)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+
+		got, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
+	})
+
+	t.Run("should let update spec if provisioned without set-status permission", func(t *testing.T) {
 		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		updated := got.Copy().(*v1beta1.Receiver)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
 		updated.Spec.Integrations = append(updated.Spec.Integrations, createIntegration(t, "email"))
 
-		_, err = adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should not let update provenance back to none without set-status permission", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.Receiver)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceNone))
+
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	t.Run("should let delete if provisioned without set-status permission", func(t *testing.T) {
+		err := writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		require.NoError(t, err)
 	})
 }
 
