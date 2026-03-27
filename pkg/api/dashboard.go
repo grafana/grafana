@@ -77,6 +77,10 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashU
 //
 // Will return the dashboard given the dashboard unique identifier (uid).
 //
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
+//
+// Deprecated: true
+//
 // Responses:
 // 200: dashboardResponse
 // 401: unauthorisedError
@@ -328,6 +332,10 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid s
 //
 // Will delete the dashboard given the specified unique identifier (uid).
 //
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
+//
+// Deprecated: true
+//
 // Responses:
 // 200: deleteDashboardResponse
 // 401: unauthorisedError
@@ -382,6 +390,10 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 //
 // Creates a new dashboard or updates an existing dashboard.
 // Note: This endpoint is not intended for creating folders, use `POST /api/folders` for that.
+//
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards
+//
+// Deprecated: true
 //
 // Responses:
 // 200: postDashboardResponse
@@ -778,6 +790,8 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 //
 // Gets all existing versions for the dashboard using UID.
 //
+// Deprecated: true
+//
 // Responses:
 // 200: dashboardVersionsResponse
 // 401: unauthorisedError
@@ -865,6 +879,8 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 // swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByUID
 //
 // Get a specific dashboard version using UID.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: dashboardVersionResponse
@@ -992,7 +1008,9 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 
 // swagger:route GET /dashboards/tags dashboards getDashboardTags
 //
-// Get all dashboards tags of an organisation.
+// Get all dashboards tags of an organization.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDashboardsTagsResponse

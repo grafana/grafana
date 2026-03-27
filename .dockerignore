@@ -24,3 +24,6 @@ node_modules
 !.yarn/plugins
 !.yarn/versions
 !.yarn/cache
+devenv
+.nx
+scripts/grafana-server/tmp
