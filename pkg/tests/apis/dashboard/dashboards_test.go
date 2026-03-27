@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -871,5 +872,85 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 		}
 		require.GreaterOrEqual(t, dashboards, 1)
 		require.GreaterOrEqual(t, folders, 1)
+	})
+}
+
+func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	// Step 1: Start Grafana normally so migrations complete
+	env := apis.NewSearchDownTestEnv(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+
+	// Step 2: Restart with search down
+	helper := env.RestartWithSearchDown(t)
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	// Verify search is actually down
+	searchCfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	searchCfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(searchCfg)
+	require.NoError(t, err)
+	var statusCode int
+	restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", "default", "search").
+		Param("query", "*").Param("limit", "1").
+		Do(ctx).StatusCode(&statusCode)
+	require.Equal(t, http.StatusInternalServerError, statusCode, "search should be down")
+
+	t.Run("non-provisioned dashboard can be deleted", func(t *testing.T) {
+		dash := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":         "gd-test-regular",
+				"schemaVersion": 42,
+			},
+		}}
+		dash.SetGenerateName("gd-test-")
+		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err, "non-provisioned dashboard delete should succeed when search is down")
+
+		_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.True(t, errors.IsNotFound(err), "dashboard should be gone after deletion")
+	})
+
+	t.Run("provisioned dashboard is still protected from deletion", func(t *testing.T) {
+		dash := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":         "gd-test-provisioned",
+				"schemaVersion": 42,
+			},
+		}}
+		dash.SetGenerateName("gd-prov-")
+		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// Mark as classic file provisioned
+		meta, err := utils.MetaAccessor(created)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindClassicFP, //nolint:staticcheck
+			Identity: "test-provisioner",
+		})
+		updated, err := client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Verify manager properties are persisted
+		updatedMeta, err := utils.MetaAccessor(updated)
+		require.NoError(t, err)
+		mgr, managed := updatedMeta.GetManagerProperties()
+		require.True(t, managed, "dashboard should be marked as managed after update")
+		require.Equal(t, utils.ManagerKindClassicFP, mgr.Kind) //nolint:staticcheck
+		require.Equal(t, "test-provisioner", mgr.Identity)
+
+		// Delete should be blocked even without search
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.Error(t, err, "provisioned dashboard delete should be blocked")
 	})
 }

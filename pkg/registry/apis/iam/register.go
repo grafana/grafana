@@ -511,7 +511,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 
 	authzWrapper := storewrapper.New(teamBindingStore, iamauthorizer.NewTeamBindingAuthorizer(b.accessClient))
 	storage[teamBindingResource.StoragePath()] = authzWrapper
-	b.teamSearch.teamBindingStore = authzWrapper
+	if b.teamSearch != nil {
+		b.teamSearch.teamBindingStore = authzWrapper
+	}
 	return nil
 }
 
