@@ -17,7 +17,7 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
       sourceUID: sourceDS.uid,
       label: item.spec.label,
       description: item.spec.description,
-      provisioned: item.metadata.annotations?.['grafana.app/managedBy'] !== undefined,
+      provisioned: !item.metadata.annotations?.['grafana.app/managerAllowsEdits'],
     };
 
     const transformationsFmt = item.spec.config.transformations?.map((trans) => {
