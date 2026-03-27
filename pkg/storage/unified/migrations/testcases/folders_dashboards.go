@@ -1,6 +1,7 @@
 package testcases
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,8 +11,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
@@ -68,6 +74,11 @@ func (tc *foldersAndDashboardsTestCase) AddLegacySQLMigrations(mg *migrator.Migr
 func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	t.Helper()
 
+	db := helper.GetEnv().SQLStore
+	legacyDashboards, err := database.ProvideDashboardStore(
+		db, helper.GetEnv().Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+	require.NoError(t, err)
+
 	// Create parent folder
 	parent := createTestFolder(t, helper, tc.parentFolderUID, "parent-folder", "")
 
@@ -80,13 +91,13 @@ func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTest
 	// Create a large dashboard (~3MB) to test migration performance with big resources.
 	// On SQLite without sufficient cache_size, large inserts cause cache spills that
 	// escalate to EXCLUSIVE locks and deadlock with concurrent readers.
-	tc.largeDashboardUID = createLargeDashboard(t, helper, child.UID, 3*1024*1024)
+	tc.largeDashboardUID = createLargeDashboard(t, helper, legacyDashboards, child.UID, 3*1024*1024)
 
 	// Create dashboard with library panel in child folder
-	tc.dashboardUID = createTestDashboardWithLibraryPanel(t, helper, "dashboard-with-library-panel",
+	tc.dashboardUID = createTestDashboardWithLibraryPanel(t, helper, legacyDashboards, "dashboard-with-library-panel",
 		tc.libPanelUID, "Test LP in dashboard", child.UID)
 
-	return true // mode0 still supported
+	return false // mode0 is not supported
 }
 
 func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
@@ -197,11 +208,10 @@ func createTestLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, name, fold
 }
 
 // createTestDashboardWithLibraryPanel creates a dashboard that uses a library panel
-func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, dashTitle, libPanelUID, libPanelName, folderUID string) string {
+func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, store dashboards.Store, dashTitle, libPanelUID, libPanelName, folderUID string) string {
 	t.Helper()
 
 	dashPayload := fmt.Sprintf(`{
-		"dashboard": {
 			"title": "%s",
 			"panels": [{
 				"id": 1,
@@ -210,60 +220,57 @@ func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelpe
 					"name": "%s"
 				}
 			}]
-		},
-		"folderUid": "%s",
-		"overwrite": false
-	}`, dashTitle, libPanelUID, libPanelName, folderUID)
+	}`, dashTitle, libPanelUID, libPanelName)
 
-	dashCreate := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Admin,
-		Method: http.MethodPost,
-		Path:   "/api/dashboards/db",
-		Body:   []byte(dashPayload),
-	}, &map[string]interface{}{})
+	userID, err := helper.Org1.Admin.Identity.GetInternalID()
+	require.NoError(t, err)
 
-	require.NotNil(t, dashCreate.Response)
-	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode)
-
-	dashUID := (*dashCreate.Result)["uid"].(string)
-	require.NotEmpty(t, dashUID)
-	return dashUID
+	rsp, err := store.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:     helper.Org1.OrgID,
+		UserID:    userID,
+		Dashboard: simplejson.MustJson([]byte(dashPayload)),
+		Overwrite: false,
+		FolderUID: folderUID,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, rsp.UID)
+	return rsp.UID
 }
 
 // createLargeDashboard creates a dashboard with padded description to reach targetBytes.
-func createLargeDashboard(t *testing.T, helper *apis.K8sTestHelper, folderUID string, targetBytes int) string {
+func createLargeDashboard(t *testing.T, helper *apis.K8sTestHelper, store dashboards.Store, folderUID string, targetBytes int) string {
 	t.Helper()
 
 	// Generate padding to reach the target size. Each panel has ~100 bytes of overhead,
 	// so we use a single panel with a large description field.
 	padding := strings.Repeat("x", targetBytes)
 	dashPayload := fmt.Sprintf(`{
-		"dashboard": {
-			"title": "large-dashboard-for-migration-test",
-			"panels": [{
-				"id": 1,
-				"type": "text",
-				"title": "padding",
-				"options": {"content": "%s"}
-			}]
-		},
-		"folderUid": "%s",
-		"overwrite": false
-	}`, padding, folderUID)
+		"title": "large-dashboard-for-migration-test",
+		"panels": [{
+			"id": 1,
+			"type": "text",
+			"title": "padding",
+			"options": {"content": "%s"}
+		}]
+	}`, padding)
 
-	dashCreate := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Admin,
-		Method: http.MethodPost,
-		Path:   "/api/dashboards/db",
-		Body:   []byte(dashPayload),
-	}, &map[string]interface{}{})
+	userID, err := helper.Org1.Admin.Identity.GetInternalID()
+	require.NoError(t, err)
 
-	require.NotNil(t, dashCreate.Response)
-	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode,
-		"failed to create large dashboard (%d bytes)", targetBytes)
+	rsp, err := store.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:     helper.Org1.OrgID,
+		UserID:    userID,
+		Dashboard: simplejson.MustJson([]byte(dashPayload)),
+		Overwrite: false,
+		FolderUID: folderUID,
+	})
+	require.NoError(t, err)
 
-	dashUID := (*dashCreate.Result)["uid"].(string)
-	require.NotEmpty(t, dashUID)
-	t.Logf("Created large dashboard %s (%d bytes)", dashUID, targetBytes)
-	return dashUID
+	// require.NotNil(t, dashCreate.Response)
+	// require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode,
+	// 	"failed to create large dashboard (%d bytes)", targetBytes)
+
+	require.NotEmpty(t, rsp.UID)
+	t.Logf("Created large dashboard %s (%d bytes)", rsp.UID, targetBytes)
+	return rsp.UID
 }

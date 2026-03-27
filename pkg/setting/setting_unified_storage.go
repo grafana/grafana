@@ -30,7 +30,7 @@ const (
 var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:    true,  // Only Mode5!
 	FolderResource:      true,  // enabled by default
-	DashboardResource:   true,  // enabled by default
+	DashboardResource:   true,  // Only Mode5!
 	ShortURLResource:    false, // Requires kubernetesShortURLs to be enabled by default
 	DataSourceResources: false,
 }
