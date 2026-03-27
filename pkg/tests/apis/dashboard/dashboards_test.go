@@ -925,8 +925,16 @@ func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
 			Kind:     utils.ManagerKindClassicFP, //nolint:staticcheck
 			Identity: "test-provisioner",
 		})
-		_, err = client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+		updated, err := client.Resource.Update(ctx, created, metav1.UpdateOptions{})
 		require.NoError(t, err)
+
+		// Verify manager properties are persisted
+		updatedMeta, err := utils.MetaAccessor(updated)
+		require.NoError(t, err)
+		mgr, managed := updatedMeta.GetManagerProperties()
+		require.True(t, managed, "dashboard should be marked as managed after update")
+		require.Equal(t, utils.ManagerKindClassicFP, mgr.Kind) //nolint:staticcheck
+		require.Equal(t, "test-provisioner", mgr.Identity)
 
 		// Delete should be blocked even without search
 		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
