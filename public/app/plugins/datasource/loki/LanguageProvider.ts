@@ -7,7 +7,7 @@ import { BackendSrvRequest, config } from '@grafana/runtime';
 import { LokiQueryType } from './dataquery.gen';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
-import { getStreamSelectorsFromQuery } from './queryUtils';
+import { getStreamSelectorsFromQuery, isQueryWithError } from './queryUtils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import {
   extractLabelKeysFromDataFrame,
@@ -297,7 +297,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     try {
       const data = await this.request('detected_labels', params, true, requestOptions);
       if (Array.isArray(data)) {
-        return data;
+        this.labelKeys = data.map((label) => label.label);
+        return this.labelKeys;
       }
     } catch (error) {
       console.error('error', error);
@@ -326,7 +327,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
       scopedVars?: ScopedVars;
     },
     requestOptions?: Partial<BackendSrvRequest>
-  ): Promise<DetectedFieldsResult | Error> {
+  ): Promise<DetectedFieldsResult> {
+    console.log(queryOptions);
     const interpolatedExpr =
       queryOptions.expr && queryOptions.expr !== EMPTY_SELECTOR
         ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
@@ -336,6 +338,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
       throw new Error('fetchDetectedFields requires query expression');
     }
 
+    if (isQueryWithError(interpolatedExpr)) {
+      console.error('fetchDetectedFields: invalid query');
+      return [];
+    }
+
     const url = `detected_fields`;
     const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
     const rangeParams = this.datasource.getTimeRangeParams(range);
@@ -343,15 +350,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const params: KeyValue<string | number> = { start, end, limit: queryOptions?.limit ?? 1000 };
     params.query = interpolatedExpr;
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        const data = await this.request(url, params, true, requestOptions);
-        resolve(data);
-      } catch (error) {
-        console.error('error', error);
-        reject(error);
-      }
-    });
+    try {
+      const data = await this.request(url, params, false, requestOptions);
+      return data;
+    } catch (error) {
+      console.error('error', error);
+    }
+    return [];
   }
 
   async fetchDetectedFieldValues(
@@ -599,7 +604,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       hasLogfmt: false,
     };
 
-    if (fields instanceof Error) {
+    if (!Array.isArray(fields)) {
       return response;
     }
 
