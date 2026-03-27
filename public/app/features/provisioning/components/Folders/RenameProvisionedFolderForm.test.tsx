@@ -258,6 +258,27 @@ describe('RenameProvisionedFolderForm', () => {
       });
     });
 
+    it('should send path from initialValues directly without modification', async () => {
+      // The hook normalizes the trailing slash; the form must pass it through as-is.
+      const formDataWithTrailingSlash = {
+        ...mockFormData,
+        path: 'folders/my-folder/',
+        workflow: 'branch' as const,
+        ref: 'my-branch',
+      };
+      const { clickRenameButton } = setup({}, { ...defaultHookData, initialValues: formDataWithTrailingSlash });
+
+      await clickRenameButton();
+
+      await waitFor(() => {
+        expect(mockReplaceFile).toHaveBeenCalledWith(
+          expect.objectContaining({
+            path: 'folders/my-folder/',
+          })
+        );
+      });
+    });
+
     it('should use custom commit message when provided', async () => {
       const customFormData = {
         ...mockFormData,

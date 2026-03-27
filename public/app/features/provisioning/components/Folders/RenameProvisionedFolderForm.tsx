@@ -20,6 +20,7 @@ import { buildNewPullRequestUrl } from '../utils/url';
 interface FormProps extends RenameProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
+  canPushToConfiguredBranch: boolean;
 }
 
 interface RenameProvisionedFolderFormProps {
@@ -27,7 +28,7 @@ interface RenameProvisionedFolderFormProps {
   onDismiss?: () => void;
 }
 
-function FormContent({ initialValues, folder, repository, onDismiss }: FormProps) {
+function FormContent({ initialValues, folder, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
   const [replaceFile, request] = useReplaceRepositoryFilesWithPathMutation();
 
@@ -157,7 +158,7 @@ function FormContent({ initialValues, folder, repository, onDismiss }: FormProps
           <ResourceEditFormSharedFields
             resourceType="folder"
             isNew={false}
-            canPushToConfiguredBranch={false}
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             hiddenFields={['path']}
           />
@@ -181,7 +182,7 @@ function FormContent({ initialValues, folder, repository, onDismiss }: FormProps
 }
 
 export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisionedFolderFormProps) {
-  const { repository, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
+  const { repository, initialValues, isReadOnlyRepo, canPushToConfiguredBranch } = useProvisionedFolderFormData({
     folderUid: folder.uid,
     title: folder.title,
     branchPrefix: 'folder-rename',
@@ -200,5 +201,13 @@ export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisi
     );
   }
 
-  return <FormContent folder={folder} onDismiss={onDismiss} initialValues={initialValues} repository={repository} />;
+  return (
+    <FormContent
+      folder={folder}
+      onDismiss={onDismiss}
+      initialValues={initialValues}
+      repository={repository}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
+    />
+  );
 }

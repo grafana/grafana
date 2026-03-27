@@ -8,6 +8,7 @@ import {
   getDefaultRef,
   getDefaultWorkflow,
 } from 'app/features/provisioning/components/defaults';
+import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type BaseProvisionedFormData } from '../types/form';
@@ -48,7 +49,7 @@ export function useProvisionedFolderFormData({
       comment: '',
       ref: getDefaultRef(repository, branchPrefix),
       repo: repository.name || '',
-      path: folder?.metadata?.annotations?.[AnnoKeySourcePath] || '',
+      path: ensureFolderPathTrailingSlash(folder?.metadata?.annotations?.[AnnoKeySourcePath] || ''),
       workflow: getDefaultWorkflow(repository),
     };
   }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix]);
