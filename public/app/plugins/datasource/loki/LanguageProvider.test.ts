@@ -403,29 +403,26 @@ describe('Language completion provider', () => {
       throwError: true,
     };
 
-    const expectedResponse: DetectedFieldsResult = {
-      fields: [
-        {
-          label: 'bytes',
-          type: 'bytes',
-          cardinality: 6,
-          parsers: ['logfmt'],
-        },
-        {
-          label: 'traceID',
-          type: 'string',
-          cardinality: 50,
-          parsers: null,
-        },
-        {
-          label: 'active_series',
-          type: 'int',
-          cardinality: 8,
-          parsers: ['logfmt'],
-        },
-      ],
-      limit: 999,
-    };
+    const expectedResponse: DetectedFieldsResult = [
+      {
+        label: 'bytes',
+        type: 'bytes',
+        cardinality: 6,
+        parsers: ['logfmt'],
+      },
+      {
+        label: 'traceID',
+        type: 'string',
+        cardinality: 50,
+        parsers: null,
+      },
+      {
+        label: 'active_series',
+        type: 'int',
+        cardinality: 8,
+        parsers: ['logfmt'],
+      },
+    ];
 
     const datasource = detectedFieldsSetup(expectedResponse, {
       end: mockTimeRange.to.valueOf(),
