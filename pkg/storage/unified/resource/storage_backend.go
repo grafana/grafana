@@ -700,18 +700,26 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
 		// Check if resource already exists for create operations
-		_, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Namespace: namespace,
 			Name:      event.Key.Name,
 		})
 		if err == nil {
-			// Resource exists, return already exists error
-			return 0, ErrResourceAlreadyExists
-		}
-		if !errors.Is(err, ErrNotFound) {
-			// Some other error occurred
+			// A resource was found, but it might be a transient write from a
+			// concurrent create that hasn't survived OCC yet. Confirm via
+			// the event store before returning AlreadyExists.
+			confirmed, confirmErr := k.confirmExistence(ctx, latestKey)
+			if confirmErr != nil {
+				return 0, fmt.Errorf("failed to confirm resource existence: %w", confirmErr)
+			}
+			if confirmed {
+				return 0, ErrResourceAlreadyExists
+			}
+			// Not confirmed — the found data is likely transient. Proceed with
+			// the write and let the post-write OCC check determine the winner.
+		} else if !errors.Is(err, ErrNotFound) {
 			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 		}
 	case resourcepb.WatchEvent_MODIFIED:
@@ -850,6 +858,38 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	k.notifier.Publish(eventData)
 
 	return rv, nil
+}
+
+// confirmExistence checks whether a resource found by GetLatestResourceKey is
+// genuinely committed. During concurrent creates, the data store can contain
+// transient writes that haven't survived the post-write OCC check yet. The
+// event store is used as a commit signal: an event is written only after OCC
+// passes, so its presence proves the write is committed.
+func (k *kvStorageBackend) confirmExistence(ctx context.Context, latestKey DataKey) (bool, error) {
+	// Extract the timestamp from the snowflake-formatted RV.
+	rvTime := time.Unix(0, snowflake.ID(latestKey.ResourceVersion).Time()*int64(time.Millisecond))
+	if time.Since(rvTime) > 30*time.Second {
+		// Old RV — well past any OCC window, definitely committed.
+		return true, nil
+	}
+
+	// Recent RV — look up the corresponding event to confirm it was committed.
+	_, err := k.eventStore.Get(ctx, EventKey{
+		Namespace:       latestKey.Namespace,
+		Group:           latestKey.Group,
+		Resource:        latestKey.Resource,
+		Name:            latestKey.Name,
+		ResourceVersion: latestKey.ResourceVersion,
+		Action:          latestKey.Action,
+		Folder:          latestKey.Folder,
+	})
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, ErrNotFound) {
+		return false, nil
+	}
+	return false, err
 }
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
