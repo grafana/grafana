@@ -42,12 +42,10 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
 
   info.push({
     label: t('datasources.use-data-source-info.label.advisor', 'Advisor'),
-    value: (
-      failureSeverity ? (
-        <DataSourceFailureBadge severity={failureSeverity} message={dataSourceInfo.failure?.message} />
-      ) : (
-        <Badge color="green" text={t('datasources.use-data-source-info.badge-text-success', 'Success')} />
-      )
+    value: failureSeverity ? (
+      <DataSourceFailureBadge severity={failureSeverity} message={dataSourceInfo.failure?.message} />
+    ) : (
+      <Badge color="green" text={t('datasources.use-data-source-info.badge-text-success', 'Success')} />
     ),
   });
 
