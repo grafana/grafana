@@ -14,6 +14,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -24,6 +25,7 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 	tests := []struct {
 		name           string
 		cmd            *team.CreateTeamCommand
+		requesterOrgID int64
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
 		noReqContext   bool
@@ -31,11 +33,11 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 		expectTeam     team.Team
 	}{
 		{
-			name: "successfully creates a team",
+			name:           "successfully creates a team",
+			requesterOrgID: 1,
 			cmd: &team.CreateTeamCommand{
 				Name:  "Test Team",
 				Email: "team@example.com",
-				OrgID: 1,
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -65,10 +67,10 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 			},
 		},
 		{
-			name: "maps ExternalUID and IsProvisioned fields",
+			name:           "maps ExternalUID and IsProvisioned fields",
+			requesterOrgID: 2,
 			cmd: &team.CreateTeamCommand{
 				Name:          "Provisioned Team",
-				OrgID:         2,
 				ExternalUID:   "ext-uid-123",
 				IsProvisioned: true,
 			},
@@ -99,10 +101,10 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 			},
 		},
 		{
-			name: "propagates error from k8s client",
+			name:           "propagates error from k8s client",
+			requesterOrgID: 1,
 			cmd: &team.CreateTeamCommand{
-				Name:  "Failing Team",
-				OrgID: 1,
+				Name: "Failing Team",
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
@@ -117,16 +119,48 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name:        "returns error when config provider not initialized",
-			cmd:         &team.CreateTeamCommand{Name: "Any Team", OrgID: 1},
+			name:           "returns error when config provider not initialized",
+			requesterOrgID: 1,
+			cmd:            &team.CreateTeamCommand{Name: "Any Team"},
+			nilProvider:    true,
+			expectErr:      true,
+		},
+		{
+			name:         "returns error when no request context",
+			cmd:          &team.CreateTeamCommand{Name: "Any Team"},
+			noReqContext: true,
+			expectErr:    true,
+		},
+		{
+			name:        "returns error when requester is not set in context",
+			cmd:         &team.CreateTeamCommand{Name: "Any Team"},
 			nilProvider: true,
 			expectErr:   true,
 		},
 		{
-			name:         "returns error when no request context",
-			cmd:          &team.CreateTeamCommand{Name: "Any Team", OrgID: 1},
-			noReqContext: true,
-			expectErr:    true,
+			name:           "uses orgId from context instead of command",
+			requesterOrgID: 5,
+			cmd: &team.CreateTeamCommand{
+				Name:  "Test Team",
+				OrgID: 99,
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "org-5")
+				resp := iamv0alpha1.Team{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+						Kind:       "Team",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "some-uid",
+						Namespace: "org-5",
+					},
+					Spec: iamv0alpha1.TeamSpec{Title: "Test Team"},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectTeam: team.Team{OrgID: 5, Name: "Test Team"},
 		},
 	}
 
@@ -153,6 +187,10 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 				ctx = contextWithReqContext()
 			}
 
+			if tt.requesterOrgID != 0 {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
+			}
+
 			result, err := svc.CreateTeam(ctx, tt.cmd)
 
 			if tt.expectErr {
@@ -175,6 +213,7 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 	tests := []struct {
 		name           string
 		query          *team.GetTeamByIDQuery
+		requesterOrgID int64
 		ctxUID         string
 		legacyResult   *team.TeamDTO
 		legacyErr      error
@@ -185,10 +224,10 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 		expectDTO      *team.TeamDTO
 	}{
 		{
-			name: "successfully gets a team by UID from context",
+			name:           "successfully gets a team by UID from context",
+			requesterOrgID: 1,
 			query: &team.GetTeamByIDQuery{
-				ID:    42,
-				OrgID: 1,
+				ID: 42,
 			},
 			ctxUID: "team-uid-from-ctx",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
@@ -218,10 +257,10 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			},
 		},
 		{
-			name: "successfully gets a team by UID",
+			name:           "successfully gets a team by UID",
+			requesterOrgID: 1,
 			query: &team.GetTeamByIDQuery{
-				UID:   "team-uid-1",
-				OrgID: 1,
+				UID: "team-uid-1",
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				resp := iamv0alpha1.Team{
@@ -253,10 +292,10 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			},
 		},
 		{
-			name: "successfully gets a team by ID",
+			name:           "successfully gets a team by ID",
+			requesterOrgID: 1,
 			query: &team.GetTeamByIDQuery{
-				ID:    42,
-				OrgID: 1,
+				ID: 42,
 			},
 			legacyResult: &team.TeamDTO{ID: 42, UID: "team-uid-42", OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
@@ -285,19 +324,19 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			},
 		},
 		{
-			name: "returns error when team not found in legacy",
+			name:           "returns error when team not found in legacy",
+			requesterOrgID: 1,
 			query: &team.GetTeamByIDQuery{
-				ID:    999,
-				OrgID: 1,
+				ID: 999,
 			},
 			legacyErr: team.ErrTeamNotFound,
 			expectErr: true,
 		},
 		{
-			name: "propagates error from k8s client",
+			name:           "propagates error from k8s client",
+			requesterOrgID: 1,
 			query: &team.GetTeamByIDQuery{
-				UID:   "team-uid-1",
-				OrgID: 1,
+				UID: "team-uid-1",
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
@@ -312,21 +351,53 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name:        "returns error when config provider not initialized",
-			query:       &team.GetTeamByIDQuery{UID: "team-uid-1", OrgID: 1},
-			nilProvider: true,
-			expectErr:   true,
+			name:           "returns error when config provider not initialized",
+			requesterOrgID: 1,
+			query:          &team.GetTeamByIDQuery{UID: "team-uid-1"},
+			nilProvider:    true,
+			expectErr:      true,
 		},
 		{
 			name:         "returns error when no request context",
-			query:        &team.GetTeamByIDQuery{UID: "team-uid-1", OrgID: 1},
+			query:        &team.GetTeamByIDQuery{UID: "team-uid-1"},
 			noReqContext: true,
 			expectErr:    true,
 		},
 		{
+			name:        "returns error when requester is not set in context",
+			query:       &team.GetTeamByIDQuery{UID: "team-uid-1"},
+			nilProvider: true,
+			expectErr:   true,
+		},
+		{
 			name:      "returns error when both ID and UID are unset",
-			query:     &team.GetTeamByIDQuery{OrgID: 1},
+			query:     &team.GetTeamByIDQuery{},
 			expectErr: true,
+		},
+		{
+			name:           "uses orgId from context instead of query",
+			requesterOrgID: 5,
+			query: &team.GetTeamByIDQuery{
+				UID:   "team-uid-1",
+				OrgID: 99,
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "org-5")
+				resp := iamv0alpha1.Team{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+						Kind:       "Team",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "team-uid-1",
+						Namespace: "org-5",
+					},
+					Spec: iamv0alpha1.TeamSpec{Title: "My Team"},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectDTO: &team.TeamDTO{UID: "team-uid-1", OrgID: 5, Name: "My Team"},
 		},
 	}
 
@@ -362,6 +433,10 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 				ctx = contextWithReqContext()
 			}
 
+			if tt.requesterOrgID != 0 {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
+			}
+
 			if tt.ctxUID != "" {
 				ctx = context.WithValue(ctx, team.TeamUIDCtxKey{}, tt.ctxUID)
 			}
@@ -388,6 +463,7 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 	tests := []struct {
 		name           string
 		cmd            *team.UpdateTeamCommand
+		requesterOrgID int64
 		legacyResult   *team.TeamDTO
 		legacyErr      error
 		serverResponse func(w http.ResponseWriter, r *http.Request)
@@ -396,10 +472,10 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 		expectErr      bool
 	}{
 		{
-			name: "successfully updates a team",
+			name:           "successfully updates a team",
+			requesterOrgID: 1,
 			cmd: &team.UpdateTeamCommand{
 				ID:          1,
-				OrgID:       1,
 				Name:        "Updated Team",
 				Email:       "updated@example.com",
 				ExternalUID: "ext-uid-1",
@@ -436,10 +512,10 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			},
 		},
 		{
-			name: "preserves provisioned field during update",
+			name:           "preserves provisioned field during update",
+			requesterOrgID: 1,
 			cmd: &team.UpdateTeamCommand{
 				ID:    2,
-				OrgID: 1,
 				Name:  "Updated Provisioned Team",
 				Email: "updated@example.com",
 			},
@@ -476,21 +552,21 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			},
 		},
 		{
-			name: "returns error when team not found in legacy",
+			name:           "returns error when team not found in legacy",
+			requesterOrgID: 1,
 			cmd: &team.UpdateTeamCommand{
-				ID:    999,
-				OrgID: 1,
-				Name:  "Any",
+				ID:   999,
+				Name: "Any",
 			},
 			legacyErr: team.ErrTeamNotFound,
 			expectErr: true,
 		},
 		{
-			name: "propagates error from k8s client",
+			name:           "propagates error from k8s client",
+			requesterOrgID: 1,
 			cmd: &team.UpdateTeamCommand{
-				ID:    1,
-				OrgID: 1,
-				Name:  "Any",
+				ID:   1,
+				Name: "Any",
 			},
 			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
@@ -506,18 +582,59 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name:         "returns error when config provider not initialized",
-			cmd:          &team.UpdateTeamCommand{ID: 1, OrgID: 1, Name: "Any"},
+			name:           "returns error when config provider not initialized",
+			requesterOrgID: 1,
+			cmd:            &team.UpdateTeamCommand{ID: 1, Name: "Any"},
+			legacyResult:   &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
+			nilProvider:    true,
+			expectErr:      true,
+		},
+		{
+			name:         "returns error when no request context",
+			cmd:          &team.UpdateTeamCommand{ID: 1, Name: "Any"},
+			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
+			noReqContext: true,
+			expectErr:    true,
+		},
+		{
+			name:         "returns error when requester is not set in context",
+			cmd:          &team.UpdateTeamCommand{ID: 1, Name: "Any"},
 			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
 			nilProvider:  true,
 			expectErr:    true,
 		},
 		{
-			name:         "returns error when no request context",
-			cmd:          &team.UpdateTeamCommand{ID: 1, OrgID: 1, Name: "Any"},
+			name:           "uses orgId from context instead of command",
+			requesterOrgID: 5,
+			cmd: &team.UpdateTeamCommand{
+				ID:    1,
+				OrgID: 99,
+				Name:  "Updated Team",
+			},
 			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
-			noReqContext: true,
-			expectErr:    true,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "org-5")
+				w.Header().Set("Content-Type", "application/json")
+				switch r.Method {
+				case http.MethodGet:
+					resp := iamv0alpha1.Team{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+							Kind:       "Team",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "team-uid-1",
+							Namespace: "org-5",
+						},
+						Spec: iamv0alpha1.TeamSpec{Title: "Old Team"},
+					}
+					_ = json.NewEncoder(w).Encode(resp)
+				case http.MethodPut:
+					var body map[string]any
+					_ = json.NewDecoder(r.Body).Decode(&body)
+					_ = json.NewEncoder(w).Encode(body)
+				}
+			},
 		},
 	}
 
@@ -547,6 +664,10 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				ctx = context.Background()
 			} else {
 				ctx = contextWithReqContext()
+			}
+
+			if tt.requesterOrgID != 0 {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
 			}
 
 			err := svc.UpdateTeam(ctx, tt.cmd)

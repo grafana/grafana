@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -196,10 +196,10 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 	return folder.Name, nil
 }
 
-// UpdateFolderMetadataTitle reads the existing _folder.json at folderPath, validates that the
-// ID (metadata.name) has not changed, updates the title from the submitted folder resource,
-// and writes the result back. Returns the updated hash.
-func UpdateFolderMetadataTitle(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string, submitted *folders.Folder) (string, error) {
+// WriteFolderMetadataUpdate reads the existing _folder.json at folderPath, validates that the
+// ID (metadata.name) has not changed, updates the mutable fields (title, description) from
+// the submitted folder resource, and writes the result back. Returns the updated hash.
+func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string, submitted *folders.Folder) (string, error) {
 	existing, _, err := ReadFolderMetadata(ctx, repo, folderPath, ref)
 	if err != nil {
 		return "", fmt.Errorf("read existing folder metadata: %w", err)

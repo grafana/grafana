@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/stretchr/testify/assert"
@@ -68,7 +68,7 @@ func TestReadFolderMetadata(t *testing.T) {
 	t.Run("missing metadata.name returns invalid folder metadata error", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
-			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`)}, nil)
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`)}, nil)
 
 		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
 
@@ -134,7 +134,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 			if err := json.Unmarshal(b, &f); err != nil {
 				return false
 			}
-			return f.APIVersion == "folder.grafana.app/v1beta1" &&
+			return f.APIVersion == "folder.grafana.app/v1" &&
 				f.Kind == "Folder" &&
 				f.Name == uid &&
 				f.Spec.Title == "myfolder"
@@ -288,7 +288,7 @@ func TestNewFolderManifest(t *testing.T) {
 
 	gvk := f.GetObjectKind().GroupVersionKind()
 	assert.Equal(t, "folder.grafana.app", gvk.Group)
-	assert.Equal(t, "v1beta1", gvk.Version)
+	assert.Equal(t, "v1", gvk.Version)
 	assert.Equal(t, "Folder", gvk.Kind)
 }
 
@@ -630,13 +630,13 @@ func TestParseFolderResource(t *testing.T) {
 
 			// Verify GVK and GVR
 			assert.Equal(t, "folder.grafana.app", result.GVK.Group)
-			assert.Equal(t, "v1beta1", result.GVK.Version)
+			assert.Equal(t, "v1", result.GVK.Version)
 			assert.Equal(t, "Folder", result.GVK.Kind)
 		})
 	}
 }
 
-func TestUpdateFolderMetadataTitle(t *testing.T) {
+func TestWriteFolderMetadataUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	const existingUID = "existing-uid-123"
@@ -659,7 +659,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
 
 		submitted := NewFolderManifest(existingUID, "New Title")
-		hash, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "new-hash", hash)
@@ -681,7 +681,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 
 		submitted := &folders.Folder{}
 		submitted.Spec.Title = "Title With No ID"
-		hash, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "new-hash", hash)
@@ -693,7 +693,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
 
 		submitted := NewFolderManifest("different-uid", "Some Title")
-		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "folder ID change is not allowed")
@@ -705,7 +705,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
 
 		submitted := NewFolderManifest(existingUID, "")
-		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "title must not be empty")
@@ -717,7 +717,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 			Return(nil, repository.ErrFileNotFound)
 
 		submitted := NewFolderManifest("any-uid", "Title")
-		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 	})
@@ -730,7 +730,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 			Return(assert.AnError)
 
 		submitted := NewFolderManifest(existingUID, "New Title")
-		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 	})
@@ -755,7 +755,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 		submitted := NewFolderManifest(existingUID, "New Title")
 		desc := "New Description"
 		submitted.Spec.Description = &desc
-		hash, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "desc-hash", hash)
@@ -785,7 +785,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 
 		submitted := &folders.Folder{}
 		submitted.Spec.Title = "New Title"
-		hash, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "new-hash", hash)
@@ -800,7 +800,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 			Return(nil, fmt.Errorf("storage error")).Once()
 
 		submitted := NewFolderManifest(existingUID, "New Title")
-		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "re-read updated folder metadata")
@@ -815,7 +815,7 @@ func TestUpdateFolderMetadataTitle(t *testing.T) {
 			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "branch-hash"}, nil).Once()
 
 		submitted := NewFolderManifest(existingUID, "New Title")
-		hash, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "feature-branch", "my commit message", submitted)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "feature-branch", "my commit message", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "branch-hash", hash)

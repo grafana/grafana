@@ -2806,7 +2806,7 @@ func saveAndApplyAlertmanagerConfiguration(t *testing.T, env *server.TestEnv, or
 	})
 	require.NoError(t, err)
 
-	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.ApplyConfig(context.Background(), org, &models.AlertConfiguration{
+	_, err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.ApplyConfig(context.Background(), org, &models.AlertConfiguration{
 		AlertmanagerConfiguration: string(cfgToSave),
 	})
 	require.NoError(t, err)

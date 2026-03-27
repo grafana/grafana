@@ -23,7 +23,6 @@ func TestCheckQuota(t *testing.T) {
 		isCreate   bool
 		expectErr  bool
 	}{
-		// No conditions (no quota configured)
 		{
 			name:       "no conditions allows create",
 			conditions: nil,
@@ -36,8 +35,6 @@ func TestCheckQuota(t *testing.T) {
 			isCreate:   false,
 			expectErr:  false,
 		},
-
-		// Unlimited quota
 		{
 			name: "unlimited quota allows create",
 			conditions: []metav1.Condition{
@@ -62,8 +59,6 @@ func TestCheckQuota(t *testing.T) {
 			isCreate:  false,
 			expectErr: false,
 		},
-
-		// Within quota
 		{
 			name: "within quota allows create",
 			conditions: []metav1.Condition{
@@ -88,8 +83,6 @@ func TestCheckQuota(t *testing.T) {
 			isCreate:  false,
 			expectErr: false,
 		},
-
-		// Quota reached (at limit)
 		{
 			name: "quota reached blocks create",
 			conditions: []metav1.Condition{
@@ -114,8 +107,6 @@ func TestCheckQuota(t *testing.T) {
 			isCreate:  false,
 			expectErr: false,
 		},
-
-		// Quota exceeded (over limit)
 		{
 			name: "quota exceeded blocks create",
 			conditions: []metav1.Condition{
@@ -226,7 +217,8 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 				require.Error(t, err)
 				assert.True(t, apierrors.IsForbidden(err))
 			} else {
-				// Guard does not fire; code reaches nil dualReadWriter and panics.
+				// Guard does not fire; code proceeds past it and panics on nil dualReadWriter.
+				// This is intentional: we only test the guard logic here, not the downstream handlers.
 				require.Panics(t, func() {
 					//nolint:errcheck
 					_, _ = connector.handleMethodRequest(context.Background(), req, opts, false, nil)
@@ -239,35 +231,35 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 func TestHandlePut_DirectoryRouting(t *testing.T) {
 	tests := []struct {
 		name                   string
+		path                   string
 		isDir                  bool
 		folderMetadataEnabled  bool
 		expectMethodNotAllowed bool
-		expectPanic            bool
 	}{
 		{
-			name:                   "directory with flag on routes to folder metadata update",
-			isDir:                  true,
-			folderMetadataEnabled:  true,
-			expectMethodNotAllowed: false,
-			expectPanic:            true, // panics on nil dualReadWriter inside handleFolderMetadataUpdate
+			name:                  "directory with flag on routes to folder metadata update",
+			path:                  "myfolder/",
+			isDir:                 true,
+			folderMetadataEnabled: true,
 		},
 		{
 			name:                   "directory with flag off returns method not supported",
+			path:                   "myfolder/",
 			isDir:                  true,
 			folderMetadataEnabled:  false,
 			expectMethodNotAllowed: true,
 		},
 		{
 			name:                  "file path with flag on routes to normal update",
+			path:                  "myfolder/dashboard.json",
 			isDir:                 false,
 			folderMetadataEnabled: true,
-			expectPanic:           true, // panics on nil dualReadWriter inside normal file update
 		},
 		{
 			name:                  "file path with flag off routes to normal update",
+			path:                  "myfolder/dashboard.json",
 			isDir:                 false,
 			folderMetadataEnabled: false,
-			expectPanic:           true, // panics on nil dualReadWriter inside normal file update
 		},
 	}
 
@@ -276,7 +268,7 @@ func TestHandlePut_DirectoryRouting(t *testing.T) {
 			connector := &filesConnector{folderMetadataEnabled: tc.folderMetadataEnabled}
 			body := strings.NewReader(`{"spec":{"title":"Test"}}`)
 			req := httptest.NewRequest(http.MethodPut, "/", body)
-			opts := resources.DualWriteOptions{Path: "myfolder/"}
+			opts := resources.DualWriteOptions{Path: tc.path}
 
 			if tc.expectMethodNotAllowed {
 				_, err := connector.handlePut(context.Background(), req, opts, tc.isDir, nil)
@@ -285,12 +277,12 @@ func TestHandlePut_DirectoryRouting(t *testing.T) {
 				return
 			}
 
-			if tc.expectPanic {
-				require.Panics(t, func() {
-					//nolint:errcheck
-					_, _ = connector.handlePut(context.Background(), req, opts, tc.isDir, nil)
-				}, "should proceed past routing and panic on nil dualReadWriter")
-			}
+			// Non-error cases proceed into the handler which dereferences the nil
+			// dualReadWriter. The panic confirms the routing decision was correct.
+			require.Panics(t, func() {
+				//nolint:errcheck
+				_, _ = connector.handlePut(context.Background(), req, opts, tc.isDir, nil)
+			}, "should proceed past routing and panic on nil dualReadWriter")
 		})
 	}
 }
@@ -302,7 +294,6 @@ func TestHandleMethodRequest_PutDirectoryRouting(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPut, "/", body)
 		opts := resources.DualWriteOptions{Path: "myfolder/"}
 
-		// isDir=true, flag on → handlePut → handleFolderMetadataUpdate → panics on nil
 		require.Panics(t, func() {
 			//nolint:errcheck
 			_, _ = connector.handleMethodRequest(context.Background(), req, opts, true, nil)

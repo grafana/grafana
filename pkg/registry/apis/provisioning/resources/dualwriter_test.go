@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -330,7 +330,7 @@ func TestCreateFolder(t *testing.T) {
 						return false
 					}
 					capturedUID = res.Name
-					return res.APIVersion == "folder.grafana.app/v1beta1" &&
+					return res.APIVersion == "folder.grafana.app/v1" &&
 						res.Kind == "Folder" &&
 						res.Name != "" &&
 						res.Spec.Title == "newfolder"
@@ -472,7 +472,7 @@ func TestCreateFolder(t *testing.T) {
 					if err := json.Unmarshal(b, &res); err != nil {
 						return false
 					}
-					return res.APIVersion == "folder.grafana.app/v1beta1" &&
+					return res.APIVersion == "folder.grafana.app/v1" &&
 						res.Kind == "Folder" &&
 						res.Name != "" &&
 						res.Spec.Title == "newfolder"
@@ -854,6 +854,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
 
 				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
 					authorizer:            NewAuthorizer(config, rw, accessMock, false),
@@ -893,6 +894,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(&repository.FileInfo{Data: []byte("{}"), Hash: "branch-hash"}, nil).Once()
 
 				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
 					authorizer:            NewAuthorizer(config, rw, accessMock, false),
@@ -966,6 +968,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config).Maybe()
 				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
 					authorizer:            NewAuthorizer(config, rw, accessMock, false),
@@ -993,6 +996,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
 
 				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
 					authorizer:            NewAuthorizer(config, rw, accessMock, false),
@@ -1020,6 +1024,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
 
 				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
 					authorizer:            NewAuthorizer(config, rw, accessMock, false),
@@ -1046,6 +1051,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(nil, repository.ErrFileNotFound)
 
 				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
 					authorizer:            NewAuthorizer(config, rw, accessMock, false),
@@ -1070,7 +1076,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				updatedManifest := NewFolderManifest(existingUID, "Updated Title")
 				updatedData, _ := json.Marshal(updatedManifest)
 
-				// First Read: UpdateFolderMetadataTitle reads existing _folder.json
+				// First Read: WriteFolderMetadataUpdate reads existing _folder.json
 				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
 					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
 				rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").Return(nil)
@@ -1079,6 +1085,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(&repository.FileInfo{Data: updatedData, Hash: "new-hash"}, nil)
 
 				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				// Pre-populate tree with post-update state so EnsureFolderPathExist
 				// sees a matching entry and returns early without calling EnsureFolderExists.
@@ -1112,6 +1119,28 @@ func TestUpdateFolderMetadata(t *testing.T) {
 			},
 		},
 		{
+			name: "error: folder-level authorization denied",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := newTestRepoConfig("test-repo")
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).
+					Return(fmt.Errorf("access denied"))
+				dw := &DualReadWriter{
+					repo:                  rw,
+					authorizer:            NewAuthorizer(config, rw, accessMock, false),
+					folderMetadataEnabled: true,
+				}
+				return dw, DualWriteOptions{
+					Path: "myfolder/",
+					Data: makeSubmitBody(t, existingUID, "Title"),
+				}
+			},
+			wantErr:     true,
+			errContains: "authorize update folder",
+		},
+		{
 			name: "sync disabled: no Grafana DB update, Upsert is nil",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := newTestRepoConfig("test-repo")
@@ -1125,6 +1154,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
 
 				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
 					authorizer:            NewAuthorizer(config, rw, accessMock, false),

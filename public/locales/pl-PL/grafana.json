@@ -6535,6 +6535,7 @@
       "description": {
         "action": "Zmień opis zmiennej"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Zmień opcję ukrywania zmiennej"
       },
@@ -6710,9 +6711,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Opcje ad hoc",
-      "alert-not-supported": "To źródło danych nie obsługuje filtrów ad hoc",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Umożliwia użytkownikom dodawanie niestandardowych wartości do listy",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Podaj wymiary jako wartości rozdzielone przecinkami: {{name}}, {{value}}",
@@ -7083,7 +7088,7 @@
         "values-timespans": "Wartości to przedziały czasowe, np. 1m, 1h, 1d"
       },
       "name": {
-        "ad-hoc-filters": "Filtry ad hoc",
+        "ad-hoc-filters": "",
         "constant": "Stała",
         "custom": "Niestandardowa",
         "data-source": "Źródło danych",
@@ -7342,6 +7347,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -8093,6 +8099,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Oznaczone gwiazdką"
     },
     "new-data-source-view": {
@@ -10457,6 +10467,7 @@
         "expander-column-name": "",
         "no-data": "Brak danych"
       },
+      "no-rows": "",
       "no-values-label": "Brak wartości",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} z {{numRows}} wierszy",
       "sort-by-column": "",
@@ -11124,24 +11135,14 @@
     },
     "forgot-password": "Nie pamiętasz hasła?",
     "form": {
-      "confirmation-code": "Wymagany jest kod potwierdzenia",
-      "confirmation-code-label": "Kod potwierdzenia",
-      "confirmation-code-placeholder": "kod potwierdzenia",
-      "email-label": "E-mail",
-      "email-placeholder": "e-mail",
-      "email-required": "E-mail jest wymagany",
-      "name-label": "Nazwa",
       "password-label": "Hasło",
       "password-placeholder": "hasło",
       "password-required": "Wymagane hasło",
-      "passwordless-username-label": "Nazwa użytkownika",
       "submit-label": "Zaloguj się",
       "submit-loading-label": "Logowanie…",
       "username-label": "E-mail lub nazwa użytkownika",
       "username-placeholder": "e-mail lub nazwa użytkownika",
-      "username-required": "Wymagane są e-mail lub nazwa użytkownika",
-      "verify-email-label": "Wyślij weryfikacyjną wiadomość e-mail",
-      "verify-email-loading-label": "Wysyłanie wiadomości e-mail…"
+      "username-required": "Wymagane są e-mail lub nazwa użytkownika"
     },
     "layout": {
       "update-password": "Zaktualizuj hasło"
@@ -15116,6 +15117,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zawijaj tekst nagłówka",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "automatycznie",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",

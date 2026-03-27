@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -275,6 +275,10 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		return nil, apierrors.NewBadRequest("expected a folder path (trailing slash)")
 	}
 
+	if err := r.authorizer.AuthorizeUpdateFolder(ctx, opts.Path); err != nil {
+		return nil, fmt.Errorf("authorize update folder: %w", err)
+	}
+
 	var submitted folders.Folder
 	if err := json.Unmarshal(opts.Data, &submitted); err != nil {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid folder resource: %v", err))
@@ -285,7 +289,7 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	newHash, err := UpdateFolderMetadataTitle(ctx, r.repo, opts.Path, opts.Ref, opts.Message, &submitted)
+	newHash, err := WriteFolderMetadataUpdate(ctx, r.repo, opts.Path, opts.Ref, opts.Message, &submitted)
 	if err != nil {
 		return nil, err
 	}

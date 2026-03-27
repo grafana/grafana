@@ -83,8 +83,10 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 		require.Contains(t, resp.BodyString(), "title must not be empty")
 	})
 
-	t.Run("missing spec title is rejected", func(t *testing.T) {
-		resp := files.Put(t, "update-test/", common.FolderBody(t, originalUID, ""))
+	t.Run("missing spec title field is rejected", func(t *testing.T) {
+		// Raw JSON with spec.title completely absent (not just empty string).
+		body := []byte(`{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{},"spec":{}}`)
+		resp := files.Put(t, "update-test/", body)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "missing title must be rejected: %s", resp.BodyString())
 	})
 

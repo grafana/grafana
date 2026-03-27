@@ -2,4 +2,4 @@
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=folder.grafana.app
 
-package v1beta1
+package v1
