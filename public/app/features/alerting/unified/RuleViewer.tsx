@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Suspense, lazy, useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
@@ -9,12 +9,15 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
-import DetailView, { ActiveTab, useActiveTab } from './components/rule-viewer/RuleViewer';
+import DetailViewV1, { ActiveTab, useActiveTab } from './components/rule-viewer/RuleViewer';
+import { shouldUseAlertingRuleViewerV2 } from './featureToggles';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { getAlertRulesNavId } from './navigation/useAlertRulesNav';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
+
+const DetailViewV2 = lazy(() => import('./components/rule-viewer/RuleViewer.v2'));
 
 const RuleViewer = () => {
   const params = useParams();
@@ -53,9 +56,10 @@ const RuleViewer = () => {
   }
 
   if (rule) {
+    const useV2 = shouldUseAlertingRuleViewerV2();
     return (
       <AlertRuleProvider identifier={identifier} rule={rule}>
-        <DetailView />
+        <Suspense>{useV2 ? <DetailViewV2 /> : <DetailViewV1 />}</Suspense>
       </AlertRuleProvider>
     );
   }
