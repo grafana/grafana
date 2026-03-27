@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2, ScopedVars } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
@@ -44,6 +44,8 @@ export interface DataSourcePickerProps {
   noDefault?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** When provided, used to resolve variable expressions (e.g. section-level datasource variables) */
+  scopedVars?: ScopedVars;
 
   // DS filters
   tracing?: boolean;
@@ -95,7 +97,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   // Used to move the focus to the footer when tabbing from the input
   const [footerRef, setFooterRef] = useState<HTMLElement | null>();
-  const currentDataSourceInstanceSettings = useDatasource(current);
+  const currentDataSourceInstanceSettings = useDatasource(current, props.scopedVars);
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;

@@ -33,7 +33,6 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
       new ShowConfirmModalEvent({
         title: t('dashboard.remove-panel.title.remove-panel', 'Remove panel'),
         text: t('dashboard.remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-        icon: 'trash-alt',
         confirmText: confirmText,
         yesText: 'Remove',
         onConfirm: () => removePanel(dashboard, panel, false),
