@@ -1,8 +1,6 @@
 package ofrep
 
 import (
-	"bytes"
-	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -96,10 +94,20 @@ func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		if !b.validateNamespaceIfPresent(r) {
+		evalCtx, err := b.readEvalContext(r)
+		if err != nil {
+			_ = tracing.Errorf(span, bodyReadFailureMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			b.logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
+			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			return
+		}
+
+		authNamespace, valid := b.validateNamespaceIfPresent(r, evalCtx)
+		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-			b.logger.Error(namespaceMismatchMsg)
+			b.logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug, "flag", flagKey)
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
@@ -120,10 +128,20 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		if !b.validateNamespaceIfPresent(r) {
+		evalCtx, err := b.readEvalContext(r)
+		if err != nil {
+			_ = tracing.Errorf(span, bodyReadFailureMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			b.logger.Error(bodyReadFailureMsg, "error", err)
+			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			return
+		}
+
+		authNamespace, valid := b.validateNamespaceIfPresent(r, evalCtx)
+		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-			b.logger.Error(namespaceMismatchMsg)
+			b.logger.Error(namespaceMismatchMsg, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
@@ -138,44 +156,38 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 // namespace, but only if the evaluation context includes a namespace. If no namespace is present in the body,
 // validation is skipped and the request is considered valid. This is used for cluster-global routes where
 // namespace is not part of the URL.
-func (b *APIBuilder) validateNamespaceIfPresent(r *http.Request) bool {
+// Returns the resolved auth namespace and whether validation passed.
+func (b *APIBuilder) validateNamespaceIfPresent(r *http.Request, evalCtx evalContext) (string, bool) {
 	_, span := tracing.Start(r.Context(), "ofrep.validateNamespaceIfPresent")
 	defer span.End()
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		_ = tracing.Errorf(span, "failed to read request body: %w", err)
-		b.logger.Error("Error reading evaluation request body", "error", err)
-		span.SetAttributes(attribute.Bool("validation.success", false))
-		return false
-	}
-	r.Body = io.NopCloser(bytes.NewBuffer(body))
-
-	evalCtxNamespace := b.namespaceFromEvalCtx(body)
-	if evalCtxNamespace == "" {
+	if evalCtx.namespace == "" {
 		// No namespace in eval context -- nothing to validate
 		span.SetAttributes(attribute.Bool("validation.success", true))
-		return true
+		return "", true
 	}
-
-	span.SetAttributes(attribute.String("request.body", string(body)))
 
 	user, ok := types.AuthInfoFrom(r.Context())
 	if !ok {
 		// No auth info -- can't validate, but that's fine; unauthed requests are
 		// gated on public flags by the caller
 		span.SetAttributes(attribute.Bool("validation.success", true))
-		return true
+		return "", true
 	}
 
 	authNamespace := user.GetNamespace()
 	if authNamespace == "" {
 		// Unauthenticated user has no namespace -- skip validation
 		span.SetAttributes(attribute.Bool("validation.success", true))
-		return true
+		return "", true
 	}
 
-	valid := evalCtxNamespace == authNamespace
+	span.SetAttributes(
+		attribute.String("auth_namespace", authNamespace),
+		attribute.String("eval_ctx_namespace", evalCtx.namespace),
+	)
+
+	valid := evalCtx.namespace == authNamespace
 	span.SetAttributes(attribute.Bool("validation.success", valid))
-	return valid
+	return authNamespace, valid
 }

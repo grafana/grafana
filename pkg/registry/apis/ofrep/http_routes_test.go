@@ -92,10 +92,13 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 				req = req.WithContext(context.Background())
 			}
 
-			valid := b.validateNamespaceIfPresent(req)
+			evalCtx, err := b.readEvalContext(req)
+			require.NoError(t, err)
+
+			_, valid := b.validateNamespaceIfPresent(req, evalCtx)
 			assert.Equal(t, tt.expectedValid, valid)
 
-			// Body must still be readable after validation
+			// Body must still be readable after readEvalContext
 			body, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			assert.Equal(t, tt.requestBody, string(body))
