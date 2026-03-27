@@ -6535,6 +6535,7 @@
       "description": {
         "action": "Изменить описание переменной"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Изменить параметр скрытия переменной"
       },
@@ -6710,9 +6711,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Специальные параметры",
-      "alert-not-supported": "Этот источник данных не поддерживает специальные фильтры",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Укажите измерения в формате CSV: {{name}}, {{value}}.",
@@ -7083,7 +7088,7 @@
         "values-timespans": "Значения являются временными интервалами, например, 1 мин, 1 ч, 1 д"
       },
       "name": {
-        "ad-hoc-filters": "Специальные фильтры",
+        "ad-hoc-filters": "",
         "constant": "Константа",
         "custom": "Пользовательская",
         "data-source": "Источник данных",
@@ -7342,6 +7347,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -8093,6 +8099,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Помеченные"
     },
     "new-data-source-view": {
@@ -10457,6 +10467,7 @@
         "expander-column-name": "",
         "no-data": "Нет данных"
       },
+      "no-rows": "",
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}",
       "sort-by-column": "",
@@ -11124,24 +11135,14 @@
     },
     "forgot-password": "Забыли пароль?",
     "form": {
-      "confirmation-code": "Введите код подтверждения",
-      "confirmation-code-label": "Код подтверждения",
-      "confirmation-code-placeholder": "код подтверждения",
-      "email-label": "Адрес электронной почты",
-      "email-placeholder": "адрес электронной почты",
-      "email-required": "Введите адрес электронной почты",
-      "name-label": "Имя",
       "password-label": "Пароль",
       "password-placeholder": "пароль",
       "password-required": "Введите пароль",
-      "passwordless-username-label": "Имя пользователя",
       "submit-label": "Войти",
       "submit-loading-label": "Вход...",
       "username-label": "Адрес электронной почты или имя пользователя",
       "username-placeholder": "адрес электронной почты или имя пользователя",
-      "username-required": "Введите адрес электронной почты или имя пользователя",
-      "verify-email-label": "Отправить письмо с подтверждением",
-      "verify-email-loading-label": "Отправка письма…"
+      "username-required": "Введите адрес электронной почты или имя пользователя"
     },
     "layout": {
       "update-password": "Обновите пароль"
@@ -15116,6 +15117,7 @@
     "name-tooltip-placement": "Размещение подсказки",
     "name-wrap-header-text": "Перенос текста заголовка",
     "name-wrap-text": "Перенос текста",
+    "no-value-placeholder": "",
     "placeholder-column-width": "авто",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "нет",

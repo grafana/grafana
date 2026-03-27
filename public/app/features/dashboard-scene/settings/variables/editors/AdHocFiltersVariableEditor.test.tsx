@@ -229,8 +229,8 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
   const variable = new AdHocFiltersVariable({
     name: 'adhocVariable',
     type: 'adhoc',
-    label: 'Ad hoc filters',
-    description: 'Ad hoc filters are applied automatically to all queries that target this data source',
+    label: 'Filter',
+    description: 'Filters are applied automatically to all queries that target this data source',
     datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
     filters: [
       {

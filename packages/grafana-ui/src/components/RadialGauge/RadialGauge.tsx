@@ -13,7 +13,7 @@ import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
-import { buildGradientColors } from './colors';
+import { buildGradientColors, colorAtGradientPercent } from './colors';
 import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
@@ -149,6 +149,9 @@ export function RadialGauge(props: RadialGaugeProps) {
     const glowFilterRef = glowBar ? `url(#${glowFilterId})` : undefined;
 
     if (endpointMarker === 'glow') {
+      const endpointColor = gradientStops
+        ? colorAtGradientPercent(gradientStops, fieldDisplay.display.percent ?? 1).toHexString()
+        : color;
       defs.push(
         <SpotlightGradient
           key={spotlightGradientId}
@@ -157,6 +160,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           dimensions={dimensions}
           roundedBars={roundedBars}
           theme={theme}
+          color={endpointColor}
         />
       );
     }
@@ -205,7 +209,9 @@ export function RadialGauge(props: RadialGaugeProps) {
       }
 
       if (glowCenter) {
-        graphics.push(<MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} />);
+        graphics.push(
+          <MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} shape={shape} />
+        );
       }
 
       graphics.push(

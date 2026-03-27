@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -33,10 +35,18 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func disableProvisioningForLegacyModes(mode rest.DualWriterMode) []string {
+	if mode < rest.Mode5 {
+		return []string{featuremgmt.FlagProvisioning}
+	}
+	return nil
+}
+
 func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVersionResource) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableAnonymous: true,
+			DisableAnonymous:      true,
+			DisableFeatureToggles: disableProvisioningForLegacyModes(mode),
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,
@@ -181,6 +191,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableFeatureToggles: []string{featuremgmt.FlagProvisioning},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {EnableMigration: false},
 			"folders.folder.grafana.app":       {EnableMigration: false},
@@ -517,7 +528,8 @@ func TestIntegrationListPagination(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
+				DisableAnonymous:      true,
+				DisableFeatureToggles: disableProvisioningForLegacyModes(mode),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 					"folders.folder.grafana.app":       {DualWriterMode: mode},
@@ -604,7 +616,8 @@ func TestIntegrationListPagination(t *testing.T) {
 
 		t.Run(fmt.Sprintf("history pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
+				DisableAnonymous:      true,
+				DisableFeatureToggles: disableProvisioningForLegacyModes(mode),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 					"folders.folder.grafana.app":       {DualWriterMode: mode},
@@ -706,9 +719,10 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
+			AppModeProduction:     true,
+			DisableAnonymous:      true,
+			APIServerStorageType:  "unified",
+			DisableFeatureToggles: disableProvisioningForLegacyModes(mode),
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
@@ -858,5 +872,85 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 		}
 		require.GreaterOrEqual(t, dashboards, 1)
 		require.GreaterOrEqual(t, folders, 1)
+	})
+}
+
+func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	// Step 1: Start Grafana normally so migrations complete
+	env := apis.NewSearchDownTestEnv(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+
+	// Step 2: Restart with search down
+	helper := env.RestartWithSearchDown(t)
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	// Verify search is actually down
+	searchCfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	searchCfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(searchCfg)
+	require.NoError(t, err)
+	var statusCode int
+	restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", "default", "search").
+		Param("query", "*").Param("limit", "1").
+		Do(ctx).StatusCode(&statusCode)
+	require.Equal(t, http.StatusInternalServerError, statusCode, "search should be down")
+
+	t.Run("non-provisioned dashboard can be deleted", func(t *testing.T) {
+		dash := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":         "gd-test-regular",
+				"schemaVersion": 42,
+			},
+		}}
+		dash.SetGenerateName("gd-test-")
+		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err, "non-provisioned dashboard delete should succeed when search is down")
+
+		_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.True(t, errors.IsNotFound(err), "dashboard should be gone after deletion")
+	})
+
+	t.Run("provisioned dashboard is still protected from deletion", func(t *testing.T) {
+		dash := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":         "gd-test-provisioned",
+				"schemaVersion": 42,
+			},
+		}}
+		dash.SetGenerateName("gd-prov-")
+		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// Mark as classic file provisioned
+		meta, err := utils.MetaAccessor(created)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindClassicFP, //nolint:staticcheck
+			Identity: "test-provisioner",
+		})
+		updated, err := client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Verify manager properties are persisted
+		updatedMeta, err := utils.MetaAccessor(updated)
+		require.NoError(t, err)
+		mgr, managed := updatedMeta.GetManagerProperties()
+		require.True(t, managed, "dashboard should be marked as managed after update")
+		require.Equal(t, utils.ManagerKindClassicFP, mgr.Kind) //nolint:staticcheck
+		require.Equal(t, "test-provisioner", mgr.Identity)
+
+		// Delete should be blocked even without search
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.Error(t, err, "provisioned dashboard delete should be blocked")
 	})
 }

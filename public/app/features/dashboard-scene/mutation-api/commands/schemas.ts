@@ -362,11 +362,7 @@ export const adhocVariableKindSchema = z
     spec: z.object({
       ...commonVariableSpecFields,
       baseFilters: z.array(adHocFilterSchema).optional().default([]).describe('Base filters always applied to queries'),
-      filters: z
-        .array(adHocFilterSchema)
-        .optional()
-        .default([])
-        .describe('User-configured ad-hoc filters applied to queries'),
+      filters: z.array(adHocFilterSchema).optional().default([]).describe('User-configured filters applied to queries'),
       defaultKeys: z
         .array(metricFindValueSchema)
         .optional()
@@ -380,7 +376,7 @@ export const adhocVariableKindSchema = z
     }),
   })
   .describe(
-    'AdhocVariable: Ad-hoc filter builder that adds key/value filters to all queries for a data source. Has top-level group and datasource fields for data source binding.'
+    'AdhocVariable: Filter builder that adds key/value filters to all queries for a data source. Has top-level group and datasource fields for data source binding.'
   );
 
 export const switchVariableKindSchema = z
