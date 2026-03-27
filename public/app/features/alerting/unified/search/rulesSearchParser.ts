@@ -59,42 +59,54 @@ export enum RuleSource {
   DataSource = 'datasource',
 }
 
+/**
+ * Constructs the mutually exclusive routing portion of a RulesFilter.
+ * Each branch returns only one of the two fields, which TypeScript can
+ * verify statically — no type assertion needed.
+ * policy takes precedence when both are provided.
+ */
+export function buildRoutingFilter(
+  contactPoint: string | undefined,
+  policy: string | undefined
+): MergeExclusive<{ contactPoint?: string }, { policy?: string }> {
+  if (policy) {
+    return { policy };
+  }
+  return { contactPoint };
+}
+
 // Define how to map parsed tokens into the filter object
 export function getSearchFilterFromQuery(query: string): RulesFilter {
-  // Use a mutable intermediate type during parsing — tokens arrive one at a time so both
-  // fields may briefly coexist before we enforce the mutual-exclusivity constraint below.
-  const filter: RulesFilterBase & { contactPoint?: string; policy?: string } = {
+  const baseFilter: RulesFilterBase = {
     labels: [],
     freeFormWords: [],
     dataSourceNames: [],
   };
 
+  let parsedContactPoint: string | undefined;
+  let parsedPolicy: string | undefined;
+
   const tokenToFilterMap: QueryFilterMapper = {
-    [terms.DataSourceToken]: (value) => filter.dataSourceNames.push(value),
-    [terms.NameSpaceToken]: (value) => (filter.namespace = value),
-    [terms.GroupToken]: (value) => (filter.groupName = value),
-    [terms.RuleToken]: (value) => (filter.ruleName = value),
-    [terms.LabelToken]: (value) => filter.labels.push(value),
-    [terms.StateToken]: (value) => (filter.ruleState = parseStateToken(value)),
-    [terms.TypeToken]: (value) => (isPromRuleType(value) ? (filter.ruleType = value) : undefined),
-    [terms.HealthToken]: (value) => (filter.ruleHealth = getRuleHealth(value)),
-    [terms.DashboardToken]: (value) => (filter.dashboardUid = value),
-    [terms.PluginsToken]: (value) => (filter.plugins = value === 'hide' ? value : undefined),
-    [terms.ContactPointToken]: (value) => (filter.contactPoint = value),
-    [terms.RuleSourceToken]: (value) => (filter.ruleSource = getRuleSource(value)),
-    [terms.PolicyToken]: (value) => (filter.policy = value),
-    [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
+    [terms.DataSourceToken]: (value) => baseFilter.dataSourceNames.push(value),
+    [terms.NameSpaceToken]: (value) => (baseFilter.namespace = value),
+    [terms.GroupToken]: (value) => (baseFilter.groupName = value),
+    [terms.RuleToken]: (value) => (baseFilter.ruleName = value),
+    [terms.LabelToken]: (value) => baseFilter.labels.push(value),
+    [terms.StateToken]: (value) => (baseFilter.ruleState = parseStateToken(value)),
+    [terms.TypeToken]: (value) => (isPromRuleType(value) ? (baseFilter.ruleType = value) : undefined),
+    [terms.HealthToken]: (value) => (baseFilter.ruleHealth = getRuleHealth(value)),
+    [terms.DashboardToken]: (value) => (baseFilter.dashboardUid = value),
+    [terms.PluginsToken]: (value) => (baseFilter.plugins = value === 'hide' ? value : undefined),
+    [terms.ContactPointToken]: (value) => (parsedContactPoint = value),
+    [terms.RuleSourceToken]: (value) => (baseFilter.ruleSource = getRuleSource(value)),
+    [terms.PolicyToken]: (value) => (parsedPolicy = value),
+    [terms.FreeFormExpression]: (value) => baseFilter.freeFormWords.push(value),
   };
 
   parseQueryToFilter(query, filterSupportedTerms, tokenToFilterMap);
 
-  // contactPoint and policy are mutually exclusive — if both appear in the query string
-  // (e.g. manually typed), keep policy and discard contactPoint.
-  if (filter.contactPoint && filter.policy) {
-    delete filter.contactPoint;
-  }
-
-  return filter;
+  // policy wins if both tokens appear in the query (e.g. manually typed URL)
+  return { ...baseFilter, ...buildRoutingFilter(parsedContactPoint, parsedPolicy) };
 }
 
 // Reverse of the previous function

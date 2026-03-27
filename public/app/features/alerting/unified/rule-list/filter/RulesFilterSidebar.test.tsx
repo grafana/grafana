@@ -208,7 +208,7 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
 
   it('initializes with the policy selector disabled when the URL has contactPoint set', async () => {
     useRulesFilterMock.mockReturnValue({
-      filterState: { ...baseFilterState, contactPoint: 'slack-cp' },
+      filterState: { freeFormWords: [], dataSourceNames: [], labels: [], contactPoint: 'slack-cp' },
       updateFilters: mockUpdateFilters,
       hasActiveFilters: true,
       clearAll: mockClearAll,
@@ -225,7 +225,7 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
 
   it('initializes with the contact point selector disabled when the URL has policy set', async () => {
     useRulesFilterMock.mockReturnValue({
-      filterState: { ...baseFilterState, policy: 'team-a-policy' },
+      filterState: { freeFormWords: [], dataSourceNames: [], labels: [], policy: 'team-a-policy' },
       updateFilters: mockUpdateFilters,
       hasActiveFilters: true,
       clearAll: mockClearAll,
@@ -242,7 +242,7 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
 
   it('never receives both contactPoint and policy -- conflicts are resolved at query ingestion', () => {
     useRulesFilterMock.mockReturnValue({
-      filterState: { ...baseFilterState, policy: 'team-a-policy' },
+      filterState: { freeFormWords: [], dataSourceNames: [], labels: [], policy: 'team-a-policy' },
       updateFilters: mockUpdateFilters,
       hasActiveFilters: true,
       clearAll: mockClearAll,

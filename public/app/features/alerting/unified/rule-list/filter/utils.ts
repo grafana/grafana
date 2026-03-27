@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { useAlertingHomePageExtensions } from '../../plugins/useAlertingHomePageExtensions';
-import { type RulesFilter } from '../../search/rulesSearchParser';
+import { type RulesFilter, buildRoutingFilter } from '../../search/rulesSearchParser';
 
 import { type AdvancedFilters } from './types';
 
@@ -9,20 +9,20 @@ export function formAdvancedFiltersToRuleFilter(
   values: AdvancedFilters,
   existingFreeFormWords: string[] = []
 ): RulesFilter {
-  const contactPoint = values.contactPoint || undefined;
-  const policy = values.policy || undefined;
-
   return {
     freeFormWords: existingFreeFormWords,
-    ...values,
+    ruleName: values.ruleName || undefined,
     namespace: values.namespace || undefined,
     groupName: values.groupName || undefined,
-    ...(policy ? { policy } : { contactPoint }),
+    dataSourceNames: values.dataSourceNames ?? [],
+    labels: values.labels ?? [],
+    dashboardUid: values.dashboardUid || undefined,
     ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
     ruleState: values.ruleState === '*' ? undefined : values.ruleState,
     ruleType: values.ruleType === '*' ? undefined : values.ruleType,
     plugins: values.plugins === 'show' ? undefined : 'hide',
     ruleSource: values.ruleSource ?? undefined,
+    ...buildRoutingFilter(values.contactPoint || undefined, values.policy || undefined),
   };
 }
 
@@ -43,9 +43,6 @@ export const emptyAdvancedFilters: AdvancedFilters = {
 };
 
 export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWords: string[] = []): RulesFilter {
-  const contactPoint = values.contactPoint || undefined;
-  const policy = values.policy || undefined;
-
   return {
     freeFormWords,
     ruleName: values.ruleName || undefined,
@@ -59,7 +56,7 @@ export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWo
     dashboardUid: values.dashboardUid || undefined,
     plugins: values.plugins === 'show' ? undefined : 'hide',
     ruleSource: values.ruleSource ?? undefined,
-    ...(policy ? { policy } : { contactPoint }),
+    ...buildRoutingFilter(values.contactPoint || undefined, values.policy || undefined),
   };
 }
 
