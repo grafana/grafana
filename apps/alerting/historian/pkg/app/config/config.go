@@ -8,7 +8,10 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/grafana/alerting/notify/historian/lokiclient"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/simple"
+
+	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
 const (
@@ -29,6 +32,8 @@ type NotificationConfig struct {
 type RuntimeConfig struct {
 	GetAlertStateHistoryHandler simple.AppCustomRouteHandler
 	Notification                NotificationConfig
+	FolderClient                *folderv1beta1.FolderClient
+	AccessClient                authlib.AccessClient
 }
 
 func (n *NotificationConfig) AddFlagsWithPrefix(prefix string, flags *pflag.FlagSet) {

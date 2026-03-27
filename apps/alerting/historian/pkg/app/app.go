@@ -28,7 +28,7 @@ func New(cfg app.Config) (app.App, error) {
 	if alertStateHandler == nil {
 		alertStateHandler = NewErrorHandler("no alert state handler")
 	}
-	notificationHandler := notification.New(runtimeConfig.Notification, reg, logger, tracer)
+	notificationHandler := notification.New(runtimeConfig.Notification, reg, logger, tracer, runtimeConfig.FolderClient, runtimeConfig.AccessClient)
 
 	simpleConfig := simple.AppConfig{
 		Name:       "alerting.historian",

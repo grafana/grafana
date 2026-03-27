@@ -3,16 +3,18 @@ package historian
 import (
 	"context"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	restclient "k8s.io/client-go/rest"
-
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis"
 	historianApp "github.com/grafana/grafana/apps/alerting/historian/pkg/app"
 	historianAppConfig "github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
+	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
@@ -38,8 +40,18 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
+	accessClient authlib.AccessClient,
+	clientGenerator resource.ClientGenerator,
 ) (*AppInstaller, error) {
-	appSpecificConfig := historianAppConfig.RuntimeConfig{}
+	folderClient, err := folderv1beta1.NewFolderClientFromGenerator(clientGenerator)
+	if err != nil {
+		return nil, err
+	}
+
+	appSpecificConfig := historianAppConfig.RuntimeConfig{
+		FolderClient: folderClient,
+		AccessClient: accessClient,
+	}
 
 	// If we're provided some config, then we can enable some things.
 	if cfg != nil {

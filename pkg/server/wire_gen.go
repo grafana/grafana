@@ -844,7 +844,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -881,7 +882,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	dashboardUpdater := service8.ProvideDashboardUpdater(inProcBus, pluginstoreService, service14, importDashboardService, service13, pluginService, dashboardService)
 	worker := garbagecollectionworker.ProvideWorker(cfg, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	fixedRolesLoader := accesscontrol.ProvideFixedRolesLoader(acimplService, featureToggles)
-	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	syncer, err := installsync.ProvideSyncer(featureToggles, clientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService)
 	if err != nil {
 		return nil, err
@@ -1539,7 +1539,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient, clientGenerator)
 	if err != nil {
 		return nil, err
 	}
@@ -1576,7 +1577,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	dashboardUpdater := service8.ProvideDashboardUpdater(inProcBus, pluginstoreService, service14, importDashboardService, service13, pluginService, dashboardService)
 	worker := garbagecollectionworker.ProvideWorker(cfg, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	fixedRolesLoader := accesscontrol.ProvideFixedRolesLoader(acimplService, featureToggles)
-	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	syncer, err := installsync.ProvideSyncer(featureToggles, clientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService)
 	if err != nil {
 		return nil, err
