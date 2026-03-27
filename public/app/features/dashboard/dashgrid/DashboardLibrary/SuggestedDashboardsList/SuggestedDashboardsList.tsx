@@ -84,8 +84,7 @@ export const SuggestedDashboardsList = ({
     cachedPages: new Set<number>(communityDashboards.length > 0 ? [1] : []),
     totalApiPages: communityTotalPages,
     // Use persisted value from the module cache, or infer when there's only one page
-    lastPageItemCount:
-      initialLastPageItemCount ?? (communityTotalPages <= 1 ? communityDashboards.length : undefined),
+    lastPageItemCount: initialLastPageItemCount ?? (communityTotalPages <= 1 ? communityDashboards.length : undefined),
   }));
 
   // Filter provisioned dashboards client-side
