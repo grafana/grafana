@@ -40,7 +40,7 @@ func applyPreferredAPIVersions(logger log.Logger, cfg *setting.Cfg, scheme *runt
 
 func parseGroupVersionSetting(s string) (schema.GroupVersion, error) {
 	parts := strings.Split(s, "/")
-	if len(parts) != 2 {
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return schema.GroupVersion{}, fmt.Errorf(
 			"invalid preferred_api_version entry %q (expected format is group/version, e.g. dashboard.grafana.app/v1)", s)
 	}
