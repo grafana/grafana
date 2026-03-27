@@ -202,7 +202,7 @@ module.exports = [
       '@typescript-eslint/consistent-type-imports': [
         'error',
         {
-          fixStyle: 'separate-type-imports',
+          fixStyle: 'inline-type-imports',
         },
       ],
       'unicorn/no-empty-file': 'error',
