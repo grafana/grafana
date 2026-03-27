@@ -103,10 +103,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   return (
     <OverlayContainer>
-      <div
-        role="presentation"
-        className={styles.modalBackdrop}
-      />
+      <div role="presentation" className={styles.modalBackdrop} />
       <FloatingFocusManager context={context} modal={trapFocus} getInsideElements={() => [getPortalContainer()]}>
         <div
           className={cx(styles.modal, className)}
