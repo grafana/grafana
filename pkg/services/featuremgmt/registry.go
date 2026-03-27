@@ -2764,6 +2764,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "splashScreen",
+			Description:  "Enables the splash screen modal for introducing new Grafana features on first session",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "lokiAlignedQuerySplitting",
 			Description: "Aligns query splitting chunks with UTC midnight",
 			Stage:       FeatureStageExperimental,
