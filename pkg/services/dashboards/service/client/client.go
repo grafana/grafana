@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -24,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -85,7 +85,7 @@ func NewK8sClientWithFallback(
 ) *K8sClientWithFallback {
 	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, features)
 	return &K8sClientWithFallback{
-		K8sHandler:    newClientFunc(context.Background(), dashboardv0.VERSION),
+		K8sHandler:    newClientFunc(context.Background(), dashboardV1.VERSION),
 		newClientFunc: newClientFunc,
 		metrics:       newK8sClientMetrics(reg),
 		log:           log.New("dashboards-k8s-client"),
@@ -106,7 +106,7 @@ func (h *K8sClientWithFallback) Get(
 		attribute.Bool("fallback", false),
 	)
 
-	span.AddEvent("v0alpha1 Get")
+	span.AddEvent("v1 Get")
 	result, err := h.K8sHandler.Get(spanCtx, name, orgID, options, subresources...)
 	if err != nil {
 		return nil, tracing.Error(span, err)
@@ -358,7 +358,7 @@ func newK8sClientFactory(
 	cacheMutex := &sync.RWMutex{}
 	return func(ctx context.Context, version string) client.K8sHandler {
 		_, span := tracing.Start(ctx, "k8sClientFactory.GetClient",
-			attribute.String("group", dashboardv0.GROUP),
+			attribute.String("group", dashboardV1.GROUP),
 			attribute.String("version", version),
 			attribute.String("resource", "dashboards"),
 		)
@@ -384,7 +384,7 @@ func newK8sClientFactory(
 		}
 
 		gvr := schema.GroupVersionResource{
-			Group:    dashboardv0.GROUP,
+			Group:    dashboardV1.GROUP,
 			Version:  version,
 			Resource: "dashboards",
 		}
