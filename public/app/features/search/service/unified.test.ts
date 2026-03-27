@@ -179,8 +179,8 @@ describe('toDashboardResults', () => {
 
       server.use(
         getCustomSearchHandler([
-          { name: 'folder1', title: 'Folder 1', resource: 'folders' },
-          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' },
+          { name: 'folder1', title: 'Folder 1', resource: 'folder' },
+          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
         ])
       );
 
@@ -197,8 +197,8 @@ describe('toDashboardResults', () => {
 
       server.use(
         getCustomSearchHandler([
-          { name: 'folder1', title: 'Folder 1', resource: 'folders' },
-          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' },
+          { name: 'folder1', title: 'Folder 1', resource: 'folder' },
+          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
         ])
       );
 
