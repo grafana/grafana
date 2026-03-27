@@ -29,6 +29,7 @@ type CatalogPluginsManifest struct {
 // empty so the resolver picks the latest compatible version automatically.
 var DefaultCatalogPlugins = []CatalogPluginSpec{
 	{ID: "elasticsearch"},
+	{ID: "zipkin"},
 }
 
 var flagBundleCatalogPlugins = &cli.StringSliceFlag{
