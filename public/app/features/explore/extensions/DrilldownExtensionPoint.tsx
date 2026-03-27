@@ -9,7 +9,6 @@ import { Button } from '@grafana/ui';
 type Props = {
   queries: DataQuery[];
   onExtensionClick?: () => void;
-  compact?: boolean;
 };
 
 const QUERYLESS_APPS = [
@@ -24,7 +23,7 @@ const QUERYLESS_APPS = [
  * Only displays when at least one queryless app extension is available.
  */
 export function DrilldownExtensionPoint(props: Props): ReactElement | null {
-  const { onExtensionClick, compact } = props;
+  const { onExtensionClick } = props;
   const context = useExtensionPointContext(props);
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
@@ -46,7 +45,7 @@ export function DrilldownExtensionPoint(props: Props): ReactElement | null {
   }
 
   return (
-    <Button variant="secondary" size={compact ? 'sm' : 'md'} type="button" onClick={onClick}>
+    <Button variant="secondary" onClick={onClick}>
       <Trans i18nKey="explore.queryless-apps-extensions.drilldown">Drilldown</Trans>
     </Button>
   );
