@@ -411,7 +411,6 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
-          id: dashboard.state.id,
           meta: dashboard.state.meta,
           uid: dashboard.state.uid,
           title: dashboard.state.title,

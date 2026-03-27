@@ -67,7 +67,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard) {
-      eventData.dashboardId = dashboard.id;
       eventData.dashboardName = dashboard.title;
       eventData.dashboardUid = dashboard.uid;
       eventData.folderName = dashboard.meta.folderTitle;

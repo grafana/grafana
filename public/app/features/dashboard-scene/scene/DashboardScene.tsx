@@ -125,9 +125,6 @@ type CopiedPanelStyles = {
 };
 
 export interface DashboardSceneState extends SceneObjectState {
-  /** @deprecated */
-  id?: number | undefined;
-
   /** The title */
   title: string;
   /** The description */
