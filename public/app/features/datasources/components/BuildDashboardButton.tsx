@@ -1,7 +1,9 @@
-import { DataSourceSettings } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, ComponentSize, Dropdown, Icon, LinkButton, Menu } from '@grafana/ui';
+import { Button, ComponentSize, Dropdown, Icon, LinkButton, Menu, useStyles2 } from '@grafana/ui';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
@@ -22,6 +24,7 @@ interface BuildDashboardButtonProps {
 
 export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildDashboardButtonProps) => {
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
 
   if (!config.featureToggles.suggestedDashboards) {
     return (
@@ -62,6 +65,11 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
                 label={t('datasources.build-a-dashboard-button.from-suggestions', 'From suggestions')}
                 icon={fetchStatus === 'loading' ? 'spinner' : 'lightbulb-alt'}
                 disabled={fetchStatus === 'loading' || (fetchStatus === 'done' && !hasDashboards)}
+                className={
+                  fetchStatus === 'loading' || (fetchStatus === 'done' && !hasDashboards)
+                    ? styles.disabledItem
+                    : undefined
+                }
                 onClick={(e) => {
                   e.nativeEvent.stopPropagation();
                   DashboardLibraryInteractions.entryPointClicked({
@@ -105,3 +113,15 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
     </SuggestedDashboardsLoader>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  disabledItem: css({
+    cursor: 'not-allowed',
+    '& span': {
+      color: theme.colors.action.disabledText,
+    },
+    '& svg': {
+      color: theme.colors.action.disabledText,
+    },
+  }),
+});
