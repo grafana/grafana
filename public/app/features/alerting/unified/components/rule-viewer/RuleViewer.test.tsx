@@ -190,6 +190,7 @@ describe('RuleViewer', () => {
       const labels = mockRule.labels;
 
       expect(ELEMENTS.metadata.summary(ruleSummary).get()).toBeInTheDocument();
+      expect(ELEMENTS.metadata.dashboardAndPanel.get()).toBeInTheDocument();
       // Evaluation interval appears in the details sidebar
       expect(screen.getByText(groupInterval!)).toBeInTheDocument();
 

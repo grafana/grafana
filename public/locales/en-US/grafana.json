@@ -1009,8 +1009,12 @@
     },
     "create-metadata": {
       "label": {
+        "dashboard": "Dashboard",
+        "dashboard-and-panel": "Dashboard and panel",
         "labels": "Labels"
-      }
+      },
+      "view-dashboard": "View dashboard",
+      "view-panel": "View panel"
     },
     "create-new-folder": {
       "folder": {
