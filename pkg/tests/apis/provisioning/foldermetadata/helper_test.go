@@ -6,11 +6,17 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-var env = common.NewSharedEnv(
+var env = common.NewSharedGitEnv(
 	common.WithProvisioningFolderMetadata,
+	common.WithRepositoryTypes([]string{"git", "local"}),
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
+	t.Helper()
+	return env.GetCleanHelper(t).ProvisioningTestHelper
+}
+
+func sharedGitHelper(t *testing.T) *common.GitTestHelper {
 	t.Helper()
 	return env.GetCleanHelper(t)
 }

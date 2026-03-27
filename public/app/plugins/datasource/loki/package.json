@@ -5,6 +5,7 @@
   "version": "13.0.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
+    "@grafana/assistant": "0.1.24",
     "@grafana/data": "13.0.0-pre",
     "@grafana/lezer-logql": "0.2.9",
     "@grafana/llm": "1.0.3",

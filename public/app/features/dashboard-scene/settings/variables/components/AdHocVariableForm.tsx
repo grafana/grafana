@@ -62,7 +62,7 @@ export function AdHocVariableForm({
     <Stack direction="column" gap={2}>
       {!inline && (
         <VariableLegend>
-          <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
+          <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Filter options</Trans>
         </VariableLegend>
       )}
 
@@ -85,7 +85,7 @@ export function AdHocVariableForm({
         <Alert
           title={t(
             'dashboard-scene.ad-hoc-variable-form.alert-not-supported',
-            'This data source does not support ad hoc filters'
+            'This data source does not support filters'
           )}
           severity="warning"
           bottomSpacing={0}
@@ -168,7 +168,7 @@ export function AdHocVariableForm({
             label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
             description={t(
               'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
-              'Enables group by operator in the ad hoc filter combobox'
+              'Enables group by operator in the filter combobox'
             )}
             noMargin
           >

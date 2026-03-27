@@ -69,8 +69,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			}
 
 			expected, err := notify.BuildReceiverConfiguration(context.Background(), recCfg, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-				v, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
-				return v
+				return receiversTesting.DecryptForTesting(sjd)(key, fallback)
 			})
 			require.NoError(t, err)
 
@@ -81,8 +80,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			require.NoError(t, err)
 
 			actual, err := notify.BuildReceiverConfiguration(context.Background(), &back, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-				v, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
-				return v
+				return receiversTesting.DecryptForTesting(sjd)(key, fallback)
 			})
 			require.NoError(t, err)
 

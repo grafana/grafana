@@ -55,6 +55,7 @@ describe('DashboardPageProxy', () => {
   describe('when dashboardScene feature toggle is enabled (default)', () => {
     beforeEach(() => {
       jest.clearAllMocks();
+      config.featureToggles.kubernetesDashboards = false;
       config.featureToggles.dashboardScene = true;
     });
 

@@ -6442,6 +6442,7 @@
       "description": {
         "action": "更改变量描述"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "更改变量隐藏选项"
       },
@@ -6614,9 +6615,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "临时选项",
-      "alert-not-supported": "此数据源不支持临时筛选条件",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "允许用户向列表中添加自定义值",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "以 CSV 格式提供维度：{{name}}, {{value}}",
@@ -6978,7 +6983,7 @@
         "values-timespans": "值是时间跨度，例如 1 分钟、1 小时、1 天"
       },
       "name": {
-        "ad-hoc-filters": "临时筛选条件",
+        "ad-hoc-filters": "",
         "constant": "固定",
         "custom": "自定义",
         "data-source": "数据源",
@@ -7228,6 +7233,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -7964,6 +7970,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "已加星标"
     },
     "new-data-source-view": {
@@ -10292,6 +10302,7 @@
         "expander-column-name": "",
         "no-data": "无数据"
       },
+      "no-rows": "",
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
       "sort-by-column": "",
@@ -10944,24 +10955,14 @@
     },
     "forgot-password": "忘记密码？",
     "form": {
-      "confirmation-code": "需要确认码",
-      "confirmation-code-label": "确认码",
-      "confirmation-code-placeholder": "确认码",
-      "email-label": "电子邮箱",
-      "email-placeholder": "电子邮件",
-      "email-required": "电子邮箱是必填项",
-      "name-label": "名称",
       "password-label": "密码",
       "password-placeholder": "密码",
       "password-required": "必须输入密码",
-      "passwordless-username-label": "用户名",
       "submit-label": "登录",
       "submit-loading-label": "正在登录...",
       "username-label": "电子邮箱或用户名",
       "username-placeholder": "电子邮件或用户名",
-      "username-required": "电子邮箱或用户名是必填项",
-      "verify-email-label": "发送验证电子邮件",
-      "verify-email-loading-label": "正在发送电子邮件…"
+      "username-required": "电子邮箱或用户名是必填项"
     },
     "layout": {
       "update-password": "更新密码"
@@ -14852,6 +14853,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "表头文字换行",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "自动",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
