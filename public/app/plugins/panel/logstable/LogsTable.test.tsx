@@ -15,7 +15,7 @@ import { defaultTableOptions } from '@grafana/schema';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/fieldSelector/logFields';
 
 import { LogsTable } from './LogsTable';
 import { Options } from './options/types';

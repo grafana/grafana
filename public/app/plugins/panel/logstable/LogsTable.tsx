@@ -13,8 +13,8 @@ import {
 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
-import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import {
   LOGS_DATAPLANE_BODY_NAME,

@@ -6,7 +6,7 @@ import { DataFrame, FieldConfigSource, transformDataFrame } from '@grafana/data'
 import { CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/fieldSelector/logFields';
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
 import { getFieldWidth } from '../fields/getFieldWidth';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';

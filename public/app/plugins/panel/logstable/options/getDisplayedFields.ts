@@ -1,4 +1,4 @@
-import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
 
