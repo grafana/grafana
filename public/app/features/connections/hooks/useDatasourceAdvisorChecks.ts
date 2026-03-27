@@ -13,6 +13,7 @@ export type FailureSeverity = 'high' | 'low';
 
 const CHECK_TYPE_LABEL = 'advisor.grafana.app/type';
 const RETRY_ANNOTATION = 'advisor.grafana.app/retry';
+const STATUS_ANNOTATION = 'advisor.grafana.app/status';
 const REFRESH_PENDING_RETRY_INTERVAL_MS = 2000;
 
 export type DatasourceFailureDetails = {
@@ -33,6 +34,7 @@ function isAdvisorEnabled(): boolean {
 export function useLatestDatasourceCheck(): {
   check: Check | undefined;
   isLoading: boolean;
+  refetchLatestCheck: () => void;
 } {
   const enabled = isAdvisorEnabled();
 
@@ -51,7 +53,7 @@ export function useLatestDatasourceCheck(): {
     return () => clearInterval(interval);
   }, [enabled, check, refetch]);
 
-  return { check, isLoading: enabled && isLoading };
+  return { check, isLoading: enabled && isLoading, refetchLatestCheck: refetch };
 }
 
 function selectLatestCheck(checks?: Check[]): Check | undefined {
@@ -67,8 +69,11 @@ function selectLatestCheck(checks?: Check[]): Check | undefined {
 }
 
 function isPending(check?: Check): boolean {
-  // The retry annotation is set when the check is still being processed.
-  return Boolean(check?.metadata.annotations?.[RETRY_ANNOTATION]);
+  return (
+    !check?.metadata.annotations?.[STATUS_ANNOTATION] ||
+    (check.metadata.annotations?.[RETRY_ANNOTATION] !== undefined &&
+      check.metadata.annotations?.[STATUS_ANNOTATION] !== 'error')
+  );
 }
 
 export type DatasourceFailuresResult = {

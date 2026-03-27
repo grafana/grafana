@@ -118,26 +118,17 @@ describe('useLatestDatasourceCheck', () => {
     expect(result.current.check).toBeUndefined();
   });
 
-  it('returns the latest check by creationTimestamp', () => {
-    const older = makeCheck({ name: 'older', creationTimestamp: '2026-01-01T00:00:00Z', failures: emptyReport });
-    const newer = makeCheck({ name: 'newer', creationTimestamp: '2026-03-11T13:00:00Z', failures: emptyReport });
-
-    useListCheckMock.mockReturnValue({ data: { items: [newer, older] }, isLoading: false });
+  it('returns a refetch callback from the query hook', async () => {
+    const refetch = jest.fn();
+    useListCheckMock.mockReturnValue({ data: { items: [] }, isLoading: false, refetch });
 
     const { result } = renderHook(() => useLatestDatasourceCheck());
 
-    expect(result.current.check?.metadata.name).toBe('newer');
-  });
+    await act(async () => {
+      result.current.refetchLatestCheck();
+    });
 
-  it('passes the correct labelSelector and limit', () => {
-    useListCheckMock.mockReturnValue({ data: undefined, isLoading: false });
-
-    renderHook(() => useLatestDatasourceCheck());
-
-    expect(useListCheckMock).toHaveBeenCalledWith(
-      { labelSelector: 'advisor.grafana.app/type=datasource', limit: 1000 },
-      expect.objectContaining({ skip: false })
-    );
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('refetches on interval while latest check has retry annotation', () => {
@@ -161,13 +152,36 @@ describe('useLatestDatasourceCheck', () => {
     jest.useRealTimers();
   });
 
-  it('does not refetch on interval when retry annotation is empty', () => {
+  it('refetches on interval when status annotation is missing', () => {
+    jest.useFakeTimers();
+    const refetch = jest.fn();
+    const checkWithoutStatus = makeCheck({
+      name: 'pending-without-status',
+      creationTimestamp: '2026-03-11T13:00:00Z',
+      failures: emptyReport,
+    });
+    useListCheckMock.mockReturnValue({ data: { items: [checkWithoutStatus] }, isLoading: false, refetch });
+
+    renderHook(() => useLatestDatasourceCheck());
+
+    act(() => {
+      jest.advanceTimersByTime(4000);
+    });
+
+    expect(refetch).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
+
+  it('does not refetch on interval when check status is error', () => {
     jest.useFakeTimers();
     const refetch = jest.fn();
     const completedCheck = makeCheck({
       name: 'completed',
       creationTimestamp: '2026-03-11T13:00:00Z',
-      annotations: { 'advisor.grafana.app/retry': '' },
+      annotations: {
+        'advisor.grafana.app/retry': '',
+        'advisor.grafana.app/status': 'error',
+      },
       failures: emptyReport,
     });
     useListCheckMock.mockReturnValue({ data: { items: [completedCheck] }, isLoading: false, refetch });
@@ -181,6 +195,53 @@ describe('useLatestDatasourceCheck', () => {
     expect(refetch).not.toHaveBeenCalled();
     jest.useRealTimers();
   });
+
+  it('does not refetch on interval when retry annotation is an empty string', () => {
+    jest.useFakeTimers();
+    const refetch = jest.fn();
+    const completedCheck = makeCheck({
+      name: 'completed-empty-retry',
+      creationTimestamp: '2026-03-11T13:00:00Z',
+      annotations: {
+        'advisor.grafana.app/retry': '   ',
+        'advisor.grafana.app/status': 'ok',
+      },
+      failures: emptyReport,
+    });
+    useListCheckMock.mockReturnValue({ data: { items: [completedCheck] }, isLoading: false, refetch });
+
+    renderHook(() => useLatestDatasourceCheck());
+
+    act(() => {
+      jest.advanceTimersByTime(4000);
+    });
+
+    expect(refetch).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
+  it('returns the latest check by creationTimestamp', () => {
+    const older = makeCheck({ name: 'older', creationTimestamp: '2026-01-01T00:00:00Z', failures: emptyReport });
+    const newer = makeCheck({ name: 'newer', creationTimestamp: '2026-03-11T13:00:00Z', failures: emptyReport });
+
+    useListCheckMock.mockReturnValue({ data: { items: [newer, older] }, isLoading: false });
+
+    const { result } = renderHook(() => useLatestDatasourceCheck());
+
+    expect(result.current.check?.metadata.name).toBe('newer');
+  });
+
+  it('passes the correct labelSelector and limit', () => {
+    useListCheckMock.mockReturnValue({ data: undefined, isLoading: false });
+
+    renderHook(() => useLatestDatasourceCheck());
+
+    expect(useListCheckMock).toHaveBeenCalledWith(
+      { labelSelector: 'advisor.grafana.app/type=datasource', limit: 1000 },
+      expect.objectContaining({ skip: false })
+    );
+  });
+
 });
 
 describe('useDatasourceFailureByUID', () => {
