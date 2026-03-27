@@ -6568,7 +6568,6 @@
       "view-template-button": "View template",
       "view-template-button-label": "View template: {{title}}"
     },
-    "community-error-description": "Failed to load community dashboard.",
     "community-error-title": "Error loading community dashboard",
     "community-mapping-form": {
       "auto-mapped_one": "{{count}} datasources were automatically configured:",
@@ -6617,6 +6616,8 @@
       "title-mapping-with-name": "Configure datasources for {{dashboardName}}",
       "title-with-datasource": "Suggested dashboards for your {{datasourceType}} datasource"
     },
+    "suggested-error-description": "Failed to load suggested dashboard.",
+    "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
       "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
       "title": "Start a dashboard from a template"
