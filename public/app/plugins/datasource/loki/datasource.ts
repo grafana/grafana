@@ -158,7 +158,7 @@ export class LokiDatasource
   maxLines: number;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
+    public readonly instanceSettings: DataSourceInstanceSettings<LokiOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
