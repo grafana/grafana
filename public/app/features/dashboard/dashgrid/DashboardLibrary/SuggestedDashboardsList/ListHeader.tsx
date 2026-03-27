@@ -9,14 +9,9 @@ interface ListHeaderProps {
 export const ListHeader = ({ error, onCreateFromScratch }: ListHeaderProps) => (
   <>
     {error && (
-      <div>
-        <Alert
-          title={t('dashboard-library.community-error-title', 'Error loading community dashboard')}
-          severity="error"
-        >
-          <Trans i18nKey="dashboard-library.community-error-description">Failed to load community dashboard.</Trans>
-        </Alert>
-      </div>
+      <Alert title={t('dashboard-library.suggested-error-title', 'Error loading suggested dashboard')} severity="error">
+        <Trans i18nKey="dashboard-library.suggested-error-description">Failed to load suggested dashboard.</Trans>
+      </Alert>
     )}
 
     <Box
