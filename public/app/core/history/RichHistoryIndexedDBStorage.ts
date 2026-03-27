@@ -1,17 +1,19 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { isEqual, omit } from 'lodash';
 
-import { DataQuery } from '@grafana/data';
+import { DataQuery, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { RichHistorySearchBackendFilters, RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
 import { RichHistoryQuery } from 'app/types/explore';
 
+import { RICH_HISTORY_KEY } from './RichHistoryLocalStorage';
 import RichHistoryStorage, {
   RichHistoryResults,
   RichHistoryServiceError,
   RichHistoryStorageWarningDetails,
 } from './RichHistoryStorage';
 import { migrateToIndexedDB } from './indexedDBMigration';
+import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
 const DB_NAME = 'grafana-query-history';
 const DB_VERSION = 1;
@@ -107,6 +109,7 @@ function matchesSearchFilter(query: RichHistoryQuery, searchFilter: string): boo
 export default class RichHistoryIndexedDBStorage implements RichHistoryStorage {
   private dbPromise: Promise<IDBPDatabase<QueryHistoryDBSchema>>;
   private migrationPromise: Promise<void> | undefined;
+  private cleanupInFlight = false;
 
   constructor() {
     this.dbPromise = this.initDB();
@@ -238,6 +241,11 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage {
     // Sort
     results = this.sortQueries(results, filters.sortOrder);
 
+    // Fire-and-forget localStorage cleanup — never blocks reads
+    this.maybeCleanupLocalStorage().catch((err) => {
+      console.warn('localStorage cleanup failed:', err);
+    });
+
     return { richHistory: results, total: results.length };
   }
 
@@ -336,6 +344,46 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage {
     }
 
     await tx.done;
+  }
+
+  /**
+   * After migration completes, track successful IndexedDB accesses.
+   * On the 2nd successful access, delete all localStorage query history keys.
+   */
+  private async maybeCleanupLocalStorage(): Promise<void> {
+    if (this.cleanupInFlight) {
+      return;
+    }
+    this.cleanupInFlight = true;
+    try {
+      const migrationComplete = await this.getMetadata('migrationComplete');
+      if (migrationComplete !== true) {
+        return;
+      }
+
+      const cleanupDone = await this.getMetadata('localStorageCleanupDone');
+      if (cleanupDone === true) {
+        return;
+      }
+
+      const rawCount = await this.getMetadata('successfulAccessCount');
+      const count = (typeof rawCount === 'number' ? rawCount : 0) + 1;
+      await this.setMetadata('successfulAccessCount', count);
+
+      if (count >= 2) {
+        store.delete(RICH_HISTORY_KEY);
+        for (const key of Object.values(RICH_HISTORY_SETTING_KEYS)) {
+          store.delete(key);
+        }
+        await this.setMetadata('localStorageCleanupDone', true);
+
+        reportInteraction('grafana_query_history_localstorage_cleanup', {
+          accessCountAtCleanup: count,
+        });
+      }
+    } finally {
+      this.cleanupInFlight = false;
+    }
   }
 
   // NOTE: DatasourceAZ/ZA sort labels are historically inverted in the existing

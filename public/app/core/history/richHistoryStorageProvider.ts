@@ -1,6 +1,9 @@
 import { config, reportInteraction } from '@grafana/runtime';
+import { createWarningNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { dispatch } from 'app/store/store';
 
+import { notifyApp } from '../reducers/appNotification';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryIndexedDBStorage from './RichHistoryIndexedDBStorage';
@@ -12,9 +15,21 @@ const richHistoryLocalStorage = new RichHistoryLocalStorage();
 const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
 let richHistoryIndexedDBStorage: RichHistoryIndexedDBStorage | undefined;
+let indexedDBWarningShown = false;
 const getRichHistoryIndexedDBStorage = (): RichHistoryStorage => {
   if (typeof indexedDB === 'undefined') {
-    reportInteraction('grafana_query_history_indexeddb_unavailable', { fallback: 'localStorage' });
+    if (!indexedDBWarningShown) {
+      indexedDBWarningShown = true;
+      reportInteraction('grafana_query_history_indexeddb_unavailable', { fallback: 'localStorage' });
+      dispatch(
+        notifyApp(
+          createWarningNotification(
+            'Query history: IndexedDB is unavailable',
+            'Falling back to localStorage. Some features may be limited.'
+          )
+        )
+      );
+    }
     return richHistoryLocalStorage;
   }
   if (!richHistoryIndexedDBStorage) {
@@ -23,7 +38,14 @@ const getRichHistoryIndexedDBStorage = (): RichHistoryStorage => {
   return richHistoryIndexedDBStorage;
 };
 
-// for query history operations
+/**
+ * Returns the appropriate storage backend for query history operations.
+ *
+ * Note: When `queryHistoryLocalOnly` is toggled off after IndexedDB use, data stored in
+ * IndexedDB remains but becomes inaccessible. If localStorage cleanup has already run,
+ * the user will see empty history until the flag is re-enabled. This is expected behavior
+ * for an experimental feature flag.
+ */
 export const getRichHistoryStorage = (): RichHistoryStorage => {
   if (config.featureToggles?.queryHistoryLocalOnly) {
     return getRichHistoryIndexedDBStorage();
