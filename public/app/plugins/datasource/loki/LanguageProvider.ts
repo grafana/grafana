@@ -93,11 +93,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
   /**
    * Probes whether the `detected_labels` metadata API exists. Runs at most once per language provider instance.
    */
-  private attemptDetectedEndpointsStart(timeRange: TimeRange) {
+  private async attemptDetectedEndpointsStart(timeRange: TimeRange) {
     if (this.detectedEndpointsSupported === undefined) {
-      return this.checkDetectedLabelsExists(timeRange);
+      await this.checkDetectedLabelsExists(timeRange);
     }
-    return Promise.resolve(this.detectedEndpointsSupported);
+    if (this.detectedEndpointsSupported === false) {
+      await this.fetchLabels({ timeRange });
+    }
   }
 
   private async checkDetectedLabelsExists(timeRange: TimeRange): Promise<void> {
@@ -110,7 +112,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
       this.detectedEndpointsSupported = Array.isArray(res);
     } catch (e) {
       this.detectedEndpointsSupported = false;
-      await this.fetchLabels({ timeRange });
     }
   }
 
