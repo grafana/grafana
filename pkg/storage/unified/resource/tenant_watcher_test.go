@@ -133,6 +133,34 @@ func TestTenantClearPendingDelete(t *testing.T) {
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		assert.ErrorIs(t, err, ErrNotFound)
 	})
+
+	t.Run("force record persists through reconcile and clear events", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+			Force:            true,
+		}))
+		tw.pendingDeleteStore.RefreshCache(t.Context())
+
+		// Reconcile path: tenant CRD says pending-delete.
+		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+
+		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err)
+		assert.True(t, record.Force)
+
+		// Clear path: tenant CRD says active.
+		restored := &unstructured.Unstructured{}
+		restored.SetName("tenant-1")
+		tw.handleTenant(restored)
+
+		record, err = tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err)
+		assert.True(t, record.Force)
+		assert.True(t, record.LabelingComplete)
+	})
 }
 
 func TestTenantResourceLabelling(t *testing.T) {
@@ -436,6 +464,52 @@ func TestTenantResourceLabelling(t *testing.T) {
 		record, err = tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err)
 		assert.True(t, record.LabelingComplete, "record should be complete after retry")
+	})
+
+	t.Run("force record prevents unlabelling during clear", func(t *testing.T) {
+		ds := newDataStore(setupBadgerKV(t))
+		collector := &writeEventCollector{}
+		tw := &TenantWatcher{
+			log:                log.NewNopLogger(),
+			pendingDeleteStore: newPendingDeleteStore(ds.kv),
+			dataStore:          ds,
+			writeEvent:         collector.append,
+			ctx:                t.Context(),
+			stopCh:             make(chan struct{}),
+		}
+
+		pendingLabels := map[string]string{labelPendingDelete: "true"}
+		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, pendingLabels)
+
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
+			Force:            true,
+		}))
+		tw.pendingDeleteStore.RefreshCache(t.Context())
+
+		restored := &unstructured.Unstructured{}
+		restored.SetName("tenant-1")
+		tw.handleTenant(restored)
+
+		assert.Empty(t, collector.all(), "no unlabelling should occur for force records")
+	})
+
+	t.Run("reconcile preserves Force field on incomplete record", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+
+		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: false,
+			Force:            true,
+		}))
+
+		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+
+		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err)
+		assert.True(t, record.Force, "Force field should be preserved after reconcile")
+		assert.True(t, record.LabelingComplete, "labeling should be marked complete")
 	})
 }
 

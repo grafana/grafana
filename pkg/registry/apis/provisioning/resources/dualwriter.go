@@ -189,7 +189,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 				stableUID = existing.Name
 				return nil
 			}
-			if !errors.Is(readErr, repository.ErrFileNotFound) {
+			if !errors.Is(readErr, repository.ErrFileNotFound) && !errors.Is(readErr, repository.ErrRefNotFound) {
 				return fmt.Errorf("failed to read folder metadata for %q: %w", folderPath, readErr)
 			}
 			// Not found: write a new folder metadata file

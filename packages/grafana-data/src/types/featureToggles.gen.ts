@@ -99,11 +99,6 @@ export interface FeatureToggles {
   */
   starsFromAPIServer?: boolean;
   /**
-  * Routes stars requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesStars?: boolean;
-  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   * @default false
   */
@@ -354,10 +349,10 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
-  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
-  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -463,6 +458,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardFiltersOverview?: boolean;
+  /**
+  * Enables the feedback button in the dashboard edit sidebar
+  * @default true
+  */
+  feedbackButton?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
@@ -1527,7 +1527,7 @@ export interface FeatureToggles {
   useMTPlugins?: boolean;
   /**
   * Enables support for variables whose values can have multiple properties
-  * @default false
+  * @default true
   */
   multiPropsVariables?: boolean;
   /**
@@ -1740,4 +1740,19 @@ export interface FeatureToggles {
   * @default false
   */
   useMTPluginSettings?: boolean;
+  /**
+  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+  * @default false
+  */
+  frontendServiceSSOAutoLogin?: boolean;
+  /**
+  * Aligns query splitting chunks with UTC midnight
+  * @default false
+  */
+  lokiAlignedQuerySplitting?: boolean;
+  /**
+  * Enables the query service to fetch the configuration from the settings service
+  * @default false
+  */
+  queryFetchConfigFromSettingsService?: boolean;
 }
