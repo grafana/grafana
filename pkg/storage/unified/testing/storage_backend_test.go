@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,26 +12,31 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func setupBadgerKV(t *testing.T) resource.StorageBackend {
+	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
+	db, err := badger.Open(opts)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = db.Close()
+	})
+	kvOpts := resource.KVBackendOptions{
+		KvStore: resource.NewBadgerKV(db),
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
+	}
+	backend, err := resource.NewKVStorageBackend(kvOpts)
+	require.NoError(t, err)
+	return backend
+}
+
 func TestBadgerKVStorageBackend(t *testing.T) {
-	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
-		db, err := badger.Open(opts)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = db.Close()
-		})
-		kvOpts := resource.KVBackendOptions{
-			KvStore: resource.NewBadgerKV(db),
-			// keep it low in tests as most of them don't exercise concurrent writes
-			WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
-		}
-		backend, err := resource.NewKVStorageBackend(kvOpts)
-		require.NoError(t, err)
-		return backend
+	RunStorageBackendTest(t, func(_ context.Context) resource.StorageBackend {
+		return setupBadgerKV(t)
 	}, &TestOptions{
 		NSPrefix: "badgerkvstorage-test",
 		SkipTests: map[string]bool{
@@ -38,6 +44,69 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 			TestBlobSupport: true,
 		},
 	})
+}
+
+func TestBadgerKVConcurrentCreateNoAlreadyExists(t *testing.T) {
+	runConcurrentCreateNoAlreadyExists(t, setupBadgerKV(t), "badgerkv-no-already-exists")
+}
+
+func TestIntegrationSQLKVConcurrentCreateNoAlreadyExists(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("Without RvManager", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists")
+	})
+
+	t.Run("With RvManager", func(t *testing.T) {
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-rvmanager-no-already-exists")
+	})
+}
+
+func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBackend, ns string) {
+	ctx := t.Context()
+
+	// Launch 10 concurrent creates for the same resource name.
+	const numConcurrent = 10
+	type result struct {
+		rv  int64
+		err error
+	}
+	results := make([]result, numConcurrent)
+
+	var wg sync.WaitGroup
+	for i := range numConcurrent {
+		wg.Go(func() {
+			rv, writeErr := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
+				WithNamespace(ns),
+				WithValue(fmt.Sprintf("create-%d", i)))
+			results[i] = result{rv: rv, err: writeErr}
+		})
+	}
+	wg.Wait()
+
+	var successes int
+	var errs []error
+	for _, res := range results {
+		if res.err == nil {
+			successes++
+		} else {
+			errs = append(errs, res.err)
+		}
+	}
+
+	require.LessOrEqual(t, successes, 1, "at most one create should succeed")
+
+	// When no resource was actually created, the errors should not claim it
+	// already exists — that would be a false positive from optimistic
+	// concurrency control.
+	if successes == 0 {
+		for _, e := range errs {
+			require.NotErrorIs(t, e, resource.ErrResourceAlreadyExists,
+				"should not receive ErrResourceAlreadyExists when no resource is created")
+		}
+	}
 }
 
 func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
