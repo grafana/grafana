@@ -113,7 +113,3 @@ func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgI
 	}
 	return nil
 }
-
-func (r RoutePermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, name string) error {
-	return r.Service.DeleteResourcePermissions(ctx, orgID, name)
-}
