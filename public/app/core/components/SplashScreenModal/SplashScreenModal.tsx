@@ -1,27 +1,22 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Modal, Button } from '@grafana/ui';
 
-export interface SplashScreenModalProps {
-  onDismiss: () => void;
-}
-
-export function SplashScreenModal({ onDismiss }: SplashScreenModalProps) {
+export function SplashScreenModal() {
+  const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
   const [isOpen, setIsOpen] = useState(true);
 
-  const handleDismiss = () => {
-    setIsOpen(false);
-    onDismiss();
-  };
+  if (!isSplashScreenEnabled || !isOpen) {
+    return null;
+  }
 
   return (
-    <Modal title={t('splash-screen.title', 'Welcome to Grafana')} isOpen={isOpen} onDismiss={handleDismiss}>
-      <p>
-        <Trans i18nKey="splash-screen.body">Splash screen content will go here.</Trans>
-      </p>
+    <Modal title={t('splash-screen.title', 'Welcome to Grafana')} isOpen onDismiss={() => setIsOpen(false)}>
+      <p>{t('splash-screen.body', 'Splash screen content will go here.')}</p>
       <Modal.ButtonRow>
-        <Button variant="primary" onClick={handleDismiss}>
+        <Button variant="primary" onClick={() => setIsOpen(false)}>
           {t('splash-screen.get-started', 'Get started')}
         </Button>
       </Modal.ButtonRow>
