@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"io"
 	"testing"
 	"time"
@@ -418,7 +419,7 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 
 		require.Eventually(t, func() bool {
 			_, err := b.Subscribe(ctx, "sub1")
-			return err == io.EOF
+			return errors.Is(err, io.EOF)
 		}, time.Second, 10*time.Millisecond)
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultTerminated), 1)
 	})
