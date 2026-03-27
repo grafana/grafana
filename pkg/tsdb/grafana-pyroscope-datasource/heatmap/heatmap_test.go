@@ -33,7 +33,7 @@ func TestGenerateFrameName(t *testing.T) {
 func TestCreateHeatmapFrame(t *testing.T) {
 	t.Run("creates frame with correct metadata", func(t *testing.T) {
 		now := time.Now()
-		points := []*Point{
+		slots := []*Slot{
 			{
 				Timestamp: now.UnixMilli(),
 				YMin:      []float64{0, 100, 200},
@@ -42,7 +42,7 @@ func TestCreateHeatmapFrame(t *testing.T) {
 		}
 		labels := map[string]string{"service": "api"}
 
-		frame := CreateHeatmapFrame(labels, points, "ns", 15.0)
+		frame := CreateHeatmapFrame(labels, slots, "ns", 15.0)
 
 		require.NotNil(t, frame)
 		require.Equal(t, "heatmap{service=api}", frame.Name)
@@ -51,8 +51,9 @@ func TestCreateHeatmapFrame(t *testing.T) {
 	})
 
 	t.Run("creates correct fields structure", func(t *testing.T) {
+		stepDuration := 15.0 // 15 seconds
 		timestamp := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-		points := []*Point{
+		slots := []*Slot{
 			{
 				Timestamp: timestamp.UnixMilli(),
 				YMin:      []float64{0, 100, 200},
@@ -60,14 +61,13 @@ func TestCreateHeatmapFrame(t *testing.T) {
 			},
 		}
 
-		frame := CreateHeatmapFrame(map[string]string{}, points, "ns", 15.0)
+		frame := CreateHeatmapFrame(map[string]string{}, slots, "ns", stepDuration)
 
-		require.Len(t, frame.Fields, 5)
+		require.Len(t, frame.Fields, 4)
 		require.Equal(t, "xMax", frame.Fields[0].Name)
 		require.Equal(t, "yMin", frame.Fields[1].Name)
 		require.Equal(t, "yMax", frame.Fields[2].Name)
 		require.Equal(t, "count", frame.Fields[3].Name)
-		require.Equal(t, "yLayout", frame.Fields[4].Name)
 	})
 
 	t.Run("correctly expands multiple time points into cells", func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestCreateHeatmapFrame(t *testing.T) {
 		timestamp2 := time.Date(2024, 1, 1, 0, 0, 15, 0, time.UTC) // 15 seconds later (1 step)
 		stepDuration := 15.0                                       // 15 seconds
 
-		points := []*Point{
+		slots := []*Slot{
 			{
 				Timestamp: timestamp1.UnixMilli(),
 				YMin:      []float64{0, 100},
@@ -88,14 +88,13 @@ func TestCreateHeatmapFrame(t *testing.T) {
 			},
 		}
 
-		frame := CreateHeatmapFrame(map[string]string{}, points, "ns", stepDuration)
+		frame := CreateHeatmapFrame(map[string]string{}, slots, "ns", stepDuration)
 
 		// Should create 4 cells total (2 time points × 2 buckets, no gaps to fill)
 		require.Equal(t, 4, frame.Fields[0].Len())
 		require.Equal(t, 4, frame.Fields[1].Len())
 		require.Equal(t, 4, frame.Fields[2].Len())
 		require.Equal(t, 4, frame.Fields[3].Len())
-		require.Equal(t, 4, frame.Fields[4].Len())
 
 		// Check xMax values (timestamps) - compare Unix millis to avoid timezone issues
 		xMaxField := frame.Fields[0]
@@ -124,18 +123,11 @@ func TestCreateHeatmapFrame(t *testing.T) {
 		require.Equal(t, int64(10), countField.At(1))
 		require.Equal(t, int64(7), countField.At(2))
 		require.Equal(t, int64(12), countField.At(3))
-
-		// Check yLayout values (should all be 0 for linear)
-		yLayoutField := frame.Fields[4]
-		require.Equal(t, int8(0), yLayoutField.At(0))
-		require.Equal(t, int8(0), yLayoutField.At(1))
-		require.Equal(t, int8(0), yLayoutField.At(2))
-		require.Equal(t, int8(0), yLayoutField.At(3))
 	})
 
 	t.Run("attaches labels to count field", func(t *testing.T) {
 		now := time.Now()
-		points := []*Point{
+		slots := []*Slot{
 			{
 				Timestamp: now.UnixMilli(),
 				YMin:      []float64{0},
@@ -144,7 +136,7 @@ func TestCreateHeatmapFrame(t *testing.T) {
 		}
 		labels := map[string]string{"service": "api", "env": "prod"}
 
-		frame := CreateHeatmapFrame(labels, points, "ns", 15.0)
+		frame := CreateHeatmapFrame(labels, slots, "ns", 15.0)
 
 		countField := frame.Fields[3]
 		require.NotNil(t, countField.Labels)
@@ -154,7 +146,7 @@ func TestCreateHeatmapFrame(t *testing.T) {
 
 	t.Run("creates unique frame name based on labels", func(t *testing.T) {
 		now := time.Now()
-		points := []*Point{
+		slots := []*Slot{
 			{
 				Timestamp: now.UnixMilli(),
 				YMin:      []float64{0},
@@ -163,7 +155,7 @@ func TestCreateHeatmapFrame(t *testing.T) {
 		}
 		labels := map[string]string{"service": "api", "env": "prod"}
 
-		frame := CreateHeatmapFrame(labels, points, "ns", 15.0)
+		frame := CreateHeatmapFrame(labels, slots, "ns", 15.0)
 
 		// Frame name should include labels in sorted order
 		require.Equal(t, "heatmap{env=prod,service=api}", frame.Name)
@@ -171,7 +163,7 @@ func TestCreateHeatmapFrame(t *testing.T) {
 
 	t.Run("sets unit on yMin and yMax fields", func(t *testing.T) {
 		now := time.Now()
-		points := []*Point{
+		slots := []*Slot{
 			{
 				Timestamp: now.UnixMilli(),
 				YMin:      []float64{0},
@@ -179,7 +171,7 @@ func TestCreateHeatmapFrame(t *testing.T) {
 			},
 		}
 
-		frame := CreateHeatmapFrame(map[string]string{}, points, "ns", 15.0)
+		frame := CreateHeatmapFrame(map[string]string{}, slots, "ns", 15.0)
 
 		// yMin field should have units
 		yMinField := frame.Fields[1]
@@ -199,22 +191,21 @@ func TestCreateHeatmapFrame(t *testing.T) {
 	})
 
 	t.Run("handles empty points", func(t *testing.T) {
-		frame := CreateHeatmapFrame(map[string]string{}, []*Point{}, "ns", 15.0)
+		frame := CreateHeatmapFrame(map[string]string{}, []*Slot{}, "ns", 15.0)
 
 		require.NotNil(t, frame)
-		require.Len(t, frame.Fields, 5)
+		require.Len(t, frame.Fields, 4)
 		require.Equal(t, 0, frame.Fields[0].Len())
 		require.Equal(t, 0, frame.Fields[1].Len())
 		require.Equal(t, 0, frame.Fields[2].Len())
 		require.Equal(t, 0, frame.Fields[3].Len())
-		require.Equal(t, 0, frame.Fields[4].Len())
 	})
 
 	t.Run("handles varying bucket counts per time point", func(t *testing.T) {
 		timestamp1 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 		timestamp2 := time.Date(2024, 1, 1, 0, 0, 15, 0, time.UTC) // 15 seconds later (1 step)
 
-		points := []*Point{
+		slots := []*Slot{
 			{
 				Timestamp: timestamp1.UnixMilli(),
 				YMin:      []float64{0, 100, 200},
@@ -227,172 +218,121 @@ func TestCreateHeatmapFrame(t *testing.T) {
 			},
 		}
 
-		frame := CreateHeatmapFrame(map[string]string{}, points, "ns", 15.0)
+		frame := CreateHeatmapFrame(map[string]string{}, slots, "ns", 15.0)
 
-		// Should use the most complete bucket structure (3 buckets from first point)
-		// 2 time points × 3 buckets = 6 cells
-		require.Equal(t, 6, frame.Fields[0].Len())
+		// Each point is rendered with its own bucket count (no padding).
+		// 3 buckets (point 1) + 2 buckets (point 2) = 5 cells
+		require.Equal(t, 5, frame.Fields[0].Len())
 	})
 
-	t.Run("fills missing time slices with zero counts", func(t *testing.T) {
+	t.Run("skips zero-count cells (sparse)", func(t *testing.T) {
 		timestamp1 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-		timestamp2 := time.Date(2024, 1, 1, 0, 0, 45, 0, time.UTC) // 45 seconds later (3 steps of 15s)
-		stepDuration := 15.0                                       // 15 seconds
+		timestamp2 := time.Date(2024, 1, 1, 0, 0, 45, 0, time.UTC) // 3 steps later
 
-		points := []*Point{
+		slots := []*Slot{
 			{
 				Timestamp: timestamp1.UnixMilli(),
 				YMin:      []float64{0, 100},
-				Counts:    []int64{5, 10},
+				Counts:    []int64{5, 0},
 			},
 			{
 				Timestamp: timestamp2.UnixMilli(),
 				YMin:      []float64{0, 100},
-				Counts:    []int64{7, 12},
+				Counts:    []int64{0, 12},
 			},
 		}
 
-		frame := CreateHeatmapFrame(map[string]string{}, points, "ns", stepDuration)
+		frame := CreateHeatmapFrame(map[string]string{}, slots, "ns", 15.0)
 
-		// Should fill gaps: original 2 points + 2 gap points = 4 points
-		// Each point has 2 buckets, so 4 * 2 = 8 cells total
-		require.Equal(t, 8, frame.Fields[0].Len())
+		// 1 non-zero cell from point1 + 1 calibration row (gap > stepMs) + 1 non-zero cell from point2
+		require.Equal(t, 3, frame.Fields[0].Len())
 
-		// Check timestamps are continuous
 		xMaxField := frame.Fields[0]
-		expectedTimestamps := []int64{
-			timestamp1.UnixMilli(),                       // Original point
-			timestamp1.Add(15 * time.Second).UnixMilli(), // Gap fill
-			timestamp1.Add(30 * time.Second).UnixMilli(), // Gap fill
-			timestamp2.UnixMilli(),                       // Original point
-		}
+		calibrationTs := timestamp1.Add(15 * time.Second)
+		require.Equal(t, timestamp1.UnixMilli(), xMaxField.At(0).(time.Time).UnixMilli())
+		require.Equal(t, calibrationTs.UnixMilli(), xMaxField.At(1).(time.Time).UnixMilli())
+		require.Equal(t, timestamp2.UnixMilli(), xMaxField.At(2).(time.Time).UnixMilli())
 
-		for i, expected := range expectedTimestamps {
-			// Each timestamp should appear twice (once per bucket)
-			require.Equal(t, expected, xMaxField.At(i*2).(time.Time).UnixMilli())
-			require.Equal(t, expected, xMaxField.At(i*2+1).(time.Time).UnixMilli())
-		}
-
-		// Check that gap-filled cells have zero counts
 		countField := frame.Fields[3]
-		require.Equal(t, int64(5), countField.At(0))  // Original
-		require.Equal(t, int64(10), countField.At(1)) // Original
-		require.Equal(t, int64(0), countField.At(2))  // Gap fill
-		require.Equal(t, int64(0), countField.At(3))  // Gap fill
-		require.Equal(t, int64(0), countField.At(4))  // Gap fill
-		require.Equal(t, int64(0), countField.At(5))  // Gap fill
-		require.Equal(t, int64(7), countField.At(6))  // Original
-		require.Equal(t, int64(12), countField.At(7)) // Original
+		require.Equal(t, int64(5), countField.At(0))
+		require.Equal(t, int64(0), countField.At(1)) // calibration row
+		require.Equal(t, int64(12), countField.At(2))
 	})
 }
 
-func TestFillMissingTimeSlices(t *testing.T) {
-	t.Run("no gaps returns original points", func(t *testing.T) {
-		timestamp1 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-		timestamp2 := time.Date(2024, 1, 1, 0, 0, 15, 0, time.UTC)
-		stepDuration := 15.0
+// TestCreateHeatmapFrameFromRealAPIData tests CreateHeatmapFrame against a real
+// Pyroscope SelectHeatmap API response (pyroscope-api.json at the repo root).
+//
+// The response contains 4 slots with two gaps of 3 steps each:
+//
+//	slot 1: ts=1774522307000  counts[0]=5
+//	slot 2: ts=1774522352000  counts[19]=1
+//	slot 3: ts=1774522367000  counts[0]=1
+//	slot 4: ts=1774522412000  counts[0]=17, counts[14]=1
+//
+// Sparse output: only 5 non-zero cells emitted (gaps and zero buckets are omitted).
+func TestCreateHeatmapFrameFromRealAPIData(t *testing.T) {
+	yMin := []float64{
+		10000000, 176500000, 343000000, 509500000, 676000000,
+		842500000, 1009000000, 1175500000, 1342000000, 1508500000,
+		1675000000, 1841500000, 2008000000, 2174500000, 2341000000,
+		2507500000, 2674000000, 2840500000, 3007000000, 3173500000,
+	}
+	slot1Counts := make([]int64, 20)
+	slot1Counts[0] = 5
+	slot2Counts := make([]int64, 20)
+	slot2Counts[19] = 1
+	slot3Counts := make([]int64, 20)
+	slot3Counts[0] = 1
+	slot4Counts := make([]int64, 20)
+	slot4Counts[0] = 17
+	slot4Counts[14] = 1
 
-		points := []*Point{
-			{
-				Timestamp: timestamp1.UnixMilli(),
-				YMin:      []float64{0, 100},
-				Counts:    []int64{5, 10},
-			},
-			{
-				Timestamp: timestamp2.UnixMilli(),
-				YMin:      []float64{0, 100},
-				Counts:    []int64{7, 12},
-			},
-		}
+	slots := []*Slot{
+		{Timestamp: 1774522307000, YMin: yMin, Counts: slot1Counts},
+		{Timestamp: 1774522352000, YMin: yMin, Counts: slot2Counts},
+		{Timestamp: 1774522367000, YMin: yMin, Counts: slot3Counts},
+		{Timestamp: 1774522412000, YMin: yMin, Counts: slot4Counts},
+	}
 
-		filled := fillMissingTimeSlices(points, stepDuration)
+	frame := CreateHeatmapFrame(map[string]string{}, slots, "ns", 15.0)
 
-		require.Len(t, filled, 2)
-		require.Equal(t, timestamp1.UnixMilli(), filled[0].Timestamp)
-		require.Equal(t, timestamp2.UnixMilli(), filled[1].Timestamp)
-	})
+	// 5 non-zero cells + 1 calibration row inserted after slot1 (gap to slot2 is 3 steps).
+	require.Equal(t, 6, frame.Fields[0].Len())
+	xMax := frame.Fields[0]
+	yMinField := frame.Fields[1]
+	yMaxField := frame.Fields[2]
+	counts := frame.Fields[3]
 
-	t.Run("fills single gap", func(t *testing.T) {
-		timestamp1 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-		timestamp2 := time.Date(2024, 1, 1, 0, 0, 30, 0, time.UTC) // 2 steps later
-		stepDuration := 15.0
+	// cell 0: slot1, bucket 0
+	require.Equal(t, int64(1774522307000), xMax.At(0).(time.Time).UnixMilli())
+	require.Equal(t, float64(10000000), yMinField.At(0))
+	require.Equal(t, float64(176500000), yMaxField.At(0))
+	require.Equal(t, int64(5), counts.At(0))
 
-		points := []*Point{
-			{
-				Timestamp: timestamp1.UnixMilli(),
-				YMin:      []float64{0, 100},
-				Counts:    []int64{5, 10},
-			},
-			{
-				Timestamp: timestamp2.UnixMilli(),
-				YMin:      []float64{0, 100},
-				Counts:    []int64{7, 12},
-			},
-		}
+	// cell 1: calibration row at slot1+stepMs — ensures panel sees correct bucket width
+	require.Equal(t, int64(1774522322000), xMax.At(1).(time.Time).UnixMilli()) // 1774522307000 + 15000
+	require.Equal(t, float64(10000000), yMinField.At(1))
+	require.Equal(t, float64(176500000), yMaxField.At(1))
+	require.Equal(t, int64(0), counts.At(1))
 
-		filled := fillMissingTimeSlices(points, stepDuration)
+	// cell 2: slot2, bucket 19 (last bucket — yMax extrapolated)
+	require.Equal(t, int64(1774522352000), xMax.At(2).(time.Time).UnixMilli())
+	require.Equal(t, float64(3173500000), yMinField.At(2))
+	require.Equal(t, float64(3340000000), yMaxField.At(2)) // yMin[19] + (yMin[19]-yMin[18])
+	require.Equal(t, int64(1), counts.At(2))
 
-		require.Len(t, filled, 3)
-		require.Equal(t, timestamp1.UnixMilli(), filled[0].Timestamp)
-		require.Equal(t, timestamp1.Add(15*time.Second).UnixMilli(), filled[1].Timestamp)
-		require.Equal(t, timestamp2.UnixMilli(), filled[2].Timestamp)
+	// cell 3: slot3, bucket 0
+	require.Equal(t, int64(1774522367000), xMax.At(3).(time.Time).UnixMilli())
+	require.Equal(t, int64(1), counts.At(3))
 
-		// Check gap point has zero counts
-		require.Equal(t, []int64{0, 0}, filled[1].Counts)
-		require.Equal(t, []float64{0, 100}, filled[1].YMin)
-	})
+	// cell 4: slot4, bucket 0
+	require.Equal(t, int64(1774522412000), xMax.At(4).(time.Time).UnixMilli())
+	require.Equal(t, int64(17), counts.At(4))
 
-	t.Run("fills multiple gaps", func(t *testing.T) {
-		timestamp1 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-		timestamp2 := time.Date(2024, 1, 1, 0, 1, 0, 0, time.UTC) // 4 steps later
-		stepDuration := 15.0
-
-		points := []*Point{
-			{
-				Timestamp: timestamp1.UnixMilli(),
-				YMin:      []float64{0, 100},
-				Counts:    []int64{5, 10},
-			},
-			{
-				Timestamp: timestamp2.UnixMilli(),
-				YMin:      []float64{0, 100},
-				Counts:    []int64{7, 12},
-			},
-		}
-
-		filled := fillMissingTimeSlices(points, stepDuration)
-
-		require.Len(t, filled, 5)
-		require.Equal(t, timestamp1.UnixMilli(), filled[0].Timestamp)
-		require.Equal(t, timestamp1.Add(15*time.Second).UnixMilli(), filled[1].Timestamp)
-		require.Equal(t, timestamp1.Add(30*time.Second).UnixMilli(), filled[2].Timestamp)
-		require.Equal(t, timestamp1.Add(45*time.Second).UnixMilli(), filled[3].Timestamp)
-		require.Equal(t, timestamp2.UnixMilli(), filled[4].Timestamp)
-
-		// Check all gap points have zero counts
-		for i := 1; i <= 3; i++ {
-			require.Equal(t, []int64{0, 0}, filled[i].Counts)
-		}
-	})
-
-	t.Run("handles empty points", func(t *testing.T) {
-		filled := fillMissingTimeSlices([]*Point{}, 15.0)
-		require.Len(t, filled, 0)
-	})
-
-	t.Run("handles single point", func(t *testing.T) {
-		timestamp := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-		points := []*Point{
-			{
-				Timestamp: timestamp.UnixMilli(),
-				YMin:      []float64{0, 100},
-				Counts:    []int64{5, 10},
-			},
-		}
-
-		filled := fillMissingTimeSlices(points, 15.0)
-
-		require.Len(t, filled, 1)
-		require.Equal(t, timestamp.UnixMilli(), filled[0].Timestamp)
-	})
+	// cell 5: slot4, bucket 14
+	require.Equal(t, int64(1774522412000), xMax.At(5).(time.Time).UnixMilli())
+	require.Equal(t, float64(2341000000), yMinField.At(5))
+	require.Equal(t, float64(2507500000), yMaxField.At(5))
+	require.Equal(t, int64(1), counts.At(5))
 }
