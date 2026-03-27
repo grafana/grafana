@@ -2173,7 +2173,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				},
 			},
 			{
-				name:       "with kubernetesDashboards feature in root folder and user is anonymous",
+				name:       "in root folder and user is anonymous",
 				rootFolder: true,
 				User: &user.SignedInUser{
 					IsAnonymous: true,
