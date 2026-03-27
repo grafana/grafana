@@ -12,12 +12,15 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
   const dsSrv = getDataSourceSrv();
   const sourceDS = dsSrv.getInstanceSettings({ type: item.spec.source.group, uid: item.spec.source.name });
   if (sourceDS !== undefined) {
+    // provisioned correlations will be missing this annotation
+    const allowEdits = item.metadata.annotations?.['grafana.app/managerAllowsEdits'] ?? false;
+
     const baseCor = {
       uid: item.metadata.name!,
       sourceUID: sourceDS.uid,
       label: item.spec.label,
       description: item.spec.description,
-      provisioned: false, // todo
+      provisioned: !allowEdits,
     };
 
     const transformationsFmt = item.spec.config.transformations?.map((trans) => {
