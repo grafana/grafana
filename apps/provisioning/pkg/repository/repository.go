@@ -179,10 +179,6 @@ const (
 
 	// Renamed actions may be reconstructed as delete then create
 	FileActionRenamed FileAction = "renamed"
-
-	// FileActionReplaced indicates a resource was replaced (e.g. folder metadata
-	// UID migration where the old identity is removed in favour of a new one).
-	FileActionReplaced FileAction = "replaced"
 )
 
 type VersionedFileChange struct {

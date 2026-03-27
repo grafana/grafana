@@ -1400,7 +1400,7 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	// Successful old folder deletion also records progress
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "myfolder/" &&
-			r.Action() == repository.FileActionReplaced &&
+			r.Action() == repository.FileActionDeleted &&
 			r.Name() == "old-uid-123" &&
 			r.Error() == nil
 	})).Return()
@@ -1466,7 +1466,7 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 
 	// Successful old folder deletions also record progress
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Action() == repository.FileActionReplaced && r.Error() == nil
+		return r.Action() == repository.FileActionDeleted && r.Error() == nil
 	})).Return()
 
 	err := applyChanges(
@@ -1513,7 +1513,7 @@ func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 	// Expect progress records the error for the old folder deletion
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "broken/" &&
-			r.Action() == repository.FileActionReplaced &&
+			r.Action() == repository.FileActionDeleted &&
 			r.Name() == "old-broken-uid" &&
 			r.Error() != nil &&
 			r.Error().Error() == "delete old folder old-broken-uid after UID change: folder in use"

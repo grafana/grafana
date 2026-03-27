@@ -449,9 +449,9 @@ func applyChanges(
 
 				logging.FromContext(ctx).Debug("deleting old folder after UID change", "path", old.Path, "uid", old.UID)
 				resultBuilder := jobs.NewFolderResult(old.Path).
-					WithAction(repository.FileActionReplaced).
+					WithAction(repository.FileActionDeleted).
 					WithName(old.UID).
-					WithReason(provisioning.ReasonFolderMetadataUIDMigration)
+					WithReason(provisioning.ReasonFolderIDUpdate)
 				if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
 					resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
 				}

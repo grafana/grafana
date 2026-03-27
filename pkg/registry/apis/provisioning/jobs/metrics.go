@@ -202,8 +202,6 @@ func fileActionToOperation(action repository.FileAction) ResourceOperation {
 		return OperationRenamed
 	case repository.FileActionIgnored:
 		return OperationIgnored
-	case repository.FileActionReplaced:
-		return OperationReplaced
 	default:
 		return ResourceOperation(action)
 	}

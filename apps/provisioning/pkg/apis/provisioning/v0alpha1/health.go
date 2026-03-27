@@ -78,9 +78,9 @@ const (
 	// ReasonInvalidFolderMetadata indicates a _folder.json file exists but contains
 	// malformed or unparseable content; the folder falls back to hash-derived identity.
 	ReasonInvalidFolderMetadata = "InvalidFolderMetadata"
-	// ReasonFolderMetadataUIDMigration indicates the old folder was deleted because
+	// ReasonFolderIDUpdate indicates the old folder was deleted because
 	// the _folder.json UID changed, triggering a replacement with a new identity.
-	ReasonFolderMetadataUIDMigration = "FolderMetadataUIDMigration"
+	ReasonFolderIDUpdate = "ReasonFolderIDUpdate"
 )
 
 // Condition reasons for the Quota condition

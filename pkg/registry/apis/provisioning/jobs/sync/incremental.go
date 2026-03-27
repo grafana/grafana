@@ -436,15 +436,11 @@ func deleteFolders(
 			continue
 		}
 
-		action := repository.FileActionDeleted
-		if entry.Replacement {
-			action = repository.FileActionReplaced
-		}
 		resultBuilder := jobs.NewFolderResult(entry.Path).
-			WithAction(action).
+			WithAction(repository.FileActionDeleted).
 			WithName(entry.UID)
 		if entry.Replacement {
-			resultBuilder.WithReason(provisioning.ReasonFolderMetadataUIDMigration)
+			resultBuilder.WithReason(provisioning.ReasonFolderIDUpdate)
 		}
 		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil {
 			span.RecordError(err)
