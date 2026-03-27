@@ -789,7 +789,9 @@
         "unknown-rule": "Neznámý",
         "value-in-transition": "Hodnota v přechodu"
       },
-      "error": "Při načítání historie stavu výstrahy se něco pokazilo",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "Vymazat filtry",
         "info": {
@@ -800,6 +802,10 @@
         }
       },
       "filterBy": "Filtrovat dle:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -2041,6 +2047,10 @@
       "error-unable-to-fetch": "Nelze načíst historii stavu výstrahy",
       "loading": "Načítání…",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "Chyba při načítání historie stavu",
@@ -4379,6 +4389,7 @@
       "button-deleting": "Probíhá odstraňování…",
       "commit": "Odstranit složku",
       "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
+      "missing-info": "",
       "success-message": "Složka byla úspěšně odstraněna"
     },
     "descendant-count": {
@@ -4431,12 +4442,13 @@
       "name-label": "Název složky"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Chyba při vytváření složky",
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
       "error-invalid-characters": "Název složky obsahuje neplatné znaky. Jsou povolena pouze písmena, čísla, mezery, podtržítka a pomlčky.",
+      "error-missing-title-or-repo": "",
       "error-required": "Název složky je povinný",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "Zadejte název složky",
       "label-folder-name": "Název složky",
       "text-pull-request-created": "Byl vytvořen pull request se změnami v této složce:",
@@ -6057,6 +6069,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6370,7 +6385,6 @@
         "label": "Ukončit úpravy",
         "tooltip": "Ukončí režim úprav a zahodí neuložené změny"
       },
-      "mark-favorite": "Označit jako oblíbené",
       "more-save-options": "Další možnosti uložení",
       "new": {
         "back-to-dashboard": "Zpět na nástěnku",
@@ -6440,8 +6454,7 @@
       "star-added": "Přidáno do oblíbených",
       "star-remove-error": "Nepodařilo se odebrat z oblíbených",
       "star-removed": "Odebráno z oblíbených",
-      "unlink-library-panel": "Odpojit panel knihovny",
-      "unmark-favorite": "Odznačit z oblíbených"
+      "unlink-library-panel": "Odpojit panel knihovny"
     },
     "transformation-editor": {
       "input-data": "Vstupní údaje",
@@ -6522,6 +6535,7 @@
       "description": {
         "action": "Změnit popis proměnné"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Změnit možnost skrytí proměnné"
       },
@@ -6697,9 +6711,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Ad-hoc možnosti",
-      "alert-not-supported": "Tento zdroj dat nepodporuje filtry ad hoc",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Umožňuje uživatelům přidávat vlastní hodnoty do seznamu",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Zadejte rozměry ve formátu CSV: {{name}}, {{value}}",
@@ -6996,11 +7014,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Nástěnku se nepodařilo odstranit",
       "cancel-action": "Zrušit",
       "delete-action": "Odstranit nástěnku",
+      "delete-error": "",
       "deleting": "Probíhá odstranění…",
       "drawer-title": "Odstranit zajištěnou nástěnku",
+      "no-repository-selected": "",
       "success-message": "Nástěnka byla úspěšně odstraněna"
     },
     "description-label": {
@@ -7069,7 +7088,7 @@
         "values-timespans": "Hodnoty jsou časové úseky, např. 1 minuta, 1 hodina, 1 den"
       },
       "name": {
-        "ad-hoc-filters": "Filtry ad hoc",
+        "ad-hoc-filters": "",
         "constant": "Konstantní",
         "custom": "Vlastní",
         "data-source": "Zdroj dat",
@@ -7328,6 +7347,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -7475,16 +7495,17 @@
       "affected-dashboards_other": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1> Budou ovlivněny následující nástěnky, které používají panel:"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Chyba při ukládání nástěnky",
       "cancel": "Zrušit",
       "cannot-be-saved": "Tuto nástěnku nelze uložit z uživatelského rozhraní Grafana, protože byla zajištěna z jiného zdroje. Zkopírujte JSON nebo ho uložte do souboru níže a následně aktualizujte nástěnku ve zdroji zajištění.",
       "copy-json-to-clipboard": "Kopírovat JSON do schránky",
+      "error-saving": "",
       "file-path": "<strong>Cesta k souboru:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "Popis",
       "label-target-folder": "Cílová složka",
       "label-title": "Název",
+      "repo-path-required": "",
       "save": "Uložit",
       "save-json-to-file": "Uložit JSON do souboru",
       "saving": "Ukládání…",
@@ -8078,6 +8099,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Označeno hvězdičkou"
     },
     "new-data-source-view": {
@@ -9010,7 +9035,8 @@
     "select-placeholder": "Filtrovat podle složky"
   },
   "folder-repo": {
-    "read-only-badge": "Jen pro čtení"
+    "read-only-badge": "Jen pro čtení",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10441,6 +10467,7 @@
         "expander-column-name": "",
         "no-data": "Žádná data"
       },
+      "no-rows": "",
       "no-values-label": "Žádné hodnoty",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
       "sort-by-column": "",
@@ -11108,24 +11135,14 @@
     },
     "forgot-password": "Zapomněli jste heslo?",
     "form": {
-      "confirmation-code": "Potvrzovací kód je vyžadován",
-      "confirmation-code-label": "Potvrzovací kód",
-      "confirmation-code-placeholder": "potvrzovací kód",
-      "email-label": "E-mail",
-      "email-placeholder": "e-mail",
-      "email-required": "E-mail je povinný",
-      "name-label": "Název",
       "password-label": "Heslo",
       "password-placeholder": "heslo",
       "password-required": "Heslo je povinné",
-      "passwordless-username-label": "Uživatelské jméno",
       "submit-label": "Přihlásit se",
       "submit-loading-label": "Přihlašování…",
       "username-label": "E-mail nebo uživatelské jméno",
       "username-placeholder": "e-mail nebo uživatelské jméno",
-      "username-required": "E-mail nebo uživatelské jméno je povinné",
-      "verify-email-label": "Odeslat ověřovací e-mail",
-      "verify-email-loading-label": "Odesílání e-mailu…"
+      "username-required": "E-mail nebo uživatelské jméno je povinné"
     },
     "layout": {
       "update-password": "Aktualizujte si heslo"
@@ -12328,12 +12345,10 @@
       "description": "Oznámení, která jste obdrželi, se zobrazí tady",
       "title": "Všechno máte dokončeno."
     },
-    "starred-dashboard": "Nástěnka byla označena hvězdičkou",
     "stored-notifications": {
       "dismiss-notifications": "Odmítnout oznámení",
       "title-alert": "Tato stránka zobrazuje minulé chyby a varování. Po zamítnutí je nelze načíst."
-    },
-    "unstarred-dashboard": "Označení nástěnky hvězdičkou bylo zrušeno"
+    }
   },
   "oauth": {
     "form": {
@@ -12620,11 +12635,13 @@
       "description-customize-dashboard-elements-visibility": "Přizpůsobit viditelnost prvků nástěnky",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Výška panelu bude upravena tak, aby odpovídala velikosti obrazovky",
+      "description-playlist-nav": "",
       "label-autofit": "Automaticky přizpůsobit",
       "label-dashboard-links": "Propojení nástěnek",
       "label-display-dashboard-controls": "Zobrazit ovládací prvky nástěnky",
       "label-hide-logo": "",
       "label-mode": "Režim",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "Načasovat a obnovit",
       "label-variables": "Proměnné",
       "modes": {
@@ -13260,6 +13277,10 @@
       "title-instant-updates-requests-webhooks": "Okamžité aktualizace a pull requesty pomocí webhooků.",
       "title-visual-previews-in-pull-requests": "Vizuální náhledy v pull requestech s vykreslením obrázků"
     },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
+    },
     "error-title-default": "Chyba",
     "expanded-row": {
       "job-specification": "Specifikace úlohy",
@@ -13473,6 +13494,28 @@
         "label": "Synchronizovat všechny zdroje s externím úložištěm",
         "subtitle": "Tuto možnost použijte, pokud chcete synchronizovat a spravovat celou instanci Grafany prostřednictvím externího úložiště."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -14886,13 +14929,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -15068,6 +15117,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Zalomit text záhlaví",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "auto.",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
@@ -15117,12 +15167,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "Vytvořit",
+      "description-create-team-folder": "",
       "description-email": "Toto je volitelné a používá se především k povolení vlastních týmových avatarů",
-      "failed-to-create": "Vytvoření týmu se nezdařilo",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "E-mail",
       "label-name": "Název",
-      "label-role": "Role"
+      "label-role": "Role",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "Nový tým",

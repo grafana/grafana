@@ -4195,17 +4195,17 @@
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
-      "basic_desc": "Basic, color from thresholds",
+      "basic_desc": "Horizontal bars, value color from thresholds",
       "basic-vertical": "Basic vertical",
-      "basic-vertical_desc": "Basic, color from thresholds, vertical",
+      "basic-vertical_desc": "Vertical bars, threshold color, text value",
       "gradient": "Gradient",
-      "gradient_desc": "Gradient, color from thresholds, text color",
+      "gradient_desc": "Horizontal bars, gradient fill from thresholds",
       "gradient-BlYlRd": "Gradient blue-red",
-      "gradient-BlYlRd_desc": "Color scale, value color",
+      "gradient-BlYlRd_desc": "Horizontal, gradient fill, blue-yellow-red scale",
       "gradient-vertical": "Gradient vertical",
-      "gradient-vertical_desc": "color scale, unchecked show unfilled",
+      "gradient-vertical_desc": "Vertical, gradient fill, no unfilled track",
       "retro-lcd": "Retro LCD",
-      "retro-lcd_desc": "Color scale, text color"
+      "retro-lcd_desc": "Horizontal, LCD style, green-yellow-red scale"
     },
     "suggestions": {
       "basic": "Bar gauge",
@@ -5680,7 +5680,7 @@
       "close": "Close",
       "empty": "No labels available",
       "groupby": "GroupBy",
-      "missing-adhoc": "No ad hoc filters available",
+      "missing-adhoc": "No filters available",
       "multi": {
         "value": {
           "aria-label": "Value",
@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Change variable description"
       },
+      "description-tooltip": "Variable description",
       "hide": {
         "action": "Change variable hide option"
       },
@@ -6646,10 +6647,14 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "This data source does not support filters.",
+      "message-supported": "Filters are applied automatically to all queries that target this data source"
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Ad-hoc options",
-      "alert-not-supported": "This data source does not support ad hoc filters",
-      "description-enable-group-by": "Enables group by operator in the ad hoc filter combobox",
+      "adhoc-options": "Filter options",
+      "alert-not-supported": "This data source does not support filters",
+      "description-enable-group-by": "Enables group by operator in the filter combobox",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
@@ -7013,7 +7018,7 @@
         "values-timespans": "Values are timespans, ex 1m, 1h, 1d"
       },
       "name": {
-        "ad-hoc-filters": "Ad hoc filters",
+        "ad-hoc-filters": "Filter",
         "constant": "Constant",
         "custom": "Custom",
         "data-source": "Data source",
@@ -7266,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "This preset will modify thresholds",
       "title": "Panel styles"
     },
     "panel-viz-type-picker": {
@@ -8007,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "failed",
+      "failed-high-tooltip": "This data source has critical failures reported by Grafana Advisor.",
+      "failed-low": "warning",
+      "failed-low-tooltip": "This data source has non-critical issues reported by Grafana Advisor.",
       "starred": "Starred"
     },
     "new-data-source-view": {
@@ -9030,17 +9040,17 @@
     "neutral": "Neutral {{value}}",
     "presets": {
       "circle": "Circle",
-      "circle_desc": "plain round, from thresholds",
+      "circle_desc": "Full circle, threshold color, with sparkline",
       "gradient": "Gradient",
-      "gradient_desc": "gradient color scale",
+      "gradient_desc": "Arc gauge, green-yellow-red gradient fill",
       "neon": "Neon",
-      "neon_desc": "round, single color endpoint glow",
+      "neon_desc": "Circle, rounded bar, glow effects, fixed red",
       "neonSegmented": "Neon segmented",
-      "neonSegmented_desc": "round, few segments",
+      "neonSegmented_desc": "Circle, 10 rounded segments, glow effects, fixed blue",
       "segmented": "Segmented",
-      "segmented_desc": "segmented thresholds",
+      "segmented_desc": "Dashed arc, threshold color, with sparkline",
       "standard": "Standard",
-      "standard_desc": "plain, from thresholds"
+      "standard_desc": "Arc gauge, threshold color, with sparkline"
     },
     "suggestions": {
       "arc": "Gauge",
@@ -10347,6 +10357,7 @@
         "expander-column-name": "Expand nested rows",
         "no-data": "No data"
       },
+      "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "sort-by-column": "Sort by column {{column}}",
@@ -11004,24 +11015,14 @@
     },
     "forgot-password": "Forgot your password?",
     "form": {
-      "confirmation-code": "Confirmation code is required",
-      "confirmation-code-label": "Confirmation code",
-      "confirmation-code-placeholder": "confirmation code",
-      "email-label": "Email",
-      "email-placeholder": "email",
-      "email-required": "Email is required",
-      "name-label": "Name",
       "password-label": "Password",
       "password-placeholder": "password",
       "password-required": "Password is required",
-      "passwordless-username-label": "Username",
       "submit-label": "Log in",
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
       "username-placeholder": "email or username",
-      "username-required": "Email or username is required",
-      "verify-email-label": "Send a verification email",
-      "verify-email-loading-label": "Sending email..."
+      "username-required": "Email or username is required"
     },
     "layout": {
       "update-password": "Update your password"
@@ -13384,21 +13385,21 @@
       }
     },
     "quota-limit": {
-      "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
-      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repository",
+      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repositories",
       "message-both-repositories-onprem_other": "Your instance is limited to {{count}} connected repositories",
-      "message-both-resources_one": "and {{count}} synced resource per repository.",
+      "message-both-resources_one": "and {{count}} synced resources per repository.",
       "message-both-resources_other": "and {{count}} synced resources per repository.",
-      "message-both-resources-onprem_one": "and {{count}} synced resource per repository.",
+      "message-both-resources-onprem_one": "and {{count}} synced resources per repository.",
       "message-both-resources-onprem_other": "and {{count}} synced resources per repository.",
-      "message-repository_one": "Your account is limited to {{count}} connected repository.",
+      "message-repository_one": "Your account is limited to {{count}} connected repositories.",
       "message-repository_other": "Your account is limited to {{count}} connected repositories.",
-      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repository.",
+      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repositories.",
       "message-repository-onprem_other": "Your instance is limited to {{count}} connected repositories.",
-      "message-resource_one": "Your account is limited to {{count}} synced resource per repository.",
+      "message-resource_one": "Your account is limited to {{count}} synced resources per repository.",
       "message-resource_other": "Your account is limited to {{count}} synced resources per repository.",
-      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resource per repository.",
+      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resources per repository.",
       "message-resource-onprem_other": "Your instance is limited to {{count}} synced resources per repository.",
       "note": "Note:",
       "to-increase-limits": "To add more {{type}},",
@@ -14036,25 +14037,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Dashboard",
-      "app-explore": "Explore",
-      "app-label": "App:",
-      "assistant-actionable-create": "Please describe what you want to query and what insights you're looking for.",
-      "assistant-actionable-update": "Please describe what you want to change or improve in this query.",
-      "assistant-prompt-create": "Help me create a new query to answer my questions and provide the insights I need.",
-      "assistant-prompt-update": "Help me update the current query to answer my questions and provide the insights I need.",
       "collapse-row": "Collapse query row",
-      "current-query": "Current query",
-      "current-query-label": "Current query:",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
-      "other-queries": "Other queries",
-      "query-with-assistant": "Query with Assistant",
       "remove-query": "Remove query",
-      "selected-datasource-label": "Selected data source:",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
@@ -14673,6 +14662,11 @@
   "sort-picker": {
     "select-aria-label": "Sort"
   },
+  "splash-screen": {
+    "body": "Splash screen content will go here.",
+    "get-started": "Get started",
+    "title": "Welcome to Grafana"
+  },
   "sql-expressions": {
     "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
     "ai-explain-title": "AI-powered SQL expression explanation",
@@ -14754,15 +14748,21 @@
     },
     "presets": {
       "horizontal-threshold-value": "Horizontal threshold value",
+      "horizontal-threshold-value-desc": "Horizontal, value color from thresholds, no sparkline",
       "horizontal-threshold-value-sparkline": "Horizontal threshold value with sparkline",
+      "horizontal-threshold-value-sparkline-desc": "Horizontal, value color from thresholds, area sparkline",
       "list": "List",
-      "list_desc": "Color mode none, text mode value and name, text align center, single color",
+      "list_desc": "Compact horizontal list, centered, name and value, sparkline",
       "threshold-background": "Threshold background",
+      "threshold-background-desc": "Background color from thresholds, no sparkline",
       "threshold-background-sparkline": "Threshold background with sparkline",
+      "threshold-background-sparkline-desc": "Background color from thresholds, area sparkline",
       "threshold-value": "Threshold value",
+      "threshold-value-desc": "Value color from thresholds, no sparkline",
       "threshold-value-sparkline": "Threshold value with sparkline",
+      "threshold-value-sparkline-desc": "Value color from thresholds, area sparkline",
       "wide-list": "Wide list",
-      "wide-list-desc": "Color mode none, text mode value and name, text align center, single color"
+      "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
     "suggestions": {
       "stat": "Stat",
@@ -14934,6 +14934,7 @@
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
+    "no-value-placeholder": "No rows",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",
@@ -15261,12 +15262,12 @@
       "zoom-to-data": "Zoom to data"
     },
     "presets": {
-      "multi-many-points": "Points",
-      "multi-many-points-stacked": "Stacked points",
+      "multi-many-points": "Lines with points",
+      "multi-many-points-stacked": "Stacked lines",
       "multi-many-points-stacked-pct": "Stacked 100%",
-      "multi-points": "Points",
+      "multi-points": "Lines with points",
       "multi-stacked-bars": "Stacked bars",
-      "multi-stacked-points": "Stacked points",
+      "multi-stacked-points": "Stacked lines",
       "single-bars": "Bars",
       "single-bars-scheme": "Bars scheme",
       "single-dashed-threshold": "Dashed threshold",

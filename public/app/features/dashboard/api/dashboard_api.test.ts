@@ -33,6 +33,7 @@ function mockDiscoveryFailure() {
 }
 
 beforeAll(() => {
+  config.featureToggles.kubernetesDashboards = false;
   dashboardAPIVersionResolver.set({ v1: 'v1beta1', v2: 'v2beta1' });
 });
 
@@ -150,7 +151,7 @@ describe('DashboardApi', () => {
       // Second call: discovery succeeds → clients rebuilt with stable versions
       mockDiscoveryResponse(['v2', 'v1']);
       await getDashboardAPI('v2');
-      expect(getK8sV2DashboardApiConfig().version).toBe('v2');
+      expect(getK8sV2DashboardApiConfig().version).toBe('v2beta1');
       expect(getK8sV1DashboardApiConfig().version).toBe('v1');
     });
   });

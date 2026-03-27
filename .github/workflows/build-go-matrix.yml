@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: read
     outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
+      changed: ${{ steps.detect-changes.outputs.backend == 'true' || steps.detect-changes.outputs.makefile == 'true' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -82,8 +82,8 @@ jobs:
       - name: Build Go (${{ matrix.name }})
         env:
           CGO_ENABLED: "0"
-          GO_BUILD_OS: ${{ matrix.goos }}
-          GO_BUILD_ARCH: ${{ matrix.goarch }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: make build-go
 

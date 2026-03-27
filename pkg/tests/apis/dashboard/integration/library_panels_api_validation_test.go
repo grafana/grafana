@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -514,8 +515,14 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
+		var disableFlags []string
+		if dualWriterMode < rest.Mode5 {
+			disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
+		}
+
 		opts := testinfra.GrafanaOpts{
-			DisableAnonymous: true,
+			DisableAnonymous:      true,
+			DisableFeatureToggles: disableFlags,
 			EnableFeatureToggles: []string{
 				"kubernetesLibraryPanels",
 			},

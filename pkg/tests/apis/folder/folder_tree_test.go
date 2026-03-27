@@ -20,7 +20,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -74,9 +74,10 @@ func TestIntegrationFolderTree(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
 			runIntegrationFolderTree(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(mode),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: mode,
