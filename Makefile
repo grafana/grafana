@@ -29,6 +29,9 @@ GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	$(if $(ENTERPRISE_COMMIT_SHA),-X main.enterpriseCommit=$(ENTERPRISE_COMMIT_SHA)) \
 	$(if $(LDFLAGS),-extldflags \"$(LDFLAGS)\")
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
+GO_BUILD_DEV_ENABLED := $(filter 1 dev,$(GO_BUILD_DEV))
+GO_BUILD_GCFLAGS_EFFECTIVE := $(if $(GO_BUILD_GCFLAGS),$(GO_BUILD_GCFLAGS),$(if $(GO_BUILD_DEV_ENABLED),all=-N -l))
+GO_BUILD_TRIMPATH_FLAG := $(if $(GO_BUILD_DEV_ENABLED),,-trimpath)
 OS ?= $(shell $(GO) env GOOS)
 ARCH ?= $(shell $(GO) env GOARCH)
 GIT_BASE = remotes/origin/main
@@ -310,7 +313,7 @@ update-workspace: gen-go
 .PHONY: build-go
 build-go: pkg/services/preference/themes_generated.go
 	@echo "build go binaries ($(OS)/$(ARCH))"
-	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/$(OS)/$(ARCH)/grafana ./pkg/cmd/grafana
+	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -buildvcs=false $(GO_BUILD_TRIMPATH_FLAG) $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") -ldflags "$(GO_LDFLAGS)" -o ./bin/$(OS)/$(ARCH)/grafana ./pkg/cmd/grafana
 	cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana
 
 bin/$(OS)/$(ARCH)/grafana:
@@ -504,7 +507,7 @@ DOCKER_JS_YARN_BUILD_FLAG = build
 DOCKER_JS_YARN_INSTALL_FLAG = --immutable
 #
 # if go is in dev mode, also build node in dev mode
-ifeq ($(GO_BUILD_DEV), dev)
+ifneq ($(filter 1 dev,$(GO_BUILD_DEV)),)
   DOCKER_JS_NODE_ENV_FLAG = dev
   DOCKER_JS_YARN_BUILD_FLAG = dev
 	DOCKER_JS_YARN_INSTALL_FLAG =
