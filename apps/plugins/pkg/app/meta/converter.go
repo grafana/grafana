@@ -595,6 +595,10 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 		metaSpec.Translations = plugin.Translations
 	}
 
+	if len(plugin.AliasIDs) > 0 {
+		metaSpec.AliasIds = plugin.AliasIDs
+	}
+
 	return metaSpec
 }
 

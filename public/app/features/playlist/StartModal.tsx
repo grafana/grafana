@@ -61,12 +61,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   };
 
   return (
-    <Modal
-      isOpen={true}
-      icon="play"
-      title={t('playlist.start-modal.title-start-playlist', 'Start playlist')}
-      onDismiss={onDismiss}
-    >
+    <Modal isOpen={true} title={t('playlist.start-modal.title-start-playlist', 'Start playlist')} onDismiss={onDismiss}>
       <FieldSet>
         <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
           <Field noMargin label={t('playlist.start-modal.label-mode', 'Mode')}>
