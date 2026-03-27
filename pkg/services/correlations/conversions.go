@@ -43,7 +43,9 @@ func ToResource(orig Correlation, namespacer authlib.NamespaceFormatter) (*corre
 	if orig.Provisioned {
 		tmp, _ := utils.MetaAccessor(obj)
 		tmp.SetManagerProperties(utils.ManagerProperties{
-			Kind: utils.ManagerKindClassicFP, // nolint:staticcheck
+			Kind:        utils.ManagerKindClassicFP, // nolint:staticcheck
+			Identity:    "provisioning",             // temporary to see that changes are being applied
+			AllowsEdits: false,
 		})
 	}
 	return obj, nil
