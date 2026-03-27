@@ -20,16 +20,11 @@ const (
 // It always includes datasource HTTP client option headers. When streamingForwardTeamHeadersTempo is enabled, it also merges
 // outgoing gRPC metadata: X-Prom-Label-Policy is set from the x-prom-label-policy metadata values, and every other
 // metadata entry is copied under its existing key.
-func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[string]string, error) {
+func GetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[string]string, error) {
 	plugin := backend.PluginConfigFromContext(ctx)
 	headers, err := getClientOptionsHeaders(ctx, plugin)
 	if err != nil {
 		return nil, err
-	}
-
-	cfg := backend.GrafanaConfigFromContext(ctx)
-	if cfg == nil || !cfg.FeatureToggles().IsEnabled(featuremgmt.FlagStreamingForwardTeamHeadersTempo) {
-		return headers, nil
 	}
 
 	// fetch team headers from outgoing context.
@@ -43,6 +38,11 @@ func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 // maps outgoing gRPC metadata to HTTP-style header strings (comma-joined values per key).
 // x-prom-label-policy is exposed as X-Prom-Label-Policy.
 func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext) map[string]string {
+	cfg := backend.GrafanaConfigFromContext(ctx)
+	if cfg == nil || !cfg.FeatureToggles().IsEnabled(featuremgmt.FlagStreamingForwardTeamHeadersTempo) {
+		return nil
+	}
+
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
 		// if no metadata was found in the outgoing context, try to get it from incoming context

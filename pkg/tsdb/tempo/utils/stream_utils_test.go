@@ -22,18 +22,36 @@ func TestGetTeamHeaders_NoMetadata_ReturnsNil(t *testing.T) {
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: featuremgmt.FlagStreamingForwardTeamHeadersTempo,
+	}))
 
 	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx))
 }
 
-// getTeamHeaders does not consult the feature toggle; SetHeadersFromIncomingContext gates calling it.
-func TestGetTeamHeaders_MapsOutgoingMetadataToHeaderStrings(t *testing.T) {
+func TestGetTeamHeaders_FeatureToggleOff_ReturnsNil(t *testing.T) {
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
 	ctx = metadata.AppendToOutgoingContext(ctx,
 		TeamHttpHeaderKeyLower, "policy-a", TeamHttpHeaderKeyLower, "policy-b",
+		"x-custom-forward", "extra",
+	)
+
+	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx))
+}
+
+func TestGetTeamHeaders_MapsOutgoingMetadataToHeaderStrings(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: featuremgmt.FlagStreamingForwardTeamHeadersTempo,
+	}))
+	ctx = metadata.AppendToOutgoingContext(ctx,
+		TeamHttpHeaderKeyLower, "policy-a,policy-b",
 		"x-custom-forward", "extra",
 	)
 
@@ -48,6 +66,9 @@ func TestGetTeamHeaders_FallsBackToIncomingMetadata(t *testing.T) {
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: featuremgmt.FlagStreamingForwardTeamHeadersTempo,
+	}))
 	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(
 		TeamHttpHeaderKeyLower, "policy-a",
 		TeamHttpHeaderKeyLower, "policy-b",
@@ -60,7 +81,7 @@ func TestGetTeamHeaders_FallsBackToIncomingMetadata(t *testing.T) {
 	assert.Equal(t, "extra", got["x-custom-forward"])
 }
 
-func TestSetHeadersFromIncomingContext_FeatureToggleOff_OnlyClientHeaders(t *testing.T) {
+func TestGetHeadersFromIncomingContext_WithoutFeatureFlag_OnlyClientHeaders(t *testing.T) {
 	jsonData := []byte(`{
 		"httpHeaderName1": "X-Client",
 		"httpHeaderName2": "X-Shared"
@@ -77,7 +98,7 @@ func TestSetHeadersFromIncomingContext_FeatureToggleOff_OnlyClientHeaders(t *tes
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
 	ctx = metadata.AppendToOutgoingContext(ctx, TeamHttpHeaderKeyLower, "should-not-forward")
 
-	headers, err := SetHeadersFromIncomingContext(ctx, testLogger())
+	headers, err := GetHeadersFromIncomingContext(ctx, testLogger())
 	require.NoError(t, err)
 	assert.Equal(t, "client-value", headers["X-Client"])
 	assert.Equal(t, "shared-value", headers["X-Shared"])
@@ -85,7 +106,7 @@ func TestSetHeadersFromIncomingContext_FeatureToggleOff_OnlyClientHeaders(t *tes
 	assert.False(t, ok)
 }
 
-func TestSetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *testing.T) {
+func TestGetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *testing.T) {
 	jsonData := []byte(`{
 		"httpHeaderName1": "X-Client",
 		"httpHeaderName2": "X-Shared"
@@ -109,7 +130,7 @@ func TestSetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *te
 		"x-custom-forward", "extra",
 	)
 
-	headers, err := SetHeadersFromIncomingContext(ctx, testLogger())
+	headers, err := GetHeadersFromIncomingContext(ctx, testLogger())
 	require.NoError(t, err)
 
 	assert.Equal(t, "policy-a,policy-b", headers[TeamHttpHeaderKeyCamel])
@@ -118,7 +139,7 @@ func TestSetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *te
 	assert.Equal(t, "client-overridden", headers["X-Shared"])
 }
 
-func TestSetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *testing.T) {
+func TestGetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *testing.T) {
 	jsonData := []byte(`{
 		"httpHeaderName1": "X-Client",
 		"httpHeaderName2": "X-Shared"
@@ -143,7 +164,7 @@ func TestSetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *te
 		"x-custom-forward", "extra",
 	))
 
-	headers, err := SetHeadersFromIncomingContext(ctx, testLogger())
+	headers, err := GetHeadersFromIncomingContext(ctx, testLogger())
 	require.NoError(t, err)
 
 	assert.Equal(t, "policy-a,policy-b", headers[TeamHttpHeaderKeyCamel])
