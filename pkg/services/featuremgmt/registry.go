@@ -2779,7 +2779,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "forwardTeamHeadersTempo",
+			Name:         "streamingForwardTeamHeadersTempo",
 			Description:  "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
 			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaOSSBigTent,

@@ -102,7 +102,7 @@ func TestSetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *te
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
 	ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
-		featuretoggles.EnabledFeatures: featuremgmt.FlagForwardTeamHeadersTempo,
+		featuretoggles.EnabledFeatures: featuremgmt.FlagStreamingForwardTeamHeadersTempo,
 	}))
 	ctx = metadata.AppendToOutgoingContext(ctx,
 		TeamHttpHeaderKeyLower, "policy-a,policy-b",
@@ -135,7 +135,7 @@ func TestSetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *te
 	}
 	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
 	ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{
-		featuretoggles.EnabledFeatures: featuremgmt.FlagForwardTeamHeadersTempo,
+		featuretoggles.EnabledFeatures: featuremgmt.FlagStreamingForwardTeamHeadersTempo,
 	}))
 	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(
 		TeamHttpHeaderKeyLower, "policy-a",

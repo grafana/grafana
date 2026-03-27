@@ -1754,7 +1754,7 @@ export interface FeatureToggles {
   * Enables forwarding team headers from tempo for streaming requests with LBAC rules
   * @default false
   */
-  forwardTeamHeadersTempo?: boolean;
+  streamingForwardTeamHeadersTempo?: boolean;
   /**
   * Aligns query splitting chunks with UTC midnight
   * @default false

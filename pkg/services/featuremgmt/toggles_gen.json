@@ -2168,7 +2168,8 @@
       "metadata": {
         "name": "forwardTeamHeadersTempo",
         "resourceVersion": "1771611370728",
-        "creationTimestamp": "2026-02-20T18:16:10Z"
+        "creationTimestamp": "2026-02-20T18:16:10Z",
+        "deletionTimestamp": "2026-03-27T01:08:07Z"
       },
       "spec": {
         "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
@@ -4746,6 +4747,20 @@
         "description": "Configurable storage for dashboards, datasources, and resources",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "streamingForwardTeamHeadersTempo",
+        "resourceVersion": "1774573687389",
+        "creationTimestamp": "2026-03-27T01:08:07Z"
+      },
+      "spec": {
+        "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/oss-big-tent",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

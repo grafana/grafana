@@ -17,7 +17,7 @@ const (
 )
 
 // returns HTTP header key/value pairs for the outgoing Tempo streaming gRPC call.
-// It always includes datasource HTTP client option headers. When forwardTeamHeadersTempo is enabled, it also merges
+// It always includes datasource HTTP client option headers. When streamingForwardTeamHeadersTempo is enabled, it also merges
 // outgoing gRPC metadata: X-Prom-Label-Policy is set from the x-prom-label-policy metadata values, and every other
 // metadata entry is copied under its existing key.
 func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[string]string, error) {
@@ -28,7 +28,7 @@ func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 	}
 
 	cfg := backend.GrafanaConfigFromContext(ctx)
-	if cfg == nil || !cfg.FeatureToggles().IsEnabled(featuremgmt.FlagForwardTeamHeadersTempo) {
+	if cfg == nil || !cfg.FeatureToggles().IsEnabled(featuremgmt.FlagStreamingForwardTeamHeadersTempo) {
 		return headers, nil
 	}
 
@@ -40,9 +40,8 @@ func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 	return headers, nil
 }
 
-// getTeamHeaders maps outgoing gRPC metadata to HTTP-style header strings (comma-joined values per key).
-// x-prom-label-policy is exposed as X-Prom-Label-Policy. Callers must enforce forwardTeamHeadersTempo;
-// SetHeadersFromIncomingContext does that before invoking this function.
+// maps outgoing gRPC metadata to HTTP-style header strings (comma-joined values per key).
+// x-prom-label-policy is exposed as X-Prom-Label-Policy.
 func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext) map[string]string {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
