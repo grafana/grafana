@@ -166,9 +166,8 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
     const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
     await user.selectOptions(contactPointSelect, 'slack-cp');
 
-    expect(mockUpdateFilters).toHaveBeenLastCalledWith(
-      expect.objectContaining({ contactPoint: 'slack-cp', policy: undefined })
-    );
+    expect(mockUpdateFilters).toHaveBeenLastCalledWith(expect.objectContaining({ contactPoint: 'slack-cp' }));
+    expect(mockUpdateFilters).toHaveBeenLastCalledWith(expect.not.objectContaining({ policy: expect.anything() }));
   });
 
   it('does not include contactPoint in the filter update when a policy is selected', async () => {
@@ -177,8 +176,9 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
     const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
     await user.selectOptions(policySelect, 'team-a-policy');
 
+    expect(mockUpdateFilters).toHaveBeenLastCalledWith(expect.objectContaining({ policy: 'team-a-policy' }));
     expect(mockUpdateFilters).toHaveBeenLastCalledWith(
-      expect.objectContaining({ policy: 'team-a-policy', contactPoint: undefined })
+      expect.not.objectContaining({ contactPoint: expect.anything() })
     );
   });
 
@@ -240,31 +240,25 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
     expect(contactPointSelect).toBeDisabled();
   });
 
-  it('resolves a URL conflict by keeping policy and clearing contact point, then syncs the URL', async () => {
+  it('never receives both contactPoint and policy -- conflicts are resolved at query ingestion', () => {
     useRulesFilterMock.mockReturnValue({
-      filterState: { ...baseFilterState, contactPoint: 'slack-cp', policy: 'team-a-policy' },
+      filterState: { ...baseFilterState, policy: 'team-a-policy' },
       updateFilters: mockUpdateFilters,
       hasActiveFilters: true,
       clearAll: mockClearAll,
-      searchQuery: 'contactPoint:slack-cp policy:team-a-policy',
+      searchQuery: 'policy:team-a-policy',
       setSearchQuery: jest.fn(),
-      activeFilters: ['contactPoint', 'policy'],
+      activeFilters: ['policy'],
     });
 
     render(<RulesFilterSidebar />);
 
-    // Policy selector should be enabled and retain its value; contact point should be cleared and disabled
-    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
-    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
+    const contactPointSelect = screen.getByRole('combobox', { name: 'Contact point' });
+    const policySelect = screen.getByRole('combobox', { name: 'Notification policy' });
 
     expect(contactPointSelect).toHaveValue('');
     expect(contactPointSelect).toBeDisabled();
     expect(policySelect).toHaveValue('team-a-policy');
     expect(policySelect).toBeEnabled();
-
-    // The stale contactPoint token should be removed from the URL
-    expect(mockUpdateFilters).toHaveBeenCalledWith(
-      expect.objectContaining({ policy: 'team-a-policy', contactPoint: undefined })
-    );
   });
 });

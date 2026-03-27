@@ -20,7 +20,14 @@ import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
 import { fuzzyFilter } from '../utils/fuzzySearch';
 import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
-import { getRuleHealth, isPluginProvidedRule, isPromRuleType, prometheusRuleType, rulerRuleType } from '../utils/rules';
+import {
+  getRuleHealth,
+  isPluginProvidedRule,
+  isPromRuleType,
+  prometheusRuleType,
+  ruleUsesDefaultPolicy,
+  rulerRuleType,
+} from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
@@ -245,16 +252,13 @@ const reduceGroups = (filterState: RulesFilter) => {
       if ('policy' in matchesFilterFor) {
         const policy = filterState.policy;
         if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const ns = rule.rulerRule.grafana_alert.notification_settings;
           const isDefaultPolicyFilter = policy === USER_DEFINED_TREE_NAME;
 
           if (isDefaultPolicyFilter) {
-            // No notification_settings or no receiver/explicit non-default policy → default tree
-            const usesDefaultPolicy = !ns || (!ns.receiver && (!ns.policy || ns.policy === USER_DEFINED_TREE_NAME));
-            if (usesDefaultPolicy) {
+            if (ruleUsesDefaultPolicy(rule.rulerRule.grafana_alert.notification_settings)) {
               matchesFilterFor.policy = true;
             }
-          } else if (ns?.policy === policy) {
+          } else if (rule.rulerRule.grafana_alert.notification_settings?.policy === policy) {
             matchesFilterFor.policy = true;
           }
         }

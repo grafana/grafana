@@ -11,7 +11,7 @@ import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
 import { fuzzyMatches } from '../../utils/fuzzySearch';
 import { parseMatcher } from '../../utils/matchers';
-import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
+import { isPluginProvidedRule, prometheusRuleType, ruleUsesDefaultPolicy } from '../../utils/rules';
 import { normalizeHealth } from '../components/util';
 
 export type RuleFilterHandler = (rule: PromRuleDTO, filterState: RulesFilter) => boolean;
@@ -214,13 +214,7 @@ export function policyFilter(rule: PromRuleDTO, filterState: RulesFilter): boole
     const isDefaultPolicyFilter = filterState.policy === USER_DEFINED_TREE_NAME;
 
     if (isDefaultPolicyFilter) {
-      // Rules with no notificationSettings or with policy routing to the default tree
-      // are implicitly routed through the default policy. Rules using contact point
-      // routing (receiver set) should not match.
-      if (rule.notificationSettings?.receiver) {
-        return false;
-      }
-      if (rule.notificationSettings?.policy && rule.notificationSettings.policy !== USER_DEFINED_TREE_NAME) {
+      if (!ruleUsesDefaultPolicy(rule.notificationSettings)) {
         return false;
       }
     } else {

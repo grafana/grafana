@@ -1,8 +1,6 @@
-import {
-  PromAlertingRuleState,
-  type PromRuleType,
-  isPromAlertingRuleState,
-} from '../../../../types/unified-alerting-dto';
+import { type MergeExclusive } from 'type-fest';
+
+import { PromAlertingRuleState, type PromRuleType, isPromAlertingRuleState } from '../../../../types/unified-alerting-dto';
 import { getRuleHealth, getRuleSource, isPromRuleType } from '../utils/rules';
 
 import * as terms from './search.terms';
@@ -14,7 +12,7 @@ import {
   parseQueryToFilter,
 } from './searchParser';
 
-export interface RulesFilter {
+interface RulesFilterBase {
   freeFormWords: string[];
   namespace?: string;
   groupName?: string;
@@ -26,10 +24,12 @@ export interface RulesFilter {
   ruleHealth?: RuleHealth;
   dashboardUid?: string;
   plugins?: 'hide';
-  contactPoint?: string | null;
   ruleSource?: RuleSource;
-  policy?: string | null;
 }
+
+/** contactPoint and policy are mutually exclusive routing filters — only one may be set at a time. */
+export type RulesFilter = RulesFilterBase &
+  MergeExclusive<{ contactPoint?: string | null }, { policy?: string | null }>;
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
   FilterSupportedTerm.dataSource,
@@ -61,7 +61,13 @@ export enum RuleSource {
 
 // Define how to map parsed tokens into the filter object
 export function getSearchFilterFromQuery(query: string): RulesFilter {
-  const filter: RulesFilter = { labels: [], freeFormWords: [], dataSourceNames: [] };
+  // Use a mutable intermediate type during parsing — tokens arrive one at a time so both
+  // fields may briefly coexist before we enforce the mutual-exclusivity constraint below.
+  const filter: RulesFilterBase & { contactPoint?: string; policy?: string } = {
+    labels: [],
+    freeFormWords: [],
+    dataSourceNames: [],
+  };
 
   const tokenToFilterMap: QueryFilterMapper = {
     [terms.DataSourceToken]: (value) => filter.dataSourceNames.push(value),
@@ -81,6 +87,12 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
   };
 
   parseQueryToFilter(query, filterSupportedTerms, tokenToFilterMap);
+
+  // contactPoint and policy are mutually exclusive — if both appear in the query string
+  // (e.g. manually typed), keep policy and discard contactPoint.
+  if (filter.contactPoint && filter.policy) {
+    delete filter.contactPoint;
+  }
 
   return filter;
 }
@@ -128,7 +140,7 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   if (filter.freeFormWords) {
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
   }
-  if (filter.contactPoint) {
+  if (filter.contactPoint && !filter.policy) {
     filterStateArray.push({ type: terms.ContactPointToken, value: filter.contactPoint });
   }
   if (filter.policy) {

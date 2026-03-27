@@ -9,13 +9,15 @@ export function formAdvancedFiltersToRuleFilter(
   values: AdvancedFilters,
   existingFreeFormWords: string[] = []
 ): RulesFilter {
+  const contactPoint = values.contactPoint || undefined;
+  const policy = values.policy || undefined;
+
   return {
     freeFormWords: existingFreeFormWords,
     ...values,
     namespace: values.namespace || undefined,
     groupName: values.groupName || undefined,
-    contactPoint: values.contactPoint || undefined,
-    policy: values.policy || undefined,
+    ...(policy ? { policy } : { contactPoint }),
     ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
     ruleState: values.ruleState === '*' ? undefined : values.ruleState,
     ruleType: values.ruleType === '*' ? undefined : values.ruleType,
@@ -41,6 +43,9 @@ export const emptyAdvancedFilters: AdvancedFilters = {
 };
 
 export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWords: string[] = []): RulesFilter {
+  const contactPoint = values.contactPoint || undefined;
+  const policy = values.policy || undefined;
+
   return {
     freeFormWords,
     ruleName: values.ruleName || undefined,
@@ -53,9 +58,8 @@ export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWo
     ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
     dashboardUid: values.dashboardUid || undefined,
     plugins: values.plugins === 'show' ? undefined : 'hide',
-    contactPoint: values.contactPoint || undefined,
     ruleSource: values.ruleSource ?? undefined,
-    policy: values.policy || undefined,
+    ...(policy ? { policy } : { contactPoint }),
   };
 }
 

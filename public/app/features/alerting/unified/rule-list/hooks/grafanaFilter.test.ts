@@ -2,7 +2,12 @@ import { testWithFeatureToggles } from 'test/test-utils';
 
 import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
-import { PromAlertingRuleState, type PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaNotificationSettings,
+  PromAlertingRuleState,
+  type PromRuleGroupDTO,
+  PromRuleType,
+} from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromRecordingRule } from '../../mocks';
 import { RuleHealth } from '../../search/rulesSearchParser';
@@ -10,6 +15,7 @@ import { pluginMeta, pluginMetaToPluginConfig } from '../../testSetup/plugins';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
+import { ruleUsesDefaultPolicy } from '../../utils/rules';
 import { getFilter } from '../../utils/search';
 
 import { getGrafanaFilter, hasGrafanaClientSideFilters } from './grafanaFilter';
@@ -951,5 +957,27 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(false);
       });
     });
+  });
+});
+
+describe('ruleUsesDefaultPolicy', () => {
+  it('should return true when notificationSettings is undefined', () => {
+    expect(ruleUsesDefaultPolicy(undefined)).toBe(true);
+  });
+
+  it('should return true when notificationSettings has no receiver and no policy', () => {
+    expect(ruleUsesDefaultPolicy({} as GrafanaNotificationSettings)).toBe(true);
+  });
+
+  it('should return true when policy is explicitly set to USER_DEFINED_TREE_NAME', () => {
+    expect(ruleUsesDefaultPolicy({ policy: USER_DEFINED_TREE_NAME })).toBe(true);
+  });
+
+  it('should return false when a receiver is set', () => {
+    expect(ruleUsesDefaultPolicy({ receiver: 'slack' })).toBe(false);
+  });
+
+  it('should return false when a non-default policy is set', () => {
+    expect(ruleUsesDefaultPolicy({ policy: 'team-a-policy' })).toBe(false);
   });
 });
