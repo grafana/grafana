@@ -8,7 +8,6 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
 import GettingStarted from './GettingStarted/GettingStarted';
-import { CloudInfoBox } from './Shared/CloudInfoBox';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
 import { CONNECTIONS_URL } from './constants';
@@ -121,7 +120,6 @@ export default function HomePage() {
           onConfirm={onConfirmDelete}
           onDismiss={() => setShowDeleteModal(false)}
         />
-        <CloudInfoBox />
         <Stack direction="column" gap={2}>
           <TabsBar>
             {tabInfo.map((t) => (

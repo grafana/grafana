@@ -1,13 +1,12 @@
 import { LocalStorageValueProvider } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
-
-import { isOnPrem } from '../utils/isOnPrem';
+import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 
 const LOCAL_STORAGE_KEY = 'provisioning.cloudInfoBox.isDismissed';
 
 export function CloudInfoBox() {
-  if (!isOnPrem()) {
+  if (!isOpenSourceBuildOrUnlicenced()) {
     return null;
   }
 
