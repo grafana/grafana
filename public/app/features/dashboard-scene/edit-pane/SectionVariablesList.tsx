@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneObject, SceneVariableSet, SceneVariables } from '@grafana/scenes';
+import { SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Stack } from '@grafana/ui';
 
 import { openAddSectionVariablePane } from '../settings/variables/VariableAddEditableElement';
@@ -9,8 +9,8 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 export interface SectionVariablesCategoryTitleProps {
-  /** Scene object that owns the section variables (e.g. RowItem, TabItem) */
-  sectionOwner: SceneObject & { state: { $variables?: SceneVariables } };
+  /** Scene object that owns section-local variables */
+  sectionOwner: SceneObject;
   isExpanded: boolean;
 }
 
@@ -45,8 +45,8 @@ export function SectionVariablesCategoryTitle({ sectionOwner, isExpanded }: Sect
 }
 
 export interface SectionVariablesListProps {
-  /** Scene object that owns the section variables (e.g. RowItem, TabItem) */
-  sectionOwner: SceneObject & { state: { $variables?: SceneVariables } };
+  /** Scene object that owns section-local variables */
+  sectionOwner: SceneObject;
 }
 
 export function SectionVariablesList({ sectionOwner }: SectionVariablesListProps) {
