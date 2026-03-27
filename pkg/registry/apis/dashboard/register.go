@@ -103,38 +103,36 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
-	accessControl                accesscontrol.AccessControl
-	accessClient                 authlib.AccessClient
-	legacy                       *DashboardStorage
-	unified                      resource.ResourceClient
-	dashboardProvisioningService dashboards.DashboardProvisioningService
-	dashboardPermissions         dashboards.PermissionsRegistrationService
-	dashboardPermissionsSvc      accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
-	resourcePermissionsSvc       *dynamic.NamespaceableResourceInterface
-	scheme                       *runtime.Scheme
-	search                       *SearchHandler
-	dashStore                    dashboards.Store
-	QuotaService                 quota.Service
-	ProvisioningService          provisioning.ProvisioningService
-	minRefreshInterval           string
-	dualWriter                   dualwrite.Service
-	folderClientProvider         client.K8sHandlerProvider
-	libraryPanels                libraryelements.Service // for legacy library panels
-	publicDashboardService       publicdashboards.Service
-	snapshotService              dashboardsnapshots.Service
-	snapshotOptions              dashv0.SnapshotSharingOptions
-	snapshotStorage              rest.Storage // for dual-write support in routes
-	namespacer                   request.NamespaceMapper
-	dashboardActivityChannel     live.DashboardActivityChannel
-	dashboardK8sClient           client.K8sHandler // for provisioning checks during delete validation
-	isStandalone                 bool              // skips any handling including anything to do with legacy storage
+	accessControl            accesscontrol.AccessControl
+	accessClient             authlib.AccessClient
+	legacy                   *DashboardStorage
+	unified                  resource.ResourceClient
+	dashboardPermissions     dashboards.PermissionsRegistrationService
+	dashboardPermissionsSvc  accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
+	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
+	scheme                   *runtime.Scheme
+	search                   *SearchHandler
+	dashStore                dashboards.Store
+	QuotaService             quota.Service
+	ProvisioningService      provisioning.ProvisioningService
+	minRefreshInterval       string
+	dualWriter               dualwrite.Service
+	folderClientProvider     client.K8sHandlerProvider
+	libraryPanels            libraryelements.Service // for legacy library panels
+	publicDashboardService   publicdashboards.Service
+	snapshotService          dashboardsnapshots.Service
+	snapshotOptions          dashv0.SnapshotSharingOptions
+	snapshotStorage          rest.Storage // for dual-write support in routes
+	namespacer               request.NamespaceMapper
+	dashboardActivityChannel live.DashboardActivityChannel
+	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
+	isStandalone             bool              // skips any handling including anything to do with legacy storage
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
-	provisioningDashboardService dashboards.DashboardProvisioningService,
 	datasourceService datasources.DataSourceService,
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService,
@@ -178,28 +176,27 @@ func RegisterAPIService(
 	}
 
 	builder := &DashboardsAPIBuilder{
-		dashboardService:             dashboardService,
-		dashboardPermissions:         dashboardPermissions,
-		dashboardPermissionsSvc:      dashboardPermissionsSvc,
-		features:                     features,
-		accessControl:                accessControl,
-		accessClient:                 accessClient,
-		unified:                      unified,
-		dashboardProvisioningService: provisioningDashboardService,
-		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
-		dashStore:                    dashStore,
-		QuotaService:                 quotaService,
-		ProvisioningService:          provisioning,
-		minRefreshInterval:           cfg.MinRefreshInterval,
-		dualWriter:                   dual,
-		dashboardK8sClient:           dashboardClient,
-		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
-		libraryPanels:                libraryPanels,
-		publicDashboardService:       publicDashboardService,
-		snapshotService:              snapshotService,
-		snapshotOptions:              snapshotOptions,
-		namespacer:                   namespacer,
-		dashboardActivityChannel:     dashboardActivityChannel,
+		dashboardService:         dashboardService,
+		dashboardPermissions:     dashboardPermissions,
+		dashboardPermissionsSvc:  dashboardPermissionsSvc,
+		features:                 features,
+		accessControl:            accessControl,
+		accessClient:             accessClient,
+		unified:                  unified,
+		search:                   NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
+		dashStore:                dashStore,
+		QuotaService:             quotaService,
+		ProvisioningService:      provisioning,
+		minRefreshInterval:       cfg.MinRefreshInterval,
+		dualWriter:               dual,
+		dashboardK8sClient:       dashboardClient,
+		folderClientProvider:     newSimpleFolderClientProvider(folderClient),
+		libraryPanels:            libraryPanels,
+		publicDashboardService:   publicDashboardService,
+		snapshotService:          snapshotService,
+		snapshotOptions:          snapshotOptions,
+		namespacer:               namespacer,
+		dashboardActivityChannel: dashboardActivityChannel,
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
@@ -353,7 +350,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	}
 
 	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
-	if b.isStandalone && util.IsInterfaceNil(b.dashboardK8sClient) {
+	if b.isStandalone {
 		return nil
 	}
 
