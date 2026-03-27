@@ -209,6 +209,7 @@ module.exports = [
           message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
         },
       ],
+      '@grafana/define-feature-events': 'error',
     },
   },
 

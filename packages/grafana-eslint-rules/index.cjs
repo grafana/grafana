@@ -6,6 +6,8 @@ const noRestrictedImgSrcs = require('./rules/no-restricted-img-srcs.cjs');
 const consistentStoryTitles = require('./rules/consistent-story-titles.cjs');
 const noPluginExternalImportPaths = require('./rules/no-plugin-external-import-paths.cjs');
 const noInvalidCssProperties = require('./rules/no-invalid-css-properties.cjs');
+const defineFeatureEvents = require('./rules/define-feature-events.cjs');
+
 
 module.exports = {
   rules: {
@@ -17,5 +19,6 @@ module.exports = {
     'consistent-story-titles': consistentStoryTitles,
     'no-plugin-external-import-paths': noPluginExternalImportPaths,
     'no-invalid-css-properties': noInvalidCssProperties,
+    'define-feature-events': defineFeatureEvents,
   },
 };
