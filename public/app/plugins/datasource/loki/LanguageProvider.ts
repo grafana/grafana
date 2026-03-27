@@ -295,15 +295,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
     }
 
     try {
-        const data = await this.request('detected_labels', params, true, requestOptions);
-        console.log(data);
-        if (Array.isArray(data)) {
-          return data;
-        }
-      } catch (error) {
-        console.error('error', error);
+      const data = await this.request('detected_labels', params, true, requestOptions);
+      if (Array.isArray(data)) {
+        return data;
       }
-      return [];
+    } catch (error) {
+      console.error('error', error);
+    }
+    return [];
   }
 
   // Cache key is a bit different here. We round up to a minute the intervals.
@@ -532,6 +531,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
     streamSelector: string,
     options?: { maxLines?: number; timeRange?: TimeRange }
   ): Promise<ParserAndLabelKeysResult> {
+    if (this.detectedEndpointsSupported) {
+      return this.getParserAndLabelKeysByDetectedLabels({
+        expr: streamSelector,
+        timeRange: options?.timeRange,
+        limit: options?.maxLines,
+      });
+    }
+
     const empty = {
       extractedLabelKeys: [],
       structuredMetadataKeys: [],
@@ -567,6 +574,43 @@ export default class LokiLanguageProvider extends LanguageProvider {
       hasPack,
       hasLogfmt,
     };
+  }
+
+  /**
+   * Wrapper for fetchDetectedFields to be used by getParserAndLabelKeys.
+   */
+  private async getParserAndLabelKeysByDetectedLabels(queryOptions: {
+    expr: string;
+    timeRange?: TimeRange;
+    limit?: number;
+  }): Promise<ParserAndLabelKeysResult> {
+    const fields = await this.fetchDetectedFields({
+      expr: queryOptions.expr,
+      timeRange: queryOptions?.timeRange,
+      limit: queryOptions?.limit,
+    });
+
+    const response: ParserAndLabelKeysResult = {
+      extractedLabelKeys: [],
+      structuredMetadataKeys: [],
+      unwrapLabelKeys: [],
+      hasJSON: false,
+      hasPack: false,
+      hasLogfmt: false,
+    };
+
+    if (fields instanceof Error) {
+      return response;
+    }
+
+    response.hasJSON = fields.some((field) => field.parsers && field.parsers.includes('json'));
+    // See https://github.com/grafana/grafana/blob/8cb77e1eae906e9b4a2343ad80a5fac21b040f8f/public/app/plugins/datasource/loki/lineParser.ts#L20
+    response.hasPack = fields.some((field) => field.label === '_entry');
+    response.hasLogfmt = fields.some((field) => field.parsers && field.parsers.includes('logfmt'));
+    response.extractedLabelKeys = fields.map((field) => field.label);
+    response.structuredMetadataKeys = fields.filter((field) => field.parsers === null).map((field) => field.label);
+
+    return response;
   }
 
   /**
