@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   setup:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     outputs:
       version: ${{ steps.version.outputs.version }}
       build_number: ${{ steps.version.outputs.build_number }}
@@ -35,7 +35,7 @@ jobs:
 
   build_with_release_action:
     name: Build via build-package action
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     needs: setup
     permissions:
       contents: read
@@ -71,7 +71,7 @@ jobs:
 
   build_frontend:
     name: Build frontend assets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     needs: setup
     steps:
       - uses: actions/checkout@v6
@@ -98,7 +98,7 @@ jobs:
 
   build_backend:
     name: Build backend binary
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     needs: setup
     env:
       BUILD_NUMBER: ${{ needs.setup.outputs.build_number }}
@@ -118,7 +118,7 @@ jobs:
 
   build_split_targz:
     name: Build tar.gz from split artifacts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     needs: [setup, build_frontend, build_backend]
     env:
       BUILD_VERSION: ${{ needs.setup.outputs.version }}
@@ -162,7 +162,7 @@ jobs:
 
   compare_targz_contents:
     name: Compare tar.gz contents
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     needs: [build_with_release_action, build_split_targz]
     steps:
       - uses: actions/download-artifact@v5
