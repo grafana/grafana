@@ -382,16 +382,15 @@ TARGZ_PACKAGE_NAME ?= grafana
 DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
 
 $(DATA_PLUGINS_BUNDLED_STAMP): package.json \
-		$(wildcard pkg/build/catalogbundle/*.go) \
-		pkg/build/cmd/download-catalog-plugins/main.go \
-		pkg/build/daggerbuild/arguments/catalog_plugins.go
+		scripts/download-catalog-plugins.sh \
+		scripts/catalog-plugins-defaults
 	@rm -rf data/plugins-bundled
 	@mkdir -p data/plugins-bundled
-	@$(GO) run ./pkg/build/cmd/download-catalog-plugins \
-		-out data/plugins-bundled \
-		-grafana-version "$(BUILD_VERSION)" \
-		-os "$(OS)" \
-		-arch "$(ARCH)"
+	@bash scripts/download-catalog-plugins.sh \
+		--out data/plugins-bundled \
+		--grafana-version "$(BUILD_VERSION)" \
+		--os "$(OS)" \
+		--arch "$(ARCH)"
 	@touch $(DATA_PLUGINS_BUNDLED_STAMP)
 
 data/plugins-bundled: $(DATA_PLUGINS_BUNDLED_STAMP)
