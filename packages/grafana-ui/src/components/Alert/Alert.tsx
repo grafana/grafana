@@ -160,6 +160,7 @@ const getStyles = (
         bottom: 0,
         right: 0,
         background: theme.colors.background.primary,
+        borderRadius: theme.shape.radius.default,
         zIndex: -1,
       },
     }),
