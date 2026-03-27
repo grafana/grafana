@@ -126,6 +126,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						wrap.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 						return
 					}
+
 					vars := mux.Vars(r)
 					namespace := vars["namespace"]
 					info, err := authlib.ParseNamespace(namespace)
@@ -155,19 +156,22 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						return
 					}
 
-					// Validate that the dashboard exists
-					dashboardUID, _ := cmd.Dashboard.Object["uid"].(string)
-					if dashboardUID == "" {
-						wrap.JsonApiErr(http.StatusBadRequest, "dashboard UID is required", nil)
-						return
-					}
-					_, err = dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-						UID:   dashboardUID,
-						OrgID: user.GetOrgID(),
-					})
-					if err != nil {
-						wrap.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("dashboard with UID %q not found", dashboardUID), nil)
-						return
+					// In public mode, skip dashboard existence validation
+					if !options.PublicMode {
+						// Validate that the dashboard exists
+						dashboardUID, _ := cmd.Dashboard.Object["uid"].(string)
+						if dashboardUID == "" {
+							wrap.JsonApiErr(http.StatusBadRequest, "dashboard UID is required", nil)
+							return
+						}
+						_, err = dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+							UID:   dashboardUID,
+							OrgID: user.GetOrgID(),
+						})
+						if err != nil {
+							wrap.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("dashboard with UID %q not found", dashboardUID), nil)
+							return
+						}
 					}
 
 					cmd.OrgID = user.GetOrgID()

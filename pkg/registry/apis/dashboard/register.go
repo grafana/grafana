@@ -172,6 +172,7 @@ func RegisterAPIService(
 		ExternalSnapshotName:  cfg.ExternalSnapshotName,
 		ExternalEnabled:       cfg.ExternalEnabled,
 		ExternalSnapshotToken: cfg.ExternalSnapshotToken,
+		PublicMode:            cfg.SnapshotPublicMode,
 	}
 
 	builder := &DashboardsAPIBuilder{
