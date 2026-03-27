@@ -2185,7 +2185,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				},
 			},
 			{
-				name:               "with kubernetesDashboards feature in subfolder",
+				name:               "in subfolder",
 				rootFolder:         false,
 				expectedPermission: nil,
 			},
