@@ -222,7 +222,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 }
 
 // queryHeatmap handles heatmap query execution and frame construction.
-func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span, profileTypeId string, labelSelector string, query backend.DataQuery, qm queryModel, stepDuration float64) ([]*data.Frame, error) {
+func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span, profileTypeId string, labelSelector string, query backend.DataQuery, qm queryModel, stepDuration float64, datasourceUID string) ([]*data.Frame, error) {
 	heatmapType := querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_INDIVIDUAL
 	if qm.HeatmapType == "span" {
 		heatmapType = querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN
@@ -287,6 +287,9 @@ func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span,
 
 		if len(exemplars) > 0 {
 			exemplarFrame := exemplar.CreateExemplarFrame(labels, exemplars, exemplarType, heatmapResp.Units)
+			exemplarFrame.Meta.Custom = map[string]interface{}{
+				"datasourceUID": datasourceUID,
+			}
 			frames = append(frames, exemplarFrame)
 		}
 	}
