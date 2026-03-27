@@ -156,7 +156,7 @@ func TestSequence(t *testing.T) {
 	})
 
 	t.Run("chain group with multiple rules evaluates sequentially", func(t *testing.T) {
-		chainGroup := models.RuleChainGroupPrefix + "chain-123"
+		chainGroup := chainGroupName(t, "chain-123")
 		nextByGroup := map[string][]string{}
 		prevByGroup := map[string][]string{}
 		callback := func(next readyToRunItem, prev ...readyToRunItem) func() {
@@ -251,7 +251,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 
 	t.Run("chain group with two rules returns true", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
-		chainGroup := models.RuleChainGroupPrefix + "my-chain"
+		chainGroup := chainGroupName(t, "my-chain")
 		items := []readyToRunItem{
 			makeItem("a", chainGroup),
 			makeItem("b", chainGroup),
@@ -261,7 +261,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 
 	t.Run("chain group with one rule returns false", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
-		chainGroup := models.RuleChainGroupPrefix + "solo"
+		chainGroup := chainGroupName(t, "solo")
 		items := []readyToRunItem{
 			makeItem("a", chainGroup),
 		}
@@ -271,7 +271,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 	t.Run("chain group is independent of jitter setting", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		sch.jitterEvaluations = JitterByGroup
-		chainGroup := models.RuleChainGroupPrefix + "jitter-test"
+		chainGroup := chainGroupName(t, "jitter-test")
 		items := []readyToRunItem{
 			makeItem("a", chainGroup),
 			makeItem("b", chainGroup),
@@ -282,7 +282,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 	t.Run("chain group returns false when jitter by rule is enabled", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		sch.jitterEvaluations = JitterByRule
-		chainGroup := models.RuleChainGroupPrefix + "jitter-rule"
+		chainGroup := chainGroupName(t, "jitter-rule")
 		items := []readyToRunItem{
 			makeItem("a", chainGroup),
 			makeItem("b", chainGroup),
@@ -295,6 +295,18 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 		items := []readyToRunItem{
 			makeItem("a", "regular-group"),
 			makeItem("b", "regular-group"),
+		}
+		require.False(t, sch.shouldEvaluateSequentially(items))
+	})
+
+	t.Run("unpadded chain prefix is not treated as chain group", func(t *testing.T) {
+		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
+		// A user-creatable group name that happens to start with the prefix
+		// but is not padded to sentinel length should NOT be sequential.
+		fakeGroup := models.RuleChainGroupPrefix + "user-created"
+		items := []readyToRunItem{
+			makeItem("a", fakeGroup),
+			makeItem("b", fakeGroup),
 		}
 		require.False(t, sch.shouldEvaluateSequentially(items))
 	})

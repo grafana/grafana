@@ -9,6 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+// chainGroupName builds the expected padded sentinel for a given chain UID.
+// It fails the test immediately on invalid UIDs so setup failures are visible.
+func chainGroupName(t *testing.T, chainUID string) string {
+	t.Helper()
+	g, err := models.NewRuleChainGroup(chainUID)
+	require.NoError(t, err)
+	return g.String()
+}
+
 func TestEnrichRulesWithChainMembership(t *testing.T) {
 	gen := models.RuleGen.With(
 		models.RuleGen.WithNamespaceUID("ns1"),
@@ -34,15 +43,16 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		rules := []*models.AlertRule{rec1, rec2, alert1}
 		models.EnrichRulesWithChainMembership(rules, chains)
 
-		assert.Equal(t, models.RuleChainGroupPrefix+"chain-abc", rec1.RuleGroup)
+		expected := chainGroupName(t, "chain-abc")
+		assert.Equal(t, expected, rec1.RuleGroup)
 		assert.Equal(t, 1, rec1.RuleGroupIndex)
 		assert.Equal(t, int64(30), rec1.IntervalSeconds)
 
-		assert.Equal(t, models.RuleChainGroupPrefix+"chain-abc", rec2.RuleGroup)
+		assert.Equal(t, expected, rec2.RuleGroup)
 		assert.Equal(t, 2, rec2.RuleGroupIndex)
 		assert.Equal(t, int64(30), rec2.IntervalSeconds)
 
-		assert.Equal(t, models.RuleChainGroupPrefix+"chain-abc", alert1.RuleGroup)
+		assert.Equal(t, expected, alert1.RuleGroup)
 		assert.Equal(t, 3, alert1.RuleGroupIndex)
 		assert.Equal(t, int64(30), alert1.IntervalSeconds)
 	})
@@ -94,7 +104,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		assert.Equal(t, originalInterval, standalone.IntervalSeconds)
 
 		// chain-rule should be enriched
-		assert.Equal(t, models.RuleChainGroupPrefix+"chain-xyz", chainRule.RuleGroup)
+		assert.Equal(t, chainGroupName(t, "chain-xyz"), chainRule.RuleGroup)
 	})
 
 	t.Run("rule in chain but not in fetched rules is a no-op", func(t *testing.T) {
@@ -165,15 +175,17 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		rules := []*models.AlertRule{rule1, rule2, rule3}
 		models.EnrichRulesWithChainMembership(rules, chains)
 
-		assert.Equal(t, models.RuleChainGroupPrefix+"chain-A", rule1.RuleGroup)
+		expectedA := chainGroupName(t, "chain-A")
+		assert.Equal(t, expectedA, rule1.RuleGroup)
 		assert.Equal(t, int64(10), rule1.IntervalSeconds)
 		assert.Equal(t, 1, rule1.RuleGroupIndex)
 
-		assert.Equal(t, models.RuleChainGroupPrefix+"chain-A", rule2.RuleGroup)
+		assert.Equal(t, expectedA, rule2.RuleGroup)
 		assert.Equal(t, int64(10), rule2.IntervalSeconds)
 		assert.Equal(t, 2, rule2.RuleGroupIndex)
 
-		assert.Equal(t, models.RuleChainGroupPrefix+"chain-B", rule3.RuleGroup)
+		expectedB := chainGroupName(t, "chain-B")
+		assert.Equal(t, expectedB, rule3.RuleGroup)
 		assert.Equal(t, int64(20), rule3.IntervalSeconds)
 		assert.Equal(t, 1, rule3.RuleGroupIndex)
 	})
@@ -200,7 +212,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		models.EnrichRulesWithChainMembership(rules, chains)
 
 		// The second chain overwrites the first in the lookup map.
-		assert.Equal(t, models.RuleChainGroupPrefix+"chain-second", rule.RuleGroup)
+		assert.Equal(t, chainGroupName(t, "chain-second"), rule.RuleGroup)
 		assert.Equal(t, int64(20), rule.IntervalSeconds)
 	})
 }
