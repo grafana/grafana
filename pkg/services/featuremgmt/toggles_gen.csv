@@ -343,5 +343,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-25,useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-03-24,frontendServiceSSOAutoLogin,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-03-25,splashScreen,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-03-26,streamingForwardTeamHeadersTempo,privatePreview,@grafana/oss-big-tent,false,false,false
 2026-03-19,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
 2026-03-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false

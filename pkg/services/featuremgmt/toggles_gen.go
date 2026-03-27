@@ -914,6 +914,10 @@ const (
 	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
 	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
 
+	// FlagStreamingForwardTeamHeadersTempo
+	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
+	FlagStreamingForwardTeamHeadersTempo = "streamingForwardTeamHeadersTempo"
+
 	// FlagLokiAlignedQuerySplitting
 	// Aligns query splitting chunks with UTC midnight
 	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
