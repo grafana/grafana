@@ -215,11 +215,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		indexMetrics:   indexMetrics,
 		ownsIndexFn:    ownsIndexFn,
 
-		dashboardIndexMaxAge: opts.DashboardIndexMaxAge,
-		maxIndexAge:          opts.MaxIndexAge,
-		minBuildVersion:      opts.MinBuildVersion,
-		selectableFields:     opts.SelectableFieldsForKinds,
-		injectFailuresPercent: opts.InjectFailuresPercent,
+		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
+		maxIndexAge:               opts.MaxIndexAge,
+		minBuildVersion:           opts.MinBuildVersion,
+		selectableFields:          opts.SelectableFieldsForKinds,
+		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 	}
 
