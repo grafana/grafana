@@ -709,7 +709,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			Name:      event.Key.Name,
 		})
 		if err == nil {
-			// A resource was found, but it might be a transient write from a
+			if latestKey.Action == kv.DataActionUpdated {
+				return 0, ErrResourceAlreadyExists
+			}
+
+			// A creation event was found, but it might be a transient write from a
 			// concurrent create that hasn't gone through the optimistic lock
 			// checks. Confirm via the event store before returning AlreadyExists.
 			committed, err := k.confirmExistence(ctx, latestKey)

@@ -70,18 +70,20 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 
 	// Launch 10 concurrent creates for the same resource name.
 	const numConcurrent = 10
-	errors := make([]error, numConcurrent)
+	createErrors := make([]error, numConcurrent)
 
 	var wg sync.WaitGroup
 	var successes atomic.Int64
+	var resourceRV atomic.Int64
 	for i := range numConcurrent {
 		wg.Go(func() {
-			_, writeErr := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
+			rv, writeErr := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
 				WithNamespace(ns),
 				WithValue(fmt.Sprintf("create-%d", i)))
-			errors[i] = writeErr
+			createErrors[i] = writeErr
 			if writeErr == nil {
 				successes.Add(1)
+				resourceRV.Store(rv)
 			}
 		})
 	}
@@ -92,10 +94,46 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 	// When no resource was actually created, the errors should not claim it
 	// already exists.
 	if successes.Load() == 0 {
-		for _, e := range errors {
+		for _, e := range createErrors {
 			require.NotErrorIs(t, e, resource.ErrResourceAlreadyExists,
 				"should not receive ErrResourceAlreadyExists when no resource is created")
 		}
+	}
+
+	// If the resource hasn't been created, do it now.
+	if successes.Load() == 0 {
+		rv, err := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
+			WithNamespace(ns),
+			WithValue("value"))
+		require.NoError(t, err)
+		resourceRV.Store(rv)
+	}
+
+	// Now, check that from now on, every attempt to create will get an `AlreadyExists` error,
+	// even if performed concurrently with other actions
+	for i := range numConcurrent {
+		wg.Go(func() {
+			_, writeErr := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
+				WithNamespace(ns),
+				WithValue(fmt.Sprintf("create-%d", i)))
+			createErrors[i] = writeErr
+		})
+		wg.Go(func() {
+			rv, updateErr := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_MODIFIED,
+				WithNamespaceAndRV(ns, resourceRV.Load()),
+				WithValue(fmt.Sprintf("create-%d", i)))
+			if updateErr == nil {
+				resourceRV.Store(rv)
+			}
+		})
+	}
+	wg.Wait()
+
+	// All creates should have received `AlreadyExists`
+	for _, e := range createErrors {
+		require.Error(t, e, "all creates should have failed")
+		require.ErrorIs(t, e, resource.ErrResourceAlreadyExists,
+			"should receive ErrResourceAlreadyExists after resource is created")
 	}
 }
 
