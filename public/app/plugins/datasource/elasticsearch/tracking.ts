@@ -1,10 +1,10 @@
-import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { CoreApp, type DashboardLoadedEvent, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
 import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
 import pluginJson from './plugin.json';
-import { ElasticsearchAnnotationQuery } from './types';
+import { type ElasticsearchAnnotationQuery } from './types';
 import { variableRegex } from './utils';
 
 type ElasticSearchOnDashboardLoadedTrackingEvent = {

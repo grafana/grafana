@@ -1,6 +1,6 @@
-import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
+import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Dashboard, VariableModel } from '@grafana/schema';
+import { type Dashboard, type VariableModel } from '@grafana/schema';
 
 import { adHocVariableFiltersEqual, getRawDashboardChanges } from './getDashboardChanges';
 

@@ -1,8 +1,8 @@
 import { getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard, GnetDashboardsResponse, Link } from '../types';
+import { type GnetDashboard, type GnetDashboardsResponse, type Link } from '../types';
 
 /**
  * Panel types that are known to allow JavaScript code execution.

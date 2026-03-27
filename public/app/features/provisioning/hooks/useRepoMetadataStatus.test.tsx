@@ -4,7 +4,7 @@ import { getWrapper } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 

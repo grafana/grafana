@@ -1,5 +1,5 @@
-import { TypedVariableModel } from '@grafana/data';
-import { sceneGraph, SceneObject } from '@grafana/scenes';
+import { type TypedVariableModel } from '@grafana/data';
+import { sceneGraph, type SceneObject } from '@grafana/scenes';
 
 import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSetToVariables';
 

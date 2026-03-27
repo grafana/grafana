@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { ReactNode, useCallback, useEffect } from 'react';
+import { type ReactNode, useCallback, useEffect } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 interface Props {
   dashboard: DashboardScene;

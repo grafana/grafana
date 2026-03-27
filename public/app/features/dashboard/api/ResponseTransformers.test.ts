@@ -1,13 +1,13 @@
-import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
+import { type AnnotationQuery, type DataQuery, type VariableModel, VariableRefresh, type Panel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultDataQueryKind,
-  GridLayoutItemKind,
-  GridLayoutKind,
-  PanelKind,
-  RowsLayoutKind,
-  RowsLayoutRowKind,
-  VariableKind,
+  type GridLayoutItemKind,
+  type GridLayoutKind,
+  type PanelKind,
+  type RowsLayoutKind,
+  type RowsLayoutRowKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
@@ -25,7 +25,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import {
   getDefaultDatasource,
@@ -33,7 +33,7 @@ import {
   ResponseTransformers,
   transformMappingsToV1,
 } from './ResponseTransformers';
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

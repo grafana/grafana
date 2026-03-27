@@ -1,8 +1,8 @@
-import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
+import { AbstractLabelOperator, type AbstractQuery } from '@grafana/data';
 
 import LanguageProvider from './LanguageProvider';
-import { ElasticsearchDataQuery } from './dataquery.gen';
-import { ElasticDatasource } from './datasource';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticDatasource } from './datasource';
 import { createElasticDatasource } from './mocks';
 
 const baseLogsQuery: Partial<ElasticsearchDataQuery> = {

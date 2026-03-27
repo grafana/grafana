@@ -1,11 +1,11 @@
 import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
-  DateHistogram,
-  ElasticsearchDataQuery,
-  ExtendedStat,
-  MetricAggregation,
-  MetricAggregationType,
-  MovingAverageModelOption,
+  type DateHistogram,
+  type ElasticsearchDataQuery,
+  type ExtendedStat,
+  type MetricAggregation,
+  type MetricAggregationType,
+  type MovingAverageModelOption,
 } from './dataquery.gen';
 import type { QueryType } from './types';
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import history from 'history';
+import type history from 'history';
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 

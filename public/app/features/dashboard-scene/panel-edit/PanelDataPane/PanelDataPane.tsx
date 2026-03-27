@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
+  type SceneObjectRef,
+  type SceneObjectState,
   SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  VizPanel,
+  type SceneObjectUrlValues,
+  type VizPanel,
 } from '@grafana/scenes';
 import { Button, Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -24,7 +24,7 @@ import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { PanelDataPaneTab, PanelEditorInterface, TabId } from './types';
+import { type PanelDataPaneTab, type PanelEditorInterface, TabId } from './types';
 
 function isPanelEditor(obj: object): obj is PanelEditorInterface {
   return 'onToggleQueryEditorVersion' in obj && typeof obj.onToggleQueryEditorVersion === 'function';

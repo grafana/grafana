@@ -1,7 +1,7 @@
-import { DataTopic, PanelOptionsEditorBuilder } from '@grafana/data';
+import { DataTopic, type PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import * as common from '@grafana/schema';
+import type * as common from '@grafana/schema';
 
 import { CanvasControlsSwitchEditor } from './CanvasControlsSwitchEditor';
 import { ClusteringSwitchEditor, DEFAULT_CLUSTERING_ANNOTATION_SPACING_DISABLED } from './ClusteringSwitchEditor';

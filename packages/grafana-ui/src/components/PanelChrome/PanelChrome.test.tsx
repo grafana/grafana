@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
 
-import { PanelChrome, PanelChromeProps } from './PanelChrome';
+import { PanelChrome, type PanelChromeProps } from './PanelChrome';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {

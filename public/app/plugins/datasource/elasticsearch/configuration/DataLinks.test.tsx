@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataLinkConfig } from '../types';
+import { type DataLinkConfig } from '../types';
 
-import { DataLinks, Props } from './DataLinks';
+import { DataLinks, type Props } from './DataLinks';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {

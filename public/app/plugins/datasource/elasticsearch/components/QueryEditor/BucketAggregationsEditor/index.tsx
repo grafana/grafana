@@ -1,6 +1,6 @@
 import { Button } from '@grafana/ui';
 
-import { BucketAggregation } from '../../../dataquery.gen';
+import { type BucketAggregation } from '../../../dataquery.gen';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';

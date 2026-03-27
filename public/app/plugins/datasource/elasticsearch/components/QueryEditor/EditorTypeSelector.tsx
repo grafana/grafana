@@ -1,7 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
 
-import { EditorType } from '../../types';
+import { type EditorType } from '../../types';
 
 const BASE_OPTIONS: Array<SelectableValue<EditorType>> = [
   { value: 'builder', label: 'Builder' },

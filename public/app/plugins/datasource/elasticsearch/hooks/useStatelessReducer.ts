@@ -1,4 +1,4 @@
-import { Action } from '@reduxjs/toolkit';
+import { type Action } from '@reduxjs/toolkit';
 import { createContext, useCallback, useContext } from 'react';
 
 export type Reducer<S, A extends Action> = (state: S, action: A) => S;

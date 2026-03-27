@@ -2,17 +2,17 @@ import { css } from '@emotion/css';
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Modal, TabsBar, Tab, TabContent, useStyles2, Text } from '@grafana/ui';
-import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DashboardInput, type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { CommunityDashboardSection } from './CommunityDashboardSection';
 import { DashboardLibrarySection } from './DashboardLibrarySection';
-import { ContentKind, EventLocation } from './constants';
-import { InputMapping } from './utils/autoMapDatasources';
+import { type ContentKind, type EventLocation } from './constants';
+import { type InputMapping } from './utils/autoMapDatasources';
 
 interface SuggestedDashboardsModalProps {
   isOpen: boolean;

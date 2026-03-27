@@ -3,7 +3,7 @@ import { getAppEvents } from '@grafana/runtime';
 
 import { QueryEditor } from './components/QueryEditor';
 import { ConfigEditor } from './configuration/ConfigEditor';
-import { ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
 import { ElasticDatasource } from './datasource';
 import { onDashboardLoadedHandler } from './tracking';
 

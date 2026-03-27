@@ -1,21 +1,21 @@
 import { css } from '@emotion/css';
 import { PureComponent, useEffect, useState } from 'react';
 import * as React from 'react';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
   getDataSourceRef,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Button, InlineFormLabel, Modal, ScrollContainer, Stack, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
@@ -25,10 +25,10 @@ import { DataSourceModal } from 'app/features/datasources/components/picker/Data
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
-import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupOptions } from 'app/types/query';
+import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { type QueryGroupOptions } from 'app/types/query';
 
-import { PanelQueryRunner } from '../state/PanelQueryRunner';
+import { type PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
 import { GroupActionComponents } from './QueryActionComponent';

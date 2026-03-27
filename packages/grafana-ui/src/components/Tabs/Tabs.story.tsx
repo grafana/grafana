@@ -1,9 +1,9 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
-import { CounterProps, Counter as TabCounter } from './Counter';
+import { type CounterProps, Counter as TabCounter } from './Counter';
 import { Tab } from './Tab';
 import { TabContent } from './TabContent';
 import { TabsBar } from './TabsBar';

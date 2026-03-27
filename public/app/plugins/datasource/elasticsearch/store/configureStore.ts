@@ -1,9 +1,9 @@
 import { createListenerMiddleware, configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
-import { Middleware } from 'redux';
+import { type Middleware } from 'redux';
 
 import { addReducer, createRootReducer } from '../reducers/root';
-import { StoreState } from '../types/store';
+import { type StoreState } from '../types/store';
 
 import { setStore } from './store';
 

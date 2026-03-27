@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { CONTENT_KINDS, EVENT_LOCATIONS } from './constants';

@@ -1,7 +1,7 @@
-import { CoreApp, DataQueryRequest, DataQueryResponse, DashboardLoadedEvent } from '@grafana/data';
+import { CoreApp, type DataQueryRequest, type DataQueryResponse, DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
 import pluginJson from './plugin.json';
 import { onDashboardLoadedHandler, trackQuery } from './tracking';
 

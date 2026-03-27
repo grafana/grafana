@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 const hasValue =
   <T extends SelectableValue>(searchValue: T['value']) =>

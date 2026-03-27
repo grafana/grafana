@@ -1,7 +1,13 @@
 import { fireEvent, screen } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
-import { Average, Derivative, ElasticsearchDataQuery, Terms, TopMetrics } from '../../../../dataquery.gen';
+import {
+  type Average,
+  type Derivative,
+  type ElasticsearchDataQuery,
+  type Terms,
+  type TopMetrics,
+} from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { renderWithESProvider } from '../../../../test-helpers/render';
 import { describeMetric } from '../../../../utils';

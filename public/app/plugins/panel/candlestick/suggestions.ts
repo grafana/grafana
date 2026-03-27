@@ -1,4 +1,4 @@
-import { FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
+import { FieldType, VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { defaultOptions } from './defaultOptions';

@@ -1,22 +1,22 @@
 import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
 
-import { VariableHide, GrafanaTheme2 } from '@grafana/data';
+import { VariableHide, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   sceneGraph,
   useSceneObjectState,
-  SceneVariable,
-  SceneVariableState,
+  type SceneVariable,
+  type SceneVariableState,
   ControlsLabel,
-  ControlsLayout,
+  type ControlsLayout,
   sceneUtils,
   SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 

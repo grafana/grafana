@@ -1,10 +1,16 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { VariableRefresh } from '@grafana/data';
+import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneTimeRange, SceneVariableSet, TestVariable, VariableValueOption, PanelBuilders } from '@grafana/scenes';
+import {
+  SceneTimeRange,
+  SceneVariableSet,
+  TestVariable,
+  type VariableValueOption,
+  PanelBuilders,
+} from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 

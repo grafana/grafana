@@ -1,3 +1,3 @@
-import { Filter } from '../../../../../dataquery.gen';
+import { type Filter } from '../../../../../dataquery.gen';
 
 export const defaultFilter = (): Filter => ({ label: '', query: '*' });

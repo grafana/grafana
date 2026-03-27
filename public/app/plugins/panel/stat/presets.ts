@@ -1,8 +1,8 @@
 import {
   FieldColorModeId,
-  FieldConfigSource,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
+  type FieldConfigSource,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,11 +11,11 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   PercentChangeColorMode,
 } from '@grafana/schema';
 
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
 
 const BASE_OPTIONS = {
   ...defaultOptions,

@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { SemVer } from 'semver';
+import { type SemVer } from 'semver';
 
-import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { getDefaultTimeRange, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, ConfirmModal, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
 
-import { ElasticsearchDataQuery, QueryType } from '../../dataquery.gen';
+import { type ElasticsearchDataQuery, type QueryType } from '../../dataquery.gen';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
-import { EditorType, ElasticDatasourceLike, ElasticsearchOptions } from '../../types';
+import { type EditorType, type ElasticDatasourceLike, type ElasticsearchOptions } from '../../types';
 import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';

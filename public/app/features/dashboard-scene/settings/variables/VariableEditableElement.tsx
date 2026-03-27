@@ -1,4 +1,4 @@
-import { FormEvent, useId, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useId, useMemo, useRef, useState } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
   MultiValueVariable,
-  SceneVariable,
+  type SceneVariable,
   SceneVariableSet,
   useSceneObjectState,
 } from '@grafana/scenes';
@@ -17,8 +17,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
-import { BulkActionElement } from '../../scene/types/BulkActionElement';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { type BulkActionElement } from '../../scene/types/BulkActionElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';

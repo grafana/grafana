@@ -1,6 +1,6 @@
-import { Store } from 'redux';
+import { type Store } from 'redux';
 
-import { StoreState } from '../types/store';
+import { type StoreState } from '../types/store';
 
 export let store: Store<StoreState>;
 

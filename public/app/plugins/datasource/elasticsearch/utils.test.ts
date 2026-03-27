@@ -1,4 +1,4 @@
-import { ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
 import { flattenObject, isTimeSeriesQuery, removeEmpty } from './utils';
 
 describe('removeEmpty', () => {

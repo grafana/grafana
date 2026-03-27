@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { usePluginContext, type UserStorage as UserStorageType, store } from '@grafana/data';
 
 import { config } from '../config';
-import { BackendSrvRequest, getBackendSrv } from '../services';
+import { type BackendSrvRequest, getBackendSrv } from '../services';
 
 const baseURL = `/apis/userstorage.grafana.app/v0alpha1/namespaces/${config.namespace}/user-storage`;
 

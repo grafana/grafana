@@ -2,10 +2,10 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ButtonProps, Stack } from '@grafana/ui';
+import { Button, type ButtonProps, Stack } from '@grafana/ui';
 
 import {
-  ViewExperienceToggleEventPayload,
+  type ViewExperienceToggleEventPayload,
   trackViewExperienceToggleClick,
   trackViewExperienceToggleConfirmed,
 } from '../Analytics';

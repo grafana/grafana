@@ -1,7 +1,7 @@
 import { onUpdateDatasourceSecureJsonDataOption, updateDatasourcePluginResetOption } from '@grafana/data';
 import { InlineField, SecretInput } from '@grafana/ui';
 
-import { Props } from './ConfigEditor';
+import { type Props } from './ConfigEditor';
 
 export const ApiKeyConfig = (props: Props) => {
   const { options } = props;

@@ -1,7 +1,13 @@
 import { render, screen } from '@testing-library/react';
 
 import { VariableHide } from '@grafana/data';
-import { SceneGridLayout, SceneVariable, SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import {
+  SceneGridLayout,
+  type SceneVariable,
+  SceneVariableSet,
+  ScopesVariable,
+  TextBoxVariable,
+} from '@grafana/scenes';
 
 import { DashboardScene } from './DashboardScene';
 import { VariableControls } from './VariableControls';

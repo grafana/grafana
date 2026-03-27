@@ -1,6 +1,6 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Status, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -11,26 +11,26 @@ import {
   AnnoKeyGrantPermissions,
   AnnoKeyMessage,
   DeprecatedInternalId,
-  Resource,
-  ResourceClient,
-  ResourceForCreate,
-  ResourceList,
+  type Resource,
+  type ResourceClient,
+  type ResourceForCreate,
+  type ResourceList,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
-import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
-import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import {
-  DashboardAPI,
+  type DashboardAPI,
   DashboardVersionError,
-  DashboardWithAccessInfo,
-  ListDashboardHistoryOptions,
-  ListDeletedDashboardsOptions,
+  type DashboardWithAccessInfo,
+  type ListDashboardHistoryOptions,
+  type ListDeletedDashboardsOptions,
 } from './types';
 import { isV0V1StoredVersion } from './utils';
 

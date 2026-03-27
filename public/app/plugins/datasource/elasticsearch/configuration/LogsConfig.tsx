@@ -3,7 +3,7 @@ import * as React from 'react';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { Input, InlineField } from '@grafana/ui';
 
-import { ElasticsearchOptions } from '../types';
+import { type ElasticsearchOptions } from '../types';
 
 type Props = {
   value: ElasticsearchOptions;

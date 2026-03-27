@@ -1,13 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelParamEditor.tsx
 import { useState } from 'react';
 
-import { DataSourceApi, SelectableValue, TimeRange, toOption } from '@grafana/data';
+import { type DataSourceApi, type SelectableValue, type TimeRange, toOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { getOperationParamId } from '../shared/param_utils';
-import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
-import { PromVisualQuery, PromQueryModellerInterface } from '../types';
+import { type QueryBuilderLabelFilter, type QueryBuilderOperationParamEditorProps } from '../shared/types';
+import { type PromVisualQuery, type PromQueryModellerInterface } from '../types';
 
 /**
  * Props for the LabelParamEditor component.

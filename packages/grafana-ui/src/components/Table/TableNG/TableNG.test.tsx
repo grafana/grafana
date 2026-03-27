@@ -4,17 +4,17 @@ import userEvent from '@testing-library/user-event';
 import {
   applyFieldOverrides,
   createTheme,
-  DataFrame,
-  DataLink,
-  EventBus,
+  type DataFrame,
+  type DataLink,
+  type EventBus,
   FieldType,
-  LinkModel,
+  type LinkModel,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { PanelContext, PanelContextProvider } from '../../PanelChrome';
+import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';

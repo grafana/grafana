@@ -1,4 +1,4 @@
-import { PipelineVariable } from '../../../../../../dataquery.gen';
+import { type PipelineVariable } from '../../../../../../dataquery.gen';
 import { reducerTester } from '../../../../../reducerTester';
 
 import {

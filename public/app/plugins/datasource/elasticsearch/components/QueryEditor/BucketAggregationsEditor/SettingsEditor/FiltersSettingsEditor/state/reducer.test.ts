@@ -1,4 +1,4 @@
-import { Filter } from '../../../../../../dataquery.gen';
+import { type Filter } from '../../../../../../dataquery.gen';
 import { reducerTester } from '../../../../../reducerTester';
 
 import { addFilter, changeFilter, removeFilter } from './actions';

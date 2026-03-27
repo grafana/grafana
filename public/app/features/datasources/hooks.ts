@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react';
-import * as React from 'react';
+import type * as React from 'react';
 import { useLocalStorage } from 'react-use';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
-import { GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
+import { type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
 
 export const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
 

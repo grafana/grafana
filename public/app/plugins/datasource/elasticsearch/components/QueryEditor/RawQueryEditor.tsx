@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, Monaco, CodeEditorMonacoOptions, monacoTypes, useStyles2, Box } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { CodeEditor, type Monaco, type CodeEditorMonacoOptions, type monacoTypes, useStyles2, Box } from '@grafana/ui';
 
 interface Props {
   value?: string;

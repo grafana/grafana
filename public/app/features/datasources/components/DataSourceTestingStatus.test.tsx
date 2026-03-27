@@ -2,15 +2,15 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 import {
   PluginExtensionTypes,
-  PluginExtensionLink,
-  ComponentTypeWithExtensionMeta,
-  PluginExtensionDataSourceConfigStatusContext,
+  type PluginExtensionLink,
+  type ComponentTypeWithExtensionMeta,
+  type PluginExtensionDataSourceConfigStatusContext,
 } from '@grafana/data';
-import { setPluginLinksHook, UsePluginLinksOptions, setPluginComponentsHook } from '@grafana/runtime';
+import { setPluginLinksHook, type UsePluginLinksOptions, setPluginComponentsHook } from '@grafana/runtime';
 
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
 
-import { DataSourceTestingStatus, Props } from './DataSourceTestingStatus';
+import { DataSourceTestingStatus, type Props } from './DataSourceTestingStatus';
 
 // Mock contextSrv
 jest.mock('app/core/services/context_srv', () => ({

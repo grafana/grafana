@@ -1,6 +1,6 @@
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { type DataSourceSettings, type SelectableValue } from '@grafana/data';
 
-import { ElasticsearchOptions, QueryType } from '../types';
+import { type ElasticsearchOptions, type QueryType } from '../types';
 
 import { defaultMaxConcurrentShardRequests, defaultQueryMode } from './ElasticDetails';
 

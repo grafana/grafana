@@ -1,10 +1,17 @@
 import { Observable, of } from 'rxjs';
 
-import { AnnotationEvent, AnnotationQuery, DataFrame, Field, FieldType, renderLegendFormat } from '@grafana/data';
+import {
+  type AnnotationEvent,
+  type AnnotationQuery,
+  type DataFrame,
+  type Field,
+  FieldType,
+  renderLegendFormat,
+} from '@grafana/data';
 
 import { PrometheusAnnotationSupport } from './annotations';
-import { PrometheusDatasource } from './datasource';
-import { PromQuery } from './types';
+import { type PrometheusDatasource } from './datasource';
+import { type PromQuery } from './types';
 
 // Mock dependencies
 jest.mock('@grafana/data', () => {

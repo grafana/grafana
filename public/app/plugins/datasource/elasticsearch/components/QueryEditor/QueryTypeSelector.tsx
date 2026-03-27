@@ -3,7 +3,7 @@ import { RadioButtonGroup } from '@grafana/ui';
 import { QUERY_TYPE_SELECTOR_OPTIONS } from '../../configuration/utils';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { queryTypeToMetricType } from '../../queryDef';
-import { QueryType } from '../../types';
+import { type QueryType } from '../../types';
 
 import { useQuery } from './ElasticsearchQueryContext';
 import { changeMetricType } from './MetricAggregationsEditor/state/actions';

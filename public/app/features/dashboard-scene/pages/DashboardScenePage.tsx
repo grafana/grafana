@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Params, useParams } from 'react-router-dom-v5-compat';
+import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
@@ -8,13 +8,16 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   DashboardBrandingFooter,
   DashboardBrandingFooterVariant,
 } from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
-import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import {
+  type DashboardPageRouteParams,
+  type DashboardPageRouteSearchParams,
+} from 'app/features/dashboard/containers/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';

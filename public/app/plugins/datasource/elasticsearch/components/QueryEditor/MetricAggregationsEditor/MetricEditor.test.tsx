@@ -1,12 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 import { from } from 'rxjs';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { Average, Count, ElasticsearchDataQuery, UniqueCount } from '../../../dataquery.gen';
-import { ElasticDatasource } from '../../../datasource';
+import { type Average, type Count, type ElasticsearchDataQuery, type UniqueCount } from '../../../dataquery.gen';
+import { type ElasticDatasource } from '../../../datasource';
 import { defaultBucketAgg } from '../../../queryDef';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 

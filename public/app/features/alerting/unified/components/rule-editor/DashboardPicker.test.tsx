@@ -1,5 +1,5 @@
 import { noop } from 'lodash';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 

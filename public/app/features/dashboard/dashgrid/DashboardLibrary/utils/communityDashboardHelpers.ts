@@ -1,18 +1,24 @@
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
 import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
-import { MappingContext } from '../SuggestedDashboardsModal';
-import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENTRY_POINTS } from '../constants';
-import { GnetDashboard, Link } from '../types';
+import { type MappingContext } from '../SuggestedDashboardsModal';
+import { fetchCommunityDashboard, type GnetDashboardDependency } from '../api/dashboardLibraryApi';
+import {
+  CONTENT_KINDS,
+  type ContentKind,
+  CREATION_ORIGINS,
+  type EventLocation,
+  SOURCE_ENTRY_POINTS,
+} from '../constants';
+import { type GnetDashboard, type Link } from '../types';
 
-import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import { type InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 
 // Constants for community dashboard pagination and API params
 // We want to get the most 6 downloaded dashboards, but we first query 12

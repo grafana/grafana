@@ -1,6 +1,6 @@
 import { Button } from '@grafana/ui';
 
-import { MetricAggregation } from '../../../dataquery.gen';
+import { type MetricAggregation } from '../../../dataquery.gen';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';

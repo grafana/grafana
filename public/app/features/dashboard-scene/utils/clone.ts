@@ -1,10 +1,10 @@
 import {
   LocalValueVariable,
-  MultiValueVariableState,
-  SceneObject,
-  SceneVariable,
+  type MultiValueVariableState,
+  type SceneObject,
+  type SceneVariable,
   SceneVariableSet,
-  VariableValueSingle,
+  type VariableValueSingle,
 } from '@grafana/scenes';
 
 const CLONE_KEY = '-clone-';

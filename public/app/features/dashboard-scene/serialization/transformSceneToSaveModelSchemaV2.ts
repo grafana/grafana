@@ -1,68 +1,68 @@
 import { omit } from 'lodash';
 
-import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
+import { type AnnotationQuery, isEmptyObject, type TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
-  QueryVariable,
+  type QueryVariable,
   sceneGraph,
-  SceneDataQuery,
+  type SceneDataQuery,
   SceneDataTransformer,
-  SceneQueryRunner,
-  SceneVariables,
+  type SceneQueryRunner,
+  type SceneVariables,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
-  PanelKind,
-  PanelQueryKind,
-  TransformationKind,
-  FieldConfigSource,
-  DataTransformerConfig,
-  PanelQuerySpec,
-  DataQueryKind,
-  QueryOptionsSpec,
-  QueryVariableKind,
-  TextVariableKind,
-  IntervalVariableKind,
-  DatasourceVariableKind,
-  CustomVariableKind,
-  ConstantVariableKind,
-  GroupByVariableKind,
-  AdhocVariableKind,
-  AnnotationQueryKind,
-  DataLink,
-  LibraryPanelKind,
-  Element,
-  DashboardCursorSync,
-  FieldColor,
+  type PanelKind,
+  type PanelQueryKind,
+  type TransformationKind,
+  type FieldConfigSource,
+  type DataTransformerConfig,
+  type PanelQuerySpec,
+  type DataQueryKind,
+  type QueryOptionsSpec,
+  type QueryVariableKind,
+  type TextVariableKind,
+  type IntervalVariableKind,
+  type DatasourceVariableKind,
+  type CustomVariableKind,
+  type ConstantVariableKind,
+  type GroupByVariableKind,
+  type AdhocVariableKind,
+  type AnnotationQueryKind,
+  type DataLink,
+  type LibraryPanelKind,
+  type Element,
+  type DashboardCursorSync,
+  type FieldColor,
   defaultFieldConfig,
   defaultDataQueryKind,
-  SwitchVariableKind,
+  type SwitchVariableKind,
   defaultTimeSettingsSpec,
   defaultDashboardLinkType,
   defaultDashboardLink,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
-import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';

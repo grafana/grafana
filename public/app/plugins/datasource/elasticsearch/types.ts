@@ -1,31 +1,31 @@
-import { Observable } from 'rxjs';
-import { SemVer } from 'semver';
+import { type Observable } from 'rxjs';
+import { type SemVer } from 'semver';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
-  MetricFindValue,
-  TimeRange,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type MetricFindValue,
+  type TimeRange,
 } from '@grafana/data';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import {
-  BucketAggregationType,
-  MetricAggregation,
-  MetricAggregationType,
-  MovingAverageEWMAModelSettings,
-  MovingAverageHoltModelSettings,
-  MovingAverageHoltWintersModelSettings,
-  MovingAverageLinearModelSettings,
-  MovingAverageModel,
-  MovingAverageSimpleModelSettings,
-  ExtendedStats,
-  MovingAverage as SchemaMovingAverage,
-  BucketAggregation,
-  Logs as SchemaLogs,
-  ElasticsearchDataQuery,
+  type BucketAggregationType,
+  type MetricAggregation,
+  type MetricAggregationType,
+  type MovingAverageEWMAModelSettings,
+  type MovingAverageHoltModelSettings,
+  type MovingAverageHoltWintersModelSettings,
+  type MovingAverageLinearModelSettings,
+  type MovingAverageModel,
+  type MovingAverageSimpleModelSettings,
+  type ExtendedStats,
+  type MovingAverage as SchemaMovingAverage,
+  type BucketAggregation,
+  type Logs as SchemaLogs,
+  type ElasticsearchDataQuery,
 } from './dataquery.gen';
 
 // We want to extend the settings of the Logs query with additional properties that

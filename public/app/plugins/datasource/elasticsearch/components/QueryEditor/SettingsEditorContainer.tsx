@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { PropsWithChildren, useState } from 'react';
+import { type PropsWithChildren, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, InlineSegmentGroup, useTheme2 } from '@grafana/ui';
 
 import { segmentStyles } from './styles';

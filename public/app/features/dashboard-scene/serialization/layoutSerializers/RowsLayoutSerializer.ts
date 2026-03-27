@@ -1,8 +1,8 @@
-import { Spec as DashboardV2Spec, RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec, type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
-import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { getConditionalRendering } from './utils';

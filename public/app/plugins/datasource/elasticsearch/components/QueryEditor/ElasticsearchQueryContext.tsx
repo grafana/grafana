@@ -1,10 +1,18 @@
-import { Context, createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  type Context,
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 
-import { ElasticsearchDataQuery } from '../../dataquery.gen';
+import { type ElasticsearchDataQuery } from '../../dataquery.gen';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
-import { ElasticDatasourceLike } from '../../types';
+import { type ElasticDatasourceLike } from '../../types';
 
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';

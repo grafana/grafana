@@ -8,13 +8,13 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import {
-  DateHistogram,
-  ElasticsearchDataQuery,
-  Filters,
-  Histogram,
-  MetricAggregation,
-  MetricAggregationWithInlineScript,
-  Terms,
+  type DateHistogram,
+  type ElasticsearchDataQuery,
+  type Filters,
+  type Histogram,
+  type MetricAggregation,
+  type MetricAggregationWithInlineScript,
+  type Terms,
 } from './dataquery.gen';
 import {
   defaultBucketAgg,
@@ -23,7 +23,7 @@ import {
   defaultGeoHashPrecisionString,
   queryTypeToMetricType,
 } from './queryDef';
-import { QueryType, TermsQuery } from './types';
+import { type QueryType, type TermsQuery } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 // Omitting 1m, 1h, 1d for now, as these cover the main use cases for calendar_interval

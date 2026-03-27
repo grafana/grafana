@@ -1,7 +1,7 @@
-import { Action, createAction } from '@reduxjs/toolkit';
+import { type Action, createAction } from '@reduxjs/toolkit';
 
-import { ElasticsearchDataQuery } from '../../dataquery.gen';
-import { QueryType } from '../../types';
+import { type ElasticsearchDataQuery } from '../../dataquery.gen';
+import { type QueryType } from '../../types';
 
 import { changeMetricType } from './MetricAggregationsEditor/state/actions';
 

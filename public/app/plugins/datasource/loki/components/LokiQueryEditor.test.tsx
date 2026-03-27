@@ -8,10 +8,10 @@ import { QueryEditorMode } from '@grafana/plugin-ui';
 import { LokiQueryType } from '../dataquery.gen';
 import { createLokiDatasource } from '../mocks/datasource';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQueryBuilderExplained';
-import { LokiQuery } from '../types';
+import { type LokiQuery } from '../types';
 
 import { LokiQueryEditor } from './LokiQueryEditor';
-import { LokiQueryEditorProps } from './types';
+import { type LokiQueryEditorProps } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {

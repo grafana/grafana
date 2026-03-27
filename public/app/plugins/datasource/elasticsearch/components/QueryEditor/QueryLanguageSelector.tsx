@@ -1,6 +1,6 @@
-import { Combobox, ComboboxOption } from '@grafana/ui';
+import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { QueryType } from '../../dataquery.gen';
+import { type QueryType } from '../../dataquery.gen';
 
 const OPTIONS: Array<ComboboxOption<QueryType>> = [
   { value: 'dsl', label: 'DSL' },

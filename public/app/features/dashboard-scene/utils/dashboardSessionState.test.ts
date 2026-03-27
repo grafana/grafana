@@ -1,6 +1,6 @@
 import { config, locationService } from '@grafana/runtime';
-import { CustomVariable, UrlSyncManager } from '@grafana/scenes';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type CustomVariable, UrlSyncManager } from '@grafana/scenes';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 

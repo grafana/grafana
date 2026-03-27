@@ -8,7 +8,7 @@ import { DeleteProvisionedDashboardDrawer } from 'app/features/provisioning/comp
 
 import { useDeleteDashboardsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { DeletedDashboardsInfo } from '../../browse-dashboards/components/DeletedDashboardsInfo';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
   dashboard: DashboardScene;

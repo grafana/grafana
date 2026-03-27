@@ -1,10 +1,10 @@
-import { DataFrame, DataFrameJSON, dataFrameToJSON } from '@grafana/data';
+import { type DataFrame, type DataFrameJSON, dataFrameToJSON } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { GrafanaQuery, GrafanaQueryType } from './types';
+import { type GrafanaQuery, GrafanaQueryType } from './types';
 
 /**
  * Will show a confirm modal if the current panel does not have a snapshot query.

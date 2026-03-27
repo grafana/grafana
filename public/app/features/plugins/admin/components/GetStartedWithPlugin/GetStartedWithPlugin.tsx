@@ -1,9 +1,9 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 import { PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../../types';
+import { type CatalogPlugin } from '../../types';
 
 import { GetStartedWithApp } from './GetStartedWithApp';
 import { GetStartedWithDataSource } from './GetStartedWithDataSource';

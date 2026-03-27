@@ -1,5 +1,5 @@
-import { DataSourceApi } from '@grafana/data';
-import { config, setTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { type DataSourceApi } from '@grafana/data';
+import { config, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,
   ConstantVariable,
@@ -10,9 +10,9 @@ import {
   GroupByVariable,
   TextBoxVariable,
   SceneVariableSet,
-  SceneVariable,
+  type SceneVariable,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceJsonData, VariableHide, VariableType } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData, VariableHide, type VariableType } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
@@ -31,7 +31,7 @@ import {
   getVariableEditor,
   getVariableScene,
   hasVariableOptions,
-  EditableVariableType,
+  type EditableVariableType,
   getDefinition,
   getOptionDataSourceTypes,
   getNextAvailableId,

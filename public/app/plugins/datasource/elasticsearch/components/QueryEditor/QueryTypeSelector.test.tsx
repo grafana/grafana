@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ElasticsearchDataQuery } from '../../dataquery.gen';
+import { type ElasticsearchDataQuery } from '../../dataquery.gen';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { renderWithESProvider } from '../../test-helpers/render';
 

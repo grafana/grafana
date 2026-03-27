@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { Playlist } from '../../api/clients/playlist/v1';
+import { type Playlist } from '../../api/clients/playlist/v1';
 
-import { PlaylistMode } from './types';
+import { type PlaylistMode } from './types';
 
 export interface Props {
   playlist: Playlist;

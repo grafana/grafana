@@ -1,6 +1,6 @@
-import { toUtc, dateTime, DateTime, DurationUnit } from '@grafana/data';
+import { toUtc, dateTime, type DateTime, type DurationUnit } from '@grafana/data';
 
-import { Interval } from './types';
+import { type Interval } from './types';
 
 type IntervalMap = Record<
   Interval,

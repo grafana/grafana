@@ -1,4 +1,4 @@
-import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { FOLDER_METADATA_FILE } from '../constants';
 

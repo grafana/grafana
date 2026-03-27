@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
-import { AssistantHook, useAssistant } from '@grafana/assistant';
+import { type AssistantHook, useAssistant } from '@grafana/assistant';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardCard } from './DashboardCard';

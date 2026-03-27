@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 

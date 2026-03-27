@@ -1,10 +1,10 @@
 import { uniqueId } from 'lodash';
 import { useRef } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { InlineField, Input, Select } from '@grafana/ui';
 
-import { ExtendedStats, MetricAggregation, Percentiles, Terms } from '../../../../dataquery.gen';
+import { type ExtendedStats, type MetricAggregation, type Percentiles, type Terms } from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { describeMetric } from '../../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';

@@ -1,4 +1,4 @@
-import { ElasticsearchDataQuery } from '../../dataquery.gen';
+import { type ElasticsearchDataQuery } from '../../dataquery.gen';
 import { reducerTester } from '../reducerTester';
 
 import { changeMetricType } from './MetricAggregationsEditor/state/actions';

@@ -1,7 +1,7 @@
 import { FieldType } from '@grafana/data';
 
 import { convertFieldsToVariableFields, migrateVariableQuery, refId, updateFrame } from './ElasticsearchVariableUtils';
-import { ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
 
 describe('ElasticsearchVariableUtils', () => {
   describe('migrateVariableQuery', () => {

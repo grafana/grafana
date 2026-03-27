@@ -1,12 +1,12 @@
 import { uniqueId } from 'lodash';
-import { ComponentProps, useState } from 'react';
+import { type ComponentProps, useState } from 'react';
 
 import { InlineField, Input, TextArea } from '@grafana/ui';
 
-import { MetricAggregationWithInlineScript, MetricAggregationWithSettings } from '../../../../dataquery.gen';
+import { type MetricAggregationWithInlineScript, type MetricAggregationWithSettings } from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { getScriptValue } from '../../../../utils';
-import { SettingKeyOf } from '../../../types';
+import { type SettingKeyOf } from '../../../types';
 import { changeMetricSetting } from '../state/actions';
 
 interface Props<T extends MetricAggregationWithSettings, K extends SettingKeyOf<T>> {

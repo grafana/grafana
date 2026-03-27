@@ -1,6 +1,6 @@
-import { DataSourceSettings } from '@grafana/data';
+import { type DataSourceSettings } from '@grafana/data';
 
-import { ElasticsearchOptions } from '../../types';
+import { type ElasticsearchOptions } from '../../types';
 
 export function createDefaultConfigOptions(): DataSourceSettings<ElasticsearchOptions> {
   return {

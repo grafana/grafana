@@ -1,6 +1,6 @@
-import { Action } from 'redux';
+import { type Action } from 'redux';
 
-import { Filter } from '../../../../../../dataquery.gen';
+import { type Filter } from '../../../../../../dataquery.gen';
 import { defaultFilter } from '../utils';
 
 import { addFilter, changeFilter, removeFilter } from './actions';

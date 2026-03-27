@@ -3,15 +3,15 @@ import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
 import { t } from '@grafana/i18n';
-import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
+import { type MultiValueVariable, sceneGraph, type VariableValueSingle } from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 
-import { TabItem } from './TabItem';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { type TabItem } from './TabItem';
+import { type TabsLayoutManager } from './TabsLayoutManager';
 
 export interface Props {
   tab: TabItem;

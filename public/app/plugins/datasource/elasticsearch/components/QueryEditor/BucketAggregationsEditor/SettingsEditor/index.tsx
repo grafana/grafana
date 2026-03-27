@@ -1,9 +1,9 @@
 import { uniqueId } from 'lodash';
-import { ComponentProps, useRef } from 'react';
+import { type ComponentProps, useRef } from 'react';
 
 import { InlineField, Input } from '@grafana/ui';
 
-import { BucketAggregation } from '../../../../dataquery.gen';
+import { type BucketAggregation } from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';

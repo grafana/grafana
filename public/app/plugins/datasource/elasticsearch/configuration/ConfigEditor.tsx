@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import {
   AdvancedHttpSettings,
   Auth,
@@ -14,7 +14,7 @@ import {
 import { config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings, Stack } from '@grafana/ui';
 
-import { ElasticsearchOptions, ElasticsearchSecureJsonData } from '../types';
+import { type ElasticsearchOptions, type ElasticsearchSecureJsonData } from '../types';
 
 import { ApiKeyConfig } from './ApiKeyConfig';
 import { DataLinks } from './DataLinks';

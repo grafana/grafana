@@ -1,7 +1,7 @@
-import { AbstractLabelOperator, AbstractLabelMatcher, LanguageProvider, AbstractQuery } from '@grafana/data';
+import { AbstractLabelOperator, type AbstractLabelMatcher, LanguageProvider, type AbstractQuery } from '@grafana/data';
 
-import { ElasticsearchDataQuery } from './dataquery.gen';
-import { ElasticDatasource } from './datasource';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticDatasource } from './datasource';
 
 export default class ElasticsearchLanguageProvider extends LanguageProvider {
   declare request: (url: string, params?: any) => Promise<any>;

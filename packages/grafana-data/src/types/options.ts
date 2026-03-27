@@ -1,4 +1,4 @@
-import { DataFrame } from './dataFrame';
+import { type DataFrame } from './dataFrame';
 
 /**
  * Base class for editor builders

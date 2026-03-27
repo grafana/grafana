@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { createDataFrame, Field, FieldType, ReducerID } from '@grafana/data';
+import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { TABLE } from './constants';
@@ -14,7 +14,7 @@ import {
   useManagedSort,
   useNestedRows,
 } from './hooks';
-import { TableRow } from './types';
+import { type TableRow } from './types';
 import { createTypographyContext, compileFrameToRecords } from './utils';
 
 describe('TableNG hooks', () => {

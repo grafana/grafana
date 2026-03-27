@@ -1,6 +1,9 @@
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
+import {
+  type DashboardTrackingInfo,
+  type DynamicDashboardsTrackingInformation,
+} from '../serialization/DashboardSceneSerializer';
 
 let isScenesContextSet = false;
 

@@ -1,6 +1,6 @@
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data';
 
-import { ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
 
 export const refId = 'ElasticsearchVariableQueryEditor-VariableQuery';
 

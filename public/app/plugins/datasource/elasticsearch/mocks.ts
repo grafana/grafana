@@ -1,9 +1,16 @@
-import { CoreApp, DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType, dateTime } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  FieldType,
+  PluginType,
+  dateTime,
+} from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
-import { ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
 import { ElasticDatasource } from './datasource';
-import { ElasticsearchOptions } from './types';
+import { type ElasticsearchOptions } from './types';
 
 export function createElasticDatasource(
   settings: Partial<DataSourceInstanceSettings<Partial<ElasticsearchOptions>>> = {}

@@ -1,18 +1,24 @@
 import { css, cx } from '@emotion/css';
-import { HTMLAttributes } from 'react';
+import { type HTMLAttributes } from 'react';
 
 import {
-  DataSourceSettings as DataSourceSettingsType,
-  GrafanaTheme2,
+  type DataSourceSettings as DataSourceSettingsType,
+  type GrafanaTheme2,
   PluginExtensionPoints,
-  PluginExtensionLink,
-  PluginExtensionDataSourceConfigStatusContext,
+  type PluginExtensionLink,
+  type PluginExtensionDataSourceConfigStatusContext,
 } from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { TestingStatus, config, usePluginLinks, usePluginComponents, renderLimitedComponents } from '@grafana/runtime';
-import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
+import {
+  type TestingStatus,
+  config,
+  usePluginLinks,
+  usePluginComponents,
+  renderLimitedComponents,
+} from '@grafana/runtime';
+import { type AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';

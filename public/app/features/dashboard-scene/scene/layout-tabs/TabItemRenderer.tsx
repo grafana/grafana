@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { Draggable, DraggableStateSnapshot } from '@hello-pangea/dnd';
+import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { useLocation } from 'react-router';
 
-import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
+import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -14,7 +14,7 @@ import { getDashboardSceneFor, useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
-import { TabItem } from './TabItem';
+import { type TabItem } from './TabItem';
 
 export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, isDropTarget, layout, key, repeatSourceKey } = model.useState();

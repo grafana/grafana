@@ -4,19 +4,19 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync, useAsyncFn } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Grid, Alert } from '@grafana/ui';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
-import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
+import { type MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { NewSuggestedDashboardInteractions } from './analytics/main';
 import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
 import { SuggestedDashboardInteractions } from './interactions';
-import { GnetDashboard } from './types';
+import { type GnetDashboard } from './types';
 import {
   getThumbnailUrl,
   getLogoUrl,

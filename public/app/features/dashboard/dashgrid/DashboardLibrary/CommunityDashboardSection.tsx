@@ -4,20 +4,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useAsyncRetry, useDebounce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv, isFetchError } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput, Box } from '@grafana/ui';
 
-import { CompatibilityState } from './CompatibilityBadge';
+import { type CompatibilityState } from './CompatibilityBadge';
 import { DashboardCard } from './DashboardCard';
-import { MappingContext } from './SuggestedDashboardsModal';
+import { type MappingContext } from './SuggestedDashboardsModal';
 import { NewDashboardLibraryInteractions, NewSuggestedDashboardInteractions } from './analytics/main';
 import { checkDashboardCompatibility } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
 import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from './interactions';
-import { GnetDashboard, isGnetDashboard } from './types';
+import { type GnetDashboard, isGnetDashboard } from './types';
 import {
   getThumbnailUrl,
   getLogoUrl,

@@ -1,10 +1,10 @@
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { Input, Stack } from '@grafana/ui';
 
-import { ElasticsearchDataQuery } from '../../dataquery.gen';
+import { type ElasticsearchDataQuery } from '../../dataquery.gen';
 
-import { ElasticQueryEditorProps, ElasticSearchQueryField } from './index';
+import { type ElasticQueryEditorProps, ElasticSearchQueryField } from './index';
 
 type Props = ElasticQueryEditorProps & {
   annotation?: AnnotationQuery<ElasticsearchDataQuery>;

@@ -3,14 +3,14 @@ import React from 'react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardSection } from './CommunityDashboardSection';
 import { NewDashboardLibraryInteractions } from './analytics/main';
-import { checkDashboardCompatibility, CompatibilityCheckResult } from './api/compatibilityApi';
+import { checkDashboardCompatibility, type CompatibilityCheckResult } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
-import { GnetDashboard } from './types';
+import { type GnetDashboard } from './types';
 import { onUseCommunityDashboard, interpolateDashboardForCompatibilityCheck } from './utils/communityDashboardHelpers';
 
 jest.mock('./api/dashboardLibraryApi', () => ({

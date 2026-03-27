@@ -1,7 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { MetricAggregation, MetricAggregationWithSettings } from '../../../../dataquery.gen';
-import { MetricAggregationWithMeta } from '../../../../types';
+import { type MetricAggregation, type MetricAggregationWithSettings } from '../../../../dataquery.gen';
+import { type MetricAggregationWithMeta } from '../../../../types';
 
 export const addMetric = createAction<MetricAggregation['id']>('@metrics/add');
 export const removeMetric = createAction<MetricAggregation['id']>('@metrics/remove');

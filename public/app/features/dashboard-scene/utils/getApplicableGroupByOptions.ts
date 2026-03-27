@@ -1,4 +1,4 @@
-import { GroupByVariable, SceneDataQuery, VariableValueOption } from '@grafana/scenes';
+import { type GroupByVariable, type SceneDataQuery, type VariableValueOption } from '@grafana/scenes';
 
 export async function getApplicableGroupByOptions(
   groupByVariable: GroupByVariable,

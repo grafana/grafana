@@ -1,5 +1,5 @@
-import { ReducersMapObject } from '@reduxjs/toolkit';
-import { Action as AnyAction, combineReducers } from 'redux';
+import { type ReducersMapObject } from '@reduxjs/toolkit';
+import { type Action as AnyAction, combineReducers } from 'redux';
 
 const addedReducers = {
   defaultReducer: (state = {}) => state,

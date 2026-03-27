@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { select } from 'react-select-event';
 
-import { DateHistogram } from '../../../../dataquery.gen';
+import { type DateHistogram } from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 
 import { DateHistogramSettingsEditor } from './DateHistogramSettingsEditor';

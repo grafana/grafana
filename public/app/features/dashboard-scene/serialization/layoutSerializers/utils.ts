@@ -1,27 +1,27 @@
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getPanelPluginMetasMapSync, PanelPluginMetas } from '@grafana/runtime/internal';
+import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
 import {
-  SceneDataProvider,
-  SceneDataQuery,
+  type SceneDataProvider,
+  type SceneDataQuery,
   SceneDataTransformer,
-  SceneObject,
+  type SceneObject,
   SceneQueryRunner,
   VizPanel,
   VizPanelMenu,
-  VizPanelState,
+  type VizPanelState,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
-  AutoGridLayoutItemKind,
-  RowsLayoutRowKind,
-  LibraryPanelKind,
-  PanelKind,
-  PanelQueryKind,
-  QueryVariableKind,
-  TabsLayoutTabKind,
-  DataQueryKind,
+  type Spec as DashboardV2Spec,
+  type AutoGridLayoutItemKind,
+  type RowsLayoutRowKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type PanelQueryKind,
+  type QueryVariableKind,
+  type TabsLayoutTabKind,
+  type DataQueryKind,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
@@ -29,18 +29,18 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
-import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
-import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
+import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
-import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';

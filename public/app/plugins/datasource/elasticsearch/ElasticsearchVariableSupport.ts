@@ -1,21 +1,21 @@
-import { ComponentType } from 'react';
-import { from, Observable } from 'rxjs';
+import { type ComponentType } from 'react';
+import { from, type Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
   CustomVariableSupport,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataFrame,
-  DataSourceApi,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataFrame,
+  type DataSourceApi,
   FieldType,
-  MetricFindValue,
-  QueryEditorProps,
+  type MetricFindValue,
+  type QueryEditorProps,
 } from '@grafana/data';
 
 import { migrateVariableQuery, updateFrame, refId } from './ElasticsearchVariableUtils';
-import { ElasticsearchDataQuery } from './dataquery.gen';
-import { ElasticsearchOptions } from './types';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchOptions } from './types';
 
 export class ElasticsearchVariableSupport<
   DS extends DataSourceApi<ElasticsearchDataQuery, ElasticsearchOptions>,

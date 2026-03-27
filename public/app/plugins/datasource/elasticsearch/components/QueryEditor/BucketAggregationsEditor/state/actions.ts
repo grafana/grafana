@@ -1,6 +1,10 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { BucketAggregation, BucketAggregationType, BucketAggregationWithField } from '../../../../dataquery.gen';
+import {
+  type BucketAggregation,
+  type BucketAggregationType,
+  type BucketAggregationWithField,
+} from '../../../../dataquery.gen';
 
 export const addBucketAggregation = createAction<BucketAggregation['id']>('@bucketAggs/add');
 export const removeBucketAggregation = createAction<BucketAggregation['id']>('@bucketAggs/remove');

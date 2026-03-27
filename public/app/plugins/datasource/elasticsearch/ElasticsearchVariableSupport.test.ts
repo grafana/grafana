@@ -1,10 +1,10 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataQueryResponse, dateTime, FieldType } from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, dateTime, FieldType } from '@grafana/data';
 
 import { ElasticsearchVariableSupport } from './ElasticsearchVariableSupport';
-import { ElasticsearchDataQuery } from './dataquery.gen';
-import { ElasticDatasource } from './datasource';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticDatasource } from './datasource';
 
 jest.mock('./datasource');
 

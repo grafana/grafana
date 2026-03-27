@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, useStyles2 } from '@grafana/ui';
 
-import { ElasticsearchDataQuery, QueryType } from '../../dataquery.gen';
+import { type ElasticsearchDataQuery, type QueryType } from '../../dataquery.gen';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 
 import { useDatasource } from './ElasticsearchQueryContext';

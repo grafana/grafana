@@ -4,20 +4,20 @@ import { useMemo, useCallback } from 'react';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   getFieldDisplayName,
-  DataFrame,
-  SelectableValue,
+  type DataFrame,
+  type SelectableValue,
   FieldType,
   ValueMatcherID,
   valueMatchers,
   TransformerCategory,
 } from '@grafana/data';
 import {
-  FilterByValueFilter,
+  type FilterByValueFilter,
   FilterByValueMatch,
-  FilterByValueTransformerOptions,
+  type FilterByValueTransformerOptions,
   FilterByValueType,
 } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
@@ -27,7 +27,7 @@ import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/filterByValue.svg';
 import lightImage from '../images/light/filterByValue.svg';
 
-import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
+import { type DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
 export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterByValueTransformerOptions>) => {
   const { input, options, onChange } = props;

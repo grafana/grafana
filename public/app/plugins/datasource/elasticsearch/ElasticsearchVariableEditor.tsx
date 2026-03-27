@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataQueryRequest, dateTime, Field } from '@grafana/data';
+import { type DataQueryRequest, dateTime, type Field } from '@grafana/data';
 import { EditorField, EditorRow, EditorRows } from '@grafana/plugin-ui';
-import { Alert, Combobox, ComboboxOption, Input, Text } from '@grafana/ui';
+import { Alert, Combobox, type ComboboxOption, Input, Text } from '@grafana/ui';
 
-import { ElasticsearchVariableQuery, migrateVariableQuery, refId } from './ElasticsearchVariableUtils';
-import { ElasticQueryEditorProps, QueryEditor } from './components/QueryEditor';
-import { ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticsearchVariableQuery, migrateVariableQuery, refId } from './ElasticsearchVariableUtils';
+import { type ElasticQueryEditorProps, QueryEditor } from './components/QueryEditor';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
 
 type ElasticsearchVariableQueryEditorProps = ElasticQueryEditorProps;
 

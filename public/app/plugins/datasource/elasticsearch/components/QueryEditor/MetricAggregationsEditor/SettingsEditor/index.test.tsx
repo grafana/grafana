@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { ElasticsearchDataQuery } from '../../../../dataquery.gen';
-import { ElasticDatasource } from '../../../../datasource';
+import { type ElasticsearchDataQuery } from '../../../../dataquery.gen';
+import { type ElasticDatasource } from '../../../../datasource';
 import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
 import { ElasticsearchQueryOptions } from '../../ElasticsearchQueryOptions';
 

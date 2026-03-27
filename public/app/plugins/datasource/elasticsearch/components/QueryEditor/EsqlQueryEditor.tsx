@@ -3,9 +3,9 @@ import { monarch } from '@elastic/monaco-esql';
 import * as monarchDefinitions from '@elastic/monaco-esql/lib/definitions';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { type Monaco, type monacoTypes } from '@grafana/ui';
 
-import { RawQueryEditor, RawQueryEditorProps } from './RawQueryEditor';
+import { RawQueryEditor, type RawQueryEditorProps } from './RawQueryEditor';
 
 const ESQL_LANG_ID = 'esql';
 const ESQL_MARKER_OWNER = 'esql-parse-validation';

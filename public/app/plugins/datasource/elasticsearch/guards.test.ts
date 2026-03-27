@@ -1,4 +1,4 @@
-import { Count, ExtendedStats } from './dataquery.gen';
+import { type Count, type ExtendedStats } from './dataquery.gen';
 import { isMetricAggregationWithMeta } from './guards';
 
 describe('Type guards', () => {

@@ -5,7 +5,7 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
-import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
+import { type Options, type FieldConfig, defaultFieldConfig } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
   .useFieldConfig({

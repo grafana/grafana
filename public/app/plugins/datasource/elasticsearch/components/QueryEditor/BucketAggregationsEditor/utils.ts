@@ -1,7 +1,7 @@
-import { InternalTimeZones, SelectableValue } from '@grafana/data';
+import { InternalTimeZones, type SelectableValue } from '@grafana/data';
 
 import { defaultGeoHashPrecisionString } from '../../../queryDef';
-import { BucketsConfiguration } from '../../../types';
+import { type BucketsConfiguration } from '../../../types';
 
 import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
 

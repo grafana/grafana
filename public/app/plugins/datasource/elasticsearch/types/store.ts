@@ -1,23 +1,23 @@
 /* eslint-disable no-restricted-imports */
 import {
-  Action,
+  type Action,
   addListener as addListenerUntyped,
-  AsyncThunk,
-  AsyncThunkOptions,
-  AsyncThunkPayloadCreator,
+  type AsyncThunk,
+  type AsyncThunkOptions,
+  type AsyncThunkPayloadCreator,
   createAsyncThunk as createAsyncThunkUntyped,
-  PayloadAction,
-  TypedAddListener,
+  type PayloadAction,
+  type TypedAddListener,
 } from '@reduxjs/toolkit';
 import {
-  TypedUseSelectorHook,
+  type TypedUseSelectorHook,
   useDispatch as useDispatchUntyped,
   useSelector as useSelectorUntyped,
 } from 'react-redux';
-import { ThunkDispatch as GenericThunkDispatch, ThunkAction } from 'redux-thunk';
+import { type ThunkDispatch as GenericThunkDispatch, type ThunkAction } from 'redux-thunk';
 
 import type { createRootReducer } from '../reducers/root';
-import { AppDispatch, RootState } from '../store/configureStore';
+import { type AppDispatch, type RootState } from '../store/configureStore';
 import { dispatch as storeDispatch } from '../store/store';
 
 export type StoreState = ReturnType<ReturnType<typeof createRootReducer>>;

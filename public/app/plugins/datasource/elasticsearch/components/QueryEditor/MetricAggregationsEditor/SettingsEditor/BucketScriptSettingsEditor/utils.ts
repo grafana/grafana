@@ -1,4 +1,4 @@
-import { PipelineVariable } from '../../../../../dataquery.gen';
+import { type PipelineVariable } from '../../../../../dataquery.gen';
 
 export const defaultPipelineVariable = (name: string): PipelineVariable => ({ name, pipelineAgg: '' });
 

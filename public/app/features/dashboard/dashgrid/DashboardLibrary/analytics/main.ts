@@ -3,14 +3,14 @@ import { defineFeatureEvents } from '@grafana/runtime/internal';
 import { FEATURE_VARIANTS } from '../constants';
 
 import {
-  CompatibilityCheckCompletedProperties,
-  CompatibilityCheckTriggeredProperties,
-  EntryPointClickedProperties,
-  ItemClickedProperties,
-  LoadedProperties,
-  MappingFormCompletedProperties,
-  MappingFormShownProperties,
-  SearchPerformedProperties,
+  type CompatibilityCheckCompletedProperties,
+  type CompatibilityCheckTriggeredProperties,
+  type EntryPointClickedProperties,
+  type ItemClickedProperties,
+  type LoadedProperties,
+  type MappingFormCompletedProperties,
+  type MappingFormShownProperties,
+  type SearchPerformedProperties,
 } from './types';
 
 const SCHEMA_VERSION = 1;

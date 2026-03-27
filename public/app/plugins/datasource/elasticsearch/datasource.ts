@@ -1,50 +1,50 @@
 import { cloneDeep, first as _first, isNumber, isString, map as _map, isObject } from 'lodash';
-import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
+import { from, generate, lastValueFrom, type Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
 import {
-  DataFrame,
-  DataLink,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceWithLogsContextSupport,
-  DataSourceWithQueryImportSupport,
-  DataSourceWithSupplementaryQueriesSupport,
-  DateTime,
+  type DataFrame,
+  type DataLink,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceWithLogsContextSupport,
+  type DataSourceWithQueryImportSupport,
+  type DataSourceWithSupplementaryQueriesSupport,
+  type DateTime,
   dateTime,
   getDefaultTimeRange,
-  AbstractQuery,
+  type AbstractQuery,
   LogLevel,
-  LogRowModel,
-  MetricFindValue,
-  ScopedVars,
-  TimeRange,
-  QueryFixAction,
+  type LogRowModel,
+  type MetricFindValue,
+  type ScopedVars,
+  type TimeRange,
+  type QueryFixAction,
   CoreApp,
   SupplementaryQueryType,
-  DataQueryError,
+  type DataQueryError,
   rangeUtil,
   LogRowContextQueryDirection,
-  LogRowContextOptions,
-  SupplementaryQueryOptions,
+  type LogRowContextOptions,
+  type SupplementaryQueryOptions,
   toUtc,
-  AnnotationEvent,
-  DataSourceWithToggleableQueryFiltersSupport,
-  QueryFilterOptions,
-  ToggleFilterAction,
-  DataSourceGetTagValuesOptions,
-  AdHocVariableFilter,
-  DataSourceWithQueryModificationSupport,
-  AdHocVariableModel,
-  TypedVariableModel,
+  type AnnotationEvent,
+  type DataSourceWithToggleableQueryFiltersSupport,
+  type QueryFilterOptions,
+  type ToggleFilterAction,
+  type DataSourceGetTagValuesOptions,
+  type AdHocVariableFilter,
+  type DataSourceWithQueryModificationSupport,
+  type AdHocVariableModel,
+  type TypedVariableModel,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
   getDataSourceSrv,
-  BackendSrvRequest,
-  TemplateSrv,
+  type BackendSrvRequest,
+  type TemplateSrv,
   getTemplateSrv,
   config,
 } from '@grafana/runtime';
@@ -62,7 +62,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { ElasticsearchDataQuery, BucketAggregation } from './dataquery.gen';
+import { type ElasticsearchDataQuery, type BucketAggregation } from './dataquery.gen';
 import { isMetricAggregationWithMeta } from './guards';
 import {
   addAddHocFilter,
@@ -73,17 +73,17 @@ import {
 } from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
-  Logs,
-  DataLinkConfig,
-  ElasticsearchOptions,
-  TermsQuery,
-  Interval,
-  ElasticsearchAnnotationQuery,
-  RangeMap,
+  type Logs,
+  type DataLinkConfig,
+  type ElasticsearchOptions,
+  type TermsQuery,
+  type Interval,
+  type ElasticsearchAnnotationQuery,
+  type RangeMap,
   isElasticsearchResponseWithAggregations,
   isElasticsearchResponseWithHits,
-  ElasticsearchHits,
-  QueryType,
+  type ElasticsearchHits,
+  type QueryType,
 } from './types';
 import { getScriptValue, isTimeSeriesQuery } from './utils';
 

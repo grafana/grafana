@@ -1,15 +1,15 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
+import { type MultiValueVariable, sceneGraph, type VariableValueSingle } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 
-import { RowItem } from './RowItem';
-import { RowsLayoutManager } from './RowsLayoutManager';
+import { type RowItem } from './RowItem';
+import { type RowsLayoutManager } from './RowsLayoutManager';
 
 export interface Props {
   row: RowItem;

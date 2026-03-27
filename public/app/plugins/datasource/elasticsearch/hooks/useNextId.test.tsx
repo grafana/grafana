@@ -1,11 +1,11 @@
 import { renderHook } from '@testing-library/react';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
-import { ElasticsearchDataQuery } from '../dataquery.gen';
-import { ElasticDatasource } from '../datasource';
+import { type ElasticsearchDataQuery } from '../dataquery.gen';
+import { type ElasticDatasource } from '../datasource';
 
 import { useNextId } from './useNextId';
 

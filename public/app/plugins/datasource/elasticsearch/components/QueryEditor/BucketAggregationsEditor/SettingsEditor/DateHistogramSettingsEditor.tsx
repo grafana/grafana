@@ -1,12 +1,12 @@
 import { uniqueId } from 'lodash';
 import { useCallback, useRef } from 'react';
-import { GroupBase, OptionsOrGroups } from 'react-select';
+import { type GroupBase, type OptionsOrGroups } from 'react-select';
 
-import { InternalTimeZones, SelectableValue } from '@grafana/data';
+import { InternalTimeZones, type SelectableValue } from '@grafana/data';
 import { InlineField, Input, Select, TimeZonePicker } from '@grafana/ui';
 
 import { calendarIntervals } from '../../../../QueryBuilder';
-import { DateHistogram } from '../../../../dataquery.gen';
+import { type DateHistogram } from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 import { changeBucketAggregationSetting } from '../state/actions';

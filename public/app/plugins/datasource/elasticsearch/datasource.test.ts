@@ -3,19 +3,26 @@ import { of, throwError } from 'rxjs';
 
 import {
   CoreApp,
-  DataQueryRequest,
-  DateTime,
+  type DataQueryRequest,
+  type DateTime,
   dateTime,
-  Field,
+  type Field,
   LoadingState,
   SupplementaryQueryType,
-  TimeRange,
+  type TimeRange,
   toUtc,
 } from '@grafana/data';
-import { FetchResponse, reportInteraction, getBackendSrv, setBackendSrv, BackendSrv, config } from '@grafana/runtime';
+import {
+  type FetchResponse,
+  reportInteraction,
+  getBackendSrv,
+  setBackendSrv,
+  type BackendSrv,
+  config,
+} from '@grafana/runtime';
 
-import { ElasticsearchDataQuery, Filters } from './dataquery.gen';
-import { ElasticDatasource } from './datasource';
+import { type ElasticsearchDataQuery, type Filters } from './dataquery.gen';
+import { type ElasticDatasource } from './datasource';
 import { createElasticDatasource, createElasticQuery, mockResponseFrames } from './mocks';
 
 const originalConsoleError = console.error;

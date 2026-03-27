@@ -1,6 +1,6 @@
-import { Action } from '@reduxjs/toolkit';
+import { type Action } from '@reduxjs/toolkit';
 
-import { ElasticsearchDataQuery, MetricAggregation } from '../../../../dataquery.gen';
+import { type ElasticsearchDataQuery, type MetricAggregation } from '../../../../dataquery.gen';
 import { defaultMetricAgg, queryTypeToMetricType } from '../../../../queryDef';
 import { removeEmpty } from '../../../../utils';
 import { changeEditorTypeAndResetQuery, initQuery } from '../../state';

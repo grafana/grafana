@@ -4,9 +4,9 @@ import { of } from 'rxjs';
 import { dateTime, FieldType } from '@grafana/data';
 
 import { ElasticsearchVariableEditor } from './ElasticsearchVariableEditor';
-import { ElasticQueryEditorProps, QueryEditor } from './components/QueryEditor';
-import { ElasticsearchDataQuery } from './dataquery.gen';
-import { ElasticDatasource } from './datasource';
+import { type ElasticQueryEditorProps, QueryEditor } from './components/QueryEditor';
+import { type ElasticsearchDataQuery } from './dataquery.gen';
+import { type ElasticDatasource } from './datasource';
 
 jest.mock('./components/QueryEditor', () => ({
   QueryEditor: jest.fn(({ query }) => <div data-testid="query-editor">Query: {query.query}</div>),

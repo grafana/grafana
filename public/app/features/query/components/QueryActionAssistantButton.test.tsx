@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import { AssistantHook, useAssistant } from '@grafana/assistant';
-import { CoreApp, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type AssistantHook, useAssistant } from '@grafana/assistant';
+import { CoreApp, type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { QueryActionAssistantButton } from './QueryActionAssistantButton';
 // Mock the assistant hook

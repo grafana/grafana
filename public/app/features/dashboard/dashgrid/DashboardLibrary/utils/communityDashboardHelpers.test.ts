@@ -1,12 +1,17 @@
-import { BackendSrv, getBackendSrv, locationService } from '@grafana/runtime';
-import { InputType, DataSourceInput, DashboardInput, DashboardJson } from 'app/features/manage-dashboards/types';
+import { type BackendSrv, getBackendSrv, locationService } from '@grafana/runtime';
+import {
+  InputType,
+  type DataSourceInput,
+  type DashboardInput,
+  type DashboardJson,
+} from 'app/features/manage-dashboards/types';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
-import { GnetDashboard } from '../types';
+import { type GnetDashboard } from '../types';
 
-import { InputMapping, tryAutoMapDatasources, parseConstantInputs } from './autoMapDatasources';
+import { type InputMapping, tryAutoMapDatasources, parseConstantInputs } from './autoMapDatasources';
 import {
   buildDashboardDetails,
   buildGrafanaComUrl,

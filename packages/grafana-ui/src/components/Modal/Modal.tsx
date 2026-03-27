@@ -1,12 +1,12 @@
 import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { OverlayContainer } from '@react-aria/overlays';
-import { PropsWithChildren, ReactNode, useId, type JSX } from 'react';
+import { type PropsWithChildren, type ReactNode, useId, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { getPortalContainer } from '../Portal/Portal';

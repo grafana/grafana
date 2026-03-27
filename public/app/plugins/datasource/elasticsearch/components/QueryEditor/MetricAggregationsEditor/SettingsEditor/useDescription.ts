@@ -1,4 +1,4 @@
-import { MetricAggregation } from '../../../../dataquery.gen';
+import { type MetricAggregation } from '../../../../dataquery.gen';
 import { extendedStats } from '../../../../queryDef';
 
 const hasValue = (value: string) => (object: { value: string }) => object.value === value;

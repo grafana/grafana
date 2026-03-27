@@ -1,10 +1,10 @@
 import { uniqueId } from 'lodash';
 import * as React from 'react';
-import { ComponentProps, useId, useRef, useState } from 'react';
+import { type ComponentProps, useId, useRef, useState } from 'react';
 
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 
-import { ExtendedStat, MetricAggregation } from '../../../../dataquery.gen';
+import { type ExtendedStat, type MetricAggregation } from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { extendedStats } from '../../../../queryDef';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';

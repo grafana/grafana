@@ -1,4 +1,4 @@
-import { ExtendedStats, MetricAggregation } from './dataquery.gen';
+import { type ExtendedStats, type MetricAggregation } from './dataquery.gen';
 
 export function isMetricAggregationWithMeta(metric: MetricAggregation): metric is ExtendedStats {
   if (!metric || typeof metric !== 'object') {
