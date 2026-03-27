@@ -17,6 +17,7 @@ const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggest
       overrides: [],
     },
     cardOptions: {
+      maxSeries: 6,
       previewModifier: (s) => {
         if (s.options?.reduceOptions?.values) {
           s.options.reduceOptions.limit = 1;
@@ -53,6 +54,10 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
       },
     });
   } else if (ds.hasFieldType(FieldType.number) && ds.hasFieldType(FieldType.time)) {
+    if (ds.frameCount > MAX_STATS) {
+      return;
+    }
+
     // aggregated suggestions for number fields
     suggestions.push(
       {

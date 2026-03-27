@@ -6,6 +6,7 @@ import { getPanelDataSummary, PanelDataSummary } from '../panel/suggestions/getP
 
 import { DataFrame } from './dataFrame';
 import { FieldConfigSource } from './fieldOverrides';
+import { PanelData } from './panel';
 
 /**
  * @internal
@@ -74,6 +75,19 @@ export interface VisualizationSuggestion<TOptions = {}, TFieldConfig extends {} 
      * mutate the suggestion object which is passed in as the first argument.
      */
     previewModifier?: (suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) => void;
+    /**
+     * Limits the number of data frames passed to the panel when rendering the preview card.
+     */
+    maxSeries?: number;
+    /**
+     * Limits the number of rows per data frame passed to the panel when rendering the preview card.
+     */
+    maxRows?: number;
+    /**
+     * Transforms the panel data before passing it to the preview renderer.
+     * Applied after maxSeries and maxRows. Useful for downsampling dense time series data.
+     */
+    transformPreviewData?: (data: PanelData) => PanelData;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */
     icon?: string;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */

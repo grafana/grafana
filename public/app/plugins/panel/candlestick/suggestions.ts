@@ -1,9 +1,13 @@
 import { FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { lttbPreviewData } from '../timeseries/utils';
+
 import { defaultOptions } from './defaultOptions';
 import { prepareCandlestickFields } from './fields';
 import { type Options } from './panelcfg.gen';
+
+const MAX_PREVIEW_SERIES = 8;
 
 export const candlestickSuggestionSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   if (
@@ -26,5 +30,13 @@ export const candlestickSuggestionSupplier: VisualizationSuggestionsSupplier<Opt
     return;
   }
 
-  return [{ score: info.autoOpenClose ? VisualizationSuggestionScore.Good : VisualizationSuggestionScore.Best }];
+  return [
+    {
+      score: info.autoOpenClose ? VisualizationSuggestionScore.Good : VisualizationSuggestionScore.Best,
+      cardOptions: {
+        maxSeries: MAX_PREVIEW_SERIES,
+        transformPreviewData: lttbPreviewData,
+      },
+    },
+  ];
 };
