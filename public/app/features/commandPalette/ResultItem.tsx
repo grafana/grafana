@@ -3,7 +3,9 @@ import { ActionId, ActionImpl } from 'kbar';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Badge, useStyles2 } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 export const ResultItem = React.forwardRef(
   (
@@ -11,10 +13,12 @@ export const ResultItem = React.forwardRef(
       action,
       active,
       currentRootActionId,
+      managedBy,
     }: {
       action: ActionImpl;
       active: boolean;
       currentRootActionId: ActionId;
+      managedBy?: ManagerKind;
     },
     ref: React.Ref<HTMLDivElement>
   ) => {
@@ -61,6 +65,7 @@ export const ResultItem = React.forwardRef(
             ))}
             <span>{name}</span>
           </div>
+          {managedBy && <ProvisionedBadge managedBy={managedBy} />}
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
         </div>
       </div>
@@ -69,6 +74,28 @@ export const ResultItem = React.forwardRef(
 );
 
 ResultItem.displayName = 'ResultItem';
+
+function ProvisionedBadge({ managedBy }: { managedBy: ManagerKind }) {
+  let text: string;
+  switch (managedBy) {
+    case ManagerKind.Terraform:
+      text = t('command-palette.provisioned-badge.terraform', 'Terraform');
+      break;
+    case ManagerKind.Kubectl:
+      text = t('command-palette.provisioned-badge.kubectl', 'Kubectl');
+      break;
+    case ManagerKind.Plugin:
+      text = t('command-palette.provisioned-badge.plugin', 'Plugin');
+      break;
+    case ManagerKind.Repo:
+      text = t('command-palette.provisioned-badge.repo', 'Provisioned');
+      break;
+    default:
+      text = t('command-palette.provisioned-badge.default', 'Provisioned');
+  }
+
+  return <Badge text={text} color="purple" icon="exchange-alt" />;
+}
 
 const getResultItemStyles = (theme: GrafanaTheme2) => {
   return {

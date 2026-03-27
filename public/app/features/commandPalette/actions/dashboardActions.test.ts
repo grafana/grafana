@@ -166,6 +166,44 @@ describe('dashboardActions', () => {
           },
         ]);
       });
+
+      it('includes managedBy when the search result has a managed-by field', async () => {
+        const managedSearchData: DataFrame = {
+          fields: [
+            { name: 'kind', type: FieldType.string, config: {}, values: ['dashboard'] },
+            { name: 'name', type: FieldType.string, config: {}, values: ['Provisioned dashboard'] },
+            { name: 'uid', type: FieldType.string, config: {}, values: ['prov-dash-1'] },
+            { name: 'url', type: FieldType.string, config: {}, values: ['/prov-dash-1'] },
+            { name: 'tags', type: FieldType.other, config: {}, values: [[]] },
+            { name: 'location', type: FieldType.string, config: {}, values: ['my-folder-1'] },
+            { name: 'managedBy', type: FieldType.string, config: {}, values: ['repo'] },
+          ],
+          meta: {
+            custom: {
+              locationInfo: {
+                'my-folder-1': { name: 'My folder 1', kind: 'folder', url: '/my-folder-1' },
+              },
+            },
+          },
+          length: 1,
+        };
+        const managedResult: QueryResponse = {
+          isItemLoaded: jest.fn(),
+          loadMoreItems: jest.fn(),
+          totalRows: 1,
+          view: new DataFrameView<DashboardQueryResult>(managedSearchData),
+        };
+        grafanaSearcherSpy.mockResolvedValueOnce(managedResult);
+
+        const results = await getSearchResultActions('provisioned');
+        expect(results).toEqual([
+          expect.objectContaining({
+            id: 'go/dashboard/prov-dash-1',
+            name: 'Provisioned dashboard',
+            managedBy: 'repo',
+          }),
+        ]);
+      });
     });
   });
 

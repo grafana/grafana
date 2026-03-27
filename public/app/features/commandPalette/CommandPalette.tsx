@@ -11,6 +11,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
@@ -165,6 +166,16 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
     [searchResults]
   );
 
+  const managedByMap = useMemo(() => {
+    const map = new Map<string, ManagerKind>();
+    for (const item of searchResults) {
+      if (item.managedBy) {
+        map.set(item.id, item.managedBy);
+      }
+    }
+    return map;
+  }, [searchResults]);
+
   const items = useMemo(() => {
     const results = [...kbarResults];
     if (folderResultItems.length > 0) {
@@ -205,7 +216,12 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
           typeof item === 'string' ? (
             <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>{item}</div>
           ) : (
-            <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
+            <ResultItem
+              action={item}
+              active={active}
+              currentRootActionId={rootActionId!}
+              managedBy={managedByMap.get(item.id)}
+            />
           );
 
         return renderedItem;

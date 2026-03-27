@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { extractManagerKind } from 'app/features/search/service/utils';
 
 import { CommandPaletteAction } from '../types';
 import { RECENT_DASHBOARDS_PRIORITY, SEARCH_RESULTS_PRIORITY } from '../values';
@@ -49,7 +50,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   });
 
   const goToSearchResultActions: CommandPaletteAction[] = data.view.map((item) => {
-    const { url, name, kind, location } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, kind, location, managedBy } = item;
     return {
       id: `go/${kind}${url}`,
       name: `${name}`,
@@ -60,6 +61,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
       priority: SEARCH_RESULTS_PRIORITY,
       url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
+      managedBy: extractManagerKind(managedBy),
     };
   });
 
