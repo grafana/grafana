@@ -284,96 +284,114 @@ func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 func (h *ProvisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 	t.Helper()
 
-	// First, we wait for all current jobs for the repository to disappear (i.e. complete/fail).
-	j, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
-	require.NoError(t, err, "failed to list active jobs")
-
-	waitUntilComplete := map[string]bool{}
-	for _, item := range j.Items {
-		annotations := item.GetLabels()
-		if annotations[jobs.LabelRepository] == repoName {
-			waitUntilComplete[item.GetName()] = false
+	// Retry the full wait-and-check cycle to handle transient failures (e.g. network timeouts
+	// when syncing from external Git repositories like GitHub).
+	const maxRetries = 2
+	for attempt := range maxRetries + 1 {
+		if attempt > 0 {
+			t.Logf("AwaitJobs: sync for %s completed with errors, retrying (attempt %d/%d)", repoName, attempt+1, maxRetries+1)
 		}
-	}
 
-	// if no active jobs for this repo, queue a pull job as a failsafe to try to ensure we are up to date as much as possible
-	if len(waitUntilComplete) == 0 {
-		body := AsJSON(&provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
-		})
-
-		h.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repoName).
-			SubResource("jobs").
-			Body(body).
-			SetHeader("Content-Type", "application/json").
-			Do(context.Background())
-
-		j, err = h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+		// Wait for all current jobs for the repository to disappear (i.e. complete/fail).
+		j, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err, "failed to list active jobs")
 
+		waitUntilComplete := map[string]bool{}
 		for _, item := range j.Items {
 			annotations := item.GetLabels()
 			if annotations[jobs.LabelRepository] == repoName {
 				waitUntilComplete[item.GetName()] = false
 			}
 		}
-	}
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		for elem := range waitUntilComplete {
-			_, err := h.Jobs.Resource.Get(context.Background(), elem, metav1.GetOptions{})
-			switch {
-			case err == nil:
-				collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
-				return
-			case apierrors.IsNotFound(err):
-				// yay
-				waitUntilComplete[elem] = true
-			default:
-				collect.Errorf("get(%s) for repo %s: %v", elem, repoName, err)
-				return
+		// if no active jobs for this repo, queue a pull job as a failsafe to try to ensure we are up to date as much as possible
+		if len(waitUntilComplete) == 0 {
+			body := AsJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionPull,
+				Pull:   &provisioning.SyncJobOptions{},
+			})
+
+			h.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repoName).
+				SubResource("jobs").
+				Body(body).
+				SetHeader("Content-Type", "application/json").
+				Do(context.Background())
+
+			j, err = h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+			require.NoError(t, err, "failed to list active jobs")
+
+			for _, item := range j.Items {
+				annotations := item.GetLabels()
+				if annotations[jobs.LabelRepository] == repoName {
+					waitUntilComplete[item.GetName()] = false
+				}
 			}
 		}
-		for elem, isComplete := range waitUntilComplete {
-			if !isComplete {
-				collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			for elem := range waitUntilComplete {
+				_, err := h.Jobs.Resource.Get(context.Background(), elem, metav1.GetOptions{})
+				switch {
+				case err == nil:
+					collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
+					return
+				case apierrors.IsNotFound(err):
+					waitUntilComplete[elem] = true
+				default:
+					collect.Errorf("get(%s) for repo %s: %v", elem, repoName, err)
+					return
+				}
+			}
+			for elem, isComplete := range waitUntilComplete {
+				if !isComplete {
+					collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
+					return
+				}
+			}
+		}, WaitTimeoutDefault, WaitIntervalDefault, "jobs for %s should finish. status: %v", repoName, waitUntilComplete)
+
+		// Then wait for them to be listed as historic jobs
+		var list *unstructured.UnstructuredList
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
+			if !assert.NoError(collect, err, "failed to list historic jobs") {
 				return
 			}
-		}
-	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs for %s should finish. status: %v", repoName, waitUntilComplete)
+			list, err = result.ToList()
+			if !assert.NoError(collect, err, "results should be a list") {
+				return
+			}
+			if !assert.NotEmpty(collect, list.Items, "expect at least one job") {
+				return
+			}
+		}, WaitTimeoutDefault, WaitIntervalDefault, "failed to list historic jobs")
 
-	// Then wait for them to be listed as historic jobs
-	var list *unstructured.UnstructuredList
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
-		if !assert.NoError(collect, err, "failed to list historic jobs") {
+		// Check that all the jobs are successful
+		successCount := 0
+		for _, elem := range list.Items {
+			require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
+
+			// historic jobs will have a suffix of -<hash>, trim that to see if the job is one we were waiting on
+			if _, ok := waitUntilComplete[getNameBeforeLastDash(elem.GetName())]; ok && (MustNestedString(elem.Object, "status", "state") != string(provisioning.JobStateError)) {
+				successCount++
+			}
+		}
+
+		// can be greater if a pull job was queued by a background task
+		if successCount >= len(waitUntilComplete) {
 			return
 		}
-		list, err = result.ToList()
-		if !assert.NoError(collect, err, "results should be a list") {
-			return
-		}
-		if !assert.NotEmpty(collect, list.Items, "expect at least one job") {
-			return
-		}
-	}, WaitTimeoutDefault, WaitIntervalDefault, "failed to list historic jobs")
 
-	// finally check that all the jobs are successful
-	successCount := 0
-	for _, elem := range list.Items {
-		require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
-
-		// historic jobs will have a suffix of -<hash>, trim that to see if the job is one we were waiting on
-		if _, ok := waitUntilComplete[getNameBeforeLastDash(elem.GetName())]; ok && (MustNestedString(elem.Object, "status", "state") != string(provisioning.JobStateError)) {
-			successCount++
+		// On the final attempt, fail the test with a descriptive message
+		if attempt == maxRetries {
+			require.GreaterOrEqual(t, successCount, len(waitUntilComplete),
+				"should have all original jobs we were waiting on successful after %d attempt(s). got: %v. expected: %v",
+				maxRetries+1, list.Items, waitUntilComplete)
 		}
 	}
-	// can be greater if a pull job was queued by a background task
-	require.GreaterOrEqual(t, successCount, len(waitUntilComplete), "should have all original jobs we were waiting on successful. got: %v. expected: %v", list.Items, waitUntilComplete)
 }
 
 func getNameBeforeLastDash(name string) string {
