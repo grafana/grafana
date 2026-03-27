@@ -25,7 +25,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       source: data.request.app,
       datasourceName: datasource.name,
       datasourceUid: datasource.uid,
-      datasourceId: datasource.id, // temporary while we migrate to datasourceUid
       datasourceType: datasource.type,
       dataSize: 0,
       panelId: 0,
