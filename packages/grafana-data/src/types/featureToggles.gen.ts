@@ -1736,6 +1736,11 @@ export interface FeatureToggles {
   */
   frontendServiceSSOAutoLogin?: boolean;
   /**
+  * Enables the splash screen modal for introducing new Grafana features on first session
+  * @default false
+  */
+  splashScreen?: boolean;
+  /**
   * Aligns query splitting chunks with UTC midnight
   * @default false
   */

@@ -850,6 +850,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/Select/ @grafana/grafana-frontend-platform
 /public/app/core/components/SharedPreferences/ @grafana/grafana-frontend-platform
 /public/app/core/components/Signup/ @grafana/grafana-frontend-navigation
+/public/app/core/components/SplashScreenModal/ @grafana/grafana-frontend-platform
 /public/app/core/components/SplitPaneWrapper/ @grafana/observability-traces-and-profiling
 /public/app/core/components/SVG/ @grafana/dataviz-squad
 /public/app/core/components/TagFilter/ @grafana/grafana-frontend-platform
