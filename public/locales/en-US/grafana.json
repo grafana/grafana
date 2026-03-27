@@ -5672,11 +5672,7 @@
       "import-dashboard-button": "Import dashboard",
       "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
       "select-layout-header": "Select layout",
-      "show-less-dashboards": "Show less",
-      "show-more-dashboards": "Show more",
-      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
-      "title": "New dashboard",
-      "use-template-button": "Use this dashboard"
+      "title": "New dashboard"
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
