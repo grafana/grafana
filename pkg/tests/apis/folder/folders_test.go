@@ -1343,7 +1343,7 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 	}
 
 	for _, mode := range modes {
-		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete blocked by library elements)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete blocked by library elements)", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    true,
 				DisableAnonymous:     true,
@@ -1419,7 +1419,7 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 	// TODO: re-enable on mode 4 and 5 when we migrate /api to /apis for library connections, and begin to
 	// use search to return the connections, rather than the connections table.
 	for _, mode := range modes {
-		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete parent blocked by library elements in child)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete parent blocked by library elements in child)", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    true,
 				DisableAnonymous:     true,
@@ -1511,7 +1511,7 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 	// TODO: re-enable on mode 4 and 5 when we migrate /api to /apis for library connections, and begin to
 	// use search to return the connections, rather than the connections table.
 	for _, mode := range modes {
-		t.Run(fmt.Sprintf("mode %v - delete blocked by connected library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+		t.Run(fmt.Sprintf("mode %v - delete blocked by connected library panels in folder and subfolder", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    true,
 				DisableAnonymous:     true,
@@ -1582,7 +1582,7 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 	}
 
 	for _, mode := range modes {
-		t.Run(fmt.Sprintf("mode %v - delete succeeds and cleans up dangling library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+		t.Run(fmt.Sprintf("mode %v - delete succeeds and cleans up dangling library panels in folder and subfolder", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    true,
 				DisableAnonymous:     true,
@@ -2274,7 +2274,7 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 	// Test dry-run on dual-writer modes 1-4.
 	// Mode 0 (legacy-only) does not use the dualWriter, so dry-run is not intercepted.
 	for _, mode := range modes {
-		modeDw := grafanarest.DualWriterMode(mode)
+		modeDw := mode
 		t.Run(fmt.Sprintf("dry-run mode %v", modeDw), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    true,
