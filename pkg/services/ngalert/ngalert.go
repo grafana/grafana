@@ -287,6 +287,7 @@ func (ng *AlertNG) init() error {
 		multiOrgMetrics,
 		ng.NotificationService,
 		ng.ResourcePermissions,
+		ng.RouteResourcePermissions,
 		moaLogger,
 		ng.SecretsService,
 		ng.FeatureToggles,
