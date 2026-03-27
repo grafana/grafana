@@ -105,9 +105,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 // TestIntegrationProvisioning_RepositoryPendingDeleteAdmission verifies that the
 // admission webhook enforces pending-delete semantics on Repository resources.
 func TestIntegrationProvisioning_RepositoryPendingDeleteAdmission(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	// createRepo creates a local repository and returns immediately — no health wait.
 	// Sufficient for tests that exercise the admission webhook synchronously.
