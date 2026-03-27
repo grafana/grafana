@@ -57,6 +57,13 @@ export class DataProvider {
 
     this.queryLabelKeys = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.queryLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
+
+    // Ensure metadata is loaded for completions. The builder mode triggers this via its own
+    // components, but the code editor does not, so we need to fetch it here if not already cached.
+    const existingMetadata = this.languageProvider.retrieveMetricsMetadata();
+    if (Object.keys(existingMetadata).length === 0) {
+      this.languageProvider.queryMetricsMetadata();
+    }
   }
 
   /**
