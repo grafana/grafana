@@ -35,7 +35,12 @@ describe('useCorrelationsK8s', () => {
       const correlation = toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
-        metadata: { name: 'testUid' },
+        metadata: {
+          name: 'testUid',
+          annotations: {
+            'grafana.app/managerAllowsEdits': 'true',
+          },
+        },
         spec: {
           label: 'testLabel',
           description: 'testDesc',
@@ -51,7 +56,12 @@ describe('useCorrelationsK8s', () => {
       const correlation = toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
-        metadata: { name: 'testUid' },
+        metadata: {
+          name: 'testUid',
+          annotations: {
+            'grafana.app/managerAllowsEdits': 'true',
+          },
+        },
         spec: {
           label: 'testLabel',
           description: 'testDesc',
@@ -68,7 +78,12 @@ describe('useCorrelationsK8s', () => {
       const correlation = toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
-        metadata: { name: 'testUid' },
+        metadata: {
+          name: 'testUid',
+          annotations: {
+            'grafana.app/managerAllowsEdits': 'true',
+          },
+        },
         spec: {
           label: 'testLabel',
           description: 'testDesc',
@@ -92,7 +107,12 @@ describe('useCorrelationsK8s', () => {
       const correlation = toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
-        metadata: { name: 'testUid' },
+        metadata: {
+          name: 'testUid',
+          annotations: {
+            'grafana.app/managerAllowsEdits': 'true',
+          },
+        },
         spec: {
           label: 'testLabel',
           description: 'testDesc',
