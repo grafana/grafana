@@ -6,6 +6,7 @@ import {
   SceneObjectBase,
   sceneGraph,
   AdHocFiltersVariable,
+  GroupByVariable,
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
@@ -30,8 +31,10 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   static Component = VizPanelSubHeaderRenderer;
 
   private _adHocVar?: AdHocFiltersVariable;
+  private _groupByVar?: GroupByVariable;
 
   private _adHocSub?: Unsubscribable;
+  private _groupBySub?: Unsubscribable;
 
   private _queryRunnerDatasource?: DataSourceRef | null;
 
@@ -54,6 +57,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     }
 
     return () => {
+      this._groupBySub?.unsubscribe();
       this._adHocSub?.unsubscribe();
     };
   };
@@ -63,6 +67,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     const queryRunner = this.getQueryRunner();
 
     this._adHocVar = vars.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+    this._groupByVar = vars.state.variables.find((variable) => variable instanceof GroupByVariable);
     this._queryRunnerDatasource = queryRunner ? getDatasourceFromQueryRunner(queryRunner) : undefined;
 
     this.setDrilldownApplicabilitySupportHelper();
@@ -80,6 +85,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     this._subs.add(
       vars.subscribeToState((n) => {
         this._adHocVar = n.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+        this._groupByVar = n.variables.find((variable) => variable instanceof GroupByVariable);
 
         this.refreshDrilldownVarsSubscriptions();
       })
@@ -93,9 +99,30 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
         });
       }
     });
+
+    this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
+      if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+        this.setDrilldownApplicabilitySupportHelper(undefined, {
+          datasource: n.datasource,
+          applicabilityEnabled: n.applicabilityEnabled,
+        });
+      }
+    });
   }
 
   private refreshDrilldownVarsSubscriptions() {
+    if (this._groupByVar) {
+      this._groupBySub?.unsubscribe();
+      this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
+        if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
+          this.setDrilldownApplicabilitySupportHelper(undefined, {
+            datasource: n.datasource,
+            applicabilityEnabled: n.applicabilityEnabled,
+          });
+        }
+      });
+    }
+
     if (this._adHocVar) {
       this._adHocSub?.unsubscribe();
       this._adHocSub = this._adHocVar?.subscribeToState((n, p) => {
@@ -109,14 +136,24 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     }
   }
 
-  private setDrilldownApplicabilitySupportHelper(adHocData?: ApplicabilitySupportHelperState) {
+  private setDrilldownApplicabilitySupportHelper(
+    adHocData?: ApplicabilitySupportHelperState,
+    groupByData?: ApplicabilitySupportHelperState
+  ) {
     this.setState({
-      supportsApplicability: verifyDrilldownApplicability(
-        this,
-        this._queryRunnerDatasource,
-        adHocData?.datasource ?? this._adHocVar?.state.datasource ?? null,
-        adHocData?.applicabilityEnabled ?? this._adHocVar?.state.applicabilityEnabled ?? false
-      ),
+      supportsApplicability:
+        verifyDrilldownApplicability(
+          this,
+          this._queryRunnerDatasource,
+          adHocData?.datasource ?? this._adHocVar?.state.datasource ?? null,
+          adHocData?.applicabilityEnabled ?? this._adHocVar?.state.applicabilityEnabled ?? false
+        ) ||
+        verifyDrilldownApplicability(
+          this,
+          this._queryRunnerDatasource,
+          groupByData?.datasource ?? this._groupByVar?.state.datasource ?? null,
+          groupByData?.applicabilityEnabled ?? this._groupByVar?.state.applicabilityEnabled ?? false
+        ),
     });
   }
 
@@ -137,11 +174,18 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
   const { supportsApplicability, hideNonApplicableDrilldowns } = model.useState();
   const variables = sceneGraph.getVariables(model);
   const adhocFiltersVar = variables.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+  const groupByVar = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
 
   if (!queryRunner || hideNonApplicableDrilldowns || !supportsApplicability) {
     return null;
   }
 
-  return <PanelNonApplicableDrilldownsSubHeader filtersVar={adhocFiltersVar} queryRunner={queryRunner} />;
+  return (
+    <PanelNonApplicableDrilldownsSubHeader
+      filtersVar={adhocFiltersVar}
+      groupByVar={groupByVar}
+      queryRunner={queryRunner}
+    />
+  );
 }

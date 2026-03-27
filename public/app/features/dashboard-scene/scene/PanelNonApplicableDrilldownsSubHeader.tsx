@@ -5,10 +5,15 @@ import { useMeasure } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersVariable, isGroupByFilter, SceneQueryRunner } from '@grafana/scenes';
+import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getDrilldownApplicability } from '../utils/drilldownUtils';
+
+// Inline check until isGroupByFilter is available from @grafana/scenes
+function isGroupByFilter(filter: { operator: string }): boolean {
+  return filter.operator === 'groupBy';
+}
 
 const GAP_SIZE = 8;
 const FONT_SIZE = 12;
@@ -20,16 +25,20 @@ interface NonApplicableItem {
 
 interface Props {
   filtersVar?: AdHocFiltersVariable;
+  groupByVar?: GroupByVariable;
   queryRunner: SceneQueryRunner;
 }
 
-export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, queryRunner }: Props) {
+export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, queryRunner }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
   const filtersState = filtersVar?.useState();
+  const groupByState = groupByVar?.useState();
   const { queries } = queryRunner.useState();
+
+  const useAdhocGroupBy = filtersVar?.state.enableGroupBy === true;
 
   const [nonApplicable, setNonApplicable] = useState<NonApplicableItem[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(0);
@@ -43,6 +52,16 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, queryRunner 
     );
   }, [filtersState?.filters, filtersState?.originFilters]);
 
+  const groupByKey = useMemo(() => {
+    if (useAdhocGroupBy) {
+      return '';
+    }
+    const value = groupByState?.value ?? [];
+    const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
+    const keysApplicabilityKey = JSON.stringify(groupByState?.keysApplicability?.map((keyApp) => keyApp.key) ?? []);
+    return JSON.stringify(groupByValues) + keysApplicabilityKey;
+  }, [useAdhocGroupBy, groupByState?.value, groupByState?.keysApplicability]);
+
   useEffect(() => {
     const fetchApplicability = async () => {
       const filters = filtersState?.filters ?? [];
@@ -50,11 +69,10 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, queryRunner 
       const allFilters = [...filters, ...originFilters];
 
       const realFilters = allFilters.filter((f) => !isGroupByFilter(f));
-      const groupByFilters = allFilters.filter((f) => isGroupByFilter(f));
 
       const items: NonApplicableItem[] = [];
 
-      const applicability = await getDrilldownApplicability(queryRunner, filtersVar);
+      const applicability = await getDrilldownApplicability(queryRunner, filtersVar, groupByVar);
 
       if (realFilters.length) {
         for (const filter of realFilters) {
@@ -69,11 +87,28 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, queryRunner 
         }
       }
 
-      if (groupByFilters.length) {
+      if (useAdhocGroupBy) {
+        const groupByFilters = allFilters.filter((f) => isGroupByFilter(f));
         for (const filter of groupByFilters) {
           const result = applicability?.find((entry) => entry.key === filter.key);
           if (result && !result.applicable) {
             items.push({ label: filter.key, reason: result.reason });
+          }
+        }
+      } else {
+        const value = groupByState?.value ?? [];
+        const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
+        const groupByApplicability = groupByState?.keysApplicability;
+
+        for (const key of groupByValues) {
+          const apiResult = applicability?.find((entry) => entry.key === key);
+          if (apiResult && !apiResult.applicable) {
+            items.push({ label: String(key), reason: apiResult.reason });
+          } else if (!apiResult) {
+            const stateResult = groupByApplicability?.find((entry) => entry.key === key);
+            if (stateResult && !stateResult.applicable) {
+              items.push({ label: String(key) });
+            }
           }
         }
       }
@@ -83,7 +118,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, queryRunner 
 
     fetchApplicability();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterKey, filtersVar, queryRunner, queries]);
+  }, [filterKey, groupByKey, filtersVar, groupByVar, queryRunner, queries]);
 
   useLayoutEffect(() => {
     if (!nonApplicable.length) {
