@@ -147,10 +147,6 @@ export default defineConfig<PluginOptions>({
       name: 'canvas',
       testDir: path.join(testDirRoot, '/canvas'),
     }),
-    withAuth({
-      name: 'zipkin',
-      testDir: path.join(pluginDirRoot, '/zipkin'),
-    }),
     {
       name: 'unauthenticated',
       testDir: path.join(testDirRoot, '/unauthenticated'),

@@ -370,7 +370,6 @@
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/oss-big-tent
 /pkg/tsdb/grafana-postgresql-datasource/ @grafana/oss-big-tent
-/pkg/tsdb/zipkin/ @grafana/oss-big-tent
 /pkg/tsdb/jaeger/ @grafana/oss-big-tent
 
 # Partner Datasources backend code
@@ -1130,7 +1129,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/prometheus/ @grafana/oss-big-tent
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
-/public/app/plugins/datasource/zipkin/ @grafana/oss-big-tent
 /public/app/plugins/datasource/tempo/ @grafana/oss-big-tent
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/parca/ @grafana/oss-big-tent

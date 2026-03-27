@@ -34,9 +34,9 @@ test.describe(
         createDataSourceConfigPage,
         page,
       }) => {
-        const configPage = await createDataSourceConfigPage({ type: 'zipkin' });
+        const configPage = await createDataSourceConfigPage({ type: 'jaeger' });
         configPage.mockHealthCheckResponse({ message: 'Data source is working', status: 'OK' }, 200);
-        await page.getByPlaceholder('http://localhost:9411').fill('http://localhost:9411');
+        await page.getByPlaceholder('http://localhost:16686').fill('http://localhost:16686');
         await expect(configPage.saveAndTest()).toBeOK();
         await expect(
           configPage,

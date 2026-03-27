@@ -91,7 +91,6 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/mysql',
     '<rootDir>/public/app/plugins/datasource/parca',
     '<rootDir>/public/app/plugins/datasource/tempo',
-    '<rootDir>/public/app/plugins/datasource/zipkin',
   ],
   projects: ['<rootDir>'],
 };

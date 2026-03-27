@@ -13,7 +13,6 @@ import {
 import { transformToOTLP } from '@grafana-plugins/tempo/resultTransformer';
 
 import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
-import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/transforms';
 
 /**
  * Downloads a DataFrame as a TXT file.
@@ -115,12 +114,6 @@ export function downloadTraceAsJson(frame: DataFrame, title: string): string {
       let res = transformToJaeger(new MutableDataFrame(frame));
       downloadAsJson(res, title);
       traceFormat = 'jaeger';
-      break;
-    }
-    case 'zipkin': {
-      let res = transformToZipkin(new MutableDataFrame(frame));
-      downloadAsJson(res, title);
-      traceFormat = 'zipkin';
       break;
     }
     case 'otlp':

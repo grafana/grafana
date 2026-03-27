@@ -1122,6 +1122,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusrec
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.124.1/go.mod h1:4+9pSfniXXdRpkKf0QNdElOd7yIWD4ux8D260tSPV54=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.124.1 h1:XkxqUEoukMWXF+EpEWeM9itXKt62yKi13Lzd8ZEASP4=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.124.1/go.mod h1:CuCZVPz+yn88b5vhZPAlxaMrVuhAVexUV6f8b07lpUc=
+github.com/openzipkin/zipkin-go v0.4.3 h1:9EGwpqkgnwdEIJ+Od7QVSEIH+ocmm5nPat0G7sjsSdg=
+github.com/openzipkin/zipkin-go v0.4.3/go.mod h1:M9wCJZFWCo2RiY+o1eBCEMe0Dp2S5LDHcMZmk3RmK7c=
 github.com/oschwald/geoip2-golang v1.11.0 h1:hNENhCn1Uyzhf9PTmquXENiWS6AlxAEnBII6r8krA3w=
 github.com/oschwald/geoip2-golang v1.11.0/go.mod h1:P9zG+54KPEFOliZ29i7SeYZ/GM6tfEL+rgSn03hYuUo=
 github.com/oschwald/maxminddb-golang v1.13.0 h1:R8xBorY71s84yO06NgTmQvqvTvlS/bnYZrrWX1MElnU=
