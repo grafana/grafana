@@ -15879,6 +15879,13 @@
       },
       "title-calc-alert": "Calculations will not have an effect if no fields are being grouped on"
     },
+    "group-to-nested-table": {
+      "aria-label-matcher-type": "Select matcher type",
+      "aria-label-operation": "Select operation",
+      "aria-label-remove-rule": "Remove rule",
+      "button-add-rule": "Add rule",
+      "placeholder": "Select operation"
+    },
     "group-to-nested-table-transformer-editor": {
       "description": {
         "group-by-field-value": "Group data by a field value and create nested tables with the grouped data."

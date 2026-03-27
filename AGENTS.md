@@ -49,6 +49,8 @@ yarn test -u                                       # Update snapshots
 yarn e2e:playwright path/to/test.spec.ts           # Specific test
 ```
 
+When running e2e tests, there's no need to start the server separately; the e2e test command starts an instance of the server to run tests against.
+
 ### Lint & Format
 
 ```bash

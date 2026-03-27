@@ -1,30 +1,53 @@
 import { css } from '@emotion/css';
-import { useCallback, useId } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import {
   DataTransformerID,
+  type GrafanaTheme2,
+  FieldMatcherID,
+  PluginState,
   type ReducerID,
   type SelectableValue,
   standardTransformers,
+  TransformerCategory,
   type TransformerRegistryItem,
   type TransformerUIProps,
-  TransformerCategory,
-  type GrafanaTheme2,
-  PluginState,
 } from '@grafana/data';
 import {
   type GroupByFieldOptions,
   GroupByOperationID,
-  type GroupByTransformerOptions,
+  type GroupToNestedTableMatcherConfig,
   type GroupToNestedTableTransformerOptions,
+  type GroupToNestedTableTransformerOptionsV2,
+  isV1GroupToNestedTableOptions,
+  migrateGroupToNestedTableOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import {
+  Alert,
+  Button,
+  Combobox,
+  Field,
+  fieldMatchersUI,
+  IconButton,
+  InlineField,
+  Select,
+  Stack,
+  StatsPicker,
+  Switch,
+  selectableValueToComboboxOption,
+  useTheme2,
+} from '@grafana/ui';
 
 import darkImage from '../images/dark/groupToNestedTable.svg';
 import lightImage from '../images/light/groupToNestedTable.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
+
+// ---------------------------------------------------------------------------
+// V1 (legacy) editor — unchanged from original
+// ---------------------------------------------------------------------------
 
 interface FieldProps {
   fieldName: string;
@@ -32,7 +55,317 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
+export const GroupByFieldConfiguration = ({ fieldName, config: fieldConfig, onConfigChange }: FieldProps) => {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+  const id = useId();
+  const onChange = useCallback(
+    (value: SelectableValue<GroupByOperationID | null>) => {
+      onConfigChange({
+        aggregations: fieldConfig?.aggregations ?? [],
+        operation: value?.value ?? null,
+      });
+    },
+    [fieldConfig, onConfigChange]
+  );
+
+  const operationOptions = [
+    {
+      label: t('transformers.group-by-field-configuration.options.label.group-by', 'Group by'),
+      value: GroupByOperationID.groupBy,
+    },
+    {
+      label: t('transformers.group-by-field-configuration.options.label.calculate', 'Calculate'),
+      value: GroupByOperationID.aggregate,
+    },
+  ];
+
+  return (
+    <InlineField className={styles.label} label={fieldName} grow shrink htmlFor={id}>
+      <Stack gap={0.5} direction="row" wrap={false}>
+        <div className={styles.operation}>
+          <Select
+            inputId={id}
+            options={operationOptions}
+            value={fieldConfig?.operation}
+            placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
+            onChange={onChange}
+            isClearable
+          />
+        </div>
+
+        {fieldConfig?.operation === GroupByOperationID.aggregate && (
+          <StatsPicker
+            placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
+            allowMultiple
+            stats={fieldConfig.aggregations}
+            onChange={(stats) => {
+              // eslint-disable-next-line
+              onConfigChange({ ...fieldConfig, aggregations: stats as ReducerID[] });
+            }}
+          />
+        )}
+      </Stack>
+    </InlineField>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// V2 editor — matcher-based rule list
+// ---------------------------------------------------------------------------
+
+const DEFAULT_MATCHER_ID = FieldMatcherID.byName;
+
+interface RuleRowProps {
+  rule: GroupToNestedTableMatcherConfig;
+  data: Parameters<typeof GroupToNestedTableTransformerEditorV2>[0]['input'];
+  onChange: (rule: GroupToNestedTableMatcherConfig) => void;
+  onDelete: () => void;
+}
+
+const RuleRow = ({ rule, data, onChange, onDelete }: RuleRowProps) => {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+  const matcherSelectId = useId();
+  const matcherOptions = useMemo(
+    () =>
+      fieldMatchersUI
+        .selectOptions()
+        .options.map(selectableValueToComboboxOption)
+        .filter((v) => !!v),
+    []
+  );
+
+  // Resolve the UI component for the current matcher type
+  const matcherUI = fieldMatchersUI.getIfExists(rule.matcher.id) ?? fieldMatchersUI.get(DEFAULT_MATCHER_ID);
+
+  const operationOptions = [
+    {
+      label: t('transformers.group-by-field-configuration.options.label.group-by', 'Group by'),
+      value: GroupByOperationID.groupBy,
+    },
+    {
+      label: t('transformers.group-by-field-configuration.options.label.calculate', 'Calculate'),
+      value: GroupByOperationID.aggregate,
+    },
+  ];
+
+  return (
+    <Stack gap={0.5} direction="column">
+      {/* Row 1: matcher type + matcher options + operation + delete */}
+      <Stack gap={0.5} direction="row" wrap={false} alignItems="center">
+        {/* Matcher type selector */}
+        <div className={styles.matcherType}>
+          <Combobox
+            id={matcherSelectId}
+            options={matcherOptions}
+            value={rule.matcher.id}
+            onChange={(value) => {
+              onChange({ ...rule, matcher: { id: value.value } });
+            }}
+            aria-label={t('transformers.group-to-nested-table.aria-label-matcher-type', 'Select matcher type')}
+          />
+        </div>
+
+        {/* Matcher sub-options (field name picker, type picker, regex input, etc.) */}
+        <div className={styles.matcherOptions}>
+          <matcherUI.component
+            id={matcherUI.id}
+            matcher={matcherUI.matcher}
+            data={data}
+            options={rule.matcher.options}
+            onChange={(matcherOption) => {
+              onChange({ ...rule, matcher: { id: rule.matcher.id, options: matcherOption } });
+            }}
+          />
+        </div>
+
+        {/* Operation selector */}
+        <div className={styles.operation}>
+          <Combobox
+            options={operationOptions}
+            value={rule.operation}
+            placeholder={t('transformers.group-to-nested-table.placeholder', 'Select operation')}
+            onChange={(value) => {
+              onChange({ ...rule, operation: value?.value ?? null });
+            }}
+            isClearable
+            aria-label={t('transformers.group-to-nested-table.aria-label-operation', 'Select operation')}
+          />
+        </div>
+
+        {/* Delete button */}
+        <IconButton
+          name="trash-alt"
+          onClick={onDelete}
+          tooltip={t('transformers.group-to-nested-table.aria-label-remove-rule', 'Remove rule')}
+          aria-label={t('transformers.group-to-nested-table.aria-label-remove-rule', 'Remove rule')}
+        />
+      </Stack>
+
+      {/* Row 2: aggregation options (only when operation is aggregate) */}
+      {rule.operation === GroupByOperationID.aggregate && (
+        <div className={styles.aggregateOptionsRow}>
+          <Stack gap={0.5} direction="row" wrap={false} alignItems="center">
+            <StatsPicker
+              placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
+              allowMultiple
+              stats={rule.aggregations}
+              onChange={(stats: string[]) => {
+                // StatsPicker should return ReducerID[] but it is typed as string[].
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                onChange({ ...rule, aggregations: stats as ReducerID[] });
+              }}
+            />
+            <InlineField
+              className={styles.inlineField}
+              label={t('transformers.group-to-nested-table.label-keep-nested-field', 'Keep nested field(s)')}
+              tooltip={t(
+                'transformers.group-to-nested-table.tooltip-keep-nested-field',
+                'When enabled, the raw field values are also retained in the nested sub-table alongside the aggregated column.'
+              )}
+            >
+              <Switch
+                value={rule.keepNestedField === true}
+                onChange={() => {
+                  onChange({ ...rule, keepNestedField: !rule.keepNestedField });
+                }}
+              />
+            </InlineField>
+          </Stack>
+        </div>
+      )}
+    </Stack>
+  );
+};
+
+type EditorProps = TransformerUIProps<GroupToNestedTableTransformerOptions | GroupToNestedTableTransformerOptionsV2>;
+
+const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptions, onChange }: EditorProps) => {
+  // Always work internally in V2 shape
+  const options: GroupToNestedTableTransformerOptionsV2 = isV1GroupToNestedTableOptions(rawOptions)
+    ? migrateGroupToNestedTableOptions(rawOptions)
+    : rawOptions;
+
+  const showHeaders =
+    options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
+
+  const hasGrouping = options.rules.some((r) => r.operation === GroupByOperationID.groupBy);
+  const hasAggregation = options.rules.some(
+    (r) => r.operation === GroupByOperationID.aggregate && r.aggregations.length > 0
+  );
+  const showCalcAlert = hasAggregation && !hasGrouping;
+
+  const onRuleChange = useCallback(
+    (index: number) => (rule: GroupToNestedTableMatcherConfig) => {
+      const rules = [...options.rules];
+      rules[index] = rule;
+      onChange({ ...options, rules });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange, options.rules]
+  );
+
+  const onRuleDelete = useCallback(
+    (index: number) => () => {
+      const rules = options.rules.filter((_, i) => i !== index);
+      onChange({ ...options, rules });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange, options.rules]
+  );
+
+  const onAddRule = useCallback(() => {
+    onChange({
+      ...options,
+      rules: [
+        ...options.rules,
+        {
+          matcher: { id: DEFAULT_MATCHER_ID },
+          operation: null,
+          aggregations: [],
+        },
+      ],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onChange, options.rules]);
+
+  const onShowFieldNamesChange = useCallback(() => {
+    onChange({
+      ...options,
+      showSubframeHeaders:
+        options.showSubframeHeaders === undefined ? !SHOW_NESTED_HEADERS_DEFAULT : !options.showSubframeHeaders,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onChange, options.showSubframeHeaders]);
+
+  return (
+    <Stack gap={1} direction="column">
+      {showCalcAlert && (
+        <Alert
+          title={t(
+            'transformers.group-to-nested-table-transformer-editor.title-calc-alert',
+            'Calculations will not have an effect if no fields are being grouped on.'
+          )}
+          severity="warning"
+        />
+      )}
+
+      <Stack gap={0.5} direction="column">
+        {options.rules.map((rule, index) => (
+          <RuleRow key={index} rule={rule} data={input} onChange={onRuleChange(index)} onDelete={onRuleDelete(index)} />
+        ))}
+      </Stack>
+
+      <div>
+        <Button icon="plus" onClick={onAddRule} variant="secondary" size="sm">
+          {t('transformers.group-to-nested-table.button-add-rule', 'Add rule')}
+        </Button>
+      </div>
+
+      <Field
+        label={t(
+          'transformers.group-to-nested-table-transformer-editor.label-show-field-names-in-nested-tables',
+          'Show field names in nested tables'
+        )}
+        description={t(
+          'transformers.group-to-nested-table-transformer-editor.description-show-field-names',
+          'If enabled nested tables will show field names as a table header'
+        )}
+        noMargin
+      >
+        <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
+      </Field>
+    </Stack>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Top-level editor — switches between V1 and V2 based on feature toggle
+// ---------------------------------------------------------------------------
+
 export const GroupToNestedTableTransformerEditor = ({
+  input,
+  options,
+  onChange,
+}: TransformerUIProps<GroupToNestedTableTransformerOptions | GroupToNestedTableTransformerOptionsV2>) => {
+  if (config.featureToggles.groupToNestedTableV2) {
+    return <GroupToNestedTableTransformerEditorV2 input={input} options={options} onChange={onChange} />;
+  }
+
+  // V1 editor: options will be V1 shape when toggle is off (or freshly created panels)
+  // Cast is safe because without the toggle, the transformer always produces V1 options.
+  const v1Options = isV1GroupToNestedTableOptions(options)
+    ? options
+    : { showSubframeHeaders: options.showSubframeHeaders, fields: {} };
+  return <GroupToNestedTableTransformerEditorV1 input={input} options={v1Options} onChange={onChange} />;
+};
+
+// ---------------------------------------------------------------------------
+// V1 (legacy) top-level editor component — original implementation
+// ---------------------------------------------------------------------------
+
+const GroupToNestedTableTransformerEditorV1 = ({
   input,
   options,
   onChange,
@@ -42,12 +375,12 @@ export const GroupToNestedTableTransformerEditor = ({
     options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
 
   const onConfigChange = useCallback(
-    (fieldName: string) => (config: GroupByFieldOptions) => {
+    (fieldName: string) => (fieldConfig: GroupByFieldOptions) => {
       onChange({
         ...options,
         fields: {
           ...options.fields,
-          [fieldName]: config,
+          [fieldName]: fieldConfig,
         },
       });
     },
@@ -73,9 +406,6 @@ export const GroupToNestedTableTransformerEditor = ({
     [onChange]
   );
 
-  // See if there's both an aggregation and grouping field configured
-  // for calculations. If not we display a warning because there
-  // needs to be a grouping for the calculation to have effect
   let hasGrouping,
     hasAggregation = false;
   for (const field of Object.values(options.fields)) {
@@ -126,93 +456,59 @@ export const GroupToNestedTableTransformerEditor = ({
   );
 };
 
-export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-  const id = useId();
-  const onChange = useCallback(
-    (value: SelectableValue<GroupByOperationID | null>) => {
-      onConfigChange({
-        aggregations: config?.aggregations ?? [],
-        operation: value?.value ?? null,
-      });
-    },
-    [config, onConfigChange]
-  );
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
 
-  const options = [
-    {
-      label: t('transformers.group-by-field-configuration.options.label.group-by', 'Group by'),
-      value: GroupByOperationID.groupBy,
-    },
-    {
-      label: t('transformers.group-by-field-configuration.options.label.calculate', 'Calculate'),
-      value: GroupByOperationID.aggregate,
-    },
-  ];
+const getStyles = (theme: GrafanaTheme2) => ({
+  label: css({
+    minWidth: theme.spacing(32),
+  }),
+  operation: css({
+    flexShrink: 0,
+    height: '100%',
+    width: theme.spacing(24),
+  }),
+  matcherType: css({
+    flexShrink: 0,
+    width: theme.spacing(28),
+  }),
+  matcherOptions: css({
+    flexShrink: 0,
+    minWidth: theme.spacing(24),
+  }),
+  aggregateOptionsRow: css({
+    maxWidth: theme.spacing(80),
+  }),
+  inlineField: css({
+    alignItems: 'center',
+  }),
+});
 
-  return (
-    <InlineField className={styles.label} label={fieldName} grow shrink htmlFor={id}>
-      <Stack gap={0.5} direction="row" wrap={false}>
-        <div className={styles.operation}>
-          <Select
-            inputId={id}
-            options={options}
-            value={config?.operation}
-            placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
-            onChange={onChange}
-            isClearable
-          />
-        </div>
+// ---------------------------------------------------------------------------
+// Registry item factory
+// ---------------------------------------------------------------------------
 
-        {config?.operation === GroupByOperationID.aggregate && (
-          <StatsPicker
-            placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
-            allowMultiple
-            stats={config.aggregations}
-            onChange={(stats) => {
-              // eslint-disable-next-line
-              onConfigChange({ ...config, aggregations: stats as ReducerID[] });
-            }}
-          />
-        )}
-      </Stack>
-    </InlineField>
-  );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    label: css({
-      minWidth: theme.spacing(32),
-    }),
-    operation: css({
-      flexShrink: 0,
-      height: '100%',
-      width: theme.spacing(24),
-    }),
-  };
-};
-
-export const getGroupToNestedTableTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> =
-  () => ({
-    id: DataTransformerID.groupToNestedTable,
-    editor: GroupToNestedTableTransformerEditor,
-    transformation: standardTransformers.groupToNestedTable,
-    name: t(
-      'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
-      'Group to nested tables'
-    ),
-    description: t(
-      'transformers.group-to-nested-table-transformer-editor.description.group-by-field-value',
-      'Group data by a field value and create nested tables with the grouped data.'
-    ),
-    categories: new Set([
-      TransformerCategory.Combine,
-      TransformerCategory.CalculateNewFields,
-      TransformerCategory.Reformat,
-    ]),
-    state: PluginState.beta,
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });
+export const getGroupToNestedTableTransformRegistryItem: () => TransformerRegistryItem<
+  GroupToNestedTableTransformerOptions | GroupToNestedTableTransformerOptionsV2
+> = () => ({
+  id: DataTransformerID.groupToNestedTable,
+  editor: GroupToNestedTableTransformerEditor,
+  transformation: standardTransformers.groupToNestedTable,
+  name: t(
+    'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
+    'Group to nested tables'
+  ),
+  description: t(
+    'transformers.group-to-nested-table-transformer-editor.description.group-by-field-value',
+    'Group data by a field value and create nested tables with the grouped data.'
+  ),
+  categories: new Set([
+    TransformerCategory.Combine,
+    TransformerCategory.CalculateNewFields,
+    TransformerCategory.Reformat,
+  ]),
+  state: PluginState.beta,
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

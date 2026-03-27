@@ -11,7 +11,14 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import {
+  Combobox,
+  fieldMatchersUI,
+  InlineField,
+  InlineFieldRow,
+  selectableValueToComboboxOption,
+  useStyles2,
+} from '@grafana/ui';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import darkImage from '../images/dark/configFromData.svg';
@@ -49,7 +56,14 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
-  const matchers = useMemo(() => fieldMatchersUI.selectOptions().options, []);
+  const matchers = useMemo(
+    () =>
+      fieldMatchersUI
+        .selectOptions()
+        .options.map(selectableValueToComboboxOption)
+        .filter((v) => !!v),
+    []
+  );
 
   return (
     <>
@@ -58,7 +72,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
           label={t('transformers.config-from-query-transformer-editor.label-config-query', 'Config query')}
           labelWidth={20}
         >
-          <Select onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
+          <Combobox onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -66,7 +80,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
           label={t('transformers.config-from-query-transformer-editor.label-apply-to', 'Apply to')}
           labelWidth={20}
         >
-          <Select onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
+          <Combobox onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
