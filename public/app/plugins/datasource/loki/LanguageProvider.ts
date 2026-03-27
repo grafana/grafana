@@ -598,14 +598,17 @@ export default class LokiLanguageProvider extends LanguageProvider {
     timeRange?: TimeRange;
     limit?: number;
   }): Promise<ParserAndLabelKeysResult> {
-    const fields = await this.fetchDetectedFields({
-      expr: queryOptions.expr,
-      timeRange: queryOptions?.timeRange,
-      limit: queryOptions?.limit,
-    },  {
+    const fields = await this.fetchDetectedFields(
+      {
+        expr: queryOptions.expr,
+        timeRange: queryOptions?.timeRange,
+        limit: queryOptions?.limit,
+      },
+      {
         showErrorAlert: false,
         showSuccessAlert: false,
-      });
+      }
+    );
 
     const response: ParserAndLabelKeysResult = {
       extractedLabelKeys: [],
