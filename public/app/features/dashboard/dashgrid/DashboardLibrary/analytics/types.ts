@@ -2,7 +2,6 @@ import { EventProperty } from '@grafana/runtime/internal';
 
 import type { ContentKind, SourceEntryPoint, EventLocation, DiscoveryMethod, FeatureVariant } from '../constants';
 
-/** Properties for when the library panel finishes rendering and surfaces its items. */
 export interface LoadedProperties extends EventProperty {
   /** Total number of items visible in the library at load time. */
   numberOfItems: number;
@@ -20,7 +19,6 @@ export interface LoadedProperties extends EventProperty {
   isDashboardAssistantEnabled?: boolean;
 }
 
-/** Properties for when a user selects an item from the library list. */
 export interface ItemClickedProperties extends EventProperty {
   /** The category of content the user clicked (e.g. panel, dashboard). */
   contentKind: ContentKind;
@@ -42,7 +40,6 @@ export interface ItemClickedProperties extends EventProperty {
   isDashboardAssistantEnabled?: boolean;
 }
 
-/** Properties for when a user submits or updates a search query in the library. */
 export interface SearchPerformedProperties extends EventProperty {
   /** Plugin IDs of data sources used as search filters. */
   datasourceTypes: string[];
@@ -56,7 +53,6 @@ export interface SearchPerformedProperties extends EventProperty {
   resultCount: number;
 }
 
-/** Properties for when the datasource mapping form is presented to the user during an import. */
 export interface MappingFormShownProperties extends EventProperty {
   /** The category of content being imported. */
   contentKind: ContentKind;
@@ -76,7 +72,6 @@ export interface MappingFormShownProperties extends EventProperty {
   constantInputsCount: number;
 }
 
-/** Properties for when the user submits the datasource mapping form to complete an import. */
 export interface MappingFormCompletedProperties extends EventProperty {
   /** The category of content being imported. */
   contentKind: ContentKind;
@@ -96,7 +91,6 @@ export interface MappingFormCompletedProperties extends EventProperty {
   autoMappedCount: number;
 }
 
-/** Properties for when the user clicks a UI entry point that opens the library. */
 export interface EntryPointClickedProperties extends EventProperty {
   /** The specific entry point (button, link, etc.) the user interacted with. */
   entryPoint: SourceEntryPoint;
@@ -104,7 +98,6 @@ export interface EntryPointClickedProperties extends EventProperty {
   contentKind: ContentKind;
 }
 
-/** Properties for when a dashboard compatibility check is initiated. */
 export interface CompatibilityCheckTriggeredProperties extends EventProperty {
   /** Unique identifier of the dashboard being checked. */
   dashboardId: string;
@@ -118,7 +111,6 @@ export interface CompatibilityCheckTriggeredProperties extends EventProperty {
   eventLocation: EventLocation;
 }
 
-/** Properties for when a dashboard compatibility check finishes and results are available. */
 export interface CompatibilityCheckCompletedProperties extends EventProperty {
   /** Unique identifier of the dashboard that was checked. */
   dashboardId: string;
