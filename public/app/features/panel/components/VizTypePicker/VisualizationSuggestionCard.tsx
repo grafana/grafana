@@ -5,6 +5,7 @@ import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, useStyles2 } from '@grafana/ui';
+import { LTTB_THRESHOLD, lttbPreviewData } from 'app/plugins/panel/timeseries/utils';
 
 import { PanelRenderer } from '../PanelRenderer';
 
@@ -59,8 +60,8 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
       };
     }
 
-    if (cardOptions.transformPreviewData) {
-      previewData = cardOptions.transformPreviewData(previewData);
+    if (previewData.series.some((frame) => frame.length > LTTB_THRESHOLD)) {
+      previewData = lttbPreviewData(previewData);
     }
 
     content = (

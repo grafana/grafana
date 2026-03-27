@@ -82,11 +82,6 @@ export interface VisualizationSuggestion<TOptions = {}, TFieldConfig extends {} 
      * Limits the number of rows per data frame passed to the panel when rendering the preview card.
      */
     maxRows?: number;
-    /**
-     * Transforms the panel data before passing it to the preview renderer.
-     * Applied after maxSeries and maxRows. Useful for downsampling dense time series data.
-     */
-    transformPreviewData?: <T extends { series: DataFrame[] }>(data: T) => T;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */
     icon?: string;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */

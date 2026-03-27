@@ -15,7 +15,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { Options } from './panelcfg.gen';
-import { lttbPreviewData } from './utils';
 
 const MAX_BARS = 100;
 const MAX_ROWS_SMOOTH_CHART = 200;
@@ -35,7 +34,6 @@ const withDefaults = (
     },
     cardOptions: {
       maxSeries: MAX_PREVIEW_SERIES,
-      transformPreviewData: lttbPreviewData,
       previewModifier: (s) => {
         s.options!.disableKeyboardEvents = true;
         s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;

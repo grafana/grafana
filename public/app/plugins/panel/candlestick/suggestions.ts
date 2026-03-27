@@ -1,8 +1,6 @@
 import { FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { lttbPreviewData } from '../timeseries/utils';
-
 import { defaultOptions } from './defaultOptions';
 import { prepareCandlestickFields } from './fields';
 import { type Options } from './panelcfg.gen';
@@ -35,7 +33,6 @@ export const candlestickSuggestionSupplier: VisualizationSuggestionsSupplier<Opt
       score: info.autoOpenClose ? VisualizationSuggestionScore.Good : VisualizationSuggestionScore.Best,
       cardOptions: {
         maxSeries: MAX_PREVIEW_SERIES,
-        transformPreviewData: lttbPreviewData,
       },
     },
   ];

@@ -370,7 +370,7 @@ export function getGroupedFilters(
   return groupingFilters;
 }
 
-const LTTB_THRESHOLD = 350;
+export const LTTB_THRESHOLD = 350;
 
 // adapted from https://github.com/pingec/downsample-lttb
 function lttbIndices(xs: number[], ys: number[], threshold: number): number[] {
