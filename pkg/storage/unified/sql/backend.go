@@ -48,7 +48,6 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
-const defaultPrunerHistoryLimit = 20
 const defaultGarbageCollectionBatchWait = 1 * time.Second
 
 type GarbageCollectionConfig struct {
@@ -122,6 +121,7 @@ func NewStorageBackend(
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			DisableStorageServices:  disableStorageServices,
 			DisablePruner:           cfg.DisablePruner,
+			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		})
 	}
 
@@ -162,7 +162,8 @@ func NewStorageBackend(
 		EventRetentionPeriod: cfg.EventRetentionPeriod,
 		EventPruningInterval: cfg.EventPruningInterval,
 		SearchLookback:       cfg.SearchLookback,
-		WatchOptions:         resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {
@@ -192,8 +193,9 @@ func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
 
 	kvStore := resource.NewBadgerKV(db)
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore: kvStore,
-		Log:     log.New("storage-backend"),
+		KvStore:                 kvStore,
+		Log:                     log.New("storage-backend"),
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	})
 }
 
@@ -208,6 +210,8 @@ type BackendOptions struct {
 
 	DisableStorageServices bool
 	DisablePruner          bool
+
+	DashboardVersionsToKeep int
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	MigrationParquetBuffer bool
@@ -239,6 +243,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
 		disablePruner:           opts.DisablePruner,
+		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
@@ -301,8 +306,9 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
-	disablePruner bool
-	historyPruner resource.Pruner
+	disablePruner           bool
+	dashboardVersionsToKeep int
+	historyPruner           resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
 
@@ -401,7 +407,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
-					HistoryLimit: b.prunerHistoryLimit(key.Group, key.Resource),
+					HistoryLimit: int64(resource.LookupPrunerHistoryLimit(key.Group, key.Resource, b.dashboardVersionsToKeep)),
 					Key: &resourcepb.ResourceKey{
 						Namespace: key.Namespace,
 						Group:     key.Group,
@@ -534,13 +540,6 @@ func (b *backend) garbageCollectionCutoffTimestamp(group, resourceName string, d
 		return time.Now().Add(-b.garbageCollection.DashboardsMaxAge).UnixMicro()
 	}
 	return defaultCutoff
-}
-
-func (b *backend) prunerHistoryLimit(group, resourceName string) int64 {
-	if limit, ok := resource.LookupCustomPrunerHistoryLimit(group, resourceName); ok {
-		return int64(limit)
-	}
-	return defaultPrunerHistoryLimit
 }
 
 func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int) (int64, error) {

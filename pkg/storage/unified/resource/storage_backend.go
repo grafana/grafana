@@ -37,8 +37,7 @@ import (
 const (
 	defaultListBufferSize             = 100
 	defaultEventRetentionPeriod       = 1 * time.Hour
-	defaultEventPruningLimit          = 20
-	defaultEventPruningInterval       = 5 * time.Minute
+defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 )
@@ -62,8 +61,9 @@ type kvStorageBackend struct {
 	eventStore           *eventStore
 	notifier             notifier
 	log                  log.Logger
-	disablePruner        bool
-	eventRetentionPeriod time.Duration
+	disablePruner           bool
+	dashboardVersionsToKeep int
+	eventRetentionPeriod    time.Duration
 	eventPruningInterval time.Duration
 	historyPruner        Pruner
 	garbageCollection    GarbageCollectionConfig
@@ -133,6 +133,8 @@ type KVBackendOptions struct {
 	// SearchLookback is the duration subtracted from sinceRv in calls to ListModifiedSince.
 	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
 	SearchLookback time.Duration
+
+	DashboardVersionsToKeep int
 }
 
 var (
@@ -200,7 +202,8 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportTimeMaxAge: opts.LastImportTimeMaxAge,
 		garbageCollection:    garbageCollection,
 		searchLookback:       opts.SearchLookback,
-		disablePruner:        opts.DisablePruner,
+		disablePruner:           opts.DisablePruner,
+		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -315,7 +318,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		return fmt.Errorf("invalid pruning key: group, resource, and name must be set: %+v", key)
 	}
 
-	prunerMaxLimit := k.prunerHistoryLimit(key.Group, key.Resource)
+	prunerMaxLimit := LookupPrunerHistoryLimit(key.Group, key.Resource, k.dashboardVersionsToKeep)
 	counter := 0
 	deleted := 0
 	// iterate over all keys for the resource and delete versions beyond the configured limit
@@ -652,13 +655,6 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 		cutoffTimestamp = rvmanager.SnowflakeFromRV(cutoffTimestamp)
 	}
 	return cutoffTimestamp
-}
-
-func (b *kvStorageBackend) prunerHistoryLimit(group, resource string) int {
-	if limit, ok := LookupCustomPrunerHistoryLimit(group, resource); ok {
-		return limit
-	}
-	return defaultEventPruningLimit
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
