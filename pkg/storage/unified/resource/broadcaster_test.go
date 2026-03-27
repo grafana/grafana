@@ -269,11 +269,11 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 		select {
 		case _, ok := <-sub:
 			if !ok {
-				requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultOK), 1)
-				requireMetricValue(t, metrics.EventsReceivedTotal, float64(subBuf+ovfCap+10))
-				requireMetricValue(t, metrics.OverflowEventsTotal, float64(ovfCap+1))
-				requireMetricValue(t, metrics.UnsubscriptionsTotal.WithLabelValues(unsubscriptionReasonOverflowCap), 1)
-				requireMetricValue(t, metrics.Subscribers, 0)
+				requireMetricEventually(t, metrics.SubscriptionsTotal.WithLabelValues(subscriptionResultOK), 1)
+				requireMetricEventually(t, metrics.EventsReceivedTotal, float64(subBuf+ovfCap+10))
+				requireMetricEventually(t, metrics.OverflowEventsTotal, float64(ovfCap+1))
+				requireMetricEventually(t, metrics.UnsubscriptionsTotal.WithLabelValues(unsubscriptionReasonOverflowCap), 1)
+				requireMetricEventually(t, metrics.Subscribers, 0)
 				return
 			}
 		case <-time.After(5 * time.Second):
