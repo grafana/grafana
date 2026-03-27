@@ -1750,4 +1750,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables data links for CloudWatch Logs data: this is a safety toggle in case we need to put it back
+  * @default false
+  */
+  cloudWatchLogsInsightsDataLinks?: boolean;
 }
