@@ -1,5 +1,5 @@
 import { act, screen, waitFor } from '@testing-library/react';
-import { render, userEvent } from 'test/test-utils';
+import { render } from 'test/test-utils';
 
 import {
   fetchCommunityDashboards,
@@ -52,7 +52,7 @@ const mockFetchCommunity = jest.mocked(fetchCommunityDashboards);
 
 const renderLoader = (props?: Partial<Parameters<typeof SuggestedDashboardsLoader>[0]>) => {
   let childProps!: SuggestedDashboardsLoaderChildProps;
-  const { unmount } = render(
+  const { unmount, user } = render(
     <SuggestedDashboardsLoader
       datasourceUid="test-uid"
       sourceEntryPoint={SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON}
@@ -64,7 +64,7 @@ const renderLoader = (props?: Partial<Parameters<typeof SuggestedDashboardsLoade
       }}
     </SuggestedDashboardsLoader>
   );
-  return { getChildProps: () => childProps, unmount };
+  return { getChildProps: () => childProps, unmount, user };
 };
 
 beforeEach(() => {
@@ -234,8 +234,7 @@ describe('SuggestedDashboardsLoader', () => {
 
   describe('openModal', () => {
     it('shows the modal after clicking the open button', async () => {
-      const user = userEvent.setup();
-      renderLoader();
+      const { user } = renderLoader();
 
       await user.click(screen.getByRole('button', { name: 'Open' }));
 
@@ -245,8 +244,7 @@ describe('SuggestedDashboardsLoader', () => {
     });
 
     it('triggers fetch when openModal is called', async () => {
-      const user = userEvent.setup();
-      renderLoader();
+      const { user } = renderLoader();
 
       await user.click(screen.getByRole('button', { name: 'Open' }));
 
@@ -257,8 +255,7 @@ describe('SuggestedDashboardsLoader', () => {
     });
 
     it('only fetches once even if openModal is called multiple times', async () => {
-      const user = userEvent.setup();
-      const { getChildProps } = renderLoader();
+      const { getChildProps, user } = renderLoader();
 
       // First click opens modal and triggers fetch
       await user.click(screen.getByRole('button', { name: 'Open' }));
@@ -325,7 +322,6 @@ describe('SuggestedDashboardsLoader', () => {
 
   describe('module-level cache', () => {
     it('restores communityTotalPages from cache on second mount', async () => {
-      const user = userEvent.setup();
       mockFetchCommunity.mockResolvedValue({
         page: 1,
         pages: 5,
