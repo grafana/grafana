@@ -176,6 +176,11 @@ export const DashboardInteractions = {
     reportDashboardInteraction('panelheader_cancelquery_clicked', properties);
   },
 
+  // track when user clicks on Add rule button in conditional rendering
+  clickAddConditionalRuleButton: (properties?: { ruleName: string }) => {
+    reportDashboardInteraction('click_add_conditional_rule_button', properties);
+  },
+
   // Dashboard interactions from toolbar
   toolbarFavoritesClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'favorites' });
