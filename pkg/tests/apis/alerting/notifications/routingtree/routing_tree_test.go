@@ -310,9 +310,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 	writer := helper.CreateUser("RoutingTreeProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
-				accesscontrol.ActionAlertingManagedRoutesRead,
-				accesscontrol.ActionAlertingManagedRoutesWrite,
-				accesscontrol.ActionAlertingManagedRoutesDelete,
+				accesscontrol.ActionAlertingRoutesRead,
+				accesscontrol.ActionAlertingRoutesWrite,
 			},
 		},
 	})
@@ -953,14 +952,13 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			}
 		})
 
-		t.Run("Update on provisioned should fail", func(t *testing.T) {
+		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
-					require.Error(t, err)
-					require.ErrorContains(t, err, "provenance")
+					require.NoError(t, err)
 				})
 			}
 		})

@@ -228,7 +228,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	updated.Provenance = storedProvenance
+	updated.Provenance = p
 
 	_, err = revision.Config.GetMergedAlertmanagerConfig()
 	if err != nil {
