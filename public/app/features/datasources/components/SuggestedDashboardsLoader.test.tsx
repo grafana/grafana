@@ -1,10 +1,11 @@
 import { act, screen, waitFor } from '@testing-library/react';
-import { render, userEvent } from 'test/test-utils';
+import { render } from 'test/test-utils';
 
 import {
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi';
+import { SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import {
   createMockGnetDashboard,
   createMockPluginDashboard,
@@ -22,10 +23,19 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibrary
 }));
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal', () => ({
-  SuggestedDashboardsModal: ({ isOpen, onDismiss }: { isOpen: boolean; onDismiss: () => void }) =>
+  SuggestedDashboardsModal: ({
+    isOpen,
+    onDismiss,
+    communityTotalPages,
+  }: {
+    isOpen: boolean;
+    onDismiss: () => void;
+    communityTotalPages: number;
+  }) =>
     isOpen ? (
       <div data-testid="modal" onClick={onDismiss}>
         Modal
+        <span data-testid="community-total-pages">{communityTotalPages}</span>
       </div>
     ) : null,
 }));
@@ -42,15 +52,19 @@ const mockFetchCommunity = jest.mocked(fetchCommunityDashboards);
 
 const renderLoader = (props?: Partial<Parameters<typeof SuggestedDashboardsLoader>[0]>) => {
   let childProps!: SuggestedDashboardsLoaderChildProps;
-  render(
-    <SuggestedDashboardsLoader datasourceUid="test-uid" {...props}>
+  const { unmount, user } = render(
+    <SuggestedDashboardsLoader
+      datasourceUid="test-uid"
+      sourceEntryPoint={SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON}
+      {...props}
+    >
       {(p) => {
         childProps = p;
         return <button onClick={p.openModal}>Open</button>;
       }}
     </SuggestedDashboardsLoader>
   );
-  return { getChildProps: () => childProps };
+  return { getChildProps: () => childProps, unmount, user };
 };
 
 beforeEach(() => {
@@ -220,8 +234,7 @@ describe('SuggestedDashboardsLoader', () => {
 
   describe('openModal', () => {
     it('shows the modal after clicking the open button', async () => {
-      const user = userEvent.setup();
-      renderLoader();
+      const { user } = renderLoader();
 
       await user.click(screen.getByRole('button', { name: 'Open' }));
 
@@ -231,8 +244,7 @@ describe('SuggestedDashboardsLoader', () => {
     });
 
     it('triggers fetch when openModal is called', async () => {
-      const user = userEvent.setup();
-      renderLoader();
+      const { user } = renderLoader();
 
       await user.click(screen.getByRole('button', { name: 'Open' }));
 
@@ -243,8 +255,7 @@ describe('SuggestedDashboardsLoader', () => {
     });
 
     it('only fetches once even if openModal is called multiple times', async () => {
-      const user = userEvent.setup();
-      const { getChildProps } = renderLoader();
+      const { getChildProps, user } = renderLoader();
 
       // First click opens modal and triggers fetch
       await user.click(screen.getByRole('button', { name: 'Open' }));
@@ -306,6 +317,43 @@ describe('SuggestedDashboardsLoader', () => {
       await waitFor(() => {
         expect(getChildProps().hasDashboards).toBe(true);
       });
+    });
+  });
+
+  describe('module-level cache', () => {
+    it('restores communityTotalPages from cache on second mount', async () => {
+      mockFetchCommunity.mockResolvedValue({
+        page: 1,
+        pages: 5,
+        items: [createMockGnetDashboard()],
+      });
+
+      // First mount — fetches from API and populates the cache
+      const { getChildProps, unmount } = renderLoader();
+      await act(async () => {
+        getChildProps().triggerFetch();
+      });
+      await waitFor(() => {
+        expect(getChildProps().fetchStatus).toBe('done');
+      });
+
+      unmount();
+
+      // Second mount — should restore communityTotalPages from cache without re-fetching
+      // Do NOT call clearDashboardCache() so the cache is still populated
+      const { getChildProps: getChildProps2 } = renderLoader();
+      await act(async () => {
+        getChildProps2().openModal();
+      });
+      await waitFor(() => {
+        expect(getChildProps2().fetchStatus).toBe('done');
+      });
+
+      // API should only have been called once (during the first mount)
+      expect(mockFetchCommunity).toHaveBeenCalledTimes(1);
+
+      // The modal should receive the cached communityTotalPages value
+      expect(screen.getByTestId('community-total-pages')).toHaveTextContent('5');
     });
   });
 });

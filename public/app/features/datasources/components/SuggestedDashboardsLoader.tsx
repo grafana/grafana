@@ -1,19 +1,23 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
+import { TrackingProvider } from 'app/features/dashboard/dashgrid/DashboardLibrary/TrackingContext';
 import {
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi';
+import {
+  EVENT_LOCATIONS,
+  PAGE_SIZE,
+  SourceEntryPoint,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import {
   DEFAULT_SORT_ORDER,
   DEFAULT_SORT_DIRECTION,
-  COMMUNITY_PAGE_SIZE_QUERY,
   INCLUDE_LOGO,
   INCLUDE_SCREENSHOTS,
-  COMMUNITY_RESULT_SIZE,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -22,6 +26,8 @@ type FetchStatus = 'idle' | 'loading' | 'done' | 'error';
 interface DashboardFetchResult {
   provisioned: PluginDashboard[];
   community: GnetDashboard[];
+  communityTotalPages: number;
+  lastPageItemCount?: number;
 }
 
 // Module-level cache keyed by datasource type — shared across all instances
@@ -43,6 +49,7 @@ export interface SuggestedDashboardsLoaderChildProps {
 
 interface SuggestedDashboardsLoaderProps {
   datasourceUid: string;
+  sourceEntryPoint: SourceEntryPoint;
   fetchOnMount?: boolean;
   onFetchComplete?: (hasDashboards: boolean) => void;
   children: (props: SuggestedDashboardsLoaderChildProps) => ReactNode;
@@ -50,6 +57,7 @@ interface SuggestedDashboardsLoaderProps {
 
 export const SuggestedDashboardsLoader = ({
   datasourceUid,
+  sourceEntryPoint,
   fetchOnMount,
   onFetchComplete,
   children,
@@ -57,6 +65,8 @@ export const SuggestedDashboardsLoader = ({
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>('idle');
   const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
   const [communityDashboards, setCommunityDashboards] = useState<GnetDashboard[]>([]);
+  const [communityTotalPages, setCommunityTotalPages] = useState(0);
+  const [lastPageItemCount, setLastPageItemCount] = useState<number | undefined>(undefined);
   const [isOpen, setIsOpen] = useState(false);
   const hasFetchedRef = useRef(false);
 
@@ -84,6 +94,8 @@ export const SuggestedDashboardsLoader = ({
       if (cached) {
         setProvisionedDashboards(cached.provisioned);
         setCommunityDashboards(cached.community);
+        setCommunityTotalPages(cached.communityTotalPages);
+        setLastPageItemCount(cached.lastPageItemCount);
         setFetchStatus('done');
         onFetchCompletedRef.current?.(cached.provisioned.length > 0 || cached.community.length > 0);
         return;
@@ -97,7 +109,7 @@ export const SuggestedDashboardsLoader = ({
             orderBy: DEFAULT_SORT_ORDER,
             direction: DEFAULT_SORT_DIRECTION,
             page: 1,
-            pageSize: COMMUNITY_PAGE_SIZE_QUERY,
+            pageSize: PAGE_SIZE,
             includeLogo: INCLUDE_LOGO,
             includeScreenshots: INCLUDE_SCREENSHOTS,
             dataSourceSlugIn: ds.type,
@@ -106,9 +118,11 @@ export const SuggestedDashboardsLoader = ({
           .then(([provisioned, communityResponse]) => {
             const result: DashboardFetchResult = {
               provisioned,
-              community: communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE),
+              community: communityResponse.items,
+              communityTotalPages: communityResponse.pages,
             };
             dashboardCache.set(ds.type, result);
+            setCommunityTotalPages(communityResponse.pages);
             return result;
           })
           .finally(() => {
@@ -117,9 +131,10 @@ export const SuggestedDashboardsLoader = ({
         pendingFetches.set(ds.type, pending);
       }
 
-      const { provisioned, community } = await pending;
+      const { provisioned, community, communityTotalPages: totalPages } = await pending;
       setProvisionedDashboards(provisioned);
       setCommunityDashboards(community);
+      setCommunityTotalPages(totalPages);
       setFetchStatus('done');
       onFetchCompletedRef.current?.(provisioned.length > 0 || community.length > 0);
     } catch {
@@ -138,17 +153,42 @@ export const SuggestedDashboardsLoader = ({
     setIsOpen(true);
   }, [triggerFetch]);
 
+  const handleLastPageItemCount = useCallback(
+    (count: number) => {
+      setLastPageItemCount(count);
+      // Persist in the module-level cache so it survives modal close/reopen
+      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+      if (ds) {
+        const cached = dashboardCache.get(ds.type);
+        if (cached) {
+          cached.lastPageItemCount = count;
+        }
+      }
+    },
+    [datasourceUid]
+  );
+
+  const trackingValue = useMemo(
+    () => ({ sourceEntryPoint, eventLocation: EVENT_LOCATIONS.MODAL_VIEW }),
+    [sourceEntryPoint]
+  );
+
   return (
     <>
       {children({ fetchStatus, hasDashboards, triggerFetch, openModal })}
-      <SuggestedDashboardsModal
-        isOpen={isOpen}
-        onDismiss={() => setIsOpen(false)}
-        datasourceUid={datasourceUid}
-        provisionedDashboards={provisionedDashboards}
-        communityDashboards={communityDashboards}
-        isDashboardsLoading={fetchStatus === 'loading'}
-      />
+      <TrackingProvider value={trackingValue}>
+        <SuggestedDashboardsModal
+          isOpen={isOpen}
+          onDismiss={() => setIsOpen(false)}
+          datasourceUid={datasourceUid}
+          provisionedDashboards={provisionedDashboards}
+          communityDashboards={communityDashboards}
+          communityTotalPages={communityTotalPages}
+          lastPageItemCount={lastPageItemCount}
+          onLastPageItemCount={handleLastPageItemCount}
+          isDashboardsLoading={fetchStatus === 'loading'}
+        />
+      </TrackingProvider>
     </>
   );
 };
