@@ -22,11 +22,9 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -41,14 +39,6 @@ func TestIntegrationFolderTreeZanzana(t *testing.T) {
 		DisableAuthZClientCache:             true,
 		DisableZanzanaServerCheckQueryCache: true,
 		APIServerStorageType:                "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
-			},
-			folderV1.RESOURCEGROUP: {
-				DualWriterMode: grafanarest.Mode5,
-			},
-		},
 		EnableFeatureToggles: []string{
 			"zanzana",
 			"zanzanaNoLegacyClient",
@@ -66,21 +56,13 @@ func TestIntegrationFolderTree(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
+	for _, search := range []bool{false, true} {
+		t.Run(fmt.Sprintf("search enabled %v", search), func(t *testing.T) {
 			runIntegrationFolderTree(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: mode,
-					},
-				},
-				UnifiedStorageDisableSearch: mode < grafanarest.Mode5, // make sure modes 0-1 work without search enabled
+				AppModeProduction:           true,
+				DisableAnonymous:            true,
+				APIServerStorageType:        "unified",
+				UnifiedStorageDisableSearch: !search,
 			})
 		})
 	}
