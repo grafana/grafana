@@ -4249,6 +4249,19 @@
     },
     {
       "metadata": {
+        "name": "queryServiceQueryCaching",
+        "resourceVersion": "1774711941702",
+        "creationTimestamp": "2026-03-28T15:32:21Z"
+      },
+      "spec": {
+        "description": "Enables the query service to do query caching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryServiceRewrite",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-04-19T09:26:21Z"

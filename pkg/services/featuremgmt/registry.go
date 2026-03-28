@@ -2777,6 +2777,13 @@ var (
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
 		},
+		{
+			Name:        "queryServiceQueryCaching",
+			Description: "Enables the query service to do query caching",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+		},
 	}
 )
 
