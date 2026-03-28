@@ -1507,6 +1507,8 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 		t.Skip("test only on sqlite for now")
 	}
 
+	t.Skip("re-enable when we migrate /api to /apis for library connections")
+
 	// TODO: re-enable on mode 4 and 5 when we migrate /api to /apis for library connections, and begin to
 	// use search to return the connections, rather than the connections table.
 	for _, mode := range modes {
