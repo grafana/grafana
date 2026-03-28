@@ -180,12 +180,6 @@ func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context
 	ctx, span := tracer.Start(ctx, "dashboards.service.cleanupK8sDashboardResources")
 	defer span.End()
 
-	readingFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, dr.dual)
-	if readingFromLegacy {
-		// Legacy does its own cleanup
-		return nil
-	}
-
 	// Create a timeout context to ensure we complete before the lock expires
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
