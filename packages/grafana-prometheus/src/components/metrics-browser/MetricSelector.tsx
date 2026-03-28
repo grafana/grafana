@@ -15,9 +15,24 @@ export function MetricSelector() {
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
   const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
 
+  // Local state for the limit input display value.
+  // We only propagate to seriesLimit (which triggers a re-fetch) on blur,
+  // not on every keystroke. See: https://github.com/grafana/grafana/issues/120727
+  const [limitInputValue, setLimitInputValue] = useState(String(seriesLimit));
+
   const filteredMetrics = useMemo(() => {
     return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
   }, [metrics, selectedMetric, metricSearchTerm]);
+
+  const handleLimitBlur = () => {
+    const parsed = parseInt(limitInputValue.trim(), 10);
+    if (!isNaN(parsed)) {
+      setSeriesLimit(parsed);
+    } else {
+      // Reset display to the current committed value if input is invalid
+      setLimitInputValue(String(seriesLimit));
+    }
+  };
 
   return (
     <div>
@@ -28,7 +43,7 @@ export function MetricSelector() {
             'Once a metric is selected only possible labels are shown. Labels are limited by the series limit below.'
           )}
         >
-          <Trans i18nKey="grafana-prometheus.components.metric-selector.select-a-metric">1. Select a metric</Trans>
+          <Trans i18nKey='grafana-prometheus.components.metric-selector.select-a-metric'>1. Select a metric</Trans>
         </Label>
         <div>
           <Input
@@ -47,21 +62,22 @@ export function MetricSelector() {
             'The limit applies to all metrics, labels, and values. Leave the field empty to use the default limit. Set to 0 to disable the limit and fetch everything — this may cause performance issues.'
           )}
         >
-          <Trans i18nKey="grafana-prometheus.components.metric-selector.series-limit">Series limit</Trans>
+          <Trans i18nKey='grafana-prometheus.components.metric-selector.series-limit'>Series limit</Trans>
         </Label>
         <div>
           <Input
-            onChange={(e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10))}
+            onChange={(e) => setLimitInputValue(e.currentTarget.value)}
+            onBlur={handleLimitBlur}
             aria-label={t(
               'grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint',
               'Limit results from series endpoint'
             )}
-            value={seriesLimit}
+            value={limitInputValue}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit}
           />
         </div>
         <div
-          role="list"
+          role='list'
           className={styles.valueListWrapper}
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.metricList}
         >
