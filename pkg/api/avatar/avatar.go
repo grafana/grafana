@@ -134,7 +134,7 @@ func (a *AvatarCacheServer) GetAvatarForHashContext(ctx context.Context, cfg *se
 		alog.Warn("'GetGravatarForHash' called despite gravatars being disabled; returning default profile image")
 		return a.notFound
 	}
-	return a.getAvatarForHashContext(ctx, hash, gravatarSource)
+	return a.getAvatarForHashContext(ctx, hash, cfg.GravatarUrl)
 }
 
 func (a *AvatarCacheServer) getAvatarForHash(hash string, baseUrl string) *Avatar {

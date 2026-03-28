@@ -98,6 +98,33 @@ func TestAvatar_ExpirationHandler(t *testing.T) {
 	require.Equal(t, callCounter, 4)
 }
 
+func TestAvatar_CustomGravatarUrl(t *testing.T) {
+	cfg := setting.NewCfg()
+	callCounter := 0
+	mockServer := setupMockGravatarServer(&callCounter, false)
+
+	t.Cleanup(func() {
+		mockServer.Close()
+	})
+
+	// Configure a custom gravatar URL pointing to the mock server.
+	cfg.GravatarUrl = mockServer.URL + "/avatar/"
+	avc := newCacheServer(cfg)
+
+	av := avc.GetAvatarForHashContext(t.Context(), cfg, DEFAULT_NONSENSE_HASH)
+	require.Equal(t, 2, callCounter)
+	require.Equal(t, NONSENSE_BODY, av.data)
+}
+
+func TestAvatar_DisabledGravatar(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.DisableGravatar = true
+	avc := newCacheServer(cfg)
+
+	av := avc.GetAvatarForHashContext(t.Context(), cfg, DEFAULT_NONSENSE_HASH)
+	require.True(t, av.notFound)
+}
+
 func setupMockGravatarServer(counter *int, simulateError bool) *httptest.Server {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		(*counter)++
