@@ -2184,6 +2184,87 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		}
 		require.Equal(t, defaultPrunerHistoryLimit, counter)
 	})
+
+	t.Run("honours DashboardVersionsToKeep for dashboard resources", func(t *testing.T) {
+		dashboardVersionsToKeep := 5
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.DashboardVersionsToKeep = dashboardVersionsToKeep
+		})
+		ctx := t.Context()
+
+		ns := NamespacedResource{
+			Namespace: "default",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		}
+		testObj, err := createTestObjectWithName("my-dashboard", ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Name:      "my-dashboard",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Update the dashboard dashboardVersionsToKeep times to exceed the configured limit.
+		// Total events: 1 (create) + dashboardVersionsToKeep (updates) = limit + 1.
+		previousRV := rv1
+		for i := 0; i < dashboardVersionsToKeep; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "default",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Name:      "my-dashboard",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// The first event (rv1) should have been pruned
+		eventKey1 := DataKey{
+			Namespace:       "default",
+			Group:           "dashboard.grafana.app",
+			Resource:        "dashboards",
+			Name:            "my-dashboard",
+			Action:          DataActionCreated,
+			ResourceVersion: rv1,
+		}
+		_, err = backend.dataStore.Get(ctx, eventKey1)
+		require.ErrorIs(t, err, ErrNotFound, "oldest event should be pruned")
+
+		// Exactly dashboardVersionsToKeep events should remain
+		counter := 0
+		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "default",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Name:      "my-dashboard",
+		}, SortOrderDesc) {
+			require.NoError(t, err)
+			require.Greater(t, datakey.ResourceVersion, rv1)
+			counter++
+		}
+		require.Equal(t, dashboardVersionsToKeep, counter)
+	})
 }
 
 // createTestObject creates a test unstructured object with standard values
