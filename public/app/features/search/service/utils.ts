@@ -1,7 +1,7 @@
 import { ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { DataFrame, DataFrameView, IconName, fuzzySearch } from '@grafana/data';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
-import { isSharedWithMe } from 'app/features/browse-dashboards/utils/dashboards';
+import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
@@ -62,10 +62,14 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
   if (item && isSharedWithMe(item.uid)) {
-    return 'users-alt';
-  } else {
-    return getIconForKind(item.kind, isOpen);
+    return 'user-arrows';
   }
+
+  if (item && isVirtualTeamFolder(item.uid)) {
+    return 'users-alt';
+  }
+
+  return getIconForKind(item.kind, isOpen);
 }
 
 function parseKindString(kind: string): DashboardViewItemKind {

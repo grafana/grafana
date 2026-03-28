@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,6 +14,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { SectionVariableControls } from '../VariableControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
@@ -43,6 +45,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const isTopLevel = model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const rowVariablesSet = model.state.$variables;
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -145,8 +149,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 className={cx(clearStyles, styles.rowTitleButton)}
                 aria-label={
                   isCollapsed
-                    ? t('dashboard.rows-layout.row.expand', 'Expand row')
-                    : t('dashboard.rows-layout.row.collapse', 'Collapse row')
+                    ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
+                    : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
                 }
                 data-testid={selectors.components.DashboardRow.toggle(title)}
               >
@@ -157,7 +161,12 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
-          {!isCollapsed && <layout.Component model={layout} />}
+          {!isCollapsed && (
+            <div>
+              {sectionVariablesEnabled && rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+              <layout.Component model={layout} />
+            </div>
+          )}
           {conditionalRenderingOverlay}
         </div>
       )}

@@ -14,15 +14,11 @@
 
 import { render } from '@testing-library/react';
 
-import { createTheme } from '@grafana/data';
-
-import { UnthemedCanvasSpanGraph } from './CanvasSpanGraph';
+import { CanvasSpanGraph } from './CanvasSpanGraph';
 
 describe('CanvasSpanGraph tests', () => {
   it('renders without exploding', () => {
-    expect(() =>
-      render(<UnthemedCanvasSpanGraph items={items} valueWidth={4000} theme={createTheme()} />)
-    ).not.toThrow();
+    expect(() => render(<CanvasSpanGraph items={items} valueWidth={4000} />)).not.toThrow();
   });
 });
 

@@ -5,7 +5,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { getFormattedThresholds } from '../Gauge/utils';
 import { Box } from '../Layout/Box/Box';
 
 import { RadialBar } from './RadialBar';
@@ -14,11 +13,11 @@ import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
-import { buildGradientColors } from './colors';
+import { buildGradientColors, colorAtGradientPercent } from './colors';
 import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
-import { calculateDimensions, getValueAngleForValue } from './utils';
+import { calculateDimensions, getValueAngleForValue, getFormattedThresholds } from './utils';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -150,6 +149,9 @@ export function RadialGauge(props: RadialGaugeProps) {
     const glowFilterRef = glowBar ? `url(#${glowFilterId})` : undefined;
 
     if (endpointMarker === 'glow') {
+      const endpointColor = gradientStops
+        ? colorAtGradientPercent(gradientStops, fieldDisplay.display.percent ?? 1).toHexString()
+        : color;
       defs.push(
         <SpotlightGradient
           key={spotlightGradientId}
@@ -158,6 +160,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           dimensions={dimensions}
           roundedBars={roundedBars}
           theme={theme}
+          color={endpointColor}
         />
       );
     }
@@ -206,7 +209,9 @@ export function RadialGauge(props: RadialGaugeProps) {
       }
 
       if (glowCenter) {
-        graphics.push(<MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} />);
+        graphics.push(
+          <MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} shape={shape} />
+        );
       }
 
       graphics.push(
@@ -286,6 +291,7 @@ export function RadialGauge(props: RadialGaugeProps) {
       display="flex"
       justifyContent="center"
       alignItems="center"
+      position="relative"
       data-testid={selectors.components.Panels.Visualization.Gauge.Container}
     >
       <svg

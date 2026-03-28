@@ -8,7 +8,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.3.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22
+	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039
 	github.com/grafana/grafana-plugin-sdk-go v0.290.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/semconv v0.0.0
@@ -17,9 +17,9 @@ require (
 	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.4.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0
-	go.opentelemetry.io/otel v1.40.0
-	go.opentelemetry.io/otel/trace v1.40.0
-	google.golang.org/grpc v1.79.1
+	go.opentelemetry.io/otel v1.42.0
+	go.opentelemetry.io/otel/trace v1.42.0
+	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11
 )
 
@@ -54,7 +54,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22 // indirect
+	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
@@ -101,7 +101,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.40.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.40.0 // indirect
-	go.opentelemetry.io/otel/metric v1.40.0 // indirect
+	go.opentelemetry.io/otel/metric v1.42.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.40.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
@@ -110,7 +110,7 @@ require (
 	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260209163413-e7419c687ee4 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/tools v0.42.0 // indirect
@@ -120,7 +120,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
-	k8s.io/apimachinery v0.35.1 // indirect
+	k8s.io/apimachinery v0.35.3 // indirect
 	k8s.io/apiserver v0.35.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4 // indirect

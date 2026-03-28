@@ -49,6 +49,7 @@ import { TableCellDisplayMode } from '../types';
 import { DataLinksActionsTooltipState } from '../utils';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
+import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { HeaderCell } from './components/HeaderCell';
 import { RowExpander } from './components/RowExpander';
 import { SummaryCell } from './components/SummaryCell';
@@ -130,6 +131,7 @@ export function TableNG(props: TableNGProps) {
     height,
     maxRowHeight: _maxRowHeight,
     noHeader,
+    noValue,
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
@@ -144,7 +146,7 @@ export function TableNG(props: TableNGProps) {
   } = props;
   const uniqueId = useId();
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, enablePagination, transparent);
+
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
 
@@ -336,6 +338,9 @@ export function TableNG(props: TableNGProps) {
     hasNestedFrames,
   });
 
+  const showPagination = enablePagination && numRows > 0;
+  const styles = useStyles2(getGridStyles, showPagination, transparent);
+
   const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
   useEffect(() => {
     if (scrollToIndex !== undefined && sortedRows && gridRef.current?.scrollToCell) {
@@ -506,7 +511,7 @@ export function TableNG(props: TableNGProps) {
               headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
               columns={nestedColumns}
               rows={expandedRecords}
-              renderers={renderers}
+              renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
               onCellClick={onCellClick}
             />
           </div>
@@ -529,6 +534,7 @@ export function TableNG(props: TableNGProps) {
       commonDataGridProps,
       expandedRows,
       nestedRows,
+      noValue,
       onCellClick,
       uniqueId,
     ]
@@ -870,11 +876,12 @@ export function TableNG(props: TableNGProps) {
     }
     for (const row of rows) {
       if (row.__depth > 0) {
+        const rowNestedFrame = nestedData![row.__index]!;
         result.push(
           fromFields(
-            nestedVisibleFields,
+            getVisibleFields(rowNestedFrame.fields),
             nestedFieldWidths,
-            nestedData![row.__index]!,
+            rowNestedFrame,
             nestedRows[row.__index].raw,
             nestedRows[row.__index].final
           )
@@ -882,7 +889,7 @@ export function TableNG(props: TableNGProps) {
       }
     }
     return result;
-  }, [rows, hasNestedFrames, nestedData, nestedRows, nestedVisibleFields, nestedFieldWidths, fromFields]);
+  }, [rows, hasNestedFrames, nestedData, nestedRows, nestedFieldWidths, fromFields]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);
@@ -967,10 +974,14 @@ export function TableNG(props: TableNGProps) {
             event.preventGridDefault();
           }
         }}
-        renderers={{ renderRow, renderCell: renderCellRoot }}
+        renderers={{
+          renderRow,
+          renderCell: renderCellRoot,
+          noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
+        }}
       />
 
-      {enablePagination && (
+      {enablePagination && numRows > 0 && (
         <div className={styles.paginationContainer}>
           <Pagination
             className="table-ng-pagination"

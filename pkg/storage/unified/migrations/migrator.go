@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -111,13 +111,34 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	origResources := opts.Resources
+
+	// TODO... the migrator must be able to dynamically define the groups
+	// The bulk processor will clean up any resources in these groups, and
+	// initialize authorization scoped to this set of resources
+	if len(opts.Resources) == 1 && opts.Resources[0].Group == "*.datasource.grafana.app" {
+		// This should be loaded from the DB, or the plugin scanning
+		plugins := []string{
+			"alertmanager", "azuremonitor", "cloud-monitoring", "cloudwatch", "dashboard", "elasticsearch",
+			"grafana-postgresql-datasource", "grafana-pyroscope-datasource", "grafana-testdata-datasource",
+			"graphite", "influxdb", "jaeger", "loki", "mixed", "mssql", "mysql", "opentsdb", "parca", "prometheus",
+			"tempo", "zipkin",
+		}
+		opts.Resources = make([]schema.GroupResource, 0, len(plugins))
+		for _, p := range plugins {
+			opts.Resources = append(opts.Resources, schema.GroupResource{
+				Group: p + ".datasource.grafana.app", Resource: "datasources",
+			})
+		}
+	}
+
 	stream, err := m.streamProvider.createStream(streamCtx, opts, m.registry)
 	if err != nil {
 		return nil, err
 	}
 
 	migratorFuncs := []MigratorFunc{}
-	for _, res := range opts.Resources {
+	for _, res := range origResources {
 		fn := m.registry.GetMigratorFunc(res)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)

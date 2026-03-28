@@ -11,6 +11,7 @@ describe('ElasticsearchVariableUtils', () => {
       expect(result).toEqual({
         refId,
         query: 'test query',
+        queryType: 'legacy_variable',
         metrics: [{ type: 'raw_document', id: '1' }],
       });
     });
