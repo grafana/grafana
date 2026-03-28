@@ -29,13 +29,15 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("successfully returns 1 log group with account id", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{{
-			Value: resources.LogGroup{
-				Arn:  "some arn",
-				Name: "some name",
-			},
-			AccountId: utils.Pointer("111"),
-		}}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{
+			Results: []resources.ResourceResponse[resources.LogGroup]{{
+				Value: resources.LogGroup{
+					Arn:  "some arn",
+					Name: "some name",
+				},
+				AccountId: utils.Pointer("111"),
+			}},
+		}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
@@ -44,25 +46,27 @@ func TestLogGroupsRoute(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.JSONEq(t, `[{"value":{"name":"some name", "arn":"some arn"},"accountId":"111"}]`, rr.Body.String())
+		assert.JSONEq(t, `{"results":[{"value":{"name":"some name", "arn":"some arn"},"accountId":"111"}]}`, rr.Body.String())
 	})
 
 	t.Run("successfully returns multiple log groups with account id", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return(
-			[]resources.ResourceResponse[resources.LogGroup]{
-				{
-					Value: resources.LogGroup{
-						Arn:  "arn 1",
-						Name: "name 1",
+			resources.LogGroupsResponse{
+				Results: []resources.ResourceResponse[resources.LogGroup]{
+					{
+						Value: resources.LogGroup{
+							Arn:  "arn 1",
+							Name: "name 1",
+						},
+						AccountId: utils.Pointer("111"),
+					}, {
+						Value: resources.LogGroup{
+							Arn:  "arn 2",
+							Name: "name 2",
+						},
+						AccountId: utils.Pointer("222"),
 					},
-					AccountId: utils.Pointer("111"),
-				}, {
-					Value: resources.LogGroup{
-						Arn:  "arn 2",
-						Name: "name 2",
-					},
-					AccountId: utils.Pointer("222"),
 				},
 			}, nil)
 
@@ -73,7 +77,7 @@ func TestLogGroupsRoute(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.JSONEq(t, `[
+		assert.JSONEq(t, `{"results":[
 		   {
 			  "value":{
 				 "name":"name 1",
@@ -88,12 +92,12 @@ func TestLogGroupsRoute(t *testing.T) {
 			  },
 			  "accountId":"222"
 		   }
-		]`, rr.Body.String())
+		]}`, rr.Body.String())
 	})
 
 	t.Run("returns error when both logGroupPrefix and logGroup Pattern are provided", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupNamePrefix=some-prefix&logGroupPattern=some-pattern", nil)
@@ -107,7 +111,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes default log group limit and nil for logGroupNamePrefix, accountId, and logGroupPattern", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
@@ -125,7 +129,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes default log group limit and nil for logGroupNamePrefix when both are absent", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
@@ -141,7 +145,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes log group limit from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?limit=2", nil)
@@ -156,7 +160,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes logGroupPrefix from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupNamePrefix=some-prefix", nil)
@@ -172,7 +176,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupPattern=some-pattern", nil)
@@ -188,7 +192,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
-		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?accountId=some-account-id", nil)
@@ -205,7 +209,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("returns error if service returns error", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).
-			Return([]resources.ResourceResponse[resources.LogGroup]{}, fmt.Errorf("some error"))
+			Return(resources.LogGroupsResponse{Results: []resources.ResourceResponse[resources.LogGroup]{}}, fmt.Errorf("some error"))
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
@@ -215,5 +219,28 @@ func TestLogGroupsRoute(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		assert.JSONEq(t, `{"Error":"some error","Message":"GetLogGroups error: some error","StatusCode":500}`, rr.Body.String())
+	})
+
+	t.Run("successfully returns log groups with nextToken", func(t *testing.T) {
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(resources.LogGroupsResponse{
+			Results: []resources.ResourceResponse[resources.LogGroup]{{
+				Value: resources.LogGroup{
+					Arn:  "some arn",
+					Name: "some name",
+				},
+				AccountId: utils.Pointer("111"),
+			}},
+			NextToken: utils.Pointer("next_page_token"),
+		}, nil)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/log-groups", nil)
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.JSONEq(t, `{"results":[{"value":{"name":"some name","arn":"some arn"},"accountId":"111"}],"nextToken":"next_page_token"}`, rr.Body.String())
 	})
 }

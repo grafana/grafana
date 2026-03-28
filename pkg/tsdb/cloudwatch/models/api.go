@@ -34,7 +34,7 @@ type ListMetricsProvider interface {
 }
 
 type LogGroupsProvider interface {
-	GetLogGroups(ctx context.Context, request resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error)
+	GetLogGroups(ctx context.Context, request resources.LogGroupsRequest) (resources.LogGroupsResponse, error)
 	GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error)
 }
 

@@ -11,47 +11,32 @@ describe('ResourcesAPI', () => {
       expect(resourceRequestMock.mock.calls[1][1].region).toBe('eu-east');
     });
 
-    it('should return log groups as an array of options', async () => {
-      const response = [
-        {
-          text: '/aws/containerinsights/dev303-workshop/application',
-          value: '/aws/containerinsights/dev303-workshop/application',
-          label: '/aws/containerinsights/dev303-workshop/application',
-        },
-        {
-          text: '/aws/containerinsights/dev303-workshop/flowlogs',
-          value: '/aws/containerinsights/dev303-workshop/flowlogs',
-          label: '/aws/containerinsights/dev303-workshop/flowlogs',
-        },
-        {
-          text: '/aws/containerinsights/dev303-workshop/dataplane',
-          value: '/aws/containerinsights/dev303-workshop/dataplane',
-          label: '/aws/containerinsights/dev303-workshop/dataplane',
-        },
-      ];
+    it('should return log groups response with results', async () => {
+      const response = {
+        results: [
+          {
+            value: {
+              arn: 'arn:aws:logs:us-west-1:123456789:log-group:/aws/containerinsights/dev303-workshop/application',
+              name: '/aws/containerinsights/dev303-workshop/application',
+            },
+          },
+          {
+            value: {
+              arn: 'arn:aws:logs:us-west-1:123456789:log-group:/aws/containerinsights/dev303-workshop/flowlogs',
+              name: '/aws/containerinsights/dev303-workshop/flowlogs',
+            },
+          },
+        ],
+        nextToken: 'some_token',
+      };
 
       const { api } = setupMockedResourcesAPI({ response });
-      const expectedLogGroups = [
-        {
-          text: '/aws/containerinsights/dev303-workshop/application',
-          value: '/aws/containerinsights/dev303-workshop/application',
-          label: '/aws/containerinsights/dev303-workshop/application',
-        },
-        {
-          text: '/aws/containerinsights/dev303-workshop/flowlogs',
-          value: '/aws/containerinsights/dev303-workshop/flowlogs',
-          label: '/aws/containerinsights/dev303-workshop/flowlogs',
-        },
-        {
-          text: '/aws/containerinsights/dev303-workshop/dataplane',
-          value: '/aws/containerinsights/dev303-workshop/dataplane',
-          label: '/aws/containerinsights/dev303-workshop/dataplane',
-        },
-      ];
 
       const logGroups = await api.getLogGroups({ region: 'default' });
 
-      expect(logGroups).toEqual(expectedLogGroups);
+      expect(logGroups).toEqual(response);
+      expect(logGroups.results).toHaveLength(2);
+      expect(logGroups.nextToken).toBe('some_token');
     });
   });
 
