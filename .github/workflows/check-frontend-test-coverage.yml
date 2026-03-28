@@ -221,8 +221,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git merge origin/${{ github.event.pull_request.base.ref }} --no-edit
+          git fetch origin "${BASE_REF}"
+          git merge "origin/${BASE_REF}" --no-edit
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
 
       - name: Setup Node.js
         if: steps.check-affected.outputs.affected == 'true'
