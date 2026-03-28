@@ -1157,6 +1157,10 @@
           "description": {
             "type": "string"
           },
+          "enableGroupBy": {
+            "description": "Whether the group-by operator is enabled in the ad hoc filter combobox.",
+            "type": "boolean"
+          },
           "filters": {
             "type": "array",
             "items": {
@@ -2781,6 +2785,10 @@
           "options": {
             "description": "The matcher options. This is specific to the matcher implementation.",
             "type": "object"
+          },
+          "scope": {
+            "description": "If set, limits this matcher to fields of that type. If not set, \"series\" mode is used.",
+            "type": "string"
           }
         }
       },

@@ -83,6 +83,7 @@ export interface Props {
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showFieldSelector?: boolean;
+  showLevel?: boolean;
   /**
    * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata
    * @alpha
@@ -111,6 +112,7 @@ type LogListComponentProps = Omit<
   | 'enableLogDetails'
   | 'logOptionsStorageKey'
   | 'permalinkedLogId'
+  | 'showLevel'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
@@ -162,6 +164,7 @@ export const LogList = ({
   setDisplayedFields,
   showControls,
   showFieldSelector,
+  showLevel,
   showLogAttributes,
   showTime,
   showUniqueLabels,
@@ -182,6 +185,7 @@ export const LogList = ({
       filterLevels={filterLevels}
       fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
+      isCustomGrammar={grammar !== undefined}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}
@@ -208,6 +212,7 @@ export const LogList = ({
       setDisplayedFields={setDisplayedFields}
       showControls={showControls}
       showLogAttributes={showLogAttributes}
+      showLevel={showLevel}
       showTime={showTime}
       showUniqueLabels={showUniqueLabels}
       sortOrder={sortOrder}
@@ -277,6 +282,7 @@ const LogListComponent = ({
     onClickFilterOutString,
     permalinkedLogId,
     prettifyJSON,
+    showLevel,
     showTime,
     showUniqueLabels,
     sortOrder,
@@ -302,9 +308,19 @@ const LogListComponent = ({
             processedLogs,
             displayedFields,
             showTime ? timestampResolution : undefined,
-            showUniqueLabels
+            showUniqueLabels,
+            showLevel
           ),
-    [displayedFields, processedLogs, showTime, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
+    [
+      displayedFields,
+      processedLogs,
+      showLevel,
+      showTime,
+      showUniqueLabels,
+      timestampResolution,
+      virtualization,
+      wrapLogMessage,
+    ]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
   const widthContainer = wrapperRef.current ?? containerElement;
@@ -506,7 +522,6 @@ const LogListComponent = ({
               </>
             }
             confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
-            icon="exclamation-triangle"
             onConfirm={onDisableConfirm}
             onDismiss={onDisableCancel}
           />
@@ -535,11 +550,9 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
-                detailsMode,
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
-                showDetails,
                 showTime,
                 wrap: wrapLogMessage,
               })}

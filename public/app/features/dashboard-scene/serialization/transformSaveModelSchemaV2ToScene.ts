@@ -55,6 +55,8 @@ import {
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
   AnnoKeyEmbedded,
+  AnnoReloadOnParamsChange,
+  DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
@@ -109,12 +111,13 @@ export function transformSaveModelSchemaV2ToScene(
 ): DashboardScene {
   const { spec: dashboard, metadata, apiVersion } = dto;
 
-  const found = dashboard.annotations.some((item) => item.spec.builtIn);
+  const annotations = dashboard.annotations ?? [];
+  const found = annotations.some((item) => item.spec.builtIn);
   if (!found) {
-    dashboard.annotations.unshift(getGrafanaBuiltInAnnotation());
+    annotations.unshift(getGrafanaBuiltInAnnotation());
   }
 
-  const annotationLayers = dashboard.annotations.map((annotation) => {
+  const annotationLayers = annotations.map((annotation) => {
     const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
 
     const layerState = {
@@ -199,8 +202,11 @@ export function transformSaveModelSchemaV2ToScene(
     dashboardProfiler
   );
 
+  const deprecatedId = metadata.labels?.[DeprecatedInternalId];
+
   const dashboardScene = new DashboardScene(
     {
+      id: deprecatedId ? parseInt(deprecatedId, 10) : undefined,
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
@@ -233,7 +239,9 @@ export function transformSaveModelSchemaV2ToScene(
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
-          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
+          reloadOnParamsChange:
+            config.featureToggles.reloadDashboardsOnParamsChange &&
+            Boolean(metadata.annotations?.[AnnoReloadOnParamsChange]),
           uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
@@ -284,7 +292,7 @@ function getVariables(
 
 function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariables: VariableKind[] = []) {
   const isDefined = (v: SceneVariable | null): v is SceneVariable => Boolean(v);
-  const variableObjects = dashboard.variables
+  const variableObjects = (dashboard.variables ?? [])
     .map((v) => {
       try {
         return createSceneVariableFromVariableModel(v);
@@ -357,7 +365,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
-      collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
+      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+        ? (variable.spec.enableGroupBy ?? false)
+        : false,
     };
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
@@ -551,7 +562,7 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
 }
 
 export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
-  const variableObjects = dashboard.variables
+  const variableObjects = (dashboard.variables ?? [])
     .map((v) => {
       try {
         // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
@@ -581,6 +592,9 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
             ),
+            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+              ? (v.spec.enableGroupBy ?? false)
+              : false,
           });
         }
         // for other variable types we are using the SnapshotVariable

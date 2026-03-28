@@ -4,15 +4,27 @@ import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { LocalValueVariable, MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
+import {
+  LocalValueVariable,
+  MultiValueVariable,
+  SceneObject,
+  SceneVariable,
+  SceneVariableSet,
+  useSceneObjectState,
+} from '@grafana/scenes';
+import { Input, TextArea, Button, Field, Box, Stack, Alert } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  EditableDashboardElement,
+  EditableDashboardElementInfo,
+  isEditableDashboardElement,
+} from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -28,6 +40,11 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
   const descriptionId = useId();
   const variableDisplayId = useId();
 
+  // Keep the variable activated while editing it in the side pane. The dashboard controls
+  // component may unmount (e.g. when changing display to "hidden"), which would deactivate
+  // the variable and destroy all state subscriptions used by the editors below.
+  useSceneObjectState(variable, { shouldActivateOrKeepAlive: true });
+
   if (variable instanceof LocalValueVariable) {
     return useLocalVariableOptions(variable);
   }
@@ -39,7 +56,7 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
           title: '',
           id: variableNameId,
           skipField: true,
-          render: () => <VariableNameInput variable={variable} isNewElement={isNewElement} />,
+          render: () => <VariableNameInput variable={variable} autoFocus={isNewElement} />,
         })
       )
       .addItem(
@@ -106,6 +123,17 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
+  public scrollIntoView() {
+    let current: SceneObject | undefined = this.variable.parent;
+    while (current) {
+      if (isEditableDashboardElement(current) && current.scrollIntoView) {
+        current.scrollIntoView();
+        return;
+      }
+      current = current.parent;
+    }
+  }
+
   public onDelete() {
     const set = this.variable.parent!;
     if (set instanceof SceneVariableSet) {
@@ -134,16 +162,20 @@ interface VariableInputProps {
   id?: string;
 }
 
-function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable; isNewElement: boolean }) {
+function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; autoFocus: boolean }) {
   const { name } = variable.useState();
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const ref = useEditPaneInputAutoFocus({ autoFocus });
   const [nameError, setNameError] = useState<string>();
+  const [nameWarning, setNameWarning] = useState<string>();
   const id = useId();
 
   const onChange = (e: FormEvent<HTMLInputElement>) => {
     const result = validateVariableName(variable, e.currentTarget.value);
     if (result.errorMessage !== nameError) {
       setNameError(result.errorMessage);
+    }
+    if (result.warningMessage !== nameWarning) {
+      setNameWarning(result.warningMessage);
     }
 
     variable.setState({ name: e.currentTarget.value });
@@ -152,44 +184,50 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   const oldName = useRef(name);
 
   return (
-    <Field
-      label={t('dashboard.edit-pane.variable.name', 'Name')}
-      invalid={!!nameError}
-      error={nameError}
-      noMargin={false}
-    >
-      <Input
-        id={id}
-        ref={ref}
-        value={name}
-        onFocus={() => {
-          oldName.current = name;
-        }}
-        onChange={onChange}
-        onBlur={(e) => {
-          const labelUnchanged = oldName.current === name;
-          const shouldSkip = labelUnchanged;
+    <>
+      <Field
+        label={t('dashboard.edit-pane.variable.name', 'Name')}
+        invalid={!!nameError}
+        error={nameError}
+        noMargin={false}
+      >
+        <Input
+          id={id}
+          ref={ref}
+          value={name}
+          onFocus={() => {
+            oldName.current = name;
+          }}
+          onChange={onChange}
+          onBlur={(e) => {
+            const labelUnchanged = oldName.current === name;
+            const shouldSkip = labelUnchanged;
 
-          if (nameError) {
-            setNameError(undefined);
-            variable.setState({ name: oldName.current });
-            return;
-          }
+            if (nameError) {
+              setNameError(undefined);
+              variable.setState({ name: oldName.current });
+              return;
+            }
 
-          if (shouldSkip) {
-            return;
-          }
+            if (shouldSkip) {
+              return;
+            }
 
-          dashboardEditActions.changeVariableName({
-            source: variable,
-            oldValue: oldName.current,
-            newValue: name,
-          });
-        }}
-        data-testid={selectors.components.PanelEditor.ElementEditPane.variableNameInput}
-        required
-      />
-    </Field>
+            dashboardEditActions.changeVariableName({
+              source: variable,
+              oldValue: oldName.current,
+              newValue: name,
+            });
+          }}
+          data-testid={selectors.components.PanelEditor.ElementEditPane.variableNameInput}
+          required
+        />
+      </Field>
+      {/* Show warning message if the variable name is already used in the dashboard
+        Unfortunately <Field> component only supports error messages, not warning messages.
+      */}
+      {nameWarning && <Alert title={nameWarning} severity="warning" topSpacing={0} bottomSpacing={1} />}
+    </>
   );
 }
 
@@ -266,7 +304,20 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
     });
   };
 
-  return <VariableDisplaySelect display={display} type={variable.state.type} onChange={onChange} />;
+  return (
+    <VariableDisplaySelect
+      display={display}
+      type={variable.state.type}
+      hideControlsMenuOption={shouldHideControlsMenuOption(variable)}
+      onChange={onChange}
+    />
+  );
+}
+
+export function shouldHideControlsMenuOption(variable: SceneVariable): boolean {
+  const set = variable.parent;
+  const dashboardVariable = set instanceof SceneVariableSet && set.parent instanceof DashboardScene;
+  return !dashboardVariable;
 }
 
 function useVariableTypeCategory(variable: SceneVariable) {

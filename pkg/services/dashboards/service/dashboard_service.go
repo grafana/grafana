@@ -18,6 +18,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
@@ -26,7 +27,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -1377,8 +1378,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
 	isNested := obj.GetFolder() != ""
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+	if isNested {
 		// Don't set any permissions for nested dashboards
 		return nil
 	}
@@ -1909,7 +1909,7 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 		query.UID = result.UID
 	}
 
-	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, "")
+	out, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, query.K8sGetAPIVersion, "")
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
@@ -2327,7 +2327,32 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	if err != nil {
 		return nil, err
 	}
-	return dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+
+	dash, err := dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+	if err != nil {
+		return nil, err
+	}
+
+	// The requested version
+	gv, _ := schema.ParseGroupVersion(item.GetAPIVersion())
+	if gv.Version != "" {
+		dash.APIVersion = gv.Version
+	}
+
+	// Use the old payload if we could not convert to the the requested version
+	conversion, ok, _ := unstructured.NestedMap(item.Object, "status", "conversion")
+	if ok && conversion != nil {
+		failed, _, _ := unstructured.NestedBool(conversion, "failed")
+		if failed {
+			dash.APIVersion, _, _ = unstructured.NestedString(conversion, "storedVersion")
+			body, ok, _ := unstructured.NestedMap(conversion, "source")
+			if ok {
+				dash.Data = simplejson.NewFromAny(body)
+			}
+		}
+	}
+
+	return dash, nil
 }
 
 func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *unstructured.Unstructured, orgID int64, users map[string]*user.User) (*dashboards.Dashboard, error) {

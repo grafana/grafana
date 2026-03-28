@@ -24,6 +24,7 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
 
   payloadSchema: payloads.removeTab,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -61,7 +62,8 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
 
       return {
         success: true,
-        changes: [{ path, previousValue: { title: resolved.item.state.title }, newValue: undefined }],
+        data: { path },
+        changes: [{ path, previousValue: { title: resolved.item.state.title }, newValue: null }],
       };
     } catch (error) {
       return {

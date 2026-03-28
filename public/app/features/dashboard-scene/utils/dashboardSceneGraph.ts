@@ -3,6 +3,8 @@ import { VizPanel, sceneGraph, behaviors, SceneObject, SceneGridRow } from '@gra
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
 
 import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
@@ -50,6 +52,17 @@ export function getNextPanelId(scene: SceneObject): number {
   return max + 1;
 }
 
+export type PanelIdGenerator = () => number;
+
+/**
+ * Returns a sequential ID generator seeded from the current max panel ID.
+ * Shared across sibling layouts to prevent duplicate panel IDs during duplication.
+ */
+export function getPanelIdGenerator(scene: SceneObject): PanelIdGenerator {
+  let id = getNextPanelId(scene);
+  return () => id++;
+}
+
 function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
   const data = sceneGraph.getData(scene);
 
@@ -90,6 +103,18 @@ export function getElementIdentifierForVizPanel(vizPanel: VizPanel): string {
   return elementKey;
 }
 
+// Used to find the section owner of a variable (row or tab)
+function findSectionOwner(element: SceneObject | undefined): RowItem | TabItem | undefined {
+  let current = element;
+  while (current) {
+    if (current instanceof RowItem || current instanceof TabItem) {
+      return current;
+    }
+    current = current.parent;
+  }
+  return undefined;
+}
+
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
@@ -100,5 +125,7 @@ export const dashboardSceneGraph = {
   getCursorSync,
   getLayoutManagerFor,
   getNextPanelId,
+  getPanelIdGenerator,
   getElementIdentifierForVizPanel,
+  findSectionOwner,
 };

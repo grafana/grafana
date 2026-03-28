@@ -7,6 +7,7 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
+import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
@@ -92,7 +93,14 @@ export function AppChrome({ children }: Props) {
     >
       {!state.chromeless && (
         <>
-          <LinkButton className={styles.skipLink} href="#pageContent">
+          <LinkButton
+            className={styles.skipLink}
+            href="#pageContent"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('pageContent')?.focus();
+            }}
+          >
             <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
           </LinkButton>
           {menuDockedAndOpen && (
@@ -133,6 +141,7 @@ export function AppChrome({ children }: Props) {
               [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
             })}
             id="pageContent"
+            tabIndex={-1}
           >
             {children}
           </main>
@@ -153,6 +162,7 @@ export function AppChrome({ children }: Props) {
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
+      {!state.chromeless && <SplashScreenModal />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}

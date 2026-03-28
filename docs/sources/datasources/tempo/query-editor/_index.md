@@ -15,53 +15,17 @@ labels:
 menuTitle: Query tracing data
 title: Query tracing data
 weight: 300
-refs:
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  service-graph:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/service-graph/
-  recorded-queries:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/
-  query-history-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/query-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/query-management/
-  query-inspector:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/
-  explore-traces-app:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/traces/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/simplified-exploration/traces/
 ---
 
 # Query tracing data
 
-The Tempo data source's query editor helps you query and display traces from Tempo in [Explore](ref:explore).
-The queries use [TraceQL](/docs/tempo/latest/traceql), the query language designed specifically for tracing.
+The Tempo data source's query editor helps you query and display traces from Tempo in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
+The queries use [TraceQL](https://grafana.com/docs/tempo/latest/traceql), the query language designed specifically for tracing.
 
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 {{< admonition type="tip" >}}
-Don't know TraceQL? Try [Grafana Traces Drilldown](ref:explore-traces-app), an intuitive, queryless app that lets you explore your tracing data using RED metrics.
+Don't know TraceQL? Try [Grafana Traces Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/traces/), an intuitive, queryless app that lets you explore your tracing data using RED metrics.
 {{< /admonition >}}
 
 ## Before you begin
@@ -90,7 +54,7 @@ The three query types are:
 
 - **Search** query builder - Provides a user interface for building a TraceQL query.
 - **TraceQL** query editor - Lets you write your own TraceQL query with assistance from autocomplete.
-- **Service Graph** view - Displays a visual relationship between services. Refer to the [Service graph](ref:service-graph) documentation for more information.
+- **Service Graph** view - Displays a visual relationship between services. Refer to the [Service graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/) documentation for more information.
 
 ### Search query builder
 
@@ -105,7 +69,7 @@ Refer to the [Search using the TraceQL query builder documentation](traceql-sear
 
 The **TraceQL** query editor lets you search by trace ID and write TraceQL queries using autocomplete.
 
-Refer to the [TraceQL query editor documentation](./traceql-editor) to learn more about constructing queries using a code-editor-like experience.
+Refer to the [TraceQL query editor documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-editor/) to learn more about constructing queries using a code-editor-like experience.
 
 ![The TraceQL query editor](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-traceql-v11.png)
 
@@ -123,7 +87,7 @@ Using the service graph view, you can:
 - Determine how long the slowest queries in your service take to complete.
 - Examine all traces that contain spans of particular interest based on rate, error, and duration values (RED signals).
 
-For more information about the service graph, refer to [Service graph](../service-graph).
+For more information about the service graph, refer to [Service graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/).
 
 ![Screenshot of the Service Graph view](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph.png)
 
@@ -131,7 +95,7 @@ For more information about the service graph, refer to [Service graph](../servic
 
 To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/traces/).
 
-To learn more about Grafana dashboards, refer to the [Use dashboards documentation](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/).
+To learn more about Grafana dashboards, refer to the [Use dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/).
 
 ## Set options for query builder and editor
 
@@ -189,7 +153,7 @@ Show data source help
 : Displays the **Tempo Cheat Sheet** with links to documentation.
 
 Create recorded query
-: Lets you save the current query block as a recorded query. This option is available in Grafana Cloud and Grafana Enterprise. For more information, refer to [Recorded queries](ref:recorded-queries).
+: Lets you save the current query block as a recorded query. This option is available in Grafana Cloud and Grafana Enterprise. For more information, refer to [Recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/).
 
 Duplicate query
 : Copies the current block and adds a new identical block.
@@ -201,7 +165,7 @@ Remove query
 
 **Explore** provides a history of all queries you've used within a data source and an inspector that lets you view stats, inspect queries, view JSON, and general information for your data source queries.
 
-For more information, refer to the [Query inspector in Explore](ref:query-inspector) and [Query management in Explore](ref:query-history-management) documentation.
+For more information, refer to the [Query inspector in Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/) and [Query management in Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/query-management/) documentation.
 
 ## Cross-tenant TraceQL queries
 

@@ -3,10 +3,15 @@ package legacy
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"text/template"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	claims "github.com/grafana/authlib/types"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -51,6 +56,21 @@ func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStor
 
 type legacySQLStore struct {
 	sql legacysql.LegacyDatabaseProvider
+}
+
+// getDB wraps s.sql(ctx) and converts ErrNamespaceNotFound to a K8s NotFound error.
+func (s *legacySQLStore) getDB(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+	db, err := s.sql(ctx)
+	if err != nil {
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+			return nil, apierrors.NewNotFound(
+				schema.GroupResource{Group: iamv0.GROUP},
+				"namespace",
+			)
+		}
+		return nil, err
+	}
+	return db, nil
 }
 
 // Templates setup.

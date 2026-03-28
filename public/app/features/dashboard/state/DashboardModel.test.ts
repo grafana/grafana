@@ -1016,7 +1016,7 @@ describe('DashboardModel', () => {
           {},
           {
             annotationsPermissions: {
-              dashboard: { canAdd: false, canEdit: false, canDelete: true },
+              dashboard: { canAdd: false, canEdit: canEditWithOrgPermission, canDelete: true },
             },
           }
         );
@@ -1076,7 +1076,7 @@ describe('DashboardModel', () => {
           {},
           {
             annotationsPermissions: {
-              dashboard: { canAdd: false, canEdit: false, canDelete: false },
+              dashboard: { canAdd: false, canEdit: false, canDelete: canDeleteWithOrgPermission },
             },
           }
         );

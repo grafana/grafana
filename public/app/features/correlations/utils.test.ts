@@ -1,14 +1,27 @@
 import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { DataFrame, DataFrameType, DataSourceInstanceSettings, FieldType, toDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameType,
+  DataSourceInstanceSettings,
+  FieldType,
+  SupportedTransformationType,
+  toDataFrame,
+} from '@grafana/data';
 import { config, CorrelationData } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { ExploreItemState } from 'app/types/explore';
 
+import { EditFormDTO } from './Forms/types';
+import { Correlation } from './types';
+import { attachCorrelationsToDataFrames, generateDefaultLabel, generatePartialEditSpec } from './utils';
 import * as utils from './utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: jest.fn().mockReturnValue({
     get: jest.fn().mockResolvedValue({
+      name: 'getTest',
       getRef: () => {
         return { type: 'testTypeFromLookup', uid: 'testUidFromLookup' };
       },
@@ -70,6 +83,32 @@ describe('correlations utils', () => {
     });
   });
 
+  it('attaches external correlations defined in the configuration', () => {
+    config.featureToggles.lokiLogsDataplane = false;
+    const { testDataFrames, refIdMap, loki } = setup();
+    attachCorrelationsToDataFrames(
+      testDataFrames,
+      [
+        {
+          uid: 'loki-to-prometheus',
+          label: 'logs to metrics',
+          source: loki,
+          type: 'external',
+          config: { field: 'traceId', target: { url: 'testUrl' } },
+          provisioned: false,
+        },
+      ],
+      refIdMap
+    );
+
+    expect(testDataFrames[0].fields[1].config.links).toHaveLength(1);
+    expect(testDataFrames[0].fields[1].config.links).toMatchObject([
+      {
+        title: 'logs to metrics',
+      },
+    ]);
+  });
+
   it('does not create duplicates when attaching links to the same data frame', () => {
     const { testDataFrames, correlations, refIdMap } = setup();
     utils.attachCorrelationsToDataFrames(testDataFrames, correlations, refIdMap);
@@ -102,6 +141,92 @@ describe('correlations utils', () => {
     config.featureToggles.lokiLogsDataplane = originalDataplaneState;
   });
 
+  it('generates a partial spec with config only when nothing is edited', () => {
+    const correlation: Correlation = {
+      uid: 'test',
+      sourceUID: 'test',
+      label: 'test',
+      provisioned: false,
+      type: 'external',
+      config: { field: 'test', target: { url: 'test' } },
+    };
+    const editForm: EditFormDTO = { ...correlation, label: correlation.label! };
+    const partialSpec = generatePartialEditSpec(editForm, correlation);
+    expect(partialSpec).toStrictEqual({ config: { field: 'test', target: { url: 'test' } } });
+  });
+
+  it('generates a partial spec as expected when things are edited', () => {
+    const correlation: Correlation = {
+      uid: 'test',
+      sourceUID: 'test',
+      label: 'test',
+      provisioned: false,
+      type: 'external',
+      config: { field: 'test', target: { url: 'test' } },
+    };
+    const editForm: EditFormDTO = {
+      ...correlation,
+      label: 'diffLabel',
+      description: 'diffDesc',
+      type: 'query',
+      config: {
+        field: 'diffField',
+        target: { diff: 'target' },
+        transformations: [
+          {
+            type: SupportedTransformationType.Logfmt,
+            expression: 'diffExp',
+            mapValue: 'diffMapValue',
+            field: 'diffField',
+          },
+        ],
+      },
+    };
+    const partialSpec = generatePartialEditSpec(editForm, correlation);
+    expect(partialSpec).toStrictEqual({
+      label: 'diffLabel',
+      description: 'diffDesc',
+      type: 'query',
+      config: {
+        field: 'diffField',
+        target: { diff: 'target' },
+        transformations: [{ expression: 'diffExp', field: 'diffField', mapValue: 'diffMapValue', type: 'logfmt' }],
+      },
+    });
+  });
+
+  it('generates the expected label from pane datasource when not mixed', async () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { uid: 'testQuery' } }];
+    const sourcePane: ExploreItemState = {
+      datasourceInstance: { name: 'testA', meta: { mixed: false } },
+      queries: queries,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+    const targetPane: ExploreItemState = {
+      datasourceInstance: { name: 'testB', meta: { mixed: false } },
+      queries: queries,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+    const label = await generateDefaultLabel(sourcePane, targetPane);
+    expect(label).toBe('testA to testB');
+  });
+
+  it('generates the expected label from query datasources when mixed', async () => {
+    const queriesA: DataQuery[] = [{ refId: 'A', datasource: { uid: 'testQueryA' } }];
+    const queriesB: DataQuery[] = [{ refId: 'B', datasource: { uid: 'testQueryB' } }];
+    const sourcePane: ExploreItemState = {
+      datasourceInstance: { name: 'testA', meta: { mixed: true } },
+      queries: queriesA,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+    const targetPane: ExploreItemState = {
+      datasourceInstance: { name: 'testB', meta: { mixed: false } },
+      queries: queriesB,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+    const label = await generateDefaultLabel(sourcePane, targetPane);
+    expect(label).toBe('getTest to testB');
+  });
   describe('getCorrelationsFromStorage', () => {
     const originalFeatureToggles = config.featureToggles;
 

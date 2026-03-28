@@ -14,7 +14,7 @@ import * as common from '@grafana/schema';
 
 export const pluginVersion = "%VERSION%";
 
-export type QueryType = ('lucene' | 'dsl');
+export type QueryType = ('lucene' | 'dsl' | 'esql');
 
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
@@ -395,6 +395,13 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    * Editor type
    */
   editorType?: string;
+  /**
+   * Metadata for variable queries
+   */
+  meta?: {
+    textField?: string;
+    valueField?: string;
+  };
   /**
    * List of metric aggregations
    */

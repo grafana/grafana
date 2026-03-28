@@ -60,6 +60,9 @@ func ProvideAppInstaller(
 	coreProvider := meta.NewCoreProvider(logger, func() (string, error) {
 		return getPluginsPath(cfgProvider)
 	})
+	if err := coreProvider.Init(context.Background()); err != nil {
+		logger.Warn("Failed to eagerly load core plugins", "error", err)
+	}
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.NewPluginsAppInstaller(logger, authorizer, metaProviderManager, false)
@@ -90,7 +93,7 @@ func getPluginsPath(cfgProvider configprovider.ConfigProvider) (string, error) {
 		return pluginsPath, nil
 	}
 
-	pluginsPath := filepath.Join(cfg.StaticRootPath, "public", "app", "plugins")
+	pluginsPath := filepath.Join(cfg.StaticRootPath, "app", "plugins")
 	if _, err = os.Stat(pluginsPath); err != nil {
 		return "", errors.New("could not find core plugins directory")
 	}

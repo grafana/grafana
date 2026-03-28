@@ -1,10 +1,11 @@
 package playlist
 
 import (
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	playlists "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	migrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func PlaylistMigration(migrator migrator.PlaylistMigrator) migrations.MigrationDefinition {
@@ -22,5 +23,7 @@ func PlaylistMigration(migrator migrator.PlaylistMigrator) migrations.MigrationD
 		Validators: []migrations.ValidatorFactory{
 			migrations.CountValidation(playlistGR, "playlist", "org_id = ?"),
 		},
+		SkipWhenMissing: true, // playlists may not exist at all
+		RenameTables:    []string{},
 	}
 }

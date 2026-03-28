@@ -14,45 +14,44 @@ import (
 )
 
 //go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
-type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error
+type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error
 
 //go:generate mockery --name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
-type CompareFn func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, error)
+type CompareFn func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string, folderMetadataEnabled bool) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error)
 
 //go:generate mockery --name IncrementalSyncFn --structname MockIncrementalSyncFn --inpackage --filename incremental_sync_fn_mock.go --with-expecter
-type IncrementalSyncFn func(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics) error
+type IncrementalSyncFn func(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error
 
 //go:generate mockery --name Syncer --structname MockSyncer --inpackage --filename syncer_mock.go --with-expecter
 type Syncer interface {
-	Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder) (string, error)
+	Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error)
 }
 
 type syncer struct {
-	compare         CompareFn
-	fullSync        FullSyncFn
-	incrementalSync IncrementalSyncFn
-	tracer          tracing.Tracer
-	metrics         jobs.JobMetrics
-	maxSyncWorkers  int
+	compare               CompareFn
+	fullSync              FullSyncFn
+	incrementalSync       IncrementalSyncFn
+	tracer                tracing.Tracer
+	metrics               jobs.JobMetrics
+	maxSyncWorkers        int
+	folderMetadataEnabled bool
 }
 
-func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics) Syncer {
+func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool) Syncer {
 	return &syncer{
-		compare:         compare,
-		fullSync:        fullSync,
-		incrementalSync: incrementalSync,
-		tracer:          tracer,
-		metrics:         metrics,
-		maxSyncWorkers:  maxSyncWorkers,
+		compare:               compare,
+		fullSync:              fullSync,
+		incrementalSync:       incrementalSync,
+		tracer:                tracer,
+		metrics:               metrics,
+		maxSyncWorkers:        maxSyncWorkers,
+		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
 
-func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder) (string, error) {
+func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options provisioning.SyncJobOptions, repositoryResources resources.RepositoryResources, clients resources.ResourceClients, progress jobs.JobProgressRecorder, quotaTracker quotas.QuotaTracker) (string, error) {
 	cfg := repo.Config()
 	logger := logging.FromContext(ctx)
-
-	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
-	quotaTracker := quotas.NewInMemoryQuotaTracker(usage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository)
 
 	var currentRef string
 	versionedRepo, ok := repo.(repository.Versioned)
@@ -65,13 +64,13 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 
 		if cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
 			progress.SetMessage(ctx, "incremental sync")
-			return currentRef, r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress, r.tracer, r.metrics)
+			return currentRef, r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress, r.tracer, r.metrics, quotaTracker, r.folderMetadataEnabled)
 		}
 
 		if quotas.IsQuotaExceeded(cfg.Status.Conditions) {
-			logger.Info("repository is over quota, running full sync", "repository", cfg.Name)
+			logger.Info("repository is over quota, running full sync")
 		}
 	}
 	progress.SetMessage(ctx, "full sync")
-	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics, quotaTracker)
+	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics, quotaTracker, r.folderMetadataEnabled)
 }

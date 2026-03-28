@@ -33,6 +33,10 @@ export class DashboardModelCompatibilityWrapper {
     );
   }
 
+  public get id(): number | null {
+    return this._scene.state.id ?? null;
+  }
+
   public get uid() {
     return this._scene.state.uid ?? null;
   }
@@ -167,15 +171,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public canEditAnnotations(dashboardUID?: string) {
-    if (!this._scene.canEditDashboard()) {
-      return false;
-    }
-
-    if (dashboardUID) {
-      return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
-    }
-
-    return false;
+    return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
   }
 
   public panelInitialized() {}

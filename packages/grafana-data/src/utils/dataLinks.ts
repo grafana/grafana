@@ -16,6 +16,7 @@ export const DataLinkBuiltInVars = {
   includeVars: '__all_variables',
   seriesName: '__series.name',
   fieldName: '__field.name',
+  fieldDisplayName: '__field.displayName',
   valueTime: '__value.time',
   valueNumeric: '__value.numeric',
   valueText: '__value.text',

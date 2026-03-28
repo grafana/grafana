@@ -7,6 +7,8 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
+import { LinkEdit } from '../settings/links/LinkAddEditableElement';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -65,13 +67,18 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // Only select via clicking outline never deselect
     if (!isSelected) {
-      onSelect?.(e);
+      if (sceneObject instanceof LinkEdit || sceneObject instanceof DashboardLinksSet) {
+        // Select directly via editPane.selectObject because link objects are not
+        // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
+        editPane.selectObject(sceneObject, key!);
+      } else {
+        onSelect?.(e);
+      }
     }
 
     editableElement.scrollIntoView?.();
-    DashboardInteractions.outlineItemClicked({ index, depth });
+    DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
   };
 
   const onToggleCollapse = (evt: React.MouseEvent) => {

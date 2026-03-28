@@ -38,17 +38,17 @@ describe('setDashboardPanelContext', () => {
 
   describe('canEditAnnotations', () => {
     it('Can edit global event when user has org permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, orgCanEdit: true });
+      const { context } = buildTestScene({ canEdit: true });
       expect(context.canEditAnnotations!()).toBe(true);
     });
 
     it('Can not edit global event when has no org permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, orgCanEdit: false });
+      const { context } = buildTestScene({ canEdit: false });
       expect(context.canEditAnnotations!()).toBe(false);
     });
 
     it('Can edit dashboard event when has dashboard permission', () => {
-      const { context } = buildTestScene({ dashboardCanEdit: true, canEdit: true });
+      const { context } = buildTestScene({ canEdit: true });
       expect(context.canEditAnnotations!('dash-uid')).toBe(true);
     });
 
@@ -325,7 +325,6 @@ interface SceneOptions {
   canAdd?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
-  orgCanEdit?: boolean;
   existingFilterVariable?: boolean;
   existingGroupByVariable?: boolean;
   groupByDatasourceUid?: string;

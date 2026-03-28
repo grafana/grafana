@@ -102,17 +102,21 @@ describe('DashboardModelCompatibilityWrapper', () => {
   it('Checks if annotations are editable', () => {
     const { wrapper, scene } = setup();
 
-    expect(wrapper.canEditAnnotations()).toBe(true);
+    expect(wrapper.canEditAnnotations()).toBe(false);
     expect(wrapper.canEditAnnotations(scene.state.uid)).toBe(false);
 
     scene.setState({
       meta: {
         canEdit: false,
         canMakeEditable: false,
+        annotationsPermissions: {
+          dashboard: { canAdd: true, canEdit: true, canDelete: true },
+        },
       },
     });
 
-    expect(wrapper.canEditAnnotations()).toBe(false);
+    expect(wrapper.canEditAnnotations()).toBe(true);
+    expect(wrapper.canEditAnnotations(scene.state.uid)).toBe(true);
   });
 });
 

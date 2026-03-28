@@ -894,7 +894,7 @@
       },
       "CorrelationTransformationSpec": {
         "type": "object",
-        "required": ["type", "expression", "field", "mapValue"],
+        "required": ["type"],
         "properties": {
           "expression": {
             "type": "string"

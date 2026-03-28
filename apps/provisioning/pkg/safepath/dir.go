@@ -38,6 +38,22 @@ func InDir(filePath, dir string) bool {
 	return strings.HasPrefix(filePath, dir)
 }
 
+// EnsureTrailingSlash returns the path with a trailing slash appended if it
+// doesn't already have one. This is useful for marking paths as directories.
+// To keep compatibility with the functions in this package, the "root" directory
+// (which can be represented as "" or "." or "/") is returned as "".
+func EnsureTrailingSlash(filePath string) string {
+	if filePath == "" || filePath == "." || filePath == "/" {
+		return ""
+	}
+
+	if strings.HasSuffix(filePath, "/") {
+		return filePath
+	}
+
+	return filePath + "/"
+}
+
 // RelativeTo returns the relative path of the filePath to the given directory.
 // It handles cases where either filePath or dir have leading or trailing slashes.
 func RelativeTo(filePath, dir string) (string, error) {
