@@ -86,8 +86,8 @@ type TraceKeyValuePair struct {
 }
 
 type TraceLog struct {
-	Timestamp int64
-	Fields    []TraceKeyValuePair
+	Timestamp int64               `json:"timestamp"`
+	Fields    []TraceKeyValuePair `json:"fields"`
 }
 
 func transformResponse(zipkinSpans []model.SpanModel, refId string) *data.Frame {
