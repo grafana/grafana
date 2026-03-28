@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -84,7 +82,6 @@ func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTest
 	db := helper.GetEnv().SQLStore
 	cfg := helper.GetEnv().Cfg
 	features := featuremgmt.WithFeatures()
-	legacyFolders := folderimpl.ProvideStore(db, cfg)
 	legacyDashboards, err := database.ProvideDashboardStore(
 		db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
@@ -93,22 +90,22 @@ func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTest
 		&alwaysYesAccessControl{}, nil, nil, nil)
 
 	// Create parent folder
-	parent := createTestFolder(t, helper, legacyFolders, tc.parentFolderUID, "parent-folder", "")
+	parent := createTestFolder(t, helper, legacyDashboards, tc.parentFolderUID, "parent-folder", "")
 
 	// Create child folder (nested under parent)
-	child := createTestFolder(t, helper, legacyFolders, tc.childFolderUID, "child-folder", parent.UID)
+	child := createTestFolder(t, helper, legacyDashboards, tc.childFolderUID, "child-folder", parent)
 
 	// Create library panel in child folder
-	tc.libPanelUID = createTestLibraryPanel(t, helper, libraryElements, "Test Library Panel", child.UID)
+	tc.libPanelUID = createTestLibraryPanel(t, helper, libraryElements, "Test Library Panel", child)
 
 	// Create a large dashboard (~3MB) to test migration performance with big resources.
 	// On SQLite without sufficient cache_size, large inserts cause cache spills that
 	// escalate to EXCLUSIVE locks and deadlock with concurrent readers.
-	tc.largeDashboardUID = createLargeDashboard(t, helper, legacyDashboards, child.UID, 3*1024*1024)
+	tc.largeDashboardUID = createLargeDashboard(t, helper, legacyDashboards, child, 3*1024*1024)
 
 	// Create dashboard with library panel in child folder
 	tc.dashboardUID = createTestDashboardWithLibraryPanel(t, helper, legacyDashboards, "dashboard-with-library-panel",
-		tc.libPanelUID, "Test LP in dashboard", child.UID)
+		tc.libPanelUID, "Test LP in dashboard", child)
 
 	return false // mode0 is not supported
 }
@@ -163,21 +160,24 @@ func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTes
 }
 
 // createTestFolder creates a folder with specified UID and optional parent
-func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, store folder.Store, uid, title, parentUID string) *folder.Folder {
+func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, store dashboards.Store, uid, title, parentUID string) string {
 	t.Helper()
 
-	f, err := store.Create(context.Background(), folder.CreateFolderCommand{
-		UID:          uid,
-		Title:        title,
-		OrgID:        helper.Org1.OrgID,
-		ParentUID:    parentUID,
-		SignedInUser: helper.Org1.Admin.Identity,
+	f, err := store.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:     helper.Org1.OrgID,
+		IsFolder:  true,
+		FolderUID: parentUID,
+		Overwrite: true,
+		Dashboard: simplejson.MustJson(fmt.Appendf([]byte{}, `{
+			"title": "%s",
+			"uid": "%s"
+		}`, title, uid)),
 	})
 
 	require.NoError(t, err)
 	require.Equal(t, uid, f.UID)
 
-	return f
+	return f.UID
 }
 
 // createTestLibraryPanel creates a library panel in a folder
@@ -185,8 +185,8 @@ func createTestLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, store libr
 	t.Helper()
 
 	libPanelPayload := fmt.Sprintf(`{
-			"type": "text",
-			"title": "%s"
+		"type": "text",
+		"title": "%s"
 	}`, name)
 
 	dto, err := store.CreateElement(context.Background(),
