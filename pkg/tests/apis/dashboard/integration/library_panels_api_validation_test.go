@@ -121,7 +121,7 @@ func runLibraryElementAuthorizationTests(t *testing.T, ctx TestContext) {
 			}
 
 			t.Run("library element viewing", func(t *testing.T) {
-				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element for "+role+" to view", "", nil)
+				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element for "+role+" to view", "")
 				require.NoError(t, err)
 
 				viewedLibElement, err := client.Resource.Get(context.Background(), uid, v1.GetOptions{})
@@ -133,7 +133,7 @@ func runLibraryElementAuthorizationTests(t *testing.T, ctx TestContext) {
 			})
 
 			t.Run("library element listing", func(t *testing.T) {
-				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element for "+role+" to list", "", nil)
+				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element for "+role+" to list", "")
 				require.NoError(t, err)
 
 				listOpts := v1.ListOptions{}
@@ -151,7 +151,7 @@ func runLibraryElementAuthorizationTests(t *testing.T, ctx TestContext) {
 				restrictedFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "Restricted Folder for "+role)
 				require.NoError(t, err)
 				require.NotNil(t, restrictedFolder)
-				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in restricted folder", restrictedFolder.UID, nil)
+				uid, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in restricted folder", restrictedFolder.UID)
 				require.NoError(t, err)
 				setResourceUserPermission(t, ctx, ctx.AdminUser, false, restrictedFolder.UID, []ResourcePermissionSetting{})
 
@@ -196,10 +196,10 @@ func runLibraryElementCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) 
 	})
 
 	t.Run("Cross-organization access", func(t *testing.T) {
-		org1LibElementUID, err := createLibraryElement(t, org1Ctx, org1Ctx.AdminUser, "Org1 Library Element", "", nil)
+		org1LibElementUID, err := createLibraryElement(t, org1Ctx, org1Ctx.AdminUser, "Org1 Library Element", "")
 		require.NoError(t, err)
 
-		org2LibElementUID, err := createLibraryElement(t, org2Ctx, org2Ctx.AdminUser, "Org2 Library Element", "", nil)
+		org2LibElementUID, err := createLibraryElement(t, org2Ctx, org2Ctx.AdminUser, "Org2 Library Element", "")
 		require.NoError(t, err)
 
 		defer func() {
@@ -234,7 +234,7 @@ func getLibraryElementGVR() schema.GroupVersionResource {
 }
 
 // currently through /api
-func createLibraryElement(t *testing.T, ctx TestContext, user apis.User, title string, folderUID string, uid *string) (string, error) {
+func createLibraryElement(t *testing.T, ctx TestContext, user apis.User, title string, folderUID string) (string, error) {
 	t.Helper()
 	libraryElement := map[string]interface{}{
 		"kind": 1,
@@ -446,7 +446,7 @@ func setupFolderHierarchy(t *testing.T, helper *apis.K8sTestHelper) folderHierar
 
 	libraryElements := make([]string, 0, 3)
 	for _, f := range []*folder.Folder{parentFolder, childFolder, grandchildFolder} {
-		libraryElement, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in "+f.Title, f.UID, nil)
+		libraryElement, err := createLibraryElement(t, ctx, ctx.AdminUser, "Library Element in "+f.Title, f.UID)
 		require.NoError(t, err)
 		libraryElements = append(libraryElements, libraryElement)
 	}

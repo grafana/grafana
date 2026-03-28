@@ -1768,7 +1768,7 @@ func runCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) {
 		folder2updated, err := org2FolderClient.Resource.Get(context.Background(), folderUID, v1.GetOptions{})
 		require.NoError(t, err, "Failed to get updated folder in org2")
 		meta2, _ = utils.MetaAccessor(folder2updated)
-		require.Equal(t, "Updated folderin org2", meta2.FindTitle(""), "Folder title in org2 should be updated")
+		require.Equal(t, "Updated folder in org2", meta2.FindTitle(""), "Folder title in org2 should be updated")
 
 		// Clean up
 		err = org1FolderClient.Resource.Delete(context.Background(), folderUID, v1.DeleteOptions{})
