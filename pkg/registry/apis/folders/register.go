@@ -182,6 +182,19 @@ func (b *FolderAPIBuilder) storageForVersion(
 	b.registerPermissionHooks(unified)
 	b.storage = unified
 
+	// This is the ST wrapper
+	if b.folderPermissionsSvc != nil {
+		b.storage = &folderStorage{
+			resourceInfo:         folders,
+			tableConverter:       folders.TableConverter(),
+			folderPermissionsSvc: b.folderPermissionsSvc,
+			features:             b.features,
+			acService:            b.acService,
+			permissionsOnCreate:  b.permissionsOnCreate,
+			store:                unified,
+		}
+	}
+
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
 
