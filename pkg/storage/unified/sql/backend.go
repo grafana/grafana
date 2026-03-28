@@ -159,9 +159,9 @@ func NewStorageBackend(
 			MaxAge:           cfg.GarbageCollectionMaxAge,
 			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 		},
-		EventRetentionPeriod: cfg.EventRetentionPeriod,
-		EventPruningInterval: cfg.EventPruningInterval,
-		SearchLookback:       cfg.SearchLookback,
+		EventRetentionPeriod:    cfg.EventRetentionPeriod,
+		EventPruningInterval:    cfg.EventPruningInterval,
+		SearchLookback:          cfg.SearchLookback,
 		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	}

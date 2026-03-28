@@ -1044,4 +1044,3 @@ func TestSqlPruneHistoryRequest_Validate(t *testing.T) {
 		})
 	}
 }
-

@@ -37,7 +37,7 @@ import (
 const (
 	defaultListBufferSize             = 100
 	defaultEventRetentionPeriod       = 1 * time.Hour
-defaultEventPruningInterval       = 5 * time.Minute
+	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 )
@@ -54,21 +54,21 @@ type GarbageCollectionConfig struct {
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake            *snowflake.Node
-	kv                   KV
-	bulkLock             *BulkLock
-	dataStore            *dataStore
-	eventStore           *eventStore
-	notifier             notifier
-	log                  log.Logger
+	snowflake               *snowflake.Node
+	kv                      KV
+	bulkLock                *BulkLock
+	dataStore               *dataStore
+	eventStore              *eventStore
+	notifier                notifier
+	log                     log.Logger
 	disablePruner           bool
 	dashboardVersionsToKeep int
 	eventRetentionPeriod    time.Duration
-	eventPruningInterval time.Duration
-	historyPruner        Pruner
-	garbageCollection    GarbageCollectionConfig
-	lastImportStore      *lastImportStore
-	lastImportTimeMaxAge time.Duration
+	eventPruningInterval    time.Duration
+	historyPruner           Pruner
+	garbageCollection       GarbageCollectionConfig
+	lastImportStore         *lastImportStore
+	lastImportTimeMaxAge    time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
@@ -186,22 +186,22 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	backend := &kvStorageBackend{
-		kv:                   kv,
-		bulkLock:             NewBulkLock(),
-		dataStore:            newDataStore(kv),
-		eventStore:           eventStore,
-		notifier:             newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
-		watchOpts:            opts.WatchOptions.normalize(),
-		snowflake:            s,
-		log:                  logger,
-		eventRetentionPeriod: eventRetentionPeriod,
-		eventPruningInterval: eventPruningInterval,
-		rvManager:            opts.RvManager,
-		dbKeepAlive:          opts.DBKeepAlive,
-		lastImportStore:      newLastImportStore(kv),
-		lastImportTimeMaxAge: opts.LastImportTimeMaxAge,
-		garbageCollection:    garbageCollection,
-		searchLookback:       opts.SearchLookback,
+		kv:                      kv,
+		bulkLock:                NewBulkLock(),
+		dataStore:               newDataStore(kv),
+		eventStore:              eventStore,
+		notifier:                newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		watchOpts:               opts.WatchOptions.normalize(),
+		snowflake:               s,
+		log:                     logger,
+		eventRetentionPeriod:    eventRetentionPeriod,
+		eventPruningInterval:    eventPruningInterval,
+		rvManager:               opts.RvManager,
+		dbKeepAlive:             opts.DBKeepAlive,
+		lastImportStore:         newLastImportStore(kv),
+		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
+		garbageCollection:       garbageCollection,
+		searchLookback:          opts.SearchLookback,
 		disablePruner:           opts.DisablePruner,
 		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 	}
