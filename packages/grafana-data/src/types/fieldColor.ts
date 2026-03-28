@@ -6,6 +6,7 @@ export enum FieldColorModeId {
   PaletteClassic = 'palette-classic',
   PaletteClassicByName = 'palette-classic-by-name',
   PaletteSaturated = 'palette-saturated',
+  PaletteColorblind = 'palette-colorblind',
   ContinuousGrYlRd = 'continuous-GrYlRd',
   ContinuousRdYlGr = 'continuous-RdYlGr',
   ContinuousBlYlRd = 'continuous-BlYlRd',

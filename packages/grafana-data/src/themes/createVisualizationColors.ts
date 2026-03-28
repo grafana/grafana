@@ -344,6 +344,33 @@ function getClassicPalette() {
   ];
 }
 
+/**
+ * Colorblind-safe palette based on Wong (2011) "Points of view: Color blindness"
+ * Nature Methods 8:441. Extended with Okabe-Ito colors for additional series.
+ * These colors are distinguishable by people with all common forms of color
+ * vision deficiency (protanopia, deuteranopia, tritanopia).
+ */
+export function getColorblindPalette(): string[] {
+  return [
+    '#0072B2', // blue
+    '#E69F00', // orange
+    '#009E73', // bluish green
+    '#CC79A7', // reddish purple
+    '#56B4E9', // sky blue
+    '#D55E00', // vermilion
+    '#F0E442', // yellow
+    '#000000', // black
+    '#0077BB', // tol blue
+    '#33BBEE', // tol cyan
+    '#EE7733', // tol orange
+    '#EE3377', // tol magenta
+    '#BBBBBB', // tol grey
+    '#AA3377', // tol wine
+    '#66CCEE', // tol light cyan
+    '#CCBB44', // tol pear
+  ];
+}
+
 // Old hues
 // function getDarkHues(): ThemeVizHue[] {
 //     return [

@@ -89,6 +89,16 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       },
     }),
     new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteColorblind,
+      name: 'Colorblind safe',
+      isContinuous: false,
+      isByValue: false,
+      getColors: () => {
+        return getColorblindPalette();
+      },
+      group: accessibleGroup,
+    }),
+    new FieldColorSchemeMode({
       id: FieldColorModeId.ContinuousViridis,
       name: 'Viridis',
       isContinuous: true,
