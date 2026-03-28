@@ -3501,7 +3501,6 @@ export type CreateRoleForm = {
   name?: string;
   permissions?: Permission[];
   uid?: string;
-  version?: number;
 };
 export type SuccessResponseBody = {
   message?: string;
@@ -3514,7 +3513,6 @@ export type UpdateRoleCommand = {
   hidden?: boolean;
   name?: string;
   permissions?: Permission[];
-  version?: number;
 };
 export type RoleAssignmentsDto = {
   role_uid?: string;

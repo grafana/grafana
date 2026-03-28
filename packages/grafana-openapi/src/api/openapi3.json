@@ -4300,10 +4300,6 @@
           },
           "uid": {
             "type": "string"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -12327,10 +12323,6 @@
               "$ref": "#/components/schemas/Permission"
             },
             "type": "array"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "required": ["displayName", "description", "group"],
