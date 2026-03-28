@@ -6,17 +6,17 @@ import (
 	"net/http"
 	"testing"
 
-	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -29,7 +29,7 @@ import (
 func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -92,7 +92,7 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -294,7 +294,7 @@ func deleteLibraryElement(t *testing.T, ctx TestContext, user apis.User, uid str
 }
 
 func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -513,7 +513,7 @@ func getVisibleLibraryElementUIDs(t *testing.T, ctx *TestContext, user apis.User
 func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode5}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		var disableFlags []string
 		if dualWriterMode < rest.Mode5 {

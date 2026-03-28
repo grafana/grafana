@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -75,15 +76,17 @@ func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTest
 	t.Helper()
 
 	db := helper.GetEnv().SQLStore
+	cfg := helper.GetEnv().Cfg
+	legacyFolders := folderimpl.ProvideStore(db, cfg)
 	legacyDashboards, err := database.ProvideDashboardStore(
-		db, helper.GetEnv().Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+		db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
 
 	// Create parent folder
-	parent := createTestFolder(t, helper, tc.parentFolderUID, "parent-folder", "")
+	parent := createTestFolder(t, helper, legacyFolders, tc.parentFolderUID, "parent-folder", "")
 
 	// Create child folder (nested under parent)
-	child := createTestFolder(t, helper, tc.childFolderUID, "child-folder", parent.UID)
+	child := createTestFolder(t, helper, legacyFolders, tc.childFolderUID, "child-folder", parent.UID)
 
 	// Create library panel in child folder
 	tc.libPanelUID = createTestLibraryPanel(t, helper, "Test Library Panel", child.UID)
@@ -150,31 +153,21 @@ func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTes
 }
 
 // createTestFolder creates a folder with specified UID and optional parent
-func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, uid, title, parentUID string) *folder.Folder {
+func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, store folder.Store, uid, title, parentUID string) *folder.Folder {
 	t.Helper()
 
-	payload := fmt.Sprintf(`{
-		"title": "%s",
-		"uid": "%s"`, title, uid)
+	f, err := store.Create(context.Background(), folder.CreateFolderCommand{
+		UID:          uid,
+		Title:        title,
+		OrgID:        helper.Org1.OrgID,
+		ParentUID:    parentUID,
+		SignedInUser: helper.Org1.Admin.Identity,
+	})
 
-	if parentUID != "" {
-		payload += fmt.Sprintf(`,
-		"parentUid": "%s"`, parentUID)
-	}
+	require.NoError(t, err)
+	require.Equal(t, uid, f.UID)
 
-	payload += "}"
-
-	folderCreate := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Admin,
-		Method: http.MethodPost,
-		Path:   "/api/folders",
-		Body:   []byte(payload),
-	}, &folder.Folder{})
-
-	require.NotNil(t, folderCreate.Result)
-	require.Equal(t, uid, folderCreate.Result.UID)
-
-	return folderCreate.Result
+	return f
 }
 
 // createTestLibraryPanel creates a library panel in a folder
