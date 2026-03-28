@@ -2270,18 +2270,16 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// Test dry-run on dual-writer modes 1-4.
-	// Mode 0 (legacy-only) does not use the dualWriter, so dry-run is not intercepted.
-	for _, mode := range modes {
-		modeDw := mode
+	// Test dry-run
+	for _, modeDw := range modes {
 		t.Run(fmt.Sprintf("dry-run mode %v", modeDw), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    true,
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folders.RESOURCEGROUP:     {DualWriterMode: mode},
-					setting.DashboardResource: {DualWriterMode: mode},
+					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
+					setting.DashboardResource: {DualWriterMode: modeDw},
 				},
 				EnableFeatureToggles: []string{},
 			})
@@ -2336,34 +2334,28 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 				require.Error(t, err, "folder should not exist after dry-run create")
 			})
 
-			// Update dry-run only works reliably in modes 4+ where unified storage is
-			// the primary read source, so the client-sent UID matches the unified store.
-			// In modes 1/2/3, the client reads from legacy (which has a different UID than
-			// unified), causing a UID precondition mismatch on dry-run update.
-			if mode >= 4 {
-				t.Run("update with dry-run should not actually update", func(t *testing.T) {
-					// Get the current folder
-					current, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
-					require.NoError(t, err)
+			t.Run("update with dry-run should not actually update", func(t *testing.T) {
+				// Get the current folder
+				current, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+				require.NoError(t, err)
 
-					// Modify the title
-					spec := current.Object["spec"].(map[string]any)
-					originalTitle := spec["title"]
-					spec["title"] = "DryRun Updated Title"
-					current.Object["spec"] = spec
+				// Modify the title
+				spec := current.Object["spec"].(map[string]any)
+				originalTitle := spec["title"]
+				spec["title"] = "DryRun Updated Title"
+				current.Object["spec"] = spec
 
-					_, err = client.Resource.Update(context.Background(), current, metav1.UpdateOptions{
-						DryRun: []string{metav1.DryRunAll},
-					})
-					require.NoError(t, err)
-
-					// Title should be unchanged
-					got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
-					require.NoError(t, err)
-					gotSpec := got.Object["spec"].(map[string]any)
-					require.Equal(t, originalTitle, gotSpec["title"], "title should not change after dry-run update")
+				_, err = client.Resource.Update(context.Background(), current, metav1.UpdateOptions{
+					DryRun: []string{metav1.DryRunAll},
 				})
-			}
+				require.NoError(t, err)
+
+				// Title should be unchanged
+				got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+				require.NoError(t, err)
+				gotSpec := got.Object["spec"].(map[string]any)
+				require.Equal(t, originalTitle, gotSpec["title"], "title should not change after dry-run update")
+			})
 
 			// Clean up
 			err = client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{})
