@@ -102,7 +102,7 @@
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/plugin-e2e": "3.4.7",
     "@grafana/test-utils": "workspace:*",
-    "@lyricalstring/gale": "0.1.4",
+    "@lyricalstring/gale": "0.1.5",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
     "@playwright/test": "1.56.1",
