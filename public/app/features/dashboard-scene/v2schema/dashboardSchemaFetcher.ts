@@ -108,12 +108,14 @@ function convertRefToDefinitionKey(key: string): string {
 // - kind fields are emitted as plain strings instead of const values
 // - scalar union types are emitted as structs instead of oneOf
 // - map[string]interface{} values are constrained to objects instead of any
+// - interface{} fields are constrained to objects instead of accepting any JSON value
 // - discriminated unions are emitted as struct properties instead of if/then
 
 function fixOpenAPIMismatches(definitions: Record<string, JSONSchema>): void {
   fixKindConstraints(definitions);
   fixScalarUnions(definitions);
   fixOpaqueMaps(definitions);
+  fixAnyValueProperties(definitions);
   fixDiscriminatedUnions(definitions);
 }
 
@@ -186,6 +188,28 @@ function fixOpaqueMaps(definitions: Record<string, JSONSchema>): void {
         for (const p of props) {
           if (schema.properties?.[p]) {
             schema.properties[p] = { type: 'object', additionalProperties: true };
+          }
+        }
+      }
+    }
+  }
+}
+
+// interface{} / any properties: the generator emits { type: object } for interface{},
+// but these fields accept any JSON value (string, number, array, object, etc.).
+const ANY_VALUE_PROPERTIES: Record<string, string[]> = {
+  DashboardMatcherConfig: ['options'],
+  DashboardDynamicConfigValue: ['value'],
+};
+
+function fixAnyValueProperties(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    for (const [suffix, props] of Object.entries(ANY_VALUE_PROPERTIES)) {
+      if (key.endsWith(`_${suffix}`)) {
+        for (const p of props) {
+          if (schema.properties?.[p]) {
+            const { description } = schema.properties[p];
+            schema.properties[p] = description ? { description } : {};
           }
         }
       }
