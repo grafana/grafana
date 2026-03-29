@@ -6,7 +6,6 @@ import { PropsWithChildren, ReactNode, useId, type JSX } from 'react';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { getPortalContainer } from '../Portal/Portal';
@@ -15,10 +14,6 @@ import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
 
 interface BaseProps {
-  /** @deprecated no longer used */
-  icon?: IconName;
-  /** @deprecated no longer used */
-  iconTooltip?: string;
   className?: string;
   contentClassName?: string;
   closeOnEscape?: boolean;
@@ -77,7 +72,16 @@ export function Modal(props: PropsWithChildren<Props>) {
   });
 
   const dismiss = useDismiss(context, {
-    enabled: closeOnEscape,
+    escapeKey: closeOnEscape,
+    // outsidePress intercepts clicks before they reach the DOM — use a function
+    // to honour closeOnBackdropClick and forward to onClickBackdrop in one place.
+    outsidePress: () => {
+      if (onClickBackdrop) {
+        onClickBackdrop();
+        return false;
+      }
+      return closeOnBackdropClick;
+    },
   });
 
   const role = useRole(context, {
@@ -94,11 +98,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   return (
     <OverlayContainer>
-      <div
-        role="presentation"
-        className={styles.modalBackdrop}
-        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
-      />
+      <div role="presentation" className={styles.modalBackdrop} />
       <FloatingFocusManager context={context} modal={trapFocus} getInsideElements={() => [getPortalContainer()]}>
         <div
           className={cx(styles.modal, className)}
@@ -108,7 +108,7 @@ export function Modal(props: PropsWithChildren<Props>) {
           {...getFloatingProps()}
         >
           <div className={headerClass}>
-            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} id={titleId} />}
+            {typeof title === 'string' && <ModalHeader title={title} id={titleId} />}
             {
               // FIXME: custom title components won't get an accessible title.
               // Do we really want to support them or shall we just limit this ModalTabsHeader?
@@ -158,14 +158,3 @@ function ModalButtonRow({ leftItems, children }: { leftItems?: ReactNode; childr
 }
 
 Modal.ButtonRow = ModalButtonRow;
-
-interface DefaultModalHeaderProps {
-  id?: string;
-  title: string;
-  icon?: IconName;
-  iconTooltip?: string;
-}
-
-function DefaultModalHeader({ icon, iconTooltip, title, id }: DefaultModalHeaderProps): JSX.Element {
-  return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} id={id} />;
-}

@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -7,6 +8,7 @@ import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
@@ -47,6 +49,7 @@ export default function CreateNewButton({
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   const handleVisibleChange = () => {
     if (!isOpen) {
@@ -109,10 +112,15 @@ export default function CreateNewButton({
             <MenuItem
               label={getNewTemplateDashboardPhrase()}
               onClick={() =>
-                DashboardLibraryInteractions.entryPointClicked({
-                  entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-                })
+                isAnalyticsFrameworkEnabled
+                  ? NewDashboardLibraryInteractions.entryPointClicked({
+                      entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
+                      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                    })
+                  : DashboardLibraryInteractions.entryPointClicked({
+                      entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
+                      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                    })
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
             />

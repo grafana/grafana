@@ -32,7 +32,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
-	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
+	HooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
 
 	go func(rb *iamv0.RoleBinding) {
 		start := time.Now()
@@ -42,7 +42,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 			// Release the ticket after write is done
 			<-b.zTickets
 			// Record operation duration and count
-			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
 		}()
 
 		b.logger.Debug("writing role binding to zanzana",
@@ -52,7 +52,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 			"roleRefs", rb.Spec.RoleRefs,
 		)
 
-		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 		defer cancel()
 
 		operations := make([]*v1.MutateOperation, 0, len(rb.Spec.RoleRefs))
@@ -109,7 +109,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 	// This limits the amount of concurrent connections to Zanzana
 	wait := time.Now()
 	b.zTickets <- true
-	hooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
+	HooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
 
 	go func(rb *iamv0.RoleBinding) {
 		start := time.Now()
@@ -119,7 +119,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 			// Release the ticket after write is done
 			<-b.zTickets
 			// Record operation duration and count
-			hooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
 		}()
 
 		b.logger.Debug("deleting role binding from zanzana",
@@ -129,7 +129,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 			"roleRefs", rb.Spec.RoleRefs,
 		)
 
-		ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 		defer cancel()
 
 		operations := make([]*v1.MutateOperation, 0, len(rb.Spec.RoleRefs))
@@ -208,7 +208,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleBindingUpdate(ctx context.
 
 		wait := time.Now()
 		b.zTickets <- true
-		hooksWaitHistogram.WithLabelValues(resourceType, "update").Observe(time.Since(wait).Seconds())
+		HooksWaitHistogram.WithLabelValues(resourceType, "update").Observe(time.Since(wait).Seconds())
 
 		go func() {
 			start := time.Now()
@@ -217,7 +217,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleBindingUpdate(ctx context.
 			defer func() {
 				<-b.zTickets
 				// Record operation duration and count
-				hooksDurationHistogram.WithLabelValues(resourceType, "update", status).Observe(time.Since(start).Seconds())
+				HooksDurationHistogram.WithLabelValues(resourceType, "update", status).Observe(time.Since(start).Seconds())
 			}()
 
 			b.logger.Debug("updating role binding in zanzana",
@@ -229,7 +229,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleBindingUpdate(ctx context.
 				"newRoleRefs", newRB.Spec.RoleRefs,
 			)
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultWriteTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 			defer cancel()
 
 			operations := make([]*v1.MutateOperation, 0, len(oldRB.Spec.RoleRefs))

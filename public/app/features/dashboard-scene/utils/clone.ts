@@ -3,6 +3,7 @@ import {
   MultiValueVariableState,
   SceneObject,
   SceneVariable,
+  SceneVariables,
   SceneVariableSet,
   VariableValueSingle,
 } from '@grafana/scenes';
@@ -66,4 +67,42 @@ export function getLocalVariableValueSet(
       }),
     ],
   });
+}
+
+export function getRepeatVariableValueSet(
+  variable: SceneVariable<MultiValueVariableState>,
+  value: VariableValueSingle,
+  text: VariableValueSingle,
+  baseSet?: SceneVariableSet
+): SceneVariableSet {
+  const localSet = getLocalVariableValueSet(variable, value, text);
+  const localVariables = localSet.state.variables.map((v) => v.clone());
+  if (!baseSet) {
+    return new SceneVariableSet({ variables: localVariables });
+  }
+
+  return new SceneVariableSet({
+    // Always clone base variables to avoid attaching the same SceneObject instance
+    // to multiple SceneVariableSet parents during repeat updates.
+    variables: [...baseSet.state.variables.map((v) => v.clone()), ...localVariables],
+  });
+}
+
+export function removeRepeatLocalVariableFromSet(
+  variableSet: SceneVariables | undefined,
+  repeatVariableName: string | undefined
+): SceneVariables | undefined {
+  if (!repeatVariableName || !(variableSet instanceof SceneVariableSet)) {
+    return variableSet;
+  }
+
+  const variables = variableSet.state.variables.filter(
+    (variable) => !(variable instanceof LocalValueVariable && variable.state.name === repeatVariableName)
+  );
+
+  if (variables.length === 0) {
+    return undefined;
+  }
+
+  return new SceneVariableSet({ variables: variables.map((variable) => variable.clone()) });
 }

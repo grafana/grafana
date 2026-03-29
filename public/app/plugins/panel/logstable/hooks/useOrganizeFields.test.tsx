@@ -7,6 +7,8 @@ import { TableCellDisplayMode } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
+import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
+
 import { useExtractFields } from './useExtractFields';
 import { useOrganizeFields } from './useOrganizeFields';
 
@@ -64,6 +66,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {},
@@ -75,9 +78,10 @@ describe('useOrganizeFields', () => {
 
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
-        expect(organizedFields.current.organizedFrame?.fields.length).toBe(2);
+        expect(organizedFields.current.organizedFrame?.fields.length).toBe(3);
         expect(organizedFields.current.organizedFrame?.fields[0].name).toBe(LOGS_DATAPLANE_TIMESTAMP_NAME);
-        expect(organizedFields.current.organizedFrame?.fields[1].name).toBe(LOGS_DATAPLANE_BODY_NAME);
+        expect(organizedFields.current.organizedFrame?.fields[1].name).toBe('level');
+        expect(organizedFields.current.organizedFrame?.fields[2].name).toBe(LOGS_DATAPLANE_BODY_NAME);
       });
     });
     test('returns specified fields', async () => {
@@ -85,6 +89,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {
@@ -110,6 +115,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {
@@ -122,11 +128,14 @@ describe('useOrganizeFields', () => {
       );
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
-        expect(organizedFields.current.organizedFrame?.fields.length).toBe(2);
+        expect(organizedFields.current.organizedFrame?.fields.length).toBe(3);
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions.type).toBe(
           TableCellDisplayMode.Custom
         );
-        expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions).not.toBeDefined();
+        expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions.type).toBe(
+          TableCellDisplayMode.Pill
+        );
+        expect(organizedFields.current.organizedFrame?.fields[2].config.custom.cellOptions).not.toBeDefined();
       });
     });
     test('only used on first column - showCopyLogLink', async () => {
@@ -134,6 +143,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {
@@ -146,11 +156,14 @@ describe('useOrganizeFields', () => {
       );
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
-        expect(organizedFields.current.organizedFrame?.fields.length).toBe(2);
+        expect(organizedFields.current.organizedFrame?.fields.length).toBe(3);
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions.type).toBe(
           TableCellDisplayMode.Custom
         );
-        expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions).not.toBeDefined();
+        expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions.type).toBe(
+          TableCellDisplayMode.Pill
+        );
+        expect(organizedFields.current.organizedFrame?.fields[2].config.custom.cellOptions).not.toBeDefined();
       });
     });
     test('not used if showInspectLogLine or showCopyLogLink is not defined', async () => {
@@ -158,6 +171,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {},
@@ -178,6 +192,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {},
@@ -190,6 +205,36 @@ describe('useOrganizeFields', () => {
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.filterable).toBe(true);
+      });
+    });
+  });
+
+  describe('log level column enhancements', () => {
+    test('applies default level mapping and pill cell mode for level field', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
+        })
+      );
+
+      expect.assertions(7);
+
+      await waitFor(() => {
+        const levelField = organizedFields.current.organizedFrame?.fields.find((f) => f.name === 'level');
+        expect(levelField).toBeDefined();
+        expect(levelField?.config.custom?.cellOptions?.type).toBe(TableCellDisplayMode.Pill);
+        expect(levelField?.config.custom?.width).toBe(DEFAULT_LOG_LEVEL_FIELD_WIDTH);
+        if (levelField?.config.mappings?.[0]?.options && 'critical' in levelField?.config.mappings?.[0]?.options) {
+          expect(levelField?.config.mappings?.[0]?.options?.['critical']).toBeDefined();
+        }
       });
     });
   });

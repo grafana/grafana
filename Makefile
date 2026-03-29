@@ -9,6 +9,8 @@ include .citools/Variables.mk
 
 GO = go
 GO_VERSION = 1.25.8
+GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
+GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -27,9 +29,39 @@ GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	$(if $(ENTERPRISE_COMMIT_SHA),-X main.enterpriseCommit=$(ENTERPRISE_COMMIT_SHA)) \
 	$(if $(LDFLAGS),-extldflags \"$(LDFLAGS)\")
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
+GO_BUILD_DEV_ENABLED := $(filter 1 dev,$(GO_BUILD_DEV))
+GO_BUILD_GCFLAGS_EFFECTIVE := $(if $(GO_BUILD_GCFLAGS),$(GO_BUILD_GCFLAGS),$(if $(GO_BUILD_DEV_ENABLED),all=-N -l))
+GO_BUILD_TRIMPATH_FLAG := $(if $(GO_BUILD_DEV_ENABLED),,-trimpath)
+GO_BUILD_ENV = \
+	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) \
+	GOOS=$(OS) \
+	GOARCH=$(ARCH) \
+	$(if $(ARM),GOARM=$(ARM))
+GO_BUILD_ARGS = \
+	-buildvcs=false \
+	$(GO_BUILD_TRIMPATH_FLAG) \
+	$(GO_RACE_FLAG) \
+	$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
+	$(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") \
+	-ldflags "$(GO_LDFLAGS)" \
+	-o ./bin/$(OS)/$(ARCH)/grafana \
+	./pkg/cmd/grafana
+ifeq ($(filter undefined environment environment\ override,$(origin OS)),)
+else
+OS := $(or $(GOOS),$(shell $(GO) env GOOS))
+endif
+ifeq ($(filter undefined environment environment\ override,$(origin ARCH)),)
+else
+ARCH := $(or $(GOARCH),$(shell $(GO) env GOARCH))
+endif
+ifeq ($(filter undefined environment environment\ override,$(origin ARM)),)
+else
+ARM := $(GOARM)
+endif
 GIT_BASE = remotes/origin/main
 
-CUE = cue
+CUE_VERSION = v0.16.0
+CUE = $(shell go env GOPATH)/bin/cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -170,12 +202,12 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
-	@echo "// This file is managed by Grafana - DO NOT EDIT MANUALLY" > apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@echo "// Source: kinds/dashboard/dashboard_kind.cue" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@echo "// To sync changes, run: make gen-cue" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@echo "" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@cp apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@echo "// This file is managed by Grafana - DO NOT EDIT MANUALLY" > apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@echo "// Source: kinds/dashboard/dashboard_kind.cue" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@echo "// To sync changes, run: make gen-cue" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@echo "" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@cp apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v1/dashboard_kind.cue
 
 
 .PHONY: gen-cuev2
@@ -193,7 +225,7 @@ APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | so
 app ?=
 
 .PHONY: gen-apps
-gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
+gen-apps: fix-cue do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt and fix-cue. Use app=<name> to generate for a specific app.
 ## NOTE: codegen produces some openapi files that result in circular dependencies
 ## for now, we revert the zz_openapi_gen.go files before comparison
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
@@ -265,11 +297,27 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 		echo "Generated app manifests code is up to date."; \
 	fi
 
+.PHONY: install-cue
+install-cue:
+	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
+
 .PHONY: fix-cue
-fix-cue:
-	@echo "formatting cue files"
-	$(CUE) fix kinds/**/*.cue
-	$(CUE) fix public/app/plugins/**/**/*.cue
+fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
+	@set -e; \
+	root_dir="."; \
+	if [ -n "$(app)" ]; then \
+		root_dir="./apps/$(app)"; \
+		if [ ! -d "$$root_dir" ]; then \
+			echo "Error: App '$(app)' not found at $$root_dir"; \
+			exit 1; \
+		fi; \
+	fi; \
+	for mod_dir in $$(find "$$root_dir" -type d -name 'cue.mod'); do \
+		project_dir="$$(dirname $$mod_dir)"; \
+		echo "Fixing: $$project_dir"; \
+		(cd "$$project_dir" && $(CUE) fmt ./...); \
+		(cd "$$project_dir" && $(CUE) fix ./...); \
+	done
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -277,7 +325,10 @@ gen-jsonnet:
 
 .PHONY: gen-themes
 gen-themes:
-	go generate ./pkg/services/preference
+	GOOS=$(GO_HOST_OS) GOARCH=$(GO_HOST_ARCH) $(GO) generate ./pkg/services/preference
+
+pkg/services/preference/themes_generated.go:
+	$(MAKE) gen-themes
 
 .PHONY: update-workspace
 update-workspace: gen-go
@@ -285,9 +336,14 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
-	@echo "build go binaries"
-	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) $(if $(GO_BUILD_OS),GOOS=$(GO_BUILD_OS)) $(if $(GO_BUILD_ARCH),GOARCH=$(GO_BUILD_ARCH)) $(GO) build -buildvcs=false $(if $(GO_BUILD_DEV),-gcflags "all=-N -l",-trimpath) $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
+build-go: pkg/services/preference/themes_generated.go
+	@echo "build go binaries ($(OS)/$(ARCH))"
+	$(GO_BUILD_ENV) \
+	$(GO) build $(GO_BUILD_ARGS)
+	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
+
+bin/$(OS)/$(ARCH)/grafana:
+	$(MAKE) build-go
 
 .PHONY: build-backend
 build-backend: build-go
@@ -300,6 +356,9 @@ build-air: build-go
 build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
+
+public/build:
+	$(MAKE) build-js
 
 PLUGIN_ID ?=
 
@@ -315,6 +374,19 @@ build-plugin-go: ## Build decoupled plugins
 
 .PHONY: build
 build: build-go build-js ## Build backend and frontend.
+
+# Tar.gz packaging variables (aligned with pkg/build/daggerbuild/packages)
+TARGZ_PACKAGE_NAME ?= grafana
+
+.PHONY: build-targz
+build-targz: | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (same layout as daggerbuild).
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	GO="$(GO)" \
+	bash scripts/build-targz.sh
 
 .PHONY: run
 run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
@@ -461,7 +533,7 @@ DOCKER_JS_YARN_BUILD_FLAG = build
 DOCKER_JS_YARN_INSTALL_FLAG = --immutable
 #
 # if go is in dev mode, also build node in dev mode
-ifeq ($(GO_BUILD_DEV), dev)
+ifneq ($(filter 1 dev,$(GO_BUILD_DEV)),)
   DOCKER_JS_NODE_ENV_FLAG = dev
   DOCKER_JS_YARN_BUILD_FLAG = dev
 	DOCKER_JS_YARN_INSTALL_FLAG =
@@ -476,8 +548,7 @@ endif
 .PHONY: build-docker-full
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
-	tar -ch . | \
-	docker buildx build - \
+	docker buildx build \
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
@@ -488,13 +559,13 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
-	$(DOCKER_BUILD_ARGS)
+	$(DOCKER_BUILD_ARGS) \
+	.
 
 .PHONY: build-docker-full-ubuntu
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
-	tar -ch . | \
-	docker buildx build - \
+	docker buildx build \
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
@@ -507,7 +578,8 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg BASE_IMAGE=ubuntu:24.04 \
 	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
-	$(DOCKER_BUILD_ARGS)
+	$(DOCKER_BUILD_ARGS) \
+	.
 
 ##@ Services
 

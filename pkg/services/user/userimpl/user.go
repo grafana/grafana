@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -39,7 +40,7 @@ func ProvideService(db db.DB,
 		return nil, err
 	}
 
-	k8sService := userk8s.NewUserK8sService(log.New("user.k8s"), cfg, configProvider)
+	k8sService := userk8s.NewUserK8sService(log.New("user.k8s"), cfg, configProvider, tracer)
 
 	return &Service{
 		legacyService:     legacyService,
@@ -49,6 +50,10 @@ func ProvideService(db db.DB,
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		return s.k8sService.Create(ctx, cmd)
+	}
+
 	return s.legacyService.Create(ctx, cmd)
 }
 
@@ -106,4 +111,12 @@ func (s *Service) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery)
 
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
 	return s.legacyService.GetUsageStats(ctx)
+}
+
+func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
+
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
 }

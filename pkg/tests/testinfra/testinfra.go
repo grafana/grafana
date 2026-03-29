@@ -690,22 +690,28 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_search", "false")
 		require.NoError(t, err)
 	}
+	if opts.SearchInjectFailuresPercent > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("search_inject_failures_percent", fmt.Sprintf("%d", opts.SearchInjectFailuresPercent))
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
 		require.NoError(t, err)
 	}
-	if opts.DisableDataMigrations {
-		section, err := getOrCreateSection("unified_storage")
-		require.NoError(t, err)
-		_, err = section.NewKey("disable_data_migrations", "true")
-		require.NoError(t, err)
-	}
 	if opts.MigrationParquetBuffer {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("migration_parquet_buffer", "true")
+		require.NoError(t, err)
+	}
+	if opts.EnableSQLKVBackend {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -850,6 +856,7 @@ type GrafanaOpts struct {
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 	UnifiedStorageDisableSearch           bool
+	SearchInjectFailuresPercent           int
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	ProvisioningAllowedTargets            []string
@@ -864,8 +871,8 @@ type GrafanaOpts struct {
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
 	DisableDBCleanup                      bool
-	DisableDataMigrations                 bool
 	MigrationParquetBuffer                bool
+	EnableSQLKVBackend                    bool
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool

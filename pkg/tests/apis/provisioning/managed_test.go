@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/assert"
@@ -16,12 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	const repoName = "folder-manager-repo"
+	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 	helper := sharedHelper(t)
 
 	helper.CreateRepo(t, common.TestRepo{
@@ -55,7 +56,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject unmanaged dashboard in managed folder", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-in-managed-",
@@ -80,7 +81,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject dashboard managed by different repo in managed folder", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "wrong-manager-",
@@ -106,8 +107,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow managed dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-folder-",
 				},
@@ -122,7 +123,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "managed-in-unmanaged-",
@@ -147,8 +148,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow unmanaged dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-folder-",
 				},
@@ -162,7 +163,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "plain-dash-",
@@ -187,8 +188,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject moving unmanaged dashboard to managed folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "src-folder-",
 				},
@@ -202,7 +203,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "move-to-managed-",
@@ -236,8 +237,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow moving dashboard to unmanaged folder", func(t *testing.T) {
 		folderA := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "folder-a-",
 				},
@@ -251,8 +252,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		folderB := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "folder-b-",
 				},
@@ -266,7 +267,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "movable-dash-",
@@ -302,8 +303,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow removing manager from dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "mgr-change-folder-",
 				},
@@ -317,7 +318,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "kubectl-dash-",
@@ -352,8 +353,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow changing manager identity on dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "mgr-id-change-folder-",
 				},
@@ -367,7 +368,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "tf-dash-",
@@ -417,8 +418,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject unmanaged sub-folder in managed folder", func(t *testing.T) {
 		folder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-subfolder-",
 					"annotations": map[string]interface{}{
@@ -441,8 +442,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject sub-folder managed by different manager in managed folder", func(t *testing.T) {
 		folder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "wrong-mgr-subfolder-",
 					"annotations": map[string]interface{}{
@@ -466,8 +467,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow managed sub-folder in unmanaged folder", func(t *testing.T) {
 		parent := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-parent-",
 				},
@@ -481,8 +482,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		child := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "managed-child-",
 					"annotations": map[string]interface{}{
@@ -505,8 +506,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow unmanaged sub-folder in unmanaged folder", func(t *testing.T) {
 		parent := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-parent-",
 				},
@@ -520,8 +521,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		child := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-child-",
 					"annotations": map[string]interface{}{

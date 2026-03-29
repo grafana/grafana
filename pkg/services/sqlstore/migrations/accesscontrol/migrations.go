@@ -223,5 +223,9 @@ func AddMigration(mg *migrator.Migrator) {
 		Name: "datasource_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: true,
 	}))
 
+	mg.AddMigration("add permission role_id scope index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Cols: []string{"role_id", "scope"},
+	}))
+
 	AddDatasourceTypeMigration(mg)
 }

@@ -17,9 +17,11 @@ import { DashboardPageError } from 'app/features/dashboard/containers/DashboardP
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
+import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
+import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
@@ -67,8 +69,18 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
     // removing slug and path (which has slug in it) from dependencies to prevent unmount when data links reference
     //  the same dashboard with no slug in url
+    // queryParams.path is used by template dashboards to identify the dashboard file; changing it means a new template was selected
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type]);
+  }, [
+    stateManager,
+    uid,
+    route.routeName,
+    queryParams.folderUid,
+    routeReloadCounter,
+    type,
+    queryParams.path,
+    queryParams.gnetId,
+  ]);
 
   useEffect(() => {
     // This use effect corrects URL without refresh when navigating to the same dashboard
@@ -123,6 +135,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <DashboardConversionWarningBanner dashboard={dashboard} />
+      <OrphanedDashboardBanner dashboard={dashboard} />
+      <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       <DashboardBrandingFooter
