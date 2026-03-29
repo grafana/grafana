@@ -181,7 +181,7 @@ func RegisterAPIService(
 		accessControl:            accessControl,
 		accessClient:             accessClient,
 		unified:                  unified,
-		search:                   NewSearchHandler(tracing, unified, features),
+		search:                   NewSearchHandler(tracing, nil, unified, features),
 		dashStore:                dashStore,
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,
