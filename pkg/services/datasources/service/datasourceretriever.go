@@ -25,6 +25,7 @@ func ProvideDataSourceRetriever(db db.DB, features featuremgmt.FeatureToggles) D
 
 // GetDataSource gets a datasource.
 func (r *DataSourceRetrieverImpl) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	// TODO: return ErrDataSourceUIDAmbiguous if there are multiple data sources with the same uid when retrieved from k8s
 	return r.store.GetDataSource(ctx, query)
 }
 

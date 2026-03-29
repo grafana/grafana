@@ -218,4 +218,10 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("Remove permission role_id index", migrator.NewDropIndexMigration(permissionV1, &migrator.Index{
 		Cols: []string{"role_id"},
 	}))
+
+	mg.AddMigration("add datasource_type column to permission table", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
+		Name: "datasource_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: true,
+	}))
+
+	AddDatasourceTypeMigration(mg)
 }

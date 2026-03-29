@@ -14,6 +14,7 @@ var (
 	ErrDataSourceAccessDenied            = errors.New("data source access denied")
 	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
 	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and org id are needed to be able to get or delete a datasource")
+	ErrDataSourceUIDAmbiguous            = errors.New("multiple data sources share this uid")
 	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
 	ErrDataSourceNameInvalid             = errutil.ValidationFailed("datasource.nameInvalid", errutil.WithPublicMessage("Invalid datasource name."))
 	ErrDataSourceURLInvalid              = errutil.ValidationFailed("datasource.urlInvalid", errutil.WithPublicMessage("Invalid datasource url."))

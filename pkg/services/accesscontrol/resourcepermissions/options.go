@@ -2,6 +2,7 @@ package resourcepermissions
 
 import (
 	"context"
+	"net/http"
 
 	"k8s.io/client-go/dynamic"
 
@@ -57,4 +58,6 @@ type Options struct {
 	LicenseMW web.Handler
 	// RestConfigProvider if configured enables K8s API redirect for resource permissions
 	RestConfigProvider apiserver.DirectRestConfigProvider
+	// RequestValidator if configured is called before each handler. Return an error to abort the request.
+	RequestValidator func(r *http.Request, orgID int64, resourceID string) error
 }

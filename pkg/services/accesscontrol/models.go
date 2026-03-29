@@ -209,9 +209,10 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 
-	Kind       string `json:"-"`
-	Attribute  string `json:"-"`
-	Identifier string `json:"-"`
+	Kind           string `json:"-"`
+	Attribute      string `json:"-"`
+	Identifier     string `json:"-"`
+	DatasourceType string `json:"-" xorm:"datasource_type"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
