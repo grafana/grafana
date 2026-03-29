@@ -180,7 +180,7 @@ func RegisterAPIService(
 		accessControl:            accessControl,
 		accessClient:             accessClient,
 		unified:                  unified,
-		search:                   NewSearchHandler(tracing, nil, unified, features),
+		search:                   NewSearchHandler(tracing, unified, features),
 		dashStore:                dashStore,
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,

@@ -84,7 +84,7 @@ func TestSearchHandlerPagination(t *testing.T) {
 		} {
 			mockClient := &MockClient{}
 
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), nil, mockClient, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
 			rr := httptest.NewRecorder()
 			endpoint := fmt.Sprintf("/search?limit=%d", limit)
