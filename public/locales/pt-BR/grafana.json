@@ -5577,6 +5577,7 @@
         "panels": "Painéis",
         "row": "Linha",
         "rows": "Linhas",
+        "section-variable": "",
         "tab": "Aba",
         "tabs": "Abas",
         "variable": "Variável {{type}}",
@@ -5593,6 +5594,10 @@
           "hide": "Ocultar",
           "title": "Cabeçalho de linha"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5652,11 +5657,7 @@
       "import-a-dashboard-body": "Importe painéis por meio de arquivos ou do <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle",
-      "show-less-dashboards": "Mostrar menos",
-      "show-more-dashboards": "Mostrar mais",
-      "start-with-suggested-dashboards": "Comece com um painel criado previamente a partir da sua fonte de dados",
-      "title": "Novo painel",
-      "use-template-button": "Usar este painel"
+      "title": "Novo painel"
     },
     "errors": {
       "failed-to-load": "Falha ao carregar o painel de controle"
@@ -6130,6 +6131,9 @@
           "hide-header": "Ocultar cabeçalho de linha",
           "title": "Título"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "O título deve ser exclusivo",
         "title-option": "Título"
       },
@@ -6283,6 +6287,9 @@
             "description": "Repetir esta aba para cada valor na variável selecionada.",
             "title": "Repetir por variável"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "O título deve ser exclusivo",
         "title-option": "Título"
@@ -6560,9 +6567,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Navegar em Grafana.com",
-    "browse-plugins": "Navegar por plug-ins",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Fonte de dados fornecida",
@@ -6573,9 +6579,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Nenhum painel de comunidade encontrado",
-    "community-empty-title-with-datasource": "Nenhum painel de comunidade de {{datasourceType}} encontrado",
-    "community-error-description": "Falha ao carregar o painel da comunidade.",
     "community-error-title": "Erro ao carregar o painel da comunidade",
     "community-mapping-form": {
       "back": "Voltar para os painéis",
@@ -6587,8 +6590,6 @@
       "auto-mapped_other": "{{count}} fontes de dados foram configuradas automaticamente:"
     },
     "community-mapping-select-datasource": "Selecionar uma fonte de dados",
-    "community-search-placeholder": "Buscar painéis da comunidade…",
-    "community-search-placeholder-with-datasource": "Buscar painéis da comunidade de {{datasourceType}}…",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6602,6 +6603,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Fonte de dados",
@@ -6610,34 +6612,27 @@
         "last-update": "Última atualização",
         "published-by": "Publicado por",
         "view-on-grafana-com": "Visualizar em Grafana.com"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Navegue e selecione a partir da fonte de dados fornecida ou dos painéis da comunidade",
-      "tab-community": "Comunidade",
-      "tab-datasource": "Fonte de dados fornecida",
       "title": "Painéis sugeridos",
       "title-mapping-with-name": "Configurar fontes de dados para {{dashboardName}}",
       "title-with-datasource": "Painéis sugeridos para sua fonte de dados {{datasourceType}}"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Tente usar um termo de busca diferente ou navegue pelos painéis para consultar outros tipos de fontes de dados em Grafana.com.",
-    "no-community-dashboards-search": "Tente usar outro termo de busca ou confira mais painéis em Grafana.com.",
-    "no-provisioned-dashboards": "Os painéis provisionados são fornecidos por plug-ins de fonte de dados. Você pode encontrar mais plugins em Grafana.com.",
-    "provisioned-empty-title": "Nenhum painel provisionado encontrado",
-    "provisioned-empty-title-with-datasource": "Nenhum painel provisionado de {{datasourceType}} encontrado",
-    "retry": "Tentar novamente",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Navegue e selecione a partir da fonte de dados fornecida ou dos painéis da comunidade",
-    "suggested-dashboards-title": "Criar um painel usando as opções sugeridas para a fonte de dados selecionada",
-    "suggested-dashboards-title-with-datasource": "Criar um painel usando as opções sugeridas para sua fonte de dados {{datasourceType}}",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Comece a usar os modelos da Grafana com dados de amostra. Relacione seus dados para impulsioná-los com métricas reais.",
       "title": "Iniciar um painel a partir de um modelo"
-    },
-    "view-all": "Ver tudo"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7460,6 +7455,10 @@
         "title": "Alterações não salvas"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON do painel usado para ajudar a solucionar problemas de visualização"
@@ -7842,7 +7841,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Clique <2>aqui</2> para saber mais sobre esse erro.",
-    "success-more-details-links": "Em seguida, você pode começar a visualizar os dados <2>criando um painel de controle</2> ou consultando os dados na <5>Visualização de exploração</5>."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7858,7 +7858,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Criar um painel",
-      "aria-label-explore-data": "Explorar dados"
+      "aria-label-explore-data": "Explorar dados",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Alerta incompatível",
@@ -7872,6 +7873,11 @@
       "basic-settings-name-placeholder-name": "Nome",
       "label-default": "Padrão",
       "label-name": "Nome"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7958,12 +7964,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, saiba mais."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Criar um painel",
       "explore": "Explorar"
     },
     "edit-data-source-actions": {
       "add-favorite": "Adicionar aos favoritos",
-      "build-a-dashboard": "Criar um painel",
       "explore-data": "Explorar dados",
       "open-in-explore": "Abrir na visualização do Explore",
       "remove-favorite": "Remover dos favoritos"
@@ -14037,25 +14041,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Painel",
-      "app-explore": "Explorar",
-      "app-label": "Aplicativo:",
-      "assistant-actionable-create": "Descreva o que você deseja consultar e quais insights você está procurando.",
-      "assistant-actionable-update": "Descreva o que você deseja alterar ou melhorar nesta consulta.",
-      "assistant-prompt-create": "Ajude-me a criar uma nova consulta para tirar minhas dúvidas e fornecer os insights que procuro.",
-      "assistant-prompt-update": "Ajude-me a atualizar a consulta atual para tirar minhas dúvidas e fornecer os insights que procuro.",
       "collapse-row": "Recolher linha de consulta",
-      "current-query": "Consulta atual",
-      "current-query-label": "Consulta atual:",
       "datasource-help": "Mostrar ajuda da fonte de dados",
       "drag-and-drop": "Arraste e solte para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir linha de consulta",
       "hide-response": "Ocultar resposta",
-      "other-queries": "Outras consultas",
-      "query-with-assistant": "Consulta com Assistente",
       "remove-query": "Remover consulta",
-      "selected-datasource-label": "Fonte de dados selecionada:",
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
@@ -14673,6 +14665,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Ordenar"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "Adicione pelo menos uma consulta de dados para gerar sugestões de SQL",

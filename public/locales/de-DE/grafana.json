@@ -5577,6 +5577,7 @@
         "panels": "Fenster",
         "row": "Zeile",
         "rows": "Zeilen",
+        "section-variable": "",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} Variable",
@@ -5593,6 +5594,10 @@
           "hide": "Ausblenden",
           "title": "Kopfzeile"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5652,11 +5657,7 @@
       "import-a-dashboard-body": "Importieren Sie Dashboards aus Dateien oder von <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
-      "show-less-dashboards": "Weniger anzeigen",
-      "show-more-dashboards": "Mehr anzeigen",
-      "start-with-suggested-dashboards": "Beginnen Sie mit einem vorgefertigten Dashboard aus Ihrer Datenquelle",
-      "title": "Neues Dashboard",
-      "use-template-button": "Dieses Dashboard verwenden"
+      "title": "Neues Dashboard"
     },
     "errors": {
       "failed-to-load": "Dashboard konnte nicht geladen werden"
@@ -6130,6 +6131,9 @@
           "hide-header": "Kopfzeile ausblenden",
           "title": "Titel"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Titel sollte eindeutig sein",
         "title-option": "Titel"
       },
@@ -6283,6 +6287,9 @@
             "description": "Wiederholen Sie diese Registerkarte für jeden Wert in der ausgewählten Variable.",
             "title": "Nach Variable wiederholen"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Titel sollte eindeutig sein",
         "title-option": "Titel"
@@ -6560,9 +6567,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Grafana.com durchsuchen",
-    "browse-plugins": "Plugins durchsuchen",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Datenquelle bereitgestellt",
@@ -6573,9 +6579,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Keine Community-Dashboards gefunden",
-    "community-empty-title-with-datasource": "Keine {{datasourceType}} Community-Dashboards gefunden",
-    "community-error-description": "Community-Dashboard konnte nicht geladen werden.",
     "community-error-title": "Fehler beim Laden des Community-Dashboards",
     "community-mapping-form": {
       "back": "Zurück zu Dashboards",
@@ -6587,8 +6590,6 @@
       "auto-mapped_other": "{{count}} Datenquellen wurden automatisch konfiguriert:"
     },
     "community-mapping-select-datasource": "Datenquelle auswählen",
-    "community-search-placeholder": "Community-Dashboards durchsuchen …",
-    "community-search-placeholder-with-datasource": "{{datasourceType}} Community-Dashboards durchsuchen …",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6602,6 +6603,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Datenquelle",
@@ -6610,34 +6612,27 @@
         "last-update": "Letztes Update",
         "published-by": "Veröffentlicht von",
         "view-on-grafana-com": "Auf Grafana.com anzeigen"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Durchsuchen Sie bereitgestellte Datenquellen oder Community-Dashboards und wählen Sie etwas aus",
-      "tab-community": "Community",
-      "tab-datasource": "Datenquelle bereitgestellt",
       "title": "Vorgeschlagene Dashboards",
       "title-mapping-with-name": "Datenquellen konfigurieren für {{dashboardName}}",
       "title-with-datasource": "Vorgeschlagene Dashboards für Ihre {{datasourceType}} Datenquelle"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Versuchen Sie es mit einem anderen Suchbegriff oder durchsuchen Sie Dashboards nach verschiedenen Datenquellentypen auf Grafana.com.",
-    "no-community-dashboards-search": "Versuchen Sie es mit einem anderen Suchbegriff oder durchsuchen Sie weitere Dashboards auf Grafana.com.",
-    "no-provisioned-dashboards": "Bereitgestellte Dashboards werden von Datenquellen-Plugins bereitgestellt. Weitere Plugins finden Sie auf Grafana.com.",
-    "provisioned-empty-title": "Keine bereitgestellten Dashboards gefunden",
-    "provisioned-empty-title-with-datasource": "Keine von {{datasourceType}} bereitgestellten Dashboards gefunden",
-    "retry": "Erneut versuchen",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Durchsuchen Sie bereitgestellte Datenquellen oder Community-Dashboards und wählen Sie etwas aus",
-    "suggested-dashboards-title": "Erstellen Sie ein Dashboard mithilfe der vorgeschlagenen Optionen für Ihre ausgewählte Datenquelle",
-    "suggested-dashboards-title-with-datasource": "Erstellen Sie ein Dashboard mit den vorgeschlagenen Optionen für Ihre {{datasourceType}} Datenquelle",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Beginnen Sie mithilfe von Beispieldaten mit der Nutzung von Grafana-Vorlagen. Verbinden Sie Ihre Daten, um ihnen echte Metriken hinzuzufügen.",
       "title": "Dashboard von einer Vorlage beginnen"
-    },
-    "view-all": "Alles anzeigen"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7460,6 +7455,10 @@
         "title": "Nicht gespeicherte Änderungen"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard-JSON zur Fehlerbehebung bei Visualisierungsproblemen"
@@ -7842,7 +7841,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klicken Sie <2>hier</2>, um mehr über diesen Fehler zu erfahren.",
-    "success-more-details-links": "Als Nächstes können Sie damit beginnen, Daten zu visualisieren, indem Sie <2>ein Dashboard erstellen</2> oder Daten in der <5>Explore-Ansicht</5> abfragen."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7858,7 +7858,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Dashboard erstellen",
-      "aria-label-explore-data": "Daten untersuchen"
+      "aria-label-explore-data": "Daten untersuchen",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Warnung wird nicht unterstützt",
@@ -7872,6 +7873,11 @@
       "basic-settings-name-placeholder-name": "Name",
       "label-default": "Standard",
       "label-name": "Name"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7958,12 +7964,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, erfahren Sie mehr."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Dashboard erstellen",
       "explore": "Entdecken"
     },
     "edit-data-source-actions": {
       "add-favorite": "Zu Favoriten hinzufügen",
-      "build-a-dashboard": "Dashboard erstellen",
       "explore-data": "Daten untersuchen",
       "open-in-explore": "In Explore View öffnen",
       "remove-favorite": "Von Favoriten entfernen"
@@ -14037,25 +14041,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Dashboard",
-      "app-explore": "Explore",
-      "app-label": "App:",
-      "assistant-actionable-create": "Bitte beschreiben Sie, was Sie abfragen möchten und nach welchen Erkenntnissen Sie suchen.",
-      "assistant-actionable-update": "Bitte beschreiben Sie in dieser Abfrage, was Sie ändern oder verbessern möchten.",
-      "assistant-prompt-create": "Hilf mir, eine neue Abfrage zu erstellen, damit meine Fragen beantwortet und die Erkenntnisse, die ich benötige, bereitgestellt werden.",
-      "assistant-prompt-update": "Hilf mir, die aktuelle Abfrage zu aktualisieren, damit meine Fragen beantwortet und die Erkenntnisse, die ich benötige, bereitgestellt werden.",
       "collapse-row": "Abfragezeile einklappen",
-      "current-query": "Aktuelle Abfrage",
-      "current-query-label": "Aktuelle Abfrage:",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
       "duplicate-query": "Abfrage duplizieren",
       "expand-row": "Suchzeile erweitern",
       "hide-response": "Antwort ausblenden",
-      "other-queries": "Andere Abfragen",
-      "query-with-assistant": "Abfrage mit Assistant",
       "remove-query": "Abfrage entfernen",
-      "selected-datasource-label": "Ausgewählte Datenquelle:",
       "show-response": "Antwort anzeigen "
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
@@ -14673,6 +14665,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Sortieren"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "Fügen Sie mindestens eine Datenabfrage hinzu, um SQL-Vorschläge zu generieren.",

@@ -5547,6 +5547,7 @@
         "panels": "面板",
         "row": "行",
         "rows": "行",
+        "section-variable": "",
         "tab": "标签页",
         "tabs": "标签页",
         "variable": "{{type}} 变量",
@@ -5563,6 +5564,10 @@
           "hide": "隐藏",
           "title": "行标题"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5622,11 +5627,7 @@
       "import-a-dashboard-body": "从文件或 <2>grafana.com</2> 导入数据面板。",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
-      "show-less-dashboards": "收起",
-      "show-more-dashboards": "展开",
-      "start-with-suggested-dashboards": "从数据源的预制数据面板开始",
-      "title": "新建数据面板",
-      "use-template-button": "使用此数据面板"
+      "title": "新建数据面板"
     },
     "errors": {
       "failed-to-load": "加载数据面板失败"
@@ -6099,6 +6100,9 @@
           "hide-header": "隐藏行标题",
           "title": "标题"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "标题应该是唯一的",
         "title-option": "标题"
       },
@@ -6252,6 +6256,9 @@
             "description": "对于所选变量中的每个值，重复此选项卡。",
             "title": "按变量重复"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "标题应该是唯一的",
         "title-option": "标题"
@@ -6529,9 +6536,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "浏览 Grafana.com",
-    "browse-plugins": "浏览插件",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "提供的数据源",
@@ -6542,9 +6548,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "未找到社区数据面板",
-    "community-empty-title-with-datasource": "未找到 {{datasourceType}} 社区数据面板",
-    "community-error-description": "加载社区数据面板失败。",
     "community-error-title": "加载社区数据面板时出错",
     "community-mapping-form": {
       "back": "返回数据面板",
@@ -6555,8 +6558,6 @@
       "auto-mapped_other": "{{count}} 个数据源已自动配置："
     },
     "community-mapping-select-datasource": "选择数据源",
-    "community-search-placeholder": "搜索社区数据面板...",
-    "community-search-placeholder-with-datasource": "搜索  {{datasourceType}} 社区数据面板...",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6570,6 +6571,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "数据源",
@@ -6578,34 +6580,27 @@
         "last-update": "上次更新",
         "published-by": "发布者：",
         "view-on-grafana-com": "在 Grafana.com 上查看"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "浏览并从数据源提供的数据面板或社区数据面板中选择",
-      "tab-community": "社区",
-      "tab-datasource": "数据源提供",
       "title": "建议的数据面板",
       "title-mapping-with-name": "配置 {{dashboardName}} 的数据源",
       "title-with-datasource": "为您的 {{datasourceType}} 数据源建议的数据面板"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "尝试其他搜索词或在 Grafana.com 上浏览不同数据源类型的数据面板。",
-    "no-community-dashboards-search": "尝试其他搜索词或在 Grafana.com 上浏览更多数据面板。",
-    "no-provisioned-dashboards": "预置的数据面板由数据源插件提供。您可以在 Grafana.com 上找到更多插件。",
-    "provisioned-empty-title": "未找到预置的数据面板",
-    "provisioned-empty-title-with-datasource": "未找到 {{datasourceType}} 预置的数据面板",
-    "retry": "重试",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "浏览并从数据源提供的数据面板或社区数据面板中选择",
-    "suggested-dashboards-title": "使用建议的选项为您所选的数据源构建数据面板",
-    "suggested-dashboards-title-with-datasource": "使用建议的选项为您的 {{datasourceType}} 数据源构建数据面板",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "使用示例数据开始使用 Grafana 模板。连接您的数据，用真实的指标为其提供支持。",
       "title": "从模板开始创建数据面板"
-    },
-    "view-all": "查看全部"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7421,6 +7416,10 @@
         "title": "未保存的更改"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "用于帮助解决可视化问题的数据面板 JSON"
@@ -7799,7 +7798,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "点击<2>此处</2>了解有关此错误的更多信息。",
-    "success-more-details-links": "接下来，您可以通过<2>构建数据面板</2>或在<5>Explore 视图</5>中查询数据来开始可视化数据。"
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7815,7 +7815,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "创建数据面板",
-      "aria-label-explore-data": "浏览数据"
+      "aria-label-explore-data": "浏览数据",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "不支持警报",
@@ -7829,6 +7830,11 @@
       "basic-settings-name-placeholder-name": "名称",
       "label-default": "默认",
       "label-name": "名称"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7915,12 +7921,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}，了解更多。"
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "构建数据面板",
       "explore": "探索"
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
-      "build-a-dashboard": "构建数据面板",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -13953,25 +13957,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "数据面板",
-      "app-explore": "探索",
-      "app-label": "应用：",
-      "assistant-actionable-create": "请描述您想要查询的内容以及您正在寻找的洞察。",
-      "assistant-actionable-update": "请描述您想要在此查询中更改或改进的内容。",
-      "assistant-prompt-create": "帮助我创建一个新的查询来回答我的问题，并提供我需要的洞察。",
-      "assistant-prompt-update": "帮助我更新当前查询来回答我的问题，并提供我需要的洞察。",
       "collapse-row": "折叠查询行",
-      "current-query": "当前查询",
-      "current-query-label": "当前查询：",
       "datasource-help": "显示数据源帮助",
       "drag-and-drop": "拖放以重新排序",
       "duplicate-query": "复制查询",
       "expand-row": "展开查询行",
       "hide-response": "隐藏回复",
-      "other-queries": "其他查询",
-      "query-with-assistant": "使用助手查询",
       "remove-query": "删除查询",
-      "selected-datasource-label": "选定的数据源：",
       "show-response": "显示回复"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
@@ -14586,6 +14578,11 @@
   },
   "sort-picker": {
     "select-aria-label": "排序"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "添加至少一个数据查询以生成 SQL 建议",

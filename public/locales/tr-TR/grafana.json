@@ -5577,6 +5577,7 @@
         "panels": "Paneller",
         "row": "Satır",
         "rows": "Satırlar",
+        "section-variable": "",
         "tab": "Sekme",
         "tabs": "Sekmeler",
         "variable": "{{type}} değişkeni",
@@ -5593,6 +5594,10 @@
           "hide": "Gizle",
           "title": "Satır başlığı"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5652,11 +5657,7 @@
       "import-a-dashboard-body": "Panoları dosyalardan veya <2>grafana.com</2>'dan içe aktarın.",
       "import-a-dashboard-header": "Bir panoyu içe aktar",
       "import-dashboard-button": "Panoyu içe aktar",
-      "show-less-dashboards": "Daha az göster",
-      "show-more-dashboards": "Daha fazla göster",
-      "start-with-suggested-dashboards": "Veri kaynağınız kullanılarak önceden hazırlanmış bir pano ile başlayın",
-      "title": "Yeni pano",
-      "use-template-button": "Bu panoyu kullan"
+      "title": "Yeni pano"
     },
     "errors": {
       "failed-to-load": "Pano yüklenemedi"
@@ -6130,6 +6131,9 @@
           "hide-header": "Satır başlığını gizle",
           "title": "Başlık"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Başlık benzersiz olmalıdır",
         "title-option": "Başlık"
       },
@@ -6283,6 +6287,9 @@
             "description": "Seçilen değişkenin her değeri için bu sekmeyi tekrarla.",
             "title": "Değişkene göre tekrar et"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Başlık benzersiz olmalıdır",
         "title-option": "Başlık"
@@ -6560,9 +6567,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Grafana.com'da göz atın",
-    "browse-plugins": "Eklentilere göz atın",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Veri kaynağı sağlandı",
@@ -6573,9 +6579,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Topluluk panosu bulunamadı",
-    "community-empty-title-with-datasource": "{{datasourceType}} topluluk panosu bulunamadı",
-    "community-error-description": "Topluluk panosu yüklenemedi.",
     "community-error-title": "Topluluk panosu yüklenirken hata oluştu",
     "community-mapping-form": {
       "back": "Panolara geri dön",
@@ -6587,8 +6590,6 @@
       "auto-mapped_other": "{{count}} veri kaynağı otomatik olarak yapılandırıldı:"
     },
     "community-mapping-select-datasource": "Bir veri kaynağı seçin",
-    "community-search-placeholder": "Topluluk panolarında arayın...",
-    "community-search-placeholder-with-datasource": "{{datasourceType}} topluluk panolarında arayın...",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6602,6 +6603,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Veri kaynağı",
@@ -6610,34 +6612,27 @@
         "last-update": "Son Güncelleme",
         "published-by": "Yayımlayan",
         "view-on-grafana-com": "Grafana.com'da göster"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Veri kaynağı tarafından sağlanan panolara veya topluluk panolarına göz atın ve seçim yapın",
-      "tab-community": "Topluluk",
-      "tab-datasource": "Veri kaynağı tarafından sağlanan",
       "title": "Önerilen panolar",
       "title-mapping-with-name": "{{dashboardName}} için veri kaynaklarını yapılandırın",
       "title-with-datasource": "{{datasourceType}} veri kaynağınız için önerilen panolar"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Farklı bir arama terimi deneyin veya Grafana.com'da farklı veri kaynağı türlerine ait panolara göz atın.",
-    "no-community-dashboards-search": "Farklı bir arama terimi deneyin veya Grafana.com'da daha fazla panoya göz atın.",
-    "no-provisioned-dashboards": "Sağlanan panolar, veri kaynağı eklentileri tarafından sunulur. Grafana.com'da daha fazla eklenti bulabilirsiniz.",
-    "provisioned-empty-title": "Sağlanan pano bulunamadı",
-    "provisioned-empty-title-with-datasource": "{{datasourceType}} veri kaynağı için sağlanan pano bulunamadı",
-    "retry": "Yeniden dene",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Veri kaynağı tarafından sağlanan panolara veya topluluk panolarına göz atın ve seçim yapın",
-    "suggested-dashboards-title": "Seçtiğiniz veri kaynağı için önerilen seçenekleri kullanarak bir pano oluşturun",
-    "suggested-dashboards-title-with-datasource": "{{datasourceType}} veri kaynağınız için önerilen seçenekleri kullanarak bir pano oluşturun",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Grafana şablonlarını örnek verilerle kullanmaya başlayın. Gerçek metriklerle çalıştırmak için verilerinizi bağlayın.",
       "title": "Bir şablondan pano oluşturun"
-    },
-    "view-all": "Tümünü göster"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7460,6 +7455,10 @@
         "title": "Kaydedilmemiş değişiklikler"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Görselleştirme sorunlarının giderilmesine yardımcı olmak için kullanılan Pano JSON'u"
@@ -7842,7 +7841,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Bu hata hakkında daha fazla bilgi edinmek için <2>buraya</2> tıklayın.",
-    "success-more-details-links": "Ardından, bir <2>pano oluşturarak</2> veya <5>Keşfet görünümünde</5> verileri sorgulayarak verileri görselleştirmeye başlayabilirsiniz."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7858,7 +7858,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Pano oluştur",
-      "aria-label-explore-data": "Verileri keşfedin"
+      "aria-label-explore-data": "Verileri keşfedin",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Uyarı desteği yok",
@@ -7872,6 +7873,11 @@
       "basic-settings-name-placeholder-name": "Ad",
       "label-default": "Varsayılan",
       "label-name": "Ad"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7958,12 +7964,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, daha fazla bilgi edinin."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Pano oluştur",
       "explore": "Keşfet"
     },
     "edit-data-source-actions": {
       "add-favorite": "Favorilere ekle",
-      "build-a-dashboard": "Pano oluştur",
       "explore-data": "Verileri keşfedin",
       "open-in-explore": "Keşfet Görünümünde aç",
       "remove-favorite": "Favorilerden çıkar"
@@ -14037,25 +14041,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Pano",
-      "app-explore": "Keşfet",
-      "app-label": "Uygulama:",
-      "assistant-actionable-create": "Lütfen neyi sorgulamak istediğinizi ve ne gibi analizler aradığınızı açıklayın.",
-      "assistant-actionable-update": "Lütfen bu sorguda neleri değiştirmek veya iyileştirmek istediğinizi açıklayın.",
-      "assistant-prompt-create": "Sorularımı yanıtlamak ve ihtiyacım olan analizleri almak için yeni bir sorgu oluşturmama yardımcı ol.",
-      "assistant-prompt-update": "Sorularımı yanıtlamak ve ihtiyacım olan bilgileri almak için mevcut sorguyu güncellememe yardımcı ol.",
       "collapse-row": "Sorgu satırını daralt",
-      "current-query": "Geçerli sorgu",
-      "current-query-label": "Geçerli sorgu:",
       "datasource-help": "Veri kaynağı yardımını göster",
       "drag-and-drop": "Yeniden düzenlemek için sürükleyip bırakın",
       "duplicate-query": "Sorguyu çoğalt",
       "expand-row": "Sorgu satırını genişlet",
       "hide-response": "Yanıtı gizle",
-      "other-queries": "Diğer sorgular",
-      "query-with-assistant": "Asistan ile sorgu oluşturun",
       "remove-query": "Sorguyu kaldır",
-      "selected-datasource-label": "Seçilen veri kaynağı:",
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
@@ -14673,6 +14665,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Sırala"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "SQL önerileri oluşturmak için en az bir veri sorgusu ekleyin",
