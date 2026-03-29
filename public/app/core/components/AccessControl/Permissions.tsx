@@ -244,10 +244,7 @@ export const Permissions = ({
   );
 };
 
-const getDescription = async (
-  resource: string,
-  queryParams?: Record<string, string>
-): Promise<Description> => {
+const getDescription = async (resource: string, queryParams?: Record<string, string>): Promise<Description> => {
   try {
     return await getBackendSrv().get(`/api/access-control/${resource}/description`, queryParams);
   } catch (e) {
@@ -260,8 +257,7 @@ const getPermissions = (
   resource: string,
   resourceId: ResourceId,
   queryParams?: Record<string, string>
-): Promise<ResourcePermission[]> =>
-  getBackendSrv().get(`/api/access-control/${resource}/${resourceId}`, queryParams);
+): Promise<ResourcePermission[]> => getBackendSrv().get(`/api/access-control/${resource}/${resourceId}`, queryParams);
 
 const setUserPermission = (
   resource: string,
