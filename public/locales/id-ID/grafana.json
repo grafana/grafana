@@ -5547,6 +5547,7 @@
         "panels": "Panel",
         "row": "Baris",
         "rows": "Baris",
+        "section-variable": "",
         "tab": "Tab",
         "tabs": "Tab",
         "variable": "variabel {{type}}",
@@ -5563,6 +5564,10 @@
           "hide": "Sembunyikan",
           "title": "Header baris"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5622,11 +5627,7 @@
       "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
       "import-dashboard-button": "Impor dasbor",
-      "show-less-dashboards": "Tampilkan lebih sedikit",
-      "show-more-dashboards": "Tampilkan lebih banyak",
-      "start-with-suggested-dashboards": "Mulai dengan dasbor yang dibuat sebelumnya dari sumber data Anda",
-      "title": "Dasbor baru",
-      "use-template-button": "Gunakan dasbor ini"
+      "title": "Dasbor baru"
     },
     "errors": {
       "failed-to-load": "Gagal memuat dasbor"
@@ -6099,6 +6100,9 @@
           "hide-header": "Sembunyikan header baris",
           "title": "Judul"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Judul harus unik",
         "title-option": "Judul"
       },
@@ -6252,6 +6256,9 @@
             "description": "Ulangi tab ini untuk setiap nilai dalam variabel yang dipilih.",
             "title": "Ulangi menurut variabel"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Judul harus unik",
         "title-option": "Judul"
@@ -6529,9 +6536,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Telusuri Grafana.com",
-    "browse-plugins": "Telusuri plugin",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Sumber data disediakan",
@@ -6542,9 +6548,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Tidak ada dasbor komunitas yang ditemukan",
-    "community-empty-title-with-datasource": "Tidak ada dasbor {{datasourceType}} komunitas yang ditemukan",
-    "community-error-description": "Gagal memuat dasbor komunitas.",
     "community-error-title": "Terjadi kesalahan saat memuat dasbor komunitas",
     "community-mapping-form": {
       "back": "Kembali ke dasbor",
@@ -6555,8 +6558,6 @@
       "auto-mapped_other": "{{count}} sumber data dikonfigurasi secara otomatis:"
     },
     "community-mapping-select-datasource": "Pilih sumber data",
-    "community-search-placeholder": "Cari dasbor komunitas...",
-    "community-search-placeholder-with-datasource": "Cari dasbor komunitas {{datasourceType}}...",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6570,6 +6571,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Sumber data",
@@ -6578,34 +6580,27 @@
         "last-update": "Pembaruan Terakhir",
         "published-by": "Dipublikasikan Oleh",
         "view-on-grafana-com": "Lihat di Grafana.com"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Telusuri dan pilih dari sumber data yang disediakan atau dasbor komunitas",
-      "tab-community": "Komunitas",
-      "tab-datasource": "Sumber data disediakan",
       "title": "Dasbor yang disarankan",
       "title-mapping-with-name": "Konfigurasikan sumber data untuk {{dashboardName}}",
       "title-with-datasource": "Dasbor yang disarankan untuk sumber data {{datasourceType}} Anda"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Coba istilah pencarian lain atau telusuri dasbor untuk berbagai jenis sumber data di Grafana.com.",
-    "no-community-dashboards-search": "Coba istilah pencarian lain atau telusuri lebih banyak dasbor di Grafana.com.",
-    "no-provisioned-dashboards": "Dasbor yang disediakan oleh plugin sumber data. Anda dapat menemukan plugin lainnya di Grafana.com.",
-    "provisioned-empty-title": "Tidak ada dasbor yang disediakan yang ditemukan",
-    "provisioned-empty-title-with-datasource": "Tidak ada dasbor {{datasourceType}} yang disediakan dan ditemukan",
-    "retry": "Coba lagi",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Telusuri dan pilih dari sumber data yang disediakan atau dasbor komunitas",
-    "suggested-dashboards-title": "Buat dasbor menggunakan opsi yang disarankan untuk sumber data yang Anda pilih",
-    "suggested-dashboards-title-with-datasource": "Buat dasbor menggunakan opsi yang disarankan untuk sumber data {{datasourceType}} Anda",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Mulai menggunakan templat Grafana dengan data sampel. Hubungkan data Anda untuk memberdayakannya dengan metrik yang sebenarnya.",
       "title": "Mulai dasbor dari templat"
-    },
-    "view-all": "Lihat semua"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7421,6 +7416,10 @@
         "title": "Perubahan belum tersimpan"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON Dasbor digunakan untuk membantu memecahkan masalah visualisasi"
@@ -7799,7 +7798,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>di sini</2> untuk mempelajari selengkapnya tentang kesalahan ini.",
-    "success-more-details-links": "Selanjutnya, Anda dapat mulai memvisualisasikan data dengan <2>membuat dasbor</2>, atau dengan melakukan kueri data di <5>tampilan Explore</5>."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7815,7 +7815,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Buat dasbor",
-      "aria-label-explore-data": "Jelajahi data"
+      "aria-label-explore-data": "Jelajahi data",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Pemberian peringatan tidak didukung",
@@ -7829,6 +7830,11 @@
       "basic-settings-name-placeholder-name": "Nama",
       "label-default": "Default",
       "label-name": "Nama"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7915,12 +7921,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, pelajari selengkapnya."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Buat dasbor",
       "explore": "Jelajahi"
     },
     "edit-data-source-actions": {
       "add-favorite": "Tambahkan ke favorit",
-      "build-a-dashboard": "Buat dasbor",
       "explore-data": "Jelajahi data",
       "open-in-explore": "Buka di Tampilan Jelajahi",
       "remove-favorite": "Hapus dari favorit"
@@ -13953,25 +13957,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Dasbor",
-      "app-explore": "Jelajahi",
-      "app-label": "Aplikasi:",
-      "assistant-actionable-create": "Jelaskan apa yang ingin Anda tanyakan dan wawasan apa yang Anda cari.",
-      "assistant-actionable-update": "Jelaskan apa yang ingin Anda ubah atau tingkatkan dalam kueri ini.",
-      "assistant-prompt-create": "Bantu saya membuat kueri baru untuk menjawab pertanyaan saya dan memberikan wawasan yang saya butuhkan.",
-      "assistant-prompt-update": "Bantu saya memperbarui kueri saat ini untuk menjawab pertanyaan saya dan memberikan wawasan yang saya butuhkan.",
       "collapse-row": "Ciutkan baris kueri",
-      "current-query": "Kueri saat ini",
-      "current-query-label": "Kueri saat ini:",
       "datasource-help": "Tampilkan bantuan sumber data",
       "drag-and-drop": "Seret dan lepas untuk menyusun ulang",
       "duplicate-query": "Duplikat kueri",
       "expand-row": "Perluas baris kueri",
       "hide-response": "Sembunyikan respons",
-      "other-queries": "Kueri lainnya",
-      "query-with-assistant": "Kueri dengan Asisten",
       "remove-query": "Hapus kueri",
-      "selected-datasource-label": "Sumber data yang dipilih:",
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
@@ -14586,6 +14578,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Urutkan"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "Tambahkan setidaknya satu kueri data untuk membuat saran SQL",
