@@ -115,7 +115,6 @@ type DashboardsAPIBuilder struct {
 	QuotaService             quota.Service
 	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
-	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
 	publicDashboardService   publicdashboards.Service
@@ -186,7 +185,6 @@ func RegisterAPIService(
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,
 		minRefreshInterval:       cfg.MinRefreshInterval,
-		dualWriter:               dual,
 		dashboardK8sClient:       dashboardClient,
 		folderClientProvider:     newSimpleFolderClientProvider(folderClient),
 		libraryPanels:            libraryPanels,
