@@ -4816,7 +4816,6 @@ export type AnnotationActions = {
 };
 export type AnnotationPermission = {
   dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
 };
 export type DashboardMeta = {
   annotationsPermissions?: AnnotationPermission;

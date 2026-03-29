@@ -3118,9 +3118,6 @@
         "properties": {
           "dashboard": {
             "$ref": "#/components/schemas/AnnotationActions"
-          },
-          "organization": {
-            "$ref": "#/components/schemas/AnnotationActions"
           }
         },
         "type": "object"
