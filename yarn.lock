@@ -5831,6 +5831,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lyricalstring/gale@npm:0.1.4":
+  version: 0.1.4
+  resolution: "@lyricalstring/gale@npm:0.1.4"
+  bin:
+    gale: bin/gale
+  checksum: 10/62e6f3f0ddcbafeda7cf65dc55a0eca0acce45368d2b7cb79e67b8d3646febd72e3aac75d804efeabe7a39cde248c4f3569493b25c6030d59ff6e0d2d25945a6
+  languageName: node
+  linkType: hard
+
 "@manypkg/find-root@npm:^3.1.0":
   version: 3.1.0
   resolution: "@manypkg/find-root@npm:3.1.0"
@@ -20189,6 +20198,7 @@ __metadata:
     "@locker/near-membrane-dom": "npm:0.14.0"
     "@locker/near-membrane-shared": "npm:0.14.0"
     "@locker/near-membrane-shared-dom": "npm:0.14.0"
+    "@lyricalstring/gale": "npm:0.1.4"
     "@manypkg/get-packages": "npm:^3.0.0"
     "@msagl/core": "npm:^1.1.19"
     "@msagl/parser": "npm:^1.1.19"
@@ -20466,7 +20476,6 @@ __metadata:
     slate-react: "npm:0.22.10"
     smtp-tester: "npm:^2.1.0"
     style-loader: "npm:4.0.0"
-    stylelint: "npm:16.23.0"
     stylelint-config-sass-guidelines: "npm:12.1.0"
     swagger-ui-react: "npm:5.31.1"
     symbol-observable: "npm:4.0.0"
@@ -32158,7 +32167,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint@npm:16.23.0, stylelint@npm:^16.8.2":
+"stylelint@npm:^16.8.2":
   version: 16.23.0
   resolution: "stylelint@npm:16.23.0"
   dependencies:
