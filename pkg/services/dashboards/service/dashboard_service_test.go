@@ -2675,3 +2675,78 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 
 	k8sCliMock.AssertExpectations(t)
 }
+
+func TestParseSortName(t *testing.T) {
+	tests := []struct {
+		name      string
+		sortName  string
+		wantField string
+		wantDesc  bool
+		wantErr   bool
+	}{
+		{
+			name:      "empty sort name",
+			sortName:  "",
+			wantField: "",
+			wantDesc:  false,
+			wantErr:   false,
+		},
+		{
+			name:      "viewed-recently with desc suffix",
+			sortName:  "viewed-recently-desc",
+			wantField: builders.DASHBOARD_VIEWS_LAST_30_DAYS,
+			wantDesc:  true,
+			wantErr:   false,
+		},
+		{
+			name:      "defaults to desc",
+			sortName:  "viewed",
+			wantField: builders.DASHBOARD_VIEWS_TOTAL,
+			wantDesc:  true,
+			wantErr:   false,
+		},
+		{
+			name:      "errors-recentlyy with asc suffix",
+			sortName:  "errors-recently-asc",
+			wantField: builders.DASHBOARD_ERRORS_LAST_30_DAYS,
+			wantDesc:  false,
+			wantErr:   false,
+		},
+		{
+			name:      "errors - defaults to desc too",
+			sortName:  "errors",
+			wantField: builders.DASHBOARD_ERRORS_TOTAL,
+			wantDesc:  true,
+			wantErr:   false,
+		},
+		{
+			name:      "alpha sort with asc suffix",
+			sortName:  "alpha-asc",
+			wantField: "title",
+			wantDesc:  false,
+			wantErr:   false,
+		},
+		{
+			name:      "invalid sort name",
+			sortName:  "invalid-sort-desc",
+			wantField: "",
+			wantDesc:  false,
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			field, isDesc, err := parseSortName(tt.sortName)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.wantField, field)
+			require.Equal(t, tt.wantDesc, isDesc)
+		})
+	}
+}

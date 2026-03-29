@@ -65,7 +65,6 @@ type LibraryPanelQuery struct {
 
 type DashboardAccessor interface {
 	resource.StorageBackend
-	resourcepb.ResourceIndexServer
 
 	GetDashboard(ctx context.Context, orgId int64, uid string, version int64) (*dashboardV1.Dashboard, int64, error)
 	SaveDashboard(ctx context.Context, orgId int64, dash *dashboardV1.Dashboard, failOnExisting bool) (*dashboardV1.Dashboard, bool, error)

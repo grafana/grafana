@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -1672,7 +1671,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		}
 
 		if hit.Field != nil && query.Sort.Name != "" {
-			fieldName, _, err := legacysearcher.ParseSortName(query.Sort.Name)
+			fieldName, _, err := parseSortName(query.Sort.Name)
 			if err != nil {
 				return nil, err
 			}
@@ -2202,7 +2201,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	if query.Sort.Name != "" {
-		sortName, isDesc, err := legacysearcher.ParseSortName(query.Sort.Name)
+		sortName, isDesc, err := parseSortName(query.Sort.Name)
 		if err != nil {
 			return dashboardv0.SearchResults{}, err
 		}
@@ -2492,4 +2491,34 @@ func getFolderUIDs(hits []dashboardv0.DashboardHit) []string {
 		}
 	}
 	return maps.Keys(folderSet)
+}
+
+var sortByMapping = map[string]string{
+	builders.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently",
+	builders.DASHBOARD_VIEWS_TOTAL:         "viewed",
+	builders.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently",
+	builders.DASHBOARD_ERRORS_TOTAL:        "errors",
+	"title":                                "alpha",
+}
+
+func parseSortName(sortName string) (string, bool, error) {
+	if sortName == "" {
+		return "", false, nil
+	}
+
+	isDesc := strings.HasSuffix(sortName, "-desc")
+	isAsc := strings.HasSuffix(sortName, "-asc")
+	// default to desc if no suffix is provided
+	if !isDesc && !isAsc {
+		isDesc = true
+	}
+
+	prefix := strings.TrimSuffix(strings.TrimSuffix(sortName, "-desc"), "-asc")
+	for key, mappedPrefix := range sortByMapping {
+		if prefix == mappedPrefix {
+			return key, isDesc, nil
+		}
+	}
+
+	return "", false, apierrors.NewBadRequest(fmt.Sprintf("no matching sort field found for: %s", sortName))
 }

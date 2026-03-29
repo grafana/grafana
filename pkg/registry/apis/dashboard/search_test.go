@@ -14,182 +14,15 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
-
-func TestSearchFallback(t *testing.T) {
-	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit legacy search handler on mode 1", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit legacy search handler on mode 2", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit legacy search handler on mode 3", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit unified storage search handler on mode 4", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-	})
-
-	t.Run("should hit unified storage search handler on mode 5", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-	})
-}
 
 func TestSearchHandlerPagination(t *testing.T) {
 	t.Run("should calculate offset and page parameters", func(t *testing.T) {
@@ -251,13 +84,7 @@ func TestSearchHandlerPagination(t *testing.T) {
 		} {
 			mockClient := &MockClient{}
 
-			cfg := &setting.Cfg{
-				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
-				},
-			}
-			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
 			rr := httptest.NewRecorder()
 			endpoint := fmt.Sprintf("/search?limit=%d", limit)

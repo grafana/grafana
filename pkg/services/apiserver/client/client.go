@@ -12,7 +12,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -52,18 +51,22 @@ type k8sHandler struct {
 	userService user.Service
 }
 
-func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
-	restConfig func(context.Context) (*rest.Config, error), dashStore dashboards.Store, userSvc user.Service, resourceClient resource.ResourceClient, sorter sort.Service, features featuremgmt.FeatureToggles) K8sHandler {
-	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gvr.GroupResource(), resourceClient, legacySearcher, features)
-
+func NewK8sHandler(dual dualwrite.Service,
+	namespacer request.NamespaceMapper,
+	gvr schema.GroupVersionResource,
+	restConfig func(context.Context) (*rest.Config, error),
+	_ dashboards.Store,
+	userSvc user.Service,
+	resourceClient resource.ResourceClient,
+	sorter sort.Service,
+	features featuremgmt.FeatureToggles,
+) K8sHandler {
 	return &k8sHandler{
 		namespacer:  namespacer,
 		gvr:         gvr,
 		restConfig:  restConfig,
-		searcher:    searchClient,
-		userService: userSvc,
-	}
+		searcher:    resourceClient,
+		userService: userSvc}
 }
 
 func (h *k8sHandler) GetNamespace(orgID int64) string {

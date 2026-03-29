@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -71,7 +70,6 @@ type dashboardSqlAccess struct {
 
 	// Use for writing (not reading)
 	dashStore              dashboards.Store
-	dashboardSearchClient  legacysearcher.DashboardSearchClient
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService
 
 	accessControl   accesscontrol.AccessControl
@@ -118,13 +116,11 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	accessControl accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
 ) *dashboardSqlAccess {
-	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
 		sql:                    sql,
 		namespacer:             namespacer,
 		dashStore:              dashStore,
 		provisioning:           provisioning,
-		dashboardSearchClient:  *dashboardSearchClient,
 		dashboardPermissionSvc: dashboardPermissionSvc,
 		libraryPanelSvc:        libraryPanelSvc,
 		accessControl:          accessControl,
@@ -954,16 +950,6 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	err = a.libraryPanelSvc.ConnectLibraryPanelsForDashboard(ctx, requester, out)
 	if err != nil {
 		return nil, false, err
-	}
-
-	// stash the raw value in context (if requested)
-	finalMeta, err := utils.MetaAccessor(dash)
-	if err != nil {
-		return nil, false, err
-	}
-	access := GetLegacyAccess(ctx)
-	if access != nil {
-		access.DashboardID = finalMeta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
 	return dash, created, err
 }

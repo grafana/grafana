@@ -116,19 +116,9 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 					return 0, err
 				}
 
-				after, err := a.dashStore.SaveProvisionedDashboard(ctx, *cmd, provisioning)
+				_, err = a.dashStore.SaveProvisionedDashboard(ctx, *cmd, provisioning)
 				if err != nil {
 					return 0, err
-				}
-
-				// dashboard version is the RV in legacy storage
-				// and deprecatedInternalID must be set here (as SaveDashboard does below for non-provisioned dashboards)
-				if after != nil {
-					rv = int64(after.Version)
-					access := GetLegacyAccess(ctx)
-					if access != nil {
-						access.DashboardID = after.ID
-					}
 				}
 			} else {
 				failOnExisting := event.Type == resourcepb.WatchEvent_ADDED
@@ -391,27 +381,4 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resourcepb.ReadReque
 	defer span.End()
 
 	return a.ReadResource(ctx, req), nil
-}
-
-func (a *dashboardSqlAccess) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.Search")
-	defer span.End()
-
-	return a.dashboardSearchClient.Search(ctx, req)
-}
-
-func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-// GetStats implements ResourceServer.
-func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
-	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.GetStats")
-	defer span.End()
-
-	return a.dashboardSearchClient.GetStats(ctx, req)
 }
