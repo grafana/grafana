@@ -6,17 +6,17 @@ import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortO
 import { config } from '@grafana/runtime';
 import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 import { getDisplayedFieldsForLogs, OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { emptyContextData, LogDetailsContext } from './LogDetailsContext';
-import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
-import { LogListFontSize } from './LogList';
+import { getGridTemplateColumns, getStyles, LogLine, type Props } from './LogLine';
+import { type LogListFontSize } from './LogList';
 import { LogListContextProvider, LogListContext } from './LogListContext';
 import { LogListSearchContext } from './LogListSearchContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
 jest.mock('@openfeature/react-sdk', () => ({

@@ -2,24 +2,28 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 	"testing"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 func TestIntegrationFolderManagerConsistency(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	const repoName = "folder-manager-repo"
-	helper := common.RunGrafana(t)
+	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
+	helper := sharedHelper(t)
 
 	helper.CreateRepo(t, common.TestRepo{
 		Name:            repoName,
@@ -52,7 +56,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject unmanaged dashboard in managed folder", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-in-managed-",
@@ -77,7 +81,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject dashboard managed by different repo in managed folder", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "wrong-manager-",
@@ -103,8 +107,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow managed dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-folder-",
 				},
@@ -119,7 +123,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "managed-in-unmanaged-",
@@ -144,8 +148,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow unmanaged dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-folder-",
 				},
@@ -159,7 +163,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "plain-dash-",
@@ -184,8 +188,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject moving unmanaged dashboard to managed folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "src-folder-",
 				},
@@ -199,7 +203,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "move-to-managed-",
@@ -233,8 +237,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow moving dashboard to unmanaged folder", func(t *testing.T) {
 		folderA := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "folder-a-",
 				},
@@ -248,8 +252,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		folderB := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "folder-b-",
 				},
@@ -263,7 +267,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "movable-dash-",
@@ -299,8 +303,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow removing manager from dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "mgr-change-folder-",
 				},
@@ -314,7 +318,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "kubectl-dash-",
@@ -349,8 +353,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow changing manager identity on dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "mgr-id-change-folder-",
 				},
@@ -364,7 +368,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "tf-dash-",
@@ -414,8 +418,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject unmanaged sub-folder in managed folder", func(t *testing.T) {
 		folder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-subfolder-",
 					"annotations": map[string]interface{}{
@@ -438,8 +442,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject sub-folder managed by different manager in managed folder", func(t *testing.T) {
 		folder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "wrong-mgr-subfolder-",
 					"annotations": map[string]interface{}{
@@ -463,8 +467,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow managed sub-folder in unmanaged folder", func(t *testing.T) {
 		parent := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-parent-",
 				},
@@ -478,8 +482,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		child := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "managed-child-",
 					"annotations": map[string]interface{}{
@@ -502,8 +506,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow unmanaged sub-folder in unmanaged folder", func(t *testing.T) {
 		parent := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-parent-",
 				},
@@ -517,8 +521,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		child := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-child-",
 					"annotations": map[string]interface{}{
@@ -538,9 +542,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "managed-change-test"
@@ -624,5 +626,185 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, string(utils.ManagerKindRepo), unchanged.GetAnnotations()[utils.AnnoKeyManagerKind])
 		require.Equal(t, repo, unchanged.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	})
+}
+
+func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	const repo = "admin-release-test"
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "all-panels.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    1,
+	})
+
+	const dashboardUID = "n1jR8vnnz"
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		if err != nil {
+			collect.Errorf("dashboard not found yet: %s", err.Error())
+			return
+		}
+		annotations := dashboard.GetAnnotations()
+		assert.Equal(collect, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind])
+		assert.Equal(collect, repo, annotations[utils.AnnoKeyManagerIdentity])
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be provisioned with repo manager")
+
+	t.Run("editor cannot release repo-managed dashboard", func(t *testing.T) {
+		editorDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Editor,
+			Namespace: "default",
+			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+		})
+
+		fresh, err := editorDashboards.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		delete(annotations, utils.AnnoKeyManagerKind)
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		delete(annotations, utils.AnnoKeySourcePath)
+		delete(annotations, utils.AnnoKeySourceChecksum)
+		fresh.SetAnnotations(annotations)
+
+		_, err = editorDashboards.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.Error(t, err, "editor should not be able to release managed dashboard")
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+	})
+
+	t.Run("admin can release repo-managed dashboard via update", func(t *testing.T) {
+		// Release top-down: the folder must be released before the dashboard,
+		// otherwise the folder-manager consistency check rejects an unmanaged
+		// resource inside a managed folder.
+		folder, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		fa := folder.GetAnnotations()
+		delete(fa, utils.AnnoKeyManagerKind)
+		delete(fa, utils.AnnoKeyManagerIdentity)
+		delete(fa, utils.AnnoKeySourcePath)
+		delete(fa, utils.AnnoKeySourceChecksum)
+		folder.SetAnnotations(fa)
+
+		_, err = helper.Folders.Resource.Update(ctx, folder, metav1.UpdateOptions{})
+		require.NoError(t, err, "admin should be able to release the folder first")
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		delete(annotations, utils.AnnoKeyManagerKind)
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		delete(annotations, utils.AnnoKeySourcePath)
+		delete(annotations, utils.AnnoKeySourceChecksum)
+		fresh.SetAnnotations(annotations)
+
+		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err, "admin should be able to release managed dashboard")
+
+		releasedAnnotations := updated.GetAnnotations()
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeyManagerKind, "managedBy should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeyManagerIdentity, "managerId should be removed")
+	})
+}
+
+func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	const repo = "admin-release-patch-test"
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "all-panels.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    1,
+	})
+
+	const dashboardUID = "n1jR8vnnz"
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		if err != nil {
+			collect.Errorf("dashboard not found yet: %s", err.Error())
+			return
+		}
+		annotations := dashboard.GetAnnotations()
+		assert.Equal(collect, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind])
+		assert.Equal(collect, repo, annotations[utils.AnnoKeyManagerIdentity])
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be provisioned with repo manager")
+
+	mergePatch, err := json.Marshal(map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"annotations": map[string]interface{}{
+				utils.AnnoKeyManagerKind:     nil,
+				utils.AnnoKeyManagerIdentity: nil,
+				utils.AnnoKeySourcePath:      nil,
+				utils.AnnoKeySourceChecksum:  nil,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	escapeJSONPointer := func(s string) string {
+		s = strings.ReplaceAll(s, "~", "~0")
+		s = strings.ReplaceAll(s, "/", "~1")
+		return s
+	}
+	jsonPatch, err := json.Marshal([]map[string]string{
+		{"op": "remove", "path": "/metadata/annotations/" + escapeJSONPointer(utils.AnnoKeyManagerKind)},
+		{"op": "remove", "path": "/metadata/annotations/" + escapeJSONPointer(utils.AnnoKeyManagerIdentity)},
+		{"op": "remove", "path": "/metadata/annotations/" + escapeJSONPointer(utils.AnnoKeySourcePath)},
+		{"op": "remove", "path": "/metadata/annotations/" + escapeJSONPointer(utils.AnnoKeySourceChecksum)},
+	})
+	require.NoError(t, err)
+
+	t.Run("editor cannot release via merge patch", func(t *testing.T) {
+		editorDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Editor,
+			Namespace: "default",
+			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+		})
+
+		_, err := editorDashboards.Resource.Patch(ctx, dashboardUID, types.MergePatchType, mergePatch, metav1.PatchOptions{})
+		require.Error(t, err, "editor should not be able to release via merge patch")
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+	})
+
+	t.Run("editor cannot release via JSON patch", func(t *testing.T) {
+		editorDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Editor,
+			Namespace: "default",
+			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+		})
+
+		_, err := editorDashboards.Resource.Patch(ctx, dashboardUID, types.JSONPatchType, jsonPatch, metav1.PatchOptions{})
+		require.Error(t, err, "editor should not be able to release via JSON patch")
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+	})
+
+	t.Run("admin can release via merge patch", func(t *testing.T) {
+		// Release the folder first (top-down) so the dashboard can become
+		// unmanaged without violating folder-manager consistency.
+		_, err := helper.Folders.Resource.Patch(ctx, repo, types.MergePatchType, mergePatch, metav1.PatchOptions{})
+		require.NoError(t, err, "admin should be able to release the folder first")
+
+		updated, err := helper.DashboardsV1.Resource.Patch(ctx, dashboardUID, types.MergePatchType, mergePatch, metav1.PatchOptions{})
+		require.NoError(t, err, "admin should be able to release via merge patch")
+
+		releasedAnnotations := updated.GetAnnotations()
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeyManagerKind, "managedBy should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeyManagerIdentity, "managerId should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeySourcePath, "sourcePath should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeySourceChecksum, "sourceChecksum should be removed")
 	})
 }

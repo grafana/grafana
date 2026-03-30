@@ -9,7 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
-import { ExternalRepository } from '../types';
+import { type ExternalRepository } from '../types';
 
 import { ConnectionForm } from './ConnectionForm';
 

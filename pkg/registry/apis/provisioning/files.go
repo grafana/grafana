@@ -291,6 +291,9 @@ func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts r
 
 func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	if isDir {
+		if c.folderMetadataEnabled {
+			return c.handleFolderMetadataUpdate(ctx, r, opts, dualReadWriter)
+		}
 		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 	}
 
@@ -305,6 +308,15 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 		return nil, err
 	}
 	return resource.AsResourceWrapper(), nil
+}
+
+func (c *filesConnector) handleFolderMetadataUpdate(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
+	data, err := readBody(r, filesMaxBodySize)
+	if err != nil {
+		return nil, err
+	}
+	opts.Data = data
+	return dualReadWriter.UpdateFolderMetadata(ctx, opts)
 }
 
 func (c *filesConnector) handleDelete(ctx context.Context, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {

@@ -19,5 +19,5 @@ WHERE
   {{- if ne .Query.External nil }}
     AND tm.external = {{ .Arg .ExternalValue }}
   {{- end }}
-ORDER BY t.id ASC
+ORDER BY tm.id ASC
 LIMIT {{ .Arg .Query.Pagination.Limit }};

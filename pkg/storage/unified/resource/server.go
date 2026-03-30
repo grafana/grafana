@@ -61,6 +61,7 @@ type SearchServer interface {
 	// Deprecated: clients should use grpc.health.v1.Health with modules.SearchServer service name instead
 	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
+	Init(ctx context.Context) error
 }
 
 type ResourceServerStopper interface {
@@ -245,11 +246,18 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
+
+	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
+	SelectableFieldsForKinds map[string][]string
 }
 
 type ResourceServerOptions struct {
 	// Real storage backend
 	Backend StorageBackend
+
+	// BulkBatchOptions overrides the default BulkProcess batching thresholds.
+	// When nil, DefaultBulkBatchOptions is used.
+	BulkBatchOptions *BulkBatchOptions
 
 	// The blob configuration
 	Blob BlobConfig
@@ -299,8 +307,18 @@ type ResourceServerOptions struct {
 	QuotasConfig QuotasConfig
 }
 
-// NewSearchServer creates a standalone search server.
-func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
+	if opts.BulkBatchOptions == nil {
+		return DefaultBulkBatchOptions()
+	}
+
+	return *opts.BulkBatchOptions
+}
+
+// NewUninitializedSearchServer creates a standalone search server without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing backend implementation")
 	}
@@ -321,16 +339,27 @@ func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	}
 	searchServer.backendDiagnostics = opts.Diagnostics
 
-	// Initialize the search server
-	ctx := context.Background()
-	if err := searchServer.Init(ctx); err != nil {
+	return searchServer, nil
+}
+
+// NewSearchServer creates a standalone search server and initializes it immediately.
+func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+	searchServer, err := NewUninitializedSearchServer(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := searchServer.Init(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to initialize search server: %w", err)
 	}
 
 	return searchServer, nil
 }
 
-func NewResourceServer(opts ResourceServerOptions) (*server, error) {
+// NewUninitializedResourceServer creates a resource server without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
@@ -384,6 +413,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	s := &server{
 		log:                            logger,
 		backend:                        opts.Backend,
+		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
 		diagnostics:                    opts.Diagnostics,
 		access:                         opts.AccessClient,
@@ -412,8 +442,16 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		}
 	}
 
-	err = s.Init(ctx)
+	return s, nil
+}
+
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
+	s, err := NewUninitializedResourceServer(opts)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := s.Init(s.ctx); err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}
@@ -449,6 +487,7 @@ var _ ResourceServer = &server{}
 type server struct {
 	log              log.Logger
 	backend          StorageBackend
+	bulkBatchOptions BulkBatchOptions
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
 	search           *searchServer
@@ -1403,6 +1442,10 @@ func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
 	return utils.MetaAccessor(partial)
 }
 
+// producerChanSize is the buffer for the channel that feeds events into the
+// broadcaster. Controls backpressure on the event-writing (producer) side.
+const producerChanSize = 100
+
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	events, err := s.backend.WatchWriteEvents(s.ctx)
@@ -1410,7 +1453,7 @@ func (s *server) initWatcher() error {
 		return err
 	}
 
-	out := make(chan *WrittenEvent, chanBufferLen)
+	out := make(chan *WrittenEvent, producerChanSize)
 	go func() {
 		defer close(out)
 		for v := range events {
@@ -1429,7 +1472,11 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = NewBroadcaster(s.ctx, out)
+	var broadcasterMetrics *BroadcasterMetrics
+	if s.storageMetrics != nil {
+		broadcasterMetrics = s.storageMetrics.Broadcaster
+	}
+	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics)
 	return nil
 }
 
@@ -1862,7 +1909,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
-		if s.quotasConfig.EnforceQuotas {
+		if s.quotasConfig.ShouldEnforce(nsr.Group, nsr.Resource) {
 			return QuotaExceededError{
 				Resource:       nsr.Resource,
 				Used:           stats[0].Count,

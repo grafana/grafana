@@ -4,27 +4,27 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { colorManipulator, DataFrame, InterpolateFunction } from '@grafana/data';
-import { TimeZone, VizAnnotations } from '@grafana/schema';
+import { colorManipulator, type DataFrame, type InterpolateFunction } from '@grafana/data';
+import { type TimeZone, type VizAnnotations } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
   getPortalContainer,
-  UPlotConfigBuilder,
+  type UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TimeRange2 } from '@grafana/ui/internal';
+import { type TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
-import { AnnotationVals, XYAnnoVals } from './annotations2-cluster/types';
+import { type AnnotationVals, type XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
-import { ANNOTATION_LANE_SIZE } from './utils';
+import { ANNOTATION_LANE_SIZE, getAnnoRegionBoxStyle } from './utils';
 
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
   options: VizAnnotations | undefined;
-  annotations: DataFrame[];
+  annotations?: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRange: TimeRange2 | null) => void;
@@ -76,7 +76,7 @@ export const AnnotationsPlugin2Cluster = ({
   canvasRegionRendering = true,
   options,
 }: AnnotationsPlugin2ClusterProps) => {
-  const [plot, setPlot] = useState<uPlot>();
+  const plotRef = useRef<uPlot | null>(null);
   const [portalRoot] = useState(() => getPortalContainer());
   const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
   const getColorByName = useTheme2().visualization.getColorByName;
@@ -93,9 +93,9 @@ export const AnnotationsPlugin2Cluster = ({
   const clusteredAnnos = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
-    plotWidth: plot?.bbox.width,
+    plotWidth: plotRef.current?.bbox.width,
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
-    timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
+    timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
   });
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
@@ -115,7 +115,11 @@ export const AnnotationsPlugin2Cluster = ({
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
       xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
-      setPlot(u);
+      plotRef.current = u;
+      // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
+      if (annotations?.length) {
+        forceUpdate();
+      }
     });
 
     config.addHook('draw', (u) => {
@@ -219,12 +223,13 @@ export const AnnotationsPlugin2Cluster = ({
     options?.clustering,
     options?.lines?.width,
     options?.regions?.opacity,
+    annotations?.length,
   ]);
 
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {
-    if (plot) {
-      plot.redraw();
+    if (plotRef.current) {
+      plotRef.current.redraw();
 
       // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
       // and ensures the anno marker positions in the dom are re-rendered in correct places
@@ -233,9 +238,10 @@ export const AnnotationsPlugin2Cluster = ({
         forceUpdate();
       }, 0);
     }
-  }, [xAnnos, plot]);
+  }, [xAnnos]);
 
-  if (plot && xAxisRef.current) {
+  if (plotRef.current && xAxisRef.current) {
+    const plot = plotRef.current;
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
     const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
@@ -259,20 +265,18 @@ export const AnnotationsPlugin2Cluster = ({
 
         let style: React.CSSProperties | null = null;
         let isVisible = true;
+        const plotWidth = plot.rect.width;
 
         if (isRegion && timeEnd != null) {
-          const right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
-
-          isVisible = left < plot.rect.width && right > 0;
+          const valPos = plot.valToPos(timeEnd, 'x');
+          const right = Math.round(valPos ?? 0) || 0; // handles -0
+          isVisible = left < plotWidth && right > 0;
 
           if (isVisible) {
-            const clampedLeft = Math.max(0, left);
-            const clampedRight = Math.min(plot.rect.width, right);
-
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
+            style = { ...getAnnoRegionBoxStyle(plotWidth, right, left), background: color, top };
           }
         } else {
-          isVisible = left >= 0 && left <= plot.rect.width;
+          isVisible = left >= 0 && left <= plotWidth;
 
           if (isVisible) {
             style = { left, borderBottomColor: color, top };

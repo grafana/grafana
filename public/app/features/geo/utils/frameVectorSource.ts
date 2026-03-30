@@ -1,10 +1,10 @@
 import Feature from 'ol/Feature';
-import { Geometry } from 'ol/geom';
+import { type Geometry } from 'ol/geom';
 import VectorSource from 'ol/source/Vector';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
-import { getGeometryField, LocationFieldMatchers } from './location';
+import { getGeometryField, type LocationFieldMatchers } from './location';
 
 export interface FrameVectorSourceOptions {}
 

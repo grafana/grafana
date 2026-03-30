@@ -2,16 +2,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  GrafanaConfig,
-  PluginMetaInfo,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type GrafanaConfig,
+  type PluginMetaInfo,
   PluginType,
   locationUtil,
 } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
-import { DataSourceModal, DataSourceModalProps } from './DataSourceModal';
+import { DataSourceModal, type DataSourceModalProps } from './DataSourceModal';
 
 const pluginMetaInfo: PluginMetaInfo = {
   author: { name: '' },

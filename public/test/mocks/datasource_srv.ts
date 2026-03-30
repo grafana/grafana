@@ -1,13 +1,13 @@
 import { Observable } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
   DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  DataSourceRef,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type DataSourceRef,
   getDataSourceUID,
 } from '@grafana/data';
 

@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Box, Button, CodeEditor, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
-import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import {
@@ -22,14 +22,14 @@ import {
   isVersionMismatchError,
 } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface JsonModelEditViewState extends DashboardEditViewState {
   jsonText: string;
@@ -81,6 +81,8 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(dto.spec, dto.metadata);
+      this._updateTimeRangeInURL(dashboard, newState);
+
       dashboard.setState(newState);
     } else {
       jsonModel.version = result.version;
@@ -88,10 +90,14 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         dashboard: jsonModel,
         meta: dashboard.state.meta,
       });
+
       const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(jsonModel, dashboard.state.meta);
+
+      this._updateTimeRangeInURL(dashboard, newState);
+
       dashboard.setState(newState);
     }
 
@@ -100,6 +106,20 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     // We also need to resume tracking changes since the change handler won't see any later edit
     dashboard.resumeTrackingChanges();
   };
+
+  private _updateTimeRangeInURL(dashboard: DashboardScene, newState: DashboardSceneState) {
+    const oldFrom = dashboard.state.$timeRange?.state.from;
+    const oldTo = dashboard.state.$timeRange?.state.to;
+
+    const nextFrom = newState.$timeRange?.state.from;
+    const nextTo = newState.$timeRange?.state.to;
+    const nextRangeValue = newState.$timeRange?.state.value;
+
+    if (nextFrom && nextTo && nextRangeValue && (oldFrom !== nextFrom || oldTo !== nextTo)) {
+      const timeRange = sceneGraph.getTimeRange(this);
+      timeRange.onTimeRangeChange(nextRangeValue);
+    }
+  }
 
   static Component = JsonModelEditViewComponent;
 }

@@ -589,7 +589,7 @@ func ParseKey(key string) (DataKey, error) {
 // GetResourceStats returns resource stats within the data store by first discovering
 // all group/resource combinations, then issuing targeted list operations for each one.
 // If namespace is provided, only keys matching that namespace are considered.
-func (d *dataStore) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (d *dataStore) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
 	// First, get all unique group/resource combinations in the store
 	groupResources, err := d.getGroupResources(ctx)
 	if err != nil {
@@ -600,7 +600,13 @@ func (d *dataStore) GetResourceStats(ctx context.Context, namespace string, minC
 
 	// Process each group/resource combination
 	for _, groupResource := range groupResources {
-		groupStats, err := d.processGroupResourceStats(ctx, groupResource, namespace, minCount)
+		if nsr.Group != "" && groupResource.Group != nsr.Group {
+			continue
+		}
+		if nsr.Resource != "" && groupResource.Resource != nsr.Resource {
+			continue
+		}
+		groupStats, err := d.processGroupResourceStats(ctx, groupResource, nsr.Namespace, minCount)
 		if err != nil {
 			return nil, fmt.Errorf("failed to process stats for %s/%s: %w", groupResource.Group, groupResource.Resource, err)
 		}

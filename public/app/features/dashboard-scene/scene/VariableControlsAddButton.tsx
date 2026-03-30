@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import { PointerEventHandler, useCallback } from 'react';
+import { type PointerEventHandler, useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { openAddVariablePane } from '../settings/variables/VariableAddEditableElement';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);

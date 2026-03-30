@@ -1,15 +1,15 @@
 import {
   FieldColorModeId,
-  FieldConfigSource,
+  type FieldConfigSource,
   FieldType,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AxisPlacement, GraphGradientMode, StackingMode } from '@grafana/schema';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
-import { FieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig, type Options } from './panelcfg.gen';
 
 const previewModifier = (s: VisualizationSuggestion<Options, FieldConfig>) => {
   s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;

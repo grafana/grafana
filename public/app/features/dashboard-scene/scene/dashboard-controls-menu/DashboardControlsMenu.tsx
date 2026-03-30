@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type SceneDataLayerProvider, type SceneVariable } from '@grafana/scenes';
+import { type DashboardLink } from '@grafana/schema';
 import { Box, Menu, useStyles2 } from '@grafana/ui';
 
 import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
 import { DashboardLinkRenderer } from '../DashboardLinkRenderer';
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 import { DataLayerControl } from '../DataLayerControl';
 import { VariableValueSelectWrapper } from '../VariableControls';
 

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // GetBootdataAPI returns the same data we currently have rendered into index.html
@@ -41,6 +41,13 @@ func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
+
+	ofClient := openfeature.NewDefaultClient()
+	autoLoginFlagEnabled := ofClient.Boolean(c.Req.Context(), featuremgmt.FlagFrontendServiceSSOAutoLogin, false, openfeature.TransactionContext(c.Req.Context()))
+	if autoLoginFlagEnabled && !c.IsSignedIn {
+		data.AutoLoginRedirectURL = hs.getAutoLoginRedirectURL(c)
+	}
+
 	c.JSON(http.StatusOK, data)
 }
 
@@ -409,25 +416,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientLDAP)
-
-		if !hasEnabledProviders {
-			oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-			for _, provider := range oauthInfos {
-				if provider.Enabled {
-					hasEnabledProviders = true
-					break
-				}
-			}
-		}
-
-		if !hasEnabledProviders {
-			frontendSettings.Auth.PasswordlessEnabled = true
-		}
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {

@@ -1,12 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 import * as React from 'react';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
+  type GrafanaTheme2,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { FavoriteDatasources, getTemplateSrv } from '@grafana/runtime';
+import { type FavoriteDatasources, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';

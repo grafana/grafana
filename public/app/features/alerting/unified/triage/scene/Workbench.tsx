@@ -1,7 +1,7 @@
 import { useEffect, useState, useTransition } from 'react';
 
-import { DataFrame } from '@grafana/data';
-import { SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
+import { type DataFrame } from '@grafana/data';
+import { SceneObjectBase, type SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
