@@ -4,9 +4,9 @@ import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Combobox } from '../Combobox/Combobox';
-import { ComboboxOption } from '../Combobox/types';
+import { type ComboboxOption } from '../Combobox/types';
 
-import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
+import { type FieldMatcherUIRegistryItem, type MatcherUIProps } from './types';
 import { frameHasName, useFieldDisplayNames, useMatcherSelectOptions } from './utils';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {

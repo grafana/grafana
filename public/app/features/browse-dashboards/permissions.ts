@@ -1,8 +1,8 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
-import { BrowseDashboardsPermissions } from './types';
+import { type BrowseDashboardsPermissions } from './types';
 
 function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDTO) {
   return folderDTO ? contextSrv.hasPermissionInMetadata(action, folderDTO) : contextSrv.hasPermission(action);

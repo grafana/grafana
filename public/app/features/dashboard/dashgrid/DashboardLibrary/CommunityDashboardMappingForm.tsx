@@ -1,17 +1,18 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useState } from 'react';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Stack, Text, Button, Alert, Field, Input, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/types';
+import { type DashboardInput, type DataSourceInput } from 'app/features/manage-dashboards/types';
 
+import { useTrackingContext } from './TrackingContext';
 import { NewDashboardLibraryInteractions } from './analytics/main';
-import { ContentKind, EventLocation, SOURCE_ENTRY_POINTS } from './constants';
+import { type ContentKind } from './constants';
 import { DashboardLibraryInteractions } from './interactions';
-import { InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
+import { type InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
 
 interface Props {
   unmappedDsInputs: DataSourceInput[];
@@ -21,7 +22,6 @@ interface Props {
   onPreview: (allMappings: InputMapping[]) => void;
   dashboardName: string;
   libraryItemId: string;
-  eventLocation: EventLocation;
   contentKind: ContentKind;
   datasourceTypes: string[];
 }
@@ -40,11 +40,12 @@ export const CommunityDashboardMappingForm = ({
   onPreview,
   dashboardName,
   libraryItemId,
-  eventLocation,
   contentKind,
   datasourceTypes,
 }: Props) => {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+
+  const { sourceEntryPoint, eventLocation } = useTrackingContext();
 
   // Track mapping form shown on mount
   useEffect(() => {
@@ -54,7 +55,7 @@ export const CommunityDashboardMappingForm = ({
           datasourceTypes,
           libraryItemId,
           libraryItemTitle: dashboardName,
-          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          sourceEntryPoint,
           eventLocation,
           unmappedDsInputsCount: unmappedDsInputs.length,
           constantInputsCount: constantInputs.length,
@@ -64,7 +65,7 @@ export const CommunityDashboardMappingForm = ({
           datasourceTypes,
           libraryItemId,
           libraryItemTitle: dashboardName,
-          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          sourceEntryPoint,
           eventLocation,
           unmappedDsInputsCount: unmappedDsInputs.length,
           constantInputsCount: constantInputs.length,
@@ -120,7 +121,7 @@ export const CommunityDashboardMappingForm = ({
           datasourceTypes,
           libraryItemId,
           libraryItemTitle: dashboardName,
-          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          sourceEntryPoint,
           eventLocation,
           userMappedCount: unmappedDsInputs.length,
           autoMappedCount: existingMappings.length,
@@ -130,7 +131,7 @@ export const CommunityDashboardMappingForm = ({
           datasourceTypes,
           libraryItemId,
           libraryItemTitle: dashboardName,
-          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          sourceEntryPoint,
           eventLocation,
           userMappedCount: unmappedDsInputs.length,
           autoMappedCount: existingMappings.length,

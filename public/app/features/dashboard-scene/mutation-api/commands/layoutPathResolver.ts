@@ -7,11 +7,11 @@
  * Used by all layout mutation commands that accept a path parameter.
  */
 
-import { RowItem } from '../../scene/layout-rows/RowItem';
+import { type RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
-import { TabItem } from '../../scene/layout-tabs/TabItem';
+import { type TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
 type GroupType = 'rows' | 'tabs';
 

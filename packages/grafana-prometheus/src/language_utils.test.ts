@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_utils.test.ts
-import { Moment } from 'moment';
+import { type Moment } from 'moment';
 
-import { AbstractLabelOperator, AbstractQuery, DateTime, dateTime, TimeRange } from '@grafana/data';
+import { AbstractLabelOperator, type AbstractQuery, type DateTime, dateTime, type TimeRange } from '@grafana/data';
 
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from './escaping';
 import {

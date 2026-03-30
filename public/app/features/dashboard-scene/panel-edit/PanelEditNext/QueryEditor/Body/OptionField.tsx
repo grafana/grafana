@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { FocusEvent, ReactNode } from 'react';
+import { type FocusEvent, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CONTENT_SIDE_BAR, QUERY_OPTION_FIELD_CONFIG } from '../../constants';
-import { QueryOptionField } from '../types';
+import { type QueryOptionField } from '../types';
 
 export interface OptionFieldProps {
   field: QueryOptionField;

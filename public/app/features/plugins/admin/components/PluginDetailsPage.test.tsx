@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginDetailsPage } from './PluginDetailsPage';
 

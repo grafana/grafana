@@ -1,24 +1,24 @@
-import { DataSourceInstanceSettings, VariableModel } from '@grafana/data';
+import { type DataSourceInstanceSettings, type VariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { AnnotationQuery, Dashboard, Panel, RowPanel } from '@grafana/schema';
-import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type AnnotationQuery, type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
+import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
+import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementKind } from '../../../library-panels/types';
 import {
-  DashboardInput,
-  DashboardInputs,
-  DataSourceInput,
-  ImportDashboardDTO,
-  ImportFormDataV2,
+  type DashboardInput,
+  type DashboardInputs,
+  type DataSourceInput,
+  type ImportDashboardDTO,
+  type ImportFormDataV2,
   InputType,
-  LibraryPanelInput,
+  type LibraryPanelInput,
   LibraryPanelInputState,
 } from '../../types';
 

@@ -1,25 +1,25 @@
-import { FC, SyntheticEvent } from 'react';
-import { CellRendererProps, Column } from 'react-data-grid';
+import { type FC, type SyntheticEvent } from 'react';
+import { type CellRendererProps, type Column } from 'react-data-grid';
 
 import {
-  DataFrame,
-  Field,
-  GrafanaTheme2,
-  KeyValue,
-  TimeRange,
-  FieldConfigSource,
-  ActionModel,
-  FieldType,
-  DataFrameWithValue,
-  SelectableValue,
-  FieldState,
+  type DataFrame,
+  type Field,
+  type GrafanaTheme2,
+  type KeyValue,
+  type TimeRange,
+  type FieldConfigSource,
+  type ActionModel,
+  type FieldType,
+  type DataFrameWithValue,
+  type SelectableValue,
+  type FieldState,
 } from '@grafana/data';
-import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
+import { type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
 
-import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellOptions } from '../types';
+import { type TableCellInspectorMode } from '../TableCellInspector';
+import { type TableCellOptions } from '../types';
 
-import { TextAlign } from './utils';
+import { type TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';

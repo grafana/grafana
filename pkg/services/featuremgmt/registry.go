@@ -360,14 +360,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:         "kubernetesDashboards",
-			Description:  "Use the kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: false,  // The backend changes permission behavior based on this flag
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,
@@ -527,6 +519,14 @@ var (
 		{
 			Name:            "datasourcesApiserverEnableResourceEndpointRedirect",
 			Description:     "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
+			Name:            "datasourcesQuerierRawOutput",
+			Description:     "use raw output mode for the data source querier",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: false,
@@ -1363,14 +1363,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:         "passwordlessMagicLinkAuthentication",
-			Description:  "Enable passwordless login via magic link authentication",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "prometheusSpecialCharsInLabelValues",
 			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
 			FrontendOnly: true,
@@ -1505,13 +1497,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "k8SFolderCounts",
-			Description: "Enable folder's api server counts",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "improvedExternalSessionHandlingSAML",
 			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1545,9 +1530,9 @@ var (
 		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
-			Stage:       FeatureStagePrivatePreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "elasticsearchImprovedParsing",
@@ -2762,6 +2747,22 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:         "splashScreen",
+			Description:  "Enables the splash screen modal for introducing new Grafana features on first session",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "streamingForwardTeamHeadersTempo",
+			Description:  "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+			Stage:        FeatureStagePrivatePreview,
+			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:        "lokiAlignedQuerySplitting",

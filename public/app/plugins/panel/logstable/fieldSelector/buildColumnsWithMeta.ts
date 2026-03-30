@@ -1,5 +1,5 @@
-import { DataFrame, FieldWithIndex, getFieldDisplayName } from '@grafana/data';
-import { FieldNameMeta, FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type DataFrame, type FieldWithIndex, getFieldDisplayName } from '@grafana/data';
+import { type FieldNameMeta, type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
 type FieldName = string;
 

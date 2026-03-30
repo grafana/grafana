@@ -3,25 +3,25 @@ import { flatten, forOwn, groupBy, partition } from 'lodash';
 
 import {
   CoreApp,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
-  DataLink,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataLink,
+  type DataQueryRequest,
+  type DataQueryResponse,
   DataTopic,
-  Field,
+  type Field,
   FieldType,
   findCommonLabels,
   getDisplayProcessor,
   getFieldDisplayName,
-  Labels,
+  type Labels,
   sortDataFrame,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
-import { ExemplarTraceIdDestination, PromMetric, PromQuery, PromValue } from './types';
+import { type ExemplarTraceIdDestination, type PromMetric, type PromQuery, type PromValue } from './types';
 
 // handles case-insensitive Inf, +Inf, -Inf (with optional "inity" suffix)
 const INFINITY_SAMPLE_REGEX = /^[+-]?inf(?:inity)?$/i;

@@ -3,41 +3,43 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
   CoreApp,
-  DataFrame,
-  FieldConfigSource,
-  GrafanaTheme2,
+  type DataFrame,
+  type FieldConfigSource,
+  type GrafanaTheme2,
   LoadingState,
   LogsSortOrder,
-  PanelData,
-  PanelProps,
+  type PanelData,
+  type PanelProps,
 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import {
+  DATAPLANE_SEVERITY_NAME,
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
-  LogsFrame,
+  type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
+import { detectLevelField } from './fields/logs';
 import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
 import { onSortOrderChange } from './options/onSortOrderChange';
-import { Options } from './options/types';
-import { Options as LogsTableOptions } from './panelcfg.gen';
+import { type Options } from './options/types';
+import { type Options as LogsTableOptions } from './panelcfg.gen';
 import { getInitialRowIndex } from './props/getInitialRowIndex';
 import {
-  BuildLinkToLogLine,
+  type BuildLinkToLogLine,
   isBuildLinkToLogLine,
   isOnLogsTableOptionsChange,
-  OnLogsTableOptionsChange,
+  type OnLogsTableOptionsChange,
 } from './types';
 
 interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
@@ -68,6 +70,7 @@ export const LogsTable = ({
     [rawTableFrame]
   );
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
+  const levelFieldName = logsFrame?.severityField?.name ?? detectLevelField(logsFrame) ?? DATAPLANE_SEVERITY_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
   const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
@@ -136,6 +139,7 @@ export const LogsTable = ({
   const { organizedFrame } = useOrganizeFields({
     extractedFrame,
     timeFieldName,
+    levelFieldName,
     bodyFieldName,
     logsFrame,
     supportsPermalink: supportsPermalink(),
@@ -176,10 +180,11 @@ export const LogsTable = ({
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
-            displayedFields={getDisplayedFields(options, timeFieldName, bodyFieldName)}
+            displayedFields={getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName)}
             height={height}
             logsFrame={logsFrame}
             timeFieldName={timeFieldName}
+            levelFieldName={levelFieldName}
             bodyFieldName={bodyFieldName}
             dataFrame={extractedFrame}
             onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
