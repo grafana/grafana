@@ -29,6 +29,7 @@ const (
 // Registrar is an interface for registering plugin installations.
 type Registrar interface {
 	Register(ctx context.Context, namespace string, install *PluginInstall) error
+	RegisterWithOwner(ctx context.Context, namespace string, install *PluginInstall, parent *pluginsv0alpha1.Plugin) error
 	Unregister(ctx context.Context, namespace string, name string, source Source) error
 }
 
@@ -41,6 +42,10 @@ type PluginInstall struct {
 }
 
 func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alpha1.Plugin {
+	return p.ToPluginInstallV0Alpha1WithOwner(namespace, nil)
+}
+
+func (p *PluginInstall) ToPluginInstallV0Alpha1WithOwner(namespace string, parent *pluginsv0alpha1.Plugin) *pluginsv0alpha1.Plugin {
 	var url *string = nil
 	if p.URL != "" {
 		url = &p.URL
@@ -49,7 +54,8 @@ func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alph
 	if p.ParentID != "" {
 		parentID = &p.ParentID
 	}
-	return &pluginsv0alpha1.Plugin{
+
+	plugin := &pluginsv0alpha1.Plugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      p.ID,
@@ -64,6 +70,20 @@ func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alph
 			ParentId: parentID,
 		},
 	}
+
+	// Set owner reference if parent is provided (for child plugins)
+	if parent != nil {
+		plugin.OwnerReferences = []metav1.OwnerReference{
+			{
+				APIVersion: parent.APIVersion,
+				Kind:       parent.Kind,
+				Name:       parent.Name,
+				UID:        parent.UID,
+			},
+		}
+	}
+
+	return plugin
 }
 
 func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.Plugin) bool {
@@ -123,8 +143,14 @@ func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginClient, error) {
 	return r.client, r.clientErr
 }
 
-// Register creates or updates a plugin install in the registry.
+// Register creates or updates a plugin install in the registry without setting owner references.
 func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
+	return r.RegisterWithOwner(ctx, namespace, install, nil)
+}
+
+// RegisterWithOwner creates or updates a plugin install in the registry with optional owner reference.
+// If parent is non-nil, sets owner reference for automatic cascade deletion.
+func (r *InstallRegistrar) RegisterWithOwner(ctx context.Context, namespace string, install *PluginInstall, parent *pluginsv0alpha1.Plugin) error {
 	start := time.Now()
 	defer func() {
 		metrics.RegistrationDurationSeconds.WithLabelValues("register").Observe(time.Since(start).Seconds())
@@ -152,7 +178,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 
 	if existing != nil {
 		if install.ShouldUpdate(existing) {
-			_, err = client.Update(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
+			_, err = client.Update(ctx, install.ToPluginInstallV0Alpha1WithOwner(namespace, parent), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 			if err != nil {
 				logger.Error("Failed to update plugin", "error", err)
 				metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
@@ -165,7 +191,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		return nil
 	}
 
-	_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.CreateOptions{})
+	_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1WithOwner(namespace, parent), resource.CreateOptions{})
 	if err != nil {
 		logger.Error("Failed to create plugin", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()

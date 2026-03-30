@@ -488,6 +488,11 @@ func (m *mockPluginRegistrar) Register(ctx context.Context, namespace string, in
 	return nil
 }
 
+func (m *mockPluginRegistrar) RegisterWithOwner(ctx context.Context, namespace string, install *PluginInstall, parent *pluginsv0alpha1.Plugin) error {
+	// For the existing tests, we just delegate to Register since they don't use owner references
+	return m.Register(ctx, namespace, install)
+}
+
 func (m *mockPluginRegistrar) Unregister(ctx context.Context, namespace string, name string, source Source) error {
 	if m.unregisterFunc != nil {
 		return m.unregisterFunc(ctx, namespace, name, source)

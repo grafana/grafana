@@ -76,6 +76,7 @@ func New(cfg app.Config) (app.App, error) {
 type PluginAppConfig struct {
 	MetaProviderManager   *meta.ProviderManager
 	EnableChildReconciler bool
+	InstallManager        install.InstallManager
 }
 
 func NewPluginsAppInstaller(
@@ -83,10 +84,12 @@ func NewPluginsAppInstaller(
 	authorizer authorizer.Authorizer,
 	metaProviderManager *meta.ProviderManager,
 	enableChildReconciler bool,
+	installManager install.InstallManager,
 ) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
 		MetaProviderManager:   metaProviderManager,
 		EnableChildReconciler: enableChildReconciler,
+		InstallManager:        installManager,
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
 	appConfig := app.Config{
@@ -100,20 +103,22 @@ func NewPluginsAppInstaller(
 	}
 
 	appInstaller := &PluginAppInstaller{
-		AppInstaller: defaultInstaller,
-		authorizer:   authorizer,
-		metaManager:  metaProviderManager,
-		logger:       logger,
-		ready:        make(chan struct{}),
+		AppInstaller:   defaultInstaller,
+		authorizer:     authorizer,
+		metaManager:    metaProviderManager,
+		installManager: installManager,
+		logger:         logger,
+		ready:          make(chan struct{}),
 	}
 	return appInstaller, nil
 }
 
 type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	metaManager *meta.ProviderManager
-	authorizer  authorizer.Authorizer
-	logger      logging.Logger
+	metaManager    *meta.ProviderManager
+	installManager install.InstallManager
+	authorizer     authorizer.Authorizer
+	logger         logging.Logger
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
@@ -153,8 +158,14 @@ func (p *PluginAppInstaller) InstallAPIs(
 	}
 
 	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
+	pluginGVR := pluginsv0alpha1.PluginKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: NewMetaStorage(p.logger, p.metaManager, clientFactory),
+		pluginMetaGVR: meta.NewMetaStorage(p.logger, p.metaManager, clientFactory),
+	}
+
+	// Only register custom PluginStorage if install manager is provided
+	if p.installManager != nil {
+		replacedStorage[pluginGVR] = install.NewPluginStorage(p.logger, p.installManager, clientFactory)
 	}
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,
