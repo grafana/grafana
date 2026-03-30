@@ -1,12 +1,13 @@
-import type { PanelPluginMeta } from '@grafana/data';
+import { PluginType, type PanelPluginMeta } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { getBackendSrv } from '../backendSrv';
 
+import { logWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
-import type { PanelPluginMetas } from './types';
+import type { PanelPluginMetas, PluginMetasResponse } from './types';
 
 let panels: PanelPluginMetas = {};
 let panelsByAliasIDs: PanelPluginMetas = {};
@@ -37,18 +38,33 @@ function resolveAliasIDs(panels: PanelPluginMetas): PanelPluginMetas {
   return panelsByAliasIDs;
 }
 
+// eslint-disable-next-line no-restricted-syntax
+function setPanelsAndAliases(input: PanelPluginMetas = config.panels) {
+  panels = input;
+  panelsByAliasIDs = resolveAliasIDs(panels);
+}
+
+function setMetas(metas: PluginMetasResponse) {
+  if (!metas.items.length) {
+    // something failed while trying to fetch plugin meta
+    // fallback to config.panels from bootdata
+    setPanelsAndAliases();
+    logWarning({ type: PluginType.panel });
+    return;
+  }
+
+  const mapper = getPanelPluginMapper();
+  setPanelsAndAliases(mapper(metas));
+}
+
 async function initPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    // eslint-disable-next-line no-restricted-syntax
-    panels = config.panels;
-    panelsByAliasIDs = resolveAliasIDs(panels);
+    setPanelsAndAliases();
     return;
   }
 
   const metas = await initPluginMetas();
-  const mapper = getPanelPluginMapper();
-  panels = mapper(metas);
-  panelsByAliasIDs = resolveAliasIDs(panels);
+  setMetas(metas);
 }
 
 function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
@@ -143,20 +159,16 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
     throw new Error('setPanelPluginMetas() function can only be called from tests.');
   }
 
-  panels = structuredClone(override);
-  panelsByAliasIDs = resolveAliasIDs(panels);
+  setPanelsAndAliases(structuredClone(override));
 }
 
 export async function refetchPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
-    panels = settings.panels;
-    panelsByAliasIDs = resolveAliasIDs(panels);
+    setPanelsAndAliases(settings.panels);
     return;
   }
 
   const metas = await refetchPluginMetas();
-  const mapper = getPanelPluginMapper();
-  panels = mapper(metas);
-  panelsByAliasIDs = resolveAliasIDs(panels);
+  setMetas(metas);
 }
