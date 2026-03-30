@@ -32,14 +32,24 @@ export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
 
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
 export {
+  getDatasourcePluginMeta,
+  getDatasourcePluginMetas,
+  getDatasourcePluginMetasMap,
+  getDatasourcePluginMetasMapSync,
+  setDatasourcePluginMetas,
+  refetchDatasourcePluginMetas,
+} from '../services/pluginMeta/datasources';
+export {
   useAppPluginMeta,
   useAppPluginMetas,
+  useDatasourcePluginMeta,
+  useDatasourcePluginMetas,
   useListedPanelPluginMetas,
   usePanelPluginMeta,
   usePanelPluginMetas,
   usePanelPluginMetasMap,
 } from '../services/pluginMeta/hooks';
-export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
+export type { AppPluginMetas, DatasourcePluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
 export { getCachedPromise, invalidateCache, setLogger } from '../utils/getCachedPromise';
 export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event } from './analyticsFramework/types';

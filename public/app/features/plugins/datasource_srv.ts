@@ -18,7 +18,7 @@ import {
   type TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
+import { ExpressionDatasourceRef, refetchDatasourcePluginMetas, UserStorage } from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
@@ -373,6 +373,9 @@ export class DatasourceSrv implements DataSourceService {
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
+    // Refresh the deduplicated plugin metadata cache in the background.
+    // This does not need to block reload since init() already has the full data.
+    refetchDatasourcePluginMetas().catch(() => {});
   }
 }
 
