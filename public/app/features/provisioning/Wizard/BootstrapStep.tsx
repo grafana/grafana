@@ -60,10 +60,10 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   } = useResourceStats(repoName, selectedTarget, undefined, { isHealthy, healthStatusNotReady });
 
   const maxResourcesPerRepository = quota?.maxResourcesPerRepository ?? 0;
-  const isQuotaExceeded = maxResourcesPerRepository > 0 && fileCount > maxResourcesPerRepository;
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
+  const isQuotaExceeded = !isLoading && maxResourcesPerRepository > 0 && fileCount > maxResourcesPerRepository;
 
   useEffect(() => {
     // Pick a nice name based on type+settings, but only if user hasn't modified it
