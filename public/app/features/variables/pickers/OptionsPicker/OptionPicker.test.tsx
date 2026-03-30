@@ -1,17 +1,22 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
-import { Store } from 'redux';
+import { type Store } from 'redux';
 
-import { LoadingState, QueryVariableModel, VariableWithMultiSupport, VariableWithOptions } from '@grafana/data';
+import {
+  LoadingState,
+  type QueryVariableModel,
+  type VariableWithMultiSupport,
+  type VariableWithOptions,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { queryBuilder } from '../../shared/testing/builders';
 import { getPreloadedState } from '../../state/helpers';
-import { VariablePickerProps } from '../types';
+import { type VariablePickerProps } from '../types';
 
 import { optionPickerFactory } from './OptionsPicker';
-import { initialOptionPickerState, OptionsPickerState } from './reducer';
+import { initialOptionPickerState, type OptionsPickerState } from './reducer';
 
 interface Args {
   pickerState?: Partial<OptionsPickerState>;

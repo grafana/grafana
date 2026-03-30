@@ -1,4 +1,4 @@
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { type RulerDataSourceConfig } from 'app/types/unified-alerting';
 
 import { mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';

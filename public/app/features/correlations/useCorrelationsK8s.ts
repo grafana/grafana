@@ -1,10 +1,15 @@
 import { handleRequestError } from '@grafana/api-clients';
 import {
-  Correlation as CorrelationK8s,
+  type Correlation as CorrelationK8s,
   useListCorrelationQuery,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { SupportedTransformationType } from '@grafana/data';
-import { CorrelationData, CorrelationExternal, CorrelationQuery, getDataSourceSrv } from '@grafana/runtime';
+import {
+  type CorrelationData,
+  type CorrelationExternal,
+  type CorrelationQuery,
+  getDataSourceSrv,
+} from '@grafana/runtime';
 
 import { toEnrichedCorrelationData } from './useCorrelations';
 

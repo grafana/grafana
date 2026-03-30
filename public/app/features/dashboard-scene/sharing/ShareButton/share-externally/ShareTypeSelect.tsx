@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { SelectableValue, toIconName } from '@grafana/data';
+import { type SelectableValue, toIconName } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { Icon, Label, Select, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';

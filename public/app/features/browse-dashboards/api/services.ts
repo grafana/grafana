@@ -5,9 +5,9 @@ import { legacyAPI } from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
 import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, NestedFolderDTO } from 'app/features/search/service/types';
+import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { dispatch } from 'app/types/store';
 

@@ -3,14 +3,14 @@ import { pickBy } from 'lodash';
 import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { RuleNamespace } from '../../../types/unified-alerting';
-import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
+import { type RuleNamespace } from '../../../types/unified-alerting';
+import { type RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
-import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
-import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { AdvancedFilters } from './rule-list/filter/types';
-import { RulesFilter } from './search/rulesSearchParser';
-import { RuleFormType } from './types/rule-form';
+import { type Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
+import { type FilterType } from './components/rules/central-state-history/EventListSceneObject';
+import { type AdvancedFilters } from './rule-list/filter/types';
+import { type RulesFilter } from './search/rulesSearchParser';
+import { type RuleFormType } from './types/rule-form';
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',

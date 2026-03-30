@@ -1,7 +1,12 @@
-import { MetricFindValue, TimeRange } from '@grafana/data';
-import { PromQuery } from '@grafana/prometheus';
+import { type MetricFindValue, type TimeRange } from '@grafana/data';
+import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFilterWithLabels, AdHocFiltersVariable, GroupByVariable, sceneGraph } from '@grafana/scenes';
+import {
+  type AdHocFilterWithLabels,
+  type AdHocFiltersVariable,
+  type GroupByVariable,
+  sceneGraph,
+} from '@grafana/scenes';
 
 import { DATASOURCE_UID, METRIC_NAME } from '../constants';
 

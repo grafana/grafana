@@ -1,6 +1,6 @@
-import { Page, Locator } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 
-import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { getCell, getCellHeight, getColumnIdx, waitForTableLoad } from './table-utils';
 

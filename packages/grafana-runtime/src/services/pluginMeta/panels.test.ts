@@ -1,6 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { BackendSrv, setBackendSrv } from '../backendSrv';
+import { type BackendSrv, setBackendSrv } from '../backendSrv';
 
 import {
   getListedPanelPluginIds,

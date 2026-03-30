@@ -1,16 +1,16 @@
 import { attempt, isError } from 'lodash';
 
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type PromRuleDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
+import { type GrafanaPromRulesOptions } from '../../api/prometheusApi';
 import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../../featureToggles';
-import { RulesFilter } from '../../search/rulesSearchParser';
+import { type RulesFilter } from '../../search/rulesSearchParser';
 import { parseMatcher } from '../../utils/matchers';
 
 import { buildTitleSearch, normalizeFilterState } from './filterNormalization';
 import {
-  GroupFilterConfig,
-  RuleFilterConfig,
+  type GroupFilterConfig,
+  type RuleFilterConfig,
   dashboardUidFilter,
   dataSourceNamesFilter,
   freeFormFilter,
