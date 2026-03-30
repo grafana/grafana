@@ -1,18 +1,18 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
-import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
+import { ElementSelectionContext, useSidebar, useStyles2, useTheme2, Sidebar } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
-import { useIsMobile } from '../../../../../packages/grafana-ui/src/utils/useIsMobile';
 import { type PopoverTarget, AssistantPopoverContext } from '../assistant/AssistantPopoverContext';
 import {
   useDashboardAssistantViewMode,
@@ -133,7 +133,8 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
   }, [isEditing, editPane]);
 
-  const isMobile = useIsMobile();
+  const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane),
     contentMargin: 1,

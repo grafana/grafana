@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { type ReactNode } from 'react';
+import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { useIsMobile } from '../../utils/useIsMobile';
 import { IconButton } from '../IconButton/IconButton';
 import { getPortalContainer } from '../Portal/Portal';
 
@@ -93,7 +93,8 @@ export interface SiderbarToolbarProps {
 export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
   const styles = useStyles2(getStyles);
   const sidebarContext = useSidebarContext();
-  const isMobile = useIsMobile();
+  const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
 
   if (!sidebarContext) {
     throw new Error('Sidebar.Toolbar must be used within a Sidebar component');

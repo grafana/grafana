@@ -1,10 +1,10 @@
 import { clamp } from 'lodash';
 import React, { useCallback, useContext, useEffect } from 'react';
+import { useMedia } from 'react-use';
 
 import { store } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { useIsMobile } from '../../utils/useIsMobile';
 
 export type SidebarPosition = 'left' | 'right';
 
@@ -79,7 +79,7 @@ export function useSidebar({
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 240);
   const [isHidden, setIsHidden] = useSidebarSavedState(persistanceKey, 'hidden', defaultIsHidden);
-  const isMobile = useIsMobile();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   /** Undocked/floating sidebar is not used on small viewports; keep layout and behavior docked. */
   const effectiveIsDocked = Boolean(isMobile) || isDocked;
 
