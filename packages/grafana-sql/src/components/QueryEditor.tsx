@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { QueryEditorProps } from '@grafana/data';
+import { type QueryEditorProps } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 import { Space } from '@grafana/ui';
 
-import { SqlDatasource } from '../datasource/SqlDatasource';
+import { type SqlDatasource } from '../datasource/SqlDatasource';
 import { applyQueryDefaults } from '../defaults';
-import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
+import { type SQLQuery, type QueryRowFilter, type SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
-import { QueryHeader, QueryHeaderProps } from './QueryHeader';
+import { QueryHeader, type QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 

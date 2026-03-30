@@ -1,4 +1,4 @@
-import { BootData } from '@grafana/data';
+import { type BootData } from '@grafana/data';
 
 import { e2e } from '../utils';
 

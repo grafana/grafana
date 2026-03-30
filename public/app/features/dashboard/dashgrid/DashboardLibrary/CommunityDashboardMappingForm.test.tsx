@@ -1,12 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { DataSourceInput, DashboardInput, InputType } from 'app/features/manage-dashboards/types';
+import { type DataSourceInput, type DashboardInput, InputType } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { TrackingProvider } from './TrackingContext';
-import { CONTENT_KINDS, ContentKind, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
-import { InputMapping } from './utils/autoMapDatasources';
+import { CONTENT_KINDS, type ContentKind, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { type InputMapping } from './utils/autoMapDatasources';
 
 interface CommunityDashboardMappingFormProps {
   dashboardName: string;

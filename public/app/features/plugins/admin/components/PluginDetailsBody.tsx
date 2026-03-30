@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
-import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
+import { type GrafanaTheme2, PluginContextProvider, type UrlQueryMap, PluginType } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { PageInfoItem } from '@grafana/runtime/internal';
-import { CellProps, Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
+import { type PageInfoItem } from '@grafana/runtime/internal';
+import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { CatalogPlugin, Permission, PluginTabIds, Screenshots } from '../types';
+import { type CatalogPlugin, type Permission, PluginTabIds, type Screenshots } from '../types';
 
 import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';

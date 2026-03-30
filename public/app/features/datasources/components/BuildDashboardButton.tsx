@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 
-import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, ComponentSize, Dropdown, Icon, LinkButton, Menu, useStyles2 } from '@grafana/ui';
+import { Button, type ComponentSize, Dropdown, Icon, LinkButton, Menu, useStyles2 } from '@grafana/ui';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useDispatch } from 'app/types/store';
 
-import { ButtonFill } from '../../../../../packages/grafana-ui/src/components/Button/Button';
+import { type ButtonFill } from '../../../../../packages/grafana-ui/src/components/Button/Button';
 import { trackBuildDashboardDropdownClicked, trackCreateDashboardClicked, trackDsConfigClicked } from '../tracking';
 
 import { SuggestedDashboardsLoader } from './SuggestedDashboardsLoader';

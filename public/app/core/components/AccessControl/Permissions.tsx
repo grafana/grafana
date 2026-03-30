@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Text, Box, Button, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
@@ -13,7 +13,7 @@ import { DescendantCount } from 'app/features/browse-dashboards/components/Brows
 
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
-import { PermissionTarget, ResourcePermission, SetPermission, Description } from './types';
+import { PermissionTarget, type ResourcePermission, type SetPermission, type Description } from './types';
 
 const EMPTY_PERMISSION = '';
 

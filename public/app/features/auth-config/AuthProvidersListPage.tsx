@@ -1,12 +1,12 @@
-import { JSX, useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { type JSX, useEffect, useState } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { isOpenSourceBuildOrUnlicenced } from '../admin/EnterpriseAuthFeaturesCard';
 

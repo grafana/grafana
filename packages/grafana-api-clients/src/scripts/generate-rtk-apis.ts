@@ -1,6 +1,6 @@
 // Generates Redux Toolkit API slices for certain APIs from the OpenAPI spec
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
-import { OpenAPIV3 } from 'openapi-types';
+import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 // Grafana root path - navigate up from this script's directory

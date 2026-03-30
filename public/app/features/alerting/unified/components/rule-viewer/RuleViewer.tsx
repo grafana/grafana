@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
-import { GrafanaTheme2, NavModelItem, UrlQueryValue } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem, type UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -18,19 +18,19 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
-import { PageInfoItem } from 'app/core/components/Page/types';
+import { type PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import {
   AlertInstanceTotalState,
-  AlertInstanceTotals,
-  CombinedRule,
-  RuleGroupIdentifierV2,
-  RuleHealth,
-  RuleIdentifier,
+  type AlertInstanceTotals,
+  type CombinedRule,
+  type RuleGroupIdentifierV2,
+  type RuleHealth,
+  type RuleIdentifier,
 } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { type PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
 import { defaultPageNav } from '../../RuleViewer';
@@ -50,7 +50,7 @@ import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink, groups } from '../../utils/navigation';
 import {
-  RulePluginOrigin,
+  type RulePluginOrigin,
   getRulePluginOrigin,
   isFederatedRuleGroup,
   isGrafanaRuleIdentifier,

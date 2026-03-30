@@ -1,7 +1,7 @@
 import { isExpressionReference } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
-import { ExpressionQuery, ExpressionQueryType, ReducerType } from './types';
+import { type ExpressionQuery, ExpressionQueryType, type ReducerType } from './types';
 
 export const isExpressionQuery = (dataQuery?: DataQuery): dataQuery is ExpressionQuery => {
   if (!dataQuery) {

@@ -1,7 +1,7 @@
-import { Spec as DashboardV2Spec, TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { TransformationKind as V2Beta1TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
+import { type Spec as DashboardV2Spec, type TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type TransformationKind as V2Beta1TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
-import { DashboardV2Version, dashboardAPIVersionResolver } from '../../dashboard/api/DashboardAPIVersionResolver';
+import { type DashboardV2Version, dashboardAPIVersionResolver } from '../../dashboard/api/DashboardAPIVersionResolver';
 
 /**
  * Wire transformation is what the API returns — either v2 stable or v2beta1 shape.

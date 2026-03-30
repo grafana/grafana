@@ -1,10 +1,10 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin, store } from '@grafana/data';
+import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
 import {
-  CancelActivationHandler,
+  type CancelActivationHandler,
   CustomVariable,
   SceneDataTransformer,
   sceneGraph,

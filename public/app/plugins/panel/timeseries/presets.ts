@@ -1,15 +1,15 @@
 import {
   FieldColorModeId,
-  FieldConfigSource,
+  type FieldConfigSource,
   ThresholdsMode,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   AxisPlacement,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
   StackingMode,
@@ -18,7 +18,7 @@ import {
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { defaultGraphConfig } from './config';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 /**
  * Default values

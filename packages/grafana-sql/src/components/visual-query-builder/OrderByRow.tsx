@@ -2,12 +2,12 @@ import { uniqueId } from 'lodash';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Input, RadioButtonGroup, Select, Space } from '@grafana/ui';
 
-import { SQLExpression } from '../../types';
+import { type SQLExpression } from '../../types';
 import { setPropertyField } from '../../utils/sql.utils';
 
 type OrderByRowProps = {

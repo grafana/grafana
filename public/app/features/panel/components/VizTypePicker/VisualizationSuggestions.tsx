@@ -3,16 +3,16 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import {
-  GrafanaTheme2,
-  PanelData,
-  PanelModel,
-  PanelPluginMeta,
-  PanelPluginVisualizationSuggestion,
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelModel,
+  type PanelPluginMeta,
+  type PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
@@ -22,10 +22,10 @@ import { panelsWithoutData } from '../../suggestions/consts';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
-import { VisualizationCardGrid, VisualizationCardGridGroup } from './VisualizationCardGrid';
+import { VisualizationCardGrid, type VisualizationCardGridGroup } from './VisualizationCardGrid';
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
-import { VizTypeChangeDetails } from './types';
+import { type VizTypeChangeDetails } from './types';
 
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;

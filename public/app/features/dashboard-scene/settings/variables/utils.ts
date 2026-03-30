@@ -1,6 +1,6 @@
 import { chain } from 'lodash';
 
-import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDataSourceRef, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -11,17 +11,17 @@ import {
   TextBoxVariable,
   QueryVariable,
   GroupByVariable,
-  SceneVariable,
-  MultiValueVariable,
+  type SceneVariable,
+  type MultiValueVariable,
   sceneUtils,
-  SceneObject,
+  type SceneObject,
   AdHocFiltersVariable,
-  SceneVariableState,
+  type SceneVariableState,
   SceneVariableSet,
   SwitchVariable,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableHide, VariableType } from '@grafana/schema';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
+import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 

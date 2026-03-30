@@ -1,10 +1,10 @@
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor/AnnotationQueryEditor';
-import { CloudWatchAnnotationQuery } from './dataquery.gen';
+import { type CloudWatchAnnotationQuery } from './dataquery.gen';
 import { DEFAULT_ANNOTATIONS_QUERY } from './defaultQueries';
 import { isCloudWatchAnnotation } from './guards';
-import { CloudWatchQuery, LegacyAnnotationQuery } from './types';
+import { type CloudWatchQuery, type LegacyAnnotationQuery } from './types';
 
 export const CloudWatchAnnotationSupport = {
   // converts legacy angular style queries to new format. Also sets the same default values as in the deprecated angular directive

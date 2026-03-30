@@ -5,12 +5,12 @@ import { memo, useCallback } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { InlineFormLabel, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../datasource';
-import { PromQuery } from '../types';
+import { type PrometheusDatasource } from '../datasource';
+import { type PromQuery } from '../types';
 
 import { PromExemplarField } from './PromExemplarField';
 

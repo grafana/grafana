@@ -1,52 +1,55 @@
-import { MetricFindValue, TypedVariableModel, AnnotationQuery } from '@grafana/data';
+import { type MetricFindValue, type TypedVariableModel, type AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  DataQuery,
-  DataSourceRef,
-  Panel,
-  RowPanel,
-  VariableModel,
-  VariableType,
-  FieldConfigSource as FieldConfigSourceV1,
+  type DataQuery,
+  type DataSourceRef,
+  type Panel,
+  type RowPanel,
+  type VariableModel,
+  type VariableType,
+  type FieldConfigSource as FieldConfigSourceV1,
   FieldColorModeId as FieldColorModeIdV1,
   ThresholdsMode as ThresholdsModeV1,
   MappingType as MappingTypeV1,
   SpecialValueMatch as SpecialValueMatchV1,
 } from '@grafana/schema';
 import {
-  AnnotationQueryKind,
-  Spec as DashboardV2Spec,
-  DataLink,
-  DatasourceVariableKind,
+  type AnnotationQueryKind,
+  type Spec as DashboardV2Spec,
+  type DataLink,
+  type DatasourceVariableKind,
   defaultSpec as defaultDashboardV2Spec,
   defaultTimeSettingsSpec,
-  PanelQueryKind,
-  QueryVariableKind,
-  TransformationKind,
-  FieldColorModeId,
-  FieldConfigSource,
-  ThresholdsMode,
-  SpecialValueMatch,
-  AdhocVariableKind,
-  CustomVariableKind,
-  ConstantVariableKind,
-  IntervalVariableKind,
-  TextVariableKind,
-  GroupByVariableKind,
-  SwitchVariableKind,
-  LibraryPanelKind,
-  PanelKind,
-  GridLayoutItemKind,
+  type PanelQueryKind,
+  type QueryVariableKind,
+  type TransformationKind,
+  type FieldColorModeId,
+  type FieldConfigSource,
+  type ThresholdsMode,
+  type SpecialValueMatch,
+  type AdhocVariableKind,
+  type CustomVariableKind,
+  type ConstantVariableKind,
+  type IntervalVariableKind,
+  type TextVariableKind,
+  type GroupByVariableKind,
+  type SwitchVariableKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type GridLayoutItemKind,
   defaultDataQueryKind,
-  RowsLayoutRowKind,
-  GridLayoutKind,
+  type RowsLayoutRowKind,
+  type GridLayoutKind,
   defaultDashboardLinkType,
   defaultDashboardLink,
   defaultFieldConfigSource,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DashboardLink, DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
-import { isWeekStart, WeekStart } from '@grafana/ui';
+import {
+  type DashboardLink,
+  type DataTransformerConfig,
+} from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
+import { isWeekStart, type WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -57,12 +60,12 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
-  ObjectMeta,
+  type ObjectMeta,
 } from 'app/features/apiserver/types';
 import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
-import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
+import { type TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
   transformCursorSyncV2ToV1,
@@ -78,9 +81,9 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
