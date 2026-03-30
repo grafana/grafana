@@ -188,6 +188,17 @@ func allScopeFromAction(action string) string {
 	return ac.Scope(parts[0], "*")
 }
 
+// folderScopeForLegacyRBAC returns a legacy RBAC scope for folder-scoped access (folders:uid:<uid>).
+func folderScopeForLegacyRBAC(folderUID string) string {
+	return ac.Scope("folders", "uid", folderUID)
+}
+
+// isDashboardRBACAction matches actions backed by the dashboard generic list path, which returns
+// both direct dashboard objects (Items) and enclosing folders (Folders).
+func isDashboardRBACAction(action string) bool {
+	return strings.HasPrefix(action, "dashboards:")
+}
+
 // listPermissions lists permissions for a subject on a given group/resource
 func (r *zanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject, group, resource, verb, action, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
@@ -205,24 +216,44 @@ func (r *zanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 
 	permissions := []ac.Permission{}
 
+	appendIfMatches := func(p ac.Permission) {
+		if scope == "" || strings.HasPrefix(p.Scope, scope) {
+			permissions = append(permissions, p)
+		}
+	}
+
 	// If All is true, the user has access to all resources of this type.
 	if resp.All {
-		permissions = append(permissions, ac.Permission{
+		appendIfMatches(ac.Permission{
 			Action: action,
 			Scope:  allScopeFromAction(action),
 		})
+		// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
+		// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
+		if isDashboardRBACAction(action) {
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  ac.Scope("folders", "*"),
+			})
+		}
 		return permissions, nil
 	}
 
-	// Convert the List response to permissions using legacy RBAC scope format.
+	// Convert Items to legacy scopes (e.g. dashboards:uid:<name>).
 	for _, item := range resp.Items {
-		perm := ac.Permission{
+		appendIfMatches(ac.Permission{
 			Action: action,
 			Scope:  scopeFromAction(action, item),
-		}
-		if scope == "" || strings.HasPrefix(perm.Scope, scope) {
-			permissions = append(permissions, perm)
-		}
+		})
+	}
+
+	// listGeneric on the Zanzana server returns folder UIDs separately; map them to folders:uid:*
+	// scopes so they match legacy RBAC (not dashboards:uid:<folderUID>).
+	for _, folderUID := range resp.Folders {
+		appendIfMatches(ac.Permission{
+			Action: action,
+			Scope:  folderScopeForLegacyRBAC(folderUID),
+		})
 	}
 
 	return permissions, nil
