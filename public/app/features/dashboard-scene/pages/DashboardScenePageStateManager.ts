@@ -23,6 +23,7 @@ import {
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
@@ -318,7 +319,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
-    if (dryRun.apiVersion.split('/')[1] === 'v2beta1') {
+    if (dryRun.apiVersion.split('/')[1].startsWith('v2')) {
       return {
         ...dryRun,
         kind: 'DashboardWithAccessInfo',
@@ -991,7 +992,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             throw new DashboardVersionError('v0alpha1', 'Assistant preview contains V1 dashboard');
           }
           return {
-            apiVersion: 'v2beta1',
+            apiVersion: dashboardAPIVersionResolver.getV2(),
             kind: 'DashboardWithAccessInfo',
             metadata: {
               creationTimestamp: '',

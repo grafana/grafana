@@ -1919,9 +1919,9 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
               ],
               queryOptions: {},
               transformations: transformationIds.map((id) => ({
-                kind: id,
+                kind: 'Transformation' as const,
+                group: id,
                 spec: {
-                  id,
                   options: {},
                 },
               })),

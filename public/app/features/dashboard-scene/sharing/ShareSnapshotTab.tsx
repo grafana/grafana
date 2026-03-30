@@ -124,8 +124,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
 
     const apiVersion = dashboardRef.resolve().serializer.apiVersion;
 
-    const isV2Dashboard =
-      apiVersion === 'dashboard.grafana.app/v2beta1' || apiVersion === 'dashboard.grafana.app/v2alpha1';
+    const isV2Dashboard = apiVersion?.startsWith('dashboard.grafana.app/v2') ?? false;
 
     if (isV2Dashboard) {
       saveModel = transformSceneToSaveModelSchemaV2(dashboardRef.resolve(), true);
