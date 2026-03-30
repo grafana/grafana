@@ -617,13 +617,3 @@ func (s *Service) scopeResource() string {
 	}
 	return s.options.Resource
 }
-
-// getRoleName returns a fixed role name with the given suffix.
-// K8s:    "fixed:dashboard.grafana.app:dashboards.permissions:reader"
-// Legacy: "fixed:dashboards.permissions:reader"
-func (s *Service) getRoleName(suffix string) string {
-	if s.options.K8sActionFormat {
-		return fmt.Sprintf("fixed:%s:%s.permissions:%s", s.options.APIGroup, s.options.Resource, suffix)
-	}
-	return fmt.Sprintf("fixed:%s.permissions:%s", s.options.Resource, suffix)
-}
