@@ -21,6 +21,7 @@ import (
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	gutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -309,6 +310,9 @@ func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 			Namespace:         ns,
 			ResourceVersion:   strconv.FormatInt(v.Last, 10),
 			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.First)),
+			Annotations: map[string]string{
+				gutils.AnnoKeyCreatedBy: fmt.Sprintf("user:%s", v.UserUID),
+			},
 		},
 		Spec: collections.StarsSpec{
 			Resource: []collections.StarsResource{{
@@ -319,5 +323,9 @@ func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 		},
 	}
 	stars.Spec.Normalize()
+	if v.Last > v.First {
+		m, _ := gutils.MetaAccessor(&stars)
+		m.SetUpdatedTimestampMillis(v.Last)
+	}
 	return stars
 }

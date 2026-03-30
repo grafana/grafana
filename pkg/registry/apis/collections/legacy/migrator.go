@@ -91,7 +91,6 @@ func (m *starsMigrator) MigrateStars(ctx context.Context, orgId int64, opts migr
 			return err
 		}
 		obj.SetResourceVersion(strconv.FormatInt(rv, 10))
-		obj.SetCreationTimestamp(metav1.NewTime(ts))
 
 		body, err := json.Marshal(s)
 		if err != nil {
