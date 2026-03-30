@@ -2231,6 +2231,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "pieChartGradientColorScheme",
+			Description:  "Enable gradient color scheme option for the pie chart panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
