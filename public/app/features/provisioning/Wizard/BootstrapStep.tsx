@@ -55,12 +55,12 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const {
     resourceCountString,
     fileCountString,
-    resourceCount,
+    fileCount,
     isLoading: isResourceStatsLoading,
   } = useResourceStats(repoName, selectedTarget, undefined, { isHealthy, healthStatusNotReady });
 
   const maxResourcesPerRepository = quota?.maxResourcesPerRepository ?? 0;
-  const isQuotaExceeded = maxResourcesPerRepository > 0 && resourceCount > maxResourcesPerRepository;
+  const isQuotaExceeded = maxResourcesPerRepository > 0 && fileCount > maxResourcesPerRepository;
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
@@ -104,13 +104,13 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           message: onPrem
             ? t(
                 'provisioning.bootstrap-step.error-quota-exceeded-message-onprem',
-                'This repository contains {{resourceCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.',
-                { resourceCount, limit: maxResourcesPerRepository }
+                'This repository folder contains {{fileCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.',
+                { fileCount, limit: maxResourcesPerRepository }
               )
             : t(
                 'provisioning.bootstrap-step.error-quota-exceeded-message',
-                'This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
-                { resourceCount, limit: maxResourcesPerRepository }
+                'This repository foldercontains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
+                { fileCount, limit: maxResourcesPerRepository }
               ),
         },
         action: onPrem
@@ -135,7 +135,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     retryRepositoryStatus,
     maxResourcesPerRepository,
     isQuotaExceeded,
-    resourceCount,
+    fileCount,
     isUnhealthy,
   ]);
 
