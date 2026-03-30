@@ -14671,6 +14671,7 @@
   },
   "splash-screen": {
     "body": "Splash screen content will go here.",
+    "close": "Close",
     "get-started": "Get started",
     "title": "Welcome to Grafana"
   },
