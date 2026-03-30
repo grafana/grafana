@@ -360,6 +360,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: 'combobox',
       supportsMultiValueOperators: Boolean(
@@ -505,6 +506,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       // @ts-expect-error
       defaultOptions: variable.options,
@@ -588,6 +590,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             baseFilters: v.spec.baseFilters ?? [],
             defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
+            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
             layout: 'combobox',
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
