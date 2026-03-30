@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -280,6 +281,147 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 			require.Error(t, err, "Expected error when getting deleted rule")
 			require.Contains(t, err.Error(), "not found", "Expected 'not found' error, got %s", err.Error())
 		}
+	})
+}
+
+// TestIntegrationAlertRuleManagerPropertiesRoundTrip verifies that ManagerProperties set via the
+// k8s API survive a round-trip through legacy storage and are visible in both APIs.
+//
+// Write path (k8s → legacy SQL):
+//   - Create rule via k8s with ManagerKindTerraform annotation.
+//   - Verify legacy provisioning API reports ProvenanceAPI (the coarse mapping for terraform).
+//   - Read rule back via k8s; verify ManagerKindTerraform is still present.
+//
+// Write path (legacy → k8s):
+//   - Create rule via legacy provisioning API (ProvenanceAPI).
+//   - Read back via k8s; verify ManagerProperties maps to ManagerKindClassicAPI.
+func TestIntegrationAlertRuleManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+
+	k8sClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
+	legacyClient := alerting.NewAlertingLegacyAPIClient(helper.GetListenerAddress(), "admin", "admin")
+
+	common.CreateTestFolder(t, helper, "mp-test-folder")
+
+	t.Run("k8s ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID("mp-test-folder"),
+			ngmodels.RuleMuts.WithGroupName("mp-test-group"),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": "mp-test-folder",
+					// Set ManagerKindTerraform so the storage layer persists manager_kind="terraform"
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  string(ngmodels.KeepLast),
+				ExecErrState: string(ngmodels.KeepLastErrState),
+			},
+		}
+
+		created, err := k8sClient.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		// Legacy API should show ProvenanceAPI (coarse mapping of terraform → api)
+		legacyRule, status, _ := legacyClient.GetProvisioningAlertRule(t, created.Name)
+		require.Equal(t, 200, status)
+		require.NotNil(t, legacyRule)
+		require.Equal(t, ngmodels.ProvenanceAPI, legacyRule.Provenance,
+			"terraform manager should map to ProvenanceAPI in legacy storage")
+
+		// k8s read-back should preserve ManagerKindTerraform
+		retrieved, err := k8sClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindTerraform), retrieved.Annotations[utils.AnnoKeyManagerKind],
+			"ManagerKindTerraform should survive round-trip through legacy storage")
+		require.Equal(t, "my-terraform-workspace", retrieved.Annotations[utils.AnnoKeyManagerIdentity],
+			"manager identity should survive round-trip through legacy storage")
+
+		// Cleanup
+		require.NoError(t, k8sClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("legacy ProvenanceAPI maps to ManagerKindClassicAPI when read via k8s", func(t *testing.T) {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID("mp-test-folder"),
+			ngmodels.RuleMuts.WithGroupName("mp-legacy-group"),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).GenerateMany(1)
+
+		ruleGroup := apimodels.AlertRuleGroup{
+			Title:     "mp-legacy-group",
+			FolderUID: "mp-test-folder",
+			Interval:  rule[0].IntervalSeconds,
+			Rules: []apimodels.ProvisionedAlertRule{
+				{
+					UID:   rule[0].UID,
+					Title: rule[0].Title,
+					OrgID: 1,
+					Data: []apimodels.AlertQuery{
+						{
+							RefID:         "A",
+							DatasourceUID: rule[0].Data[0].DatasourceUID,
+							Model:         rule[0].Data[0].Model,
+							RelativeTimeRange: apimodels.RelativeTimeRange{
+								From: apimodels.Duration(time.Duration(5) * time.Minute),
+								To:   apimodels.Duration(0),
+							},
+						},
+					},
+					Condition:    "A",
+					FolderUID:    "mp-test-folder",
+					NoDataState:  apimodels.NoDataState(rule[0].NoDataState),
+					ExecErrState: apimodels.ExecutionErrorState(rule[0].ExecErrState),
+				},
+			},
+		}
+
+		created, status, body := legacyClient.CreateOrUpdateRuleGroupProvisioning(t, ruleGroup)
+		require.Equalf(t, 200, status, "Expected status 200, got %d. Body: %s", status, body)
+		require.NotNil(t, created)
+
+		// k8s read-back: ProvenanceAPI → ManagerKindClassicAPI
+		retrieved, err := k8sClient.Get(ctx, rule[0].UID, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.Annotations[utils.AnnoKeyManagerKind],
+			"legacy ProvenanceAPI should map to ManagerKindClassicAPI in k8s representation")
+		// Classic kinds have no meaningful identity
+		require.Empty(t, retrieved.Annotations[utils.AnnoKeyManagerIdentity],
+			"classic API provisioning should have no manager identity")
+
+		// Cleanup
+		require.NoError(t, k8sClient.Delete(ctx, rule[0].UID, v1.DeleteOptions{}))
 	})
 }
 

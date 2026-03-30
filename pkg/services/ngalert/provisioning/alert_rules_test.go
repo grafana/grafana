@@ -58,7 +58,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, readGroup.Rules)
 		for _, rule := range readGroup.Rules {
-			_, provenance, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
+			_, provenance, _, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
 			require.NoError(t, err)
 			require.Equal(t, models.ProvenanceAPI, provenance)
 		}
@@ -75,7 +75,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		err = ruleService.UpdateRuleGroup(context.Background(), u, rule.NamespaceUID, rule.RuleGroup, 120)
 		require.NoError(t, err)
 
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
@@ -155,7 +155,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		_, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
 		require.NoError(t, err)
 
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, ruleUID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, ruleUID)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rule.Version)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
@@ -163,7 +163,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		err = ruleService.UpdateRuleGroup(context.Background(), u, namespaceUID, ruleGroup, newInterval)
 		require.NoError(t, err)
 
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, ruleUID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, ruleUID)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rule.Version)
 		require.Equal(t, newInterval, rule.IntervalSeconds)
@@ -342,7 +342,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 
 		// Read the rule and check that the editor settings are preserved
-		readRule, _, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		readRule, _, _, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.Equal(t, ruleMetadata, readRule.Metadata)
 	})
@@ -760,7 +760,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(rule.RuleGroup), "Rule should be considered NoGroup rule")
 
@@ -786,11 +786,11 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(rule.RuleGroup), "Rule should be considered NoGroup rule")
 
-		rule2, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
+		rule2, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(rule2.RuleGroup), "Rule should be considered NoGroup rule")
 
@@ -826,11 +826,11 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(rule.RuleGroup), "Rule should be considered NoGroup rule")
 
-		rule2, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
+		rule2, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(rule2.RuleGroup), "Rule should be considered NoGroup rule")
 
@@ -840,10 +840,10 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		err = ruleService.UpdateRuleGroup(context.Background(), u, rule.NamespaceUID, rule.RuleGroup, updatedInterval)
 		require.NoError(t, err)
 
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.Equal(t, updatedInterval, rule.IntervalSeconds, "Rule should have updated interval")
-		rule2, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
+		rule2, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule2.UID)
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule2.IntervalSeconds, "Rule should not have updated interval")
 		require.NotEqual(t, updatedInterval, rule2.IntervalSeconds, "Both rules should not have updated interval")
@@ -858,14 +858,14 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
 		// get the actual calculated group for use with the api
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(rule.RuleGroup), "Rule should be considered NoGroup rule")
 
 		err = ruleService.UpdateRuleGroup(context.Background(), u, rule.NamespaceUID, rule.RuleGroup, 120)
 		require.NoError(t, err)
 
-		rule, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		rule, _, _, _, err = ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.Equal(t, int64(120), rule.IntervalSeconds)
 	})
@@ -1130,7 +1130,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 		rule, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#2", orgID), models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		_, provenance, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		_, provenance, _, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceAPI, provenance)
 	})
@@ -1149,7 +1149,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 			created, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
 			require.NoError(t, err)
 			require.Equal(t, uid, created.UID)
-			_, _, err = ruleService.GetAlertRule(context.Background(), u, uid)
+			_, _, _, err = ruleService.GetAlertRule(context.Background(), u, uid)
 			require.NoError(t, err)
 		})
 	})
@@ -1199,7 +1199,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 		_, err := ruleService.CreateAlertRule(context.Background(), u, ruleWNoGroup, models.ProvenanceNone)
 		require.NoError(t, err)
 		// We should be able to retrieve the rule and see that it is a NoGroup rule
-		retrievedRule, _, err := ruleService.GetAlertRule(context.Background(), u, ruleWNoGroup.UID)
+		retrievedRule, _, _, err := ruleService.GetAlertRule(context.Background(), u, ruleWNoGroup.UID)
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(retrievedRule.RuleGroup), "Rule should be considered NoGroup rule")
 	})
@@ -1656,7 +1656,7 @@ func TestGetAlertRule(t *testing.T) {
 			return expected
 		}
 
-		_, _, err := service.GetAlertRule(context.Background(), u, rule.UID)
+		_, _, _, err := service.GetAlertRule(context.Background(), u, rule.UID)
 		require.Error(t, err)
 		require.Equal(t, expected, err)
 
@@ -1668,7 +1668,7 @@ func TestGetAlertRule(t *testing.T) {
 			return nil
 		}
 
-		actual, provenance, err := service.GetAlertRule(context.Background(), u, rule.UID)
+		actual, provenance, _, err := service.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		assert.Equal(t, *rule, actual)
 		assert.Equal(t, expectedProvenance, provenance)
@@ -1677,7 +1677,7 @@ func TestGetAlertRule(t *testing.T) {
 	t.Run("should return ErrAlertRuleNotFound if rule does not exist", func(t *testing.T) {
 		service, ruleStore, _, ac := initServiceWithData(t)
 
-		_, _, err := service.GetAlertRule(context.Background(), u, "no-rule-uid")
+		_, _, _, err := service.GetAlertRule(context.Background(), u, "no-rule-uid")
 		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 
 		assert.Len(t, ac.Calls, 0)
@@ -1889,7 +1889,7 @@ func TestListAlertRules(t *testing.T) {
 				return true, nil
 			}
 
-			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			rules, _, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
 			require.NoError(t, err)
 			// check that rules contain all uids from allRules
 			ruleUIDs := make(map[string]bool)
@@ -1917,7 +1917,7 @@ func TestListAlertRules(t *testing.T) {
 				return folder.GetNamespaceUID() == groupKey2.NamespaceUID, nil
 			}
 
-			rules, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
+			rules, _, _, token, err := service.ListAlertRules(context.Background(), u, ListAlertRulesOptions{})
 			require.NoError(t, err)
 			// check that rules contain all uids from rules1
 			ruleUIDs := make(map[string]bool)
@@ -1970,7 +1970,7 @@ func TestGetAlertRules(t *testing.T) {
 			return false, expectedErr
 		}
 
-		_, _, err := service.GetAlertRules(context.Background(), u)
+		_, _, _, err := service.GetAlertRules(context.Background(), u)
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -2031,7 +2031,7 @@ func TestGetAlertRules(t *testing.T) {
 					return expectedErr
 				}
 
-				_, _, err := service.GetAlertRules(context.Background(), u)
+				_, _, _, err := service.GetAlertRules(context.Background(), u)
 				require.ErrorIs(t, err, expectedErr)
 			})
 		})
@@ -2180,7 +2180,7 @@ func TestReplaceGroup(t *testing.T) {
 		err = service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone, "")
 		require.NoError(t, err)
 
-		rule, _, err = service.GetAlertRule(context.Background(), u, rule.UID)
+		rule, _, _, err = service.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		require.Equal(t, "new", rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
 	})
