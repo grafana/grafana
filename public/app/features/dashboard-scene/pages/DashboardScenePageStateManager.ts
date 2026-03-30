@@ -454,6 +454,9 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
+    // Resolve API versions before synchronous getV1()/getV2() calls downstream.
+    await dashboardAPIVersionResolver.resolve();
+
     // Home dashboard is not handled through legacy API and is not versioned.
     // Handling home dashboard flow separately from regular dashboard flow.
     if (options.route === DashboardRoutes.Home) {
