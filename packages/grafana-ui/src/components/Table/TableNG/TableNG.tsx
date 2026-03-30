@@ -76,6 +76,7 @@ import {
   getLinkStyles,
   getMaxHeightCellStyles,
   getTooltipStyles,
+  headerCellWrapOverrides,
 } from './styles';
 import {
   CellRootRenderer,
@@ -593,7 +594,10 @@ export function TableNG(props: TableNGProps) {
         const textAlign = getAlignment(field);
         const justifyContent = getJustifyContent(textAlign);
         const displayName = getDisplayName(field);
-        const headerCellClass = getHeaderCellStyles(theme, justifyContent);
+        const headerCellClass = clsx(
+          getHeaderCellStyles(theme, justifyContent),
+          field.config.custom?.wrapHeaderText && headerCellWrapOverrides
+        );
         const CellType = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);

@@ -1393,6 +1393,119 @@ describe('TableNG', () => {
     });
   });
 
+  describe('Header text wrapping', () => {
+    it('applies wrap styles to header label when wrapHeaderText is true', () => {
+      const longHeaderName = 'Very Long Column Header Name That Should Wrap';
+      const frameWithWrap = toDataFrame({
+        name: 'TestData',
+        length: 2,
+        fields: [
+          {
+            name: longHeaderName,
+            type: FieldType.string,
+            values: ['A1', 'A2'],
+            config: {
+              custom: {
+                width: 80,
+                wrapHeaderText: true,
+                cellOptions: { type: TableCellDisplayMode.Auto, wrapText: false },
+              },
+            },
+            display: (v: unknown) => ({ text: String(v), numeric: 0, color: undefined, prefix: undefined, suffix: undefined }),
+            state: {},
+            getLinks: () => [],
+          },
+          {
+            name: 'Col B',
+            type: FieldType.number,
+            values: [1, 2],
+            config: { custom: { width: 100, cellOptions: { type: TableCellDisplayMode.Auto, wrapText: false } } },
+            display: (v: unknown) => ({ text: String(v), numeric: Number(v), color: undefined, prefix: undefined, suffix: undefined }),
+            state: {},
+            getLinks: () => [],
+          },
+        ],
+      });
+      const frame = applyFieldOverrides({
+        data: [frameWithWrap],
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (v) => v,
+        timeZone: 'utc',
+        theme: createTheme(),
+      })[0];
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={frame} width={400} height={600} />
+      );
+
+      const columnHeaders = container.querySelectorAll('[role="columnheader"]');
+      expect(columnHeaders.length).toBeGreaterThan(0);
+      const firstHeader = columnHeaders[0];
+      const labelButton = firstHeader.querySelector('button');
+      expect(labelButton).toBeInTheDocument();
+
+      const labelStyles = window.getComputedStyle(labelButton!);
+      expect(labelStyles.getPropertyValue('white-space')).toBe('pre-line');
+      expect(['0', '0px']).toContain(labelStyles.getPropertyValue('min-width'));
+      expect(labelStyles.getPropertyValue('flex-grow')).toBe('1');
+    });
+
+    it('keeps nowrap and no flex override when wrapHeaderText is false', () => {
+      const frameNoWrap = toDataFrame({
+        name: 'TestData',
+        length: 2,
+        fields: [
+          {
+            name: 'Short',
+            type: FieldType.string,
+            values: ['A1', 'A2'],
+            config: {
+              custom: {
+                width: 100,
+                wrapHeaderText: false,
+                cellOptions: { type: TableCellDisplayMode.Auto, wrapText: false },
+              },
+            },
+            display: (v: unknown) => ({ text: String(v), numeric: 0, color: undefined, prefix: undefined, suffix: undefined }),
+            state: {},
+            getLinks: () => [],
+          },
+          {
+            name: 'Col B',
+            type: FieldType.number,
+            values: [1, 2],
+            config: { custom: { width: 100, cellOptions: { type: TableCellDisplayMode.Auto, wrapText: false } } },
+            display: (v: unknown) => ({ text: String(v), numeric: Number(v), color: undefined, prefix: undefined, suffix: undefined }),
+            state: {},
+            getLinks: () => [],
+          },
+        ],
+      });
+      const frame = applyFieldOverrides({
+        data: [frameNoWrap],
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (v) => v,
+        timeZone: 'utc',
+        theme: createTheme(),
+      })[0];
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={frame} width={400} height={600} />
+      );
+
+      const columnHeaders = container.querySelectorAll('[role="columnheader"]');
+      expect(columnHeaders.length).toBeGreaterThan(0);
+      const labelButton = columnHeaders[0].querySelector('button');
+      expect(labelButton).toBeInTheDocument();
+
+      const labelStyles = window.getComputedStyle(labelButton!);
+      expect(labelStyles.getPropertyValue('white-space')).toBe('nowrap');
+      // When wrap is false we do not set flex: 1; flex-grow is 0 or empty
+      const flexGrow = labelStyles.getPropertyValue('flex-grow');
+      expect(flexGrow === '0' || flexGrow === '').toBe(true);
+    });
+  });
+
   describe('Cell inspection', () => {
     it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
