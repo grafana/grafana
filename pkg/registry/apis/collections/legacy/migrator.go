@@ -26,7 +26,7 @@ func StarsMigrationDefinition(migrator StarsMigrator) migrations.MigrationDefini
 		ID:          "stars",
 		MigrationID: "stars migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: starsGR, LockTables: []string{"star"}},
+			{GroupResource: starsGR, LockTables: []string{"star", "user"}},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			starsGR: migrator.MigrateStars,
