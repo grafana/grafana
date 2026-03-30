@@ -1,12 +1,12 @@
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScenePage';
 
 import { isDashboardSceneEnabled } from '../../dashboard-scene/utils/utils';
 
-import DashboardPage, { DashboardPageParams } from './DashboardPage';
-import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
+import DashboardPage, { type DashboardPageParams } from './DashboardPage';
+import { type DashboardPageRouteParams, type DashboardPageRouteSearchParams } from './types';
 
 export type DashboardPageProxyProps = Omit<
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>,

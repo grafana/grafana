@@ -1,17 +1,23 @@
-import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
+import { type default as uPlot, type AlignedData, type Options, type PaddingSide } from 'uplot';
 
 import {
-  DataFrame,
-  DisplayProcessor,
-  DisplayValue,
-  Field,
+  type DataFrame,
+  type DisplayProcessor,
+  type DisplayValue,
+  type Field,
   fieldReducers,
   getDisplayProcessor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   reduceField,
   ReducerID,
 } from '@grafana/data';
-import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
+import {
+  type BarAlignment,
+  GraphDrawStyle,
+  GraphTransform,
+  type LineInterpolation,
+  StackingMode,
+} from '@grafana/schema';
 
 import { attachDebugger } from '../../utils/debug';
 import { createLogger } from '../../utils/logger';

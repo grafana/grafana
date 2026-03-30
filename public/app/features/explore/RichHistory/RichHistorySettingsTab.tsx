@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
@@ -71,7 +71,6 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
           'Are you sure you want to permanently delete your query history?'
         ),
         yesText: t('explore.rich-history-settings-tab.delete-confirm', 'Delete'),
-        icon: 'trash-alt',
         onConfirm: () => {
           deleteRichHistory();
           dispatch(

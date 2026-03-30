@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { Labels } from '@grafana/data';
+import { type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, LinkButton, Stack, Text } from '@grafana/ui';
-import { GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
+import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { createBridgeURL } from '../../components/PluginBridge';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';

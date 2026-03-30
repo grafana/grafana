@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { SetupServer } from 'msw/node';
+import { type SetupServer } from 'msw/node';
 
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -11,28 +11,28 @@ import {
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { resetHistorianState } from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
-import { DashboardDTO } from 'app/types/dashboard';
-import { FolderDTO } from 'app/types/folders';
+import { type DashboardDTO } from 'app/types/dashboard';
+import { type FolderDTO } from 'app/types/folders';
 import {
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
-  AlertManagerCortexConfig,
-  AlertmanagerConfig,
-  AlertmanagerReceiver,
-  EmailConfig,
-  GrafanaManagedReceiverConfig,
-  MatcherOperator,
-  Route,
+  type AlertManagerCortexConfig,
+  type AlertmanagerConfig,
+  type AlertmanagerReceiver,
+  type EmailConfig,
+  type GrafanaManagedReceiverConfig,
+  type MatcherOperator,
+  type Route,
 } from '../../../plugins/datasource/alertmanager/types';
-import { DashboardSearchItem } from '../../search/types';
+import { type DashboardSearchItem } from '../../search/types';
 
-import { RulerGroupUpdatedResponse } from './api/alertRuleModel';
+import { type RulerGroupUpdatedResponse } from './api/alertRuleModel';
 
 type Configurator<T> = (builder: T) => T;
 

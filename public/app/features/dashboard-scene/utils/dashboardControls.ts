@@ -1,11 +1,11 @@
 import { nanoid } from 'nanoid';
-import { filter, Observable, scan, share, Subscriber } from 'rxjs';
+import { filter, Observable, scan, share, type Subscriber } from 'rxjs';
 
-import { DataSourceApi } from '@grafana/data';
+import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { SceneVariable } from '@grafana/scenes';
-import { DashboardLink, DataSourceRef } from '@grafana/schema';
-import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type SceneVariable } from '@grafana/scenes';
+import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 type LoadDefaultControlsPhase = 'default_variables' | 'default_links';
 type InvokeAndTrackOptions = { traceId: string; phase: LoadDefaultControlsPhase; datasourceType?: string };

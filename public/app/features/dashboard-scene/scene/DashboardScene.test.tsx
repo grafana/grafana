@@ -1,6 +1,6 @@
 import {
   CoreApp,
-  GrafanaConfig,
+  type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
   getDefaultTimeRange,
@@ -21,13 +21,13 @@ import {
   SceneDataTransformer,
   LocalValueVariable,
 } from '@grafana/scenes';
-import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
-import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -44,7 +44,7 @@ import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../u
 import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { DashboardScene, type DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -2154,9 +2154,9 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
               ],
               queryOptions: {},
               transformations: transformationIds.map((id) => ({
-                kind: id,
+                kind: 'Transformation' as const,
+                group: id,
                 spec: {
-                  id,
                   options: {},
                 },
               })),

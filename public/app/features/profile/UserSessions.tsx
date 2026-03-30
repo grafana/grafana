@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { formatDate } from 'app/core/internationalization/dates';
-import { UserSession } from 'app/types/user';
+import { type UserSession } from 'app/types/user';
 
 interface Props {
   sessions: UserSession[];

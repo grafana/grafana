@@ -1,13 +1,17 @@
-import { DataQuery, DataSourceApi, DataSourceJsonData } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DashboardLink, DataSourceRef } from '@grafana/schema';
-import { defaultDataQueryKind, QueryVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DataQuery, type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import {
+  defaultDataQueryKind,
+  type QueryVariableKind,
+  type VariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import {
   loadDefaultControlsShared$,
   loadDefaultLinks$,
   loadDefaultVariables$,
-  DefaultControlEvent,
+  type DefaultControlEvent,
 } from './dashboardControls';
 
 jest.mock('@grafana/runtime', () => {
@@ -311,7 +315,7 @@ describe('dashboardControls', () => {
 
       getDataSourceSrvMock.mockReturnValue(mockSrv);
 
-      const emissions: Array<Array<import('@grafana/schema/apis/dashboard.grafana.app/v2').VariableKind>> = [];
+      const emissions: VariableKind[][] = [];
       const shared$ = loadDefaultControlsShared$(refs);
 
       loadDefaultVariables$(shared$).subscribe({
@@ -350,7 +354,7 @@ describe('dashboardControls', () => {
 
       getDataSourceSrvMock.mockReturnValue(mockSrv);
 
-      const emissions: Array<Array<import('@grafana/schema/apis/dashboard.grafana.app/v2').VariableKind>> = [];
+      const emissions: VariableKind[][] = [];
       const shared$ = loadDefaultControlsShared$(refs);
 
       loadDefaultVariables$(shared$).subscribe({

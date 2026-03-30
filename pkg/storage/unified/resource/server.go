@@ -246,6 +246,9 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
+
+	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
+	SelectableFieldsForKinds map[string][]string
 }
 
 type ResourceServerOptions struct {
@@ -1469,7 +1472,11 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = NewBroadcaster(s.ctx, out)
+	var broadcasterMetrics *BroadcasterMetrics
+	if s.storageMetrics != nil {
+		broadcasterMetrics = s.storageMetrics.Broadcaster
+	}
+	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics)
 	return nil
 }
 

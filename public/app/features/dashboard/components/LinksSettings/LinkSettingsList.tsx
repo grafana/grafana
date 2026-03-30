@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 import { arrayUtils } from '@grafana/data';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { DashboardLinkList } from 'app/features/dashboard-scene/settings/links/DashboardLinkList';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 type LinkSettingsListProps = {
   dashboard: DashboardModel;

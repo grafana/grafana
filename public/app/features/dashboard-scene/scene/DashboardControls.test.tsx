@@ -14,7 +14,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardControls, DashboardControlsState } from './DashboardControls';
+import { DashboardControls, type DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
