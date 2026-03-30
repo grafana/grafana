@@ -18,16 +18,16 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
   const sourceDS = dsSrv.getInstanceSettings({ type: item.spec.source.group, uid: item.spec.source.name });
   if (sourceDS !== undefined) {
     // if a resource has a manager set, it must explicitly allow edits
-    const hasManager = item.metadata.annotations?.['grafana.app/managedBy'] !== undefined;
+    const isManaged = item.metadata.annotations?.['grafana.app/managedBy'] !== undefined;
     const managerAllowsEdits = item.metadata.annotations?.['grafana.app/managerAllowsEdits'] === 'true';
-    const allowEdits = !hasManager || managerAllowsEdits;
+    const managedReadOnly = isManaged && !managerAllowsEdits;
 
     const baseCor = {
       uid: item.metadata.name!,
       sourceUID: sourceDS.uid,
       label: item.spec.label,
       description: item.spec.description,
-      provisioned: !allowEdits,
+      provisioned: managedReadOnly,
     };
 
     const transformationsFmt = item.spec.config.transformations?.map((trans) => {
