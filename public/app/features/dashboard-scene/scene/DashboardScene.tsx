@@ -49,7 +49,6 @@ import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisi
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
@@ -88,6 +87,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -125,6 +125,17 @@ type CopiedPanelStyles = {
   panelType: string;
   styles: PanelStyles;
 };
+
+function copyFieldConfigPropIfDefined<K extends keyof FieldConfig>(
+  source: FieldConfig,
+  target: Partial<FieldConfig>,
+  key: K
+): void {
+  const value = source[key];
+  if (value !== undefined) {
+    target[key] = value;
+  }
+}
 
 export interface DashboardSceneState extends SceneObjectState {
   /** @deprecated */
@@ -673,11 +684,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     store.delete(LS_PANEL_COPY_KEY);
   }
 
-  /**
-   * Hardcoded to Timeseries for this PoC
-   * @internal
-   */
-  private static extractPanelStyles(panel: VizPanel): PanelStyles {
+  /** @internal */
+  private static extractPanelStyles(panel: VizPanel, styleConfig: PanelStyleConfig): PanelStyles {
     const styles: PanelStyles = {};
 
     if (!panel.state.fieldConfig?.defaults) {
@@ -686,25 +694,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     styles.fieldConfig = { defaults: {} };
 
-    const defaults = styles.fieldConfig.defaults;
     const panelDefaults = panel.state.fieldConfig.defaults;
+    const defaults = styles.fieldConfig.defaults;
 
     // default props (color)
-    if (defaultGraphStyleConfig.fieldConfig?.defaultsProps) {
-      for (const key of defaultGraphStyleConfig.fieldConfig.defaultsProps) {
-        const value = panelDefaults[key];
-        if (value !== undefined) {
-          defaults[key] = value;
-        }
-      }
+    for (const key of styleConfig.fieldConfig.defaultsProps) {
+      copyFieldConfigPropIfDefined(panelDefaults, defaults, key);
     }
 
     // custom props (lineWidth, fillOpacity, etc.)
-    if (panel.state.fieldConfig.defaults.custom && defaultGraphStyleConfig.fieldConfig?.defaults) {
+    if (panel.state.fieldConfig.defaults.custom) {
       const customDefaults: Record<string, unknown> = {};
       const panelCustom: Record<string, unknown> = panel.state.fieldConfig.defaults.custom;
 
-      for (const key of defaultGraphStyleConfig.fieldConfig.defaults) {
+      for (const key of styleConfig.fieldConfig.defaults) {
         const value = panelCustom[key];
         if (value !== undefined) {
           customDefaults[key] = value;
@@ -724,14 +727,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     const panelType = vizPanel.state.pluginId;
+    const styleConfig = getPanelStyleConfig(panelType);
 
-    if (panelType !== 'timeseries') {
+    if (!styleConfig) {
       return;
     }
 
     const stylesToCopy: CopiedPanelStyles = {
       panelType,
-      styles: DashboardScene.extractPanelStyles(vizPanel),
+      styles: DashboardScene.extractPanelStyles(vizPanel, styleConfig),
     };
 
     store.set(LS_STYLES_COPY_KEY, JSON.stringify(stylesToCopy));
