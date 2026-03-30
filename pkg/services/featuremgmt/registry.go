@@ -1955,14 +1955,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingImportAlertmanagerUI",
-			Description:  "Enables the UI to see imported Alertmanager configuration",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "alertingDisableDMAinUI",
 			Description:  "Disables the DMA feature in the UI",
 			Stage:        FeatureStageExperimental,

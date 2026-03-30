@@ -1241,11 +1241,6 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Enables the UI to see imported Alertmanager configuration
-  * @default false
-  */
-  alertingImportAlertmanagerUI?: boolean;
-  /**
   * Disables the DMA feature in the UI
   * @default false
   */
