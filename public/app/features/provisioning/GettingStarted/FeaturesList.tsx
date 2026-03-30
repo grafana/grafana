@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { FeatureState, GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Box, FeatureBadge, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 

@@ -1,18 +1,18 @@
-import { ChangeEvent, useCallback } from 'react';
+import { type ChangeEvent, useCallback } from 'react';
 
 import {
   DataTransformerID,
-  FieldNamePickerConfigSettings,
+  type FieldNamePickerConfigSettings,
   FieldType,
-  SelectableValue,
-  StandardEditorsRegistryItem,
+  type SelectableValue,
+  type StandardEditorsRegistryItem,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
   getTimeZones,
 } from '@grafana/data';
-import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
+import { type ConvertFieldTypeOptions, type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { getAllFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';

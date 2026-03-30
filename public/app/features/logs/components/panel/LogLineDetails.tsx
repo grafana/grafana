@@ -3,7 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Resizable } from 're-resizable';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
@@ -13,9 +13,9 @@ import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
 import { LogLineDetailsHeader } from './LogLineDetailsHeader';
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface Props {

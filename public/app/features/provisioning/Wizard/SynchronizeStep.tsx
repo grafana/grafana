@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 
@@ -12,7 +12,7 @@ import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData, WizardStep } from './types';
+import { type WizardFormData, type WizardStep } from './types';
 import { getSyncStepStatus } from './utils/getSteps';
 
 export interface SynchronizeStepProps {

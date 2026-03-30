@@ -56,6 +56,9 @@ const (
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
 
+// Default renderer auth token from [rendering]renderer_token.
+const DefaultRendererAuthToken = "-"
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -310,8 +313,6 @@ type Cfg struct {
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
-
-	PasswordlessMagicLinkAuth AuthPasswordlessMagicLinkSettings
 
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
@@ -572,6 +573,10 @@ type Cfg struct {
 
 	// DatabaseRegisterDeprecatedMetrics decides whether to register the deprecated `grafana_database_conn_*` and `go_sql_stats_*` metrics.
 	DatabaseRegisterDeprecatedMetrics bool
+
+	// DatabaseForceDashboardTitleIndex (MySQL only): when true, dashboard search uses FORCE INDEX (IDX_dashboard_title).
+	// Set to false to let the optimizer choose the index (can be faster for selective filters).
+	DatabaseForceDashboardTitleIndex bool
 
 	// Public dashboards
 	PublicDashboardsEnabled bool
@@ -1534,7 +1539,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
-	cfg.readPasswordlessMagicLinkSettings()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
 	}
@@ -1614,6 +1618,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
+	cfg.DatabaseForceDashboardTitleIndex = databaseSection.Key("force_dashboard_title_index").MustBool(true)
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
@@ -2069,7 +2074,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererServerUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
-	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
+	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", DefaultRendererAuthToken)
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)

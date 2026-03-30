@@ -1,23 +1,23 @@
-import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { AnyAction } from 'redux';
+import { createAction, type PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction } from 'redux';
 
 import {
-  TimeRange,
-  HistoryItem,
-  DataSourceApi,
-  ExplorePanelsState,
-  PreferredVisualisationType,
-  RawTimeRange,
-  ExploreCorrelationHelperData,
-  EventBusExtended,
+  type TimeRange,
+  type HistoryItem,
+  type DataSourceApi,
+  type ExplorePanelsState,
+  type PreferredVisualisationType,
+  type RawTimeRange,
+  type ExploreCorrelationHelperData,
+  type EventBusExtended,
 } from '@grafana/data';
-import { CorrelationData } from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type CorrelationData } from '@grafana/runtime';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
 import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { ExploreItemState } from 'app/types/explore';
-import { createAsyncThunk, ThunkResult } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk, type ThunkResult } from 'app/types/store';
 
 import { datasourceReducer } from './datasource';
 import { queryReducer, runQueries } from './query';

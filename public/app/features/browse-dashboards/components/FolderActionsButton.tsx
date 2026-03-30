@@ -7,14 +7,14 @@ import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/u
 import { appEvents } from 'app/core/app_events';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
 import { contextSrv } from 'app/core/services/context_srv';
-import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { ManagerKind } from '../../apiserver/types';

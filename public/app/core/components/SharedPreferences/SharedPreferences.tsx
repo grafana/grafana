@@ -2,7 +2,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { SharedPreferencesFunctional } from './SharedPreferencesFunctional';
 import SharedPreferencesOld from './SharedPreferencesOld';
-import { Props } from './utils';
+import { type Props } from './utils';
 
 export const SharedPreferences = (props: Props) => {
   const newPrefsEnabled = useBooleanFlagValue('functionalSharedPreferences', false);

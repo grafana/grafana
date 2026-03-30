@@ -1,5 +1,5 @@
 // Wrap the DocsContainer for theme switching support.
-import { DocsContainer, DocsContextProps } from '@storybook/addon-docs';
+import { DocsContainer, type DocsContextProps } from '@storybook/addon-docs';
 import * as React from 'react';
 
 import { getThemeById } from '@grafana/data';

@@ -1,9 +1,9 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { DataSourceApi } from '@grafana/data';
+import { type DataSourceApi } from '@grafana/data';
 
-import { VariablePayload } from '../state/types';
-import { VariableQueryEditorType } from '../types';
+import { type VariablePayload } from '../state/types';
+import { type VariableQueryEditorType } from '../types';
 
 export interface AdHocVariableEditorState {
   infoText?: string;
