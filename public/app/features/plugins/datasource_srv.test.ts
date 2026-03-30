@@ -12,6 +12,7 @@ import {
 import { RuntimeDataSource, TemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
+import config from 'app/core/config';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv = {
@@ -590,6 +591,36 @@ describe('datasource_srv', () => {
           })
         ).toThrow();
       });
+    });
+  });
+
+  describe('reload', () => {
+    let reloadSrv: DatasourceSrv;
+    let originalDatasources: typeof config.datasources;
+    let originalDefault: typeof config.defaultDatasource;
+
+    beforeEach(() => {
+      getBackendSrvGetMock.mockReset();
+      originalDatasources = config.datasources;
+      originalDefault = config.defaultDatasource;
+      reloadSrv = new DatasourceSrv(templateSrv);
+      reloadSrv.init(dataSourceInit as any, 'BBB');
+      config.datasources = dataSourceInit as any;
+      config.defaultDatasource = 'BBB';
+    });
+
+    afterEach(() => {
+      config.datasources = originalDatasources;
+      config.defaultDatasource = originalDefault;
+    });
+
+    it('falls back to bootData when /api/frontend/settings fails', async () => {
+      getBackendSrvGetMock.mockRejectedValueOnce(new Error('network error'));
+
+      await expect(reloadSrv.reload()).resolves.toBeUndefined();
+
+      const settings = reloadSrv.getInstanceSettings('mmm');
+      expect(settings?.uid).toBe('uid-code-mmm');
     });
   });
 

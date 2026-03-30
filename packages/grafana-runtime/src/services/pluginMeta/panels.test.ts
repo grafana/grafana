@@ -1,6 +1,7 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { BackendSrv, setBackendSrv } from '../backendSrv';
+import { config } from '../../config';
 
 import {
   getListedPanelPluginIds,
@@ -512,6 +513,23 @@ describe('when useMTPlugins flag is disabled', () => {
 
       expect(actual).toHaveLength(1);
       expect(actualIds).toStrictEqual(['alertlist']);
+    });
+
+    it('should fall back to bootData panels if /api/frontend/settings fails', async () => {
+      backendSrv.get = jest.fn().mockRejectedValue(new Error('boom'));
+      const originalPanels = config.panels;
+      // eslint-disable-next-line no-restricted-syntax
+      config.panels = panels;
+
+      await expect(refetchPanelPluginMetas()).resolves.not.toThrow();
+
+      const actual = await getPanelPluginMetas();
+      const actualIds = actual.map((a) => a.id).sort();
+      expect(actualIds).toStrictEqual(Object.keys(panels).sort());
+
+      // restore
+      // eslint-disable-next-line no-restricted-syntax
+      config.panels = originalPanels;
     });
   });
 });

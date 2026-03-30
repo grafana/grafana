@@ -45,10 +45,20 @@ async function initPanelPluginMetas(): Promise<void> {
     return;
   }
 
-  const metas = await initPluginMetas();
-  const mapper = getPanelPluginMapper();
-  panels = mapper(metas);
-  panelsByAliasIDs = resolveAliasIDs(panels);
+  try {
+    const metas = await initPluginMetas();
+    const mapper = getPanelPluginMapper();
+    panels = mapper(metas);
+    panelsByAliasIDs = resolveAliasIDs(panels);
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'test') {
+      // eslint-disable-next-line no-console
+      console.error('Failed to load panel plugin metas from new API, falling back to boot data panels', error);
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    panels = config.panels;
+    panelsByAliasIDs = resolveAliasIDs(panels);
+  }
 }
 
 function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
@@ -149,18 +159,38 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
 
 export async function refetchPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    const settings = await getBackendSrv().get('/api/frontend/settings');
-    panels = settings.panels;
-    panelsByAliasIDs = resolveAliasIDs(panels);
+    try {
+      const settings = await getBackendSrv().get('/api/frontend/settings');
+      panels = settings.panels;
+      panelsByAliasIDs = resolveAliasIDs(panels);
 
-    // TODO(@hugohaggmark) remove this as soon as all config.panels occurances have been replaced in core Grafana
-    // eslint-disable-next-line no-restricted-syntax
-    config.panels = settings.panels;
+      // TODO(@hugohaggmark) remove this as soon as all config.panels occurances have been replaced in core Grafana
+      // eslint-disable-next-line no-restricted-syntax
+      config.panels = settings.panels;
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'test') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to refetch panel plugin metas, using boot data panels instead', error);
+      }
+      // eslint-disable-next-line no-restricted-syntax
+      panels = config.panels;
+      panelsByAliasIDs = resolveAliasIDs(panels);
+    }
     return;
   }
 
-  const metas = await refetchPluginMetas();
-  const mapper = getPanelPluginMapper();
-  panels = mapper(metas);
-  panelsByAliasIDs = resolveAliasIDs(panels);
+  try {
+    const metas = await refetchPluginMetas();
+    const mapper = getPanelPluginMapper();
+    panels = mapper(metas);
+    panelsByAliasIDs = resolveAliasIDs(panels);
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'test') {
+      // eslint-disable-next-line no-console
+      console.error('Failed to refetch panel plugin metas via new API, using boot data panels instead', error);
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    panels = config.panels;
+    panelsByAliasIDs = resolveAliasIDs(panels);
+  }
 }

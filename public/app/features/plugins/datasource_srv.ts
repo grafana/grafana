@@ -369,10 +369,18 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   async reload() {
-    const settings = await getBackendSrv().get('/api/frontend/settings');
-    config.datasources = settings.datasources;
-    config.defaultDatasource = settings.defaultDatasource;
-    this.init(settings.datasources, settings.defaultDatasource);
+    try {
+      const settings = await getBackendSrv().get('/api/frontend/settings');
+      config.datasources = settings.datasources;
+      config.defaultDatasource = settings.defaultDatasource;
+      this.init(settings.datasources, settings.defaultDatasource);
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'test') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to reload datasource settings, falling back to bootData', error);
+      }
+      this.init(config.datasources, config.defaultDatasource);
+    }
   }
 }
 
