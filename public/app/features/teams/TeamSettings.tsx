@@ -9,6 +9,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { Team } from 'app/types/teams';
 
+import { TeamVisualizationOptions } from './TeamVisualizationOptions';
 import { useUpdateTeam } from './hooks';
 
 interface Props {
@@ -98,6 +99,7 @@ const TeamSettings = ({ team }: Props) => {
         </Button>
       </form>
       <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} preferenceType="team" />
+      <TeamVisualizationOptions team={team} />
     </Stack>
   );
 };

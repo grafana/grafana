@@ -391,7 +391,7 @@ ValueMappingResult: {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
+FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" | "palette-ai-zeitgeist-v2" | "palette-vivid-spectrum" | "palette-classic-modernized" | "palette-modern-muted-v2" | "palette-new-editor"
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 FieldColorSeriesByMode: "min" | "max" | "last"
@@ -609,6 +609,9 @@ GridLayoutItemSpec: {
 	height:  int
 	element: ElementReference // reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
 	repeat?: RepeatOptions
+	// When true, the panel's color mode has been explicitly set by the user and
+	// will not be overwritten by a parent tab/row color palette.
+	colorPaletteOverride?: bool
 }
 
 GridLayoutItemKind: {
@@ -648,6 +651,8 @@ RowsLayoutRowSpec: {
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 	variables?:            [...VariableKind]
+	// ID of a color palette applied to all panels in this row that do not have colorPaletteOverride set.
+	colorPalette?: string
 }
 
 AutoGridLayoutKind: {
@@ -674,6 +679,9 @@ AutoGridLayoutItemSpec: {
 	element:               ElementReference
 	repeat?:               AutoGridRepeatOptions
 	conditionalRendering?: ConditionalRenderingGroupKind
+	// When true, the panel's color mode has been explicitly set by the user and
+	// will not be overwritten by a parent tab/row color palette.
+	colorPaletteOverride?: bool
 }
 
 TabsLayoutKind: {
@@ -696,6 +704,8 @@ TabsLayoutTabSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
 	variables?:            [...VariableKind]
+	// ID of a color palette applied to all panels in this tab that do not have colorPaletteOverride set.
+	colorPalette?: string
 }
 
 PanelSpec: {

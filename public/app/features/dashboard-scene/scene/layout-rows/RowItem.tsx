@@ -29,6 +29,7 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { applyColorPaletteToLayout } from '../layouts-shared/colorPalette';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -55,6 +56,8 @@ export interface RowItemState extends SceneObjectState {
   repeatedRows?: RowItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;
+  /** ID of a color palette applied to all panels in this row that do not have colorPaletteOverride set */
+  colorPalette?: string;
 }
 
 export class RowItem
@@ -84,6 +87,12 @@ export class RowItem
 
   private _activationHandler() {
     const deactivate = this.state.conditionalRendering?.activate();
+
+    // Re-apply the persisted palette on dashboard load so panels that haven't been
+    // manually overridden always reflect the row-level setting.
+    if (this.state.colorPalette) {
+      applyColorPaletteToLayout(this.getLayout(), this.state.colorPalette);
+    }
 
     return () => {
       if (deactivate) {
@@ -173,6 +182,11 @@ export class RowItem
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
   public duplicate(panelIdGenerator?: PanelIdGenerator): RowItem {
     return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
+  }
+
+  public onChangePalette(paletteId: string) {
+    this.setState({ colorPalette: paletteId });
+    applyColorPaletteToLayout(this.getLayout(), paletteId);
   }
 
   public serialize(): RowsLayoutRowKind {

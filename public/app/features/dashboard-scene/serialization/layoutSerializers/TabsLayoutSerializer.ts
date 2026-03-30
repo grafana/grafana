@@ -25,6 +25,7 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
     spec: {
       title: tab.state.title,
       layout: layout,
+      ...(tab.state.colorPalette && { colorPalette: tab.state.colorPalette }),
       ...(tab.state.repeatByVariable && {
         repeat: {
           mode: 'variable',
@@ -73,5 +74,6 @@ export function deserializeTab(
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     repeatByVariable: tab.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(tab),
+    colorPalette: tab.spec.colorPalette,
   });
 }

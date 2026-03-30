@@ -31,6 +31,7 @@ import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { applyColorPaletteToLayout } from '../layouts-shared/colorPalette';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -54,6 +55,8 @@ export interface TabItemState extends SceneObjectState {
   repeatedTabs?: TabItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;
+  /** Color palette applied to all panels in this tab */
+  colorPalette?: string;
 }
 
 export class TabItem
@@ -85,10 +88,14 @@ export class TabItem
   private _activationHandler() {
     const deactivate = this.state.conditionalRendering?.activate();
 
+    // Re-apply the persisted palette on dashboard load so panels that haven't been
+    // manually overridden always reflect the tab-level setting.
+    if (this.state.colorPalette) {
+      applyColorPaletteToLayout(this.getLayout(), this.state.colorPalette);
+    }
+
     return () => {
-      if (deactivate) {
-        deactivate();
-      }
+      deactivate?.();
     };
   }
 
@@ -204,6 +211,11 @@ export class TabItem
     } else {
       this.setState({ repeatedTabs: undefined, $variables: undefined, repeatByVariable: undefined });
     }
+  }
+
+  public onChangePalette(paletteId: string) {
+    this.setState({ colorPalette: paletteId });
+    applyColorPaletteToLayout(this.getLayout(), paletteId);
   }
 
   public setIsDropTarget(isDropTarget: boolean) {

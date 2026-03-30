@@ -45,6 +45,7 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
       layout: layout,
       fillScreen: row.state.fillScreen,
       hideHeader: row.state.hideHeader,
+      ...(row.state.colorPalette && { colorPalette: row.state.colorPalette }),
       ...(row.state.repeatByVariable && {
         repeat: {
           mode: 'variable',
@@ -92,5 +93,6 @@ export function deserializeRow(
     repeatByVariable: row.spec.repeat?.value,
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),
+    colorPalette: row.spec.colorPalette,
   });
 }

@@ -32,6 +32,8 @@ export interface AutoGridItemState extends SceneObjectState {
   isHidden?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatedConditionalRendering?: ConditionalRenderingGroup[];
+  /** When true, this panel's color mode was explicitly set by the user and will not be overwritten by a tab/row color palette. */
+  colorPaletteOverride?: boolean;
 }
 
 export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements DashboardLayoutItem {

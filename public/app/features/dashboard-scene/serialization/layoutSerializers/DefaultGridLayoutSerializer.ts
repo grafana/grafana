@@ -97,6 +97,7 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, yOverr
         kind: 'ElementReference',
         name: elementKey,
       },
+      ...(gridItem_.state.colorPaletteOverride && { colorPaletteOverride: true }),
     },
   };
 
@@ -227,6 +228,7 @@ function buildGridItem(
     variableName: gridItem.repeat?.value,
     repeatDirection: gridItem.repeat?.direction,
     maxPerRow: gridItem.repeat?.maxPerRow,
+    colorPaletteOverride: gridItem.colorPaletteOverride,
   });
 }
 

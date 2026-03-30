@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -25,9 +26,25 @@ export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[]
     })
   );
 
+  const colorPaletteCategory = new OptionsPaneCategoryDescriptor({
+    title: t('dashboard.auto-grid.item-options.color-palette.title', 'Color palette'),
+    id: 'color-palette-options',
+    isOpenDefault: false,
+  }).addItem(
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard.auto-grid.item-options.color-palette.lock.title', 'Lock color'),
+      id: 'auto-grid-color-palette-lock',
+      description: t(
+        'dashboard.auto-grid.item-options.color-palette.lock.description',
+        'When enabled, this panel keeps its own color and ignores any color palette set at the tab or row level.'
+      ),
+      render: (descriptor) => <ColorPaletteLockOption id={descriptor.props.id} item={model} />,
+    })
+  );
+
   const conditionalRenderingCategory = useConditionalRenderingEditor(model.state.conditionalRendering)!;
 
-  return [repeatCategory, conditionalRenderingCategory];
+  return [repeatCategory, colorPaletteCategory, conditionalRenderingCategory];
 }
 
 function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
@@ -44,6 +61,26 @@ function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
           source: item,
           perform: () => item.setRepeatByVariable(value),
           undo: () => item.setRepeatByVariable(variableName),
+        });
+      }}
+    />
+  );
+}
+
+function ColorPaletteLockOption({ item, id }: { item: AutoGridItem; id?: string }) {
+  const { colorPaletteOverride } = item.useState();
+
+  return (
+    <Switch
+      id={id}
+      value={colorPaletteOverride ?? false}
+      onChange={(e) => {
+        const locked = e.currentTarget.checked;
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-color-palette-lock', 'Lock panel color'),
+          source: item,
+          perform: () => item.setState({ colorPaletteOverride: locked }),
+          undo: () => item.setState({ colorPaletteOverride: colorPaletteOverride }),
         });
       }}
     />
