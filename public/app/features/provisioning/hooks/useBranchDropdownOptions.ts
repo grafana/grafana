@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { GetRepositoryRefsApiResponse, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type GetRepositoryRefsApiResponse, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 interface UseBranchDropdownOptionsParams {
   repository?: RepositoryView;

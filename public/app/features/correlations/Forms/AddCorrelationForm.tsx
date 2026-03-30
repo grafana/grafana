@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { useCreateCorrelationMutation } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelContainer, useStyles2 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
@@ -16,7 +16,7 @@ import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm
 import { ConfigureCorrelationTargetForm } from './ConfigureCorrelationTargetForm';
 import { CorrelationFormNavigation } from './CorrelationFormNavigation';
 import { CorrelationsFormContextProvider } from './correlationsFormContext';
-import { FormDTO } from './types';
+import { type FormDTO } from './types';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   panelContainer: css({

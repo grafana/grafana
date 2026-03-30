@@ -9,7 +9,7 @@ import { config } from '@grafana/runtime';
 import {
   Button,
   Combobox,
-  ComboboxOption,
+  type ComboboxOption,
   Field,
   FieldValidationMessage,
   Input,
@@ -23,7 +23,7 @@ import {
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { RuleFormValues } from '../types/rule-form';
+import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 

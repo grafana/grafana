@@ -7,7 +7,7 @@
  * if converted). Supports panels in both DashboardGridItem and AutoGridItem.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import type { VizPanel } from '@grafana/scenes';
 

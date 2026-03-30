@@ -1,7 +1,7 @@
-import { AdHocVariableModel, EventBusSrv, GroupByVariableModel, VariableModel } from '@grafana/data';
-import { BackendSrv, config, setBackendSrv } from '@grafana/runtime';
+import { type AdHocVariableModel, EventBusSrv, type GroupByVariableModel, type VariableModel } from '@grafana/data';
+import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
-import { AdHocFilterItem, PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';

@@ -2,15 +2,21 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { type AdHocFiltersVariable, type GroupByVariable, type SceneQueryRunner } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getDrilldownApplicability } from '../utils/drilldownUtils';
 
 const GAP_SIZE = 8;
 const FONT_SIZE = 12;
+
+interface NonApplicableItem {
+  label: string;
+  reason?: string;
+}
 
 interface Props {
   filtersVar?: AdHocFiltersVariable;
@@ -26,8 +32,9 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
   // Subscribe to state changes (this triggers re-renders when state changes)
   const filtersState = filtersVar?.useState();
   const groupByState = groupByVar?.useState();
+  const { queries } = queryRunner.useState();
 
-  const [nonApplicable, setNonApplicable] = useState<string[]>([]);
+  const [nonApplicable, setNonApplicable] = useState<NonApplicableItem[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
   // Create stable string representations to detect actual changes
@@ -57,50 +64,44 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
       const filterValues = [...filters, ...originFilters];
       const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
 
-      const labels: string[] = [];
+      const items: NonApplicableItem[] = [];
 
       const applicability = await getDrilldownApplicability(queryRunner, filtersVar, groupByVar);
       if (filterValues.length) {
-        const nonApplicableFilters = filterValues.filter((filter) => {
+        for (const filter of filterValues) {
           const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
-          return result && !result.applicable;
-        });
-        labels.push(
-          ...nonApplicableFilters.map((filter) => {
-            // Use values array for multi-value operators, fall back to value for single-value
+          if (result && !result.applicable) {
             const displayValue = filter.values?.length ? filter.values.join(', ') : filter.value;
-            return `${filter.key} ${filter.operator} ${displayValue}`;
-          })
-        );
+            items.push({
+              label: `${filter.key} ${filter.operator} ${displayValue}`,
+              reason: result.reason,
+            });
+          }
+        }
       }
 
       if (groupByValues.length) {
-        // Use keysApplicability from groupByVar state as fallback if API call didn't include groupBy
-        // (this can happen if groupByVar's datasource doesn't match queryRunner's datasource)
         const groupByApplicability = groupByState?.keysApplicability;
 
-        const nonApplicableKeys = groupByValues
-          .filter((groupByKey) => {
-            // First check API result, then fall back to variable's keysApplicability state
-            const apiResult = applicability?.find((entry) => entry.key === groupByKey);
-            if (apiResult) {
-              return !apiResult.applicable;
-            }
-            // Fallback to keysApplicability from the variable's state
+        for (const groupByKey of groupByValues) {
+          const apiResult = applicability?.find((entry) => entry.key === groupByKey);
+          if (apiResult && !apiResult.applicable) {
+            items.push({ label: String(groupByKey), reason: apiResult.reason });
+          } else if (!apiResult) {
             const stateResult = groupByApplicability?.find((entry) => entry.key === groupByKey);
-            return stateResult && !stateResult.applicable;
-          })
-          .map((key) => String(key));
-
-        labels.push(...nonApplicableKeys);
+            if (stateResult && !stateResult.applicable) {
+              items.push({ label: String(groupByKey), reason: stateResult.reason });
+            }
+          }
+        }
       }
 
-      setNonApplicable(labels);
+      setNonApplicable(items);
     };
 
     fetchApplicability();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterKey, groupByKey, filtersVar, groupByVar, queryRunner]);
+  }, [filterKey, groupByKey, filtersVar, groupByVar, queryRunner, queries]);
 
   useLayoutEffect(() => {
     if (!nonApplicable.length) {
@@ -108,17 +109,27 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
       return;
     }
 
-    setVisibleCount(calculateVisibleCount(nonApplicable, containerWidth, theme));
+    setVisibleCount(
+      calculateVisibleCount(
+        nonApplicable.map((item) => item.label),
+        containerWidth,
+        theme
+      )
+    );
   }, [containerWidth, nonApplicable, theme]);
 
   if (nonApplicable.length === 0) {
     return null;
   }
 
-  const visibleFilters = nonApplicable.slice(0, visibleCount);
+  const visibleItems = nonApplicable.slice(0, visibleCount);
   const remainingCount = nonApplicable.length - visibleCount;
   const hasOverflow = remainingCount > 0;
-  const remainingFilters = nonApplicable.slice(visibleCount);
+  const remainingItems = nonApplicable.slice(visibleCount);
+  const defaultReason = t(
+    'dashboard-scene.panel-non-applicable-drilldowns-sub-header.default-reason',
+    'Filter is not applicable'
+  );
 
   return (
     <div
@@ -126,13 +137,13 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
       className={styles.container}
       data-testid={selectors.components.Panels.Panel.PanelNonApplicableDrilldownsSubHeader}
     >
-      {visibleFilters.map((filter, index) => (
-        <div key={`${filter}-${index}`} className={cx(styles.disabledPill, styles.strikethrough, styles.pill)}>
-          {filter}
-        </div>
+      {visibleItems.map((item, index) => (
+        <Tooltip key={`${item.label}-${index}`} content={item.reason ?? defaultReason} placement="bottom">
+          <div className={cx(styles.disabledPill, styles.strikethrough, styles.pill)}>{item.label}</div>
+        </Tooltip>
       ))}
       {hasOverflow && (
-        <Tooltip content={remainingFilters.join(', ')}>
+        <Tooltip content={remainingItems.map((item) => item.label).join(', ')} placement="bottom">
           <div className={cx(styles.disabledPill, styles.pill)}>+{remainingCount}</div>
         </Tooltip>
       )}

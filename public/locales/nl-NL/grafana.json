@@ -5577,6 +5577,7 @@
         "panels": "Panelen",
         "row": "Rij",
         "rows": "Rijen",
+        "section-variable": "",
         "tab": "Tabblad",
         "tabs": "Tabbladen",
         "variable": "{{type}}variabele",
@@ -5593,6 +5594,10 @@
           "hide": "Verbergen",
           "title": "Rijkoptekst"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5652,11 +5657,7 @@
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
-      "show-less-dashboards": "Minder weergeven",
-      "show-more-dashboards": "Meer weergeven",
-      "start-with-suggested-dashboards": "Begin met een vooraf samengesteld dashboard uit uw databron",
-      "title": "Nieuw dashboard",
-      "use-template-button": "Dit dashboard gebruiken"
+      "title": "Nieuw dashboard"
     },
     "errors": {
       "failed-to-load": "Kan dashboard niet laden"
@@ -6130,6 +6131,9 @@
           "hide-header": "Rij-koptekst verbergen",
           "title": "Titel"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Titel moet uniek zijn",
         "title-option": "Titel"
       },
@@ -6283,6 +6287,9 @@
             "description": "Herhaal dit tabblad voor elke waarde in de geselecteerde variabele.",
             "title": "Herhalen per variabele"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Titel moet uniek zijn",
         "title-option": "Titel"
@@ -6560,9 +6567,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Grafana.com doorbladeren",
-    "browse-plugins": "Plugins doorbladeren",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Databron verstrekt",
@@ -6573,9 +6579,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Geen communitydashboards gevonden",
-    "community-empty-title-with-datasource": "Geen {{datasourceType}} communitydashboards gevonden",
-    "community-error-description": "Kan communitydashboard niet laden.",
     "community-error-title": "Er is een fout opgetreden bij het laden van het communitydashboard",
     "community-mapping-form": {
       "back": "Terug naar dashboards",
@@ -6587,8 +6590,6 @@
       "auto-mapped_other": "{{count}} databronnen werden automatisch geconfigureerd:"
     },
     "community-mapping-select-datasource": "Selecteer een databron",
-    "community-search-placeholder": "Communitydashboards doorzoeken ...",
-    "community-search-placeholder-with-datasource": "Doorzoek {{datasourceType}} communitydashboards ...",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6602,6 +6603,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Databron",
@@ -6610,34 +6612,27 @@
         "last-update": "Laatste update",
         "published-by": "Gepubliceerd door",
         "view-on-grafana-com": "Bekijk op Grafana.com"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Blader en selecteer uit de verstrekte databron of communitydashboards",
-      "tab-community": "Community",
-      "tab-datasource": "Databron verstrekt",
       "title": "Voorgestelde dashboards",
       "title-mapping-with-name": "Databronnen configureren voor {{dashboardName}}",
       "title-with-datasource": "Voorgestelde dashboards voor uw {{datasourceType}} databron"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Probeer een andere zoekterm of blader door dashboards voor verschillende databrontypes op Grafana.com.",
-    "no-community-dashboards-search": "Probeer een andere zoekterm of blader door meer dashboards op Grafana.com.",
-    "no-provisioned-dashboards": "Geprovisioneerde dashboards worden geleverd door databronplugins. Meer plugins vindt u op Grafana.com.",
-    "provisioned-empty-title": "Geen geprovisioneerde dashboards gevonden",
-    "provisioned-empty-title-with-datasource": "Geen {{datasourceType}} geprovisioneerde dashboards gevonden",
-    "retry": "Opnieuw proberen",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Blader en selecteer uit de verstrekte databron of communitydashboards",
-    "suggested-dashboards-title": "Maak een dashboard met behulp van voorgestelde opties voor uw geselecteerde databron",
-    "suggested-dashboards-title-with-datasource": "Maak een dashboard met behulp van voorgestelde opties voor uw {{datasourceType}} databron",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Aan de slag met Grafana-sjablonen met voorbeeldgegevens. Verbind uw gegevens om ze te voorzien van echte metrics.",
       "title": "Een dashboard starten vanuit een sjabloon"
-    },
-    "view-all": "Alles bekijken"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7460,6 +7455,10 @@
         "title": "Onopgeslagen wijzigingen"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON gebruikt om problemen met visualisatie op te lossen"
@@ -7842,7 +7841,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klik <2>hier</2> voor meer informatie over deze fout.",
-    "success-more-details-links": "Vervolgens kun je beginnen met het visualiseren van gegevens door <2> een dashboard te bouwen </2> of door gegevens op te vragen in de <5> Verkennen-weergave</5>."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7858,7 +7858,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Dashboard maken",
-      "aria-label-explore-data": "Gegevens verkennen"
+      "aria-label-explore-data": "Gegevens verkennen",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Waarschuwingen worden niet ondersteund",
@@ -7872,6 +7873,11 @@
       "basic-settings-name-placeholder-name": "Naam",
       "label-default": "Standaard",
       "label-name": "Naam"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7958,12 +7964,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, meer informatie."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Maak een dashboard",
       "explore": "Verkennen"
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
-      "build-a-dashboard": "Maak een dashboard",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
@@ -14037,25 +14041,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Dashboard",
-      "app-explore": "Verkennen",
-      "app-label": "App:",
-      "assistant-actionable-create": "Beschrijf wat u wilt opvragen en naar welke inzichten u op zoek bent.",
-      "assistant-actionable-update": "Beschrijf wat u in deze zoekopdracht wilt wijzigen of verbeteren.",
-      "assistant-prompt-create": "Help me een nieuwe query te maken om mijn vragen te beantwoorden en de inzichten te geven die ik nodig heb.",
-      "assistant-prompt-update": "Help me de huidige query bij te werken om mijn vragen te beantwoorden en de inzichten te geven die ik nodig heb.",
       "collapse-row": "Queryrij samenvouwen",
-      "current-query": "Huidige query",
-      "current-query-label": "Huidige query:",
       "datasource-help": "Hulp bij gegevensbron weergeven",
       "drag-and-drop": "Versleep om opnieuw te rangschikken",
       "duplicate-query": "Query dupliceren",
       "expand-row": "Queryrij uitvouwen",
       "hide-response": "Antwoord verbergen",
-      "other-queries": "Andere queries",
-      "query-with-assistant": "Query met assistent",
       "remove-query": "Query verwijderen",
-      "selected-datasource-label": "Geselecteerde databron:",
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
@@ -14673,6 +14665,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Sorteren"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "Voeg ten minste één gegevensquery toe om SQL-suggesties te genereren",

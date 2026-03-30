@@ -344,6 +344,11 @@ export interface FeatureToggles {
   */
   datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
   /**
+  * use raw output mode for the data source querier
+  * @default false
+  */
+  datasourcesQuerierRawOutput?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -950,11 +955,6 @@ export interface FeatureToggles {
   */
   lokiLabelNamesQueryApi?: boolean;
   /**
-  * Enable folder's api server counts
-  * @default false
-  */
-  k8SFolderCounts?: boolean;
-  /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
   * @default true
   */
@@ -976,7 +976,7 @@ export interface FeatureToggles {
   teamLBACApiReadFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
-  * @default false
+  * @default true
   */
   grafanaAdvisor?: boolean;
   /**
@@ -1735,6 +1735,11 @@ export interface FeatureToggles {
   * @default false
   */
   splashScreen?: boolean;
+  /**
+  * Enables forwarding team headers from tempo for streaming requests with LBAC rules
+  * @default false
+  */
+  streamingForwardTeamHeadersTempo?: boolean;
   /**
   * Aligns query splitting chunks with UTC midnight
   * @default false

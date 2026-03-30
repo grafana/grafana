@@ -1,10 +1,10 @@
 import { memo, useState, useCallback, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
-import { FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 import config from 'app/core/config';
 
-import { LoginDTO } from './types';
+import { type LoginDTO } from './types';
 
 const isOauthEnabled = () => {
   return !!config.oauth && Object.keys(config.oauth).length > 0;

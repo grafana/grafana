@@ -6,7 +6,7 @@ import { Checkbox, IconButton, useStyles2, useTheme2, Space } from '@grafana/ui'
 
 import { EntryIcon } from './EntryIcon';
 import getStyles from './styles';
-import { ResourceRow } from './types';
+import { type ResourceRow } from './types';
 
 interface NestedEntryProps {
   level: number;

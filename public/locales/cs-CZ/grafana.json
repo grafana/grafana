@@ -5637,6 +5637,7 @@
         "panels": "Panely",
         "row": "Řádek",
         "rows": "Řádky",
+        "section-variable": "",
         "tab": "Karta",
         "tabs": "Karty",
         "variable": "{{type}} proměnná",
@@ -5653,6 +5654,10 @@
           "hide": "Skrýt",
           "title": "Záhlaví řádku"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5712,11 +5717,7 @@
       "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku",
-      "show-less-dashboards": "Zobrazit méně",
-      "show-more-dashboards": "Zobrazit více",
-      "start-with-suggested-dashboards": "Začněte s předem vytvořeným panelem nástrojů ze zdroje dat",
-      "title": "Nová nástěnka",
-      "use-template-button": "Použít tuto nástěnku"
+      "title": "Nová nástěnka"
     },
     "errors": {
       "failed-to-load": "Nástěnku se nepodařilo načíst"
@@ -6192,6 +6193,9 @@
           "hide-header": "Skrýt záhlaví řádku",
           "title": "Název"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Název by měl být jedinečný",
         "title-option": "Název"
       },
@@ -6345,6 +6349,9 @@
             "description": "Opakovat tuto záložku pro každou hodnotu ve vybrané proměnné.",
             "title": "Opakovat podle proměnné"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Název by měl být jedinečný",
         "title-option": "Název"
@@ -6622,9 +6629,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Procházet Grafana.com",
-    "browse-plugins": "Procházet pluginy",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Zdroj dat poskytnut",
@@ -6635,9 +6641,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Nebyly nalezeny žádné komunitní nástěnky",
-    "community-empty-title-with-datasource": "Nebyly nalezeny žádné komunitní nástěnky {{datasourceType}}",
-    "community-error-description": "Komunitní nástěnku se nepodařilo načíst.",
     "community-error-title": "Chyba při načítání komunitní nástěnky",
     "community-mapping-form": {
       "back": "Zpět na nástěnky",
@@ -6651,8 +6654,6 @@
       "auto-mapped_other": "Zdroje dat (celkem {{count}}) byly automaticky nakonfigurovány:"
     },
     "community-mapping-select-datasource": "Vyberte zdroj dat",
-    "community-search-placeholder": "Vyhledat komunitní nástěnky…",
-    "community-search-placeholder-with-datasource": "Vyhledat komunitní nástěnky {{datasourceType}}…",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6666,6 +6667,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Zdroj dat",
@@ -6674,34 +6676,27 @@
         "last-update": "Poslední aktualizace",
         "published-by": "Zveřejnil uživatel",
         "view-on-grafana-com": "Zobrazit na Grafana.com"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Procházejte a vybírejte z poskytnutých zdrojů dat nebo komunitních nástěnek",
-      "tab-community": "Komunita",
-      "tab-datasource": "Zdroj dat poskytnut",
       "title": "Navrhované nástěnky",
       "title-mapping-with-name": "Konfigurovat zdroje dat pro {{dashboardName}}",
       "title-with-datasource": "Navrhované nástěnky pro váš zdroj dat {{datasourceType}}"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Zkuste jiný hledaný výraz nebo procházejte nástěnky pro různé typy zdrojů dat na Grafana.com.",
-    "no-community-dashboards-search": "Zkuste jiný hledaný výraz nebo procházejte další nástěnky na Grafana.com.",
-    "no-provisioned-dashboards": "Zajištěné nástěnky jsou poskytovány pluginy zdrojů dat. Další pluginy najdete na Grafana.com.",
-    "provisioned-empty-title": "Nebyly nalezeny žádné poskytnuté nástěnky",
-    "provisioned-empty-title-with-datasource": "Nebyly nalezeny žádné poskytnuté nástěnky {{datasourceType}}",
-    "retry": "Zkusit znovu",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Procházejte a vybírejte z poskytnutých zdrojů dat nebo komunitních nástěnek",
-    "suggested-dashboards-title": "Vytvořte nástěnku pomocí navrhovaných možností pro vybraný zdroj dat",
-    "suggested-dashboards-title-with-datasource": "Vytvořte nástěnku pomocí navrhovaných možností pro zdroj dat {{datasourceType}}",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Začněte s šablonami Grafana pomocí vzorových dat. Připojte svá data a dodejte jim skutečné metriky.",
       "title": "Spustit nástěnku ze šablony"
-    },
-    "view-all": "Zobrazit vše"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7538,6 +7533,10 @@
         "title": "Neuložené změny"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Nástěnka JSON používaná k řešení problémů s vizualizací"
@@ -7928,7 +7927,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Klikněte <2>tady</2> a zjistěte víc o této chybě.",
-    "success-more-details-links": "Následně můžete začít vizualizovat data <2>vytvořením nástěnky</2> nebo dotazováním na data v <5>Prozkoumat zobrazení</5>."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7944,7 +7944,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Vytvořit nástěnku",
-      "aria-label-explore-data": "Prozkoumat data"
+      "aria-label-explore-data": "Prozkoumat data",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Upozorňování není podporováno",
@@ -7958,6 +7959,11 @@
       "basic-settings-name-placeholder-name": "Název",
       "label-default": "Výchozí",
       "label-name": "Název"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -8044,12 +8050,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, zjistěte víc."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Vytvořit nástěnku",
       "explore": "Prozkoumat"
     },
     "edit-data-source-actions": {
       "add-favorite": "Přidat do oblíbených",
-      "build-a-dashboard": "Vytvořit nástěnku",
       "explore-data": "Prozkoumat data",
       "open-in-explore": "Otevřít v zobrazení Prozkoumat",
       "remove-favorite": "Odstranit z oblíbených"
@@ -14205,25 +14209,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Nástěnka",
-      "app-explore": "Prozkoumat",
-      "app-label": "Aplikace:",
-      "assistant-actionable-create": "Popište, na co se chcete dotázat a jaké poznatky hledáte.",
-      "assistant-actionable-update": "Popište, co chcete v tomto dotazu změnit nebo vylepšit.",
-      "assistant-prompt-create": "Pomoz mi vytvořit nový dotaz, který mi pomůže získat odpovědi na mé otázky a potřebné poznatky.",
-      "assistant-prompt-update": "Pomoz mi aktualizovat aktuální dotaz, abych získal odpovědi na své otázky a potřebné poznatky.",
       "collapse-row": "Sbalit řádek dotazu",
-      "current-query": "Aktuální dotaz",
-      "current-query-label": "Aktuální dotaz:",
       "datasource-help": "Zobrazit nápovědu pro zdroj dat",
       "drag-and-drop": "Přetažením změníte pořadí",
       "duplicate-query": "Duplikovat dotaz",
       "expand-row": "Rozbalit řádek dotazu",
       "hide-response": "Skrýt odpověď",
-      "other-queries": "Další dotazy",
-      "query-with-assistant": "Dotaz s asistentem",
       "remove-query": "Odebrat dotaz",
-      "selected-datasource-label": "Vybraný zdroj dat:",
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
@@ -14847,6 +14839,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Třídit"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "Přidejte alespoň jeden dotaz na data a vygenerujte návrhy SQL",

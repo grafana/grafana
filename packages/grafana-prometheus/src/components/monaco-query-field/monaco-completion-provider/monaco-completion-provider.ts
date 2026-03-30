@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/index.ts
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { CompletionType, getCompletions } from './completions';
-import { DataProvider } from './data_provider';
+import { type CompletionType, getCompletions } from './completions';
+import { type DataProvider } from './data_provider';
 import { getSituation } from './situation';
 import { NeverCaseError } from './util';
 

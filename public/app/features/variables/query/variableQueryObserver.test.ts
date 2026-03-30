@@ -1,10 +1,10 @@
-import { Subscription } from 'rxjs';
+import { type Subscription } from 'rxjs';
 
 import { LoadingState } from '@grafana/data';
 
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 
-import { UpdateOptionsResults } from './VariableQueryRunner';
+import { type UpdateOptionsResults } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 
 function getTestContext(args: { next?: UpdateOptionsResults; error?: string; complete?: boolean }) {

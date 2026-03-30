@@ -1,9 +1,9 @@
 import { debounce } from 'lodash';
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 
 import { store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_SORT } from '../constants';
@@ -14,8 +14,8 @@ import {
   reportSearchResultInteraction,
 } from '../page/reporting';
 import { getGrafanaSearcher } from '../service/searcher';
-import { SearchQuery } from '../service/types';
-import { SearchLayout, SearchQueryParams, SearchState } from '../types';
+import { type SearchQuery } from '../service/types';
+import { SearchLayout, type SearchQueryParams, type SearchState } from '../types';
 import { parseRouteParams } from '../utils';
 
 export const initialState: SearchState = {

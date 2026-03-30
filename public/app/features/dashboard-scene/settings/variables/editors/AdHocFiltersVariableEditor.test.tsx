@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import {
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,

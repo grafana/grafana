@@ -9,7 +9,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import * as analytics from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
+import { type RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';

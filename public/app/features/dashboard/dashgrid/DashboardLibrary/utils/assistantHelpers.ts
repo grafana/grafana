@@ -2,9 +2,9 @@ import { firstValueFrom, map } from 'rxjs';
 
 import { isAssistantAvailable } from '@grafana/assistant';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard } from '../types';
+import { type GnetDashboard } from '../types';
 
 import { isGnetDashboard } from './dashboardLibraryHelpers';
 

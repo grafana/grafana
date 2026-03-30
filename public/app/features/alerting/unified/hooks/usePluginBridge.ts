@@ -1,8 +1,8 @@
-import { PluginMeta } from '@grafana/data';
+import { type PluginMeta } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 
 import { useGetPluginSettingsQuery } from '../api/pluginsApi';
-import { PluginID } from '../components/PluginBridge';
+import { type PluginID } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 interface PluginBridgeHookResponse {
