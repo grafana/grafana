@@ -218,7 +218,7 @@ main() {
 
   require_cmds
 
-  local specs_tmp
+  # Not local: EXIT runs after main returns, so locals would be unbound (set -u) when cleanup runs.
   specs_tmp="$(mktemp)"
   cleanup_specs() { rm -f "$specs_tmp"; }
   trap 'cleanup_specs' EXIT
