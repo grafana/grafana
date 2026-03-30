@@ -1064,6 +1064,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
+      "content-you-do-not-have-permission-to-access-incident": "You do not have permission to access Incident",
       "label-declare-incident": "Declare incident"
     },
     "delete-rule-modal": {
@@ -3577,6 +3578,7 @@
       },
       "instance-details-drawer": {
         "declare-incident": "Declare incident",
+        "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
         "silence-button": "Silence"
       },

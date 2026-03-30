@@ -3,12 +3,12 @@ import { useMemo } from 'react';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Box, LinkButton, Stack, Text } from '@grafana/ui';
+import { Box, Button, LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
 import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { createBridgeURL } from '../../components/PluginBridge';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
-import { useIrmPlugin } from '../../hooks/usePluginBridge';
+import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../../utils/misc';
@@ -35,6 +35,9 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
 
   const shouldShowDeclareIncident = (!isOpenSourceEdition() || isLocalDevEnv()) && installed && settings;
   const incidentURL = createBridgeURL(pluginId, '/incidents/declare', { title: rule?.title ?? '' });
+  const canAccessIncident = settings
+    ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare'))
+    : false;
 
   return (
     <Stack direction="column" gap={2}>
@@ -54,17 +57,23 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
             <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
           </LinkButton>
         )}
-        {shouldShowDeclareIncident && (
-          <LinkButton
-            href={incidentURL}
-            icon="fire"
-            variant="secondary"
-            size="sm"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+<<<<<<< HEAD
+        {shouldShowDeclareIncident && canAccessIncident && (
+          <LinkButton href={incidentURL} icon="fire" variant="secondary" size="sm" target="_blank" rel="noopener noreferrer">
             <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">Declare incident</Trans>
           </LinkButton>
+        )}
+        {shouldShowDeclareIncident && !canAccessIncident && (
+          <Tooltip
+            content={t(
+              'alerting.triage.instance-details-drawer.declare-incident-no-permission',
+              'You do not have permission to access Incident'
+            )}
+          >
+            <Button icon="fire" variant="secondary" size="sm" disabled>
+              <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">Declare incident</Trans>
+            </Button>
+          </Tooltip>
         )}
       </Stack>
       <Box>
