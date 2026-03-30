@@ -42,28 +42,32 @@ func (r *zanzanaPermissionResolver) searchUsersPermissions(ctx context.Context, 
 	return r.searchAllUsers(ctx, signedInUser, orgID, options)
 }
 
-// searchSingleUser searches permissions for a single user
+// searchSingleUser searches permissions for a single user.
 func (r *zanzanaPermissionResolver) searchSingleUser(ctx context.Context, orgID, userID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
-	result := make(map[int64][]ac.Permission)
-	permissions := []ac.Permission{}
-
-	// Get user info to construct subject
 	usr, err := r.userSvc.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
+	return r.searchPermissionsForIdentity(ctx, orgID, userID, usr.UID, usr.IsServiceAccount, options)
+}
 
-	// Construct the subject (user or service account)
+// searchPermissionsForIdentity resolves permissions when uid and account type are already known.
+// Used by searchAllUsers with data from user.Search (avoids one GetByID per user). Search results
+// only include non-service accounts; pass isServiceAccount accordingly for other call sites.
+func (r *zanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Context, orgID, userID int64, uid string, isServiceAccount bool, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+	result := make(map[int64][]ac.Permission)
+	permissions := []ac.Permission{}
+
 	var subject string
-	if usr.IsServiceAccount {
-		subject = claims.NewTypeID(claims.TypeServiceAccount, usr.UID)
+	if isServiceAccount {
+		subject = claims.NewTypeID(claims.TypeServiceAccount, uid)
 	} else {
-		subject = claims.NewTypeID(claims.TypeUser, usr.UID)
+		subject = claims.NewTypeID(claims.TypeUser, uid)
 	}
 
-	// Use OrgNamespaceFormatter to create namespace from orgID
 	namespace := claims.OrgNamespaceFormatter(orgID)
 
+	var err error
 	if options.Action != "" {
 		group, resource, verb := common.TranslateActionToListParams(options.Action)
 		if group != "" && resource != "" {
@@ -121,7 +125,14 @@ func (r *zanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 		for _, userHit := range searchResult.Users {
 			userHit := userHit
 			g.Go(func() error {
-				userPerms, err := r.searchSingleUser(gctx, orgID, userHit.ID, options)
+				var userPerms map[int64][]ac.Permission
+				var err error
+				// user.Search already returns id and uid; org user search excludes service accounts.
+				if userHit.UID != "" {
+					userPerms, err = r.searchPermissionsForIdentity(gctx, orgID, userHit.ID, userHit.UID, false, options)
+				} else {
+					userPerms, err = r.searchSingleUser(gctx, orgID, userHit.ID, options)
+				}
 				if err != nil {
 					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 						return err
@@ -163,7 +174,7 @@ func (r *zanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 
 func scopeFromAction(action, name string) string {
 	parts := strings.SplitN(action, ":", 2)
-	if len(parts) == 0 || parts[0] == "" {
+	if parts[0] == "" {
 		return name
 	}
 	return ac.Scope(parts[0], "uid", name)
@@ -171,7 +182,7 @@ func scopeFromAction(action, name string) string {
 
 func allScopeFromAction(action string) string {
 	parts := strings.SplitN(action, ":", 2)
-	if len(parts) == 0 || parts[0] == "" {
+	if parts[0] == "" {
 		return "*"
 	}
 	return ac.Scope(parts[0], "*")
