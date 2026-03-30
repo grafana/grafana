@@ -157,7 +157,7 @@ Learn more about saved queries:
 
 The **Saved queries** dialog box gives you access to all the saved queries in your organization:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-dialog-v13.0.png" max-width="750px" alt="List of saved queries" caption="The **Saved queries** dialog box accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-v13.0.png" max-width="750px" alt="List of saved queries" caption="The **Saved queries** dialog box accessed from Dashboards" >}}
 
 From here, you can:
 
@@ -178,7 +178,7 @@ You can apply all the same search, filter, and sort options in the **Starred que
 
 To access your saved queries, click **+ Add from saved queries** or open the **Saved queries** drop-down menu and click **Replace query** in the query editor:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-use-saved-queries-v12.3.png" max-width="750px" alt="Access saved queries" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-add-save-reuse-query-v13.0.png" max-width="750px" alt="Access saved queries" >}}
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
@@ -208,7 +208,7 @@ To save a query you've created:
 
 1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-v12.2.png" max-width="750px" alt="Save a query" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-save-query-v13.0.png" max-width="750px" alt="Save a query" >}}
 
 1. In the **Saved queries** dialog box, enter a title for the query that makes it easier to find later.
 1. (Optional) Enter a description and relevant tags.
