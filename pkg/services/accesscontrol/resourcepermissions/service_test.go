@@ -308,11 +308,11 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 					assert.ElementsMatch(t, expectedActionSet.Actions, actionSet)
 				}
 			} else {
-			// Check that action sets have not been registered
-			for permission := range tt.options.PermissionsToActions {
-				actionSetName := GetActionSetName(tt.options.K8sActionFormat, tt.options.APIGroup, tt.options.Resource, permission)
-				assert.Nil(t, actionSets.ResolveActionSet(actionSetName))
-			}
+				// Check that action sets have not been registered
+				for permission := range tt.options.PermissionsToActions {
+					actionSetName := tt.options.GetActionSetName(permission)
+					assert.Nil(t, actionSets.ResolveActionSet(actionSetName))
+				}
 			}
 		})
 	}
@@ -473,12 +473,12 @@ func TestStore_RegisterActionSet(t *testing.T) {
 
 func TestService_K8sActionFormat(t *testing.T) {
 	tests := []struct {
-		name             string
-		opts             Options
-		expectErr        bool
-		expectedAction   string
-		expectedScope    string
-		expectedRoleName string
+		name                  string
+		opts                  Options
+		expectErr             bool
+		expectedAction        string
+		expectedScope         string
+		expectedRoleName      string
 		expectedActionSetName string
 	}{
 		{
@@ -491,7 +491,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 			expectErr:             false,
 			expectedAction:        "dashboards.permissions:read",
 			expectedScope:         "dashboards:uid:abc123",
-			expectedRoleName:    "fixed:dashboards.permissions:reader",
+			expectedRoleName:      "fixed:dashboards.permissions:reader",
 			expectedActionSetName: "dashboards:view",
 		},
 		{
@@ -504,7 +504,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 			expectErr:             false,
 			expectedAction:        "dashboard.grafana.app/dashboards:get_permissions",
 			expectedScope:         "dashboard.grafana.app/dashboards:uid:abc123",
-			expectedRoleName:    "fixed:dashboard.grafana.app:dashboards.permissions:reader",
+			expectedRoleName:      "fixed:dashboard.grafana.app:dashboards.permissions:reader",
 			expectedActionSetName: "dashboard.grafana.app/dashboards:view",
 		},
 		{
@@ -540,20 +540,20 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 			require.NoError(t, err)
 
-			// Test getAction
-			action := service.getAction("read")
+			// Test Options.GetAction
+			action := service.options.GetAction("read")
 			assert.Equal(t, tt.expectedAction, action)
 
-			// Test getScope
-			scope := service.getScope("uid", "abc123")
+			// Test Options.GetScope
+			scope := service.options.GetScope("uid", "abc123")
 			assert.Equal(t, tt.expectedScope, scope)
 
-			// Test getRoleName
-			roleName := service.getRoleName("reader")
+			// Test Options.GetRoleName
+			roleName := service.options.GetRoleName("reader")
 			assert.Equal(t, tt.expectedRoleName, roleName)
 
-			// Test getActionSetName
-			actionSetName := service.getActionSetName("View")
+			// Test Options.GetActionSetName
+			actionSetName := service.options.GetActionSetName("View")
 			assert.Equal(t, tt.expectedActionSetName, actionSetName)
 		})
 	}
@@ -561,12 +561,12 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 func TestGetActionSetName(t *testing.T) {
 	tests := []struct {
-		name        string
-		k8sFormat   bool
-		apiGroup    string
-		resource    string
-		permission  string
-		expected    string
+		name       string
+		k8sFormat  bool
+		apiGroup   string
+		resource   string
+		permission string
+		expected   string
 	}{
 		{
 			name:       "legacy format",

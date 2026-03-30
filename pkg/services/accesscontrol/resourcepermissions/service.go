@@ -82,7 +82,7 @@ func New(cfg *setting.Cfg,
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
-		actionSetService.StoreActionSet(GetActionSetName(options.K8sActionFormat, options.APIGroup, options.Resource, permission), actions)
+		actionSetService.StoreActionSet(options.GetActionSetName(permission), actions)
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -365,7 +365,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 
 	// Write action sets for folders and dashboards
 	if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
-		actions = append(actions, s.getActionSetName(permission))
+		actions = append(actions, s.options.GetActionSetName(permission))
 
 		// If we only want to store action sets, return now
 		//nolint:staticcheck // not yet migrated to OpenFeature
@@ -444,14 +444,14 @@ func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) e
 }
 
 func (s *Service) declareFixedRoles() error {
-	scopeAll := s.getScope("*")
+	scopeAll := s.options.GetScope("*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.getRoleName("reader"),
+			Name:        s.options.GetRoleName("reader"),
 			DisplayName: s.options.ReaderRoleName,
 			Group:       s.options.RoleGroup,
 			Permissions: []accesscontrol.Permission{
-				{Action: s.getAction("read"), Scope: scopeAll},
+				{Action: s.options.GetAction("read"), Scope: scopeAll},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -459,11 +459,11 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.getRoleName("writer"),
+			Name:        s.options.GetRoleName("writer"),
 			DisplayName: s.options.WriterRoleName,
 			Group:       s.options.RoleGroup,
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: s.getAction("write"), Scope: scopeAll},
+				{Action: s.options.GetAction("write"), Scope: scopeAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -606,45 +606,6 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 
 func isFolderOrDashboardAction(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
-}
-
-// GetActionSetName builds an action set name. Extended with k8sFormat and apiGroup params.
-// K8s:    "dashboard.grafana.app/dashboards:view"
-// Legacy: "dashboards:view"  (pass k8sFormat=false, apiGroup="" for legacy behavior)
-func GetActionSetName(k8sFormat bool, apiGroup, resource, permission string) string {
-	resource = strings.ToLower(resource)
-	permission = strings.ToLower(permission)
-	if k8sFormat {
-		return fmt.Sprintf("%s/%s:%s", strings.ToLower(apiGroup), resource, permission)
-	}
-	return fmt.Sprintf("%s:%s", resource, permission)
-}
-
-// getActionSetName is a convenience wrapper for use after Service construction.
-func (s *Service) getActionSetName(permission string) string {
-	return GetActionSetName(s.options.K8sActionFormat, s.options.APIGroup, s.options.Resource, permission)
-}
-
-// getAction returns the permission action string for a given verb.
-// K8s:    "dashboard.grafana.app/dashboards:get_permissions"
-// Legacy: "dashboards.permissions:read"
-func (s *Service) getAction(verb string) string {
-	if s.options.K8sActionFormat {
-		k8sVerb := map[string]string{"read": "get_permissions", "write": "set_permissions"}[verb]
-		return fmt.Sprintf("%s/%s:%s", s.options.APIGroup, s.options.Resource, k8sVerb)
-	}
-	return fmt.Sprintf("%s.permissions:%s", s.options.Resource, verb)
-}
-
-// getScope returns a scope string using the appropriate resource prefix.
-// K8s:    "dashboard.grafana.app/dashboards:uid:abc123"
-// Legacy: "dashboards:uid:abc123"
-func (s *Service) getScope(parts ...string) string {
-	if s.options.K8sActionFormat {
-		prefix := fmt.Sprintf("%s/%s", s.options.APIGroup, s.options.Resource)
-		return accesscontrol.Scope(append([]string{prefix}, parts...)...)
-	}
-	return accesscontrol.Scope(append([]string{s.options.Resource}, parts...)...)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.

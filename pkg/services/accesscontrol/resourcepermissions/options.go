@@ -2,6 +2,8 @@ package resourcepermissions
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"k8s.io/client-go/dynamic"
 
@@ -62,4 +64,48 @@ type Options struct {
 	LicenseMW web.Handler
 	// RestConfigProvider if configured enables K8s API redirect for resource permissions
 	RestConfigProvider apiserver.DirectRestConfigProvider
+}
+
+// GetAction returns the permission action string for a given verb.
+// K8s:    "{APIGroup}/{Resource}:get_permissions" (read) or "{APIGroup}/{Resource}:set_permissions" (write)
+// Legacy: "{Resource}.permissions:read" or "{Resource}.permissions:write"
+func (o *Options) GetAction(verb string) string {
+	if o.K8sActionFormat {
+		k8sVerb := map[string]string{"read": "get_permissions", "write": "set_permissions"}[verb]
+		return fmt.Sprintf("%s/%s:%s", o.APIGroup, o.Resource, k8sVerb)
+	}
+	return fmt.Sprintf("%s.permissions:%s", o.Resource, verb)
+}
+
+// GetScope returns a scope string using the appropriate resource prefix.
+// K8s:    "{APIGroup}/{Resource}:{parts[0]}:{parts[1]}:..."
+// Legacy: "{Resource}:{parts[0]}:{parts[1]}:..."
+func (o *Options) GetScope(parts ...string) string {
+	if o.K8sActionFormat {
+		prefix := fmt.Sprintf("%s/%s", o.APIGroup, o.Resource)
+		return accesscontrol.Scope(append([]string{prefix}, parts...)...)
+	}
+	return accesscontrol.Scope(append([]string{o.Resource}, parts...)...)
+}
+
+// GetActionSetName returns the action set name for a given permission.
+// K8s:    "{APIGroup}/{Resource}:{permission}" (lowercased)
+// Legacy: "{Resource}:{permission}" (lowercased)
+func (o *Options) GetActionSetName(permission string) string {
+	resource := strings.ToLower(o.Resource)
+	permission = strings.ToLower(permission)
+	if o.K8sActionFormat {
+		return fmt.Sprintf("%s/%s:%s", strings.ToLower(o.APIGroup), resource, permission)
+	}
+	return fmt.Sprintf("%s:%s", resource, permission)
+}
+
+// GetRoleName returns a fixed role name with the given suffix.
+// K8s:    "fixed:{APIGroup}:{Resource}.permissions:{suffix}"
+// Legacy: "fixed:{Resource}.permissions:{suffix}"
+func (o *Options) GetRoleName(suffix string) string {
+	if o.K8sActionFormat {
+		return fmt.Sprintf("fixed:%s:%s.permissions:%s", o.APIGroup, o.Resource, suffix)
+	}
+	return fmt.Sprintf("fixed:%s.permissions:%s", o.Resource, suffix)
 }
