@@ -10,7 +10,7 @@ export const FIXED_UNIT = '__fixed';
 
 export type PlotConfig = Pick<
   Options,
-  'mode' | 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding'
+  'mode' | 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding' | 'cache'
 >;
 
 export type FacetValues = any[];

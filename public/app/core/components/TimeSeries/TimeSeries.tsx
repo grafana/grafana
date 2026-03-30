@@ -21,13 +21,12 @@ export function TimeSeries(props: TimeSeriesProps) {
   const theme = useTheme2();
 
   const prepConfig = useCallback(
-    (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange, annotationLanes?: number) => {
+    (alignedFrame: DataFrame, getTimeRange: () => TimeRange, annotationLanes?: number) => {
       return preparePlotConfigBuilder({
         frame: alignedFrame,
         theme,
         timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
         getTimeRange,
-        allFrames,
         renderers,
         tweakScale,
         tweakAxis,
@@ -39,19 +38,19 @@ export function TimeSeries(props: TimeSeriesProps) {
     [theme, timeZone, options, renderers, tweakAxis, tweakScale]
   );
 
-  const renderLegend = useCallback(
-    (uPlotConfig: UPlotConfigBuilder) => {
-      if (!uPlotConfig || (legend && !legend.showLegend) || !hasVisibleLegendSeries(uPlotConfig, frames)) {
-        return null;
-      }
+  // const renderLegend = useCallback(
+  //   (uPlotConfig: UPlotConfigBuilder) => {
+  //     if (!uPlotConfig || (legend && !legend.showLegend) || !hasVisibleLegendSeries(uPlotConfig, frames)) {
+  //       return null;
+  //     }
 
-      const enableFacetedFilter = config.featureToggles.vizLegendFacetedFilter && legend?.enableFacetedFilter;
-      return <PlotLegend data={frames} config={uPlotConfig} {...legend} enableFacetedFilter={enableFacetedFilter} />;
-    },
-    [legend, frames]
-  );
+  //     const enableFacetedFilter = config.featureToggles.vizLegendFacetedFilter && legend?.enableFacetedFilter;
+  //     return <PlotLegend data={frames} config={uPlotConfig} {...legend} enableFacetedFilter={enableFacetedFilter} />;
+  //   },
+  //   [legend, frames]
+  // );
 
   return (
-    <GraphNG {...props} theme={theme} prepConfig={prepConfig} propsToDiff={propsToDiff} renderLegend={renderLegend} />
+    <GraphNG {...props} theme={theme} prepConfig={prepConfig} propsToDiff={propsToDiff} renderLegend={() => null} />
   );
 }

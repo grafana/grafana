@@ -184,6 +184,7 @@ export class UPlotConfigBuilder {
     const config: PlotConfig = {
       ...DEFAULT_PLOT_CONFIG,
       mode: this.mode,
+      cache: false,
       series: [
         this.mode === 2
           ? (null as unknown as Series)
@@ -291,7 +292,6 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   theme: GrafanaTheme2;
   timeZones: TimeZone[];
   getTimeRange: () => TimeRange;
-  allFrames: DataFrame[];
   renderers?: Renderers;
   tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
