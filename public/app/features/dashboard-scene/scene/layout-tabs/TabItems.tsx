@@ -3,7 +3,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 
-import { TabItem } from './TabItem';
+import type { TabItem } from './TabItem';
 
 export class TabItems implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;

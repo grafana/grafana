@@ -7,7 +7,7 @@ import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDash
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import type { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import {
   DashboardChangeInfo,
   NameAlreadyExistsError,

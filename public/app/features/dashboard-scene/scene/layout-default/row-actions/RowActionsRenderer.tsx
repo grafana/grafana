@@ -12,7 +12,7 @@ import { getQueryRunnerFor, useDashboardState } from '../../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 
-import { RowActions } from './RowActions';
+import type { RowActions } from './RowActions';
 import { RowOptionsButton } from './RowOptionsButton';
 
 export function RowActionsRenderer({ model }: SceneComponentProps<RowActions>) {

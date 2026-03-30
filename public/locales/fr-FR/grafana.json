@@ -5577,6 +5577,7 @@
         "panels": "Panneaux",
         "row": "Ligne",
         "rows": "Lignes",
+        "section-variable": "",
         "tab": "Onglet",
         "tabs": "Onglets",
         "variable": "Variable {{type}}",
@@ -5593,6 +5594,10 @@
           "hide": "Masquer",
           "title": "En-tête de ligne"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5652,11 +5657,7 @@
       "import-a-dashboard-body": "Importez des tableaux de bord à partir de fichiers ou du site <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord",
-      "show-less-dashboards": "Afficher moins",
-      "show-more-dashboards": "Afficher plus",
-      "start-with-suggested-dashboards": "Commencer avec un tableau de bord prédéfini à partir de votre source de données",
-      "title": "Nouveau tableau de bord",
-      "use-template-button": "Utiliser ce tableau de bord"
+      "title": "Nouveau tableau de bord"
     },
     "errors": {
       "failed-to-load": "Échec du chargement du tableau de bord"
@@ -6130,6 +6131,9 @@
           "hide-header": "Masquer l’en-tête de ligne",
           "title": "Titre"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Le titre doit être unique",
         "title-option": "Titre"
       },
@@ -6283,6 +6287,9 @@
             "description": "Répétez cet onglet pour chaque valeur de la variable sélectionnée.",
             "title": "Répéter par variable"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Le titre doit être unique",
         "title-option": "Titre"
@@ -6560,9 +6567,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Parcourir Grafana.com",
-    "browse-plugins": "Parcourir les plugins",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Source de données fournie",
@@ -6573,9 +6579,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Aucun tableau de bord communautaire trouvé",
-    "community-empty-title-with-datasource": "Aucun tableau de bord communautaire trouvé pour {{datasourceType}}",
-    "community-error-description": "Échec du chargement du tableau de bord communautaire.",
     "community-error-title": "Erreur lors du chargement du tableau de bord communautaire",
     "community-mapping-form": {
       "back": "Retour aux tableaux de bord",
@@ -6587,8 +6590,6 @@
       "auto-mapped_other": "{{count}} sources de données ont été configurées automatiquement :"
     },
     "community-mapping-select-datasource": "Sélectionner une source de données",
-    "community-search-placeholder": "Rechercher des tableaux de bord communautaires…",
-    "community-search-placeholder-with-datasource": "Rechercher des tableaux de bord communautaires {{datasourceType}}…",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6602,6 +6603,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Source de données",
@@ -6610,34 +6612,27 @@
         "last-update": "Dernière mise à jour",
         "published-by": "Publié par",
         "view-on-grafana-com": "Voir sur Grafana.com"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Parcourir et sélectionner parmi les tableaux de bord fournis par les sources de données ou les tableaux de bord communautaires",
-      "tab-community": "Communauté",
-      "tab-datasource": "Fourni par la source de données",
       "title": "Tableaux de bord suggérés",
       "title-mapping-with-name": "Configurer les sources de données pour {{dashboardName}}",
       "title-with-datasource": "Tableaux de bord suggérés pour votre source de données {{datasourceType}}"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Essayez un autre terme de recherche ou parcourez les tableaux de bord pour d’autres types de sources de données sur Grafana.com.",
-    "no-community-dashboards-search": "Essayez un autre terme de recherche ou parcourez davantage de tableaux de bord sur Grafana.com.",
-    "no-provisioned-dashboards": "Les tableaux de bord provisionnés sont fournis par des plugins de source de données. Vous pouvez découvrir d’autres plugins sur Grafana.com.",
-    "provisioned-empty-title": "Aucun tableau de bord provisionné trouvé",
-    "provisioned-empty-title-with-datasource": "Aucun tableau de bord provisionné trouvé pour {{datasourceType}}",
-    "retry": "Réessayer",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Parcourir et sélectionner parmi les tableaux de bord fournis par les sources de données ou les tableaux de bord communautaires",
-    "suggested-dashboards-title": "Créer un tableau de bord à l’aide des options suggérées pour la source de données sélectionnée",
-    "suggested-dashboards-title-with-datasource": "Créer un tableau de bord à l’aide des options suggérées pour votre source de données {{datasourceType}}",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Commencez avec les modèles Grafana en utilisant des données d’exemple. Connectez vos données pour les alimenter avec de vraies métriques.",
       "title": "Créer un tableau de bord à partir d’un modèle"
-    },
-    "view-all": "Tout afficher"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7460,6 +7455,10 @@
         "title": "Modifications non enregistrées"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON du tableau de bord utilisé pour aider à résoudre les problèmes de visualisation"
@@ -7842,7 +7841,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Cliquez <2>ici</2> pour en savoir plus sur cette erreur.",
-    "success-more-details-links": "Ensuite, vous pouvez commencer à visualiser les données en <2>créant un tableau de bord</2> ou en interrogeant les données dans la <5>vue Explorer</5>."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7858,7 +7858,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Créer un tableau de bord",
-      "aria-label-explore-data": "Explorer les données"
+      "aria-label-explore-data": "Explorer les données",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Alertes non prises en charge",
@@ -7872,6 +7873,11 @@
       "basic-settings-name-placeholder-name": "Nom",
       "label-default": "Par défaut",
       "label-name": "Nom"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7958,12 +7964,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, en savoir plus."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Créer un tableau de bord",
       "explore": "Explorer"
     },
     "edit-data-source-actions": {
       "add-favorite": "Ajouter aux favoris",
-      "build-a-dashboard": "Créer un tableau de bord",
       "explore-data": "Explorer les données",
       "open-in-explore": "Ouvrir dans l’Explorateur",
       "remove-favorite": "Retirer des favoris"
@@ -14037,25 +14041,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Tableau de bord",
-      "app-explore": "Explorer",
-      "app-label": "Application :",
-      "assistant-actionable-create": "Veuillez décrire ce que vous souhaitez interroger et les informations que vous recherchez.",
-      "assistant-actionable-update": "Veuillez décrire ce que vous souhaitez modifier ou améliorer dans cette requête.",
-      "assistant-prompt-create": "Aidez-moi à créer une nouvelle requête pour répondre à mes questions et fournir les informations dont j’ai besoin.",
-      "assistant-prompt-update": "Aidez-moi à mettre à jour la requête actuelle pour répondre à mes questions et fournir les informations dont j’ai besoin.",
       "collapse-row": "Réduire la ligne de requête",
-      "current-query": "Requête actuelle",
-      "current-query-label": "Requête actuelle :",
       "datasource-help": "Afficher l'aide de la source de données",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
       "duplicate-query": "Dupliquer la requête",
       "expand-row": "Développer la ligne de requête",
       "hide-response": "Masquer la réponse",
-      "other-queries": "Autres requêtes",
-      "query-with-assistant": "Interroger avec l’assistant",
       "remove-query": "Supprimer la requête",
-      "selected-datasource-label": "Source de données sélectionnée :",
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -14673,6 +14665,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Trier"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "Ajoutez au moins une requête de données pour générer des suggestions SQL",
