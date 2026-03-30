@@ -7,6 +7,7 @@ import {
   FieldType,
   LoadingState,
   PanelData,
+  VariableHide,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,
@@ -179,6 +180,11 @@ describe('VariablesEditView', () => {
 
     it('should change the variable type creating a new variable object', () => {
       const previousVariable = variableView.getVariables()[1] as CustomVariable;
+      previousVariable.setState({
+        label: 'Custom label',
+        description: 'Custom description',
+        hide: VariableHide.inControlsMenu,
+      });
       variableView.onEdit('customVar2');
 
       variableView.onTypeChange('adhoc');
@@ -190,6 +196,8 @@ describe('VariablesEditView', () => {
       // Values to be kept between the old and new variable
       expect(variable.state.name).toEqual(previousVariable.state.name);
       expect(variable.state.label).toEqual(previousVariable.state.label);
+      expect(variable.state.description).toEqual(previousVariable.state.description);
+      expect(variable.state.hide).toEqual(previousVariable.state.hide);
     });
 
     it('should reset editing variable when going back', () => {

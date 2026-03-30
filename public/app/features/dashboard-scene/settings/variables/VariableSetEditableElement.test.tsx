@@ -17,6 +17,10 @@ jest.mock('../../utils/interactions', () => ({
   },
 }));
 
+jest.mock('./actions', () => ({
+  openAddVariablePane: jest.fn(),
+}));
+
 const variables = new SceneVariableSet({ variables: [] });
 
 export function buildTestScene() {

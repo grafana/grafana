@@ -17,7 +17,7 @@ import { EditableDashboardElement, EditableDashboardElementInfo } from '../../sc
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { openAddVariablePane } from './VariableAddEditableElement';
+import { openAddVariablePane } from './actions';
 import { isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {

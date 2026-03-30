@@ -8,7 +8,7 @@ import { SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
+import { openAddVariablePane } from '../../settings/variables/actions';
 import { isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';

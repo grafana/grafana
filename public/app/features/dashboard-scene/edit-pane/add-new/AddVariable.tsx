@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { t } from '@grafana/i18n';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
+import { openAddVariablePane } from '../../settings/variables/actions';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { AddButton } from './AddButton';

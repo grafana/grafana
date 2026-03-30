@@ -1,13 +1,11 @@
-import { render } from '@testing-library/react';
-
-import { SceneGridLayout, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
+import { sceneGraph, SceneGridLayout, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { VariableAdd, VariableTypeSelection } from './VariableAddEditableElement';
+import { openAddVariablePane } from './actions';
 
 const defaultDsSettings = {
   name: 'TestDataSource',
@@ -38,24 +36,22 @@ function buildTestScene() {
   return testScene;
 }
 
-function renderTestScene() {
-  const dashboard = buildTestScene();
-  const variableAdd = new VariableAdd({ dashboardRef: dashboard.getRef() });
-  return render(<VariableTypeSelection variableAdd={variableAdd} />);
-}
-
-describe('VariableAddEditableElement', () => {
+describe('variable actions', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  it('calls DashboardInteractions.newVariableTypeSelected when a variable type is clicked', () => {
+  it('adds a default query variable, selects it, and tracks the query type', () => {
+    const dashboard = buildTestScene();
     const newVariableTypeSelectedSpy = jest.spyOn(DashboardInteractions, 'newVariableTypeSelected');
+    const variablesSet = sceneGraph.getVariables(dashboard) as SceneVariableSet;
 
-    const { getByRole } = renderTestScene();
+    openAddVariablePane(dashboard);
 
-    getByRole('button', { name: /query/i }).click();
-
+    expect(variablesSet.state.variables).toHaveLength(1);
+    expect(variablesSet.state.variables[0].state.name).toBe('query0');
+    expect(variablesSet.state.variables[0].state.type).toBe('query');
+    expect(dashboard.state.editPane.getSelection()).toBe(variablesSet.state.variables[0]);
     expect(newVariableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' });
   });
 });
