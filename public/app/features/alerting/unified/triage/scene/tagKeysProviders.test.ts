@@ -111,8 +111,8 @@ describe('tagKeysProviders', () => {
           { value: 'alertname', text: 'Rule name', group: 'Common' },
           { value: 'grafana_folder', text: 'Folder', group: 'Common' },
           { value: 'service', text: 'Service', group: 'Common' },
-          { text: 'Severity', value: 'severity', group: 'Common' },
           { text: 'Team', value: 'team', group: 'Common' },
+          { text: 'Namespace', value: 'namespace', group: 'Common' },
           { text: 'environment', value: 'environment', group: 'All' },
         ])
       );
