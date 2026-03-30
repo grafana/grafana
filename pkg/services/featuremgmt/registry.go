@@ -2215,14 +2215,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:         "vizLegendSeriesLimit",
-			Description:  "Limit the number of legend items by default, with an option to show all",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-		},
-		{
 			Name:         "nestedFramesFieldOverrides",
 			Description:  "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
 			Stage:        FeatureStagePublicPreview,

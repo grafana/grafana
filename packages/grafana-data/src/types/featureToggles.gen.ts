@@ -1401,11 +1401,6 @@ export interface FeatureToggles {
   */
   externalVizSuggestions?: boolean;
   /**
-  * Limit the number of legend items by default, with an option to show all
-  * @default false
-  */
-  vizLegendSeriesLimit?: boolean;
-  /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
   */
