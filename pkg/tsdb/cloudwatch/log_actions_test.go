@@ -1428,10 +1428,11 @@ func TestBuildSourceClause(t *testing.T) {
 			dataSourceIdentifiers: nil,
 			expected:              "SOURCE logGroups()",
 		},
-		"with INFREQUENT_ACCESS class": {
+		"allLogGroups with INFREQUENT_ACCESS class": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogGroupClass: utils.Pointer(dataquery.LogGroupClassINFREQUENTACCESS),
+					LogsQueryScope: utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogGroupClass:  utils.Pointer(dataquery.LogGroupClassINFREQUENTACCESS),
 				},
 			},
 			includeAccounts:       false,
@@ -1439,10 +1440,11 @@ func TestBuildSourceClause(t *testing.T) {
 			dataSourceIdentifiers: nil,
 			expected:              "SOURCE logGroups(class: ['INFREQUENT_ACCESS'])",
 		},
-		"with STANDARD class (should be omitted)": {
+		"allLogGroups with STANDARD class (should be omitted)": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
-					LogGroupClass: utils.Pointer(dataquery.LogGroupClassSTANDARD),
+					LogsQueryScope: utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
+					LogGroupClass:  utils.Pointer(dataquery.LogGroupClassSTANDARD),
 				},
 			},
 			includeAccounts:       false,
@@ -1450,9 +1452,10 @@ func TestBuildSourceClause(t *testing.T) {
 			dataSourceIdentifiers: nil,
 			expected:              "SOURCE logGroups()",
 		},
-		"with account identifiers when includeAccounts is true": {
+		"allLogGroups with account identifiers when includeAccounts is true": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogsQueryScope:     utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
 					SelectedAccountIds: []string{"123456789012", "987654321098"},
 				},
 			},
@@ -1461,9 +1464,10 @@ func TestBuildSourceClause(t *testing.T) {
 			dataSourceIdentifiers: nil,
 			expected:              "SOURCE logGroups(accountIdentifier: ['123456789012', '987654321098'])",
 		},
-		"with account identifiers when includeAccounts is false (non-monitoring account)": {
+		"allLogGroups with account identifiers when includeAccounts is false (non-monitoring account)": {
 			logsQuery: models.LogsQuery{
 				CloudWatchLogsQuery: dataquery.CloudWatchLogsQuery{
+					LogsQueryScope:     utils.Pointer(dataquery.LogsQueryScopeAllLogGroups),
 					SelectedAccountIds: []string{"123456789012", "987654321098"},
 				},
 			},
