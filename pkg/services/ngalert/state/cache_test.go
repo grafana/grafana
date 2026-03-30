@@ -168,6 +168,59 @@ func Test_mergeLabels(t *testing.T) {
 	})
 }
 
+func Test_expandAnnotationsAndLabels(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+
+	t.Run("manually set labels are available in annotation templates via $labels", func(t *testing.T) {
+		alertRule := &models.AlertRule{
+			Title: "test-rule",
+			Labels: map[string]string{
+				"environment": "production",
+				"team":        "backend",
+			},
+			Annotations: map[string]string{
+				"summary": `Alert in {{ $labels.environment }} for {{ $labels.team }}`,
+			},
+		}
+
+		result := eval.Result{
+			Instance:    data.Labels{"instance": "host1"},
+			EvaluatedAt: time.Now(),
+		}
+
+		extraLabels := data.Labels{}
+
+		_, annotations := expandAnnotationsAndLabels(ctx, logger, alertRule, result, extraLabels, nil)
+
+		require.Equal(t, "Alert in production for backend", annotations["summary"])
+	})
+
+	t.Run("result labels take precedence over alert rule labels in annotations", func(t *testing.T) {
+		alertRule := &models.AlertRule{
+			Title: "test-rule",
+			Labels: map[string]string{
+				"environment": "production",
+			},
+			Annotations: map[string]string{
+				"summary": `Environment is {{ $labels.environment }}`,
+			},
+		}
+
+		result := eval.Result{
+			Instance:    data.Labels{"environment": "staging"},
+			EvaluatedAt: time.Now(),
+		}
+
+		extraLabels := data.Labels{}
+
+		_, annotations := expandAnnotationsAndLabels(ctx, logger, alertRule, result, extraLabels, nil)
+
+		// Result labels should take precedence over alert rule labels
+		require.Equal(t, "Environment is staging", annotations["summary"])
+	})
+}
+
 func TestCacheMetrics(t *testing.T) {
 	orgID := int64(1)
 
