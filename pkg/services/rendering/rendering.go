@@ -111,21 +111,24 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	var renderKeyProvider renderKeyProvider
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
-		if strings.TrimSpace(cfg.RendererAuthToken) == "" {
-			err := "Using an empty [rendering]renderer_token is not allowed, set it to another value. " +
-				"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
-			logger.Error(err)
-			return nil, fmt.Errorf("failed to start rendering service: %v", err)
-		}
-
-		if cfg.RendererAuthToken == setting.DefaultRendererAuthToken {
-			if cfg.Env == setting.Dev {
-				logger.Warn("Using the default [rendering]renderer_token is not allowed for production settings, and Grafana will refuse to start.")
-			} else {
-				err := "Using the default [rendering]renderer_token is not allowed for production settings, set it to another value. " +
+		// only check if the renderer is configured otherwise we dont need to force changing the default.
+		if cfg.RendererServerUrl != "" {
+			if strings.TrimSpace(cfg.RendererAuthToken) == "" {
+				err := "Using an empty [rendering]renderer_token is not allowed, set it to another value. " +
 					"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
 				logger.Error(err)
 				return nil, fmt.Errorf("failed to start rendering service: %v", err)
+			}
+
+			if cfg.RendererAuthToken == setting.DefaultRendererAuthToken {
+				if cfg.Env == setting.Dev {
+					logger.Warn("Using the default [rendering]renderer_token is not allowed for production settings, and Grafana will refuse to start.")
+				} else {
+					err := "Using the default [rendering]renderer_token is not allowed for production settings, set it to another value. " +
+						"Read more at https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/#security"
+					logger.Error(err)
+					return nil, fmt.Errorf("failed to start rendering service: %v", err)
+				}
 			}
 		}
 

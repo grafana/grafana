@@ -341,7 +341,7 @@ func TestProvideService(t *testing.T) {
 		t.Run("with an empty renderer auth token", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AppURL = "http://app-url"
-			cfg.RendererCallbackUrl = "https://public-grafana.com/"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
 			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
 			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
 			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
@@ -363,7 +363,7 @@ func TestProvideService(t *testing.T) {
 		t.Run("with the default renderer auth token", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AppURL = "http://app-url"
-			cfg.RendererCallbackUrl = "https://public-grafana.com/"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
 			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
 			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
 			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
@@ -386,7 +386,7 @@ func TestProvideService(t *testing.T) {
 		t.Run("with non-default renderer auth token", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AppURL = "http://app-url"
-			cfg.RendererCallbackUrl = "https://public-grafana.com/"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
 			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
 			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
 			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
