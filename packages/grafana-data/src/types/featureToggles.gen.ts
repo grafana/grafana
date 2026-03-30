@@ -1711,6 +1711,11 @@ export interface FeatureToggles {
   */
   yAxisTickControl?: boolean;
   /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
+  /**
   * Enables plugins setting from new apis
   * @default false
   */
@@ -1740,9 +1745,4 @@ export interface FeatureToggles {
   * @default false
   */
   queryFetchConfigFromSettingsService?: boolean;
-  /**
-  * Enables the logs tableNG panel to replace existing tableRT
-  * @default false
-  */
-  logsTablePanelNG?: boolean;
 }

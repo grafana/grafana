@@ -2716,6 +2716,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "logsTablePanelNG",
+			Description:  "Enables the logs tableNG panel to replace existing tableRT",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "useMTPluginSettings",
 			Description:  "Enables plugins setting from new apis",
 			Stage:        FeatureStageExperimental,
@@ -2761,14 +2769,6 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
-		},
-		{
-			Name:         "logsTablePanelNG",
-			Description:  "Enables the logs tableNG panel to replace existing tableRT",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 	}
 )

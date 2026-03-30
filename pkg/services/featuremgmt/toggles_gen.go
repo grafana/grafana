@@ -902,6 +902,10 @@ const (
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
 
+	// FlagLogsTablePanelNG
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanelNG = "logsTablePanelNG"
+
 	// FlagFrontendServiceSSOAutoLogin
 	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
 	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
@@ -917,8 +921,4 @@ const (
 	// FlagQueryFetchConfigFromSettingsService
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
-
-	// FlagLogsTablePanelNG
-	// Enables the logs tableNG panel to replace existing tableRT
-	FlagLogsTablePanelNG = "logsTablePanelNG"
 )
