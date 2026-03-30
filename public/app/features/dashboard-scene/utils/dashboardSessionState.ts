@@ -1,8 +1,8 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { type UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { sceneUtils } from '@grafana/scenes';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 export const PRESERVED_SCENE_STATE_KEY = `grafana.dashboard.preservedUrlFiltersState`;
 

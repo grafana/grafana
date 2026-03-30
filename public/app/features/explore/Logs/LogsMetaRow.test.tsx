@@ -1,9 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import saveAs from 'file-saver';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { FieldType, LogLevel, LogsDedupStrategy, LogsMetaItem, LogsMetaKind, store, toDataFrame } from '@grafana/data';
+import {
+  FieldType,
+  LogLevel,
+  LogsDedupStrategy,
+  type LogsMetaItem,
+  LogsMetaKind,
+  store,
+  toDataFrame,
+} from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 

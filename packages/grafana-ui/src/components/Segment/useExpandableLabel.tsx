@@ -1,4 +1,4 @@
-import { useState, useRef, ReactElement } from 'react';
+import { useState, useRef, type ReactElement } from 'react';
 import * as React from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';

@@ -21,7 +21,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from '../core/navigation/types';
+import { type RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 

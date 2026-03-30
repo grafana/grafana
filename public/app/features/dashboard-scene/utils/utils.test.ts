@@ -1,5 +1,5 @@
 import { VizPanel, SceneGridLayout } from '@grafana/scenes';
-import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';

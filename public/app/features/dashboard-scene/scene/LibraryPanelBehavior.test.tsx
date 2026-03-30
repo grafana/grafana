@@ -1,17 +1,17 @@
 import { of } from 'rxjs';
 
-import { FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
+import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneCanvasText,
-  SceneDataTransformer,
+  type SceneDataTransformer,
   sceneGraph,
   SceneGridLayout,
-  SceneQueryRunner,
+  type SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import { type LibraryPanel } from '@grafana/schema';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -21,7 +21,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { VizPanelLinks } from './PanelLinks';
+import { type VizPanelLinks } from './PanelLinks';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';

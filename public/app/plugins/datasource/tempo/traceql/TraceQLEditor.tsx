@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
-import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
+import { CodeEditor, type Monaco, type monacoTypes, useTheme2 } from '@grafana/ui';
 
 import { DEFAULT_TIME_RANGE_FOR_TAGS } from '../configuration/TagsTimeRangeSettings';
-import { TempoDatasource } from '../datasource';
-import { TempoQuery } from '../types';
+import { type TempoDatasource } from '../datasource';
+import { type TempoQuery } from '../types';
 
-import { CompletionProvider, CompletionItemType } from './autocomplete';
+import { CompletionProvider, type CompletionItemType } from './autocomplete';
 import { getErrorNodes, setMarkers } from './highlighting';
 import { languageDefinition } from './traceql';
 

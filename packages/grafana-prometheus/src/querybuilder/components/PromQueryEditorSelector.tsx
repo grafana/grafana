@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual } from 'lodash';
-import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { memo, type SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, LoadingState } from '@grafana/data';
@@ -10,8 +10,8 @@ import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space } from '@grafana/ui';
 
-import { PromQueryEditorProps } from '../../components/types';
-import { PromQuery } from '../../types';
+import { type PromQueryEditorProps } from '../../components/types';
+import { type PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
 import { promQueryEditorExplainKey, useFlag } from '../hooks/useFlag';
 import { buildVisualQueryFromString } from '../parsing';

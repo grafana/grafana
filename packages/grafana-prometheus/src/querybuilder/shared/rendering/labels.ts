@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 
 import { prometheusRegularEscape } from '../../../escaping';
 import { utf8Support } from '../../../utf8_support';
-import { QueryBuilderLabelFilter } from '../types';
+import { type QueryBuilderLabelFilter } from '../types';
 
 /**
  * Renders label filters in the format: {label1="value1", label2="value2"}

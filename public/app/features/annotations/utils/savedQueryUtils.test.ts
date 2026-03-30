@@ -1,7 +1,13 @@
 // unit test for savedQuery utils
-import { AnnotationQuery, DataSourceApi, CoreApp, AbstractQuery, AbstractLabelOperator } from '@grafana/data';
-import { PromQuery } from '@grafana/prometheus';
-import { DataQuery } from '@grafana/schema';
+import {
+  type AnnotationQuery,
+  type DataSourceApi,
+  type CoreApp,
+  type AbstractQuery,
+  AbstractLabelOperator,
+} from '@grafana/data';
+import { type PromQuery } from '@grafana/prometheus';
+import { type DataQuery } from '@grafana/schema';
 
 import { getDataQueryFromAnnotationForSavedQueries, updateAnnotationFromSavedQuery } from './savedQueryUtils';
 

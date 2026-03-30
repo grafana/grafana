@@ -1,11 +1,11 @@
 import { noop } from 'lodash';
-import { FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
+import { type DataSourceInstanceSettings, type MetricFindValue, getDataSourceRef } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, AdHocFilterWithLabels, SceneVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';

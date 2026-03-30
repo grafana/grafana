@@ -1,10 +1,10 @@
-import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
+import { type Scope, type ScopeDashboardBinding, type ScopeNode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { dispatch } from 'app/store/store';
 
-import { ScopeNavigation } from './dashboards/types';
+import { type ScopeNavigation } from './dashboards/types';
 
 export class ScopesApiClient {
   /**

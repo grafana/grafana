@@ -2,7 +2,7 @@ import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { DashboardEditActionEvent } from '../../edit-pane/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene, DashboardSceneState } from '../DashboardScene';
+import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 

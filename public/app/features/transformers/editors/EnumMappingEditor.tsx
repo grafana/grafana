@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { DataFrame, EnumFieldConfig, GrafanaTheme2 } from '@grafana/data';
-import { ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
+import { type DataFrame, type EnumFieldConfig, type GrafanaTheme2 } from '@grafana/data';
+import { type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 

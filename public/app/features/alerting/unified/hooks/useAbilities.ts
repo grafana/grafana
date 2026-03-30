@@ -14,8 +14,8 @@ import {
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type CombinedRule, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useGetPluginSettingsQuery } from '../api/pluginsApi';

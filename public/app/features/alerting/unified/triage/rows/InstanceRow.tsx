@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { DataFrame, GrafanaTheme2, Labels, LoadingState, TimeRange } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type Labels, LoadingState, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { SceneContextProvider, VizPanel } from '@grafana/scenes-react';

@@ -7,8 +7,8 @@ import {
   dataLayers,
   LocalValueVariable,
   SceneGridRow,
-  SceneObject,
-  SceneVariable,
+  type SceneObject,
+  type SceneVariable,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
@@ -16,7 +16,7 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
 import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';

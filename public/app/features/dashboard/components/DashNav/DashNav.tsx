@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { memo, ReactNode } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { memo, type ReactNode } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
@@ -22,17 +22,17 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PublicDashboardBadgeLegacy } from 'app/features/dashboard-scene/scene/new-toolbar/actions/PublicDashboardBadge';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
-import { KioskMode } from 'app/types/dashboard';
+import { type KioskMode } from 'app/types/dashboard';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import {
-  DynamicDashNavButtonModel,
+  type DynamicDashNavButtonModel,
   dynamicDashNavActions,
   registerDynamicDashNavAction,
 } from '../../../dashboard-scene/utils/registerDynamicDashNavAction';
