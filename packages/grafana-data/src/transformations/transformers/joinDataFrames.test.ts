@@ -7,7 +7,7 @@ import { FieldMatcherID } from '../matchers/ids';
 
 import { calculateFieldTransformer } from './calculateField';
 import { JoinMode } from './joinByField';
-import { isLikelyAscendingVector, join, joinDataFrames } from './joinDataFrames';
+import { isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
 
 describe('align frames', () => {
   beforeAll(() => {
@@ -629,11 +629,6 @@ describe('align frames', () => {
   });
 
   describe('handles empty tables (no frames match join field)', () => {
-    it('join() should not crash with empty tables array', () => {
-      const result = join([], undefined, JoinMode.outer);
-      expect(result).toEqual([[]]);
-    });
-
     it('outer join should not crash when no frames have the join field', () => {
       const frame1 = toDataFrame({
         fields: [

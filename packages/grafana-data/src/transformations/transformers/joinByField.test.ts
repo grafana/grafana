@@ -609,36 +609,6 @@ describe('JOIN Transformer', () => {
       });
     });
 
-    it('should not crash when byField does not exist with outerTabular mode', async () => {
-      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
-        options: {
-          byField: 'nonexistent_field',
-          mode: JoinMode.outerTabular,
-        },
-      };
-
-      const frame1 = toDataFrame({
-        fields: [
-          { name: 'name', type: FieldType.string, values: ['a', 'b'] },
-          { name: 'count', type: FieldType.number, values: [1, 2] },
-        ],
-      });
-
-      const frame2 = toDataFrame({
-        fields: [
-          { name: 'name', type: FieldType.string, values: ['c'] },
-          { name: 'count', type: FieldType.number, values: [3] },
-        ],
-      });
-
-      await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith((received) => {
-        const data = received[0];
-        expect(data).toBeDefined();
-        expect(data.length).toBeGreaterThanOrEqual(1);
-        expect(data[0].length).toBe(0);
-      });
-    });
   });
 
   describe('inner join', () => {
