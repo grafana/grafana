@@ -9,7 +9,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-09-26,grpcServer,preview,@grafana/search-and-storage,false,false,false
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 2022-12-14,alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
-2026-02-11,alertingRuleGroupSortByFolderFullpath,experimental,@grafana/alerting-squad,false,false,false
+2026-02-10,alertingRuleGroupSortByFolderFullpath,experimental,@grafana/alerting-squad,false,false,false
 2024-10-23,lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 2022-02-09,influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
@@ -48,7 +48,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 2025-12-09,kubernetesUnifiedStorageQuotas,experimental,@grafana/search-and-storage,false,true,false
-2025-10-17,kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
+2025-10-16,kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
 2025-10-20,kubernetesQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2025-04-11,dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2025-04-11,dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -74,11 +74,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-16,createAlertRuleFromPanel,experimental,@grafana/alerting-squad,false,false,true
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
-2026-03-13,annotationsClustering,experimental,@grafana/dataviz-squad,false,false,true
+2026-03-12,annotationsClustering,experimental,@grafana/dataviz-squad,false,false,true
 2023-11-13,dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 2024-10-23,dashboardNewLayouts,preview,@grafana/dashboards-squad,false,false,false
 2026-03-19,dashboardDefaultLayoutSelector,experimental,@grafana/dashboards-squad,false,false,true
-2026-03-11,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
+2026-03-10,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 2025-10-10,unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 2026-02-11,sceneCsvExport,experimental,@grafana/dashboards-squad,false,false,false
@@ -130,7 +130,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-07,suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 2026-02-18,dashboardValidatorApp,experimental,@grafana/sharing-squad,false,false,false
 2025-10-28,dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
-2026-02-19,dashboardTemplatesAssistantButton,experimental,@grafana/sharing-squad,false,false,true
+2026-02-18,dashboardTemplatesAssistantButton,experimental,@grafana/sharing-squad,false,false,true
 2026-03-12,suggestedDashboardsAssistantButton,experimental,@grafana/sharing-squad,false,false,true
 2024-05-24,alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 2026-03-02,alertingAlertListPanelEnhancements,experimental,@grafana/alerting-squad,false,false,true
@@ -167,10 +167,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-17,unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 2025-11-05,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
-2025-11-21,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
+2025-11-20,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 2024-12-20,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2024-12-19,prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
+2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 2024-11-05,enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 2024-11-07,enableSCIM,GA,@grafana/identity-access-team,false,false,false
 2024-11-12,crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
@@ -185,7 +185,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-16,alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 2024-11-22,alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 2024-12-19,unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
-2024-12-13,elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
+2024-12-12,elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
 2024-12-13,lokiLabelNamesQueryApi,GA,@grafana/oss-big-tent,false,false,false
 2025-01-09,improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
@@ -233,8 +233,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-12,kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesAuthzTeamLBACRuleApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
-2026-03-17,kubernetesAuthzRolesAndRoleBindingsRedirect,experimental,@grafana/identity-access-team,false,false,false
-2026-03-18,kubernetesAuthzDatasourceResourcePermissions,experimental,@grafana/identity-access-team,false,false,false
+2026-03-16,kubernetesAuthzRolesAndRoleBindingsRedirect,experimental,@grafana/identity-access-team,false,false,false
+2026-03-17,kubernetesAuthzDatasourceResourcePermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-05-23,restoreDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2025-12-10,recentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-01-13,experimentRecentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
@@ -245,7 +245,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-05,alertEnrichmentPreview,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
-2025-07-16,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
+2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 2025-06-30,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
@@ -298,7 +298,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 2025-12-05,useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-12-09,multiPropsVariables,GA,@grafana/dashboards-squad,false,false,true
-2026-03-03,dashboardSectionVariables,experimental,@grafana/dashboards-squad,false,false,true
+2026-03-02,dashboardSectionVariables,experimental,@grafana/dashboards-squad,false,false,true
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-01-07,profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false
