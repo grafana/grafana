@@ -61,7 +61,7 @@ export function TableNGWrap({
 
   const [controlsExpanded, setControlsExpanded] = useState(controlsExpandedFromStore);
   const controlsWidth = !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
-  const styles = useStyles2(getStyles, fieldSelectorWidth, height, tableWidth, controlsWidth, !!title);
+  const styles = useStyles2(getStyles, height, tableWidth, controlsWidth);
 
   // Callbacks
   const onTableOptionsChange = useCallback(
@@ -138,14 +138,7 @@ export function TableNGWrap({
   );
 }
 
-const getStyles = (
-  theme: GrafanaTheme2,
-  fieldSelectorWidth: number,
-  height: number,
-  tableWidth: number,
-  controlsWidth: number,
-  hasTitle: boolean
-) => {
+const getStyles = (_: GrafanaTheme2, height: number, tableWidth: number, controlsWidth: number) => {
   return {
     listControlsWrapper: css({
       height: '100%',
