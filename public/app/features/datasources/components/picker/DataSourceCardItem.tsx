@@ -1,5 +1,5 @@
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
-import { FavoriteDatasources, reportInteraction } from '@grafana/runtime';
+import type { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { type FavoriteDatasources, reportInteraction } from '@grafana/runtime';
 
 import { DataSourceCard } from './DataSourceCard';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './DataSourcePicker';

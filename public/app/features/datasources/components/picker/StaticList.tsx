@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
-import * as React from 'react';
-import { Observable } from 'rxjs';
+import type * as React from 'react';
+import type { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
-import { FavoriteDatasources } from '@grafana/runtime';
+import type { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import type { FavoriteDatasources } from '@grafana/runtime';
 
 import { useKeyboardNavigatableList } from '../../hooks';
 

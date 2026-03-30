@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useRef } from 'react';
-import * as React from 'react';
-import { Observable } from 'rxjs';
+import type * as React from 'react';
+import type { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
-import { FavoriteDatasources } from '@grafana/runtime';
+import type { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import type { FavoriteDatasources } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { useKeyboardNavigatableList } from '../../hooks';
