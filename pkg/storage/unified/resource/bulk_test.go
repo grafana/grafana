@@ -334,8 +334,13 @@ func (b *panicBulkBackend) ListModifiedSince(context.Context, NamespacedResource
 	return 0, nil
 }
 
-func (b *panicBulkBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
-	return nil, nil
+func (b *panicBulkBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+	ch := make(chan *WrittenEvent)
+	go func() {
+		<-ctx.Done()
+		close(ch)
+	}()
+	return ch, nil
 }
 
 func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {

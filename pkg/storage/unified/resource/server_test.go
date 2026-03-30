@@ -62,6 +62,7 @@ func TestSimpleServer(t *testing.T) {
 		Backend: store,
 	})
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = server.Stop(context.Background()) })
 
 	t.Run("playlist happy CRUD paths", func(t *testing.T) {
 		raw := []byte(`{
@@ -933,6 +934,7 @@ func TestGracefulShutdown(t *testing.T) {
 			Backend: store,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() { _ = srv.Stop(context.Background()) })
 		return srv
 	}
 
