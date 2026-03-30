@@ -2,8 +2,10 @@ import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clie
 import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dropdown, Menu } from '@grafana/ui';
+import { Dropdown, Menu, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import MoreButton from '../components/MoreButton';
 import { DeclareIncidentMenuItem } from '../components/bridges/DeclareIncidentButton';
@@ -22,16 +24,35 @@ export function NotificationActionsMenu({ notification }: NotificationActionsMen
   const shouldShowDeclareIncident = !isOpenSourceEdition() || isLocalDevEnv();
 
   const hasSilenceableLabels = notification.groupLabels && Object.keys(notification.groupLabels).length > 0;
+  const canViewContactPoint =
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+  const canSilence = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
 
   const ruleUIDs = notification.ruleUIDs ?? [];
 
   const menuItems = (
     <>
-      <Menu.Item
-        label={t('alerting.notification-detail.menu-view-contact-point', 'View contact point')}
-        icon="at"
-        url={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(notification.receiver)}`)}
-      />
+      {canViewContactPoint ? (
+        <Menu.Item
+          label={t('alerting.notification-detail.menu-view-contact-point', 'View contact point')}
+          icon="at"
+          url={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(notification.receiver)}`)}
+        />
+      ) : (
+        <Tooltip
+          content={t(
+            'alerting.notification-detail.menu-view-contact-point-no-permission',
+            'You do not have permission to view contact points'
+          )}
+        >
+          <Menu.Item
+            label={t('alerting.notification-detail.menu-view-contact-point', 'View contact point')}
+            icon="at"
+            disabled
+          />
+        </Tooltip>
+      )}
       {ruleUIDs.length === 1 && (
         <Menu.Item
           label={t('alerting.notification-detail.menu-view-rule', 'View alert rule')}
@@ -51,13 +72,27 @@ export function NotificationActionsMenu({ notification }: NotificationActionsMen
           />
         ))}
       <Menu.Divider />
-      {hasSilenceableLabels && (
-        <Menu.Item
-          label={t('alerting.notification-detail.menu-silence', 'Silence notifications')}
-          icon="bell-slash"
-          url={makeLabelBasedSilenceLink('grafana', notification.groupLabels!)}
-        />
-      )}
+      {hasSilenceableLabels &&
+        (canSilence ? (
+          <Menu.Item
+            label={t('alerting.notification-detail.menu-silence', 'Silence notifications')}
+            icon="bell-slash"
+            url={makeLabelBasedSilenceLink('grafana', notification.groupLabels!)}
+          />
+        ) : (
+          <Tooltip
+            content={t(
+              'alerting.notification-detail.menu-silence-no-permission',
+              'You do not have permission to create silences'
+            )}
+          >
+            <Menu.Item
+              label={t('alerting.notification-detail.menu-silence', 'Silence notifications')}
+              icon="bell-slash"
+              disabled
+            />
+          </Tooltip>
+        ))}
       {shouldShowDeclareIncident && (
         <DeclareIncidentMenuItem title={pickHeadingLabel(notification.groupLabels)} url="" />
       )}

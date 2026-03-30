@@ -5,6 +5,8 @@ import { type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
 import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { createBridgeURL } from '../../components/PluginBridge';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
@@ -38,6 +40,9 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
   const canAccessIncident = settings
     ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare'))
     : false;
+  const hasGlobalSilencePermission = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
+  const hasFolderSilencePermission = folder?.accessControl?.[AccessControlAction.AlertingSilenceCreate] ?? false;
+  const canSilence = hasGlobalSilencePermission || hasFolderSilencePermission;
 
   return (
     <Stack direction="column" gap={2}>
@@ -45,7 +50,7 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
         <Trans i18nKey="alerting.triage.instance-details-drawer.instance-details">Instance details</Trans>
       </Text>
       <Stack direction="row" gap={1}>
-        {silenceLink && (
+        {silenceLink && canSilence && (
           <LinkButton
             href={silenceLink}
             icon="bell-slash"
@@ -57,7 +62,18 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
             <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
           </LinkButton>
         )}
-<<<<<<< HEAD
+        {silenceLink && !canSilence && (
+          <Tooltip
+            content={t(
+              'alerting.triage.instance-details-drawer.silence-no-permission',
+              'You do not have permission to create silences'
+            )}
+          >
+            <Button icon="bell-slash" variant="secondary" size="sm" disabled>
+              <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
+            </Button>
+          </Tooltip>
+        )}
         {shouldShowDeclareIncident && canAccessIncident && (
           <LinkButton href={incidentURL} icon="fire" variant="secondary" size="sm" target="_blank" rel="noopener noreferrer">
             <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">Declare incident</Trans>
