@@ -2269,14 +2269,17 @@
     {
       "metadata": {
         "name": "grafanaAdvisor",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-01-20T10:08:00Z"
+        "resourceVersion": "1774448820925",
+        "creationTimestamp": "2025-01-20T10:08:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-25 14:27:00.925614 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Advisor app",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
