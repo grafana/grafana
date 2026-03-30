@@ -82,36 +82,6 @@ import {
 import { type KeyedVariableIdentifier } from './types';
 import { cleanVariables } from './variablesReducer';
 
-// process flow queryVariable
-// thunk => processVariables
-//    adapter => setValueFromUrl
-//      thunk => setOptionFromUrl
-//        adapter => updateOptions
-//          thunk => updateQueryVariableOptions
-//            action => updateVariableOptions
-//            action => updateVariableTags
-//            thunk => validateVariableSelectionState
-//              adapter => setValue
-//                thunk => setOptionAsCurrent
-//                  action => setCurrentVariableValue
-//                  thunk => variableUpdated
-//                    adapter => updateOptions for dependent nodes
-//        adapter => setValue
-//          thunk => setOptionAsCurrent
-//            action => setCurrentVariableValue
-//            thunk => variableUpdated
-//              adapter => updateOptions for dependent nodes
-//    adapter => updateOptions
-//      thunk => updateQueryVariableOptions
-//        action => updateVariableOptions
-//        action => updateVariableTags
-//        thunk => validateVariableSelectionState
-//          adapter => setValue
-//            thunk => setOptionAsCurrent
-//              action => setCurrentVariableValue
-//              thunk => variableUpdated
-//                adapter => updateOptions for dependent nodes
-
 export const initDashboardTemplating = (key: string, dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
     let orderIndex = 0;
