@@ -1,4 +1,4 @@
-import { SceneDataQuery } from '@grafana/scenes';
+import { type SceneDataQuery } from '@grafana/scenes';
 
 import { METRIC_NAME } from '../constants';
 

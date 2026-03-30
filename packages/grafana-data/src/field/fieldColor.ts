@@ -12,14 +12,14 @@ import tinycolor from 'tinycolor2';
 import { t } from '@grafana/i18n';
 
 import { getContrastRatio } from '../themes/colorManipulator';
-import { GrafanaTheme2 } from '../themes/types';
+import { type GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
-import { Field } from '../types/dataFrame';
+import { type Field } from '../types/dataFrame';
 import { FALLBACK_COLOR, FieldColorModeId } from '../types/fieldColor';
-import { Threshold } from '../types/thresholds';
-import { Registry, RegistryItem } from '../utils/Registry';
+import { type Threshold } from '../types/thresholds';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
-import { getScaleCalculator, ColorScaleValue } from './scale';
+import { getScaleCalculator, type ColorScaleValue } from './scale';
 import { fallBackThreshold } from './thresholds';
 
 /** @beta */

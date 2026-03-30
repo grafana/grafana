@@ -1,4 +1,4 @@
-import { ExploreLogsPanelState } from '@grafana/data';
+import { type ExploreLogsPanelState } from '@grafana/data';
 /**
  * If the active viz was table, and we have displayed fields, we want to use displayed fields
  * If the active viz was table, and we have columns, we want to migrate columns to displayed fields

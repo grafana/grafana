@@ -1,16 +1,16 @@
-import { BackendSrv, getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type BackendSrv, getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard } from '../types';
+import { type GnetDashboard } from '../types';
 import { createMockGnetDashboard, createMockPluginDashboard } from '../utils/test-utils';
 
 import {
   fetchCommunityDashboard,
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
-  FetchCommunityDashboardsParams,
-  GnetDashboardResponse,
+  type FetchCommunityDashboardsParams,
+  type GnetDashboardResponse,
 } from './dashboardLibraryApi';
 
 jest.mock('@grafana/runtime', () => ({

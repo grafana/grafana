@@ -3,9 +3,9 @@ import { take } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneQueryRunner } from '@grafana/scenes';
+import { type SceneQueryRunner } from '@grafana/scenes';
 import { Box, Button, EmptyState, ScrollContainer, Stack, Text, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
@@ -20,7 +20,7 @@ import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
-import { Domain, Filter, WorkbenchRow } from './types';
+import { type Domain, type Filter, type WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;

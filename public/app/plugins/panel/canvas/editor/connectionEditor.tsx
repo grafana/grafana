@@ -1,11 +1,11 @@
 import { get as lodashGet } from 'lodash';
 
-import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type NestedPanelOptions, type NestedValueAccess } from '@grafana/data/internal';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { CanvasConnection } from '../panelcfg.gen';
-import { ConnectionState } from '../types';
+import { type CanvasConnection } from '../panelcfg.gen';
+import { type ConnectionState } from '../types';
 
 import { optionBuilder } from './options';
 

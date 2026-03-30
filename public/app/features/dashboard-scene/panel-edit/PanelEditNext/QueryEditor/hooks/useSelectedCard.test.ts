@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react';
 
 import { AlertState } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 
-import { AlertRule, Transformation } from '../types';
+import { type AlertRule, type Transformation } from '../types';
 
 import { useSelectedCard } from './useSelectedCard';
 

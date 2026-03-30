@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2, Scope } from '@grafana/data';
+import { type GrafanaTheme2, type Scope } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { NodesMap, SelectedScope, TreeNode } from './types';
+import { type NodesMap, type SelectedScope, type TreeNode } from './types';
 import { useScopeActions } from './useScopeActions';
 import { useScopesHighlighting } from './useScopesHighlighting';
 

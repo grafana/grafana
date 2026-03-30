@@ -4,7 +4,7 @@ import { useDeepCompareEffect } from 'react-use';
 import useAsync from 'react-use/lib/useAsync';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { Role, AccessControlAction } from 'app/types/accessControl';
+import { type Role, AccessControlAction } from 'app/types/accessControl';
 
 import { fetchRoleOptions } from './api';
 

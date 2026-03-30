@@ -1,4 +1,4 @@
-import { EventProperty } from '@grafana/runtime/internal';
+import { type EventProperty } from '@grafana/runtime/internal';
 
 import type { ContentKind, SourceEntryPoint, EventLocation, DiscoveryMethod } from '../constants';
 

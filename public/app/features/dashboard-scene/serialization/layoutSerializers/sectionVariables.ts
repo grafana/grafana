@@ -1,6 +1,6 @@
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { SceneVariables, SceneVariableSet } from '@grafana/scenes';
-import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type SceneVariables, SceneVariableSet } from '@grafana/scenes';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { sceneVariablesSetToSchemaV2Variables } from '../sceneVariablesSetToVariables';
 import { createSceneVariableFromVariableModel } from '../transformSaveModelSchemaV2ToScene';

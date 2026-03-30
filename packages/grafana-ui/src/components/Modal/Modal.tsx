@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { PropsWithChildren, ReactNode, useId, type JSX } from 'react';
+import { type PropsWithChildren, type ReactNode, useId, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 

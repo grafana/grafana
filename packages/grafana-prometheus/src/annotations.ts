@@ -1,17 +1,17 @@
 import { Observable, of } from 'rxjs';
 
 import {
-  AnnotationEvent,
-  AnnotationQuery,
-  AnnotationSupport,
-  DataFrame,
+  type AnnotationEvent,
+  type AnnotationQuery,
+  type AnnotationSupport,
+  type DataFrame,
   rangeUtil,
   renderLegendFormat,
 } from '@grafana/data';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
-import { PrometheusDatasource } from './datasource';
-import { PromQuery } from './types';
+import { type PrometheusDatasource } from './datasource';
+import { type PromQuery } from './types';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 

@@ -1,11 +1,11 @@
 import {
   EventBusSrv,
-  FieldConfigOptionsRegistry,
-  FieldConfigPropertyItem,
+  type FieldConfigOptionsRegistry,
+  type FieldConfigPropertyItem,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelPlugin,
+  type PanelPlugin,
   Registry,
   toDataFrame,
 } from '@grafana/data';
