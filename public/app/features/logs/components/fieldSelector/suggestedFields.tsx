@@ -5,10 +5,12 @@ import { type FieldWithStats } from './FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from './logFields';
 
 /**
+ * Builds suggested fields list from logs and defaults.
  *
  * @param logs
  * @param displayedFields
  * @param defaultFields
+ * @param otelLogsFormattingEnabled
  */
 export function getSuggestedFieldsFromLogList(
   logs: LogListModel[],

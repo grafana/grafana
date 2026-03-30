@@ -33,7 +33,7 @@ import {
   setPluginLinksHook,
 } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
@@ -52,17 +52,8 @@ import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerC
 
 import { mockData } from './mocks';
 
-const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
-
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
-}));
-
 export const setBooleanFlags = (flags: Record<string, boolean>) => {
-  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
-    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
-  });
+  setTestFlags(flags);
 };
 
 export const QueryLibraryMocks = {
@@ -98,7 +89,7 @@ export function setupExplore(options?: SetupOptions): {
   container: HTMLElement;
   location: LocationService;
 } {
-  useBooleanFlagValueMock.mockImplementation((_: string, defaultValue: boolean) => defaultValue);
+  setTestFlags({});
 
   const previousBackendSrv = getBackendSrv();
   setBackendSrv({
@@ -254,6 +245,7 @@ export function setupExplore(options?: SetupOptions): {
     if (options?.clearLocalStorage !== false) {
       window.localStorage.clear();
     }
+    setTestFlags({});
   };
 
   return {

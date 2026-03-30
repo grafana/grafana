@@ -246,7 +246,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
   const newLogContextEnabled = useBooleanFlagValue('newLogContext', false);
   const logsPanelControlsEnabled = useBooleanFlagValue('logsPanelControls', true);
-  const logsTablePanelNGEnabled = useBooleanFlagValue('logsTablePanelNG', false);
 
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
@@ -849,7 +848,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
 
-  const enableNewLogsTable = logsTablePanelNGEnabled;
+  const enableNewLogsTable = config.featureToggles.logsTablePanelNG;
   const panelData: PanelData = {
     state: loading ? LoadingState.Loading : LoadingState.Done,
     series: props.logsFrames ?? [],
