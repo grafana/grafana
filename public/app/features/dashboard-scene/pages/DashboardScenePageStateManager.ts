@@ -492,6 +492,9 @@ abstract class DashboardScenePageStateManagerBase<T>
       return;
     }
 
+    this.defaultVariablesSubscription?.unsubscribe();
+    this.defaultLinksSubscription?.unsubscribe();
+
     const shared$ = loadDefaultControlsShared$(refs);
 
     this.defaultVariablesSubscription = loadDefaultVariables$(shared$).subscribe({
