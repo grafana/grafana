@@ -101,6 +101,12 @@ export const DashboardInteractions = {
     reportDashboardInteraction('new_variable_type_selected', properties);
   },
 
+  // dashboards_new_section_variable_type_selected
+  // when a user selects a variable type when creating a new section (row/tab) variable
+  newSectionVariableTypeSelected: (properties: { type: string }) => {
+    reportDashboardInteraction('new_section_variable_type_selected', properties);
+  },
+
   // dashboards_delete_variable_button_clicked
   // when a user deletes a variable
   deleteVariableButtonClicked: (properties: { type: string }) => {

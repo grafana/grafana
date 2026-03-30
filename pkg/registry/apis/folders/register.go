@@ -21,7 +21,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -59,7 +58,6 @@ type FolderAPIBuilder struct {
 	maxNestedFolderDepth int
 
 	// Legacy services -- these will not exist in the MT environment
-	folderSvc              folder.LegacyService
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
 	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
 	acService              accesscontrol.Service
@@ -69,7 +67,7 @@ type FolderAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	folderSvc folder.LegacyService,
+	_ folder.LegacyService,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	acService accesscontrol.Service,
@@ -81,7 +79,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 	builder := &FolderAPIBuilder{
 		features:             features,
 		namespacer:           request.GetNamespaceMapper(cfg),
-		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
 		ac:                   accessControl,
@@ -185,17 +182,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 	b.registerPermissionHooks(unified)
 	b.storage = unified
 
-	if b.folderSvc != nil {
-		legacyStore := &legacyStorage{
-			resourceInfo:   folders,
-			service:        b.folderSvc,
-			namespacer:     b.namespacer,
-			tableConverter: folders.TableConverter(),
-		}
-		dw, err := opts.DualWriteBuilder(folders.GroupResource(), legacyStore, unified)
-		if err != nil {
-			return err
-		}
+	// This is the ST wrapper
+	if b.folderPermissionsSvc != nil {
 		b.storage = &folderStorage{
 			resourceInfo:         folders,
 			tableConverter:       folders.TableConverter(),
@@ -203,7 +191,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 			features:             b.features,
 			acService:            b.acService,
 			permissionsOnCreate:  b.permissionsOnCreate,
-			store:                dw,
+			store:                unified,
 		}
 	}
 

@@ -32,6 +32,7 @@ interface Props {
   onClose?: () => void;
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
+  showCommunityBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
   /** Show the compact compatibility badge (replaces showCompatibilityButton) */
@@ -53,6 +54,7 @@ function DashboardCardComponent({
   details,
   isLogo,
   showDatasourceProvidedBadge,
+  showCommunityBadge,
   dimThumbnail,
   kind,
   showCompatibilityBadge,
@@ -65,11 +67,7 @@ function DashboardCardComponent({
 
   const detailsButton = details && (
     <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
-      <IconButton
-        name="info-circle"
-        size={isCompatibilityAppEnabled ? 'sm' : 'xl'}
-        aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
-      />
+      <IconButton name="info-circle" size="md" aria-label={t('dashboard-library.card.details-tooltip', 'Details')} />
     </Tooltip>
   );
 
@@ -139,6 +137,11 @@ function DashboardCardComponent({
             />
           </div>
         )}
+        {showCommunityBadge && (
+          <div className={styles.badgeContainer}>
+            <Badge text={t('dashboard-library.card.community-badge', 'Community')} color="blue" />
+          </div>
+        )}
         <div className={styles.thumbnailOverlay}>
           <Button
             variant="secondary"
@@ -173,28 +176,27 @@ function DashboardCardComponent({
           )}
         </div>
       </div>
-      {(dashboard.description || hasCompatActions) && (
-        <div className={styles.bottomSection}>
-          {dashboard.description && (
-            <div title={dashboard.description}>
-              <Card.Description data-testid="dashboard-card-description" className={styles.description}>
-                {dashboard.description}
-              </Card.Description>
-            </div>
-          )}
-          {hasCompatActions && (
-            <div className={styles.actionsContainer}>
-              {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
-                <CompatibilityBadge
-                  state={compatibilityState ?? { status: 'idle' }}
-                  onCheck={onCompatibilityCheck}
-                  onRetry={onCompatibilityCheck}
-                />
-              )}
-            </div>
-          )}
+      <div className={styles.bottomSection}>
+        <div title={dashboard.description}>
+          <Card.Description
+            data-testid="dashboard-card-description"
+            className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
+          >
+            {dashboard.description || t('dashboard-library.dashboard-card.no-description', 'No description available')}
+          </Card.Description>
         </div>
-      )}
+        {hasCompatActions && (
+          <div className={styles.actionsContainer}>
+            {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
+              <CompatibilityBadge
+                state={compatibilityState ?? { status: 'idle' }}
+                onCheck={onCompatibilityCheck}
+                onRetry={onCompatibilityCheck}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
@@ -269,6 +271,7 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateRows: 'auto auto 1fr',
       gridTemplateColumns: '1fr auto',
       width: '350px',
+      height: '100%',
       background: 'transparent',
       border: `1px solid ${theme.colors.border.strong}`,
       borderRadius: theme.shape.radius.default,
@@ -290,6 +293,17 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
         opacity: 1,
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '100%',
+        background: 'linear-gradient(to bottom, rgba(6, 6, 6, 0) 50%, #060606 100%)',
+        pointerEvents: 'none',
+        zIndex: 0,
       },
     }),
     thumbnailOverlay,
@@ -321,6 +335,17 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
         opacity: 1,
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '50%',
+        background: 'linear-gradient(to bottom, rgba(6, 6, 6, 0) 26%, #060606 100%)',
+        pointerEvents: 'none',
+        zIndex: 0,
       },
     }),
     logo: css({
@@ -371,6 +396,9 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
       fontSize: theme.typography.bodySmall.fontSize,
     }),
+    noDescription: css({
+      fontStyle: 'italic',
+    }),
     actionsContainer: css({
       display: 'flex',
       alignItems: 'center',
@@ -387,7 +415,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     badgeContainer: css({
       position: 'absolute',
-      top: theme.spacing(1),
+      bottom: theme.spacing(1),
       right: theme.spacing(1),
       zIndex: 1,
     }),

@@ -99,7 +99,6 @@ export const MetricsQueryEditor = (props: Props) => {
           body="You will lose changes made to the query if you change to Metric Insights Builder mode."
           confirmText="Yes, I am sure."
           dismissText="No, continue editing the query."
-          icon="exclamation-triangle"
           onConfirm={() => {
             setShowConfirm(false);
             setCodeEditorIsDirty(false);

@@ -98,6 +98,7 @@
     "relative_time_zone_support": (import '../dev-dashboards/scenarios/relative_time_zone_support.json'),
     "reuse": (import '../dev-dashboards/transforms/reuse.json'),
     "rows-to-fields": (import '../dev-dashboards/transforms/rows-to-fields.json'),
+    "section-variables": (import '../dev-dashboards/section-variables/section-variables.json'),
     "shared_queries": (import '../dev-dashboards/panel-common/shared_queries.json'),
     "slow_queries_and_annotations": (import '../dev-dashboards/scenarios/slow_queries_and_annotations.json'),
     "status-history-thresholds-mappings": (import '../dev-dashboards/panel-status-history/status-history-thresholds-mappings.json'),

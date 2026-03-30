@@ -11,6 +11,7 @@ import (
 
 type Service struct {
 	store  store
+	db     db.DB
 	logger log.Logger
 }
 
@@ -27,6 +28,7 @@ func ProvideService(db db.DB) star.Service {
 		store: &sqlStore{
 			db: db,
 		},
+		db:     db,
 		logger: starLogger,
 	}
 }
@@ -35,7 +37,11 @@ func (s *Service) Add(ctx context.Context, cmd *star.StarDashboardCommand) error
 	if err := cmd.Validate(); err != nil {
 		return err
 	}
-	return s.store.Insert(ctx, cmd)
+	err := s.store.Insert(ctx, cmd)
+	if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+		return nil
+	}
+	return err
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) error {

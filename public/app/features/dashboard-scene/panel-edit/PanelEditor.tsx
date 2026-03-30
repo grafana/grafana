@@ -40,6 +40,7 @@ import {
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { createPanelDataPane } from './PanelDataPane/PanelDataPaneFactory';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
 import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
@@ -274,7 +275,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     if (!skipDataQuery) {
       if (!this.state.dataPane) {
-        const dataPane = PanelDataPane.createFor(this.getPanel(), this.state.useQueryExperienceNext);
+        const dataPane = createPanelDataPane(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
         this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
       }
@@ -405,7 +406,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public onToggleQueryEditorVersion = () => {
     const newUseQueryExperienceNext = !this.state.useQueryExperienceNext;
     trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
-    const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
+    const dataPane = createPanelDataPane(this.getPanel(), newUseQueryExperienceNext);
 
     setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, newUseQueryExperienceNext);
 

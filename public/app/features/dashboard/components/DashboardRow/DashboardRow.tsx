@@ -88,7 +88,6 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
         title: t('dashboard.unthemed-dashboard-row.title.delete-row', 'Delete row'),
         text: 'Are you sure you want to remove this row and all its panels?',
         altActionText: 'Delete row only',
-        icon: 'trash-alt',
         onConfirm: () => {
           this.props.dashboard.removeRow(this.props.panel, true);
         },
