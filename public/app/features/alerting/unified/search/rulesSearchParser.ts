@@ -1,6 +1,10 @@
 import { type MergeExclusive } from 'type-fest';
 
-import { PromAlertingRuleState, type PromRuleType, isPromAlertingRuleState } from '../../../../types/unified-alerting-dto';
+import {
+  PromAlertingRuleState,
+  type PromRuleType,
+  isPromAlertingRuleState,
+} from '../../../../types/unified-alerting-dto';
 import { getRuleHealth, getRuleSource, isPromRuleType } from '../utils/rules';
 
 import * as terms from './search.terms';
