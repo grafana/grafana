@@ -2185,10 +2185,10 @@ var (
 		{
 			Name:         "newVizSuggestions",
 			Description:  "Enable new visualization suggestions",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "panelStyleActions",
