@@ -694,8 +694,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     styles.fieldConfig = { defaults: {} };
 
-    const panelDefaults = panel.state.fieldConfig.defaults;
     const defaults = styles.fieldConfig.defaults;
+    const panelDefaults = panel.state.fieldConfig.defaults;
 
     // default props (color)
     for (const key of styleConfig.fieldConfig.defaultsProps) {
