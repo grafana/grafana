@@ -7,6 +7,7 @@ import { ResourceList } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
 import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
 import { DashboardVersionError, DashboardWithAccessInfo } from './types';
@@ -190,8 +191,14 @@ describe('UnifiedDashboardAPI', () => {
 
       const result = await api.listDashboardHistory('dash-1');
 
-      expect(v1Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
-      expect(v2Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
+      expect(v1Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', {
+        limit: VERSIONS_FETCH_LIMIT,
+        continueToken: undefined,
+      });
+      expect(v2Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', {
+        limit: VERSIONS_FETCH_LIMIT,
+        continueToken: undefined,
+      });
       expect(result.items).toHaveLength(2);
       expect(result.items).toEqual(mockV2Response.items);
 

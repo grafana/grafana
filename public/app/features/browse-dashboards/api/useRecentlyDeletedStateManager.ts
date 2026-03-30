@@ -95,7 +95,12 @@ export class TrashStateManager extends SearchStateManager {
 let recentlyDeletedStateManager: TrashStateManager;
 function getRecentlyDeletedStateManager() {
   if (!recentlyDeletedStateManager) {
-    recentlyDeletedStateManager = new TrashStateManager({ ...initialState, includePanels: false, deleted: true });
+    recentlyDeletedStateManager = new TrashStateManager({
+      ...initialState,
+      includePanels: false,
+      deleted: true,
+      sort: 'deleted-desc',
+    });
   }
 
   return recentlyDeletedStateManager;

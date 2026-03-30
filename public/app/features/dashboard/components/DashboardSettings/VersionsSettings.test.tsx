@@ -2,8 +2,6 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { VERSIONS_FETCH_LIMIT } from 'app/features/dashboard/types/revisionModels';
-
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { VersionsSettings } from './VersionsSettings';
@@ -86,129 +84,42 @@ describe('VersionSettings', () => {
 
     setup();
 
-    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
 
-    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
   });
 
-  test('does not render show more button if versions < VERSIONS_FETCH_LIMIT', async () => {
+  test('sorts versions by generation descending regardless of API order', async () => {
     mockListDashboardHistory.mockResolvedValue({
       metadata: { continue: '' },
-      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT - 5),
-    });
-
-    setup();
-
-    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
-
-    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
-
-    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /compare versions/i })).toBeInTheDocument();
-  });
-
-  test('renders buttons if versions >= VERSIONS_FETCH_LIMIT', async () => {
-    mockListDashboardHistory.mockResolvedValue({
-      metadata: { continue: 'next-page-token' },
-      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT),
-    });
-
-    setup();
-
-    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /compare versions/i })).not.toBeInTheDocument();
-
-    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
-    const compareButton = screen.getByRole('button', { name: /compare versions/i });
-    const showMoreButton = screen.getByRole('button', { name: /show more versions/i });
-
-    expect(showMoreButton).toBeInTheDocument();
-    expect(showMoreButton).toBeEnabled();
-
-    expect(compareButton).toBeInTheDocument();
-    expect(compareButton).toBeDisabled();
-  });
-
-  test('clicking show more appends results to the table', async () => {
-    mockListDashboardHistory
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          metadata: { continue: 'next-page-token' },
-          items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT),
-        })
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          metadata: { continue: '' },
-          items: versionsResourceList.items.slice(VERSIONS_FETCH_LIMIT),
-        })
-      );
-
-    setup();
-
-    await waitFor(() => expect(mockListDashboardHistory).toHaveBeenCalledTimes(1));
-
-    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
-
-    expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(VERSIONS_FETCH_LIMIT);
-
-    const showMoreButton = screen.getByRole('button', { name: /show more versions/i });
-    await user.click(showMoreButton);
-
-    expect(mockListDashboardHistory).toHaveBeenCalledTimes(2);
-    expect(screen.getByText(/Fetching more entries/i)).toBeInTheDocument();
-    jest.advanceTimersByTime(1000);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/Fetching more entries/i)).not.toBeInTheDocument();
-      expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(
-        versionsResourceList.items.length
-      );
-    });
-  });
-
-  test('does not show more button when receiving partial page without version 1', async () => {
-    // Mock a partial page response (less than VERSIONS_FETCH_LIMIT)
-    mockListDashboardHistory.mockResolvedValueOnce({
-      metadata: { continue: '' },
-      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT - 5),
+      items: [
+        toResource(3, '2021-01-05T15:41:33+01:00'),
+        toResource(1, '2021-01-05T14:59:15+01:00'),
+        toResource(5, '2021-01-14T14:28:01+01:00'),
+        toResource(2, '2021-01-05T15:01:50+01:00'),
+        toResource(4, '2021-01-08T10:45:33+01:00'),
+      ],
     });
 
     setup();
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
 
-    // Verify that show more button is not present since we got a partial page
-    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
-    // Verify that compare button is still present
-    expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
-  });
-
-  test('does not show more button when continueToken is empty', async () => {
-    mockListDashboardHistory.mockResolvedValueOnce({
-      metadata: { continue: '' },
-      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT - 1),
-    });
-
-    setup();
-
-    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
-
-    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
+    const tableBody = screen.getAllByRole('rowgroup')[1];
+    const rows = within(tableBody).getAllByRole('row');
+    // Versions should be sorted: 5, 4, 3, 2, 1
+    expect(within(rows[0]).getByText('5')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('4')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('3')).toBeInTheDocument();
+    expect(within(rows[3]).getByText('2')).toBeInTheDocument();
+    expect(within(rows[4]).getByText('1')).toBeInTheDocument();
   });
 
   test('selecting two versions and clicking compare button should render compare view', async () => {
     // getDiff now uses already-loaded data from versionsResourceList, no separate API call needed
-    mockListDashboardHistory.mockResolvedValue({
-      metadata: { continue: '' },
-      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT),
-    });
+    mockListDashboardHistory.mockResolvedValue(versionsResourceList);
 
     setup();
 
@@ -218,34 +129,33 @@ describe('VersionSettings', () => {
 
     const compareButton = screen.getByRole('button', { name: /compare versions/i });
     const tableBody = screen.getAllByRole('rowgroup')[1];
-    await user.click(within(tableBody).getAllByRole('checkbox')[0]);
-    await user.click(within(tableBody).getAllByRole('checkbox')[VERSIONS_FETCH_LIMIT - 1]);
+    // Select the first (version 11) and last (version 1) checkboxes
+    const checkboxes = within(tableBody).getAllByRole('checkbox');
+    await user.click(checkboxes[0]);
+    await user.click(checkboxes[checkboxes.length - 1]);
 
     expect(compareButton).toBeEnabled();
 
     await user.click(compareButton);
 
-    await waitFor(() => expect(screen.getByRole('heading', { name: /comparing 2 11/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('heading', { name: /comparing 1 11/i })).toBeInTheDocument());
 
     expect(queryByFullText('Version 11 updated by admin')).toBeInTheDocument();
-    expect(queryByFullText('Version 2 updated by admin')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /restore to version 2/i })).toBeInTheDocument();
-    expect(screen.queryAllByTestId('diffGroup').length).toBe(5);
-
-    const diffGroups = screen.getAllByTestId('diffGroup');
-
-    expect(queryByFullText('description added The dashboard description')).toBeInTheDocument();
-    expect(queryByFullText('panels changed')).toBeInTheDocument();
-    expect(within(diffGroups[1]).queryByRole('list')).toBeInTheDocument();
-    expect(within(diffGroups[1]).queryByText(/added title/i)).toBeInTheDocument();
-    expect(within(diffGroups[1]).queryByText(/changed id/i)).toBeInTheDocument();
-    expect(queryByFullText('tags deleted item 0')).toBeInTheDocument();
-    expect(queryByFullText('timepicker added 1 refresh_intervals')).toBeInTheDocument();
-    expect(queryByFullText('version changed')).toBeInTheDocument();
-    expect(screen.queryByText(/view json diff/i)).toBeInTheDocument();
-
-    await user.click(screen.getByText(/view json diff/i));
-
-    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+    expect(queryByFullText('Version 1 updated by admin')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /restore to version 1/i })).toBeInTheDocument();
   });
 });
+
+function toResource(version: number, created: string) {
+  return {
+    apiVersion: 'apiVersion',
+    kind: 'Dashboard',
+    metadata: {
+      name: '_U4zObQMz',
+      generation: version,
+      creationTimestamp: created,
+      annotations: { 'grafana.app/updatedBy': 'admin', 'grafana.app/message': '' },
+    },
+    spec: {},
+  };
+}

@@ -285,10 +285,6 @@ export const DashboardInteractions = {
   versionRestoreClicked: (properties: { version: number; index?: number; confirm: boolean; version_date?: Date }) => {
     reportDashboardInteraction('version_restore_clicked', properties);
   },
-  showMoreVersionsClicked: () => {
-    reportDashboardInteraction('show_more_versions_clicked');
-  },
-
   // Image export interactions
   generateDashboardImageClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('dashboard_image_generated', properties);

@@ -3,7 +3,6 @@ import * as React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { SceneTimeRange } from '@grafana/scenes';
-import { VERSIONS_FETCH_LIMIT } from 'app/features/dashboard/types/revisionModels';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -118,33 +117,21 @@ describe('VersionsEditView', () => {
       expect(versionsView.state.isNewLatest).toBe(true);
     });
 
-    it('should correctly identify last page when partial page is returned without version 1', async () => {
+    it('should sort versions by generation descending regardless of API order', async () => {
       mockListDashboardHistory.mockResolvedValueOnce({
         metadata: { continue: '' },
-        items: [createTestResource(4, '2017-02-22T17:43:01-08:00'), createTestResource(3, '2017-02-22T17:43:01-08:00')],
+        items: [
+          createTestResource(2, '2017-02-22T17:43:01-08:00'),
+          createTestResource(4, '2017-02-23T17:43:01-08:00'),
+          createTestResource(1, '2017-02-21T17:43:01-08:00'),
+          createTestResource(3, '2017-02-22T17:43:01-08:00'),
+        ],
       });
 
-      versionsView.reset();
       versionsView.fetchVersions();
       await new Promise(process.nextTick);
 
-      expect(versionsView.versions.length).toBeLessThan(VERSIONS_FETCH_LIMIT);
-      expect(versionsView.versions.find((rev) => rev.version === 1)).toBeUndefined();
-    });
-
-    it('should correctly identify last page when continueToken is empty', async () => {
-      mockListDashboardHistory.mockResolvedValueOnce({
-        metadata: { continue: '' },
-        items: [createTestResource(4, '2017-02-22T17:43:01-08:00'), createTestResource(3, '2017-02-22T17:43:01-08:00')],
-      });
-
-      versionsView.reset();
-      versionsView.fetchVersions();
-      await new Promise(process.nextTick);
-
-      expect(versionsView.versions.length).toBeLessThan(VERSIONS_FETCH_LIMIT);
-      expect(versionsView.versions.find((rev) => rev.version === 1)).toBeUndefined();
-      expect(versionsView.continueToken).toBe('');
+      expect(versionsView.versions.map((v) => v.version)).toEqual([4, 3, 2, 1]);
     });
   });
 
