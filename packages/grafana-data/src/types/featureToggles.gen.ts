@@ -1382,7 +1382,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new visualization suggestions
-  * @default false
+  * @default true
   */
   newVizSuggestions?: boolean;
   /**
@@ -1397,7 +1397,7 @@ export interface FeatureToggles {
   vizPresets?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default false
+  * @default true
   */
   externalVizSuggestions?: boolean;
   /**
