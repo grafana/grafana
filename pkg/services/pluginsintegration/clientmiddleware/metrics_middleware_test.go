@@ -313,3 +313,179 @@ func newLabels(initialLabels prometheus.Labels, additional ...prometheus.Labels)
 	}
 	return r
 }
+
+func TestCallResourceHTTPStatusMetrics(t *testing.T) {
+	pCtx := backend.PluginContext{PluginID: pluginID, PluginVersion: "1.0.0"}
+
+	testCases := []struct {
+		name           string
+		statusCode     int
+		expectedStatus instrumentationutils.RequestStatus
+	}{
+		{
+			name:           "HTTP 200 should be counted as ok",
+			statusCode:     200,
+			expectedStatus: instrumentationutils.RequestStatusOK,
+		},
+		{
+			name:           "HTTP 201 should be counted as ok",
+			statusCode:     201,
+			expectedStatus: instrumentationutils.RequestStatusOK,
+		},
+		{
+			name:           "HTTP 204 should be counted as ok",
+			statusCode:     204,
+			expectedStatus: instrumentationutils.RequestStatusOK,
+		},
+		{
+			name:           "HTTP 400 should be counted as error",
+			statusCode:     400,
+			expectedStatus: instrumentationutils.RequestStatusError,
+		},
+		{
+			name:           "HTTP 404 should be counted as error",
+			statusCode:     404,
+			expectedStatus: instrumentationutils.RequestStatusError,
+		},
+		{
+			name:           "HTTP 500 should be counted as error",
+			statusCode:     500,
+			expectedStatus: instrumentationutils.RequestStatusError,
+		},
+		{
+			name:           "HTTP 502 should be counted as error",
+			statusCode:     502,
+			expectedStatus: instrumentationutils.RequestStatusError,
+		},
+		{
+			name:           "HTTP 503 should be counted as error",
+			statusCode:     503,
+			expectedStatus: instrumentationutils.RequestStatusError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			promRegistry := prometheus.NewRegistry()
+			pluginsRegistry := pluginfakes.NewFakePluginRegistry()
+			require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
+				JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+			}))
+
+			mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
+
+			// Use WithResourceResponses to configure the test handler to send a response with the specified status code
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				handlertest.WithResourceResponses([]*backend.CallResourceResponse{
+					{
+						Status: tc.statusCode,
+					},
+				}),
+				handlertest.WithMiddlewares(
+					backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+						mw.BaseHandler = backend.NewBaseHandler(next)
+						return mw
+					}),
+				),
+			)
+
+			// Make the CallResource request
+			err := cdt.MiddlewareHandler.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: pCtx}, nopCallResourceSender)
+			require.NoError(t, err)
+
+			// Verify the metric was incremented with the correct status label
+			counter := mw.pluginRequestCounter.WithLabelValues(
+				pluginID,
+				string(backend.EndpointCallResource),
+				tc.expectedStatus.String(),
+				string(backendplugin.TargetUnknown),
+				pCtx.PluginVersion,
+				string(backend.DefaultErrorSource),
+			)
+			require.Equal(t, 1.0, testutil.ToFloat64(counter), "metric should be incremented with status=%s", tc.expectedStatus.String())
+		})
+	}
+}
+
+func TestCallResourceNoResponseSentFallbackToError(t *testing.T) {
+	pCtx := backend.PluginContext{PluginID: pluginID, PluginVersion: "1.0.0"}
+
+	t.Run("when handler succeeds without sending response, should use ok status", func(t *testing.T) {
+		promRegistry := prometheus.NewRegistry()
+		pluginsRegistry := pluginfakes.NewFakePluginRegistry()
+		require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+		}))
+
+		mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
+
+		// Use empty responses to simulate handler succeeding without sending any response
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			handlertest.WithResourceResponses([]*backend.CallResourceResponse{}),
+			handlertest.WithMiddlewares(
+				backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+					mw.BaseHandler = backend.NewBaseHandler(next)
+					return mw
+				}),
+			),
+		)
+
+		// Make the CallResource request
+		err := cdt.MiddlewareHandler.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: pCtx}, nopCallResourceSender)
+		require.NoError(t, err)
+
+		// Verify the metric was incremented with ok status (fallback to error-based detection)
+		counter := mw.pluginRequestCounter.WithLabelValues(
+			pluginID,
+			string(backend.EndpointCallResource),
+			instrumentationutils.RequestStatusOK.String(),
+			string(backendplugin.TargetUnknown),
+			pCtx.PluginVersion,
+			string(backend.DefaultErrorSource),
+		)
+		require.Equal(t, 1.0, testutil.ToFloat64(counter), "metric should be incremented with status=ok when handler returns nil")
+	})
+}
+
+func TestCallResourceMultipleResponsesUsesFirstStatus(t *testing.T) {
+	pCtx := backend.PluginContext{PluginID: pluginID, PluginVersion: "1.0.0"}
+
+	t.Run("when handler sends multiple responses, should use first response status", func(t *testing.T) {
+		promRegistry := prometheus.NewRegistry()
+		pluginsRegistry := pluginfakes.NewFakePluginRegistry()
+		require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+		}))
+
+		mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
+
+		// Configure multiple responses: first with 200, second with 500
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			handlertest.WithResourceResponses([]*backend.CallResourceResponse{
+				{Status: 200},
+				{Status: 500}, // Should be ignored for metrics
+			}),
+			handlertest.WithMiddlewares(
+				backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+					mw.BaseHandler = backend.NewBaseHandler(next)
+					return mw
+				}),
+			),
+		)
+
+		// Make the CallResource request
+		err := cdt.MiddlewareHandler.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: pCtx}, nopCallResourceSender)
+		require.NoError(t, err)
+
+		// Verify the metric was incremented with ok status (from first response)
+		counter := mw.pluginRequestCounter.WithLabelValues(
+			pluginID,
+			string(backend.EndpointCallResource),
+			instrumentationutils.RequestStatusOK.String(),
+			string(backendplugin.TargetUnknown),
+			pCtx.PluginVersion,
+			string(backend.DefaultErrorSource),
+		)
+		require.Equal(t, 1.0, testutil.ToFloat64(counter), "metric should use status from first response")
+	})
+}

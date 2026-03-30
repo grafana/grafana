@@ -178,3 +178,84 @@ func TestRequestStatusFromErrorString(t *testing.T) {
 		})
 	}
 }
+
+func TestRequestStatusFromHTTPStatus(t *testing.T) {
+	tcs := []struct {
+		desc           string
+		statusCode     int
+		expectedStatus RequestStatus
+	}{
+		{
+			desc:           "HTTP 200 OK should be status ok",
+			statusCode:     200,
+			expectedStatus: RequestStatusOK,
+		},
+		{
+			desc:           "HTTP 201 Created should be status ok",
+			statusCode:     201,
+			expectedStatus: RequestStatusOK,
+		},
+		{
+			desc:           "HTTP 204 No Content should be status ok",
+			statusCode:     204,
+			expectedStatus: RequestStatusOK,
+		},
+		{
+			desc:           "HTTP 400 Bad Request should be status error",
+			statusCode:     400,
+			expectedStatus: RequestStatusError,
+		},
+		{
+			desc:           "HTTP 401 Unauthorized should be status error",
+			statusCode:     401,
+			expectedStatus: RequestStatusError,
+		},
+		{
+			desc:           "HTTP 403 Forbidden should be status error",
+			statusCode:     403,
+			expectedStatus: RequestStatusError,
+		},
+		{
+			desc:           "HTTP 404 Not Found should be status error",
+			statusCode:     404,
+			expectedStatus: RequestStatusError,
+		},
+		{
+			desc:           "HTTP 500 Internal Server Error should be status error",
+			statusCode:     500,
+			expectedStatus: RequestStatusError,
+		},
+		{
+			desc:           "HTTP 502 Bad Gateway should be status error",
+			statusCode:     502,
+			expectedStatus: RequestStatusError,
+		},
+		{
+			desc:           "HTTP 503 Service Unavailable should be status error",
+			statusCode:     503,
+			expectedStatus: RequestStatusError,
+		},
+		{
+			desc:           "HTTP 100 Continue should be status ok",
+			statusCode:     100,
+			expectedStatus: RequestStatusOK,
+		},
+		{
+			desc:           "HTTP 301 Moved Permanently should be status ok",
+			statusCode:     301,
+			expectedStatus: RequestStatusOK,
+		},
+		{
+			desc:           "HTTP 302 Found should be status ok",
+			statusCode:     302,
+			expectedStatus: RequestStatusOK,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.desc, func(t *testing.T) {
+			status := RequestStatusFromHTTPStatus(tc.statusCode)
+			require.Equal(t, tc.expectedStatus, status)
+		})
+	}
+}

@@ -104,3 +104,18 @@ func RequestStatusFromProtoQueryDataResponse(res *pluginv2.QueryDataResponse, er
 
 	return status
 }
+
+// RequestStatusFromHTTPStatus maps an HTTP status code to a RequestStatus.
+// It returns RequestStatusOK for 2xx status codes, and RequestStatusError for 4xx and 5xx codes.
+// This is particularly useful for CallResource handlers that communicate errors via HTTP status codes
+// rather than Go error returns.
+func RequestStatusFromHTTPStatus(statusCode int) RequestStatus {
+	if statusCode >= 200 && statusCode < 300 {
+		return RequestStatusOK
+	}
+	if statusCode >= 400 {
+		return RequestStatusError
+	}
+	// For 1xx (informational) and 3xx (redirect), treat as OK
+	return RequestStatusOK
+}
