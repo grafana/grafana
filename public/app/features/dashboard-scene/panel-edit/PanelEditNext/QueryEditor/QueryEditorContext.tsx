@@ -1,27 +1,32 @@
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 
 import {
-  DataQueryError,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataTransformerConfig,
-  PanelData,
+  type DataQueryError,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataTransformerConfig,
+  type PanelData,
 } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { QueryGroupOptions } from 'app/types/query';
+import { type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
+import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';
+import { type QueryGroupOptions } from 'app/types/query';
 
-import { QueryEditorType } from '../constants';
+import { type QueryEditorType } from '../constants';
 
-import { AlertRule, QueryOptionField, Transformation } from './types';
+import { type AlertRule, type QueryOptionField, type Transformation } from './types';
 
 export interface PendingExpression {
   insertAfter: string;
 }
 
+export interface PendingSavedQuery {
+  insertAfter: string;
+}
+
 export interface PendingTransformation {
   insertAfter?: string;
+  showPicker?: boolean;
 }
 
 export interface DatasourceState {
@@ -33,7 +38,6 @@ export interface DatasourceState {
 export interface QueryRunnerState {
   queries: DataQuery[];
   data?: PanelData;
-  isLoading: boolean;
   queryError?: DataQueryError;
 }
 
@@ -83,12 +87,16 @@ export interface QueryEditorUIState {
   pendingExpression: PendingExpression | null;
   setPendingExpression: (pending: PendingExpression | null) => void;
   finalizePendingExpression: (type: ExpressionQueryType) => void;
+  pendingSavedQuery: PendingSavedQuery | null;
+  setPendingSavedQuery: (pending: PendingSavedQuery | null) => void;
   pendingTransformation: PendingTransformation | null;
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
+  showVersionBanner: boolean;
 }
 
 export interface QueryEditorActions {
+  onSwitchToClassic?: () => void;
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;

@@ -1,6 +1,6 @@
-import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
+import { type PanelOptionsEditorBuilder, standardEditorsRegistry, type StatsPickerConfigSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
 
 /**
  * @alpha
@@ -11,6 +11,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
   showLegend = true
 ) {
   const category = [t('grafana-ui.builder.legend.category', 'Legend')];
+
   builder
     .addBooleanSwitch({
       path: 'legend.showLegend',
@@ -55,6 +56,13 @@ export function addLegendOptions<T extends OptionsWithLegend>(
         placeholder: 'Auto',
       },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
+    })
+    .addNumberInput({
+      path: 'legend.limit',
+      name: t('grafana-ui.builder.legend.name-limit', 'Limit'),
+      category,
+      description: t('grafana-ui.builder.legend.description-limit', 'Limits how many items are shown by default'),
+      showIf: (c) => c.legend.showLegend,
     });
 
   if (includeLegendCalcs) {

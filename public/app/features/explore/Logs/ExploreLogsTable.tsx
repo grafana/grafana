@@ -1,21 +1,21 @@
 import { useCallback, useMemo } from 'react';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
-  EventBus,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  type EventBus,
   EventBusSrv,
-  FieldConfigSource,
-  PanelData,
+  type FieldConfigSource,
+  type PanelData,
   urlUtil,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
+import { type AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { LogsTable } from 'app/plugins/panel/logstable/LogsTable';
-import { Options } from 'app/plugins/panel/logstable/options/types';
+import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { defaultOptions as logsTablePanelDefaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
-import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
+import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 
 /**
  * New Logs Table panel
@@ -76,6 +76,31 @@ export function ExploreLogsTable(props: {
     }
   }, []);
 
+  const fieldConfig = useMemo(
+    () => ({
+      defaults: {
+        custom: {
+          filterable: true,
+        },
+      },
+      overrides: [],
+    }),
+    []
+  );
+
+  const options = useMemo(
+    () => ({
+      ...logsTablePanelDefaultOptions,
+      buildLinkToLogLine: props.buildLinkToLogLine,
+      showHeader: true,
+      showControls: true,
+      showCopyLogLink: true,
+      ...props.externalOptions,
+      permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
+    }),
+    [props.buildLinkToLogLine, props.externalOptions, selectedLogInfo?.id]
+  );
+
   return (
     <PanelContextProvider
       value={{
@@ -88,26 +113,11 @@ export function ExploreLogsTable(props: {
         data={props.data}
         id={0}
         timeZone={props.timeZone}
-        options={{
-          ...logsTablePanelDefaultOptions,
-          buildLinkToLogLine: props.buildLinkToLogLine,
-          showHeader: true,
-          showControls: true,
-          showCopyLogLink: true,
-          ...props.externalOptions,
-          permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
-        }}
+        options={options}
         transparent={false}
         width={props.width}
         height={props.height}
-        fieldConfig={{
-          defaults: {
-            custom: {
-              filterable: true,
-            },
-          },
-          overrides: [],
-        }}
+        fieldConfig={fieldConfig}
         renderCounter={0}
         title={''}
         eventBus={props.eventBus}

@@ -2,10 +2,15 @@ package httpclientprovider
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/mwitkow/go-conntrack"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -44,7 +49,27 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 
 	// SigV4 signing should be performed after all headers are added
 	if cfg.SigV4AuthEnabled {
-		middlewares = append(middlewares, awsauth.NewSigV4Middleware())
+		awsCfg := backend.NewGrafanaCfg(map[string]string{
+			awsds.AllowedAuthProvidersEnvVarKeyName:          strings.Join(cfg.AWSAllowedAuthProviders, ","),
+			awsds.AssumeRoleEnabledEnvVarKeyName:             strconv.FormatBool(cfg.AWSAssumeRoleEnabled),
+			awsds.GrafanaAssumeRoleExternalIdKeyName:         cfg.AWSExternalId,
+			awsds.ListMetricsPageLimitKeyName:                strconv.Itoa(cfg.AWSListMetricsPageLimit),
+			awsds.SessionDurationEnvVarKeyName:               cfg.AWSSessionDuration,
+			awsds.PerDatasourceHTTPProxyEnabledEnvVarKeyName: strconv.FormatBool(cfg.AWSPerDatasourceHTTPProxyEnabled),
+			proxy.PluginSecureSocksProxyEnabled:              strconv.FormatBool(cfg.SecureSocksDSProxy.Enabled),
+		})
+		middlewares = append(middlewares, sdkhttpclient.NamedMiddlewareFunc("sigv4-aws-config", func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+			sigv4 := awsauth.NewSigV4Middleware().CreateMiddleware(opts, next)
+			return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				ctx := req.Context()
+				// Normally the sigv4 middleware would read auth settings from ctx. But for frontend-only datasources using the data proxy,
+				// GrafanaConfig is never injected into the request context. In this case fall back to cfg values
+				if _, exists := awsds.ReadAuthSettingsFromContext(ctx); !exists {
+					ctx = backend.WithGrafanaConfig(ctx, awsCfg)
+				}
+				return sigv4.RoundTrip(req.WithContext(ctx))
+			})
+		}))
 	}
 
 	setDefaultTimeoutOptions(cfg)

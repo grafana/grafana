@@ -1,12 +1,12 @@
-import { PayloadAction } from '@reduxjs/toolkit';
+import { type PayloadAction } from '@reduxjs/toolkit';
 
-import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
 import { GENERAL_FOLDER_UID } from '../../search/constants';
-import { BrowseDashboardsState } from '../types';
-import { isSharedWithMe } from '../utils/dashboards';
+import { type BrowseDashboardsState } from '../types';
+import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
-import { fetchNextChildrenPage, refetchChildren } from './actions';
+import { type fetchNextChildrenPage, type refetchChildren } from './actions';
 import { findItem } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
@@ -91,8 +91,8 @@ export function setItemSelectionState(
 ) {
   const { item, isSelected } = action.payload;
 
-  // UI shouldn't allow it, but also prevent sharedwithme from being selected
-  if (isSharedWithMe(item.uid)) {
+  // UI shouldn't allow it, but also prevent sharedwithme/teamfolders from being selected
+  if (isSharedWithMe(item.uid) || isVirtualTeamFolder(item.uid)) {
     return;
   }
 
@@ -143,9 +143,9 @@ export function setAllSelection(
 ) {
   const { isSelected, folderUID: folderUIDArg, excludeUIDs } = action.payload;
 
-  // If we're in the folder view for sharedwith me (currently not supported)
+  // If we're in the folder view for sharedwithme or teamfolders (currently not supported)
   // bail and don't select anything
-  if (folderUIDArg && isSharedWithMe(folderUIDArg)) {
+  if (folderUIDArg && (isSharedWithMe(folderUIDArg) || isVirtualTeamFolder(folderUIDArg))) {
     return;
   }
 
@@ -160,8 +160,8 @@ export function setAllSelection(
   if (isSelected) {
     // Recursively select the children of the folder in view
     function selectChildrenOfFolder(folderUID: string | undefined) {
-      // Don't descend into the sharedwithme folder
-      if (folderUID && isSharedWithMe(folderUID)) {
+      // Don't descend into the sharedwithme or teamfolders folder
+      if (folderUID && (isSharedWithMe(folderUID) || isVirtualTeamFolder(folderUID))) {
         return;
       }
 
@@ -173,8 +173,8 @@ export function setAllSelection(
       }
 
       for (const child of collection.items) {
-        // Don't traverse into the sharedwithme folder
-        if (isSharedWithMe(child.uid)) {
+        // Don't traverse into the sharedwithme or teamfolders folder
+        if (isSharedWithMe(child.uid) || isVirtualTeamFolder(child.uid)) {
           continue;
         }
 

@@ -1,25 +1,25 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
-import { QueryGroupOptions } from 'app/types/query';
+import { type DataQuery } from '@grafana/schema';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
 import {
-  DatasourceState,
-  PanelState,
-  QueryEditorActions,
-  QueryEditorUIState,
-  QueryOptionsState,
-  QueryRunnerState,
+  type AlertingState,
+  type DatasourceState,
+  type PanelState,
+  type QueryEditorActions,
   QueryEditorProvider,
-  AlertingState,
+  type QueryEditorUIState,
+  type QueryOptionsState,
+  type QueryRunnerState,
 } from './QueryEditorContext';
-import { Transformation } from './types';
+import { type Transformation } from './types';
 
 export function setup(jsx: React.ReactElement) {
   return {
@@ -42,6 +42,32 @@ export const ds1SettingsMock: DataSourceInstanceSettings = {
       description: '',
       links: [],
       logos: { small: 'test-logo.png', large: '' },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+    module: '',
+    baseUrl: '',
+  },
+  access: 'proxy',
+  readOnly: false,
+  jsonData: {},
+};
+
+export const dashboardDsSettingsMock: DataSourceInstanceSettings = {
+  id: 99,
+  uid: '-- Dashboard --',
+  name: '-- Dashboard --',
+  type: 'datasource',
+  meta: {
+    id: 'dashboard',
+    name: '-- Dashboard --',
+    type: PluginType.datasource,
+    info: {
+      author: { name: '' },
+      description: '',
+      links: [],
+      logos: { small: '', large: '' },
       screenshots: [],
       updated: '',
       version: '',
@@ -159,8 +185,11 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
 
   const defaultQrState: QueryRunnerState = {
     queries,
-    data: undefined,
-    isLoading: false,
+    data: {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: getDefaultTimeRange(),
+    },
     queryError: undefined,
     ...qrState,
   };
@@ -191,6 +220,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     finalizePendingTransformation: jest.fn(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
+    pendingSavedQuery: null,
+    setPendingSavedQuery: jest.fn(),
+    showVersionBanner: false,
     ...uiStateOverrides,
   };
 

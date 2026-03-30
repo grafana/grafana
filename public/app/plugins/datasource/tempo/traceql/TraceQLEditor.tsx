@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
-import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
+import { CodeEditor, type Monaco, type monacoTypes, useTheme2 } from '@grafana/ui';
 
 import { DEFAULT_TIME_RANGE_FOR_TAGS } from '../configuration/TagsTimeRangeSettings';
-import { TempoDatasource } from '../datasource';
-import { TempoQuery } from '../types';
+import { type TempoDatasource } from '../datasource';
+import { type TempoQuery } from '../types';
 
-import { CompletionProvider, CompletionItemType } from './autocomplete';
+import { CompletionProvider, type CompletionItemType } from './autocomplete';
 import { getErrorNodes, setMarkers } from './highlighting';
 import { languageDefinition } from './traceql';
 
@@ -90,8 +90,12 @@ export function TraceQLEditor(props: Props) {
           // Parse query that might already exist (e.g., after a page refresh)
           const model = editor.getModel();
           if (model) {
-            const errorNodes = getErrorNodes(model.getValue());
-            setMarkers(monaco, model, errorNodes);
+            try {
+              const errorNodes = getErrorNodes(model.getValue());
+              setMarkers(monaco, model, errorNodes);
+            } catch (err) {
+              console.warn('TraceQL editor: failed to update syntax error markers', err);
+            }
           }
 
           // Register callback for query changes
@@ -107,21 +111,28 @@ export function TraceQLEditor(props: Props) {
               window.clearTimeout(errorTimeoutId.current);
             }
 
-            const errorNodes = getErrorNodes(model.getValue());
-            const cursorPosition = changeEvent.changes[0].rangeOffset;
+            try {
+              const errorNodes = getErrorNodes(model.getValue());
+              const cursorPosition = changeEvent.changes[0].rangeOffset;
 
-            // Immediately updates the squiggles, in case the user fixed an error,
-            // excluding the error around the cursor position
-            setMarkers(
-              monaco,
-              model,
-              errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
-            );
+              // Immediately updates the squiggles, in case the user fixed an error,
+              // excluding the error around the cursor position
+              setMarkers(
+                monaco,
+                model,
+                errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
+              );
 
-            // Show all errors after a short delay, to avoid flickering
-            errorTimeoutId.current = window.setTimeout(() => {
-              setMarkers(monaco, model, errorNodes);
-            }, 500);
+              errorTimeoutId.current = window.setTimeout(() => {
+                try {
+                  setMarkers(monaco, model, errorNodes);
+                } catch (err) {
+                  console.warn('TraceQL editor: failed to update syntax error markers', err);
+                }
+              }, 500);
+            } catch (err) {
+              console.warn('TraceQL editor: failed to parse query for error highlighting', err);
+            }
           });
         }}
       />

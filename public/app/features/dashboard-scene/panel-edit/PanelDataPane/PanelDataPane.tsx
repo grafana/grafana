@@ -1,28 +1,35 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
+  type SceneObjectRef,
+  type SceneObjectState,
   SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  VizPanel,
+  type SceneObjectUrlValues,
+  type VizPanel,
 } from '@grafana/scenes';
-import { Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
+import { type PanelDataPaneTab, type PanelEditorInterface, TabId } from './types';
 
-import { PanelDataAlertingTab } from './PanelDataAlertingTab';
-import { PanelDataQueriesTab } from './PanelDataQueriesTab';
-import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { PanelDataPaneTab, TabId } from './types';
+function isPanelEditor(obj: object): obj is PanelEditorInterface {
+  return 'onToggleQueryEditorVersion' in obj && typeof obj.onToggleQueryEditorVersion === 'function';
+}
+
+const VALID_TAB_IDS: Set<string> = new Set(Object.values(TabId));
+
+function isValidTabId(value: string): value is TabId {
+  return VALID_TAB_IDS.has(value);
+}
 
 export interface PanelDataPaneState extends SceneObjectState {
   tabs: PanelDataPaneTab[];
@@ -34,38 +41,14 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
 
-  /**
-   * Create a data pane for the given panel.
-   * @param panel The VizPanel to create the data pane for
-   * @param useQueryEditorNext Signals whether to use the query editor v2 experience or the original (v1) experience.
-   */
-  public static createFor(panel: VizPanel, useQueryEditorNext: boolean | undefined) {
-    const panelRef = panel.getRef();
-
-    // Query experience v2
-    if (useQueryEditorNext) {
-      return new PanelDataPaneNext({ panelRef });
-    }
-
-    // Original experience
-    const tabs: PanelDataPaneTab[] = [
-      new PanelDataQueriesTab({ panelRef }),
-      new PanelDataTransformationsTab({ panelRef }),
-    ];
-
-    if (shouldShowAlertingTab(panel.state.pluginId)) {
-      tabs.push(new PanelDataAlertingTab({ panelRef }));
-    }
-
-    return new PanelDataPane({
-      panelRef,
-      tabs,
-      tab: TabId.Queries,
-    });
-  }
-
   public onChangeTab = (tab: PanelDataPaneTab) => {
     this.setState({ tab: tab.tabId });
+  };
+
+  public onTryNewEditor = () => {
+    if (this.parent && isPanelEditor(this.parent)) {
+      this.parent.onToggleQueryEditorVersion();
+    }
   };
 
   public getUrlState() {
@@ -76,8 +59,8 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     if (!values.tab) {
       return;
     }
-    if (typeof values.tab === 'string') {
-      this.setState({ tab: values.tab as TabId });
+    if (typeof values.tab === 'string' && isValidTabId(values.tab)) {
+      this.setState({ tab: values.tab });
     }
   }
 }
@@ -85,6 +68,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
   const styles = useStyles2(getStyles);
+  const showTryNewEditor = useBooleanFlagValue('queryEditorNext', false);
 
   if (!tabs || !tabs.length) {
     return;
@@ -96,6 +80,20 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
       <TabsBar hideBorder className={styles.tabsBar}>
         {tabs.map((t) => t.renderTab({ active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) }))}
+        {showTryNewEditor && (
+          <div className={styles.tryNewEditorWrapper}>
+            <Button
+              size="sm"
+              fill="text"
+              icon="flask"
+              variant="primary"
+              onClick={model.onTryNewEditor}
+              tooltip={t('panel-data-pane.try-new-editor.tooltip', 'Switch to the new query editor experience')}
+            >
+              {t('panel-data-pane.try-new-editor.label', 'Try the new editor')}
+            </Button>
+          </div>
+        )}
       </TabsBar>
       <div className={styles.tabBorder}>
         <ScrollContainer>
@@ -148,6 +146,12 @@ function getStyles(theme: GrafanaTheme2) {
     tabsBar: css({
       flexShrink: 0,
       paddingLeft: theme.spacing(2),
+    }),
+    tryNewEditorWrapper: css({
+      marginLeft: 'auto',
+      display: 'flex',
+      alignItems: 'center',
+      paddingRight: theme.spacing(1),
     }),
   };
 }

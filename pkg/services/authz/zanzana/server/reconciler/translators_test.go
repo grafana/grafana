@@ -11,8 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 
@@ -133,7 +135,7 @@ func TestTranslateTeamBindingToTuples(t *testing.T) {
 			tb := &iamv0.TeamBinding{
 				ObjectMeta: metav1.ObjectMeta{Name: "tb-test"},
 				Spec: iamv0.TeamBindingSpec{
-					Subject:    iamv0.TeamBindingspecSubject{Name: "user1"},
+					Subject:    iamv0.TeamBindingspecSubject{Kind: "User", Name: "user1"},
 					TeamRef:    iamv0.TeamBindingTeamRef{Name: "teamA"},
 					Permission: tt.permission,
 				},
@@ -146,6 +148,59 @@ func TestTranslateTeamBindingToTuples(t *testing.T) {
 			assert.Equal(t, "user:user1", tuples[0].GetUser())
 			assert.Equal(t, tt.expectedRelation, tuples[0].GetRelation())
 			assert.Equal(t, "team:teamA", tuples[0].GetObject())
+		})
+	}
+}
+
+func TestTranslateGlobalRoleBindingToTuples(t *testing.T) {
+	tests := []struct {
+		name         string
+		subjectKind  iamv0.GlobalRoleBindingSpecSubjectKind
+		subjectName  string
+		expectedUser string
+	}{
+		{
+			name:         "user subject",
+			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindUser,
+			subjectName:  "uid1",
+			expectedUser: "user:uid1",
+		},
+		{
+			name:         "service-account subject",
+			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount,
+			subjectName:  "sa1",
+			expectedUser: "service-account:sa1",
+		},
+		{
+			name:         "team subject",
+			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindTeam,
+			subjectName:  "team1",
+			expectedUser: "team:team1#member",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			grb := &iamv0.GlobalRoleBinding{
+				ObjectMeta: metav1.ObjectMeta{Name: "grb-test"},
+				Spec: iamv0.GlobalRoleBindingSpec{
+					Subject: iamv0.GlobalRoleBindingspecSubject{
+						Kind: tt.subjectKind,
+						Name: tt.subjectName,
+					},
+					RoleRefs: []iamv0.GlobalRoleBindingspecRoleRef{
+						{Kind: "GlobalRole", Name: "global-role-1"},
+					},
+				},
+			}
+
+			tuples, err := TranslateGlobalRoleBindingToTuples(toUnstructured(t, grb))
+			require.NoError(t, err)
+			require.Len(t, tuples, 1)
+
+			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
+			assert.Equal(t, common.RelationAssignee, tuples[0].GetRelation())
+			assert.Equal(t, "role:global-role-1", tuples[0].GetObject())
 		})
 	}
 }
@@ -174,12 +229,6 @@ func TestTranslateRoleBindingToTuples(t *testing.T) {
 			subjectKind:  iamv0.RoleBindingSpecSubjectKindTeam,
 			subjectName:  "team1",
 			expectedUser: "team:team1#member",
-		},
-		{
-			name:         "basic role subject",
-			subjectKind:  iamv0.RoleBindingSpecSubjectKindBasicRole,
-			subjectName:  "basic_viewer",
-			expectedUser: "role:basic_viewer#assignee",
 		},
 	}
 
@@ -298,6 +347,239 @@ func TestTranslateFolderToTuples(t *testing.T) {
 		tuples, err := TranslateFolderToTuples(toUnstructured(t, folder))
 		require.NoError(t, err)
 		assert.Nil(t, tuples)
+	})
+}
+
+func TestResolveAllGlobalRolePermissions(t *testing.T) {
+	t.Run("role with permissions", func(t *testing.T) {
+		allRoles := map[string]*iamv0.GlobalRole{
+			"custom": {
+				ObjectMeta: metav1.ObjectMeta{Name: "custom"},
+				Spec: iamv0.GlobalRoleSpec{
+					Permissions: []iamv0.GlobalRolespecPermission{
+						{Action: "dashboards:read", Scope: "dashboards:uid:d1"},
+					},
+				},
+			},
+		}
+
+		resolved, err := resolveAllGlobalRolePermissions(allRoles)
+		require.NoError(t, err)
+		perms := resolved["custom"]
+		require.Len(t, perms, 1)
+		assert.Equal(t, "dashboards:read", perms[0].Action)
+		assert.Equal(t, "dashboards:uid:d1", perms[0].Scope)
+	})
+
+	t.Run("empty role — produces no permissions", func(t *testing.T) {
+		allRoles := map[string]*iamv0.GlobalRole{
+			"empty": {
+				ObjectMeta: metav1.ObjectMeta{Name: "empty"},
+				Spec:       iamv0.GlobalRoleSpec{},
+			},
+		}
+
+		resolved, err := resolveAllGlobalRolePermissions(allRoles)
+		require.NoError(t, err)
+		assert.Empty(t, resolved["empty"])
+	})
+
+	t.Run("all roles in map are resolved", func(t *testing.T) {
+		allRoles := map[string]*iamv0.GlobalRole{
+			"role-a": {
+				ObjectMeta: metav1.ObjectMeta{Name: "role-a"},
+				Spec: iamv0.GlobalRoleSpec{
+					Permissions: []iamv0.GlobalRolespecPermission{
+						{Action: "dashboards:read", Scope: "dashboards:uid:d1"},
+					},
+				},
+			},
+			"role-b": {
+				ObjectMeta: metav1.ObjectMeta{Name: "role-b"},
+				Spec: iamv0.GlobalRoleSpec{
+					Permissions: []iamv0.GlobalRolespecPermission{
+						{Action: "teams:read", Scope: "*"},
+					},
+				},
+			},
+		}
+
+		resolved, err := resolveAllGlobalRolePermissions(allRoles)
+		require.NoError(t, err)
+		assert.Len(t, resolved, 2, "both roles should be present in the result")
+		assert.Contains(t, resolved, "role-a")
+		assert.Contains(t, resolved, "role-b")
+	})
+
+	t.Run("empty map — returns empty result", func(t *testing.T) {
+		resolved, err := resolveAllGlobalRolePermissions(map[string]*iamv0.GlobalRole{})
+		require.NoError(t, err)
+		assert.Empty(t, resolved)
+	})
+
+	t.Run("multiple roles with multiple permissions", func(t *testing.T) {
+		allRoles := map[string]*iamv0.GlobalRole{
+			"role-a": {
+				ObjectMeta: metav1.ObjectMeta{Name: "role-a"},
+				Spec: iamv0.GlobalRoleSpec{
+					Permissions: []iamv0.GlobalRolespecPermission{
+						{Action: "dashboards:read", Scope: "*"},
+						{Action: "dashboards:write", Scope: "*"},
+					},
+				},
+			},
+			"role-b": {
+				ObjectMeta: metav1.ObjectMeta{Name: "role-b"},
+				Spec: iamv0.GlobalRoleSpec{
+					Permissions: []iamv0.GlobalRolespecPermission{
+						{Action: "teams:read", Scope: "*"},
+					},
+				},
+			},
+		}
+
+		resolved, err := resolveAllGlobalRolePermissions(allRoles)
+		require.NoError(t, err)
+		assert.Len(t, resolved["role-a"], 2)
+		assert.Len(t, resolved["role-b"], 1)
+	})
+}
+
+// TestUnlinkedGlobalRoleInjection verifies the per-namespace injection logic:
+// GlobalRoles referenced by a namespace Role are NOT injected as standalone tuples
+// (their permissions are already inlined via translateRoleToTuples composition).
+// GlobalRoles NOT referenced by any namespace Role ARE injected as standalone tuples.
+func TestUnlinkedGlobalRoleInjection(t *testing.T) {
+	globalRolePerms := map[string][]*authzextv1.RolePermission{
+		"linked-role":   {{Action: "dashboards:read", Scope: "dashboards:uid:d1"}},
+		"unlinked-role": {{Action: "dashboards:read", Scope: "dashboards:uid:d2"}},
+	}
+
+	referencedGlobalRoles := map[string]bool{
+		"linked-role": true,
+	}
+
+	// Simulate the injection loop from fetchAndTranslateTuples.
+	var injected []*openfgav1.TupleKey
+	for roleName, perms := range globalRolePerms {
+		if referencedGlobalRoles[roleName] {
+			continue
+		}
+		tuples, err := zanzana.RoleToTuples(roleName, perms)
+		require.NoError(t, err)
+		injected = append(injected, tuples...)
+	}
+
+	require.NotEmpty(t, injected, "unlinked-role should produce tuples")
+
+	// All injected tuples must come from unlinked-role (the only non-referenced role).
+	for _, tuple := range injected {
+		assert.Contains(t, tuple.GetUser(), "unlinked-role",
+			"all injected standalone tuples must belong to unlinked-role")
+	}
+
+	// Confirm that linked-role produced no standalone tuples.
+	linkedTuples, err := zanzana.RoleToTuples("linked-role", globalRolePerms["linked-role"])
+	require.NoError(t, err)
+	require.NotEmpty(t, linkedTuples, "linked-role has translatable permissions")
+
+	for _, lt := range linkedTuples {
+		for _, it := range injected {
+			assert.NotEqual(t, lt.GetUser(), it.GetUser(),
+				"linked-role tuples must not appear in the injected set")
+		}
+	}
+}
+
+func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
+	globalRolePerms := map[string][]*authzextv1.RolePermission{
+		"global-role-a": {
+			{Action: "dashboards:read", Scope: "dashboards:uid:d1"},
+			{Action: "dashboards:write", Scope: "dashboards:uid:d1"},
+		},
+	}
+
+	t.Run("role with RoleRefs inherits and applies delta", func(t *testing.T) {
+		role := &iamv0.Role{
+			ObjectMeta: metav1.ObjectMeta{Name: "ns-role"},
+			Spec: iamv0.RoleSpec{
+				RoleRefs: []iamv0.RolespecRoleRef{
+					{Kind: "GlobalRole", Name: "global-role-a"},
+				},
+				Permissions: []iamv0.RolespecPermission{
+					{Action: "dashboards:read", Scope: "dashboards:uid:d2"},
+				},
+				PermissionsOmitted: []iamv0.RolespecPermission{
+					{Action: "dashboards:write", Scope: "dashboards:uid:d1"},
+				},
+			},
+		}
+
+		tuples, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		require.NoError(t, err)
+		// Expects: dashboards:read/d1 (inherited) + dashboards:read/d2 (own addition),
+		// dashboards:write/d1 is omitted.
+		require.NotEmpty(t, tuples)
+	})
+
+	t.Run("role without RoleRefs uses own permissions only", func(t *testing.T) {
+		role := &iamv0.Role{
+			ObjectMeta: metav1.ObjectMeta{Name: "custom-ns-role"},
+			Spec: iamv0.RoleSpec{
+				Permissions: []iamv0.RolespecPermission{
+					{Action: "dashboards:read", Scope: "dashboards:uid:d1"},
+				},
+			},
+		}
+
+		tuples, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		require.NoError(t, err)
+		require.NotEmpty(t, tuples)
+	})
+
+	t.Run("public TranslateRoleToTuples — no composition even with RoleRefs", func(t *testing.T) {
+		role := &iamv0.Role{
+			ObjectMeta: metav1.ObjectMeta{Name: "wrapper-role"},
+			Spec: iamv0.RoleSpec{
+				RoleRefs: []iamv0.RolespecRoleRef{
+					{Kind: "GlobalRole", Name: "global-role-a"},
+				},
+				// Only own permissions; global role perms not inherited when globalRolePerms is nil.
+				Permissions: []iamv0.RolespecPermission{
+					{Action: "dashboards:read", Scope: "dashboards:uid:d1"},
+				},
+			},
+		}
+
+		// Public wrapper passes nil globalRolePerms — no composition.
+		tuplesNoComposition, err := TranslateRoleToTuples(toUnstructured(t, role))
+		require.NoError(t, err)
+
+		// With composition, the same role also inherits dashboards:write from global-role-a.
+		tuplesWithComposition, err := translateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+		require.NoError(t, err)
+
+		// Composition produces more (or equal if deduped) tuples than no-composition.
+		assert.GreaterOrEqual(t, len(tuplesWithComposition), len(tuplesNoComposition))
+	})
+
+	t.Run("role with RoleRefs but nil globalRolePerms falls back to own permissions", func(t *testing.T) {
+		role := &iamv0.Role{
+			ObjectMeta: metav1.ObjectMeta{Name: "fallback-role"},
+			Spec: iamv0.RoleSpec{
+				RoleRefs: []iamv0.RolespecRoleRef{
+					{Kind: "GlobalRole", Name: "global-role-a"},
+				},
+				Permissions: []iamv0.RolespecPermission{
+					{Action: "dashboards:read", Scope: "dashboards:uid:d1"},
+				},
+			},
+		}
+
+		tuples, err := translateRoleToTuples(toUnstructured(t, role), nil)
+		require.NoError(t, err)
+		// Only own Permissions are used — global role not inherited.
+		require.NotEmpty(t, tuples)
 	})
 }
 
@@ -448,7 +730,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 				tb := &iamv0.TeamBinding{
 					ObjectMeta: metav1.ObjectMeta{Name: "tb-schema-test"},
 					Spec: iamv0.TeamBindingSpec{
-						Subject:    iamv0.TeamBindingspecSubject{Name: "user1"},
+						Subject:    iamv0.TeamBindingspecSubject{Kind: "User", Name: "user1"},
 						TeamRef:    iamv0.TeamBindingTeamRef{Name: "teamA"},
 						Permission: perm,
 					},
@@ -472,7 +754,6 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			{iamv0.RoleBindingSpecSubjectKindUser, "uid1"},
 			{iamv0.RoleBindingSpecSubjectKindServiceAccount, "sa1"},
 			{iamv0.RoleBindingSpecSubjectKindTeam, "team1"},
-			{iamv0.RoleBindingSpecSubjectKindBasicRole, "basic_viewer"},
 		}
 
 		for _, s := range subjects {
@@ -509,6 +790,41 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 				}
 
 				tuples, err := TranslateUserToTuples(toUnstructured(t, user))
+				require.NoError(t, err)
+
+				for _, tuple := range tuples {
+					validateTupleAgainstSchema(t, ts, tuple)
+				}
+			})
+		}
+	})
+
+	t.Run("global role bindings for all subject kinds", func(t *testing.T) {
+		subjects := []struct {
+			kind iamv0.GlobalRoleBindingSpecSubjectKind
+			name string
+		}{
+			{iamv0.GlobalRoleBindingSpecSubjectKindUser, "uid1"},
+			{iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount, "sa1"},
+			{iamv0.GlobalRoleBindingSpecSubjectKindTeam, "team1"},
+		}
+
+		for _, s := range subjects {
+			t.Run(string(s.kind), func(t *testing.T) {
+				grb := &iamv0.GlobalRoleBinding{
+					ObjectMeta: metav1.ObjectMeta{Name: "grb-schema-test"},
+					Spec: iamv0.GlobalRoleBindingSpec{
+						Subject: iamv0.GlobalRoleBindingspecSubject{
+							Kind: s.kind,
+							Name: s.name,
+						},
+						RoleRefs: []iamv0.GlobalRoleBindingspecRoleRef{
+							{Kind: "GlobalRole", Name: "global-role"},
+						},
+					},
+				}
+
+				tuples, err := TranslateGlobalRoleBindingToTuples(toUnstructured(t, grb))
 				require.NoError(t, err)
 
 				for _, tuple := range tuples {

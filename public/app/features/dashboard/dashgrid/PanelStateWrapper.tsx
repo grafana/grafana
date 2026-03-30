@@ -3,35 +3,35 @@ import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   AnnotationChangeEvent,
-  AnnotationEventUIModel,
+  type AnnotationEventUIModel,
   CoreApp,
   DashboardCursorSync,
-  DataFrame,
-  EventFilterOptions,
-  FieldConfigSource,
+  type DataFrame,
+  type EventFilterOptions,
+  type FieldConfigSource,
   getDataSourceRef,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
-  PanelPlugin,
-  PanelPluginMeta,
+  type PanelData,
+  type PanelPlugin,
+  type PanelPluginMeta,
   PluginContextProvider,
   SetPanelAttentionEvent,
-  TimeRange,
+  type TimeRange,
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
-import { VizLegendOptions } from '@grafana/schema';
+import { type VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
   PanelChrome,
-  PanelContext,
+  type PanelContext,
   PanelContextProvider,
-  SeriesVisibilityChangeMode,
-  AdHocFilterItem,
+  type SeriesVisibilityChangeMode,
+  type AdHocFilterItem,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { profiler } from 'app/core/profiler';
@@ -45,9 +45,9 @@ import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
 
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+import { getTimeSrv, type TimeSrv } from '../services/TimeSrv';
+import { type DashboardModel } from '../state/DashboardModel';
+import { type PanelModel } from '../state/PanelModel';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
@@ -165,7 +165,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
   };
 
-  onSeriesVisibilityChange = (label: string, mode: SeriesVisibilityChangeMode) => {
+  onSeriesVisibilityChange = (label: string | string[] | null, mode: SeriesVisibilityChangeMode) => {
+    if (typeof label !== 'string') {
+      return;
+    }
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );

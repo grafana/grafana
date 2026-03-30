@@ -5,53 +5,53 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   compareArrayValues,
   CoreApp,
-  DataFrame,
+  type DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  DataQueryResponse,
-  EventBus,
-  ExploreLogsPanelState,
-  ExplorePanelsState,
-  FieldConfigSource,
-  FieldType,
+  type DataQueryResponse,
+  type EventBus,
+  type ExploreLogsPanelState,
+  type ExplorePanelsState,
+  type FieldConfigSource,
+  type FieldType,
   getFieldDisplayName,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   LoadingState,
-  LogLevel,
-  LogRowContextOptions,
-  LogRowModel,
+  type LogLevel,
+  type LogRowContextOptions,
+  type LogRowModel,
   LogsDedupDescription,
   LogsDedupStrategy,
-  LogsMetaItem,
+  type LogsMetaItem,
   LogsSortOrder,
-  PanelData,
+  type PanelData,
   rangeUtil,
-  RawTimeRange,
+  type RawTimeRange,
   serializeStateToUrlParam,
   shallowCompare,
-  SplitOpen,
+  type SplitOpen,
   store,
-  TimeRange,
-  TimeZone,
+  type TimeRange,
+  type TimeZone,
   toUtc,
   urlUtil,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataTopic, TableSortByFieldState } from '@grafana/schema';
+import { type DataQuery, DataTopic, type TableSortByFieldState } from '@grafana/schema';
 import {
   Button,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
   PanelChrome,
-  PopoverContent,
+  type PopoverContent,
   RadioButtonGroup,
   SeriesVisibilityChangeMode,
-  Themeable2,
+  type Themeable2,
   withTheme2,
 } from '@grafana/ui';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
@@ -60,17 +60,17 @@ import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
-import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
+import { LogList, type LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
-import { Options } from 'app/plugins/panel/logstable/options/types';
-import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type Options } from 'app/plugins/panel/logstable/options/types';
+import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';
-import { ExploreItemState } from 'app/types/explore';
+import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
 import { getDefaultFieldSelectorWidth } from '../../logs/components/fieldSelector/FieldSelector';
@@ -92,7 +92,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { LogsVisualisationType } from './constants';
+import { type LogsVisualisationType } from './constants';
 import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
 import { getDefaultTableSortBy } from './utils/table/logsTable';
@@ -1176,7 +1176,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 }
 
                 if (options.frameIndex !== tableFrameIndex) {
-                  const refId = props.logsFrames?.[options.frameIndex]?.refId;
+                  const refId = props?.logsFrames?.[options.frameIndex]?.refId;
                   if (refId) {
                     updatePanelState({ refId });
                   }

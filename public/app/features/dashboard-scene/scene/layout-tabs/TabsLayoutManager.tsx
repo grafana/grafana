@@ -1,17 +1,18 @@
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  VizPanel,
+  type SceneObjectUrlValues,
+  type VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -21,24 +22,37 @@ import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
-import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
+type TabsPlaceholder = {
+  width: number;
+  height: number;
+  index: number;
+};
+
 interface TabsLayoutManagerState extends SceneObjectState {
   tabs: TabItem[];
   currentTabSlug?: string;
+  isDropTarget?: boolean;
+  placeholder?: TabsPlaceholder;
 }
 
-export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> implements DashboardLayoutGroup {
+export class TabsLayoutManager
+  extends SceneObjectBase<TabsLayoutManagerState>
+  implements DashboardLayoutGroup, DashboardDropTarget
+{
   public static Component = TabsLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
+  public readonly isDashboardDropTarget = true as const;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -53,8 +67,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     icon: 'window',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeTabsLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeTabsLayout(this, isSnapshot);
   }
 
   public readonly descriptor = TabsLayoutManager.descriptor;
@@ -68,9 +82,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
-  public duplicate(): DashboardLayoutManager {
-    // Maybe not needed, depending on if we want nested tabs or tabs within rows
-    throw new Error('Method not implemented.');
+  // a single panel ID generator is shared across all tabs to ensure that each gets a unique range of panel IDs.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
+    const gen = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(this);
+    const newTabs = this.state.tabs.map((tab) => tab.duplicate(gen));
+    return this.clone({ tabs: newTabs, key: undefined });
   }
 
   public duplicateTab(tab: TabItem) {
@@ -127,6 +143,16 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
       return acc;
     }, []);
+  }
+
+  public setPlaceholder(placeholder: TabsPlaceholder) {
+    this.setState({ placeholder });
+  }
+
+  public setIsDropTarget(isDropTarget: boolean) {
+    this.setState({
+      isDropTarget,
+    });
   }
 
   public addPanel(vizPanel: VizPanel) {
@@ -243,6 +269,33 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
+  /**
+   * Calculates the correct index to insert a tab when dragging within the same TabsLayoutManager, accounting for repeated tabs.
+   * @param {number } insertIndexInRepeatedTabs - the index where the tab would be inserted if repeated tabs were included as separate entries
+   */
+  public mapTabInsertIndex(insertIndexInRepeatedTabs: number): number {
+    const { tabs } = this.state;
+    const insertAt = Math.max(0, insertIndexInRepeatedTabs);
+    let groupStart = 0;
+
+    for (let tabIndex = 0; tabIndex < tabs.length; tabIndex++) {
+      const groupSize = 1 + (tabs[tabIndex].state.repeatedTabs?.length ?? 0);
+      const groupEnd = groupStart + groupSize;
+
+      if (insertAt <= groupStart) {
+        return tabIndex;
+      }
+
+      if (insertAt < groupEnd) {
+        return tabIndex + 1;
+      }
+
+      groupStart = groupEnd;
+    }
+
+    return tabs.length;
+  }
+
   private _confirmConvertMixedGrids(availableIds: Set<string>) {
     showConvertMixedGridsModal(availableIds, (id: string) => {
       const selected = mapIdToGridLayoutType(id);
@@ -308,33 +361,50 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     ungroupLayout(this, firstTab.state.layout, true);
   }
 
-  public removeTab(tabToRemove: TabItem, skipUndo?: boolean) {
-    const tabIndex = this.state.tabs.findIndex((t) => t === tabToRemove);
+  public removeTab(tab: TabItem, skipUndo?: boolean) {
+    const tabsBeforeRemoval = [...this.state.tabs];
+    let tabIndex = 0;
+    const tabsAfterRemoval = tabsBeforeRemoval.filter((r, i) => {
+      if (r !== tab) {
+        return true;
+      }
+      tabIndex = i;
+      return false;
+    });
+    const parent = this.parent!;
+    if (!isLayoutParent(parent)) {
+      throw new Error('Parent object is not a LayoutParent');
+    }
 
     const perform = () => {
-      const tabs = this.state.tabs;
-      const tabIndex = tabs.findIndex((t) => t === tabToRemove);
-      const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
-
-      const newTabsState = tabs.filter((t) => t !== tabToRemove);
-
-      this.setState({
-        tabs: newTabsState,
-        currentTabSlug: newTabsState[newCurrentTabIndex]?.getSlug(),
-      });
+      if (!tabsAfterRemoval.length) {
+        parent.switchLayout(AutoGridLayoutManager.createEmpty());
+      } else {
+        const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
+        this.setState({
+          tabs: tabsAfterRemoval,
+          currentTabSlug: tabsAfterRemoval[newCurrentTabIndex]?.getSlug(),
+        });
+      }
     };
 
+    const thisLayout = this;
     const undo = () => {
-      const tabs = [...this.state.tabs];
-      tabs.splice(tabIndex, 0, tabToRemove);
-      this.setState({ tabs, currentTabSlug: tabToRemove.getSlug() });
+      if (!tabsAfterRemoval.length) {
+        parent.switchLayout(thisLayout);
+      } else {
+        this.setState({
+          tabs: tabsBeforeRemoval,
+          currentTabSlug: tab.getSlug(),
+        });
+      }
     };
 
     if (skipUndo) {
       perform();
     } else {
       dashboardEditActions.removeElement({
-        removedObject: tabToRemove,
+        removedObject: tab,
         source: this,
         perform,
         undo,
@@ -434,6 +504,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
             title: newTitle,
             conditionalRendering,
             repeatByVariable: row.state.repeatByVariable,
+            $variables: row.state.$variables,
           })
         );
       }

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultCatalogTTL = 1 * time.Hour
+	defaultCatalogTTL = 6 * time.Hour
 )
 
 // CatalogProvider retrieves plugin metadata from the grafana.com API.
@@ -47,6 +47,11 @@ func NewCatalogProviderWithTTL(logger logging.Logger, grafanaComAPIURL, grafanaC
 		ttl:                ttl,
 		logger:             logger,
 	}
+}
+
+// Name returns the name of the provider.
+func (p *CatalogProvider) Name() string {
+	return "catalog"
 }
 
 // GetMeta fetches plugin metadata from grafana.com API endpoint:

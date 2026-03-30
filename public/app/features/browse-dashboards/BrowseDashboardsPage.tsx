@@ -4,7 +4,7 @@ import { memo, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
@@ -16,7 +16,8 @@ import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
-import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
+import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
+import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -24,6 +25,7 @@ import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
+import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
@@ -40,7 +42,11 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUID });
+  const {
+    isReadOnlyRepo,
+    status: repoViewStatus,
+    orphanedRepoName,
+  } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
@@ -160,6 +166,12 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
+
+        {/* Only shown when viewing a folder (not root) whose managing repository has been deleted — the folder still has ownership annotations pointing to a repo that no longer exists. */}
+        {repoViewStatus === RepoViewStatus.Orphaned && orphanedRepoName && (
+          <OrphanedResourceBanner repositoryName={orphanedRepoName} />
+        )}
+        <QuotaLimitBanner />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
@@ -171,13 +183,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           />
         </div>
 
-        {hasSelection ? (
-          <BrowseActions folderDTO={folderDTO} />
-        ) : (
-          <div className={styles.filters}>
-            <BrowseFilters />
-          </div>
-        )}
+        {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
 
         <div className={styles.subView}>
           <AutoSizer>
@@ -210,6 +216,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
+    label: 'pageContents',
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
@@ -218,15 +225,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
+    label: 'subView',
     height: '100%',
-  }),
-
-  filters: css({
-    display: 'none',
-
-    [theme.breakpoints.up('md')]: {
-      display: 'block',
-    },
+    minHeight: '300px',
   }),
 });
 

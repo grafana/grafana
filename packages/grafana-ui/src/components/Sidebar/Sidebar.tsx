@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useContext } from 'react';
+import { type ReactNode, useContext } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -11,7 +11,12 @@ import { getPortalContainer } from '../Portal/Portal';
 import { SidebarButton } from './SidebarButton';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
 import { SidebarResizer } from './SidebarResizer';
-import { SIDE_BAR_WIDTH_ICON_ONLY, SIDE_BAR_WIDTH_WITH_TEXT, SidebarContext, SidebarContextValue } from './useSidebar';
+import {
+  SIDE_BAR_WIDTH_ICON_ONLY,
+  SIDE_BAR_WIDTH_WITH_TEXT,
+  SidebarContext,
+  type SidebarContextValue,
+} from './useSidebar';
 import { useCustomClickAway } from './useSidebarClickAway';
 
 export interface Props {
@@ -78,14 +83,12 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
     <div className={cx(styles.toolbar, context.compact && styles.toolbarIconsOnly)}>
       {children}
       <div className={styles.flexGrow} />
-      {context.hasOpenPane && (
-        <SidebarButton
-          icon={'web-section-alt'}
-          onClick={context.onToggleDock}
-          title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
-          data-testid={selectors.components.Sidebar.dockToggle}
-        />
-      )}
+      <SidebarButton
+        icon={'web-section-alt'}
+        onClick={context.onToggleDock}
+        title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
+        data-testid={selectors.components.Sidebar.dockToggle}
+      />
     </div>
   );
 }

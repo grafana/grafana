@@ -1,10 +1,15 @@
 import { handleRequestError } from '@grafana/api-clients';
 import {
-  Correlation as CorrelationK8s,
+  type Correlation as CorrelationK8s,
   useListCorrelationQuery,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { SupportedTransformationType } from '@grafana/data';
-import { CorrelationData, CorrelationExternal, CorrelationQuery, getDataSourceSrv } from '@grafana/runtime';
+import {
+  type CorrelationData,
+  type CorrelationExternal,
+  type CorrelationQuery,
+  getDataSourceSrv,
+} from '@grafana/runtime';
 
 import { toEnrichedCorrelationData } from './useCorrelations';
 
@@ -74,7 +79,6 @@ export const useCorrelationsK8s = (limit = 100, page: number) => {
   const { currentData, isLoading, error } = useListCorrelationQuery({ limit: pagedLimit });
   const startIdx = limit * (page - 1);
   const pagedData = currentData?.items.slice(startIdx, startIdx + limit) ?? [];
-
   const enrichedCorrelations =
     currentData !== undefined
       ? pagedData

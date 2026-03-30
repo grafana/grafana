@@ -10,14 +10,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -143,10 +143,10 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
-				storage:    us,
-				parents:    newParentsGetter(us, 2), // Max Depth of 2
+				namespacer:           func(_ int64) string { return "123" },
+				storage:              us,
+				parents:              newParentsGetter(us, 2),
+				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
 			}
 
 			tt.input.obj.Name = tt.input.name
@@ -286,7 +286,6 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
 			}
@@ -479,10 +478,9 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
-				parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
+				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -573,10 +571,9 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
-				parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
+				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -679,10 +676,9 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
 		namespacer: func(_ int64) string { return "123" },
-		folderSvc:  foldertest.NewFakeService(),
 		storage:    us,
 		searcher:   sm,
-		parents:    newParentsGetter(us, folder.MaxNestedFolderDepth),
+		parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

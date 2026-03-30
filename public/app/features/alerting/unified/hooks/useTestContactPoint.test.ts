@@ -2,12 +2,14 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
-import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import { type CreateReceiverIntegrationTestResponse } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import {
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
+} from 'app/plugins/datasource/alertmanager/types';
 
-import { TestIntegrationResponse } from '../api/testIntegrationApi';
 import { setupMswServer } from '../mockApi';
-import { GrafanaChannelValues } from '../types/receiver-form';
+import { type GrafanaChannelValues } from '../types/receiver-form';
 import { K8sAnnotations } from '../utils/k8s/constants';
 
 import { useTestContactPoint } from './useTestContactPoint';
@@ -31,7 +33,7 @@ const wrapper = () => getWrapper({ renderWithRouter: true });
 const K8S_TEST_ENDPOINT =
   '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test';
 
-const defaultK8sSuccessResponse: TestIntegrationResponse = {
+const defaultK8sSuccessResponse: CreateReceiverIntegrationTestResponse = {
   apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
   kind: 'CreateReceiverIntegrationTest',
   status: 'success',
@@ -41,7 +43,7 @@ const defaultK8sSuccessResponse: TestIntegrationResponse = {
 interface K8sTestHandlerOptions {
   onRequestBody?: (body: unknown) => void;
   onRequestUrl?: (url: string) => void;
-  response?: Partial<TestIntegrationResponse>;
+  response?: Partial<CreateReceiverIntegrationTestResponse>;
   status?: number;
   waitFor?: Promise<void>;
   networkError?: boolean;
@@ -173,119 +175,8 @@ describe('useTestContactPoint', () => {
     });
   });
 
-  describe('API path selection', () => {
-    const originalFeatureToggles = config.featureToggles;
-
-    beforeEach(() => {
-      server.resetHandlers();
-    });
-
-    afterEach(() => {
-      config.featureToggles = originalFeatureToggles;
-      server.resetHandlers();
-    });
-
-    it('should use K8s API when alertingImportAlertmanagerAPI is enabled', async () => {
-      // Suppress expected RTK Query async state update warnings
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      try {
-        config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: true };
-
-        let requestUrl: string | undefined;
-        server.use(createK8sTestHandler({ onRequestUrl: (url) => (requestUrl = url) }));
-
-        const contactPoint = createContactPoint();
-        const { result } = renderHook(() => useTestContactPoint({ contactPoint, defaultChannelValues }), {
-          wrapper: wrapper(),
-        });
-
-        const testPromise = result.current.testChannel({
-          channelValues: createChannelValues(),
-          existingIntegration: createExistingIntegration(),
-        });
-
-        await act(async () => {
-          await testPromise;
-        });
-
-        // Wait for RTK Query state updates to complete and request to be made
-        await waitFor(
-          () => {
-            expect(result.current.isLoading).toBe(false);
-          },
-          { timeout: 3000 }
-        );
-
-        expect(requestUrl).not.toBeUndefined();
-        expect(requestUrl).toContain('/apis/notifications.alerting.grafana.app/');
-      } finally {
-        consoleSpy.mockRestore();
-      }
-    });
-
-    it('should use old API when alertingImportAlertmanagerAPI is disabled', async () => {
-      // Suppress expected RTK Query async state update warnings
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      try {
-        config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: false };
-
-        let requestUrl: string | undefined;
-        server.use(
-          http.post('*/config/api/v1/receivers/test', ({ request }) => {
-            requestUrl = request.url;
-            return HttpResponse.json({
-              notified_at: new Date().toISOString(),
-              receivers: [
-                {
-                  name: 'Test Receiver',
-                  grafana_managed_receiver_configs: [{ name: 'webhook', status: 'ok' }],
-                },
-              ],
-            });
-          })
-        );
-
-        const contactPoint = createContactPoint();
-        const { result } = renderHook(() => useTestContactPoint({ contactPoint, defaultChannelValues }), {
-          wrapper: wrapper(),
-        });
-
-        const testPromise = result.current.testChannel({
-          channelValues: createChannelValues(),
-          existingIntegration: createExistingIntegration(),
-        });
-
-        await act(async () => {
-          await testPromise;
-        });
-
-        await waitFor(
-          () => {
-            expect(result.current.isLoading).toBe(false);
-          },
-          { timeout: 3000 }
-        );
-
-        expect(requestUrl).not.toBeUndefined();
-        expect(requestUrl).toContain('/api/alertmanager/');
-      } finally {
-        consoleSpy.mockRestore();
-      }
-    });
-  });
-
   describe('K8s API request construction', () => {
-    const originalFeatureToggles = config.featureToggles;
-
     beforeEach(() => {
-      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: true };
-      server.resetHandlers();
-    });
-
-    afterEach(() => {
-      config.featureToggles = originalFeatureToggles;
       server.resetHandlers();
     });
 
@@ -540,15 +431,7 @@ describe('useTestContactPoint', () => {
   });
 
   describe('error handling', () => {
-    const originalFeatureToggles = config.featureToggles;
-
     beforeEach(() => {
-      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: true };
-      server.resetHandlers();
-    });
-
-    afterEach(() => {
-      config.featureToggles = originalFeatureToggles;
       server.resetHandlers();
     });
 
@@ -616,14 +499,7 @@ describe('useTestContactPoint', () => {
   });
 
   describe('state management', () => {
-    const originalFeatureToggles = config.featureToggles;
-
-    beforeEach(() => {
-      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: true };
-    });
-
     afterEach(() => {
-      config.featureToggles = originalFeatureToggles;
       server.resetHandlers();
     });
 
@@ -687,7 +563,7 @@ describe('useTestContactPoint', () => {
     it('should set error after failed API call', async () => {
       server.use(
         createK8sTestHandler({
-          response: { message: 'Internal server error' } as unknown as Partial<TestIntegrationResponse>,
+          response: { message: 'Internal server error' } as unknown as Partial<CreateReceiverIntegrationTestResponse>,
           status: 500,
         })
       );

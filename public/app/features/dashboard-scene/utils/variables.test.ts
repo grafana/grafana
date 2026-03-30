@@ -1,14 +1,14 @@
 import {
-  ConstantVariableModel,
-  CustomVariableModel,
-  DataSourceVariableModel,
-  GroupByVariableModel,
-  IntervalVariableModel,
+  type ConstantVariableModel,
+  type CustomVariableModel,
+  type DataSourceVariableModel,
+  type GroupByVariableModel,
+  type IntervalVariableModel,
   LoadingState,
-  QueryVariableModel,
-  SwitchVariableModel,
-  TextBoxVariableModel,
-  TypedVariableModel,
+  type QueryVariableModel,
+  type SwitchVariableModel,
+  type TextBoxVariableModel,
+  type TypedVariableModel,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -20,7 +20,7 @@ import {
   SceneVariableSet,
   SwitchVariable,
 } from '@grafana/scenes';
-import { defaultDashboard, defaultTimePickerConfig, VariableType } from '@grafana/schema';
+import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
@@ -461,6 +461,12 @@ describe('when creating variables objects', () => {
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
+      collapsible: undefined,
+      $behaviors: undefined,
+      defaultKeys: undefined,
+      drilldownRecommendationsEnabled: undefined,
+      enableGroupBy: false,
+      layout: 'combobox',
     });
   });
 
@@ -546,6 +552,11 @@ describe('when creating variables objects', () => {
       ],
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
+      collapsible: undefined,
+      $behaviors: undefined,
+      drilldownRecommendationsEnabled: undefined,
+      enableGroupBy: false,
+      layout: 'combobox',
     });
   });
 

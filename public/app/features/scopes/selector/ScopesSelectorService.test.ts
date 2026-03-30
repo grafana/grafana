@@ -1,12 +1,12 @@
-import { Scope, ScopeNode, Store } from '@grafana/data';
+import { type Scope, type ScopeNode, type Store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { ScopesApiClient } from '../ScopesApiClient';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
-import { ScopeNavigation } from '../dashboards/types';
+import { type ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopeNavigation } from '../dashboards/types';
 
 import { RECENT_SCOPES_KEY, ScopesSelectorService } from './ScopesSelectorService';
-import { RecentScope } from './types';
+import { type RecentScope } from './types';
 
 // Mock locationService
 jest.mock('@grafana/runtime', () => ({
@@ -1155,6 +1155,58 @@ describe('ScopesSelectorService', () => {
       // Should redirect to the first one
       expect(locationService.push).toHaveBeenCalledWith('/d/first-dashboard');
       expect(locationService.push).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT redirect when redirects are disabled', async () => {
+      service.setRedirectEnabled(false);
+
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+            url: '/d/dashboard1',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      await service.changeScopes(['test-scope']);
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should redirect again after re-enabling redirects', async () => {
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+            url: '/d/dashboard1',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      // Disable, then re-enable — the flag should be toggleable back on.
+      service.setRedirectEnabled(false);
+      service.setRedirectEnabled(true);
+
+      await service.changeScopes(['test-scope']);
+
+      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
     });
 
     it('should redirect to redirectUrl when scope node has explicit redirectUrl', async () => {

@@ -2,12 +2,12 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import {
   from,
   lastValueFrom,
-  MonoTypeOperatorFunction,
+  type MonoTypeOperatorFunction,
   Observable,
-  Observer,
-  OperatorFunction,
+  type Observer,
+  type OperatorFunction,
   Subject,
-  Subscriber,
+  type Subscriber,
   Subscription,
   throwError,
 } from 'rxjs';
@@ -27,16 +27,22 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
-import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
+import {
+  type BackendSrv as BackendService,
+  type BackendSrvRequest,
+  config,
+  type FetchError,
+  type FetchResponse,
+} from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardSearchItem } from 'app/features/search/types';
+import { type DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
-import { DashboardDTO } from 'app/types/dashboard';
-import { FolderDTO } from 'app/types/folders';
+import { type DashboardDTO } from 'app/types/dashboard';
+import { type FolderDTO } from 'app/types/folders';
 
 import { ShowModalReactEvent } from '../../types/events';
 import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
@@ -45,7 +51,7 @@ import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
 import { ResponseQueue } from './ResponseQueue';
-import { ContextSrv, contextSrv } from './context_srv';
+import { type ContextSrv, contextSrv } from './context_srv';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -431,8 +437,9 @@ export class BackendSrv implements BackendService {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
+      const message = isHtmlResponse(err.data) ? `${err.status} ${err.statusText ?? 'Error'}` : err.data;
       err.data = {
-        message: err.data,
+        message,
         error: err.statusText,
         response: err.data,
       };
@@ -632,7 +639,7 @@ export class BackendSrv implements BackendService {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
-    return getDashboardAPI('v1').getDashboardDTO(uid);
+    return getDashboardAPI('v1').then((api) => api.getDashboardDTO(uid));
   }
 
   getPublicDashboardByUid(uid: string) {
@@ -654,6 +661,11 @@ export class BackendSrv implements BackendService {
       showErrorAlert: false,
     });
   }
+}
+
+function isHtmlResponse(value: string): boolean {
+  const trimmed = value.trimStart().toLowerCase();
+  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html');
 }
 
 // Used for testing and things that really need BackendSrv

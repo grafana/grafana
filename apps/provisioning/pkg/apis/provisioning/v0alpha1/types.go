@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -86,7 +87,7 @@ func (GitHubRepositoryConfig) OpenAPIModelName() string {
 }
 
 type GitRepositoryConfig struct {
-	// The repository URL (e.g. `https://github.com/example/test.git`).
+	// The repository URL (e.g. `https://github.com/example/test`).
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
@@ -253,6 +254,15 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+// ConnectionName returns the name of the connection referenced by this repository,
+// or an empty string if the repository does not use a connection.
+func (r *Repository) ConnectionName() string {
+	if r.Spec.Connection != nil {
+		return r.Spec.Connection.Name
+	}
+	return ""
+}
+
 type ConnectionInfo struct {
 	Name string `json:"name"`
 }
@@ -278,6 +288,11 @@ type RepositorySpec struct {
 
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
+
+	// Webhook settings for the repository.
+	// When specified, the base URL overrides the auto-detected Grafana public URL
+	// used to register webhooks with the external Git provider.
+	Webhook *WebhookConfig `json:"webhook,omitempty"`
 
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
@@ -345,6 +360,19 @@ type SyncOptions struct {
 
 func (SyncOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SyncOptions"
+}
+
+type WebhookConfig struct {
+	// Base URL of the Grafana instance used to construct the webhook endpoint
+	// registered with the external Git provider. Only the base URL should be
+	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
+	// and resource name are appended automatically. Trailing slashes are stripped.
+	// Must be a valid HTTP or HTTPS URL.
+	BaseURL string `json:"baseUrl,omitempty"`
+}
+
+func (WebhookConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "WebhookConfig"
 }
 
 // The status of a Repository.
@@ -734,6 +762,7 @@ func (TestResults) OpenAPIModelName() string {
 // does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to
 // communicate validation or external reference errors that users can resolve by editing spec fields.
 // TODO: Rename this type to FieldError for consistency with Kubernetes conventions and to more clearly indicate that it represents field-level validation errors, not arbitrary error details.
+// +k8s:deepcopy-gen=false
 type ErrorDetails struct {
 	// Type is a machine-readable description of the cause of the error.
 	// This is intended for programmatic handling and matches Kubernetes' CauseType values.
@@ -755,8 +784,24 @@ type ErrorDetails struct {
 
 	// BadValue is the value of the field that was determined to be invalid, if applicable.
 	// This can be any type. This field is optional and may be omitted if not relevant.
-	// FIXME: DeepCopyInto and DeepCopy are not generated for interface{} or any
-	// BadValue interface{} `json:"badValue,omitempty"`
+	BadValue any `json:"badValue,omitempty"`
+}
+
+// DeepCopy copies the receiver, creating a new ErrorDetails.
+func (in *ErrorDetails) DeepCopy() *ErrorDetails {
+	if in == nil {
+		return nil
+	}
+
+	out := new(ErrorDetails)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto copies the receiver, writing into out.
+func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
+	//nolint:errcheck,gosec // this format is taken from the other generated DeepCopyInto functions.
+	resource.CopyObjectInto(out, in)
 }
 
 func (ErrorDetails) OpenAPIModelName() string {
@@ -819,6 +864,8 @@ type RefItem struct {
 	Hash string `json:"hash,omitempty"`
 	// The URL to the reference (branch or tag)
 	RefURL string `json:"refURL,omitempty"`
+	// Whether this ref is protected (e.g. branch protection rules)
+	Protected bool `json:"protected,omitempty"`
 }
 
 func (RefItem) OpenAPIModelName() string {

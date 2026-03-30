@@ -1,6 +1,6 @@
 // POST /apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/timeintervals
 
-import { HttpResponse, HttpResponseResolver, http } from 'msw';
+import { HttpResponse, type HttpResponseResolver, http } from 'msw';
 
 const getProvisioningHelper: HttpResponseResolver = ({ request }) => {
   const url = new URL(request.url);
@@ -17,11 +17,5 @@ const exportMuteTimingsHandler = () => http.get('/api/v1/provisioning/mute-timin
 const exportSpecificMuteTimingsHandler = () =>
   http.get('/api/v1/provisioning/mute-timings/:name/export', getProvisioningHelper);
 
-// Used by folder picker to load provisioning settings
-const provisioningSettingsHandler = () =>
-  http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/settings', () =>
-    HttpResponse.json({ items: [] })
-  );
-
-const handlers = [exportMuteTimingsHandler(), exportSpecificMuteTimingsHandler(), provisioningSettingsHandler()];
+const handlers = [exportMuteTimingsHandler(), exportSpecificMuteTimingsHandler()];
 export default handlers;

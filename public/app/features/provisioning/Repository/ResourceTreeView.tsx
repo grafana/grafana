@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   FilterInput,
   Icon,
   InteractiveTable,
@@ -13,15 +14,16 @@ import {
   LinkButton,
   Spinner,
   Stack,
+  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import {
-  Repository,
+  type Repository,
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FlatTreeItem, TreeItem } from '../types';
+import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
@@ -97,7 +99,20 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         id: 'status',
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
-          const { status } = original.item;
+          const { status, missingFolderMetadata } = original.item;
+          if (config.featureToggles.provisioningFolderMetadata && missingFolderMetadata) {
+            return (
+              <Tooltip
+                content={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
+              >
+                <Icon
+                  name="exclamation-triangle"
+                  className={styles.warningIcon}
+                  aria-label={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
+                />
+              </Tooltip>
+            );
+          }
           if (!status) {
             return null;
           }
@@ -222,5 +237,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   syncedIcon: css({
     color: theme.colors.success.text,
+  }),
+  warningIcon: css({
+    color: theme.colors.warning.text,
   }),
 });

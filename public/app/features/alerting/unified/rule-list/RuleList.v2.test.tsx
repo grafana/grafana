@@ -10,7 +10,7 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
 import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { RulesFilter } from '../search/rulesSearchParser';
+import { type RulesFilter } from '../search/rulesSearchParser';
 import { setupDataSources } from '../testSetup/datasources';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
@@ -187,11 +187,11 @@ describe('RuleListActions', () => {
     moreButton: byRole('button', { name: /more/i }),
     moreMenu: byRole('menu'),
     menuOptions: {
-      newAlertRuleForExport: byRole('link', { name: /new alert rule for export/i }),
-      newGrafanaRecordingRule: byRole('link', { name: /new grafana recording rule/i }),
-      newDataSourceRecordingRule: byRole('link', { name: /new data source recording rule/i }),
-      importAlertRules: byRole('link', { name: /import alert rules/i }),
-      importToGma: byRole('link', { name: /import to gma/i }),
+      newAlertRuleForExport: byRole('menuitem', { name: /new alert rule for export/i }),
+      newGrafanaRecordingRule: byRole('menuitem', { name: /new grafana recording rule/i }),
+      newDataSourceRecordingRule: byRole('menuitem', { name: /new data source recording rule/i }),
+      importAlertRules: byRole('menuitem', { name: /import alert rules/i }),
+      importToGma: byRole('menuitem', { name: /import to gma/i }),
       exportAllGrafanaRules: byRole('menuitem', { name: /export all grafana rules/i }),
     },
     exportDrawer: byRole('dialog', { name: /export/i }),

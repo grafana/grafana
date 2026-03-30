@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { GroupByVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
+import { type GroupByVariable, type VariableValueOption, type VariableValueSingle } from '@grafana/scenes';
 import { Button, Checkbox, ClickOutsideWrapper, FilterInput, Stack, useStyles2 } from '@grafana/ui';
 
 interface Props {
@@ -45,21 +45,13 @@ export function PanelGroupByActionPopover({
   };
 
   const handleApply = useCallback(() => {
-    if (!values.length) {
-      return;
-    }
-
     groupByVariable.changeValueTo(values, values.map(String), true);
     onCancel();
   }, [groupByVariable, onCancel, values]);
 
-  const isAnyOptionChecked = () => {
-    if (!values.length) {
-      return false;
-    }
-
-    return values.some((value) => options.find((option) => option.value === value));
-  };
+  const groupByHasCurrentValues = Array.isArray(groupByVariable.state.value)
+    ? groupByVariable.state.value.length > 0
+    : Boolean(groupByVariable.state.value);
 
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
@@ -97,7 +89,7 @@ export function PanelGroupByActionPopover({
           </div>
 
           <Stack justifyContent="end" direction="row-reverse">
-            <Button size="sm" onClick={handleApply} disabled={!isAnyOptionChecked()}>
+            <Button size="sm" onClick={handleApply} disabled={!values.length && !groupByHasCurrentValues}>
               <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
             </Button>
             <Button size="sm" variant="secondary" onClick={onCancel}>

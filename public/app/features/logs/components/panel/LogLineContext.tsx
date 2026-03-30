@@ -3,31 +3,31 @@ import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   CoreApp,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceWithLogsContextSupport,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceWithLogsContextSupport,
   dateTime,
   EventBusSrv,
   formattedValueToString,
   getValueFormat,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   hasLogsContextSupport,
   LoadingState,
-  LogRowContextOptions,
+  type LogRowContextOptions,
   LogRowContextQueryDirection,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   shallowCompare,
   store,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
-import { Button, Collapse, Combobox, ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { type DataQuery, type TimeZone } from '@grafana/schema';
+import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';
 
@@ -37,8 +37,8 @@ import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
-import { LogLineMenuCustomItem } from './LogLineMenu';
-import { LogList, LogListOptions } from './LogList';
+import { type LogLineMenuCustomItem } from './LogLineMenu';
+import { LogList, type LogListOptions } from './LogList';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -359,9 +359,7 @@ export const LogLineContext = memo(
         className={styles.modal}
         onDismiss={handleClose}
       >
-        {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
-          <div>{getLogRowContextUi(log, updateResults)}</div>
-        )}
+        {getLogRowContextUi && <div>{getLogRowContextUi(log, updateResults)}</div>}
         <Collapse
           isOpen={showLog}
           onToggle={() => setShowLog(!showLog)}

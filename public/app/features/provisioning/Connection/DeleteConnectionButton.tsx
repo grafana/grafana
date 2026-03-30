@@ -5,7 +5,7 @@ import { AppEvents, isObject } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { Connection, useDeleteConnectionMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection, useDeleteConnectionMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage, extractStatusCauses } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';

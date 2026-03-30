@@ -3,14 +3,14 @@ import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
-import { PromRuleType, RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
+import { PromRuleType, type RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
 import {
   RuleSource,
-  RulesFilter,
+  type RulesFilter,
   applySearchFilterToQuery,
   getSearchFilterFromQuery,
 } from '../search/rulesSearchParser';

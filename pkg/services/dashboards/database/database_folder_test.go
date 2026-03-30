@@ -38,7 +38,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var err error
 			dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
-			folderStore = folderimpl.ProvideStore(sqlStore)
+			folderStore = folderimpl.ProvideStore(sqlStore, cfg)
 			require.NoError(t, err)
 			flder = insertTestDashFolder(t, dashboardStore, folderStore, "1 test dash folder", 1, 0, "", "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod", "webapp")

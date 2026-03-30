@@ -1,8 +1,8 @@
-import { VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
-import { GraphFieldConfig } from '@grafana/ui';
+import { VisualizationSuggestionScore, type VisualizationSuggestionsSupplier } from '@grafana/data';
+import { type GraphFieldConfig } from '@grafana/ui';
 import { getGeometryField, getDefaultLocationMatchers } from 'app/features/geo/utils/location';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export const geomapSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (dataSummary) => {
   if (!dataSummary.hasData || !dataSummary.rawFrames) {

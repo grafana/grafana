@@ -1,4 +1,4 @@
-import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
+import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -6,8 +6,8 @@ import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
-import { DashboardScene, DashboardSceneState } from './DashboardScene';
-import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { type DashboardScene, type DashboardSceneState } from './DashboardScene';
+import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 

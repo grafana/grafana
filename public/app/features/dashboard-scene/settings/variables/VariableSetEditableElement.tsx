@@ -1,20 +1,26 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+  isEditableDashboardElement,
+} from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
 import { openAddVariablePane } from './VariableAddEditableElement';
 import { isEditableVariableType } from './utils';
@@ -35,21 +41,6 @@ function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariable
   return [options];
 }
 
-function partitionVariables(variables: SceneVariable[]) {
-  const standardVariables: SceneVariable[] = [];
-  const controlsMenuVariables: SceneVariable[] = [];
-
-  variables.forEach((variable) => {
-    if (variable.state.hide === VariableHide.inControlsMenu) {
-      controlsMenuVariables.push(variable);
-    } else {
-      standardVariables.push(variable);
-    }
-  });
-
-  return { standardVariables, controlsMenuVariables };
-}
-
 export class VariableSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Variable';
@@ -65,12 +56,23 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren() {
-    const { standardVariables, controlsMenuVariables } = partitionVariables(
-      this.set.state.variables
+    const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(
+      filterSectionRepeatLocalVariables(this.set.state.variables, this.set)
         // filter out system and snapshot variables
         .filter((variable) => isEditableVariableType(variable.state.type))
     );
-    return [...standardVariables, ...controlsMenuVariables];
+    return [...visible, ...controlsMenu, ...hidden];
+  }
+
+  public scrollIntoView() {
+    let current: SceneObject | undefined = this.set.parent;
+    while (current) {
+      if (isEditableDashboardElement(current) && current.scrollIntoView) {
+        current.scrollIntoView();
+        return;
+      }
+      current = current.parent;
+    }
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
@@ -97,7 +99,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
   const { editableVariables, nonEditableVariables } = useMemo(() => {
     const editableVariables: SceneVariable[] = [];
     const nonEditableVariables: SceneVariable[] = [];
-    variables.forEach((variable) => {
+    filterSectionRepeatLocalVariables(variables, set).forEach((variable) => {
       if (isEditableVariableType(variable.state.type)) {
         editableVariables.push(variable);
       } else {
@@ -108,12 +110,9 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       editableVariables,
       nonEditableVariables,
     };
-  }, [variables]);
+  }, [variables, set]);
 
-  const { standardVariables, controlsMenuVariables } = useMemo(
-    () => partitionVariables(editableVariables),
-    [editableVariables]
-  );
+  const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(editableVariables);
 
   const createDragEndHandler = useCallback(
     (sourceList: SceneVariable[], mergeLists: (updatedList: SceneVariable[]) => SceneVariable[]) => {
@@ -150,14 +149,19 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
     [nonEditableVariables, set]
   );
 
-  const onStandardDragEnd = useMemo(
-    () => createDragEndHandler(standardVariables, (updatedList) => [...updatedList, ...controlsMenuVariables]),
-    [controlsMenuVariables, createDragEndHandler, standardVariables]
+  const onVisibleDragEnd = useMemo(
+    () => createDragEndHandler(visible, (updatedList) => [...updatedList, ...controlsMenu, ...hidden]),
+    [createDragEndHandler, controlsMenu, hidden, visible]
   );
 
-  const onControlsDragEnd = useMemo(
-    () => createDragEndHandler(controlsMenuVariables, (updatedList) => [...standardVariables, ...updatedList]),
-    [controlsMenuVariables, createDragEndHandler, standardVariables]
+  const onControlsMenuDragEnd = useMemo(
+    () => createDragEndHandler(controlsMenu, (updatedList) => [...visible, ...updatedList, ...hidden]),
+    [createDragEndHandler, controlsMenu, hidden, visible]
+  );
+
+  const onHiddenDragEnd = useMemo(
+    () => createDragEndHandler(hidden, (updatedList) => [...visible, ...controlsMenu, ...updatedList]),
+    [createDragEndHandler, controlsMenu, hidden, visible]
   );
 
   const onPointerDown = useCallback((event: React.PointerEvent) => {
@@ -215,13 +219,14 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
   return (
     <Stack direction="column" gap={1}>
-      <DragDropContext onDragEnd={onStandardDragEnd}>
-        {renderList(standardVariables, 'variables-outline-standard')}
-      </DragDropContext>
-      {controlsMenuVariables.length > 0 && (
-        <DragDropContext onDragEnd={onControlsDragEnd}>
-          {renderList(controlsMenuVariables, 'variables-outline-controls')}
+      <DragDropContext onDragEnd={onVisibleDragEnd}>{renderList(visible, 'variables-outline-visible')}</DragDropContext>
+      {controlsMenu.length > 0 && (
+        <DragDropContext onDragEnd={onControlsMenuDragEnd}>
+          {renderList(controlsMenu, 'variables-outline-controls')}
         </DragDropContext>
+      )}
+      {hidden.length > 0 && (
+        <DragDropContext onDragEnd={onHiddenDragEnd}>{renderList(hidden, 'variables-outline-hidden')}</DragDropContext>
       )}
       {canAdd && (
         <Box paddingBottom={1} paddingTop={1} display={'flex'}>

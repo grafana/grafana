@@ -1,11 +1,11 @@
 import { defaultsDeep } from 'lodash';
 
-import { DataTransformerConfig } from '@grafana/schema';
+import { type DataTransformerConfig } from '@grafana/schema';
 
-import { getPanelDataSummary, PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
+import { getPanelDataSummary, type PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 
-import { DataFrame } from './dataFrame';
-import { FieldConfigSource } from './fieldOverrides';
+import { type DataFrame } from './dataFrame';
+import { type FieldConfigSource } from './fieldOverrides';
 
 /**
  * @internal
@@ -53,7 +53,7 @@ function deterministicObjectHash<T extends Record<string, any>>(obj: T): string 
  * A suggestion for a visualization given some data. This represents the shape of the panel (including options and field config)
  * that will be used to show a small preview in the Grafana UI when suggesting visualizations in the Panel Editor.
  */
-export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}> {
+export interface VisualizationSuggestion<TOptions = {}, TFieldConfig extends {} = {}> {
   /** Name of suggestion */
   name?: string;
   /** Description */
@@ -85,7 +85,7 @@ export interface VisualizationSuggestion<TOptions extends unknown = {}, TFieldCo
  * @internal
  * the internal interface that the PanelPlugin transforms the supplied suggestions into.
  */
-export interface PanelPluginVisualizationSuggestion<TOptions extends unknown = {}, TFieldConfig extends {} = {}>
+export interface PanelPluginVisualizationSuggestion<TOptions = {}, TFieldConfig extends {} = {}>
   extends VisualizationSuggestion<TOptions, TFieldConfig> {
   /** Name of suggestion */
   name: string;
@@ -117,8 +117,24 @@ export enum VisualizationSuggestionScore {
  * - returns an array of VisualizationSuggestions
  * - boolean return equates to "show a single suggestion card for this panel plugin with the default options" (true = show, false or void = hide)
  */
-export type VisualizationSuggestionsSupplier<TOptions extends unknown, TFieldConfig extends {} = {}> = (
+export type VisualizationSuggestionsSupplier<TOptions, TFieldConfig extends {} = {}> = (
   panelDataSummary: PanelDataSummary
+) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
+
+/**
+ * @alpha
+ * Context for VisualizationPresetsSupplier
+ */
+export interface VisualizationPresetsContext {
+  dataSummary?: PanelDataSummary;
+}
+
+/**
+ * @alpha
+ * Returns presets for a panel plugin
+ */
+export type VisualizationPresetsSupplier<TOptions extends unknown = {}, TFieldConfig extends {} = {}> = (
+  context: VisualizationPresetsContext
 ) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
 
 /**

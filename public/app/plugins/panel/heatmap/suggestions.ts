@@ -1,16 +1,17 @@
 import {
   DataFrameType,
   FieldType,
-  PanelDataSummary,
+  type PanelDataSummary,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig } from '@grafana/schema';
+import { type GraphFieldConfig } from '@grafana/schema';
 
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { Options, defaultOptions } from './types';
+import { type Options } from './panelcfg.gen';
+import { defaultOptions } from './types';
 
 function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
   // look to see if the data has an explicity marker for heatmap data on it.

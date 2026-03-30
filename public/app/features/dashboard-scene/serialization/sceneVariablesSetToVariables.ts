@@ -1,39 +1,38 @@
 import { config } from '@grafana/runtime';
 import {
-  AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
-  MultiValueVariable,
-  SceneVariables,
+  type AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
+  type MultiValueVariable,
+  type SceneVariables,
   sceneUtils,
-  SceneVariable,
 } from '@grafana/scenes';
 import {
-  VariableModel,
+  type VariableModel,
   VariableRefresh as OldVariableRefresh,
   VariableHide as OldVariableHide,
   VariableSort as OldVariableSort,
 } from '@grafana/schema';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  DataQueryKind,
-  DatasourceVariableKind,
-  IntervalVariableKind,
-  QueryVariableKind,
-  TextVariableKind,
-  GroupByVariableKind,
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type DataQueryKind,
+  type DatasourceVariableKind,
+  type IntervalVariableKind,
+  type QueryVariableKind,
+  type TextVariableKind,
+  type GroupByVariableKind,
   defaultVariableHide,
-  VariableOption,
+  type VariableOption,
   defaultDataQueryKind,
-  AdHocFilterWithLabels,
-  SwitchVariableKind,
+  type AdHocFilterWithLabels,
+  type SwitchVariableKind,
   defaultIntervalVariableSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';
 import { getDataQueryKind, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
@@ -55,6 +54,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
   const variables: VariableModel[] = [];
 
   for (const variable of set.state.variables) {
+    // Skipping default variables
+    // (Default variables don't get persisted to the JSON schema.)
+    if (variable.state.origin !== undefined) {
+      continue;
+    }
+
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
@@ -317,6 +322,12 @@ export function sceneVariablesSetToSchemaV2Variables(
   > = [];
 
   for (const variable of set.state.variables) {
+    // Skipping default variables
+    // (Default variables don't get persisted to the JSON schema.)
+    if (variable.state.origin !== undefined) {
+      continue;
+    }
+
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
@@ -558,11 +569,18 @@ export function sceneVariablesSetToSchemaV2Variables(
 
           baseFilters: validateFiltersOrigin(variable.state.baseFilters) || [],
           filters: [
-            ...validateFiltersOrigin(variable.state.originFilters),
+            ...validateFiltersOrigin(variable.getOriginalFilters()).map(
+              ({ key, operator, value, values, keyLabel, valueLabels, origin }) => {
+                return { key, origin, value, values, valueLabels, keyLabel, operator };
+              }
+            ),
             ...validateFiltersOrigin(variable.state.filters),
           ],
           defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+            ? (variable.state.enableGroupBy ?? false)
+            : false,
         },
       };
       variables.push(adhocVariable);
@@ -592,8 +610,4 @@ export function sceneVariablesSetToSchemaV2Variables(
 export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
   // Only keep dashboard originated filters in the schema
   return filters?.filter((f): f is AdHocFilterWithLabels => !f.origin || f.origin === 'dashboard') || [];
-}
-
-export function isVariableEditable(variable: SceneVariable) {
-  return variable.state.type !== 'system';
 }
