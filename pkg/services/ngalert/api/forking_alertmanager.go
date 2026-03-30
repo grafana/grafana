@@ -113,10 +113,6 @@ func (f *AlertmanagerApiHandler) handleRouteGetSilences(ctx *contextmodel.ReqCon
 }
 
 func (f *AlertmanagerApiHandler) handleRoutePostAlertingConfig(ctx *contextmodel.ReqContext, body apimodels.PostableUserConfig, dsUID string) response.Response {
-	if f.isExtraConfig(ctx) {
-		return response.Error(http.StatusForbidden, "Read-only configuration", nil)
-	}
-
 	s, err := f.getService(ctx)
 	if err != nil {
 		return errorToResponse(err)
