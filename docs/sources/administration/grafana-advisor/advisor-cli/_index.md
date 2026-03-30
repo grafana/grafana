@@ -1,5 +1,6 @@
 ---
 title: Manage Grafana Advisor using the Grafana CLI
+menuTitle: Manage Advisor with Grafana CLI
 description: Manage Grafana Advisor using the Grafana CLI
 weight: 100
 labels:

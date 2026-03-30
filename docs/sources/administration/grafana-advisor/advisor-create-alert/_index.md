@@ -1,5 +1,6 @@
 ---
 title: Create an alert based on Grafana Advisor results
+menuTitle: Create an alert based on Advisor
 description: Create an alert based on the results from Grafana Advisor
 weight: 200
 labels:
