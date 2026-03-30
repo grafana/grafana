@@ -480,8 +480,6 @@ abstract class DashboardScenePageStateManagerBase<T>
       return;
     }
 
-    this.defaultControlsSubscription?.unsubscribe();
-    scene.clearDefaultControls();
     this.defaultControlsSubscription = loadDefaultControls$(refs).subscribe({
       next: (event) => {
         if (event.type === 'variables') {
@@ -516,6 +514,7 @@ abstract class DashboardScenePageStateManagerBase<T>
 
   public clearState() {
     this.defaultControlsSubscription?.unsubscribe();
+    this.state.dashboard?.clearDefaultControls();
     getDashboardSrv().setCurrent(undefined);
 
     this.setState({
