@@ -629,77 +629,32 @@ describe('align frames', () => {
   });
 
   describe('handles empty tables (no frames match join field)', () => {
-    it('outer join should not crash when no frames have the join field', () => {
-      const frame1 = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1000, 2000] },
-          { name: 'A', type: FieldType.number, values: [1, 2] },
-        ],
-      });
-      const frame2 = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1000, 3000] },
-          { name: 'B', type: FieldType.number, values: [3, 4] },
-        ],
-      });
+    it.each([JoinMode.outer, JoinMode.inner, JoinMode.outerTabular])(
+      '%s join should not crash when no frames have the join field',
+      (mode) => {
+        const frame1 = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000] },
+            { name: 'A', type: FieldType.number, values: [1, 2] },
+          ],
+        });
+        const frame2 = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 3000] },
+            { name: 'B', type: FieldType.number, values: [3, 4] },
+          ],
+        });
 
-      const out = joinDataFrames({
-        frames: [frame1, frame2],
-        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('nonexistent_field'),
-        mode: JoinMode.outer,
-      });
+        const out = joinDataFrames({
+          frames: [frame1, frame2],
+          joinBy: fieldMatchers.get(FieldMatcherID.byName).get('nonexistent_field'),
+          mode,
+        });
 
-      expect(out).toBeDefined();
-      expect(out!.length).toBe(0);
-    });
-
-    it('inner join should not crash when no frames have the join field', () => {
-      const frame1 = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1000, 2000] },
-          { name: 'A', type: FieldType.number, values: [1, 2] },
-        ],
-      });
-      const frame2 = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1000, 3000] },
-          { name: 'B', type: FieldType.number, values: [3, 4] },
-        ],
-      });
-
-      const out = joinDataFrames({
-        frames: [frame1, frame2],
-        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('nonexistent_field'),
-        mode: JoinMode.inner,
-      });
-
-      expect(out).toBeDefined();
-      expect(out!.length).toBe(0);
-    });
-
-    it('outerTabular join should not crash when no frames have the join field', () => {
-      const frame1 = toDataFrame({
-        fields: [
-          { name: 'name', type: FieldType.string, values: ['a', 'b'] },
-          { name: 'value', type: FieldType.number, values: [1, 2] },
-        ],
-      });
-      const frame2 = toDataFrame({
-        fields: [
-          { name: 'name', type: FieldType.string, values: ['c', 'd'] },
-          { name: 'value', type: FieldType.number, values: [3, 4] },
-        ],
-      });
-
-      const out = joinDataFrames({
-        frames: [frame1, frame2],
-        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('nonexistent_field'),
-        mode: JoinMode.outerTabular,
-      });
-
-      expect(out).toBeDefined();
-      expect(out!.length).toBe(0);
-    });
+        expect(out).toBeDefined();
+        expect(out!.length).toBe(0);
+      }
+    );
   });
 
   describe('check ascending data', () => {
