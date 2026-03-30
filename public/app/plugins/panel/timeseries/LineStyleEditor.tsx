@@ -55,7 +55,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
       value: 'dot',
     },
     {
-      label: t('timeseries.line-style-editor.line-fill-options.label-colorblind', 'Colorblind patterns'),
+      label: t('timeseries.line-style-editor.line-fill-options.label-auto', 'Auto'),
       value: 'colorblind',
     },
   ];

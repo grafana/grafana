@@ -13,7 +13,7 @@ comments: |
 | Line width                                  | Set the thickness of the series lines or the outline for bars using the **Line width** slider. |
 | Fill opacity                                | Set the series area fill color using the **Fill opacity** slider. |
 | [Gradient mode](#gradient-mode)             | Choose a gradient mode to control the gradient fill, which is based on the series color. |
-| [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style. |
+| [Line style](#line-style)                   | Choose a solid, dashed, dotted, or auto-patterned line style. |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected. |
 | [Show points](#show-points)                 | Set whether to show data points to lines or bars. |
@@ -69,11 +69,12 @@ If the **Color scheme** is set to **From thresholds (by value)** and **Gradient 
 
 #### Line style
 
-Choose a solid, dashed, or dotted line style:
+Choose a solid, dashed, dotted, or auto-patterned line style:
 
 - **Solid** - Display a solid line. This is the default setting.
 - **Dash** - Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing is 10, 10 by default.
 - **Dots** - Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing is 0, 10 by default.
+- **Auto** - Automatically assign a distinct dash pattern to each series. The first series uses a solid line, and subsequent series cycle through nine different dash patterns. This is useful for making series visually distinguishable without relying on color alone, improving accessibility for users with color vision deficiency.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-line-style-v12.0.png" max-width="550px" alt="Line style examples" >}}
 
