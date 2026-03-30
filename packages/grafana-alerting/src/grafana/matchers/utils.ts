@@ -1,6 +1,25 @@
-import { parseFlags } from '@grafana/data';
-
 import { Label, LabelMatcher } from './types';
+
+// Inlined from @grafana/data so that this module has no runtime dependency on
+// @grafana/data.  That keeps the worker-safe build self-contained.
+const CLEAR_FLAG = '-';
+const FLAGS_REGEXP = /\(\?([ims-]+)\)/g;
+function parseFlags(text: string): { cleaned: string; flags: string } {
+  const flags: Set<string> = new Set(['g']);
+  const cleaned = text.replace(FLAGS_REGEXP, (_str, group) => {
+    const clearAll = group.startsWith(CLEAR_FLAG);
+    for (let i = 0; i < group.length; ++i) {
+      const flag = group.charAt(i);
+      if (clearAll || group.charAt(i - 1) === CLEAR_FLAG) {
+        flags.delete(flag);
+      } else if (flag !== CLEAR_FLAG) {
+        flags.add(flag);
+      }
+    }
+    return '';
+  });
+  return { cleaned, flags: Array.from(flags).join('') };
+}
 
 type LabelMatchingResult = {
   // wether all of the labels match the given set of matchers

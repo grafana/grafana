@@ -24,6 +24,7 @@ export {
 export {
   type TreeMatch,
   type RouteMatchResult,
+  type RouteMatchInfo,
   matchInstancesToRoute,
   findMatchingRoutes,
   getInheritedProperties,
