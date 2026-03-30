@@ -40,6 +40,8 @@ const (
 	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
+	concurrentCreateSettleDelay       = 5 * time.Millisecond
+	concurrentCreateSettleTimeout     = 250 * time.Millisecond
 )
 
 type GarbageCollectionConfig struct {
@@ -793,31 +795,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
 		}
 	} else if event.Type == resourcepb.WatchEvent_ADDED {
-		// Create operations: verify our write is the latest version
-		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-			Group:     event.Key.Group,
-			Resource:  event.Key.Resource,
-			Namespace: namespace,
-			Name:      event.Key.Name,
-		})
-		if err != nil {
-			// If we can't read the latest version, clean up what we wrote
-			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("failed to check latest version: %w", err)
-		}
-
-		// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
-		if latestKey.ResourceVersion != dataKey.ResourceVersion {
-			// Delete the data we just wrote since it's not the latest
-			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
-		}
-
-		// Verify that the immediate predecessor is not a create
-		if prevKey.Action == DataActionCreated {
-			// Another concurrent create happened - delete our write and return error
-			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
+		if err := k.validateCreateWrite(ctx, event.Key, namespace, dataKey); err != nil {
+			return 0, err
 		}
 	}
 
@@ -848,6 +827,103 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	k.notifier.Publish(eventData)
 
 	return rv, nil
+}
+
+func (k *kvStorageBackend) validateCreateWrite(ctx context.Context, key *resourcepb.ResourceKey, namespace string, dataKey DataKey) error {
+	latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: namespace,
+		Name:      key.Name,
+	})
+	if err != nil {
+		// If we can't read the latest version, clean up what we wrote
+		_ = k.dataStore.Delete(ctx, dataKey)
+		return fmt.Errorf("failed to check latest version: %w", err)
+	}
+
+	// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
+	if latestKey.ResourceVersion != dataKey.ResourceVersion {
+		// Delete the data we just wrote since it's not the latest
+		_ = k.dataStore.Delete(ctx, dataKey)
+		return fmt.Errorf("optimistic locking failed: concurrent create detected")
+	}
+
+	if prevKey.Action != DataActionCreated {
+		return nil
+	}
+
+	if k.rvManager != nil {
+		// Preserve the existing behavior for rvManager-backed writes.
+		_ = k.dataStore.Delete(ctx, dataKey)
+		return fmt.Errorf("optimistic locking failed: concurrent create detected")
+	}
+
+	return k.waitForConcurrentCreateSettlement(ctx, key, namespace, dataKey)
+}
+
+// waitForConcurrentCreateSettlement handles the non-rvManager create race where
+// our write is currently the latest version, but its immediate predecessor is
+// also a create. In that case the predecessor may be a transient loser that is
+// about to delete itself, or it may be the real winner that will persist an
+// event. We briefly poll until one of those outcomes becomes observable before
+// deciding whether to keep or delete our write.
+func (k *kvStorageBackend) waitForConcurrentCreateSettlement(ctx context.Context, key *resourcepb.ResourceKey, namespace string, dataKey DataKey) error {
+	ticker := time.NewTicker(concurrentCreateSettleDelay)
+	defer ticker.Stop()
+
+	timeout := time.NewTimer(concurrentCreateSettleTimeout)
+	defer timeout.Stop()
+
+	for {
+		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: namespace,
+			Name:      key.Name,
+		})
+		if err != nil {
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return fmt.Errorf("failed to check latest version: %w", err)
+		}
+
+		if latestKey.ResourceVersion != dataKey.ResourceVersion {
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return fmt.Errorf("optimistic locking failed: concurrent create detected")
+		}
+
+		if prevKey.Action != DataActionCreated {
+			return nil
+		}
+
+		_, err = k.eventStore.Get(ctx, EventKey{
+			Namespace:       prevKey.Namespace,
+			Group:           prevKey.Group,
+			Resource:        prevKey.Resource,
+			Name:            prevKey.Name,
+			ResourceVersion: prevKey.ResourceVersion,
+			Action:          prevKey.Action,
+			Folder:          prevKey.Folder,
+		})
+		if err == nil {
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return ErrResourceAlreadyExists
+		}
+		if !errors.Is(err, ErrNotFound) {
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return fmt.Errorf("failed to check predecessor event: %w", err)
+		}
+
+		select {
+		case <-ctx.Done():
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return fmt.Errorf("failed to validate concurrent create: %w", ctx.Err())
+		case <-timeout.C:
+			_ = k.dataStore.Delete(ctx, dataKey)
+			return fmt.Errorf("failed to validate concurrent create: predecessor create did not settle")
+		case <-ticker.C:
+		}
+	}
 }
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
