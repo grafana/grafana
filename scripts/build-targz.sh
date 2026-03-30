@@ -54,6 +54,11 @@ cp -r packaging/wrappers "${DIR}/packaging/wrappers"
 
 mkdir -p "${DIR}/bin"
 cp "bin/${OS}/${ARCH}/"* "${DIR}/bin/"
+
+# This directory is unused, but it is preserved for backwards compatibility.
+# Bundled plugins are in 'data/plugins-bundled' now.
+mkdir -p "${DIR}/plugins-bundled"
+
 cp -r public "${DIR}/public"
 find "${DIR}/public" -type d -name node_modules -print0 | xargs -0 rm -rf 2>/dev/null || true
 

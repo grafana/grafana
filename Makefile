@@ -400,7 +400,7 @@ data/plugins-bundled: $(DATA_PLUGINS_BUNDLED_STAMP)
 build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plugins into data/plugins-bundled (network; alias).
 
 .PHONY: build-targz
-build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, data/plugins-bundled from catalog)
+build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
 	BUILD_NUMBER="$(BUILD_NUMBER)" \

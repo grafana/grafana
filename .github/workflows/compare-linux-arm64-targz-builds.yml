@@ -208,11 +208,16 @@ jobs:
 
           skip_du_for_rel() {
             local rel="$1"
-            # Root and public/ aggregate hashed webpack output; public/build/** differs by platform (arm64 Dagger vs amd64 CI).
+            # Sizes omitted where release (Dagger arm64) vs split (native amd64) or different Go link are expected to diverge.
             [[ "$rel" == "." ]] && return 0
+            [[ "$rel" == "bin" ]] && return 0
+            [[ "$rel" == bin/* ]] && return 0
             [[ "$rel" == "public" ]] && return 0
             [[ "$rel" == "public/build" ]] && return 0
             [[ "$rel" == public/build/* ]] && return 0
+            # Built-in plugins emit public/app/plugins/*/dist with [contenthash]; same cross-arch variance as public/build.
+            [[ "$rel" == "public/app" ]] && return 0
+            [[ "$rel" == public/app/* ]] && return 0
             return 1
           }
 
@@ -241,8 +246,8 @@ jobs:
           echo "1) Directory tree (must be identical)."
           echo "   Directory count — release: $(wc -l </tmp/release-tree.txt)  split: $(wc -l </tmp/split-tree.txt)"
           echo ""
-          echo "2) Recursive sizes per directory (GNU du -sb), excluding: .  public/  public/build/**"
-          echo "   (Webpack [contenthash] output is not byte-identical between Dagger linux/arm64 Node and native amd64.)"
+          echo "2) Recursive sizes (GNU du -sb), excluding: .  bin/**  public/  public/build/**  public/app/**"
+          echo "   (Go binary link + webpack/plugin dist hashes differ arm64 Dagger vs amd64 CI.)"
           echo "   Sized paths — release: $(wc -l </tmp/release-sizes.txt)  split: $(wc -l </tmp/split-sizes.txt)"
           echo ""
 
@@ -252,10 +257,10 @@ jobs:
             ok=0
           fi
           if ! diff -u /tmp/release-sizes.txt /tmp/split-sizes.txt; then
-            echo >&2 "Compare failed: directory sizes differ (outside public/build)."
+            echo >&2 "Compare failed: directory sizes differ (outside excluded paths)."
             ok=0
           fi
           if [[ "$ok" -ne 1 ]]; then
             exit 1
           fi
-          echo "OK: same directory tree; matching sizes for all directories outside public/build."
+          echo "OK: same directory tree; matching sizes for all non-excluded directories."
