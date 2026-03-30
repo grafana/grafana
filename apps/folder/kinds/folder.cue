@@ -1,6 +1,6 @@
 package folder
 
-foldersV1beta1: {
+foldersV1: {
 	kind:       "Folder"
 	pluralName: "Folders"
 
@@ -15,3 +15,5 @@ foldersV1beta1: {
 		"spec.title",
 	]
 }
+
+foldersV1beta1: foldersV1

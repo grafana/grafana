@@ -1,6 +1,11 @@
 import { renderHook } from '@testing-library/react';
 
-import { Check, CheckType, useGetCheckTypeQuery, useListCheckQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import {
+  type Check,
+  type CheckType,
+  useGetCheckTypeQuery,
+  useListCheckQuery,
+} from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
 import { useDatasourceFailureByUID, useLatestDatasourceCheck } from './useDatasourceAdvisorChecks';

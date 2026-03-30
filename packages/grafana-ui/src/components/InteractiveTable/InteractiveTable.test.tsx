@@ -6,7 +6,7 @@ import { Checkbox } from '../Forms/Checkbox';
 import { Icon } from '../Icon/Icon';
 
 import { InteractiveTable } from './InteractiveTable';
-import { Column } from './types';
+import { type Column } from './types';
 
 interface TableData {
   id: string;

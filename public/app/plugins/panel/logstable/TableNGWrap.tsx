@@ -2,15 +2,15 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import {
-  FieldConfigSource,
-  GrafanaTheme2,
+  type FieldConfigSource,
+  type GrafanaTheme2,
   LogSortOrderChangeEvent,
   LogsSortOrder,
-  PanelProps,
+  type PanelProps,
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { TableOptions } from '@grafana/schema';
+import { type TableOptions } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
@@ -19,11 +19,11 @@ import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogL
 import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
 import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
-import { DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
+import { type DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
 
 import { TablePanel } from '../table/TablePanel';
 
-import { Options } from './options/types';
+import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 
 interface Props extends Omit<PanelProps<Options>, 'timeRange'> {

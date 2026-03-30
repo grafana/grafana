@@ -1,8 +1,8 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime'; // will use the version in __mocks__
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime'; // will use the version in __mocks__
 
 import CloudMonitoringDataSource from '../datasource';
-import { CloudMonitoringOptions, CustomVariableModel } from '../types/types';
+import { type CloudMonitoringOptions, type CustomVariableModel } from '../types/types';
 
 let getTempVars = () => [] as CustomVariableModel[];
 let replace = () => '';

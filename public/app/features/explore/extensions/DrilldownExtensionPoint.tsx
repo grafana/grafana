@@ -1,9 +1,15 @@
-import { ReactElement, useCallback, useMemo } from 'react';
+import { type ReactElement, useCallback, useMemo } from 'react';
 
-import { PluginExtensionPoints, RawTimeRange, getDefaultTimeRange, getTimeZone, locationUtil } from '@grafana/data';
+import {
+  PluginExtensionPoints,
+  type RawTimeRange,
+  getDefaultTimeRange,
+  getTimeZone,
+  locationUtil,
+} from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 
 type Props = {

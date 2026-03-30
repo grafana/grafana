@@ -1,10 +1,10 @@
 import { store } from '@grafana/data';
 import {
-  AutoGridLayoutItemKind,
-  Spec as DashboardV2Spec,
-  GridLayoutItemKind,
-  RowsLayoutRowKind,
-  TabsLayoutTabKind,
+  type AutoGridLayoutItemKind,
+  type Spec as DashboardV2Spec,
+  type GridLayoutItemKind,
+  type RowsLayoutRowKind,
+  type TabsLayoutTabKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_STYLES_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 
@@ -13,12 +13,12 @@ import { deserializeGridItem } from '../../serialization/layoutSerializers/Defau
 import { deserializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { deserializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { GridCell } from '../layout-default/findSpaceForNewPanel';
-import { RowItem } from '../layout-rows/RowItem';
-import { TabItem } from '../layout-tabs/TabItem';
+import { type GridCell } from '../layout-default/findSpaceForNewPanel';
+import { type RowItem } from '../layout-rows/RowItem';
+import { type TabItem } from '../layout-tabs/TabItem';
 
 export function clearClipboard() {
   store.delete(LS_PANEL_COPY_KEY);

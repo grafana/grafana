@@ -1,5 +1,5 @@
-import { Labels } from '../types/data';
-import { DataFrame, Field, FieldType } from '../types/dataFrame';
+import { type Labels } from '../types/data';
+import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 
 /**
  * Synthetic facet key representing the field/metric name as a filterable dimension.
