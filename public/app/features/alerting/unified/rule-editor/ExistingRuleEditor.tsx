@@ -1,7 +1,7 @@
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';
-import { RuleIdentifier } from 'app/types/unified-alerting';
+import { type RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -10,7 +10,7 @@ import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWar
 import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
-import { RuleFormValues } from '../types/rule-form';
+import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { stringifyErrorLike } from '../utils/misc';
 import { rulerRuleToFormValues } from '../utils/rule-form';

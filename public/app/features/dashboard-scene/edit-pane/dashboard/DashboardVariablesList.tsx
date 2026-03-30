@@ -1,13 +1,13 @@
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { type SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
 import { isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -103,9 +103,8 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
         title={t('dashboard-scene.variables-list.title-above-dashboard', 'Above dashboard ({{count}})', {
           count: visible.length,
         })}
-        dataTestId={`${ID_VISIBLE_LIST}-variable-name`}
         onClickItem={onClickVariable}
-        renderItemLabel={(v) => v.state.name}
+        renderItemLabel={renderItemLabel}
       />
       <DraggableList
         items={controlsMenu}
@@ -113,21 +112,21 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
         title={t('dashboard-scene.variables-list.title-controls-menu', 'Controls menu ({{count}})', {
           count: controlsMenu.length,
         })}
-        dataTestId={`${ID_CONTROLS_MENU_LIST}-variable-name`}
         onClickItem={onClickVariable}
-        renderItemLabel={(v) => v.state.name}
+        renderItemLabel={renderItemLabel}
       />
       <DraggableList
         items={hidden}
         droppableId={ID_HIDDEN_LIST}
         title={t('dashboard-scene.variables-list.title-hidden', 'Hidden ({{count}})', { count: hidden.length })}
-        dataTestId={`${ID_HIDDEN_LIST}-variable-name`}
         onClickItem={onClickVariable}
-        renderItemLabel={(v) => v.state.name}
+        renderItemLabel={renderItemLabel}
       />
     </DragDropContext>
   );
 }
+
+const renderItemLabel = (v: SceneVariable) => <span data-testid="variable-name">{v.state.name}</span>;
 
 function getTargetHide(droppableId: string, currentHide: VariableHide): VariableHide {
   if (droppableId === ID_VISIBLE_LIST) {

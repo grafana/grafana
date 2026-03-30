@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/events"
@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -862,31 +861,5 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
-		return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
-	}
-
-	folders := []string{*q.UID}
-	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
-	descendantFolders, err := s.unifiedStore.GetDescendants(ctx, q.OrgID, *q.UID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
-		return nil, err
-	}
-
-	for _, f := range descendantFolders {
-		folders = append(folders, f.UID)
-	}
-	countsMap[entity.StandardKindFolder] = int64(len(descendantFolders))
-
-	for _, v := range s.registry {
-		c, err := v.CountInFolders(ctx, q.OrgID, folders, q.SignedInUser)
-		if err != nil {
-			s.log.ErrorContext(ctx, "failed to count folder descendants", "error", err)
-			return nil, err
-		}
-		countsMap[v.Kind()] = c
-	}
-	return countsMap, nil
+	return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
 }

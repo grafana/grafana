@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -177,12 +177,6 @@ func TestTranslateGlobalRoleBindingToTuples(t *testing.T) {
 			subjectName:  "team1",
 			expectedUser: "team:team1#member",
 		},
-		{
-			name:         "basic role subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindBasicRole,
-			subjectName:  "basic_viewer",
-			expectedUser: "role:basic_viewer#assignee",
-		},
 	}
 
 	for _, tt := range tests {
@@ -235,12 +229,6 @@ func TestTranslateRoleBindingToTuples(t *testing.T) {
 			subjectKind:  iamv0.RoleBindingSpecSubjectKindTeam,
 			subjectName:  "team1",
 			expectedUser: "team:team1#member",
-		},
-		{
-			name:         "basic role subject",
-			subjectKind:  iamv0.RoleBindingSpecSubjectKindBasicRole,
-			subjectName:  "basic_viewer",
-			expectedUser: "role:basic_viewer#assignee",
 		},
 	}
 
@@ -766,7 +754,6 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			{iamv0.RoleBindingSpecSubjectKindUser, "uid1"},
 			{iamv0.RoleBindingSpecSubjectKindServiceAccount, "sa1"},
 			{iamv0.RoleBindingSpecSubjectKindTeam, "team1"},
-			{iamv0.RoleBindingSpecSubjectKindBasicRole, "basic_viewer"},
 		}
 
 		for _, s := range subjects {
@@ -820,7 +807,6 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			{iamv0.GlobalRoleBindingSpecSubjectKindUser, "uid1"},
 			{iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount, "sa1"},
 			{iamv0.GlobalRoleBindingSpecSubjectKindTeam, "team1"},
-			{iamv0.GlobalRoleBindingSpecSubjectKindBasicRole, "basic_viewer"},
 		}
 
 		for _, s := range subjects {

@@ -2,12 +2,12 @@ import { useCallback } from 'react';
 
 import {
   DataTransformerID,
-  SelectableValue,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  GroupingToMatrixTransformerOptions,
-  SpecialValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  type GroupingToMatrixTransformerOptions,
+  type SpecialValue,
   TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';

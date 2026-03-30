@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { downloadLogs } from '../../utils';
 import { createLogLine, createLogRow } from '../mocks/logRow';
 
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
@@ -56,6 +56,7 @@ jest.mock('@grafana/assistant', () => {
   return {
     ...jest.requireActual('@grafana/assistant'),
     useAssistant: jest.fn().mockReturnValue({
+      isLoading: false,
       isAvailable: true,
     }),
   };

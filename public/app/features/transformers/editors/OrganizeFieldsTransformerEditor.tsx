@@ -1,22 +1,22 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
 import {
   DataTransformerID,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import {
   createOrderFieldsComparer,
   Order,
-  OrderByItem,
+  type OrderByItem,
   OrderByMode,
   OrderByType,
-  OrganizeFieldsTransformerOptions,
+  type OrganizeFieldsTransformerOptions,
 } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import {

@@ -1,7 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { DataTransformerID, TransformerRegistryItem, TransformerUIProps, TransformerCategory } from '@grafana/data';
+import {
+  DataTransformerID,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Tooltip, useTheme2 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
@@ -12,7 +17,7 @@ import lightImage from '../images/light/smoothing.svg';
 import {
   DEFAULTS,
   RESOLUTION_LIMITS,
-  SmoothingTransformerOptions,
+  type SmoothingTransformerOptions,
   getSmoothingTransformer,
   calculateEffectiveResolution,
   calculateMaxSourcePoints,

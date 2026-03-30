@@ -1,7 +1,7 @@
 import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
-import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 
 import { wellFormedTree } from '../../../../fixtures/folders';
 

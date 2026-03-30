@@ -1,16 +1,16 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
 import {
   DataTransformerID,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  FieldNamePickerConfigSettings,
-  SelectableValue,
-  StandardEditorsRegistryItem,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  type FieldNamePickerConfigSettings,
+  type SelectableValue,
+  type StandardEditorsRegistryItem,
   TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, type ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
 import darkImage from '../images/dark/extractFields.svg';
@@ -19,7 +19,7 @@ import lightImage from '../images/light/extractFields.svg';
 import { JSONPathEditor } from './components/JSONPathEditor';
 import { extractFieldsTransformer } from './extractFields';
 import { fieldExtractors } from './fieldExtractors';
-import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
+import { type ExtractFieldsOptions, FieldExtractorID, type JSONPath } from './types';
 
 export const extractFieldsTransformerEditor = ({
   input,

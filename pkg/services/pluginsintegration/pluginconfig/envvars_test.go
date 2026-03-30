@@ -2,6 +2,7 @@ package pluginconfig
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -554,6 +555,15 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
+			// Clear any pre-existing AWS host env vars (e.g., from CI) that aren't
+			// explicitly set by this test case, so they don't leak into results.
+			for _, envVarName := range awsHostEnvVarNames {
+				if _, ok := tc.hostEnvVars[envVarName]; !ok {
+					t.Setenv(envVarName, "")
+					require.NoError(t, os.Unsetenv(envVarName))
+				}
+			}
+
 			for k, v := range tc.hostEnvVars {
 				t.Setenv(k, v)
 			}

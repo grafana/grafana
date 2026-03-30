@@ -1,6 +1,6 @@
 import { Controller } from 'react-hook-form';
 
-import { locationUtil, OrgRole, SelectableValue } from '@grafana/data';
+import { locationUtil, OrgRole, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {

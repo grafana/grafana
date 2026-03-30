@@ -1,12 +1,12 @@
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
   FrameMatcherID,
 } from '@grafana/data';
-import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/internal';
+import { type FilterFramesByRefIdTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 

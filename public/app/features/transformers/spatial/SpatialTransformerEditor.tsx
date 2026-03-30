@@ -3,12 +3,12 @@ import { useEffect } from 'react';
 
 import {
   DataTransformerID,
-  GrafanaTheme2,
-  PanelOptionsEditorBuilder,
+  type GrafanaTheme2,
+  type PanelOptionsEditorBuilder,
   PluginState,
-  StandardEditorContext,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type StandardEditorContext,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,7 +19,7 @@ import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 import darkImage from '../images/dark/spatial.svg';
 import lightImage from '../images/light/spatial.svg';
 
-import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
+import { SpatialCalculation, SpatialOperation, SpatialAction, type SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
 import { isLineBuilderOption, getSpatialTransformer } from './spatialTransformer';
 

@@ -1,13 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/VariableQueryEditor.tsx
 import debounce from 'debounce-promise';
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { getDefaultTimeRange, QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
+import { getDefaultTimeRange, type QueryEditorProps, type SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { AsyncSelect, InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../datasource';
+import { type PrometheusDatasource } from '../datasource';
 import { truncateResult } from '../language_utils';
 import {
   migrateVariableEditorBackToVariableSupport,
@@ -15,14 +15,14 @@ import {
 } from '../migrations/variableMigration';
 import { MetricsLabelsSection } from '../querybuilder/components/MetricsLabelsSection';
 import { promQueryModeller } from '../querybuilder/shared/modeller_instance';
-import { QueryBuilderLabelFilter } from '../querybuilder/shared/types';
-import { PromVisualQuery } from '../querybuilder/types';
+import { type QueryBuilderLabelFilter } from '../querybuilder/shared/types';
+import { type PromVisualQuery } from '../querybuilder/types';
 import {
-  PromOptions,
-  PromQuery,
-  PromVariableQuery,
+  type PromOptions,
+  type PromQuery,
+  type PromVariableQuery,
   PromVariableQueryType as QueryType,
-  StandardPromVariableQuery,
+  type StandardPromVariableQuery,
 } from '../types';
 
 const variableOptions = [

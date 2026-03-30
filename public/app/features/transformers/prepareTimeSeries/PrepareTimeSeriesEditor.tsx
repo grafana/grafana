@@ -3,10 +3,10 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import {
-  GrafanaTheme2,
-  SelectableValue,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type GrafanaTheme2,
+  type SelectableValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -15,7 +15,7 @@ import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import darkImage from '../images/dark/prepareTimeSeries.svg';
 import lightImage from '../images/light/prepareTimeSeries.svg';
 
-import { PrepareTimeSeriesOptions, timeSeriesFormat, getPrepareTimeSeriesTransformer } from './prepareTimeSeries';
+import { type PrepareTimeSeriesOptions, timeSeriesFormat, getPrepareTimeSeriesTransformer } from './prepareTimeSeries';
 
 export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSeriesOptions>): React.ReactElement {
   const { options, onChange } = props;

@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
-import { AssistantHook, useAssistant } from '@grafana/assistant';
+import { type AssistantHook, useAssistant } from '@grafana/assistant';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardCard } from './DashboardCard';
@@ -32,6 +32,7 @@ describe('DashboardCard', () => {
     jest.clearAllMocks();
     // Default: assistant not available
     useAssistantMock.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: mockOpenAssistant,
     } as unknown as AssistantHook);
@@ -107,7 +108,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Use dashboard' }));
+      await user.click(screen.getByRole('button', { name: 'View dashboard: Test Dashboard' }));
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
@@ -122,8 +123,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'View template' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Use dashboard' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View template: Test Dashboard' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View dashboard: Test Dashboard' })).not.toBeInTheDocument();
     });
 
     it('should display dashboard button text', () => {
@@ -136,8 +137,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Use dashboard' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'View template' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View dashboard: Test Dashboard' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View template: Test Dashboard' })).not.toBeInTheDocument();
     });
   });
 
@@ -181,6 +182,34 @@ describe('DashboardCard', () => {
       );
 
       expect(screen.queryByText('Data source provided')).not.toBeInTheDocument();
+    });
+
+    it('should show community badge when showCommunityBadge is true', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          showCommunityBadge={true}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.getByText('Community')).toBeInTheDocument();
+    });
+
+    it('should not show community badge when showCommunityBadge is false', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          showCommunityBadge={false}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.queryByText('Community')).not.toBeInTheDocument();
     });
   });
 
@@ -475,7 +504,7 @@ describe('DashboardCard', () => {
       // With dashboardValidatorApp enabled, details button moves into the title row
       const buttons = screen.getAllByRole('button');
       expect(buttons[0]).toHaveAttribute('aria-label', 'Details');
-      expect(buttons[1]).toHaveTextContent('Use dashboard');
+      expect(buttons[1]).toHaveTextContent('View dashboard');
       expect(buttons[2]).toHaveTextContent('Check compatibility');
     });
   });
@@ -530,6 +559,7 @@ describe('DashboardCard', () => {
     beforeEach(() => {
       // Enable assistant for these tests
       useAssistantMock.mockReturnValue({
+        isLoading: false,
         isAvailable: true,
         openAssistant: mockOpenAssistant,
       } as unknown as AssistantHook);
@@ -565,6 +595,7 @@ describe('DashboardCard', () => {
 
     it('should not show Assistant button when assistant is unavailable', () => {
       useAssistantMock.mockReturnValue({
+        isLoading: false,
         isAvailable: false,
         openAssistant: mockOpenAssistant,
       } as unknown as AssistantHook);

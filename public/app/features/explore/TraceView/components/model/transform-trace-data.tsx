@@ -15,12 +15,12 @@
 import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
-import { TraceKeyValuePair } from '@grafana/data';
+import { type TraceKeyValuePair } from '@grafana/data';
 
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import { TraceResponse, Trace, TraceSpan, TraceProcess } from '../types/trace';
+import { type TraceResponse, type Trace, type TraceSpan, type TraceProcess } from '../types/trace';
 // @ts-ignore
-import TreeNode from '../utils/TreeNode';
+import type TreeNode from '../utils/TreeNode';
 import { getConfigValue } from '../utils/config/get-config';
 import { getServiceDisplayName } from '../utils/service-name';
 

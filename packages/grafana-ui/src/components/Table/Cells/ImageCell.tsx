@@ -2,10 +2,10 @@ import { useState } from 'react';
 
 import { getCellLinks } from '../../../utils/table';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
-import { TableCellDisplayMode, TableCellProps } from '../types';
+import { TableCellDisplayMode, type TableCellProps } from '../types';
 import {
   tooltipOnClickHandler,
-  DataLinksActionsTooltipCoords,
+  type DataLinksActionsTooltipCoords,
   getCellOptions,
   getDataLinksActionsTooltipUtils,
 } from '../utils';

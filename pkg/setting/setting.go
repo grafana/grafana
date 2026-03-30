@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -54,6 +55,9 @@ const (
 
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
+
+// Default renderer auth token from [rendering]renderer_token.
+const DefaultRendererAuthToken = "-"
 
 var (
 	customInitPath = "conf/custom.ini"
@@ -309,8 +313,6 @@ type Cfg struct {
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
-
-	PasswordlessMagicLinkAuth AuthPasswordlessMagicLinkSettings
 
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
@@ -571,6 +573,10 @@ type Cfg struct {
 	// DatabaseRegisterDeprecatedMetrics decides whether to register the deprecated `grafana_database_conn_*` and `go_sql_stats_*` metrics.
 	DatabaseRegisterDeprecatedMetrics bool
 
+	// DatabaseForceDashboardTitleIndex (MySQL only): when true, dashboard search uses FORCE INDEX (IDX_dashboard_title).
+	// Set to false to let the optimizer choose the index (can be faster for selective filters).
+	DatabaseForceDashboardTitleIndex bool
+
 	// Public dashboards
 	PublicDashboardsEnabled bool
 
@@ -606,8 +612,6 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
-	// DisableDataMigrations will disable resources data migration to unified storage at startup
-	DisableDataMigrations bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -656,7 +660,7 @@ type Cfg struct {
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
-	EnforceQuotas                              bool
+	EnforcedQuotaResources                     []string
 	QuotasErrorMessageSupportInfo              string
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
@@ -664,15 +668,17 @@ type Cfg struct {
 	GarbageCollectionDryRun                    bool
 	GarbageCollectionInterval                  time.Duration
 	GarbageCollectionBatchSize                 int
+	GarbageCollectionBatchWait                 time.Duration
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
 	// StorageModeCacheTTL is the TTL for caching statusReader results in the dynamic dualwrite service.
-	// Default: 0 (no expiration).
+	// Default: 5 seconds, 0 or negative means no expiration.
 	StorageModeCacheTTL time.Duration
 
 	EventRetentionPeriod time.Duration
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
+	NotifierSettleDelay  time.Duration
 
 	// SimulatedNetworkLatency is used for testing only
 	SimulatedNetworkLatency       time.Duration
@@ -680,6 +686,9 @@ type Cfg struct {
 	TenantApiServerAddress        string
 	TenantWatcherAllowInsecureTLS bool
 	TenantWatcherCAFile           string
+	EnableTenantDeleter           bool
+	TenantDeleterDryRun           bool
+	TenantDeleterInterval         time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -820,6 +829,9 @@ func RedactedURL(value string) (string, error) {
 
 func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 	cfg.appliedEnvOverrides = make([]string, 0)
+
+	// First pass: apply overrides for keys that already exist in the ini file.
+	appliedKeys := make(map[string]bool)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			envKey := EnvKey(section.Name(), key.Name())
@@ -828,6 +840,65 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
 				cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+			}
+			appliedKeys[envKey] = true
+		}
+	}
+
+	// Second pass: scan all GF_ environment variables and create new keys
+	// for any that match a known section but don't have a corresponding key yet.
+	// This allows env vars to add new config keys without requiring them to be
+	// pre-defined in defaults.ini or custom.ini.
+
+	// Build a mapping from env-style section prefix to ini section.
+	type sectionMapping struct {
+		prefix  string
+		section *ini.Section
+	}
+	sectionMappings := make([]sectionMapping, 0, len(file.Sections()))
+	for _, section := range file.Sections() {
+		prefix := EnvSectionPrefix(section.Name())
+		sectionMappings = append(sectionMappings, sectionMapping{prefix: prefix, section: section})
+	}
+
+	// Sort by prefix length descending so more specific sections match first.
+	// e.g., GF_AUTH_GOOGLE_ matches before GF_AUTH_.
+	sort.Slice(sectionMappings, func(i, j int) bool {
+		return len(sectionMappings[i].prefix) > len(sectionMappings[j].prefix)
+	})
+
+	for _, env := range os.Environ() {
+		if !strings.HasPrefix(env, "GF_") {
+			continue
+		}
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) != 2 || len(parts[1]) == 0 {
+			continue
+		}
+		envKey := parts[0]
+		envValue := parts[1]
+
+		if appliedKeys[envKey] {
+			continue
+		}
+
+		// Skip unified_storage env vars — they use camelCase key names
+		// and are handled by applyUnifiedStorageEnvOverrides which
+		// preserves the correct casing.
+		if strings.HasPrefix(envKey, EnvSectionPrefix("unified_storage")) {
+			continue
+		}
+
+		for _, m := range sectionMappings {
+			if strings.HasPrefix(envKey, m.prefix) {
+				keyName := strings.ToLower(envKey[len(m.prefix):])
+				if keyName == "" {
+					continue
+				}
+				m.section.Key(keyName).SetValue(envValue)
+				cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+				appliedKeys[envKey] = true
+				break
 			}
 		}
 	}
@@ -952,12 +1023,22 @@ func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSetti
 	}
 }
 
+// envNameFromIniName converts an ini-style name (section or key) to the
+// uppercased, underscore-separated form used in GF_ environment variables.
+// Dots and dashes become underscores; everything is uppercased.
+func envNameFromIniName(name string) string {
+	s := strings.ToUpper(strings.ReplaceAll(name, ".", "_"))
+	return strings.ReplaceAll(s, "-", "_")
+}
+
+// EnvSectionPrefix returns the GF_ environment variable prefix for a given
+// ini section name, e.g. "auth.google" → "GF_AUTH_GOOGLE_".
+func EnvSectionPrefix(sectionName string) string {
+	return "GF_" + envNameFromIniName(sectionName) + "_"
+}
+
 func EnvKey(sectionName string, keyName string) string {
-	sN := strings.ToUpper(strings.ReplaceAll(sectionName, ".", "_"))
-	sN = strings.ReplaceAll(sN, "-", "_")
-	kN := strings.ToUpper(strings.ReplaceAll(keyName, ".", "_"))
-	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
-	return envKey
+	return "GF_" + envNameFromIniName(sectionName) + "_" + envNameFromIniName(keyName)
 }
 
 func (cfg *Cfg) applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
@@ -1457,7 +1538,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
-	cfg.readPasswordlessMagicLinkSettings()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
 	}
@@ -1537,6 +1617,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
+	cfg.DatabaseForceDashboardTitleIndex = databaseSection.Key("force_dashboard_title_index").MustBool(true)
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
@@ -1992,7 +2073,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererServerUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
-	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
+	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", DefaultRendererAuthToken)
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
@@ -2090,7 +2171,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
-	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
+	cfg.EnableGzip = server.Key("enable_gzip").MustBool(true)
 	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	staticRoot := valueAsString(server, "static_root_path", "")
 	cfg.StaticRootPath = makeAbsolute(staticRoot, cfg.HomePath)

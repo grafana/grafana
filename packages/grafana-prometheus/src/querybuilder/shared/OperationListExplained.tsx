@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationListExplained.tsx
-import { Grammar } from 'prismjs';
+import { type Grammar } from 'prismjs';
 
 import { OperationExplainedBox } from './OperationExplainedBox';
 import { RawQuery } from './RawQuery';
-import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from './types';
+import { type QueryBuilderOperation, type QueryWithOperations, type VisualQueryModeller } from './types';
 
 interface Props<T extends QueryWithOperations> {
   query: T;

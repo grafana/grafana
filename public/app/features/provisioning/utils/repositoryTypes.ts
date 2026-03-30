@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
-import { IconName } from '@grafana/ui';
+import { type IconName } from '@grafana/ui';
 
-import { RepoType } from '../Wizard/types';
+import { type RepoType } from '../Wizard/types';
 import bitbucketSvg from '../img/bitbucket.svg';
 import gitSvg from '../img/git.svg';
 import gitlabSvg from '../img/gitlab.svg';
@@ -10,6 +10,7 @@ export interface RepositoryTypeConfig {
   type: RepoType;
   label: string;
   description: string;
+  tooltip?: string;
   icon: IconName;
   logo?: string;
 }
@@ -19,6 +20,10 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     type: 'git',
     label: t('provisioning.repository-types.pure-git', 'Pure Git'),
     description: t('provisioning.repository-types.pure-git-description', 'Connect to any Git repository'),
+    tooltip: t(
+      'provisioning.repository-types.pure-git-tooltip',
+      'Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links).'
+    ),
     icon: 'git' as const,
     logo: gitSvg,
   },
@@ -26,12 +31,20 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     type: 'github',
     label: t('provisioning.repository-types.github', 'GitHub'),
     description: t('provisioning.repository-types.github-description', 'Connect to GitHub repositories'),
+    tooltip: t(
+      'provisioning.repository-types.github-tooltip',
+      'Enhanced GitHub integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
+    ),
     icon: 'github' as const,
   },
   {
     type: 'gitlab',
     label: t('provisioning.repository-types.gitlab', 'GitLab'),
     description: t('provisioning.repository-types.gitlab-description', 'Connect to GitLab repositories'),
+    tooltip: t(
+      'provisioning.repository-types.gitlab-tooltip',
+      'Enhanced GitLab integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.'
+    ),
     icon: 'gitlab' as const,
     logo: gitlabSvg,
   },
@@ -39,6 +52,10 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     type: 'bitbucket',
     label: t('provisioning.repository-types.bitbucket', 'Bitbucket'),
     description: t('provisioning.repository-types.bitbucket-description', 'Connect to Bitbucket repositories'),
+    tooltip: t(
+      'provisioning.repository-types.bitbucket-tooltip',
+      'Enhanced Bitbucket integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.'
+    ),
     icon: 'bitbucket' as const,
     logo: bitbucketSvg,
   },
@@ -46,6 +63,10 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     type: 'local',
     label: t('provisioning.repository-types.local', 'Local'),
     description: t('provisioning.repository-types.local-description', 'Configure file provisioning'),
+    tooltip: t(
+      'provisioning.repository-types.local-tooltip',
+      'Provision dashboards from local file system without Git.'
+    ),
     icon: 'file-alt' as const,
   },
 ];

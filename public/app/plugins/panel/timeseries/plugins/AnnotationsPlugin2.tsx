@@ -4,12 +4,12 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, InterpolateFunction } from '@grafana/data';
-import { TimeZone } from '@grafana/schema';
+import { arrayToDataFrame, colorManipulator, type DataFrame, DataTopic, type InterpolateFunction } from '@grafana/data';
+import { type TimeZone } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
   getPortalContainer,
-  UPlotConfigBuilder,
+  type UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
@@ -25,7 +25,7 @@ interface TimeRange2 {
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
-  annotations: DataFrame[];
+  annotations?: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRange: TimeRange2 | null) => void;
@@ -64,6 +64,18 @@ function getVals(frame: DataFrame) {
   return vals;
 }
 
+/**
+ * @deprecated - remove and replace with AnnotationsPlugin2Cluster
+ * @param annotations
+ * @param timeZone
+ * @param config
+ * @param newRange
+ * @param setNewRange
+ * @param replaceVariables
+ * @param canvasRegionRendering
+ * @param multiLane
+ * @constructor
+ */
 export const AnnotationsPlugin2 = ({
   annotations,
   timeZone,

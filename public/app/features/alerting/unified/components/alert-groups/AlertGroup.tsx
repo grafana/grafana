@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { createContactPointSearchLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';

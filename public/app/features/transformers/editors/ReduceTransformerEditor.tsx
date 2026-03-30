@@ -2,14 +2,14 @@ import { useCallback } from 'react';
 
 import {
   DataTransformerID,
-  ReducerID,
-  SelectableValue,
+  type ReducerID,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/internal';
+import { ReduceTransformerMode, type ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	gocache "github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -37,12 +36,12 @@ type fakeMigrationStatusReader struct {
 
 var _ unifiedmigrations.MigrationStatusReader = (*fakeMigrationStatusReader)(nil)
 
-func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
+func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
 	mode, ok := f.modes[gr.String()]
 	if !ok {
-		return unifiedmigrations.StorageModeLegacy
+		return unifiedmigrations.StorageModeLegacy, nil
 	}
-	return mode
+	return mode, nil
 }
 
 // NewFakeMigrationStatusReader creates a MigrationStatusReader for tests.
@@ -54,6 +53,19 @@ func NewFakeMigrationStatusReader(resourceModes ...interface{}) unifiedmigration
 		key, _ := resourceModes[i].(string)
 		mode, _ := resourceModes[i+1].(unifiedmigrations.StorageMode)
 		m[key] = mode
+	}
+	return &fakeMigrationStatusReader{modes: m}
+}
+
+// NewConfigBasedMigrationStatusReader creates a MigrationStatusReader that derives
+// storage modes from the config's UnifiedStorage map. This is used in standalone
+// APIServer paths where there is no legacy database for migration log checks.
+func NewConfigBasedMigrationStatusReader(cfg *setting.Cfg) unifiedmigrations.MigrationStatusReader {
+	m := make(map[string]unifiedmigrations.StorageMode)
+	if cfg != nil {
+		for key, config := range cfg.UnifiedStorage {
+			m[key] = storageModeFromConfigMode(config.DualWriterMode)
+		}
 	}
 	return &fakeMigrationStatusReader{modes: m}
 }
@@ -92,62 +104,39 @@ func ProvideService(
 	metrics := provideDualWriterMetrics(reg)
 
 	if cfg != nil {
-		if !enabled {
-			return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
-		}
-
-		foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
-		dashboardsMode := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
-
-		// If both are fully on unified (Mode5), the dynamic service is not needed.
-		if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
-			return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
-		}
-
-		if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
-			return nil, fmt.Errorf("dashboards and folders must use the same mode when reading from unified storage")
-		}
+		// in G13, folders and dashboards are ALWAYS in mode5, so the dynamic version is not needed
+		// We should either remove this entirely, or use it to support other resources
+		return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
 	}
 
-	cacheTTL := gocache.NoExpiration
-	cacheCleanup := time.Duration(0)
-	if cfg != nil && cfg.StorageModeCacheTTL > 0 {
-		cacheTTL = cfg.StorageModeCacheTTL
-		cacheCleanup = cacheTTL * 2
-	}
-
+	// TODO... this should not be possible
 	return &service{
 		db: &keyvalueDB{
 			db:     kv,
 			logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
 		},
-		enabled:            enabled,
-		statusReader:       statusReader,
-		resourceModesCache: gocache.New(cacheTTL, cacheCleanup),
-		metrics:            metrics,
+		enabled:      enabled,
+		statusReader: statusReader,
+		metrics:      metrics,
 	}, nil
 }
 
 type service struct {
-	db                 *keyvalueDB
-	enabled            bool
-	statusReader       unifiedmigrations.MigrationStatusReader
-	resourceModesCache *gocache.Cache
-	metrics            *dualWriterMetrics
+	db           *keyvalueDB
+	enabled      bool
+	statusReader unifiedmigrations.MigrationStatusReader
+	metrics      *dualWriterMetrics
 }
 
-// getStorageMode returns the cached StorageMode for a non-managed resource.
-// Results are cached with the TTL configured via StorageModeCacheTTL.
+// getStorageMode returns the StorageMode for a non-managed resource.
+// On error, the config-mode is used directly.
 func (m *service) getStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
-	key := gr.String()
-	if val, ok := m.resourceModesCache.Get(key); ok {
-		return val.(unifiedmigrations.StorageMode)
+	resource := gr.String()
+	mode, err := m.statusReader.GetStorageMode(ctx, gr)
+	if err != nil {
+		m.metrics.statusReaderErrors.WithLabelValues(resource).Inc()
+		return mode
 	}
-
-	mode := m.statusReader.GetStorageMode(ctx, gr)
-	m.resourceModesCache.SetDefault(key, mode)
-
-	logging.DefaultLogger.With("resource", key, "mode", mode).Info("resolved dynamic storage mode")
 	return mode
 }
 

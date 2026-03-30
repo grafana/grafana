@@ -10,14 +10,13 @@ import {
   DataFrameType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { commonOptionsBuilder, getGraphFieldOptions, LegendDisplayMode } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';
 
 import { HistogramPanel } from './HistogramPanel';
 import { defaultHistogramConfig } from './config';
 import { changeToHistogramPanelMigrationHandler } from './migrations';
-import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
+import { type FieldConfig, type Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { originalDataHasHistogram } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
@@ -78,7 +77,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .useFieldConfig({
     standardOptions: {
