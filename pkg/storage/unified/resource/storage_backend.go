@@ -2059,6 +2059,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			seenCreates[createID] = true
 		case DataActionDeleted:
 			delete(seenCreates, createID)
+		case DataActionUpdated:
+			// no-op for duplicate tracking
 		}
 
 		pending = append(pending, pendingItem{dataKey: dataKey, value: req.Value, obj: obj, action: action})
