@@ -67,6 +67,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
+| `externalVizSuggestions`              | Enable all plugins to supply visualization suggestions (including 3rd party plugins)                                                                          | Yes                |
 | `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                 | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 
