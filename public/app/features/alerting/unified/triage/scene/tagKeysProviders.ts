@@ -17,7 +17,6 @@ const FILTER_PROMOTED: MetricFindValue[] = [
   { value: 'alertstate', text: 'State', group: COMMON_GROUP },
   { value: 'alertname', text: 'Rule name', group: COMMON_GROUP },
   { value: 'grafana_folder', text: 'Folder', group: COMMON_GROUP },
-  { value: 'severity', text: 'Severity', group: COMMON_GROUP },
   { value: 'service', text: 'Service', group: COMMON_GROUP },
   { value: 'team', text: 'Team', group: COMMON_GROUP },
   { value: 'namespace', text: 'Namespace', group: COMMON_GROUP },
