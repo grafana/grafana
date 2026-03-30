@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -225,7 +226,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		body := recorder.Body.String()
 
 		// Check that the generic error message is in the response
-		assert.Contains(t, body, "loginError", "Should contain loginError when cookie is present")
+		assert.Contains(t, body, `"loginError"`, "Should contain loginError when cookie is present")
 		assert.Contains(t, body, "oauth.login.error", "Should contain the generic OAuth error message")
 
 		// Check that the cookie was deleted (MaxAge=-1)
@@ -261,8 +262,10 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		// The page should render but without the login error
 		assert.Contains(t, body, "window.grafanaBootData")
 		// Check that loginError is not set (or is empty/omitted in JSON)
-		// Since it's omitempty, it shouldn't appear at all
-		assert.NotContains(t, body, "loginError", "Should not contain loginError when cookie is absent")
+		// Since it's omitempty, it shouldn't appear at all.
+		// Note: the static JS in the template contains "loginError" as a property accessor,
+		// so we check for the JSON-quoted form which only appears when the value is serialized.
+		assert.NotContains(t, body, `"loginError":`, "Should not contain loginError when cookie is absent")
 	})
 
 	t.Run("should handle custom OAuth error message from config", func(t *testing.T) {
@@ -560,7 +563,7 @@ func TestFrontendService_CSP(t *testing.T) {
 		assert.Contains(t, cspHeader, "frame-ancestors *")
 	})
 
-	t.Run("should not add frame-ancestors to CSP when allow_embedding_hosts is empty", func(t *testing.T) {
+	t.Run("should disallow iframing when allow_embedding_hosts is empty", func(t *testing.T) {
 		cfg := &setting.Cfg{
 			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
@@ -568,7 +571,7 @@ func TestFrontendService_CSP(t *testing.T) {
 			BuildVersion:   "10.3.0",
 			AppURL:         "https://grafana.example.com",
 			CSPEnabled:     true,
-			CSPTemplate:    "script-src 'self'",
+			CSPTemplate:    "script-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
 		}
 		service := createTestService(t, cfg)
 
@@ -582,7 +585,40 @@ func TestFrontendService_CSP(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		cspHeader := recorder.Header().Get("Content-Security-Policy")
-		assert.NotContains(t, cspHeader, "frame-ancestors")
+		assert.Contains(t, cspHeader, "frame-ancestors 'none'")
+	})
+
+	t.Run("should apply per-tenant allow_embedding_hosts override to CSP header", func(t *testing.T) {
+		enableSettingsOverridesToggle(t)
+
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
+		}
+		service := createTestService(t, cfg)
+		service.settingsService = &mockSettingsService{
+			settings: []*settingservice.Setting{
+				{Section: "security", Key: "allow_embedding_hosts", Value: "tenant.example.com wiki.example.com"},
+			},
+		}
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("baggage", "namespace=stacks-tenant-1")
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "frame-ancestors tenant.example.com wiki.example.com")
 	})
 
 	t.Run("should use base config when Tenant-ID header is present", func(t *testing.T) {

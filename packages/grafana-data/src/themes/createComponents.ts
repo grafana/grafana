@@ -1,5 +1,5 @@
-import { ThemeColors } from './createColors';
-import { ThemeShadows } from './createShadows';
+import { type ThemeColors } from './createColors';
+import { type ThemeShadows } from './createShadows';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
 

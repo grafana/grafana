@@ -1,7 +1,7 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useMemo, useState, useEffect } from 'react';
 
-import { PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -10,7 +10,7 @@ import {
   Box,
   Button,
   Combobox,
-  ComboboxOption,
+  type ComboboxOption,
   FeatureBadge,
   Field,
   FieldSet,
@@ -20,7 +20,7 @@ import {
   TextLink,
   TimeZonePicker,
   useStyles2,
-  WeekStart,
+  type WeekStart,
   WeekStartPicker,
 } from '@grafana/ui';
 import { PreferencesService } from 'app/core/services/PreferencesService';
@@ -30,7 +30,14 @@ import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { languageChanged, regionalFormatChanged, saveButtonClicked, themeChanged } from './analytics/main';
-import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props, State } from './utils';
+import {
+  getLanguageOptions,
+  getRegionalFormatOptions,
+  getStyles,
+  getTranslatedThemeName,
+  type Props,
+  type State,
+} from './utils';
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);

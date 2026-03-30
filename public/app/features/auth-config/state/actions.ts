@@ -3,11 +3,11 @@ import { lastValueFrom } from 'rxjs';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { Settings, UpdateSettingsQuery } from 'app/types/settings';
-import { ThunkResult } from 'app/types/store';
+import { type Settings, type UpdateSettingsQuery } from 'app/types/settings';
+import { type ThunkResult } from 'app/types/store';
 
 import { getAuthProviderStatus, getRegisteredAuthProviders } from '..';
-import { AuthProviderStatus, SettingsError, SSOProvider } from '../types';
+import { type AuthProviderStatus, type SettingsError, type SSOProvider } from '../types';
 
 import {
   loadingBegin,

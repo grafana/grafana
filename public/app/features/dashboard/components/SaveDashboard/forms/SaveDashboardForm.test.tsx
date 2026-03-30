@@ -1,12 +1,12 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Dashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type Dashboard } from '@grafana/schema';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
-import { SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { SaveDashboardOptions } from '../types';
+import { type SaveDashboardOptions } from '../types';
 
 import { SaveDashboardForm } from './SaveDashboardForm';
 

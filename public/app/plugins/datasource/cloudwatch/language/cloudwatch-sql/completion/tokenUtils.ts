@@ -1,4 +1,4 @@
-import { LinkedToken } from '../../monarch/LinkedToken';
+import { type LinkedToken } from '../../monarch/LinkedToken';
 import { FROM, SCHEMA, SELECT } from '../language';
 
 import { SQLTokenTypes } from './types';

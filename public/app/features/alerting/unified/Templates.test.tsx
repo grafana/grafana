@@ -1,11 +1,11 @@
-import { InitialEntry } from 'history/createMemoryHistory';
+import { type InitialEntry } from 'history/createMemoryHistory';
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { CodeEditor } from '@grafana/ui';
+import { type CodeEditor } from '@grafana/ui';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types/accessControl';

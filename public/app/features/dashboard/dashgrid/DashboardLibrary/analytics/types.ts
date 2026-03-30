@@ -1,6 +1,6 @@
-import { EventProperty } from '@grafana/runtime/internal';
+import { type EventProperty } from '@grafana/runtime/internal';
 
-import type { ContentKind, SourceEntryPoint, EventLocation, DiscoveryMethod, FeatureVariant } from '../constants';
+import type { ContentKind, SourceEntryPoint, EventLocation, DiscoveryMethod } from '../constants';
 
 export interface LoadedProperties extends EventProperty {
   /** Total number of items visible in the library at load time. */
@@ -13,8 +13,6 @@ export interface LoadedProperties extends EventProperty {
   sourceEntryPoint: SourceEntryPoint;
   /** The specific UI location within the product where the event fired. */
   eventLocation: EventLocation;
-  /** Active A/B test or feature-flag variant, if any. */
-  featureVariant?: FeatureVariant;
   /** Whether the Dashboard Assistant AI feature was enabled at the time of the event. */
   isDashboardAssistantEnabled?: boolean;
 }
@@ -34,8 +32,6 @@ export interface ItemClickedProperties extends EventProperty {
   eventLocation: EventLocation;
   /** How the user found the item — e.g. via search, browsing, or a suggestion. */
   discoveryMethod: DiscoveryMethod;
-  /** Active A/B test or feature-flag variant, if any. */
-  featureVariant?: FeatureVariant;
   /** Whether the Dashboard Assistant AI feature was enabled at the time of the event. */
   isDashboardAssistantEnabled?: boolean;
 }

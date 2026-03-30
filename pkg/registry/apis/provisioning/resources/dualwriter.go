@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -259,6 +261,72 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	return wrap, nil
 }
 
+// UpdateFolderMetadata updates the _folder.json for a folder directory path.
+// The caller PUTs to the folder path (e.g. "my-folder/") with a Folder resource
+// body. This method validates that the ID has not changed, updates the title,
+// and writes the _folder.json back. If sync is enabled on the configured branch,
+// it also updates the Grafana folder object.
+func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWriteOptions) (*provisioning.ResourceWrapper, error) {
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
+	}
+
+	if !safepath.IsDir(opts.Path) {
+		return nil, apierrors.NewBadRequest("expected a folder path (trailing slash)")
+	}
+
+	if err := r.authorizer.AuthorizeUpdateFolder(ctx, opts.Path); err != nil {
+		return nil, fmt.Errorf("authorize update folder: %w", err)
+	}
+
+	var submitted folders.Folder
+	if err := json.Unmarshal(opts.Data, &submitted); err != nil {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid folder resource: %v", err))
+	}
+
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
+	newHash, err := WriteFolderMetadataUpdate(ctx, r.repo, opts.Path, opts.Ref, opts.Message, &submitted)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := r.repo.Config()
+	wrap := &provisioning.ResourceWrapper{
+		Path: opts.Path,
+		Ref:  opts.Ref,
+		Repository: provisioning.ResourceRepositoryInfo{
+			Type:      cfg.Spec.Type,
+			Namespace: cfg.Namespace,
+			Name:      cfg.Name,
+			Title:     cfg.Spec.Title,
+		},
+		Resource: provisioning.ResourceObjects{
+			Action: provisioning.ResourceActionUpdate,
+		},
+	}
+
+	if r.shouldUpdateGrafanaDB(opts, nil) {
+		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
+			return nil, fmt.Errorf("ensure folder path exists: %w", err)
+		}
+
+		updatedMeta, _, readErr := ReadFolderMetadata(ctx, r.repo, opts.Path, opts.Ref)
+		if readErr == nil && updatedMeta != nil {
+			current, getErr := r.folders.GetFolder(ctx, updatedMeta.Name)
+			if getErr == nil && current != nil {
+				wrap.Resource.Upsert = v0alpha1.Unstructured{Object: current.Object}
+			}
+		}
+	}
+
+	wrap.Hash = newHash
+	return wrap, nil
+}
+
 // CreateResource creates a new resource in the repository
 func (r *DualReadWriter) CreateResource(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	return r.createOrUpdate(ctx, true, opts)
@@ -415,6 +483,11 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 
 	// Create a basic parsed resource response for directories
 	cfg := r.repo.Config()
+	urls, err := getFolderURLs(ctx, opts.Path, opts.Ref, r.repo)
+	if err != nil {
+		return nil, err
+	}
+
 	parsed := &ParsedResource{
 		Action: provisioning.ResourceActionMove,
 		Info: &repository.FileInfo{
@@ -426,7 +499,8 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 			Version: FolderResource.Version,
 			Kind:    "Folder",
 		},
-		GVR: FolderResource,
+		GVR:  FolderResource,
+		URLs: urls,
 		Repo: provisioning.ResourceRepositoryInfo{
 			Type:      cfg.Spec.Type,
 			Namespace: cfg.Namespace,

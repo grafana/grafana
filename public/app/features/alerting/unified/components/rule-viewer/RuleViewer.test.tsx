@@ -5,9 +5,9 @@ import { byLabelText, byRole, byText } from 'testing-library-selector';
 import { setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
   __clearRuleViewTabsForTests,

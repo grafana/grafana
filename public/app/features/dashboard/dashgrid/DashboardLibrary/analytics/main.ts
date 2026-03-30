@@ -1,16 +1,14 @@
 import { defineFeatureEvents } from '@grafana/runtime/internal';
 
-import { FEATURE_VARIANTS } from '../constants';
-
 import {
-  CompatibilityCheckCompletedProperties,
-  CompatibilityCheckTriggeredProperties,
-  EntryPointClickedProperties,
-  ItemClickedProperties,
-  LoadedProperties,
-  MappingFormCompletedProperties,
-  MappingFormShownProperties,
-  SearchPerformedProperties,
+  type CompatibilityCheckCompletedProperties,
+  type CompatibilityCheckTriggeredProperties,
+  type EntryPointClickedProperties,
+  type ItemClickedProperties,
+  type LoadedProperties,
+  type MappingFormCompletedProperties,
+  type MappingFormShownProperties,
+  type SearchPerformedProperties,
 } from './types';
 
 const SCHEMA_VERSION = 1;
@@ -57,46 +55,4 @@ export const NewTemplateDashboardInteractions = {
   itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked'),
   /** Fired when the Template Dashboards view finishes loading. */
   loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
-};
-
-/**
- * Dashboard Library events scoped to the Suggested Dashboards variant.
- * Automatically injects `featureVariant: SUGGESTED_DASHBOARDS` into every event.
- * @owner grafana-dashboards
- */
-export const NewSuggestedDashboardInteractions = {
-  ...NewDashboardLibraryInteractions,
-  /** Fired when the user selects an item in the Suggested Dashboards view. */
-  itemClicked: (props: ItemClickedProperties) =>
-    newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
-    }),
-  /** Fired when the Suggested Dashboards view finishes loading. */
-  loaded: (props: LoadedProperties) =>
-    newDashboardLibraryInteraction<LoadedProperties>('loaded')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
-    }),
-};
-
-/**
- * Dashboard Library events scoped to the Basic Provisioned Dashboards variant.
- * Automatically injects `featureVariant: BASIC_PROVISIONED_DASHBOARDS` into every event.
- * @owner grafana-dashboards
- */
-export const NewBasicProvisionedDashboardInteractions = {
-  ...NewDashboardLibraryInteractions,
-  /** Fired when the user selects an item in the Basic Provisioned Dashboards view. */
-  itemClicked: (props: ItemClickedProperties) =>
-    newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    }),
-  /** Fired when the Basic Provisioned Dashboards view finishes loading. */
-  loaded: (props: LoadedProperties) =>
-    newDashboardLibraryInteraction<LoadedProperties>('loaded')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    }),
 };

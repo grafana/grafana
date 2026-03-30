@@ -1,10 +1,10 @@
 import { HttpResponse, http } from 'msw';
 
 import {
-  CreateCorrelationApiResponse,
-  ListCorrelationApiResponse,
-  DeleteCorrelationApiResponse,
-  UpdateCorrelationApiResponse,
+  type CreateCorrelationApiResponse,
+  type ListCorrelationApiResponse,
+  type DeleteCorrelationApiResponse,
+  type UpdateCorrelationApiResponse,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 
 import { mockCorrelationsMap } from './fixtures';
