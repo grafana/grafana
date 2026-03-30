@@ -14,7 +14,6 @@ const (
 	TEAM_SEARCH_EMAIL        = "email"
 	TEAM_SEARCH_PROVISIONED  = "provisioned"
 	TEAM_SEARCH_EXTERNAL_UID = "externalUID"
-	TEAM_SEARCH_MEMBER_COUNT = "memberCount"
 )
 
 // TeamSortableExtraFields are the additional fields that can be used for sorting team search results.
@@ -38,11 +37,6 @@ var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColum
 		Name:        TEAM_SEARCH_EXTERNAL_UID,
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 		Description: "External UID of the team",
-	},
-	TEAM_SEARCH_MEMBER_COUNT: {
-		Name:        TEAM_SEARCH_MEMBER_COUNT,
-		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-		Description: "Number of members in the team",
 	},
 }
 

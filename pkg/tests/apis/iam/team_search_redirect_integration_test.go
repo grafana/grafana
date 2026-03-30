@@ -160,4 +160,5 @@ func assertSearchTeamsMatch(t *testing.T, legacy, k8s *team.TeamDTO) {
 	assert.Equal(t, legacy.Email, k8s.Email)
 	assert.Equal(t, legacy.ExternalUID, k8s.ExternalUID)
 	assert.Equal(t, legacy.IsProvisioned, k8s.IsProvisioned)
+	assert.Equal(t, legacy.MemberCount, k8s.MemberCount)
 }

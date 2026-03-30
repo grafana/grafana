@@ -42,7 +42,8 @@ func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage
 
 	req := restClient.Get().
 		AbsPath("apis", iamv0alpha1.APIGroup, iamv0alpha1.APIVersion, "namespaces", namespace, "searchTeams").
-		Param("accesscontrol", "true")
+		Param("accesscontrol", "true").
+		Param("membercount", "true")
 
 	if query := c.Query("query"); query != "" {
 		req = req.Param("query", query)
@@ -72,6 +73,10 @@ func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage
 
 	teams := make([]*team.TeamDTO, 0, len(searchResp.Hits))
 	for _, hit := range searchResp.Hits {
+		var memberCount int64
+		if hit.MemberCount != nil {
+			memberCount = *hit.MemberCount
+		}
 		teams = append(teams, &team.TeamDTO{
 			UID:           hit.Name,
 			OrgID:         c.GetOrgID(),
@@ -80,7 +85,7 @@ func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage
 			AvatarURL:     dtos.GetGravatarUrlWithDefault(tapi.cfg, hit.Email, hit.Title),
 			IsProvisioned: hit.Provisioned,
 			ExternalUID:   hit.ExternalUID,
-			MemberCount:   hit.MemberCount,
+			MemberCount:   memberCount,
 			AccessControl: hit.AccessControl,
 		})
 	}

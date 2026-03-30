@@ -402,7 +402,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"name", "title", "email", "provisioned", "externalUID", "memberCount"},
+				Required: []string{"name", "title", "email", "provisioned", "externalUID"},
 			},
 		},
 	}

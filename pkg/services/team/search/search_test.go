@@ -29,10 +29,6 @@ func TestParseResults(t *testing.T) {
 						Name: "externalUID",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
-					{
-						Name: "memberCount",
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -45,7 +41,6 @@ func TestParseResults(t *testing.T) {
 							[]byte("team1@example.com"),
 							[]byte("true"),
 							[]byte("team1-uid"),
-							[]byte("5"),
 						},
 					},
 				},
@@ -60,7 +55,6 @@ func TestParseResults(t *testing.T) {
 		require.Equal(t, "team1@example.com", results.Hits[0].Email)
 		require.True(t, results.Hits[0].Provisioned)
 		require.Equal(t, "team1-uid", results.Hits[0].ExternalUID)
-		require.Equal(t, int64(5), results.Hits[0].MemberCount)
 	})
 
 	t.Run("should handle nil result", func(t *testing.T) {
