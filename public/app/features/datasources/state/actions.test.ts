@@ -179,11 +179,8 @@ describe('initDataSourceSettings', () => {
       expect(dependencies.getDataSource).toHaveBeenCalledTimes(1);
       expect(dependencies.getDataSource).toHaveBeenCalledWith({}, 256);
 
-      expect(dependencies.getDataSourceMeta).toHaveBeenCalledTimes(1);
-      expect(dependencies.getDataSourceMeta).toHaveBeenCalledWith({}, 'app');
-
       expect(dependencies.importDataSourcePlugin).toHaveBeenCalledTimes(1);
-      expect(dependencies.importDataSourcePlugin).toHaveBeenCalledWith(dataSourceMeta);
+      expect(dependencies.importDataSourcePlugin).toHaveBeenCalledWith('app');
     });
   });
 

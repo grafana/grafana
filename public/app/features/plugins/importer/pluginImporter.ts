@@ -13,6 +13,7 @@ import {
   throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
 import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
@@ -168,9 +169,17 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
   return getPromiseFromCache(meta);
 };
 
+async function importDataSource(pluginId: string): Promise<GenericDataSourcePlugin> {
+  const meta = await getDatasourcePluginMeta(pluginId);
+  if (!meta) {
+    throw new Error(`Could not find datasource plugin metadata for '${pluginId}'`);
+  }
+  return importPlugin(meta, datasourcePluginPostImport);
+}
+
 export const pluginImporter: PluginImporter = {
   importPanel: (meta: PanelPluginMeta) => importPlugin(meta, panelPluginPostImport),
-  importDataSource: (meta: DataSourcePluginMeta) => importPlugin(meta, datasourcePluginPostImport),
+  importDataSource,
   importApp: (meta: AppPluginMeta) => importPlugin(meta, appPluginPostImport),
   getPanel: (id: string) => getPluginFromCache<PanelPlugin>(id), // we need this sync because how the panel plugins are loaded in PanelRenderer
 };

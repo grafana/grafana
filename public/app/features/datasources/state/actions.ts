@@ -118,8 +118,7 @@ export const initDataSourceSettings = (
       await dispatch(dependencies.loadDataSourceMeta(loadedDataSource));
 
       const dataSource = dependencies.getDataSource(getState().dataSources, uid);
-      const dataSourceMeta = dependencies.getDataSourceMeta(getState().dataSources, dataSource!.type);
-      const importedPlugin = await dependencies.importDataSourcePlugin(dataSourceMeta);
+      const importedPlugin = await dependencies.importDataSourcePlugin(dataSource!.type);
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
@@ -226,7 +225,7 @@ export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSetti
 export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<void> {
   return async (dispatch) => {
     const pluginInfo: DataSourcePluginMeta = await getPluginSettings(dataSource.type);
-    const plugin = await pluginImporter.importDataSource(pluginInfo);
+    const plugin = await pluginImporter.importDataSource(dataSource.type);
     const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
     const meta = {
       ...pluginInfo,

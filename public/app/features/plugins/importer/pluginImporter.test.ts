@@ -19,6 +19,13 @@ import { pluginsLogger } from '../utils';
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getDatasourcePluginMeta: jest.fn(),
+}));
+
+const { getDatasourcePluginMeta } = jest.requireMock('@grafana/runtime/internal');
+
 jest.mock('../extensions/registry/setup', () => ({
   ...jest.requireActual('../extensions/registry/setup'),
   getPluginExtensionRegistries: jest.fn(),
@@ -36,6 +43,7 @@ describe('pluginImporter', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     clearCaches();
+    getDatasourcePluginMeta.mockResolvedValue({ ...dataSourcePlugin });
     addedComponentsRegistry = new AddedComponentsRegistry([]);
     addedFunctionsRegistry = new AddedFunctionsRegistry([]);
     addedLinksRegistry = new AddedLinksRegistry([]);
@@ -146,8 +154,9 @@ describe('pluginImporter', () => {
         .spyOn(importPluginModule, 'importPluginModule')
         .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
 
-      const result = await pluginImporter.importDataSource({ ...dataSourcePlugin });
+      const result = await pluginImporter.importDataSource('test-plugin');
 
+      expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-plugin');
       expect(spy).toHaveBeenCalledWith({
         path: 'public/plugins/test-plugin/module.js',
         version: '1.0.0',
@@ -165,8 +174,9 @@ describe('pluginImporter', () => {
         .spyOn(importPluginModule, 'importPluginModule')
         .mockResolvedValue({ Datasource: { ...dataSourcePlugin } });
 
-      const result = await pluginImporter.importDataSource({ ...dataSourcePlugin });
+      const result = await pluginImporter.importDataSource('test-plugin');
 
+      expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-plugin');
       expect(spy).toHaveBeenCalledWith({
         path: 'public/plugins/test-plugin/module.js',
         version: '1.0.0',
@@ -197,9 +207,9 @@ describe('pluginImporter', () => {
       const spy = jest
         .spyOn(importPluginModule, 'importPluginModule')
         .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
-      const meta = { ...dataSourcePlugin, loadingStrategy: PluginLoadingStrategy.script };
+      getDatasourcePluginMeta.mockResolvedValue({ ...dataSourcePlugin, loadingStrategy: PluginLoadingStrategy.script });
 
-      const result = await pluginImporter.importDataSource({ ...meta });
+      const result = await pluginImporter.importDataSource('test-plugin');
 
       expect(spy).toHaveBeenCalledWith({
         path: 'public/plugins/test-plugin/module.js',
@@ -216,9 +226,9 @@ describe('pluginImporter', () => {
     it('should throw error if module is missing exported plugin', async () => {
       const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
 
-      expect(async () => {
-        await pluginImporter.importDataSource({ ...dataSourcePlugin });
-      }).rejects.toThrow(new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export'));
+      await expect(pluginImporter.importDataSource('test-plugin')).rejects.toThrow(
+        new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export')
+      );
 
       expect(spy).toHaveBeenCalledWith({
         path: 'public/plugins/test-plugin/module.js',
@@ -228,6 +238,14 @@ describe('pluginImporter', () => {
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
+    });
+
+    it('should throw error if plugin metadata is not found', async () => {
+      getDatasourcePluginMeta.mockResolvedValue(null);
+
+      await expect(pluginImporter.importDataSource('unknown-plugin')).rejects.toThrow(
+        "Could not find datasource plugin metadata for 'unknown-plugin'"
+      );
     });
   });
 

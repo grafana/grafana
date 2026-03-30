@@ -33,7 +33,7 @@ export async function getVariableQueryEditor<
   }
 
   if (hasDatasourceVariableSupport(datasource)) {
-    const dsPlugin = await importDataSourcePluginFunc(datasource.meta!);
+    const dsPlugin = await importDataSourcePluginFunc(datasource.type);
 
     if (!dsPlugin.components.QueryEditor) {
       throw new Error('Missing QueryEditor in plugin definition.');
@@ -47,7 +47,7 @@ export async function getVariableQueryEditor<
   }
 
   if (hasLegacyVariableSupport(datasource)) {
-    const dsPlugin = await importDataSourcePluginFunc(datasource.meta!);
+    const dsPlugin = await importDataSourcePluginFunc(datasource.type);
     return dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
   }
 

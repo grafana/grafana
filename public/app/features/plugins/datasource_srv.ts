@@ -216,7 +216,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const dsPlugin = await pluginImporter.importDataSource(instanceSettings.meta);
+      const dsPlugin = await pluginImporter.importDataSource(instanceSettings.type);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];
