@@ -145,21 +145,16 @@ const getStyles = (
   tableWidth: number,
   controlsWidth: number
 ) => {
-  const listControlsWrapperTableHeaderOffset = '-5px';
   return {
     listControlsWrapper: css({
       height: '100%',
       width: controlsWidth,
       label: 'listControlsWrapper',
-      marginTop: `calc(${theme.spacing.gridSize * theme.components.panel.headerHeight}px + ${listControlsWrapperTableHeaderOffset})`,
-      position: 'absolute',
-      right: 0,
-      top: 0,
     }),
     tableWrapper: css({
       position: 'relative',
-      paddingLeft: fieldSelectorWidth,
-      paddingRight: controlsWidth,
+      display: 'flex',
+      flexDirection: 'row-reverse',
       height,
       width: tableWidth,
     }),
