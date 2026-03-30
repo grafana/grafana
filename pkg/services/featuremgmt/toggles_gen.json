@@ -2531,7 +2531,8 @@
       "metadata": {
         "name": "k8SFolderCounts",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-12-27T17:10:44Z"
+        "creationTimestamp": "2024-12-27T17:10:44Z",
+        "deletionTimestamp": "2026-03-29T14:31:36Z"
       },
       "spec": {
         "description": "Enable folder's api server counts",
