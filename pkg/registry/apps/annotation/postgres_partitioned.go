@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -25,7 +24,6 @@ const (
 	defaultMaxConnections  = 10
 	defaultMaxIdleConns    = 5
 	defaultConnMaxLifetime = time.Hour
-	defaultRetentionTTL    = 90 * 24 * time.Hour // TODO: determine appropriate default TTL
 	defaultTagCacheTTL     = 60 * time.Second
 	defaultTagCacheSize    = 1000
 )
@@ -42,12 +40,10 @@ type PostgreSQLStoreConfig struct {
 
 // PostgreSQLStore implements the Store interface using PostgreSQL as the backend
 type PostgreSQLStore struct {
-	pool          *pgxpool.Pool
-	config        PostgreSQLStoreConfig
-	tagCache      *tagCache
-	logger        log.Logger
-	cleanupCancel context.CancelFunc
-	cleanupWg     sync.WaitGroup
+	pool     *pgxpool.Pool
+	config   PostgreSQLStoreConfig
+	tagCache *tagCache
+	logger   log.Logger
 }
 
 var _ Store = (*PostgreSQLStore)(nil)
@@ -64,9 +60,6 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 	}
 	if cfg.ConnMaxLifetime == 0 {
 		cfg.ConnMaxLifetime = defaultConnMaxLifetime
-	}
-	if cfg.RetentionTTL == 0 {
-		cfg.RetentionTTL = defaultRetentionTTL
 	}
 	if cfg.TagCacheTTL == 0 {
 		cfg.TagCacheTTL = defaultTagCacheTTL
@@ -120,18 +113,11 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 		logger:   logger,
 	}
 
-	// Start background cleanup
-	store.startCleanup(ctx)
-
 	return store, nil
 }
 
-// Close closes the database connection pool and stops background cleanup
+// Close closes the database connection pool
 func (s *PostgreSQLStore) Close() {
-	if s.cleanupCancel != nil {
-		s.cleanupCancel()
-		s.cleanupWg.Wait()
-	}
 	if s.pool != nil {
 		s.pool.Close()
 	}
@@ -445,7 +431,7 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 
 func (s *PostgreSQLStore) validateAnnotation(anno *annotationV0.Annotation) error {
 	now := time.Now().UTC()
-	// TODO: determine appropriate bounds and maybe make configurable
+	// TODO: determine appropriate future bound and maybe make configurable
 	maxFuture := now.Add(7 * 24 * time.Hour).UnixMilli()
 	maxPast := now.Add(-s.config.RetentionTTL).UnixMilli()
 

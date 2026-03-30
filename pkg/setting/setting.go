@@ -1003,8 +1003,10 @@ type AnnotationCleanupSettings struct {
 }
 
 type AnnotationAppPlatformSettings struct {
-	Enabled           bool
-	StoreBackend      string // "legacy-sql" (default), "grpc", or "postgres"
+	Enabled      bool
+	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
+	RetentionTTL time.Duration // Retention TTL for annotations
+
 	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
 	GRPCTLSCAFile     string // Path to CA certificate file (optional)
@@ -1015,7 +1017,6 @@ type AnnotationAppPlatformSettings struct {
 	PostgresMaxConnections   int           // Maximum number of connections in the pool
 	PostgresMaxIdleConns     int           // Maximum number of idle connections
 	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
-	PostgresRetentionTTL     time.Duration // Retention TTL for annotations
 	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
 	PostgresTagCacheSize     int           // Size of the tag query cache
 }
@@ -1023,8 +1024,10 @@ type AnnotationAppPlatformSettings struct {
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		Enabled:      appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend: appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL: appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
 		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
@@ -1035,7 +1038,6 @@ func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSetti
 		PostgresMaxConnections:   appPlatformSection.Key("postgres_max_connections").MustInt(10),
 		PostgresMaxIdleConns:     appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
 		PostgresConnMaxLifetime:  appPlatformSection.Key("postgres_conn_max_lifetime").MustDuration(time.Hour),
-		PostgresRetentionTTL:     appPlatformSection.Key("postgres_retention_ttl").MustDuration(2160 * time.Hour),
 		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
 		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
 	}

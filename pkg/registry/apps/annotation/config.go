@@ -9,9 +9,20 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	// cleanupInterval is how often the background cleanup runs
+	cleanupInterval = 24 * time.Hour
+	// defaultRetentionTTL is the default retention period for annotations
+	// TODO: determine appropriate default TTL
+	defaultRetentionTTL = 90 * 24 * time.Hour
+)
+
 // Config holds the store backend configuration for the annotation app.
 type Config struct {
 	StoreBackend string
+
+	// General lifecycle configuration
+	RetentionTTL time.Duration
 
 	// gRPC store configuration
 	GRPCAddress       string
@@ -24,7 +35,6 @@ type Config struct {
 	PostgresMaxConnections   int
 	PostgresMaxIdleConns     int
 	PostgresConnMaxLifetime  time.Duration
-	PostgresRetentionTTL     time.Duration
 	PostgresTagCacheTTL      time.Duration
 	PostgresTagCacheSize     int
 
@@ -37,6 +47,9 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 	// TODO: add cleanup flags when the SQL backend is supported in MT.
 	flags.StringVar(&c.StoreBackend, "annotation.store-backend", "memory", "Annotation store backend: memory, grpc, postgres, legacy-sql")
 
+	// General lifecycle flags
+	flags.DurationVar(&c.RetentionTTL, "annotation.retention-ttl", defaultRetentionTTL, "Retention TTL for annotations (old data will be cleaned up)")
+
 	// gRPC flags
 	flags.StringVar(&c.GRPCAddress, "annotation.grpc-address", "", "gRPC server address for the annotation store")
 	flags.BoolVar(&c.GRPCUseTLS, "annotation.grpc-use-tls", false, "Enable TLS for the annotation gRPC connection")
@@ -48,14 +61,20 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 	flags.IntVar(&c.PostgresMaxConnections, "annotation.postgres-max-connections", defaultMaxConnections, "Maximum number of connections in the Postgres pool")
 	flags.IntVar(&c.PostgresMaxIdleConns, "annotation.postgres-max-idle-conns", defaultMaxIdleConns, "Maximum number of idle connections in the Postgres pool")
 	flags.DurationVar(&c.PostgresConnMaxLifetime, "annotation.postgres-conn-max-lifetime", defaultConnMaxLifetime, "Maximum lifetime of a connection in the Postgres pool")
-	flags.DurationVar(&c.PostgresRetentionTTL, "annotation.postgres-retention-ttl", defaultRetentionTTL, "Retention TTL for annotations (old partitions will be dropped)")
 	flags.DurationVar(&c.PostgresTagCacheTTL, "annotation.postgres-tag-cache-ttl", defaultTagCacheTTL, "TTL for tag query cache")
 	flags.IntVar(&c.PostgresTagCacheSize, "annotation.postgres-tag-cache-size", defaultTagCacheSize, "Size of the tag query cache")
 }
 
 func newConfigFromSettings(cfg *setting.Cfg) Config {
+	retentionTTL := cfg.AnnotationAppPlatform.RetentionTTL
+	if retentionTTL == 0 {
+		retentionTTL = defaultRetentionTTL
+	}
+
 	return Config{
-		StoreBackend:      cfg.AnnotationAppPlatform.StoreBackend,
+		StoreBackend: cfg.AnnotationAppPlatform.StoreBackend,
+		RetentionTTL: retentionTTL,
+
 		GRPCAddress:       cfg.AnnotationAppPlatform.GRPCAddress,
 		GRPCUseTLS:        cfg.AnnotationAppPlatform.GRPCUseTLS,
 		GRPCTLSCAFile:     cfg.AnnotationAppPlatform.GRPCTLSCAFile,
@@ -65,7 +84,6 @@ func newConfigFromSettings(cfg *setting.Cfg) Config {
 		PostgresMaxConnections:   cfg.AnnotationAppPlatform.PostgresMaxConnections,
 		PostgresMaxIdleConns:     cfg.AnnotationAppPlatform.PostgresMaxIdleConns,
 		PostgresConnMaxLifetime:  cfg.AnnotationAppPlatform.PostgresConnMaxLifetime,
-		PostgresRetentionTTL:     cfg.AnnotationAppPlatform.PostgresRetentionTTL,
 		PostgresTagCacheTTL:      cfg.AnnotationAppPlatform.PostgresTagCacheTTL,
 		PostgresTagCacheSize:     cfg.AnnotationAppPlatform.PostgresTagCacheSize,
 
