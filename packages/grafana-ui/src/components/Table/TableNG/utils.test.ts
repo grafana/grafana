@@ -1189,14 +1189,53 @@ describe('TableNG utils', () => {
       expect(measurers![0].fieldIdxs).toEqual([0]);
     });
 
-    it('does not enable text counting for non-string fields', () => {
+    it('enables text counting for Time fields rendered by AutoCellRenderer', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapText: true } } },
+        {
+          name: 'Time',
+          type: FieldType.time,
+          values: [],
+          config: { custom: { wrapText: true } },
+          display: (v) => ({ text: '2024-03-26 14:30:00', numeric: v as number, color: undefined, title: undefined }),
+        },
       ];
 
       const measurers = buildCellHeightMeasurers(fields, ctx);
-      // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
+      // Time fields use AutoCellRenderer (same as string fields) and can produce long formatted strings
+      expect(measurers).toBeDefined();
+      expect(measurers![0].fieldIdxs).toEqual([1]);
+    });
+
+    it('enables text counting for Number fields rendered by AutoCellRenderer', () => {
+      const fields: Field[] = [
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [],
+          config: { custom: { wrapText: true } },
+          display: (v) => ({ text: String(v), numeric: v as number, color: undefined, title: undefined }),
+        },
+      ];
+
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers).toBeDefined();
+      expect(measurers![0].fieldIdxs).toEqual([0]);
+    });
+
+    it('does not enable text counting for non-AutoCellRenderer fields like Gauge', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        {
+          name: 'Score',
+          type: FieldType.number,
+          values: [],
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Gauge } } },
+        },
+      ];
+
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      // Gauge cells don't use AutoCellRenderer, so no measurer is set up
       expect(measurers).toBeUndefined();
     });
 
@@ -1354,6 +1393,93 @@ describe('TableNG utils', () => {
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
+      });
+    });
+
+    describe('non-string fields with display processor', () => {
+      it('measures the display-formatted string for Time fields, not the raw epoch number', () => {
+        const FORMATTED_TIME = '2024-03-26 14:30:00';
+        const EPOCH_MS = 1711462200000;
+
+        const timeFields: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [EPOCH_MS],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({ text: FORMATTED_TIME, numeric: EPOCH_MS, color: undefined, title: undefined })),
+          },
+        ];
+        const frame = createDataFrame({ fields: timeFields });
+        const frameToRecords = compileFrameToRecords(frame);
+        const timeRows = frameToRecords(frame);
+
+        const timeMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        getRowHeight(timeFields, timeRows[0], [100], 36, [timeMeasurer], 20, 10);
+
+        // Must be called with the formatted string, not the raw epoch number
+        expect(timeMeasurer.measure).toHaveBeenCalledWith(FORMATTED_TIME, 100, timeFields[0], 0, 20);
+        expect(timeMeasurer.measure).not.toHaveBeenCalledWith(EPOCH_MS, 100, timeFields[0], 0, 20);
+      });
+
+      it('still passes the raw value for string fields (no display transformation)', () => {
+        const stringFields: Field[] = [
+          {
+            name: 'Name',
+            type: FieldType.string,
+            values: ['hello world'],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({ text: 'SHOULD NOT BE USED', numeric: NaN, color: undefined, title: undefined })),
+          },
+        ];
+        const frame = createDataFrame({ fields: stringFields });
+        const frameToRecords = compileFrameToRecords(frame);
+        const stringRows = frameToRecords(frame);
+
+        const stringMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        getRowHeight(stringFields, stringRows[0], [100], 36, [stringMeasurer], 20, 10);
+
+        // String fields pass through the raw value, not the display-formatted value
+        expect(stringMeasurer.measure).toHaveBeenCalledWith('hello world', 100, stringFields[0], 0, 20);
+      });
+
+      it('uses the display name for header rows (rowIdx === -1) regardless of field type', () => {
+        const EPOCH_MS = 1711462200000;
+
+        const timeFields: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [EPOCH_MS],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({
+              text: '2024-03-26 14:30:00',
+              numeric: EPOCH_MS,
+              color: undefined,
+              title: undefined,
+            })),
+          },
+        ];
+
+        const timeMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        // rowIdx -1 = header row; value should be the field display name
+        getRowHeight(timeFields, { __index: -1, __depth: 0 }, [100], 36, [timeMeasurer], 20, 10);
+
+        expect(timeMeasurer.measure).toHaveBeenCalledWith('Time', 100, timeFields[0], -1, 20);
+        // display() should not have been called for header rows
+        expect(timeFields[0].display).not.toHaveBeenCalled();
       });
     });
   });

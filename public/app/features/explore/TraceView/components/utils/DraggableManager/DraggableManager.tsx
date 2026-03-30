@@ -17,7 +17,7 @@ import { get as _get } from 'lodash';
 import TNil from '../../types/TNil';
 
 import EUpdateTypes from './EUpdateTypes';
-import { DraggableBounds, DraggingUpdate } from './types';
+import type { DraggableBounds, DraggingUpdate } from './types';
 
 const LEFT_MOUSE_BUTTON = 0;
 

@@ -8,7 +8,7 @@ import { t } from '@grafana/i18n';
 import { Button, Combobox, ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { AutoGridColumnWidth, AutoGridRowHeight, AutoGridLayoutManager } from './AutoGridLayoutManager';
+import type { AutoGridColumnWidth, AutoGridRowHeight, AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function getEditOptions(layoutManager: AutoGridLayoutManager): OptionsPaneItemDescriptor[] {
   const options: OptionsPaneItemDescriptor[] = [];

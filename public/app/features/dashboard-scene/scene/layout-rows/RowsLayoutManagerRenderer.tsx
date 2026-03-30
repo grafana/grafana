@@ -17,7 +17,7 @@ import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { RowItem } from './RowItem';
 import { RowItemRepeater } from './RowItemRepeater';
-import { RowsLayoutManager } from './RowsLayoutManager';
+import type { RowsLayoutManager } from './RowsLayoutManager';
 
 export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayoutManager>) {
   const { rows, key } = model.useState();

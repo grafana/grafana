@@ -11,7 +11,7 @@ import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayou
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 
-import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
+import type { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
 
 interface PanelWrapperProps {
   panel: VizPanel;
