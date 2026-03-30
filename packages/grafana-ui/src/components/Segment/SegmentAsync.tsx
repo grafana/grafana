@@ -1,11 +1,11 @@
 import { cx } from '@emotion/css';
 import { isObject } from 'lodash';
-import { HTMLProps } from 'react';
+import { type HTMLProps } from 'react';
 import * as React from 'react';
 import { useAsyncFn } from 'react-use';
 import { type AsyncState } from 'react-use/lib/useAsync';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -13,7 +13,7 @@ import { InlineLabel } from '../Forms/InlineLabel';
 
 import { SegmentSelect } from './SegmentSelect';
 import { getSegmentStyles } from './styles';
-import { SegmentProps } from './types';
+import { type SegmentProps } from './types';
 import { useExpandableLabel } from './useExpandableLabel';
 
 export interface SegmentAsyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {

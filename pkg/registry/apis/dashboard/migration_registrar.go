@@ -2,7 +2,7 @@ package dashboard
 
 import (
 	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"k8s.io/apimachinery/pkg/runtime/schema"

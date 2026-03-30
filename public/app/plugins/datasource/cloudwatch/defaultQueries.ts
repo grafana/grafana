@@ -1,13 +1,13 @@
 import {
-  CloudWatchAnnotationQuery,
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
-  LogGroup,
+  type CloudWatchAnnotationQuery,
+  type CloudWatchLogsQuery,
+  type CloudWatchMetricsQuery,
+  type LogGroup,
   LogsQueryLanguage,
   MetricEditorMode,
   MetricQueryType,
 } from './dataquery.gen';
-import { VariableQuery, VariableQueryType } from './types';
+import { type VariableQuery, VariableQueryType } from './types';
 
 export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   queryMode: 'Metrics',

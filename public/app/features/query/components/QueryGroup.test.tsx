@@ -7,7 +7,7 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 
-import { Props, QueryGroup } from './QueryGroup';
+import { type Props, QueryGroup } from './QueryGroup';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',

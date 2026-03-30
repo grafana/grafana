@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { Badge, IconSize, Tooltip } from '@grafana/ui';
+import { Badge, type IconSize, Tooltip } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 
 import { useGetPluginSettingsQuery } from '../api/pluginsApi';

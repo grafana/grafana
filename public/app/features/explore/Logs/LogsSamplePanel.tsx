@@ -3,20 +3,20 @@ import { useRef, type JSX } from 'react';
 
 import {
   CoreApp,
-  DataQueryResponse,
-  DataSourceApi,
-  GrafanaTheme2,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type GrafanaTheme2,
   hasSupplementaryQuerySupport,
   LoadingState,
   LogsDedupStrategy,
-  SplitOpen,
+  type SplitOpen,
   store,
   SupplementaryQueryType,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, LogsSortOrder, TimeZone } from '@grafana/schema';
+import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 

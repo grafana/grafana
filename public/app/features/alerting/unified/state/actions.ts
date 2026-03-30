@@ -2,18 +2,22 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService, logMeasurement } from '@grafana/runtime';
-import { AlertManagerCortexConfig, AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { ThunkResult } from 'app/types/store';
-import { RuleIdentifier, RuleNamespace, StateHistoryItem } from 'app/types/unified-alerting';
-import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  type AlertManagerCortexConfig,
+  type AlertmanagerGroup,
+  type Matcher,
+} from 'app/plugins/datasource/alertmanager/types';
+import { type ThunkResult } from 'app/types/store';
+import { type RuleIdentifier, type RuleNamespace, type StateHistoryItem } from 'app/types/unified-alerting';
+import { type RulerRuleDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { withPromRulesMetadataLogging, withRulerRulesMetadataLogging } from '../Analytics';
 import { deleteAlertManagerConfig, fetchAlertGroups, updateAlertManagerConfig } from '../api/alertmanager';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
-import { FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
+import { type FetchPromRulesFilter, fetchRules } from '../api/prometheus';
+import { type FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { getAllRulesSourceNames } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';

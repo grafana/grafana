@@ -1,17 +1,17 @@
 import { useEffect } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { SyncInfo } from 'app/types/ldap';
-import { StoreState } from 'app/types/store';
-import { UserDTO, UserOrg, UserSession, UserAdminError } from 'app/types/user';
+import { type SyncInfo } from 'app/types/ldap';
+import { type StoreState } from 'app/types/store';
+import { type UserDTO, type UserOrg, type UserSession, type UserAdminError } from 'app/types/user';
 
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { UserOrgs } from './UserOrgs';

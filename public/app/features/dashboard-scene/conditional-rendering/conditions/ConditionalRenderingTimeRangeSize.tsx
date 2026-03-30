@@ -1,16 +1,17 @@
-import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { rangeUtil, SelectableValue } from '@grafana/data';
+import { rangeUtil, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
+import { type ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Field, Select } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
-import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { checkGroup, getObjectType } from './utils';
 
 interface ConditionalRenderingTimeRangeSizeState extends SceneObjectState {
@@ -246,6 +247,7 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
         noMargin
       >
         <Select
+          data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.timeRange.select}
           isClearable={false}
           allowCustomValue
           onCreateOption={(value) => handleChange(value)}

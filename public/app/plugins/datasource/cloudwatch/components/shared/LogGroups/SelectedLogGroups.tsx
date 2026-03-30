@@ -1,4 +1,4 @@
-import { LogGroup } from '../../../dataquery.gen';
+import { type LogGroup } from '../../../dataquery.gen';
 import { SelectionChipList } from '../SelectionChipList';
 
 type CrossAccountLogsQueryProps = {

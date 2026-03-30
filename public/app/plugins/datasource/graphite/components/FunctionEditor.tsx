@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, TextLink, Tooltip, useStyles2, type PopoverContent } from '@grafana/ui';
 
-import { FuncInstance } from '../gfunc';
+import { type FuncInstance } from '../gfunc';
 
-import { FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
+import { FunctionEditorControls, type FunctionEditorControlsProps } from './FunctionEditorControls';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
   func: FuncInstance;

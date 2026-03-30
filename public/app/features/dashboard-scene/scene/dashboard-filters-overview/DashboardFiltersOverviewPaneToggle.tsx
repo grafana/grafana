@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import { ToolbarButton } from '@grafana/ui';
 
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 import { DashboardFiltersOverviewDrawer } from './DashboardFiltersOverviewDrawer';
 

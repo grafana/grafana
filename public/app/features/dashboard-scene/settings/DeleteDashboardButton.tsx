@@ -8,7 +8,7 @@ import { DeleteProvisionedDashboardDrawer } from 'app/features/provisioning/comp
 
 import { useDeleteDashboardsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { DeletedDashboardsInfo } from '../../browse-dashboards/components/DeletedDashboardsInfo';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
   dashboard: DashboardScene;
@@ -93,7 +93,6 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
       onConfirm={onConfirm}
       onDismiss={onClose}
       title={t('dashboard-settings.delete-modal.title', 'Delete')}
-      icon="trash-alt"
       confirmText={t('dashboard-settings.delete-modal.delete-button', 'Delete')}
       confirmationText={t('dashboard-settings.delete-modal.confirmation-text', 'Delete')}
     />
@@ -108,7 +107,6 @@ function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModal
         'dashboard-scene.provisioned-delete-modal.title-cannot-delete-provisioned-dashboard',
         'Cannot delete provisioned dashboard'
       )}
-      icon="trash-alt"
       onDismiss={onClose}
     >
       <p>
