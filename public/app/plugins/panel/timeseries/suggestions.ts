@@ -25,6 +25,9 @@ import { type Options } from './panelcfg.gen';
 const MAX_BARS = 100;
 const MAX_ROWS_SMOOTH_CHART = 200;
 
+const MAX_PREVIEW_SERIES = 8;
+const MAX_PREVIEW_BAR_ROWS = 30;
+
 const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
 ): VisualizationSuggestion<Options, GraphFieldConfig> =>
@@ -36,6 +39,7 @@ const withDefaults = (
       overrides: [],
     },
     cardOptions: {
+      maxSeries: MAX_PREVIEW_SERIES,
       previewModifier: (s) => {
         s.options!.disableKeyboardEvents = true;
         s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
@@ -72,6 +76,9 @@ const barChart = (name: string, stacking?: StackingMode) => ({
       },
     },
     overrides: [],
+  },
+  cardOptions: {
+    maxRows: MAX_PREVIEW_BAR_ROWS,
   },
 });
 
