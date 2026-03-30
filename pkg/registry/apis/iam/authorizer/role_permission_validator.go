@@ -325,28 +325,31 @@ func (v *RolePermissionValidator) checkLegacyPermission(ctx context.Context, aut
 	// for legacy permissions, reconstruct the full action (e.g., "annotations:read")
 	fullAction := perm.action.resource + ":" + perm.action.verb
 
+	// convert k8s datasource uid scope to legacy format so the legacy AC check can match it
+	// e.g. "loki.datasource.grafana.app/datasources:abc" -> "datasources:uid:abc"
+	legacyScope := k8sDatasourceScopeToLegacy(perm.scope.originalScope)
+
 	// if AccessControl is nil, legacy permissions are not supported
 	if v.ac == nil {
 		v.logger.Debug("legacy permission check not supported",
 			"user", authInfo.GetIdentifier(),
 			"action", fullAction,
-			"scope", perm.scope.originalScope,
+			"scope", legacyScope,
 		)
-		return apierrors.NewBadRequest(fmt.Sprintf("legacy permission '%s' on scope '%s' is not supported: use K8s format permissions (group/resource:verb) instead", fullAction, perm.scope.originalScope))
+		return apierrors.NewBadRequest(fmt.Sprintf("legacy permission '%s' on scope '%s' is not supported: use K8s format permissions (group/resource:verb) instead", fullAction, legacyScope))
 	}
 
 	v.logger.Debug("checking legacy permission not in mapper using AccessControl",
 		"user", authInfo.GetIdentifier(),
 		"action", fullAction,
-		"scope", perm.scope.originalScope,
+		"scope", legacyScope,
 	)
 
-	// use the original scope string directly for legacy permission checks
 	var evaluator accesscontrol.Evaluator
-	if perm.scope.originalScope == "" {
+	if legacyScope == "" {
 		evaluator = accesscontrol.EvalPermission(fullAction)
 	} else {
-		evaluator = accesscontrol.EvalPermission(fullAction, perm.scope.originalScope)
+		evaluator = accesscontrol.EvalPermission(fullAction, legacyScope)
 	}
 
 	// use the accesscontrol service to evaluate the permission
@@ -355,28 +358,47 @@ func (v *RolePermissionValidator) checkLegacyPermission(ctx context.Context, aut
 		v.logger.Debug("legacy permission delegation check failed with error",
 			"user", authInfo.GetIdentifier(),
 			"action", fullAction,
-			"scope", perm.scope.originalScope,
+			"scope", legacyScope,
 			"error", err,
 		)
-		return fmt.Errorf("cannot delegate legacy permission '%s' on scope '%s': %w", fullAction, perm.scope.originalScope, err)
+		return fmt.Errorf("cannot delegate legacy permission '%s' on scope '%s': %w", fullAction, legacyScope, err)
 	}
 
 	if !allowed {
 		v.logger.Debug("legacy permission delegation check denied",
 			"user", authInfo.GetIdentifier(),
 			"action", fullAction,
-			"scope", perm.scope.originalScope,
+			"scope", legacyScope,
 		)
-		return fmt.Errorf("cannot delegate legacy permission '%s' on scope '%s': you do not have this permission", fullAction, perm.scope.originalScope)
+		return fmt.Errorf("cannot delegate legacy permission '%s' on scope '%s': you do not have this permission", fullAction, legacyScope)
 	}
 
 	v.logger.Debug("legacy permission delegation check passed",
 		"user", authInfo.GetIdentifier(),
 		"action", fullAction,
-		"scope", perm.scope.originalScope,
+		"scope", legacyScope,
 	)
 
 	return nil
+}
+
+// k8sDatasourceScopeToLegacy converts a k8s-style datasource uid scope to legacy RBAC format.
+// e.g. "loki.datasource.grafana.app/datasources:abc" -> "datasources:uid:abc"
+// returns the original scope unchanged if it is not a k8s datasource scope.
+func k8sDatasourceScopeToLegacy(scope string) string {
+	group, resourceUID, ok := strings.Cut(scope, "/")
+	if !ok {
+		return scope
+	}
+	resource, uid, ok := strings.Cut(resourceUID, ":")
+	if !ok || resource != "datasources" || uid == "" {
+		return scope
+	}
+	_, ok = strings.CutSuffix(group, ".datasource.grafana.app")
+	if !ok {
+		return scope
+	}
+	return "datasources:uid:" + uid
 }
 
 func getResourceVerb(action string) (string, string, error) {
