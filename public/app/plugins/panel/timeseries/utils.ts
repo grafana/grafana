@@ -370,7 +370,7 @@ export function getGroupedFilters(
   return groupingFilters;
 }
 
-export const LTTB_THRESHOLD = 350;
+export const LTTB_THRESHOLD = 150;
 
 // adapted from https://github.com/pingec/downsample-lttb
 function lttbIndices(xs: number[], ys: number[], threshold: number): number[] {
@@ -425,17 +425,17 @@ function lttbIndices(xs: number[], ys: number[], threshold: number): number[] {
 // then applies those indices to all fields. For frames with multiple numeric fields
 // the sampling is optimal for the first field only, which is acceptable for small
 // preview cards where pixel density already limits visible detail.
-export function lttbPreviewData(data: PanelData): PanelData {
+export function lttbPreviewData(data: PanelData, threshold = LTTB_THRESHOLD): PanelData {
   return {
     ...data,
     series: data.series.map((frame) => {
       const timeField = frame.fields.find((f) => f.type === FieldType.time);
       const numericField = frame.fields.find((f) => f.type === FieldType.number);
-      if (!timeField || !numericField || frame.length <= LTTB_THRESHOLD) {
+      if (!timeField || !numericField || frame.length <= threshold) {
         return frame;
       }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const indices = lttbIndices(timeField.values as number[], numericField.values as number[], LTTB_THRESHOLD);
+      const indices = lttbIndices(timeField.values as number[], numericField.values as number[], threshold);
 
       return {
         ...frame,

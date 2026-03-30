@@ -49,19 +49,24 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
     const maxRows = cardOptions.maxRows;
     let previewData = maxSeries ? { ...data, series: data.series.slice(0, maxSeries) } : data;
 
-    if (maxRows) {
-      previewData = {
-        ...previewData,
-        series: previewData.series.map((frame) => ({
-          ...frame,
-          length: Math.min(frame.length, maxRows),
-          fields: frame.fields.map((field) => ({ ...field, values: field.values.slice(0, maxRows) })),
-        })),
-      };
+    const lttbTarget = maxRows ?? LTTB_THRESHOLD;
+    if (previewData.series.some((frame) => frame.length > lttbTarget)) {
+      previewData = lttbPreviewData(previewData, lttbTarget);
     }
 
-    if (previewData.series.some((frame) => frame.length > LTTB_THRESHOLD)) {
-      previewData = lttbPreviewData(previewData);
+    if (maxRows && previewData.series.some((frame) => frame.length > maxRows)) {
+      previewData = {
+        ...previewData,
+        series: previewData.series.map((frame) =>
+          frame.length > maxRows
+            ? {
+                ...frame,
+                length: maxRows,
+                fields: frame.fields.map((field) => ({ ...field, values: field.values.slice(0, maxRows) })),
+              }
+            : frame
+        ),
+      };
     }
 
     content = (
