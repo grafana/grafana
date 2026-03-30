@@ -28,9 +28,23 @@ import { fallBackThreshold } from './thresholds';
  * Includes both black and white for theme-adaptive contrast filtering.
  */
 const COLORBLIND_SAFE_PALETTE: string[] = [
-  '#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00', '#F0E442',
-  '#000000', '#FFFFFF',
-  '#0077BB', '#33BBEE', '#EE7733', '#EE3377', '#BBBBBB', '#AA3377', '#66CCEE', '#CCBB44',
+  '#0072B2',
+  '#E69F00',
+  '#009E73',
+  '#CC79A7',
+  '#56B4E9',
+  '#D55E00',
+  '#F0E442',
+  '#000000',
+  '#FFFFFF',
+  '#0077BB',
+  '#33BBEE',
+  '#EE7733',
+  '#EE3377',
+  '#BBBBBB',
+  '#AA3377',
+  '#66CCEE',
+  '#CCBB44',
 ];
 
 /** @beta */
