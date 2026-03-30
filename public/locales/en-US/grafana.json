@@ -12107,11 +12107,16 @@
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
+      "clear-filter-tooltip": "Clear filter",
       "close": "Close menu",
       "dialog-label": "Navigation",
+      "collapse-all-sections": "Collapse all sections",
       "dock": "Dock menu",
+      "expand-all-sections": "Expand all sections",
       "list-label": "Navigation",
       "open": "Main menu",
+      "search-input-label": "Search menu",
+      "search-placeholder": "Search menu",
       "undock": "Undock menu"
     },
     "megamenu-item": {
