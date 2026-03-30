@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -12,7 +11,6 @@ import { SplashScreenSlide } from './SplashScreenSlide';
 import { getSplashScreenConfig } from './splashContent';
 
 export function SplashScreenModal() {
-  const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
   const [isOpen, setIsOpen] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const styles = useStyles2(getStyles);
@@ -35,7 +33,7 @@ export function SplashScreenModal() {
     [goToPrev, goToNext]
   );
 
-  if (!isSplashScreenEnabled || !isOpen) {
+  if (!isOpen) {
     return null;
   }
 
@@ -72,7 +70,7 @@ export function SplashScreenModal() {
       className={styles.modal}
     >
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-      <div className={styles.container} onKeyDown={handleKeyDown} tabIndex={-1}>
+      <div className={styles.container} onKeyDown={handleKeyDown}>
         <IconButton
           name="times"
           size="lg"
@@ -98,7 +96,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     position: 'relative',
     height: '100%',
-    outline: 'none',
   }),
   closeButton: css({
     position: 'absolute',
