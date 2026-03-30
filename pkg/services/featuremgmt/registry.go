@@ -1955,14 +1955,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingImportAlertmanagerUI",
-			Description:  "Enables the UI to see imported Alertmanager configuration",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "alertingDisableDMAinUI",
 			Description:  "Disables the DMA feature in the UI",
 			Stage:        FeatureStageExperimental,
@@ -2185,10 +2177,10 @@ var (
 		{
 			Name:         "newVizSuggestions",
 			Description:  "Enable new visualization suggestions",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "panelStyleActions",
@@ -2209,10 +2201,10 @@ var (
 		{
 			Name:         "externalVizSuggestions",
 			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "vizLegendSeriesLimit",
@@ -2776,6 +2768,13 @@ var (
 			Description: "Enables the query service to fetch the configuration from the settings service",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryServiceQueryCaching",
+			Description: "Enables the query service to do query caching",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
 	}

@@ -891,6 +891,13 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 
 		for _, m := range sectionMappings {
 			if strings.HasPrefix(envKey, m.prefix) {
+				// Skip root feature_toggles section — handled by
+				// applyFeatureToggleEnvOverrides which preserves casing.
+				// Subsections like feature_toggles.openfeature are still
+				// handled here because they match a longer prefix first.
+				if m.section.Name() == "feature_toggles" {
+					break
+				}
 				keyName := strings.ToLower(envKey[len(m.prefix):])
 				if keyName == "" {
 					continue
@@ -1003,23 +1010,43 @@ type AnnotationCleanupSettings struct {
 }
 
 type AnnotationAppPlatformSettings struct {
-	Enabled           bool
-	StoreBackend      string // "sql" (default) or "grpc"
+	Enabled      bool
+	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
+	RetentionTTL time.Duration // Retention TTL for annotations
+
 	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
 	GRPCTLSCAFile     string // Path to CA certificate file (optional)
 	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
+
+	// Postgres store configuration
+	PostgresConnectionString string        // PostgreSQL connection string
+	PostgresMaxConnections   int           // Maximum number of connections in the pool
+	PostgresMaxIdleConns     int           // Maximum number of idle connections
+	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
+	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
+	PostgresTagCacheSize     int           // Size of the tag query cache
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("sql"),
+		Enabled:      appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend: appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL: appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
 		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
 		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
+
+		// Postgres configuration
+		PostgresConnectionString: appPlatformSection.Key("postgres_connection_string").MustString(""),
+		PostgresMaxConnections:   appPlatformSection.Key("postgres_max_connections").MustInt(10),
+		PostgresMaxIdleConns:     appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
+		PostgresConnMaxLifetime:  appPlatformSection.Key("postgres_conn_max_lifetime").MustDuration(time.Hour),
+		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
+		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
 	}
 }
 
