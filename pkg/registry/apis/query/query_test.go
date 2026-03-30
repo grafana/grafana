@@ -14,6 +14,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -23,6 +25,7 @@ import (
 	queryapi "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -307,6 +310,23 @@ func (m mockClient) GetSettings() clientapi.InstanceConfigurationSettings {
 	}
 }
 
+type nonMarshalableRuntimeObject struct {
+	Broken chan int `json:"broken"`
+}
+
+func (o *nonMarshalableRuntimeObject) GetObjectKind() schema.ObjectKind {
+	return schema.EmptyObjectKind
+}
+
+func (o *nonMarshalableRuntimeObject) DeepCopyObject() runtime.Object {
+	if o == nil {
+		return nil
+	}
+
+	out := *o
+	return &out
+}
+
 type mockLegacyDataSourceLookup struct{}
 
 func (m *mockLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*dataapi.DataSourceRef, error) {
@@ -314,6 +334,19 @@ func (m *mockLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx conte
 		UID:  "demo-prom",
 		Type: "prometheus",
 	}, nil
+}
+
+func TestRawResponderWrapperObjectLogsSerializationError(t *testing.T) {
+	logger := &logtest.Fake{}
+	recorder := httptest.NewRecorder()
+	responder := newRawResponderWrapper(context.Background(), recorder, logger, nil, nil)
+
+	responder.Object(http.StatusOK, &nonMarshalableRuntimeObject{
+		Broken: make(chan int),
+	})
+
+	require.Equal(t, 1, logger.ErrorLogs.Calls)
+	require.Equal(t, "querier output: json serialisation failed", logger.ErrorLogs.Message)
 }
 
 func TestMergeHeaders(t *testing.T) {

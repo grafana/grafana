@@ -128,7 +128,7 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 		b.reportStatus(ctx, statusCode)
 	}
 
-	responder := newRawResponderWrapper(ctx, w, responderOnObjectFn, responderOnErrorFn)
+	responder := newRawResponderWrapper(ctx, w, connectLogger, responderOnObjectFn, responderOnErrorFn)
 
 	raw := &query.QueryDataRequest{}
 	err := web.Bind(httpreq, raw)
@@ -339,14 +339,16 @@ type rawResponderWrapper struct {
 	ctx        context.Context
 	onObjectFn func(statusCode *int, obj runtime.Object)
 	onErrorFn  func(err error)
+	logger     log.Logger
 }
 
-func newRawResponderWrapper(ctx context.Context, w http.ResponseWriter, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) rest.Responder {
+func newRawResponderWrapper(ctx context.Context, w http.ResponseWriter, logger log.Logger, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) rest.Responder {
 	return &rawResponderWrapper{
 		w:          w,
 		ctx:        ctx,
 		onObjectFn: onObjectFn,
 		onErrorFn:  onErrorFn,
+		logger:     logger,
 	}
 }
 
@@ -362,6 +364,7 @@ func (r rawResponderWrapper) Object(statusCode int, obj runtime.Object) {
 	r.w.Header().Set("Content-Type", "application/json")
 	r.w.WriteHeader(statusCode)
 	if err := json.NewEncoder(r.w).Encode(obj); err != nil {
+		r.logger.Error("querier output: json serialisation failed", "error", err)
 		http.Error(r.w, err.Error(), http.StatusInternalServerError)
 	}
 }
