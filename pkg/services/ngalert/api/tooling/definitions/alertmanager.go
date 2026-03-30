@@ -1139,6 +1139,12 @@ type ExternalAlertmanagerConfig struct {
 }
 
 func (c *ExternalAlertmanagerConfig) MarshalJSON() ([]byte, error) {
+	// amSimple is populated by UnmarshalJSON/UnmarshalYAML and holds the raw alertmanager config
+	// without secret redaction. Marshaling without it would silently lose secret fields.
+	if c.amSimple == nil {
+		return nil, fmt.Errorf("cannot marshal ExternalAlertmanagerConfig to JSON: alertmanager config was not decoded")
+	}
+
 	type plain struct {
 		TemplateFiles      map[string]string      `yaml:"template_files" json:"template_files"`
 		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
@@ -1174,6 +1180,12 @@ func (c *ExternalAlertmanagerConfig) UnmarshalJSON(b []byte) error {
 
 // MarshalYAML implements yaml.Marshaller.
 func (c *ExternalAlertmanagerConfig) MarshalYAML() (interface{}, error) {
+	// amSimple is populated by UnmarshalJSON/UnmarshalYAML and holds the raw alertmanager config
+	// without secret redaction. Marshaling without it would silently lose secret fields.
+	if c.amSimple == nil {
+		return nil, fmt.Errorf("cannot marshal ExternalAlertmanagerConfig to YAML: alertmanager config was not decoded")
+	}
+
 	yml, err := yaml.Marshal(c.amSimple)
 	if err != nil {
 		return nil, err
@@ -1239,6 +1251,10 @@ func (s *ExternalAlertmanagerStatus) UnmarshalJSON(b []byte) error {
 	amStatus := amv2.AlertmanagerStatus{}
 	if err := json.Unmarshal(b, &amStatus); err != nil {
 		return err
+	}
+
+	if amStatus.Config == nil || amStatus.Config.Original == nil {
+		return fmt.Errorf("alertmanager status response missing config")
 	}
 
 	c := config.Config{}
