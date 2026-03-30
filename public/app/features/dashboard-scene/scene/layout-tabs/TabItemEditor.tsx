@@ -1,20 +1,24 @@
+import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useSyncExternalStore } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Field, Input, TextLink } from '@grafana/ui';
+import { Alert, Field, Input, TextLink, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { getTeamPalettesSnapshot, subscribeTeamPalettes } from '../../../teams/teamPalettesStore';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../edit-pane/SectionFiltersList';
 import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { CLASSIC_PALETTE_ID, CUSTOM_PALETTES, PaletteDefinition } from '../../panel-edit/palettes';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
@@ -104,6 +108,22 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
     return category;
   }, [model]);
 
+  const visualizationCategory = useMemo(
+    () =>
+      new OptionsPaneCategoryDescriptor({
+        title: t('dashboard.tabs-layout.tab-options.visualization.title', 'Visualization options'),
+        id: 'visualization-options',
+        isOpenDefault: true,
+      }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.tabs-layout.tab-options.visualization.palette', 'Color palette'),
+          id: 'tab-options-color-palette',
+          render: () => <TabVisualizationOptions tab={model} />,
+        })
+      ),
+    [model]
+  );
+
   const editOptions = sectionVariablesEnabled
     ? [
         tabCategory,
@@ -122,6 +142,8 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
   if (conditionalRenderingCategory) {
     editOptions.push(conditionalRenderingCategory);
   }
+
+  editOptions.push(visualizationCategory);
 
   return editOptions;
 }
@@ -200,6 +222,82 @@ function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
       ) : undefined}
     </>
   );
+}
+
+function TabVisualizationOptions({ tab }: { tab: TabItem }) {
+  const { colorPalette } = tab.useState();
+  const theme = useTheme2();
+  const styles = useStyles2(getPaletteStyles);
+  const teamPalettes = useSyncExternalStore(subscribeTeamPalettes, getTeamPalettesSnapshot);
+
+  const classicPalette: PaletteDefinition = {
+    id: CLASSIC_PALETTE_ID,
+    name: t('dashboard.tabs-layout.tab-options.visualization.palette-classic', 'Classic'),
+    colors: theme.visualization.palette.slice(0, 8),
+  };
+
+  const allPalettes: PaletteDefinition[] = [
+    classicPalette,
+    ...CUSTOM_PALETTES,
+    ...teamPalettes.map((p) => ({ ...p, colors: p.colors.slice(0, 8) })),
+  ];
+
+  return (
+    <div className={styles.grid}>
+      {allPalettes.map((palette) => (
+        <Tooltip key={palette.id} content={palette.name} placement="top">
+          <button
+            type="button"
+            className={cx(styles.thumbnail, colorPalette === palette.id && styles.selected)}
+            onClick={() => tab.onChangePalette(palette.id)}
+            aria-label={palette.name}
+            aria-pressed={colorPalette === palette.id}
+          >
+            {palette.colors.map((color, i) => (
+              <span key={i} className={styles.swatch} style={{ backgroundColor: color }} />
+            ))}
+          </button>
+        </Tooltip>
+      ))}
+    </div>
+  );
+}
+
+function getPaletteStyles(theme: GrafanaTheme2) {
+  return {
+    grid: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: theme.spacing(0.75),
+      width: '100%',
+    }),
+    thumbnail: css({
+      display: 'flex',
+      flexDirection: 'row',
+      height: 56,
+      width: '100%',
+      borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
+      border: `2px solid transparent`,
+      cursor: 'pointer',
+      padding: 0,
+      background: 'none',
+      outline: 'none',
+      '&:hover': {
+        border: `2px solid ${theme.colors.primary.border}`,
+      },
+      '&:focus-visible': {
+        border: `2px solid ${theme.colors.primary.border}`,
+      },
+    }),
+    selected: css({
+      border: `2px solid ${theme.colors.primary.main}`,
+    }),
+    swatch: css({
+      flex: 1,
+      height: '100%',
+    }),
+  };
 }
 
 function editTabTitleAction(tab: TabItem, title: string, prevTitle: string) {

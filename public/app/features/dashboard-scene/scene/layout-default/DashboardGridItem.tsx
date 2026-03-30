@@ -35,6 +35,8 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
   itemHeight?: number;
   repeatDirection?: RepeatDirection;
   maxPerRow?: number;
+  /** When true, this panel's color mode was explicitly set by the user and will not be overwritten by a tab/row color palette. */
+  colorPaletteOverride?: boolean;
 }
 
 export type RepeatDirection = 'v' | 'h';

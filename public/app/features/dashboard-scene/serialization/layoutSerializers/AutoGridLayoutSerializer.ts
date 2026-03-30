@@ -54,6 +54,7 @@ export function serializeAutoGridItem(item: AutoGridItem): AutoGridLayoutItemKin
         kind: 'ElementReference',
         name: elementKey,
       },
+      ...(item.state.colorPaletteOverride && { colorPaletteOverride: true }),
     },
   };
 
@@ -169,5 +170,6 @@ export function deserializeAutoGridItem(
     body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel, id) : buildVizPanel(panel, id),
     variableName: item.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(item),
+    colorPaletteOverride: item.spec.colorPaletteOverride,
   });
 }

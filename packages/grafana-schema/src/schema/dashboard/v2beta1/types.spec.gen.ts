@@ -541,7 +541,7 @@ export const defaultFieldColor = (): FieldColor => ({
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
+export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" | "palette-ai-zeitgeist-v2" | "palette-vivid-spectrum" | "palette-classic-modernized" | "palette-modern-muted-v2" | "palette-new-editor";
 
 export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 
@@ -714,6 +714,9 @@ export interface GridLayoutItemSpec {
 	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
 	element: ElementReference;
 	repeat?: RepeatOptions;
+	// When true, the panel's color mode has been explicitly set by the user and
+	// will not be overwritten by a parent tab/row color palette.
+	colorPaletteOverride?: boolean;
 }
 
 export const defaultGridLayoutItemSpec = (): GridLayoutItemSpec => ({
@@ -786,6 +789,8 @@ export interface RowsLayoutRowSpec {
 	repeat?: RowRepeatOptions;
 	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 	variables?: VariableKind[];
+	// ID of a color palette applied to all panels in this row that do not have colorPaletteOverride set.
+	colorPalette?: string;
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -924,6 +929,9 @@ export interface AutoGridLayoutItemSpec {
 	element: ElementReference;
 	repeat?: AutoGridRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
+	// When true, the panel's color mode has been explicitly set by the user and
+	// will not be overwritten by a parent tab/row color palette.
+	colorPaletteOverride?: boolean;
 }
 
 export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
@@ -974,6 +982,8 @@ export interface TabsLayoutTabSpec {
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: TabRepeatOptions;
 	variables?: VariableKind[];
+	// ID of a color palette applied to all panels in this tab that do not have colorPaletteOverride set.
+	colorPalette?: string;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
