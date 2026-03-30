@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { OverlayContainer } from '@react-aria/overlays';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPortalContainer } from '../Portal/Portal';
