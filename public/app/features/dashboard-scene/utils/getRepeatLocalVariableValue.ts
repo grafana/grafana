@@ -1,4 +1,10 @@
-import { LocalValueVariable, sceneGraph, SceneObject, SceneVariableSet, VariableValueSingle } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  sceneGraph,
+  type SceneObject,
+  SceneVariableSet,
+  type VariableValueSingle,
+} from '@grafana/scenes';
 
 export function getRepeatLocalVariableValue(
   sceneObject: SceneObject,

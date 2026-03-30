@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
 import { useState, useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Modal, useStyles2 } from '@grafana/ui';
-import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type DashboardInput, type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { SuggestedDashboardsList } from './SuggestedDashboardsList/SuggestedDashboardsList';
-import { ContentKind } from './constants';
-import { GnetDashboard } from './types';
-import { InputMapping } from './utils/autoMapDatasources';
+import { type ContentKind } from './constants';
+import { type GnetDashboard } from './types';
+import { type InputMapping } from './utils/autoMapDatasources';
 
 interface SuggestedDashboardsModalProps {
   isOpen: boolean;

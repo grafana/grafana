@@ -3,19 +3,19 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
-import { getDefaultTimeRange, LoadingState, PanelData, PanelProps } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
-import { PublicDashboardScenePage, Props as PublicDashboardSceneProps } from './PublicDashboardScenePage';
+import { PublicDashboardScenePage, type Props as PublicDashboardSceneProps } from './PublicDashboardScenePage';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

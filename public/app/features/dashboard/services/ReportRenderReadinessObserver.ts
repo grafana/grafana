@@ -1,4 +1,4 @@
-import { performanceUtils } from '@grafana/scenes';
+import { type performanceUtils } from '@grafana/scenes';
 
 import { registerPerformanceObserver } from './performanceUtils';
 

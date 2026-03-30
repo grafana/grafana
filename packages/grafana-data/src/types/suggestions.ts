@@ -1,11 +1,11 @@
 import { defaultsDeep } from 'lodash';
 
-import { DataTransformerConfig } from '@grafana/schema';
+import { type DataTransformerConfig } from '@grafana/schema';
 
-import { getPanelDataSummary, PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
+import { getPanelDataSummary, type PanelDataSummary } from '../panel/suggestions/getPanelDataSummary';
 
-import { DataFrame } from './dataFrame';
-import { FieldConfigSource } from './fieldOverrides';
+import { type DataFrame } from './dataFrame';
+import { type FieldConfigSource } from './fieldOverrides';
 
 /**
  * @internal

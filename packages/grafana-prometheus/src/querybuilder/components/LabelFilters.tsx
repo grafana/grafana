@@ -3,12 +3,12 @@ import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList } from '@grafana/plugin-ui';
 import { InlineFieldRow, InlineLabel } from '@grafana/ui';
 
-import { QueryBuilderLabelFilter } from '../shared/types';
+import { type QueryBuilderLabelFilter } from '../shared/types';
 
 import { LabelFilterItem } from './LabelFilterItem';
 

@@ -1,4 +1,4 @@
-import { Locator } from '@playwright/test';
+import { type Locator } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 

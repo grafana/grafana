@@ -1,5 +1,5 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from 'app/core/navigation/types';
+import { type RouteDescriptor } from 'app/core/navigation/types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 

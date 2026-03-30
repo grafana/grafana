@@ -1,8 +1,15 @@
-import { PanelPlugin, PanelProps } from '@grafana/data';
+import { PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import {
+  type SceneObject,
+  SceneObjectBase,
+  type SceneObjectState,
+  sceneUtils,
+  VizPanel,
+  type VizPanelState,
+} from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';

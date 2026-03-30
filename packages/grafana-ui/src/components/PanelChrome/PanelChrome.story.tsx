@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
-import { CSSProperties, useState, ReactNode } from 'react';
+import { type CSSProperties, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
@@ -14,7 +14,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { TextLink } from '../Link/TextLink';
 import { Menu } from '../Menu/Menu';
 
-import { PanelChromeProps } from './PanelChrome';
+import { type PanelChromeProps } from './PanelChrome';
 import mdx from './PanelChrome.mdx';
 
 import { PanelChrome } from '.';

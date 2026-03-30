@@ -1,8 +1,8 @@
-import { DashboardLoadedEvent } from '@grafana/data';
+import { type DashboardLoadedEvent } from '@grafana/data';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 
 import pluginJson from './plugin.json';
-import { TempoQuery } from './types';
+import { type TempoQuery } from './types';
 
 type TempoOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;

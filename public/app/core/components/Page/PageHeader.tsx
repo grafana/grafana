@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
+import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
 import { EditableTitle } from './EditableTitle';
-import { PageInfoItem } from './types';
+import { type PageInfoItem } from './types';
 
 export interface Props {
   navItem: NavModelItem;

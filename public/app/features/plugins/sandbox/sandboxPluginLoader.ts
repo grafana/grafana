@@ -1,7 +1,7 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
-import { ProxyTarget } from '@locker/near-membrane-shared';
+import { type ProxyTarget } from '@locker/near-membrane-shared';
 
-import { BootData } from '@grafana/data';
+import { type BootData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
@@ -17,7 +17,12 @@ import {
 } from './documentSandbox';
 import { sandboxPluginDependencies } from './pluginDependencies';
 import { sandboxPluginComponents } from './sandboxComponents';
-import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment, SandboxPluginMeta } from './types';
+import {
+  type CompartmentDependencyModule,
+  type PluginFactoryFunction,
+  type SandboxEnvironment,
+  type SandboxPluginMeta,
+} from './types';
 import { logError, logInfo } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
+import { type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Combobox, Field, Stack, useStyles2 } from '@grafana/ui';

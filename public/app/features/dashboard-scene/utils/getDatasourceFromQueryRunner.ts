@@ -1,5 +1,5 @@
-import { SceneQueryRunner } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type SceneQueryRunner } from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
 
 /**
  * Gets the datasource from a query runner.

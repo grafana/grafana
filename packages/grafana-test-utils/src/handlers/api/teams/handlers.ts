@@ -1,6 +1,6 @@
 import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
-import { MOCK_TEAMS, mockTeamsMap } from '../../../fixtures/teams';
+import { type MOCK_TEAMS, mockTeamsMap } from '../../../fixtures/teams';
 
 const k8sTeamToLegacyTeam = (k8sTeam: (typeof MOCK_TEAMS)[number], addAccessControl?: boolean) => {
   return {
