@@ -474,7 +474,7 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchDetectedFields(options);
 
-      expect(requestSpy).toHaveBeenCalledWith(`detected_fields`, expectedOptions, false, undefined);
+      expect(requestSpy).toHaveBeenCalledWith(`detected_fields`, expectedOptions, true, undefined);
       expect(labelValues).toEqual(expectedResponse);
     });
     it('should return values', async () => {
@@ -487,7 +487,7 @@ describe('Language completion provider', () => {
 
       const nextLabelValues = await provider.fetchDetectedFields(options);
       expect(requestSpy).toHaveBeenCalledTimes(2);
-      expect(requestSpy).toHaveBeenCalledWith(`detected_fields`, expectedOptions, false, undefined);
+      expect(requestSpy).toHaveBeenCalledWith(`detected_fields`, expectedOptions, true, undefined);
       expect(nextLabelValues).toEqual(expectedResponse);
     });
     it('should encode special characters', async () => {
@@ -495,7 +495,7 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       await provider.fetchDetectedFields(options);
 
-      expect(requestSpy).toHaveBeenCalledWith('detected_fields', expectedOptions, false, undefined);
+      expect(requestSpy).toHaveBeenCalledWith('detected_fields', expectedOptions, true, undefined);
     });
   });
 
