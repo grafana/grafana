@@ -223,6 +223,8 @@ The ES|QL code editor provides:
 
 ### Example queries
 
+The following examples show common ES|QL query patterns.
+
 #### Basic aggregation
 
 Count documents grouped by a field:
