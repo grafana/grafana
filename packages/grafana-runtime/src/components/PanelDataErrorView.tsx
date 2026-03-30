@@ -4,8 +4,6 @@ import { type FieldConfigSource, type PanelData, type PanelPluginVisualizationSu
 
 /**
  * Describes the properties that can be passed to the PanelDataErrorView.
- *
- * @alpha
  */
 export interface PanelDataErrorViewProps {
   message?: string;
@@ -28,8 +26,6 @@ export type PanelDataErrorViewType = React.ComponentType<PanelDataErrorViewProps
 /**
  * PanelDataErrorView allows panels to show a consistent error message when
  * the result structure does not meet expected criteria
- *
- * @alpha
  */
 export let PanelDataErrorView: PanelDataErrorViewType = ({ message }) => {
   return <div>Unable to render data: {message}.</div>;

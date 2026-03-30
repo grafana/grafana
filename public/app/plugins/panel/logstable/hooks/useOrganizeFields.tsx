@@ -6,6 +6,7 @@ import { type DataFrame, type FieldConfigSource, transformDataFrame } from '@gra
 import { type CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 
+import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/fieldSelector/logFields';
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
 import { getLogLevelColumnEnhancements } from '../fields/defaultLogLevelColumnConfig';
 import { getFieldWidth } from '../fields/getFieldWidth';
@@ -100,11 +101,15 @@ const organizeFields = async (
     return Promise.resolve(null);
   }
 
-  const displayedFields = getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName);
+  const displayedFields = getDisplayedFields(options, timeFieldName, levelFieldName);
 
   let indexByName: Record<string, number> = {};
   let includeByName: Record<string, boolean> = {};
-  for (const [idx, field] of displayedFields.entries()) {
+  for (let [idx, field] of displayedFields.entries()) {
+    // interop with logs panel
+    if (field === LOG_LINE_BODY_FIELD_NAME) {
+      field = bodyFieldName;
+    }
     indexByName[field] = idx;
     includeByName[field] = true;
   }

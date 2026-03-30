@@ -14,6 +14,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import {
   DATAPLANE_SEVERITY_NAME,
@@ -107,6 +108,32 @@ export const LogsTable = ({
     [handleLogsTableOptionsChange, options]
   );
 
+  const transformDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      return displayedFields.map((displayedField) => {
+        if (displayedField === bodyFieldName) {
+          return LOG_LINE_BODY_FIELD_NAME;
+        }
+
+        return displayedField;
+      });
+    },
+    [bodyFieldName]
+  );
+
+  const untransformDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      return displayedFields.map((displayedField) => {
+        if (displayedField === LOG_LINE_BODY_FIELD_NAME) {
+          return bodyFieldName;
+        }
+
+        return displayedField;
+      });
+    },
+    [bodyFieldName]
+  );
+
   const handleTableOnFieldConfigChange = useCallback(
     (fieldConfig: FieldConfigSource) => {
       onFieldConfigChange(fieldConfig);
@@ -180,14 +207,16 @@ export const LogsTable = ({
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
-            displayedFields={getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName)}
+            displayedFields={untransformDisplayedFields(getDisplayedFields(options, timeFieldName, levelFieldName))}
             height={height}
             logsFrame={logsFrame}
             timeFieldName={timeFieldName}
             levelFieldName={levelFieldName}
             bodyFieldName={bodyFieldName}
             dataFrame={extractedFrame}
-            onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
+            onDisplayedFieldsChange={(displayedFields: string[]) =>
+              handleLogsTableOptionChange({ displayedFields: transformDisplayedFields(displayedFields) })
+            }
             onFieldSelectorWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
           />
 
