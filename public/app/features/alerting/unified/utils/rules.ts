@@ -26,7 +26,7 @@ import {
   GrafanaAlertState,
   type GrafanaAlertStateWithReason,
   type GrafanaAlertingRuleDefinition,
-  GrafanaNotificationSettings,
+  type GrafanaNotificationSettings,
   type GrafanaPromAlertingRuleDTO,
   type GrafanaPromRecordingRuleDTO,
   type GrafanaRecordingRuleDefinition,

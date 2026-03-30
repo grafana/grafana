@@ -3065,13 +3065,6 @@
       "aria-label-return-to": "Return to previous view",
       "error-loading": "Something went wrong loading the rule",
       "evaluation-interval": "Every {{interval}}",
-      "inhibition-details": {
-        "learn-more": "Learn more about inhibition rules",
-        "source-title_one": "When firing, this alert rule may suppress alerts matched by {{count}} inhibition rule(s)",
-        "source-title_other": "When firing, this alert rule may suppress alerts matched by {{count}} inhibition rule(s)",
-        "target-title_one": "This alert rule may be suppressed by {{count}} inhibition rule(s)",
-        "target-title_other": "This alert rule may be suppressed by {{count}} inhibition rule(s)"
-      },
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"
