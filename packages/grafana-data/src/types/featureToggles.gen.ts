@@ -1411,6 +1411,11 @@ export interface FeatureToggles {
   */
   heatmapRowsAxisOptions?: boolean;
   /**
+  * Enable gradient color scheme option for the pie chart panel
+  * @default false
+  */
+  pieChartGradientColorScheme?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
