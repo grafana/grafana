@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
+import { type AdHocFiltersVariable, type GroupByVariable, type SceneQueryRunner } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getDrilldownApplicability } from '../utils/drilldownUtils';
@@ -107,7 +107,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
           } else if (!apiResult) {
             const stateResult = groupByApplicability?.find((entry) => entry.key === key);
             if (stateResult && !stateResult.applicable) {
-              items.push({ label: String(key) });
+              items.push({ label: String(key), reason: stateResult.reason });
             }
           }
         }

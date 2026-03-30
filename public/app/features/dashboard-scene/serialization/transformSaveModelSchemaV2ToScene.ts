@@ -3,7 +3,7 @@ import { uniqueId } from 'lodash';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
-  AdHocFilterWithLabels,
+  type AdHocFilterWithLabels,
   behaviors,
   ConstantVariable,
   CustomVariable,
@@ -14,18 +14,18 @@ import {
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
-  SceneVariable,
+  type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
-  AdhocVariableKind,
-  ConstantVariableKind,
-  CustomVariableKind,
-  Spec as DashboardV2Spec,
-  DatasourceVariableKind,
+  type AdhocVariableKind,
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type Spec as DashboardV2Spec,
+  type DatasourceVariableKind,
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
   defaultCustomVariableKind,
@@ -36,16 +36,16 @@ import {
   defaultTextVariableKind,
   defaultSwitchVariableKind,
   defaultTimeSettingsSpec,
-  GroupByVariableKind,
-  IntervalVariableKind,
-  LibraryPanelKind,
-  PanelKind,
-  QueryVariableKind,
-  SwitchVariableKind,
-  TextVariableKind,
+  type GroupByVariableKind,
+  type IntervalVariableKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type QueryVariableKind,
+  type SwitchVariableKind,
+  type TextVariableKind,
   defaultDataQueryKind,
-  AnnotationQueryKind,
-  VariableKind,
+  type AnnotationQueryKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
@@ -58,17 +58,17 @@ import {
   AnnoReloadOnParamsChange,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
   getDashboardComponentInteractionCallback,
 } from 'app/features/dashboard/services/DashboardProfiler';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
-import { LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
+import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -76,7 +76,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
@@ -367,7 +367,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
-      collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
         ? (variable.spec.enableGroupBy ?? false)
         : false,

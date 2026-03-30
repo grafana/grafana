@@ -1,9 +1,9 @@
 import { t } from '@grafana/i18n';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
+import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 
-import { TabItem } from './TabItem';
+import { type TabItem } from './TabItem';
 
 export class TabItems implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;

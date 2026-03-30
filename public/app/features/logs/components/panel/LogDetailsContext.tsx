@@ -1,12 +1,12 @@
 import { debounce } from 'lodash';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-import { LogRowModel, store } from '@grafana/data';
+import { type LogRowModel, store } from '@grafana/data';
 
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
-import { LogLineDetailsMode } from './LogLineDetails';
-import { LogListModel } from './processing';
+import { type LogLineDetailsMode } from './LogLineDetails';
+import { type LogListModel } from './processing';
 import { getScrollbarWidth, LOG_LIST_CONTROLS_WIDTH, LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface LogDetailsContextData {

@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
-import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataQuery, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';

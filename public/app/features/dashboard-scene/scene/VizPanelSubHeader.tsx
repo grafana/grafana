@@ -1,8 +1,8 @@
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import {
-  SceneComponentProps,
-  SceneObjectState,
+  type SceneComponentProps,
+  type SceneObjectState,
   SceneObjectBase,
   sceneGraph,
   AdHocFiltersVariable,
@@ -10,7 +10,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';

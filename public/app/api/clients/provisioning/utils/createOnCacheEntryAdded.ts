@@ -1,8 +1,8 @@
 import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
-import { Subscription } from 'rxjs';
+import { type Subscription } from 'rxjs';
 
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ListOptions, GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
+import { type ListOptions, type GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
 
 interface OnCacheEntryAddedOptions<List = unknown> {
   onError?: (

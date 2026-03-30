@@ -43,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -2158,16 +2157,14 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 	t.Run("Should set correct default permissions", func(t *testing.T) {
 		testCases := []struct {
-			name                        string
-			rootFolder                  bool
-			featureKubernetesDashboards bool
-			User                        *user.SignedInUser
-			expectedPermission          []accesscontrol.SetResourcePermissionCommand
+			name               string
+			rootFolder         bool
+			User               *user.SignedInUser
+			expectedPermission []accesscontrol.SetResourcePermissionCommand
 		}{
 			{
-				name:                        "without kubernetesDashboards feature in root folder",
-				rootFolder:                  true,
-				featureKubernetesDashboards: false,
+				name:       "in root folder",
+				rootFolder: true,
 				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
 					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
@@ -2175,19 +2172,8 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				},
 			},
 			{
-				name:                        "with kubernetesDashboards feature in root folder",
-				rootFolder:                  true,
-				featureKubernetesDashboards: true,
-				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
-					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-				},
-			},
-			{
-				name:                        "with kubernetesDashboards feature in root folder and user is anonymous",
-				rootFolder:                  true,
-				featureKubernetesDashboards: true,
+				name:       "in root folder and user is anonymous",
+				rootFolder: true,
 				User: &user.SignedInUser{
 					IsAnonymous: true,
 					UserID:      0,
@@ -2198,18 +2184,9 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				},
 			},
 			{
-				name:                        "without kubernetesDashboards feature in subfolder",
-				rootFolder:                  false,
-				featureKubernetesDashboards: false,
-				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
-					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
-				},
-			},
-			{
-				name:                        "with kubernetesDashboards feature in subfolder",
-				rootFolder:                  false,
-				featureKubernetesDashboards: true,
-				expectedPermission:          nil,
+				name:               "in subfolder",
+				rootFolder:         false,
+				expectedPermission: nil,
 			},
 		}
 
@@ -2229,9 +2206,6 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				// Setup mocks and service
 				dashboardStore := &dashboards.FakeDashboardStore{}
 				features := featuremgmt.WithFeatures()
-				if tc.featureKubernetesDashboards {
-					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards)
-				}
 
 				permService := acmock.NewMockedPermissionsService()
 				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
@@ -2348,21 +2322,14 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	tests := []struct {
-		name            string
-		readFromUnified bool
-		batchSize       int
-		setupFunc       func(*DashboardServiceImpl, context.Context, *client.MockK8sHandler)
-		verifyFunc      func(*testing.T, *DashboardServiceImpl, context.Context, *client.MockK8sHandler, *kvstore.FakeKVStore)
+		name       string
+		batchSize  int
+		setupFunc  func(*DashboardServiceImpl, context.Context, *client.MockK8sHandler)
+		verifyFunc func(*testing.T, *DashboardServiceImpl, context.Context, *client.MockK8sHandler, *kvstore.FakeKVStore)
 	}{
 		{
-			name:            "Should not run cleanup when we're reading from legacy",
-			readFromUnified: false,
-			batchSize:       10,
-		},
-		{
-			name:            "Should process dashboard cleanup for all orgs",
-			readFromUnified: true,
-			batchSize:       10,
+			name:      "Should process dashboard cleanup for all orgs",
+			batchSize: 10,
 			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
 				// Test organizations
 				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
@@ -2430,9 +2397,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 			},
 		},
 		{
-			name:            "Should handle pagination and batching when processing large sets of dashboards",
-			readFromUnified: true,
-			batchSize:       3,
+			name:      "Should handle pagination and batching when processing large sets of dashboards",
+			batchSize: 3,
 			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
 				// Test organization
 				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
@@ -2516,8 +2482,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 			sqlStore, _ := sqlstore.InitTestDB(t)
 			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
-			dual := dualwrite.NewMockService(t)
-			dual.On("ReadFromUnified", mock.Anything, mock.Anything).Return(tc.readFromUnified, nil)
 
 			fakeStore := dashboards.FakeDashboardStore{}
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -2533,7 +2497,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				serverLockService:      lockService,
 				kvstore:                kv,
 				features:               features,
-				dual:                   dual,
 			}
 
 			ctx, k8sCliMock := setupK8sDashboardTests(service)

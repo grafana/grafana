@@ -31,13 +31,14 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `influxdbBackendMigration`            | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
 | `logsExploreTableVisualisation`       | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`       | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
+| `provisioning`                        | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
 | `awsAsyncQueryCaching`                | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
 | `dashgpt`                             | Enable AI powered features in dashboards                                                                                                                      | Yes                |
-| `kubernetesDashboards`                | Use the kubernetes API in the frontend for dashboards                                                                                                         | Yes                |
 | `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`          | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
+| `sqlExpressions`                      | Enables SQL Expressions, which can execute SQL queries against data source results.                                                                           | Yes                |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `playlistsRBAC`                       | Enables RBAC for playlists                                                                                                                                    |                    |
 | `alertingNavigationV2`                | Enables the new Alerting navigation structure with improved menu grouping                                                                                     | Yes                |
@@ -58,6 +59,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch data source                                                                                                 |                    |
 | `lokiLabelNamesQueryApi`              | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
+| `grafanaAdvisor`                      | Enables Advisor app                                                                                                                                           | Yes                |
 | `newLogsPanel`                        | Enables the new logs panel                                                                                                                                    | Yes                |
 | `alertingMigrationUI`                 | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
@@ -66,6 +68,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
+| `multiPropsVariables`                 | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 
 ## Public preview feature toggles
 
@@ -81,11 +84,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
+| `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                          |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
-| `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
 | `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                         |

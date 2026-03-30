@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react';
 
 import { SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';

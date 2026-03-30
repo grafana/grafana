@@ -1,8 +1,8 @@
 import { isEqual } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersController, AdHocFilterWithLabels } from '@grafana/scenes';
+import { type AdHocFiltersController, type AdHocFilterWithLabels } from '@grafana/scenes';
 
 export class AdHocOriginFiltersController implements AdHocFiltersController {
   constructor(

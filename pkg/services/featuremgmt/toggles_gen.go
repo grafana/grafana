@@ -47,10 +47,6 @@ const (
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"
 
-	// FlagKubernetesStars
-	// Routes stars requests from /api to the /apis endpoint
-	FlagKubernetesStars = "kubernetesStars"
-
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -92,7 +88,7 @@ const (
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagProvisioning
-	// Next generation provisioning... and git
+	// Enables Git Sync and as-code provisioning for Grafana resources
 	FlagProvisioning = "provisioning"
 
 	// FlagProvisioningFolderMetadata
@@ -110,10 +106,6 @@ const (
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
-
-	// FlagQueryCacheRequestDeduplication
-	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
-	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
 
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
@@ -142,10 +134,6 @@ const (
 	// FlagKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
-
-	// FlagKubernetesDashboards
-	// Use the kubernetes API in the frontend for dashboards
-	FlagKubernetesDashboards = "kubernetesDashboards"
 
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
@@ -215,9 +203,13 @@ const (
 	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
 
-	// FlagDatasourcesApiServerEnableResourceEndpointFrontend
-	// Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
-	FlagDatasourcesApiServerEnableResourceEndpointFrontend = "datasourcesApiServerEnableResourceEndpointFrontend"
+	// FlagDatasourcesApiserverEnableResourceEndpointRedirect
+	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
+	FlagDatasourcesApiserverEnableResourceEndpointRedirect = "datasourcesApiserverEnableResourceEndpointRedirect"
+
+	// FlagDatasourcesQuerierRawOutput
+	// use raw output mode for the data source querier
+	FlagDatasourcesQuerierRawOutput = "datasourcesQuerierRawOutput"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -483,10 +475,6 @@ const (
 	// Enables experimental reconciler for playlists
 	FlagPlaylistsReconciler = "playlistsReconciler"
 
-	// FlagPasswordlessMagicLinkAuthentication
-	// Enable passwordless login via magic link authentication
-	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
-
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
@@ -538,10 +526,6 @@ const (
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
-
-	// FlagK8SFolderCounts
-	// Enable folder&#39;s api server counts
-	FlagK8SFolderCounts = "k8SFolderCounts"
 
 	// FlagImprovedExternalSessionHandlingSAML
 	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
@@ -922,11 +906,23 @@ const (
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
 
-	// FlagRbacIAMClient
-	// Enables the IAM client integration for fetching remote IAM global roles
-	FlagRbacIAMClient = "rbacIAMClient"
-
 	// FlagLogsTablePanelNG
 	// Enables the logs tableNG panel to replace existing tableRT
 	FlagLogsTablePanelNG = "logsTablePanelNG"
+
+	// FlagFrontendServiceSSOAutoLogin
+	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
+
+	// FlagStreamingForwardTeamHeadersTempo
+	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
+	FlagStreamingForwardTeamHeadersTempo = "streamingForwardTeamHeadersTempo"
+
+	// FlagLokiAlignedQuerySplitting
+	// Aligns query splitting chunks with UTC midnight
+	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
+
+	// FlagQueryFetchConfigFromSettingsService
+	// Enables the query service to fetch the configuration from the settings service
+	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
 )

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, useId } from 'react';
+import { type PropsWithChildren, useId } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 
 interface VariableSelectFieldProps<T> {

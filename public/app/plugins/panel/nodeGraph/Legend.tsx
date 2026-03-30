@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { Field, FieldColorModeId, GrafanaTheme2 } from '@grafana/data';
+import { type Field, FieldColorModeId, type GrafanaTheme2 } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
-import { Icon, useStyles2, useTheme2, VizLegend, VizLegendItem, VizLegendListItem } from '@grafana/ui';
+import { Icon, useStyles2, useTheme2, VizLegend, type VizLegendItem, VizLegendListItem } from '@grafana/ui';
 
-import { Config } from './layout';
-import { NodeDatum } from './types';
+import { type Config } from './layout';
+import { type NodeDatum } from './types';
 
 function getStyles() {
   return {

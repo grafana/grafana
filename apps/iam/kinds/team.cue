@@ -9,8 +9,8 @@ teamKind: {
 	pluralName: "Teams"
 	current:    "v0alpha1"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 
@@ -21,10 +21,10 @@ teamv0alpha1: teamKind & {
 	routes: {
 		"/groups": {
 			"GET": {
-				name: "getTeamGroups",
+				name: "getTeamGroups"
 				response: {
 					#ExternalGroupMapping: {
-						name: string
+						name:          string
 						externalGroup: string
 					}
 					items: [...#ExternalGroupMapping]
@@ -34,13 +34,13 @@ teamv0alpha1: teamKind & {
 		}
 		"/members": {
 			"GET": {
-				name: "getTeamMembers",
+				name: "getTeamMembers"
 				response: {
 					#TeamUser: {
-						team: string
-						user: string
+						team:       string
+						user:       string
 						permission: string
-						external: bool
+						external:   bool
 					}
 					items: [...#TeamUser]
 				}

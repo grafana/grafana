@@ -1,7 +1,13 @@
-import { DrilldownsApplicability } from '@grafana/data';
+import { type DrilldownsApplicability } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, GroupByVariable, sceneGraph, SceneObject, SceneQueryRunner } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import {
+  type AdHocFiltersVariable,
+  type GroupByVariable,
+  sceneGraph,
+  type SceneObject,
+  type SceneQueryRunner,
+} from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
 

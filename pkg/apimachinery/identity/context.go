@@ -196,6 +196,9 @@ var serviceIdentityTokenPermissions = []string{
 
 	// Allow access to all apiextensions.k8s.io resources
 	"*.ext.grafana.app:*",
+
+	// Allow access to apps.grafana.app resources (e.g. AppManifest)
+	"apps.grafana.app:*",
 }
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{

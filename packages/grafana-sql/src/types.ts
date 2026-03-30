@@ -1,21 +1,21 @@
-import { JsonTree } from '@react-awesome-query-builder/ui';
+import type { JsonTree } from '@react-awesome-query-builder/ui';
 
 import {
-  DataFrame,
-  DataQuery,
-  DataSourceJsonData,
-  MetricFindValue,
-  SelectableValue,
-  TimeRange,
+  type DataFrame,
+  type DataQuery,
+  type DataSourceJsonData,
+  type MetricFindValue,
+  type SelectableValue,
+  type TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageDefinition } from '@grafana/plugin-ui';
+import { type CompletionItemKind, type EditorMode, type LanguageDefinition } from '@grafana/plugin-ui';
 
-import { QueryWithDefaults } from './defaults';
+import { type QueryWithDefaults } from './defaults';
 import {
-  QueryEditorFunctionExpression,
-  QueryEditorGroupByExpression,
-  QueryEditorPropertyExpression,
+  type QueryEditorFunctionExpression,
+  type QueryEditorGroupByExpression,
+  type QueryEditorPropertyExpression,
 } from './expressions';
 
 export interface SqlQueryForInterpolation {

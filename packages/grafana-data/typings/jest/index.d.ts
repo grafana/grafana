@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 type ObservableType<T> = T extends Observable<infer V> ? V : never;
 

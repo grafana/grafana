@@ -328,12 +328,14 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	rule1 := createRule(t, store, gen)
 	rule2 := createRule(t, store, gen)
 	rule3 := createRule(t, store, recordingGen)
+	rule4 := createRule(t, store, gen.With(gen.WithGroupName("")))
 
 	parentFolderUid := uuid.NewString()
 	parentFolderTitle := "Very Parent Folder"
 	rule1FolderTitle := "folder-" + rule1.Title
 	rule2FolderTitle := "folder-" + rule2.Title
 	rule3FolderTitle := "folder-" + rule3.Title
+	rule4FolderTitle := "folder-" + rule4.Title
 
 	fakeFolderService.AddFolder(&folder.Folder{
 		UID:       rule1.NamespaceUID,
@@ -357,6 +359,13 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		Fullpath:  rule3FolderTitle,
 	})
 	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule4.NamespaceUID,
+		Title:     rule4FolderTitle,
+		OrgID:     rule4.OrgID,
+		ParentUID: "",
+		Fullpath:  rule4FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
 		UID:       parentFolderUid,
 		Title:     parentFolderTitle,
 		OrgID:     rule1.OrgID,
@@ -374,7 +383,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}{
 		{
 			name:  "without a rule group filter, it returns all created rules",
-			rules: []string{rule1.Title, rule2.Title, rule3.Title},
+			rules: []string{rule1.Title, rule2.Title, rule3.Title, rule4.Title},
 		},
 		{
 			name:       "with a rule group filter, it only returns the rules that match on rule group",
@@ -389,17 +398,17 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:         "with a filter on orgs, it returns rules that do not belong to that org",
 			rules:        []string{rule1.Title},
-			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID},
+			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID, rule4.OrgID},
 		},
 		{
 			name:    "with populate folders enabled, it returns them",
-			rules:   []string{rule1.Title, rule2.Title, rule3.Title},
-			folders: map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle, rule2.GetFolderKey(): rule2FolderTitle, rule3.GetFolderKey(): rule3FolderTitle},
+			rules:   []string{rule1.Title, rule2.Title, rule3.Title, rule4.Title},
+			folders: map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle, rule2.GetFolderKey(): rule2FolderTitle, rule3.GetFolderKey(): rule3FolderTitle, rule4.GetFolderKey(): rule4FolderTitle},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
-			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID},
+			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID, rule4.OrgID},
 			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle},
 		},
 	}
@@ -456,8 +465,37 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 			rule1.GetFolderKey(): parentFolderTitle + "/" + rule1FolderTitle,
 			rule2.GetFolderKey(): rule2FolderTitle,
 			rule3.GetFolderKey(): rule3FolderTitle,
+			rule4.GetFolderKey(): rule4FolderTitle,
 		}
 		require.Equal(t, expected, query.ResultFoldersTitles)
+	})
+
+	t.Run("with a no-group rule group filter, it returns the rule matching by UID", func(t *testing.T) {
+		noGroup, err := models.NewNoGroupRuleGroup(rule4.UID)
+		require.NoError(t, err)
+
+		query := &models.GetAlertRulesForSchedulingQuery{
+			RuleGroups: []string{noGroup.String()},
+		}
+		require.NoError(t, store.GetAlertRulesForScheduling(context.Background(), query))
+		require.Len(t, query.ResultRules, 1)
+		require.Equal(t, rule4.Title, query.ResultRules[0].Title)
+	})
+
+	t.Run("with mixed real and no-group rule group filter, it returns both", func(t *testing.T) {
+		noGroup, err := models.NewNoGroupRuleGroup(rule4.UID)
+		require.NoError(t, err)
+
+		query := &models.GetAlertRulesForSchedulingQuery{
+			RuleGroups: []string{rule2.RuleGroup, noGroup.String()},
+		}
+		require.NoError(t, store.GetAlertRulesForScheduling(context.Background(), query))
+
+		resultTitles := make([]string, 0, len(query.ResultRules))
+		for _, r := range query.ResultRules {
+			resultTitles = append(resultTitles, r.Title)
+		}
+		require.ElementsMatch(t, []string{rule4.Title, rule2.Title}, resultTitles)
 	})
 }
 
@@ -2197,6 +2235,106 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 		// After all pages, token should be empty
 		require.Empty(t, continueToken2, "should be no more pages")
+	})
+
+	t.Run("should filter by no-group rule group", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		ns := "test-ns-nogroup"
+		groupedRule := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("normal-group"),
+		))
+
+		noGroupRule := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+		))
+
+		noGroup, err := models.NewNoGroupRuleGroup(noGroupRule.UID)
+		require.NoError(t, err)
+
+		t.Run("only no-group filter returns matching rule by UID", func(t *testing.T) {
+			result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID:      orgID,
+					RuleGroups: []string{noGroup.String()},
+				},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, noGroupRule.UID, result[0].UID)
+		})
+
+		t.Run("mixed real and no-group filter returns both", func(t *testing.T) {
+			result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID:      orgID,
+					RuleGroups: []string{groupedRule.RuleGroup, noGroup.String()},
+				},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 2)
+			resultUIDs := []string{result[0].UID, result[1].UID}
+			require.ElementsMatch(t, []string{groupedRule.UID, noGroupRule.UID}, resultUIDs)
+		})
+	})
+
+	t.Run("should paginate with no-group rule group filter", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		ns := "test-ns-nogroup-paginated"
+		// Create rules in a normal group
+		groupedRule1 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-a"),
+		))
+		groupedRule2 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-a"),
+		))
+		// Create a rule that we'll query via no-group
+		noGroupRule := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+		))
+
+		noGroup, err := models.NewNoGroupRuleGroup(noGroupRule.UID)
+		require.NoError(t, err)
+
+		// Page 1: limit to 1 group
+		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:      orgID,
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+			},
+			Limit: 1,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, token1, "should have a continuation token")
+
+		// Page 2: continue
+		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:      orgID,
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+			},
+			Limit:         1,
+			ContinueToken: token1,
+		})
+		require.NoError(t, err)
+
+		allResults := append(page1, page2...)
+		allUIDs := make([]string, 0, len(allResults))
+		for _, r := range allResults {
+			allUIDs = append(allUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{groupedRule1.UID, groupedRule2.UID, noGroupRule.UID}, allUIDs)
+		require.Empty(t, token2, "should have no more pages")
 	})
 
 	t.Run("should sort by folder fullpath when enabled", func(t *testing.T) {
