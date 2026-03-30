@@ -247,8 +247,9 @@ describe('AdHocFiltersVariableEditor', () => {
       const { renderer } = await setup();
 
       await waitFor(() => {
-        expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
+        expect(renderer.getByTestId('origin-filters-editor')).toBeInTheDocument();
       });
+      expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
     });
 
     it('should not show default group by editor when dashboardUnifiedDrilldownControls is off', async () => {
@@ -259,8 +260,9 @@ describe('AdHocFiltersVariableEditor', () => {
       const { renderer } = await setup(undefined, { enableGroupBy: true });
 
       await waitFor(() => {
-        expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
+        expect(renderer.getByTestId('origin-filters-editor')).toBeInTheDocument();
       });
+      expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
     });
 
     it('should update originFilters when group-by selection changes', async () => {
@@ -302,7 +304,7 @@ describe('AdHocFiltersVariableEditor', () => {
 
       expect(capturedOriginController).toBeDefined();
       const state = capturedOriginController!.useState();
-      expect('enableGroupBy' in state).toBe(false);
+      expect(state.enableGroupBy).toBe(false);
     });
   });
 

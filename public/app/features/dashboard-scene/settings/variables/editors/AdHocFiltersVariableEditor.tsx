@@ -90,13 +90,15 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   );
 
   const onDefaultGroupByChange = (items: Array<SelectableValue<string>>) => {
-    const groupByFilters: AdHocFilterWithLabels[] = items.map((item) => ({
-      key: item.value!,
-      keyLabel: item.label || item.value!,
-      operator: 'groupBy',
-      value: '',
-      origin: ORIGIN_DASHBOARD,
-    }));
+    const groupByFilters: AdHocFilterWithLabels[] = items
+      .filter((item) => item.value != null)
+      .map((item) => ({
+        key: item.value!,
+        keyLabel: item.label || item.value!,
+        operator: 'groupBy',
+        value: '',
+        origin: ORIGIN_DASHBOARD,
+      }));
     const keep = (variable.state.originFilters ?? []).filter((f) => !isGroupByOriginFilter(f));
     const allFilters = [...keep, ...groupByFilters];
     variable.setOriginalFilters(allFilters);
