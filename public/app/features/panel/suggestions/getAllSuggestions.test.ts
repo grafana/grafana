@@ -1,22 +1,22 @@
 import {
   AppEvents,
-  DataFrame,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   getPanelDataSummary,
   LoadingState,
-  PanelData,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
   PluginType,
   toDataFrame,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { getListedPanelPluginMetas, PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
+import { getListedPanelPluginMetas, type PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
-  GraphFieldConfig,
-  ReduceDataOptions,
+  type GraphFieldConfig,
+  type ReduceDataOptions,
   StackingMode,
   VizOrientation,
 } from '@grafana/schema';

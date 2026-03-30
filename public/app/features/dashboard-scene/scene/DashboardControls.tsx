@@ -1,21 +1,21 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
-  SceneObjectState,
+  type SceneObjectState,
   SceneObjectBase,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneTimePicker,
   SceneRefreshPicker,
   SceneDebugger,
   VariableDependencyConfig,
   sceneGraph,
   SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  CancelActivationHandler,
+  type SceneObjectUrlValues,
+  type CancelActivationHandler,
   sceneUtils,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
@@ -27,7 +27,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 import { DrilldownControls } from './DrilldownControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';

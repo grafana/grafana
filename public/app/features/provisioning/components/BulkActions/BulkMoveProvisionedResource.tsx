@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import { RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
@@ -21,16 +21,16 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { StepStatusInfo } from '../../Wizard/types';
+import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import { StatusInfo } from '../../types';
+import { type StatusInfo } from '../../types';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
-import { MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { BulkActionFormData, BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
+import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
+import { type BulkActionFormData, type BulkActionProvisionResourceProps, getTargetFolderPathInRepo } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;

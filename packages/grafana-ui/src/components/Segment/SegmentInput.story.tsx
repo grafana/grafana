@@ -1,11 +1,11 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState, type JSX } from 'react';
 import * as React from 'react';
 
 import { Icon } from '../Icon/Icon';
 
-import { SegmentInput, SegmentInputProps } from './SegmentInput';
+import { SegmentInput, type SegmentInputProps } from './SegmentInput';
 import { SegmentSection } from './SegmentSection';
 
 const SegmentFrame = ({ children }: React.PropsWithChildren) => (

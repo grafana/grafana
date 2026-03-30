@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { LogsPanel } from './LogsPanel';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder, context) => {

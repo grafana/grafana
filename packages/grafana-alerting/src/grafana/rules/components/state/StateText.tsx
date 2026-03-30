@@ -1,10 +1,10 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text } from '@grafana/ui';
 
 import { StateDot } from './StateDot';
-import { Health, State } from './types';
+import { type Health, type State } from './types';
 
 // we're making a distinction here between the "state" of the rule and its "health".
 // When the type is "recording" we only support the health property.

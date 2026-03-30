@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   FilterInput,
   Icon,
   InteractiveTable,
@@ -18,12 +18,12 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import {
-  Repository,
+  type Repository,
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FlatTreeItem, TreeItem } from '../types';
+import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 

@@ -3,8 +3,8 @@
  */
 
 import { isDateTime } from '../datetime/moment_wrapper';
-import { ExploreUrlState, URLRange } from '../types/explore';
-import { RawTimeRange } from '../types/time';
+import { type ExploreUrlState, type URLRange } from '../types/explore';
+import { type RawTimeRange } from '../types/time';
 
 /**
  * Type to represent the value of a single query variable.

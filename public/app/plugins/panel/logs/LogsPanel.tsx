@@ -5,25 +5,25 @@ import * as React from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   CoreApp,
-  DataFrame,
+  type DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  DataQueryResponse,
-  DataSourceApi,
+  type DataQueryResponse,
+  type DataSourceApi,
   dateTimeForTimeZone,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
-  Labels,
-  LogRowContextOptions,
-  LogRowModel,
+  type Labels,
+  type LogRowContextOptions,
+  type LogRowModel,
   LogsSortOrder,
-  PanelData,
-  PanelProps,
-  TimeRange,
-  TimeZone,
+  type PanelData,
+  type PanelProps,
+  type TimeRange,
+  type TimeZone,
   toUtc,
   LogSortOrderChangeEvent,
   LoadingState,
@@ -52,7 +52,7 @@ import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../feat
 
 import type { Options } from './panelcfg.gen';
 import {
-  GetFieldLinksFn,
+  type GetFieldLinksFn,
   isCoreApp,
   isGrammar,
   isIsFilterLabelActive,
@@ -67,7 +67,7 @@ import {
   isOnNewLogsReceivedType,
   isReactNodeArray,
   isSetDisplayedFields,
-  onNewLogsReceivedType,
+  type onNewLogsReceivedType,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 

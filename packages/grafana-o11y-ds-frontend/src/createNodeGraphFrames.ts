@@ -2,7 +2,7 @@ import {
   FieldType,
   NodeGraphDataFrameFieldNames as Fields,
   DataFrameView,
-  DataFrame,
+  type DataFrame,
   MutableDataFrame,
 } from '@grafana/data';
 

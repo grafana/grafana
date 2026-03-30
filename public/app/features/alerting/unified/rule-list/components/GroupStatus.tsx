@@ -1,6 +1,6 @@
 import { css, keyframes } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 

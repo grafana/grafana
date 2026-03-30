@@ -3,22 +3,22 @@ import { getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
   LoadingState,
   MutableDataFrame,
-  PanelData,
-  TimeRange,
+  type PanelData,
+  type TimeRange,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import * as queryHints from '../../query_hints';
-import { PromApplication, PromOptions } from '../../types';
+import { PromApplication, type PromOptions } from '../../types';
 import { getLabelSelects } from '../testUtils';
-import { PromVisualQuery } from '../types';
+import { type PromVisualQuery } from '../types';
 
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
