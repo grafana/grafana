@@ -49,7 +49,6 @@ function deterministicObjectHash<T extends Record<string, any>>(obj: T): string 
 }
 
 /**
- * @alpha
  * A suggestion for a visualization given some data. This represents the shape of the panel (including options and field config)
  * that will be used to show a small preview in the Grafana UI when suggesting visualizations in the Panel Editor.
  */
@@ -95,9 +94,6 @@ export interface PanelPluginVisualizationSuggestion<TOptions = {}, TFieldConfig 
   hash: string;
 }
 
-/**
- * @alpha
- */
 export enum VisualizationSuggestionScore {
   /** We are pretty sure this is the best possible option */
   Best = 100,
@@ -108,9 +104,6 @@ export enum VisualizationSuggestionScore {
 }
 
 /**
- * @alpha
- * TODO: this name is temporary; it will become just "VisualizationSuggestionsSupplier" when the other interface is deleted.
- *
  * executed while rendering suggestions each time the DataFrame changes, this method
  * determines which suggestions can be shown for this PanelPlugin given the PanelDataSummary.
  *
@@ -122,7 +115,6 @@ export type VisualizationSuggestionsSupplier<TOptions, TFieldConfig extends {} =
 ) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
 
 /**
- * @alpha
  * Context for VisualizationPresetsSupplier
  */
 export interface VisualizationPresetsContext {
@@ -130,7 +122,6 @@ export interface VisualizationPresetsContext {
 }
 
 /**
- * @alpha
  * Returns presets for a panel plugin
  */
 export type VisualizationPresetsSupplier<TOptions extends unknown = {}, TFieldConfig extends {} = {}> = (

@@ -222,4 +222,8 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add permission role_id scope index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
 		Cols: []string{"role_id", "scope"},
 	}))
+
+	mg.AddMigration("alter permission.kind to length 80", migrator.NewRawSQLMigration("").
+		Postgres("ALTER TABLE permission ALTER COLUMN kind TYPE VARCHAR(80);").
+		Mysql("ALTER TABLE permission MODIFY kind VARCHAR(80);"))
 }

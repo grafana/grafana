@@ -745,6 +745,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
+/packages/grafana-ui/src/options/builder/ @grafana/dataviz-squad
 /packages/grafana-ui/tsconfig.build.json @grafana/frontend-ops
 /packages/grafana-ui/tsconfig.json @grafana/frontend-ops
 
