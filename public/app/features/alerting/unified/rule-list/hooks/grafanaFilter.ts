@@ -20,6 +20,7 @@ import {
   mapDataSourceNamesToUids,
   namespaceFilter,
   pluginsFilter,
+  policyFilter,
   ruleMatches,
   ruleNameFilter,
   ruleTypeFilter,
@@ -42,7 +43,8 @@ export function hasGrafanaClientSideFilters(filterState: Partial<RulesFilter>): 
     (ruleFilterConfig.ruleHealth !== null && Boolean(filterState?.ruleHealth)) ||
     (ruleFilterConfig.dashboardUid !== null && Boolean(filterState?.dashboardUid)) ||
     (ruleFilterConfig.plugins !== null && Boolean(filterState?.plugins)) ||
-    (ruleFilterConfig.contactPoint !== null && Boolean(filterState?.contactPoint));
+    (ruleFilterConfig.contactPoint !== null && Boolean(filterState?.contactPoint)) ||
+    (ruleFilterConfig.policy !== null && Boolean(filterState?.policy));
 
   // Check each group filter: if the config has a non-null handler AND the filter state has a value, we need client-side filtering
   const hasActiveGroupFilters =
@@ -132,6 +134,7 @@ function buildGrafanaFilterConfigs() {
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
     plugins: useBackendFilters || useFullyCompatibleBackendFilters ? null : pluginsFilter,
     contactPoint: null,
+    policy: policyFilter,
   };
 
   const groupFilterConfig: GroupFilterConfig = {
