@@ -2035,15 +2035,18 @@
     {
       "metadata": {
         "name": "externalVizSuggestions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-01T23:22:22Z"
+        "resourceVersion": "1774877899502",
+        "creationTimestamp": "2025-12-01T23:22:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 13:38:19.502534 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3709,15 +3712,18 @@
     {
       "metadata": {
         "name": "newVizSuggestions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-12T19:26:29Z"
+        "resourceVersion": "1774878275721",
+        "creationTimestamp": "2025-11-12T19:26:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 13:44:35.72192 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable new visualization suggestions",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
