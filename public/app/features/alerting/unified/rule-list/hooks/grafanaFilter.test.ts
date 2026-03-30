@@ -3,7 +3,7 @@ import { testWithFeatureToggles } from 'test/test-utils';
 import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import {
-  GrafanaNotificationSettings,
+  type GrafanaNotificationSettings,
   PromAlertingRuleState,
   type PromRuleGroupDTO,
   PromRuleType,

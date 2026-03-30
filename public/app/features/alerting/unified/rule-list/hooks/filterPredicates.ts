@@ -2,8 +2,8 @@ import { attempt, compact, isString } from 'lodash';
 import memoize from 'micro-memoize';
 
 import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { PromRuleDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import type { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import type { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { type RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';

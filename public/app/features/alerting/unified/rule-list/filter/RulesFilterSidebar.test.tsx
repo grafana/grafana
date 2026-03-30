@@ -3,7 +3,7 @@ import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RulesFilter } from '../../search/rulesSearchParser';
+import type { RulesFilter } from '../../search/rulesSearchParser';
 
 import { RulesFilterSidebar } from './RulesFilterSidebar';
 
