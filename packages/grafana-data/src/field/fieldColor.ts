@@ -23,7 +23,7 @@ import { getScaleCalculator, type ColorScaleValue } from './scale';
 import { fallBackThreshold } from './thresholds';
 
 /**
- * Colorblind-safe palette based on Wong (2011) "Points of view: Color blindness"
+ * Color blind-safe palette based on Wong (2011) "Points of view: Color blindness"
  * Nature Methods 8:441. Extended with Tol qualitative colors.
  * Includes both black and white for theme-adaptive contrast filtering.
  */
@@ -115,7 +115,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteColorblind,
-      name: 'Colorblind safe',
+      name: 'Color blind safe',
       isContinuous: false,
       isByValue: false,
       getColors: (theme: GrafanaTheme2) => {

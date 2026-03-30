@@ -345,7 +345,7 @@ function getClassicPalette() {
 }
 
 /**
- * Colorblind-safe palette based on Wong (2011) "Points of view: Color blindness"
+ * Color blind-safe palette based on Wong (2011) "Points of view: Color blindness"
  * Nature Methods 8:441. Extended with Okabe-Ito colors for additional series.
  * These colors are distinguishable by people with all common forms of color
  * vision deficiency (protanopia, deuteranopia, tritanopia).
