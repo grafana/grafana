@@ -363,7 +363,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     params.query = interpolatedExpr;
 
     try {
-      const data = await this.request(url, params, false, requestOptions);
+      const data = await this.request(url, params, true, requestOptions);
       return data;
     } catch (error) {
       console.error('error', error);
