@@ -41,6 +41,7 @@ The Elasticsearch data source supports:
 - **Log queries:** Search, filter, and explore log data with Lucene query syntax.
 - **Annotations:** Overlay Elasticsearch events on your dashboard graphs.
 - **Alerting:** Create alerts based on Elasticsearch query results.
+- **ES|QL queries (experimental):** Query data using Elasticsearch's pipe-based query language.
 
 ## Before you begin
 
