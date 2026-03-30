@@ -197,7 +197,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -325,7 +324,6 @@ var wireBasicSet = wire.NewSet(
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
-	elasticsearch.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,
 	zipkin.ProvideService,

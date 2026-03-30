@@ -115,14 +115,14 @@ func (s *LegacySQL) getDashboardStars(ctx context.Context, orgId int64, user str
 	return stars, updated.UnixMilli(), err
 }
 
-func (s *LegacySQL) GetMaxTime(ctx context.Context, orgId int64) (time.Time, error) {
+func (s *LegacySQL) GetMaxTime(ctx context.Context) (time.Time, error) {
 	var max sql.NullString
 	sql, err := s.db(ctx)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	req := newStarQueryReq(sql, "", orgId)
+	req := newStarQueryReq(sql, "", 0)
 
 	q, err := sqltemplate.Execute(sqlDashboardStarsRV, req)
 	if err != nil {

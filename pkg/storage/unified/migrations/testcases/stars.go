@@ -3,6 +3,7 @@ package testcases
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,7 @@ import (
 	collectionsV1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
@@ -20,13 +22,13 @@ import (
 
 // starsTestCase tests the "playlists" ResourceMigration
 type starsTestCase struct {
-	stars map[string]collectionsV1.StarsResource
+	stars map[apis.User]collectionsV1.StarsResource
 }
 
 // NewStarsTestCase creates a test case for the stars migrator
 func NewStarsTestCase() ResourceMigratorTestCase {
 	return &starsTestCase{
-		stars: map[string]collectionsV1.StarsResource{},
+		stars: map[apis.User]collectionsV1.StarsResource{},
 	}
 }
 
@@ -63,35 +65,42 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 
 	ctx := context.Background()
 	stars := starimpl.ProvideService(env.SQLStore)
-	userID, err := helper.Org1.Admin.Identity.GetInternalID()
-	require.NoError(t, err)
 
-	err = stars.Add(ctx, &star.StarDashboardCommand{
-		UserID:       userID,
-		OrgID:        helper.Org1.OrgID,
-		DashboardUID: "dash-1",
-	})
-	require.NoError(t, err)
-	err = stars.Add(ctx, &star.StarDashboardCommand{
-		UserID:       userID,
-		OrgID:        helper.Org1.OrgID,
-		DashboardUID: "dash-2",
-	})
-	require.NoError(t, err)
+	users := []apis.User{
+		helper.Org1.Admin,
+		helper.Org1.Editor,
+		helper.OrgB.Admin,
+	}
 
-	res, err := stars.GetByUser(context.Background(), &star.GetUserStarsQuery{
-		UserID: userID,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, res)
-	require.Len(t, res.UserStars, 2)
+	for _, user := range users {
+		userID, err := user.Identity.GetInternalID()
+		require.NoError(t, err)
 
-	tc.stars = map[string]collectionsV1.StarsResource{
-		"user-" + helper.Org1.Admin.Identity.GetUID(): {
+		err = stars.Add(ctx, &star.StarDashboardCommand{
+			UserID:       userID,
+			OrgID:        user.Identity.GetOrgID(),
+			DashboardUID: "dash-1",
+		})
+		require.NoError(t, err)
+		err = stars.Add(ctx, &star.StarDashboardCommand{
+			UserID:       userID,
+			OrgID:        user.Identity.GetOrgID(),
+			DashboardUID: "dash-2",
+		})
+		require.NoError(t, err)
+
+		res, err := stars.GetByUser(context.Background(), &star.GetUserStarsQuery{
+			UserID: userID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, res)
+		require.Len(t, res.UserStars, 2)
+
+		tc.stars[user] = collectionsV1.StarsResource{
 			Group: "dashboard.grafana.app",
 			Kind:  "Dashboard",
 			Names: []string{"dash-1", "dash-2"},
-		},
+		}
 	}
 
 	return true // will exist in mode0
@@ -100,30 +109,34 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
 
-	orgID := helper.Org1.OrgID
-	namespace := authlib.OrgNamespaceFormatter(orgID)
-
-	// Verify playlists
-	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: namespace,
-		GVR: schema.GroupVersionResource{
-			Group:    "collections.grafana.app",
-			Version:  "v1alpha1",
-			Resource: "stars",
-		},
-	})
-
 	for user, expected := range tc.stars {
-		found, err := client.Resource.Get(context.Background(), user, v1.GetOptions{})
+		namespace := authlib.OrgNamespaceFormatter(user.Identity.GetOrgID())
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR: schema.GroupVersionResource{
+				Group:    "collections.grafana.app",
+				Version:  "v1alpha1",
+				Resource: "stars",
+			},
+		})
+
+		name := user.Identity.GetIdentifier()
+		require.True(t, strings.HasPrefix(name, "user-"))
+		ctx := identity.WithRequester(context.Background(), user.Identity)
+		found, err := client.Resource.Get(ctx, name, v1.GetOptions{})
+		if !shouldExist {
+			require.Error(t, err, "should not get star for user %s", user)
+			continue
+		}
 		require.NoError(t, err)
 
 		tmp, err := found.MarshalJSON()
 		require.NoError(t, err)
-		typedobj := &collectionsV1.Stars{}
-		err = json.Unmarshal(tmp, typedobj)
+		stars := &collectionsV1.Stars{}
+		err = json.Unmarshal(tmp, stars)
 		require.NoError(t, err)
-		require.Len(t, typedobj.Spec.Resource, 1)
-		require.Equal(t, expected, typedobj.Spec.Resource[0])
+		require.Len(t, stars.Spec.Resource, 1)
+		require.Equal(t, expected, stars.Spec.Resource[0])
 	}
 }

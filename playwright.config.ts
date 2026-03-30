@@ -92,10 +92,6 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     withAuth({
-      name: 'elasticsearch',
-      testDir: path.join(pluginDirRoot, '/elasticsearch'),
-    }),
-    withAuth({
       name: 'mysql',
       testDir: path.join(pluginDirRoot, '/mysql'),
     }),

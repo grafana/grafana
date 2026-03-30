@@ -43,11 +43,11 @@ func (m *starsMigrator) MigrateStars(ctx context.Context, orgId int64, opts migr
 		return opts.Namespace // static namespace
 	}, sql)
 
-	ts, err := sql.GetMaxTime(ctx, orgId)
+	ts, err := sql.GetMaxTime(ctx)
 	if err != nil {
 		return err
 	}
-	rv := ts.UnixMilli()
+	rv := (ts.UnixMilli() / 1000000 * 1000000) + (orgId * 10000) // ensure unique RV across orgs
 
 	// 1. list all users with stars (in this org)
 	users, err := sql.ListUsers(ctx, orgId)

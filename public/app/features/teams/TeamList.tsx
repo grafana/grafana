@@ -256,9 +256,9 @@ const TeamList = () => {
               new ShowModalReactEvent({
                 component: TeamDeleteModal,
                 props: {
-                  onConfirm: () => {
+                  onConfirm: async () => {
                     reportInteraction('grafana_teams_list_delete_modal_confirm_clicked');
-                    deleteTeam({ uid: original.uid });
+                    await deleteTeam({ uid: original.uid });
                   },
                   teamName: original.name,
                   ownedFolder: ownedFolders && ownedFolders.length > 0,

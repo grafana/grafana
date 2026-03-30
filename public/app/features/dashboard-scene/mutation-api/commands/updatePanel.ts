@@ -163,8 +163,10 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
 
         if (dataSpec.transformations !== undefined && isDataTransformer(dataPipeline)) {
           const transformations = dataSpec.transformations.map((t: TransformationKind) => ({
-            id: t.spec.id,
+            id: t.group,
             disabled: t.spec.disabled,
+            filter: t.spec.filter,
+            topic: t.spec.topic,
             options: t.spec.options,
           }));
           dataPipeline.setState({ transformations });
