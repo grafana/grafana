@@ -16,7 +16,7 @@ import {
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
-import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
+import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
@@ -30,13 +30,7 @@ import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tr
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
-import {
-  DashboardDataDTO,
-  DashboardDTO,
-  DashboardRoutes,
-  HomeDashboardRedirectDTO,
-  isRedirectResponse,
-} from 'app/types/dashboard';
+import { DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -51,6 +45,7 @@ import { loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
 import { getDsRefsFromV1Dashboard, getDsRefsFromV2Dashboard } from '../utils/dashboardDsRefs';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
+import { homeV1 } from './home';
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
 /**
@@ -164,31 +159,44 @@ abstract class DashboardScenePageStateManagerBase<T>
   }
 
   protected async fetchHomeDashboard(): Promise<DashboardDTO | null> {
-    const rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
-
-    if (isRedirectResponse(rsp)) {
-      const newUrl = locationUtil.processRedirectUri(rsp.redirectUri, locationService.getLocation());
+    const prefs = await getBackendSrv().get(
+      `/apis/preferences.grafana.app/v1alpha1/namespaces/${config.namespace}/preferences/merged`
+    );
+    if (prefs.spec.homeDashboardUID) {
+      const newUrl = `/d/${prefs.spec.homeDashboardUID}/`; // missing title
       locationService.replace(newUrl);
       return null;
     }
 
-    // If dashboard is on v2 schema convert to v1 schema, there's curently no v2 API for home dashboard
-    if (isDashboardV2Spec(rsp.dashboard)) {
-      rsp.dashboard = transformDashboardV2SpecToV1(rsp.dashboard, {
-        name: '',
-        generation: 0,
-        resourceVersion: '0',
-        creationTimestamp: '',
+    const dto: DashboardDTO = {
+      dashboard: {
+        ...homeV1,
+        uid: 'home',
+      },
+      meta: {
+        canSave: false,
+        canStar: false,
+        canEdit: contextSrv.hasRole('Admin'),
+        canShare: false,
+      },
+    };
+
+    const helpFlags = contextSrv.user.helpFlags1;
+    const HELP_FLAG_GettingStartedPanelDismissed = 0x0001;
+    if (!(helpFlags & HELP_FLAG_GettingStartedPanelDismissed)) {
+      dto.dashboard!.panels!.unshift({
+        type: 'gettingstarted',
+        id: 123123,
+        gridPos: {
+          x: 0,
+          y: 3,
+          w: 24,
+          h: 9,
+        },
       });
     }
 
-    if (rsp?.meta) {
-      rsp.meta.canSave = false;
-      rsp.meta.canShare = false;
-      rsp.meta.canStar = false;
-    }
-
-    return rsp;
+    return dto;
   }
 
   private async loadHomeDashboard(): Promise<DashboardScene | null> {
