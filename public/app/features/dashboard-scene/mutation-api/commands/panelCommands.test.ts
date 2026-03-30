@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 
 import { getUpdatedHoverHeader } from '../../panel-edit/getPanelFrameOptions';
 import type { DashboardScene } from '../../scene/DashboardScene';
@@ -511,9 +511,9 @@ describe('Panel mutation commands', () => {
                 spec: {
                   transformations: [
                     {
-                      kind: 'limit',
+                      kind: 'Transformation',
+                      group: 'limit',
                       spec: {
-                        id: 'limit',
                         disabled: false,
                         filter: { id: 'byName', options: 'temperature' },
                         topic: 'series',

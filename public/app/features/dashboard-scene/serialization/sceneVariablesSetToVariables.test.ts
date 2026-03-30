@@ -1,13 +1,13 @@
 import { of } from 'rxjs';
 
 import {
-  DataSourceApi,
+  type DataSourceApi,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
@@ -24,7 +24,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
+import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
 
 import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 

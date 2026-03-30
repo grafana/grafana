@@ -4,19 +4,19 @@ import {
   DataSourceVariable,
   QueryVariable,
   SceneDataTransformer,
-  SceneObject,
+  type SceneObject,
   SceneQueryRunner,
-  SceneVariable,
-  SceneVariableState,
+  type SceneVariable,
+  type SceneVariableState,
   SwitchVariable,
-  VizPanel,
+  type VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { VizPanelLinks } from '../scene/PanelLinks';
-import { TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { type VizPanelLinks } from '../scene/PanelLinks';
+import { type TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 type SceneVariableConstructor<T extends SceneVariableState, V extends SceneVariable<T>> = new (

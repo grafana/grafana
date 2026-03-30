@@ -3,13 +3,13 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
   CoreApp,
-  DataFrame,
-  FieldConfigSource,
-  GrafanaTheme2,
+  type DataFrame,
+  type FieldConfigSource,
+  type GrafanaTheme2,
   LoadingState,
   LogsSortOrder,
-  PanelData,
-  PanelProps,
+  type PanelData,
+  type PanelProps,
 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
@@ -20,7 +20,7 @@ import {
   DATAPLANE_SEVERITY_NAME,
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
-  LogsFrame,
+  type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
@@ -33,14 +33,14 @@ import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
 import { onSortOrderChange } from './options/onSortOrderChange';
-import { Options } from './options/types';
-import { Options as LogsTableOptions } from './panelcfg.gen';
+import { type Options } from './options/types';
+import { type Options as LogsTableOptions } from './panelcfg.gen';
 import { getInitialRowIndex } from './props/getInitialRowIndex';
 import {
-  BuildLinkToLogLine,
+  type BuildLinkToLogLine,
   isBuildLinkToLogLine,
   isOnLogsTableOptionsChange,
-  OnLogsTableOptionsChange,
+  type OnLogsTableOptionsChange,
 } from './types';
 
 interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}

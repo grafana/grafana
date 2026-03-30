@@ -1,4 +1,4 @@
-import { DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data';
 
 // Annotation points/regions are 5px with 1px of padding
 export const ANNOTATION_LANE_SIZE = 7;

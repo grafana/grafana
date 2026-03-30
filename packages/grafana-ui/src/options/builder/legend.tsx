@@ -1,6 +1,6 @@
-import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
+import { type PanelOptionsEditorBuilder, standardEditorsRegistry, type StatsPickerConfigSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
 
 /**
  * @alpha

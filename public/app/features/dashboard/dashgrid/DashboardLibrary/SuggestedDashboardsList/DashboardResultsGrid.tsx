@@ -1,10 +1,10 @@
 import { Grid } from '@grafana/ui';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { CompatibilityState } from '../CompatibilityBadge';
+import { type CompatibilityState } from '../CompatibilityBadge';
 import { DashboardCard } from '../DashboardCard';
 import { PAGE_SIZE } from '../constants';
-import { GnetDashboard, isGnetDashboard } from '../types';
+import { type GnetDashboard, isGnetDashboard } from '../types';
 import { getThumbnailUrl, getLogoUrl, buildDashboardDetails } from '../utils/communityDashboardHelpers';
 import { getProvisionedDashboardImageUrl } from '../utils/provisionedDashboardHelpers';
 

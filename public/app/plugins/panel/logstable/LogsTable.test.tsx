@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import {
-  AbsoluteTimeRange,
-  EventBus,
-  FieldConfigSource,
+  type AbsoluteTimeRange,
+  type EventBus,
+  type FieldConfigSource,
   LogSortOrderChangeEvent,
   LogsSortOrder,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
@@ -18,7 +18,7 @@ import { extractFieldsTransformer } from 'app/features/transformers/extractField
 import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/fieldSelector/logFields';
 
 import { LogsTable } from './LogsTable';
-import { Options } from './options/types';
+import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
 

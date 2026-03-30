@@ -6,9 +6,9 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { PyroscopeDataSource } from '../datasource';
 import { mockFetchPyroscopeDatasourceSettings } from '../mocks';
-import { ProfileTypeMessage } from '../types';
+import { type ProfileTypeMessage } from '../types';
 
-import { Props, QueryEditor } from './QueryEditor';
+import { type Props, QueryEditor } from './QueryEditor';
 
 describe('QueryEditor', () => {
   beforeEach(() => {

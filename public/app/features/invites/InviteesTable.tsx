@@ -1,7 +1,7 @@
 import { memo } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { Invitee } from 'app/types/user';
+import { type Invitee } from 'app/types/user';
 
 import InviteeRow from './InviteeRow';
 

@@ -4,15 +4,15 @@ import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  DataHoverPayload,
-  EventBus,
+  type DataHoverPayload,
+  type EventBus,
   LegacyGraphHoverEvent,
 } from '@grafana/data';
 
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 interface EventBusPluginProps {
   config: UPlotConfigBuilder;

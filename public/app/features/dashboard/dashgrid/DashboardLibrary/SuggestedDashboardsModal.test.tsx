@@ -1,10 +1,10 @@
 import { screen, act } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { setDataSourceSrv } from '@grafana/runtime';
-import { DashboardJson, InputType } from 'app/features/manage-dashboards/types';
+import { setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import { type DashboardJson, InputType } from 'app/features/manage-dashboards/types';
 
-import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
+import { type MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { CONTENT_KINDS } from './constants';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
 
@@ -107,9 +107,9 @@ describe('SuggestedDashboardsModal', () => {
       setDataSourceSrv({
         getInstanceSettings: () =>
           ({ uid: 'prom-uid', name: 'Prometheus', type: 'prometheus' }) as ReturnType<
-            import('@grafana/runtime').DataSourceSrv['getInstanceSettings']
+            DataSourceSrv['getInstanceSettings']
           >,
-      } as import('@grafana/runtime').DataSourceSrv);
+      } as DataSourceSrv);
 
       render(<SuggestedDashboardsModal {...defaultProps} datasourceUid="prom-uid" />);
 

@@ -1,20 +1,20 @@
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { VariableModel, defaultDashboard } from '@grafana/schema';
+import { type VariableModel, defaultDashboard } from '@grafana/schema';
 import {
-  AdhocVariableKind,
+  type AdhocVariableKind,
   defaultAdhocVariableSpec,
   defaultSpec as defaultDashboardV2Spec,
   defaultGroupByVariableSpec,
   defaultTimeSettingsSpec,
-  GroupByVariableKind,
-  Spec as DashboardV2Spec,
+  type GroupByVariableKind,
+  type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 import { contextSrv } from '../../../core/services/context_srv';
 

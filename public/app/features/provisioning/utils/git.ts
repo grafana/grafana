@@ -1,6 +1,6 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { InstructionAvailability, RepoType } from '../Wizard/types';
+import { type InstructionAvailability, type RepoType } from '../Wizard/types';
 
 /**
  * Validates a Git branch name according to the following rules:

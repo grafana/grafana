@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 import { DataLayerControl } from './DataLayerControl';
 
 export function DashboardDataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
