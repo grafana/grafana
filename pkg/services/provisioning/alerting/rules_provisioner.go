@@ -85,7 +85,7 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 	user identity.Requester,
 	rule alert_models.AlertRule) error {
 	prov.logger.Debug("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
-	_, _, err := prov.ruleService.GetAlertRule(ctx, user, rule.UID)
+	_, _, _, err := prov.ruleService.GetAlertRule(ctx, user, rule.UID)
 	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {
 		return err
 	} else if err != nil {
