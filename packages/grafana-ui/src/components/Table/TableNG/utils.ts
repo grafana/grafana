@@ -1,29 +1,29 @@
-import { Property } from 'csstype';
+import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import WKT from 'ol/format/WKT';
 import Geometry from 'ol/geom/Geometry';
-import { CSSProperties } from 'react';
-import { SortColumn } from 'react-data-grid';
+import { type CSSProperties } from 'react';
+import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { Count, varPreLine } from 'uwrap';
+import { type Count, varPreLine } from 'uwrap';
 
 import {
   FieldType,
-  Field,
+  type Field,
   formattedValueToString,
-  GrafanaTheme2,
-  DisplayValue,
-  LinkModel,
-  DisplayValueAlignmentFactors,
-  DataFrame,
-  DisplayProcessor,
+  type GrafanaTheme2,
+  type DisplayValue,
+  type LinkModel,
+  type DisplayValueAlignmentFactors,
+  type DataFrame,
+  type DisplayProcessor,
   isDataFrame,
-  FieldSparkline,
-  DecimalCount,
+  type FieldSparkline,
+  type DecimalCount,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
-  FieldTextAlignment,
+  type FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
@@ -31,20 +31,20 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellOptions } from '../types';
+import { type TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
-  TableRow,
-  ColumnTypes,
-  FrameToRowsConverter,
-  Comparator,
-  TypographyCtx,
-  MeasureCellHeight,
-  MeasureCellHeightEntry,
-  FilterType,
+  type TableRow,
+  type ColumnTypes,
+  type FrameToRowsConverter,
+  type Comparator,
+  type TypographyCtx,
+  type MeasureCellHeight,
+  type MeasureCellHeightEntry,
+  type FilterType,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */

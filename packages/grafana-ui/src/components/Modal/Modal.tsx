@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { OverlayContainer } from '@react-aria/overlays';
-import { PropsWithChildren, ReactNode, useId, type JSX } from 'react';
+import { type PropsWithChildren, type ReactNode, useId, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -73,6 +73,15 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   const dismiss = useDismiss(context, {
     escapeKey: closeOnEscape,
+    // outsidePress intercepts clicks before they reach the DOM — use a function
+    // to honour closeOnBackdropClick and forward to onClickBackdrop in one place.
+    outsidePress: () => {
+      if (onClickBackdrop) {
+        onClickBackdrop();
+        return false;
+      }
+      return closeOnBackdropClick;
+    },
   });
 
   const role = useRole(context, {
@@ -89,11 +98,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   return (
     <OverlayContainer>
-      <div
-        role="presentation"
-        className={styles.modalBackdrop}
-        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
-      />
+      <div role="presentation" className={styles.modalBackdrop} />
       <FloatingFocusManager context={context} modal={trapFocus} getInsideElements={() => [getPortalContainer()]}>
         <div
           className={cx(styles.modal, className)}

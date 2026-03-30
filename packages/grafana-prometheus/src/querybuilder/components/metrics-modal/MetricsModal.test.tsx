@@ -2,14 +2,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../../datasource';
-import { PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
 import { getMockTimeRange } from '../../../test/mocks/datasource';
-import { PromOptions } from '../../../types';
-import { PromVisualQuery } from '../../types';
+import { type PromOptions } from '../../../types';
+import { type PromVisualQuery } from '../../types';
 
 import { MetricsModal } from './MetricsModal';
 import { metricsModaltestIds } from './testIds';

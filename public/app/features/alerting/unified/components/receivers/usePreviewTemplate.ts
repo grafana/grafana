@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
-import { AlertField, usePreviewTemplateMutation } from '../../api/templateApi';
+import { type AlertField, usePreviewTemplateMutation } from '../../api/templateApi';
 
 export function usePreviewTemplate(
   templateContent: string,

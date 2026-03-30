@@ -1,7 +1,7 @@
-import { Ref, forwardRef } from 'react';
+import { type Ref, forwardRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, ButtonProps, Icon, Stack } from '@grafana/ui';
+import { Button, type ButtonProps, Icon, Stack } from '@grafana/ui';
 
 const MoreButton = forwardRef(function MoreButton(
   props: Omit<ButtonProps, 'children'> & { title?: string },

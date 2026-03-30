@@ -3,12 +3,12 @@ import { memo, useState, type FocusEvent, type FormEvent } from 'react';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   stringToJsRegex,
   TransformerCategory,
 } from '@grafana/data';
-import { RenameByRegexTransformerOptions } from '@grafana/data/internal';
+import { type RenameByRegexTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 

@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, ChangeEvent, FocusEvent, useCallback } from 'react';
+import React, { useState, type ChangeEvent, type FocusEvent, useCallback } from 'react';
 
-import { rangeUtil, PanelData, DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { rangeUtil, type PanelData, type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { QueryGroupOptions } from 'app/types/query';
+import { type QueryGroupOptions } from 'app/types/query';
 
 interface Props {
   options: QueryGroupOptions;

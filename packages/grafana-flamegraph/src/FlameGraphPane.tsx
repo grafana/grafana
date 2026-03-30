@@ -5,12 +5,12 @@ import { escapeStringForRegex } from '@grafana/data';
 
 import FlameGraphCallTreeContainer from './CallTree/FlameGraphCallTreeContainer';
 import FlameGraph from './FlameGraph/FlameGraph';
-import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
+import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
-import { ClickedItemData, PaneView, ViewMode, TextAlign } from './types';
+import { type ClickedItemData, PaneView, type ViewMode, type TextAlign } from './types';
 
 export type FlameGraphPaneProps = {
   paneView: PaneView;

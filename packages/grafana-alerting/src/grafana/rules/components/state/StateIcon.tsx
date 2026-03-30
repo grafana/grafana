@@ -1,8 +1,8 @@
 import { css, keyframes } from '@emotion/css';
 import { upperFirst } from 'lodash';
-import { ComponentProps, memo } from 'react';
+import { type ComponentProps, memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, type IconName, Text, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import type { Health, State, Type } from './types';

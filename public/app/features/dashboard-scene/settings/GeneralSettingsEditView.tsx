@@ -1,10 +1,10 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
-import { TimeZone } from '@grafana/schema';
+import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
+import { type TimeZone } from '@grafana/schema';
 import {
   Box,
   CollapsableSection,
@@ -16,7 +16,7 @@ import {
   Switch,
   TagsInput,
   TextArea,
-  WeekStart,
+  type WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
@@ -26,13 +26,13 @@ import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/compon
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { updateNavModel } from '../pages/utils';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DeleteDashboardButton } from './DeleteDashboardButton';
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {
   showMoveModal?: boolean;

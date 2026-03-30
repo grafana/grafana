@@ -1,20 +1,20 @@
-import { ReactElement, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   MultiValueVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import {
-  ConditionalRenderingVariableKind,
-  ConditionalRenderingVariableSpec,
+  type ConditionalRenderingVariableKind,
+  type ConditionalRenderingVariableSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Box, Combobox, ComboboxOption, Field, Input, Stack } from '@grafana/ui';
+import { Box, Combobox, type ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 import { ALL_VARIABLE_TEXT } from 'app/features/variables/constants';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
@@ -22,7 +22,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
-import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { checkGroup, getObject, getObjectType } from './utils';
 
 type VariableConditionValueOperator = '=' | '!=' | '=~' | '!~';

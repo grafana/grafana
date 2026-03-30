@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import type { DashboardLink } from '@grafana/schema';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { openAddLinkPane, openLinkEditPane } from './LinkAddEditableElement';

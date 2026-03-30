@@ -1,6 +1,6 @@
-import { Fragment, memo, ReactNode } from 'react';
+import { Fragment, memo, type ReactNode } from 'react';
 
-import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
+import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Segment } from '@grafana/ui';
 

@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
 import { useListCorrelationQuery } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { DataSourceRef } from '@grafana/schema/dist/esm/index';
+import { type DataSourceRef } from '@grafana/schema/dist/esm/index';
 
 import { toEnrichedCorrelationDataK8s, useCorrelationsK8s } from './useCorrelationsK8s';
 
