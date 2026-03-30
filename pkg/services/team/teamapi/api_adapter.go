@@ -80,6 +80,7 @@ func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage
 			AvatarURL:     dtos.GetGravatarUrlWithDefault(tapi.cfg, hit.Email, hit.Title),
 			IsProvisioned: hit.Provisioned,
 			ExternalUID:   hit.ExternalUID,
+			MemberCount:   hit.MemberCount,
 			AccessControl: hit.AccessControl,
 		})
 	}

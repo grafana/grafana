@@ -148,6 +148,8 @@ func createCells(t *team.TeamDTO, fields []string) [][]byte {
 			cells = append(cells, []byte(strconv.FormatBool(t.IsProvisioned)))
 		case builders.TEAM_SEARCH_EXTERNAL_UID:
 			cells = append(cells, []byte(t.ExternalUID))
+		case builders.TEAM_SEARCH_MEMBER_COUNT:
+			cells = append(cells, []byte(strconv.FormatInt(t.MemberCount, 10)))
 		}
 	}
 	return cells

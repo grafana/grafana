@@ -380,6 +380,13 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"memberCount": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
 					"accessControl": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -396,7 +403,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"name", "title", "email", "provisioned", "externalUID"},
+				Required: []string{"name", "title", "email", "provisioned", "externalUID", "memberCount"},
 			},
 		},
 	}
