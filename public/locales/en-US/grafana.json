@@ -2592,6 +2592,9 @@
       "view-policies": "View policies",
       "view-policies-aria": "View notification policies"
     },
+    "policyFilter": {
+      "label": "Notification policy"
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
       "preview-alerts": "Preview alerts",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Clear filters",
       "configured-alert-rules": "Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are stored and evaluated in the data source itself.",
+      "contact-point-disabled-tooltip": "Contact point filtering is not available while a notification policy filter is active.",
       "contact-point-tooltip": "Filters alert rules which route directly to the selected contact point. Alert rules routed to notification policies will not be displayed.",
       "contact-point-tooltip-title": "Contact point filter help",
       "dashboard": "Dashboard",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Select data sources",
       "placeholder-group-search": "Search group",
       "placeholder-labels": "Select labels",
+      "placeholder-policy": "Select policy",
       "plugin-rules": "Plugin rules",
+      "policy-disabled-tooltip": "Notification policy filtering is not available while a contact point filter is active.",
+      "policy-tooltip": "Filters alert rules which route to the selected notification policy tree. Alert rules using direct contact point routing will not be displayed.",
+      "policy-tooltip-title": "Notification policy filter help",
       "rule-source": {
         "datasource": "Data source managed",
         "grafana": "Grafana managed"
@@ -3212,6 +3220,7 @@
       "title-group": "Group",
       "title-health": "Health",
       "title-labels": "Labels",
+      "title-policy": "Policy",
       "title-rule": "Rule",
       "title-state": "State",
       "title-type": "Type"
@@ -14671,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "Splash screen content will go here.",
+    "close": "Close",
     "get-started": "Get started",
     "title": "Welcome to Grafana"
   },

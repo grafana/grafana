@@ -1241,11 +1241,6 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Enables the UI to see imported Alertmanager configuration
-  * @default false
-  */
-  alertingImportAlertmanagerUI?: boolean;
-  /**
   * Disables the DMA feature in the UI
   * @default false
   */
@@ -1382,7 +1377,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new visualization suggestions
-  * @default false
+  * @default true
   */
   newVizSuggestions?: boolean;
   /**
@@ -1397,14 +1392,9 @@ export interface FeatureToggles {
   vizPresets?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default false
+  * @default true
   */
   externalVizSuggestions?: boolean;
-  /**
-  * Limit the number of legend items by default, with an option to show all
-  * @default false
-  */
-  vizLegendSeriesLimit?: boolean;
   /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
