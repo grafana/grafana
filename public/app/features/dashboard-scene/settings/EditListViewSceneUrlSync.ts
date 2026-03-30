@@ -1,8 +1,8 @@
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
 
-import { AnnotationsEditView, AnnotationsEditViewState } from './AnnotationsEditView';
-import { DashboardLinksEditView, DashboardLinksEditViewState } from './DashboardLinksEditView';
-import { VariablesEditView, VariablesEditViewState } from './VariablesEditView';
+import type { AnnotationsEditView, AnnotationsEditViewState } from './AnnotationsEditView';
+import type { DashboardLinksEditView, DashboardLinksEditViewState } from './DashboardLinksEditView';
+import type { VariablesEditView, VariablesEditViewState } from './VariablesEditView';
 
 type EditListViewUrlSync = DashboardLinksEditView | VariablesEditView | AnnotationsEditView;
 type EditListViewState = DashboardLinksEditViewState | VariablesEditViewState | AnnotationsEditViewState;

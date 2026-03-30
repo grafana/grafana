@@ -11,7 +11,7 @@ import { dashboardEditActions } from '../../edit-pane/shared';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
-import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import type { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { checkGroup, getObjectType } from './utils';
 
 interface ConditionalRenderingTimeRangeSizeState extends SceneObjectState {

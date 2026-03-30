@@ -5637,6 +5637,7 @@
         "panels": "Панели",
         "row": "Строка",
         "rows": "Строки",
+        "section-variable": "",
         "tab": "Вкладка",
         "tabs": "Вкладки",
         "variable": "Тип переменной: {{type}}",
@@ -5653,6 +5654,10 @@
           "hide": "Скрыть",
           "title": "Заголовок строки"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5712,11 +5717,7 @@
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
-      "show-less-dashboards": "Меньше",
-      "show-more-dashboards": "Больше",
-      "start-with-suggested-dashboards": "Начните с готового дашборда из источника данных",
-      "title": "Новый дашборд",
-      "use-template-button": "Использовать этот дашборд"
+      "title": "Новый дашборд"
     },
     "errors": {
       "failed-to-load": "Не удалось загрузить дашборд"
@@ -6192,6 +6193,9 @@
           "hide-header": "Скрытие заголовка строки",
           "title": "Заголовок"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Заголовок должен быть уникальным",
         "title-option": "Название"
       },
@@ -6345,6 +6349,9 @@
             "description": "Повторите эту вкладку для каждого значения в выбранной переменной.",
             "title": "Повторение по переменной"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Заголовок должен быть уникальным",
         "title-option": "Название"
@@ -6622,9 +6629,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Обзор Grafana.com",
-    "browse-plugins": "Обзор плагинов",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Источник данных указан",
@@ -6635,9 +6641,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Дашборды сообщества не найдены",
-    "community-empty-title-with-datasource": "Дашборды сообщества ({{datasourceType}}) не найдены",
-    "community-error-description": "Не удалось загрузить дашборд сообщества.",
     "community-error-title": "Ошибка при загрузке дашборда сообщества",
     "community-mapping-form": {
       "back": "Назад к дашбордам",
@@ -6651,8 +6654,6 @@
       "auto-mapped_other": "Выполнена автоматическая конфигурация {{count}} источника данных:"
     },
     "community-mapping-select-datasource": "Выберите источник данных",
-    "community-search-placeholder": "Поиск дашбордов сообщества...",
-    "community-search-placeholder-with-datasource": "Поиск дашбордов сообщества ({{datasourceType}})...",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6666,6 +6667,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Источник данных",
@@ -6674,34 +6676,27 @@
         "last-update": "Последнее обновление",
         "published-by": "Опубликовано",
         "view-on-grafana-com": "Просмотр на Grafana.com"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Просматривайте доступные варианты и выбирайте дашборды из источника данных или сообщества",
-      "tab-community": "Сообщество",
-      "tab-datasource": "Источник данных указан",
       "title": "Рекомендуемые дашборды",
       "title-mapping-with-name": "Настройте источники данных для дашборда {{dashboardName}}",
       "title-with-datasource": "Рекомендуемые дашборды для источника данных {{datasourceType}}"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Попробуйте изменить поисковый запрос или найти другие типы источников данных в дашбордах на Grafana.com.",
-    "no-community-dashboards-search": "Попробуйте изменить поисковый запрос или просмотрите больше дашбордов на Grafana.com.",
-    "no-provisioned-dashboards": "Подготовленные дашборды предоставлены плагинами источников данных. Больше плагинов можно найти на Grafana.com.",
-    "provisioned-empty-title": "Подготовленные дашборды не найдены",
-    "provisioned-empty-title-with-datasource": "Подготовленные дашборды ({{datasourceType}}) не найдены",
-    "retry": "Повторить попытку",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Просматривайте доступные варианты и выбирайте дашборды из источника данных или сообщества",
-    "suggested-dashboards-title": "Создайте дашборд на основе предложенных вариантов для выбранного источника данных",
-    "suggested-dashboards-title-with-datasource": "Создайте дашборд на основе предложенных вариантов для источника данных {{datasourceType}}",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Попробуйте шаблоны Grafana на основе образцов данных. Подключите свои данные, чтобы добавить реальные метрики.",
       "title": "Создайте дашборд из шаблона"
-    },
-    "view-all": "Посмотреть все"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7538,6 +7533,10 @@
         "title": "Несохраненные изменения"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON-файл дашборда используется для устранения проблем с визуализацией"
@@ -7928,7 +7927,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Чтобы узнать больше об этой ошибке, нажмите <2>здесь</2>.",
-    "success-more-details-links": "Затем вы можете начать визуализировать данные, <2>создав панель</2> или запросив данные в <5>представлении Explore</5>."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7944,7 +7944,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Создать дашборд",
-      "aria-label-explore-data": "Просмотреть данные"
+      "aria-label-explore-data": "Просмотреть данные",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Оповещения не поддерживаются",
@@ -7958,6 +7959,11 @@
       "basic-settings-name-placeholder-name": "Имя",
       "label-default": "По умолчанию",
       "label-name": "Имя"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -8044,12 +8050,10 @@
       "aria-label-learn-more": "Подробнее о {{dataSourcePluginName}}."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Создать дашборд",
       "explore": "Explore"
     },
     "edit-data-source-actions": {
       "add-favorite": "Добавить в избранное",
-      "build-a-dashboard": "Создать дашборд",
       "explore-data": "Просмотреть данные",
       "open-in-explore": "Открыть в режиме Explore",
       "remove-favorite": "Удалить из избранного"
@@ -14205,25 +14209,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Дашборд",
-      "app-explore": "Explore",
-      "app-label": "Приложение:",
-      "assistant-actionable-create": "Укажите, к какому ресурсу вы хотите обратиться и какие сведения ищете.",
-      "assistant-actionable-update": "Опишите, что вы хотите изменить или улучшить в запросе.",
-      "assistant-prompt-create": "Мне нужна помощь в создании нового запроса, чтобы получить ответы на вопросы и необходимые сведения.",
-      "assistant-prompt-update": "Мне нужна помощь с обновлением текущего запроса, чтобы получить ответы на вопросы и необходимые сведения.",
       "collapse-row": "Свернуть строку запроса",
-      "current-query": "Текущий запрос",
-      "current-query-label": "Текущий запрос:",
       "datasource-help": "Показать справку по источнику данных",
       "drag-and-drop": "Перетащить для изменения порядка",
       "duplicate-query": "Дублировать запрос",
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
-      "other-queries": "Другие запросы",
-      "query-with-assistant": "Запрос с помощью Assistant",
       "remove-query": "Удалить запрос",
-      "selected-datasource-label": "Выбранный источник данных:",
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
@@ -14847,6 +14839,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Сортировать"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "Чтобы сгенерировать рекомендации по SQL, добавьте хотя бы один запрос данных",

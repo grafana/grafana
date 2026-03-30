@@ -243,10 +243,8 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 			},
 		},
 		{
-			name: "should return v1 as the default if some other feature is enabled",
-			enabledFeatures: []string{
-				featuremgmt.FlagKubernetesDashboards,
-			},
+			name:            "should return v1 as the default if some other feature is enabled",
+			enabledFeatures: []string{},
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
 				dashv1beta1.DashboardResourceInfo.GroupVersion(),

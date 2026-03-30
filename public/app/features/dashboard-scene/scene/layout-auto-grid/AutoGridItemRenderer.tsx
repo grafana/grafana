@@ -13,7 +13,7 @@ import { useSoloPanelContext, renderMatchingSoloPanels } from '../SoloPanelConte
 import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
-import { AutoGridItem } from './AutoGridItem';
+import type { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 

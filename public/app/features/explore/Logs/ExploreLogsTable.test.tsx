@@ -124,9 +124,10 @@ describe('ExploreLogsTable', () => {
     const { container } = render(setUp());
     await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
     const headers = container.querySelectorAll('[role="columnheader"]');
-    expect(headers).toHaveLength(2);
+    expect(headers).toHaveLength(3);
     expect(headers[0].textContent).toBe('Time');
-    expect(headers[1].textContent).toBe('Line');
+    expect(headers[1].textContent).toBe('detected_level');
+    expect(headers[2].textContent).toBe('Line');
   });
 
   describe('options', () => {
@@ -234,9 +235,10 @@ describe('ExploreLogsTable', () => {
 
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
       const headers = container.querySelectorAll('[role="columnheader"]');
-      expect(headers).toHaveLength(2);
+      expect(headers).toHaveLength(3);
       expect(headers[0].textContent).toBe('timestamp');
-      expect(headers[1].textContent).toBe('body');
+      expect(headers[1].textContent).toBe('severity');
+      expect(headers[2].textContent).toBe('body');
     });
 
     it.each([0, 200])('Should respect options.fieldSelectorWidth', async (fieldSelectorWidth: number) => {

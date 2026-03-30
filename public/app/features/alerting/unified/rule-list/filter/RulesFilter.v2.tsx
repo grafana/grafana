@@ -15,7 +15,7 @@ import { shouldUseSavedSearches } from '../../featureToggles';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
-import { RulesFilterProps } from './RulesFilter';
+import type { RulesFilterProps } from './RulesFilter';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 
 type SearchQueryForm = {

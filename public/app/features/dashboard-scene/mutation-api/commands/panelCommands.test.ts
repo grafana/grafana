@@ -493,6 +493,58 @@ describe('Panel mutation commands', () => {
       expect(result.success).toBe(true);
     });
 
+    it('applies transformations with filter and topic', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const elementName = await addPanel(client, 'Transform Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: {
+            kind: 'Panel',
+            spec: {
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  transformations: [
+                    {
+                      kind: 'limit',
+                      spec: {
+                        id: 'limit',
+                        disabled: false,
+                        filter: { id: 'byName', options: 'temperature' },
+                        topic: 'series',
+                        options: { limitField: 10 },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      const dataProvider = body.getVizPanels()[0].state.$data;
+      expect(dataProvider).toBeDefined();
+      if (dataProvider && 'state' in dataProvider) {
+        const transformerState = dataProvider.state as { transformations?: Array<Record<string, unknown>> };
+        expect(transformerState.transformations).toBeDefined();
+        expect(transformerState.transformations![0]).toMatchObject({
+          id: 'limit',
+          disabled: false,
+          filter: { id: 'byName', options: 'temperature' },
+          topic: 'series',
+          options: { limitField: 10 },
+        });
+      }
+    });
+
     it('updates panel description', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);
