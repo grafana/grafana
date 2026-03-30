@@ -268,6 +268,10 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 function joinTabular(tables: AlignedData[], outer = false) {
   // console.time('joinTabular');
 
+  if (tables.length === 0) {
+    return [[]];
+  }
+
   let ltable = tables[0];
   let lfield = ltable[0];
 
@@ -533,6 +537,10 @@ function allHeadersSame(tables: AlignedData[]) {
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
 export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
+  if (tables.length === 0) {
+    return [[]];
+  }
+
   // cheap join
   if (allHeadersSame(tables)) {
     let table = tables[0].slice();
