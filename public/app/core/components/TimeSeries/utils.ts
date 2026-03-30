@@ -19,6 +19,7 @@ import {
   GraphDrawStyle,
   type GraphFieldConfig,
   GraphThresholdsStyleMode,
+  LineStyle,
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
@@ -29,6 +30,33 @@ import {
   VizOrientation,
   type ScaleDistributionConfig,
 } from '@grafana/schema';
+
+/**
+ * Distinct line styles cycled per series when the "colorblind" line style is selected.
+ * 9 patterns to maximize distinguishable series before repeats.
+ */
+const COLORBLIND_LINE_STYLES: LineStyle[] = [
+  { fill: 'solid' },
+  { fill: 'dash', dash: [10, 10] },
+  { fill: 'dash', dash: [20, 10] },
+  { fill: 'dash', dash: [30, 3, 3] },
+  { fill: 'dash', dash: [10, 5, 3, 5] },
+  { fill: 'dash', dash: [5, 5] },
+  { fill: 'dash', dash: [20, 5, 5, 5] },
+  { fill: 'dash', dash: [15, 10, 5, 10] },
+  { fill: 'dash', dash: [30, 10] },
+];
+
+/**
+ * Resolves the "colorblind" fill type into a concrete line style per series.
+ * Non-colorblind line styles pass through unchanged.
+ */
+function resolveLineStyle(lineStyle: LineStyle | undefined, seriesIndex: number): LineStyle | undefined {
+  if (!lineStyle || lineStyle.fill !== 'colorblind') {
+    return lineStyle;
+  }
+  return COLORBLIND_LINE_STYLES[seriesIndex % COLORBLIND_LINE_STYLES.length];
+}
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
 // see categories.ts is @grafana/data
@@ -248,6 +276,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
     renderers?.flatMap((r) => Object.values(r.fieldMap).filter((name) => r.indicesOnly.indexOf(name) === -1)) ?? [];
 
   let indexByName: Map<string, number> | undefined;
+  let seriesIdx = 0;
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -562,7 +591,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       lineColor: customConfig.lineColor ?? seriesColor,
       lineWidth: customConfig.lineWidth,
       lineInterpolation: customConfig.lineInterpolation,
-      lineStyle: customConfig.lineStyle,
+      lineStyle: resolveLineStyle(customConfig.lineStyle, seriesIdx),
       barAlignment: customConfig.barAlignment,
       barWidthFactor: customConfig.barWidthFactor,
       barMaxWidth: customConfig.barMaxWidth,
@@ -579,6 +608,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       dataFrameFieldIndex: field.state?.origin,
       showValues: customConfig.showValues,
     });
+
+    seriesIdx++;
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && config.thresholds) {
