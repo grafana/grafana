@@ -8,6 +8,7 @@ import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/
 import { type AlertManagerDataSourceJsonData, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import {
   __clearRuleViewTabsForTests,
@@ -380,7 +381,7 @@ describe('RuleViewer', () => {
     const mockRule = getGrafanaRule(
       {
         name: 'Test alert',
-        promRule: mockPromAlertingRule({ state: 'firing' }),
+        promRule: mockPromAlertingRule({ state: PromAlertingRuleState.Firing }),
       },
       { uid: grafanaRulerRule.grafana_alert.uid }
     );
