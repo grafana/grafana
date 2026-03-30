@@ -173,6 +173,10 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 
 // Create creates a new annotation
 func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
+	if err := s.validateAnnotation(anno); err != nil {
+		return nil, err
+	}
+
 	// Ensure partition exists for this timestamp
 	if err := ensurePartition(ctx, s.pool, s.logger, anno.Spec.Time); err != nil {
 		return nil, fmt.Errorf("failed to ensure partition: %w", err)
@@ -188,7 +192,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	tags := anno.Spec.Tags
 	scopes := anno.Spec.Scopes
 	createdBy := anno.GetCreatedBy()
-	createdAt := time.Now().UnixMilli()
+	createdAt := time.Now().UTC().UnixMilli()
 
 	query := `
 		INSERT INTO annotations
@@ -437,4 +441,30 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	anno.CreationTimestamp = metav1.NewTime(time.UnixMilli(createdAt))
 
 	return anno
+}
+
+func (s *PostgreSQLStore) validateAnnotation(anno *annotationV0.Annotation) error {
+	now := time.Now().UTC()
+	// TODO: determine appropriate bounds and maybe make configurable
+	maxFuture := now.Add(7 * 24 * time.Hour).UnixMilli()
+	maxPast := now.Add(-s.config.RetentionTTL).UnixMilli()
+
+	if anno.Spec.Time > maxFuture {
+		return fmt.Errorf("annotation time cannot be more than 1 week in the future")
+	}
+	if anno.Spec.Time < maxPast {
+		return fmt.Errorf("annotation time cannot be older than retention TTL (%v)", s.config.RetentionTTL)
+	}
+
+	// If timeEnd is set, validate it's after time and within future bounds
+	if anno.Spec.TimeEnd != nil {
+		if *anno.Spec.TimeEnd < anno.Spec.Time {
+			return fmt.Errorf("annotation timeEnd must be after time")
+		}
+		if *anno.Spec.TimeEnd > maxFuture {
+			return fmt.Errorf("annotation timeEnd cannot be more than 1 week in the future")
+		}
+	}
+
+	return nil
 }

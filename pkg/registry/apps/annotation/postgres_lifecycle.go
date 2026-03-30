@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 const (
@@ -55,7 +57,7 @@ func (s *PostgreSQLStore) runCleanup(ctx context.Context) {
 // It removes old partitions that are beyond the retention TTL
 func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
 	// Calculate cutoff timestamp and corresponding partition name
-	cutoff := time.Now().Add(-s.config.RetentionTTL)
+	cutoff := time.Now().UTC().Add(-s.config.RetentionTTL)
 	cutoffMs := cutoff.UnixMilli()
 	cutoffPartition := getPartitionName(cutoffMs)
 
@@ -75,13 +77,15 @@ func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
 		}
 
 		// Don't drop partitions less than 24 hours old even if they're past TTL
-		if partition.EndTime > time.Now().Add(-24*time.Hour).UnixMilli() {
+		if partition.EndTime > time.Now().UTC().Add(-24*time.Hour).UnixMilli() {
 			continue
 		}
 
+		partitionIdent := pgx.Identifier{partition.Name}.Sanitize()
+
 		// Count rows to be deleted
 		var count int64
-		countQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", partition.Name)
+		countQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", partitionIdent)
 		if err := s.pool.QueryRow(ctx, countQuery).Scan(&count); err != nil {
 			// Log error but continue with other partitions since this is just for metrics
 			s.logger.Warn("Failed to count rows in partition", "partition", partition.Name, "err", err)
@@ -89,13 +93,13 @@ func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
 		}
 
 		// Detach partition first to avoid locking the main table during deletion
-		detachQuery := fmt.Sprintf("ALTER TABLE annotations DETACH PARTITION %s", partition.Name)
+		detachQuery := fmt.Sprintf("ALTER TABLE annotations DETACH PARTITION %s", partitionIdent)
 		if _, err := s.pool.Exec(ctx, detachQuery); err != nil {
 			return totalDeleted, fmt.Errorf("failed to detach partition %s: %w", partition.Name, err)
 		}
 
 		// Drop the detached partition
-		dropQuery := fmt.Sprintf("DROP TABLE %s", partition.Name)
+		dropQuery := fmt.Sprintf("DROP TABLE %s", partitionIdent)
 		if _, err := s.pool.Exec(ctx, dropQuery); err != nil {
 			return totalDeleted, fmt.Errorf("failed to drop partition %s: %w", partition.Name, err)
 		}
