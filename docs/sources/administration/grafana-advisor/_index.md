@@ -22,8 +22,6 @@ Grafana Advisor performs regular checks on data sources, plugins, and your Grafa
 
 Grafana Advisor is a monitoring tool that helps administrators keep their Grafana instances running smoothly and securely. It automatically performs regular health checks on your Grafana server, providing actionable insights and recommendations for maintaining optimal system performance.
 
-{{< youtube id="o84EfY-KP-c" >}}
-
 To access Grafana Advisor:
 
 1. Log in to your Grafana instance with an **Administrator account**.
@@ -43,7 +41,7 @@ An Advisor report can contain the following tasks and action suggestions:
 
 {{< admonition type="note" >}}
 
-You can configure which checks Advisor will run. See how in [Configure application](#advisor-menu).
+You can configure which checks Advisor will run. Refer to [Configure application](#advisor-menu) for details.
 
 {{< /admonition >}}
 
@@ -92,4 +90,4 @@ To maintain system reliability and keep your Grafana instance secure and up to d
 - **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass.
 - **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet.
 
-You can also set up your own alerts with **Grafana Alerting**, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view.Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/index.md) for more information.
+You can also set up your own alerts with **Grafana Alerting**, which allows you to monitor your incoming data and set up alerts for specific events or circumstances. You can then create, manage, and take action on your alerts from a single, consolidated view. Refer to the [Grafana Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) for more information.

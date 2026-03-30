@@ -1,5 +1,5 @@
 ---
-title: Create an alert based on Advisor
+title: Create an alert based on Grafana Advisor results
 description: Create an alert based on the results from Grafana Advisor
 weight: 200
 labels:
@@ -16,6 +16,10 @@ keywords:
 ---
 
 # Create an alert based on Grafana Advisor results
+
+{{< admonition type="note" >}}
+Grafana Advisor performs regular checks on data sources, plugins, and your Grafana instance, but will expand its capabilities in future releases to cover more aspects of your Grafana environment. You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
+{{< /admonition >}}
 
 This guide walks you through creating a Grafana alert that monitors Advisor check results and triggers when failures are detected.
 
@@ -47,7 +51,7 @@ Copy the token value immediately and store it securely - you won't be able to se
 Use Infinity plugin v3.3.0 or higher for the JQ parser used later.
 {{< /admonition >}}
 
-1. Go to **Connections → Add new connection**
+1. Navigate to **Connections → Add new connection**
 2. Search for "Infinity"
 3. If not installed, click **Install**. Wait for the plugin to be installed.
 4. From the plugin page, click **Add new data source**.
@@ -115,9 +119,9 @@ If you want to alert only for specific check types:
 
 ### Complete alert configuration
 
-Select your preferred evaluation (e.g. every 24 hours) and notification settings.
+Select your preferred evaluation (for example, every 24 hours) and notification settings.
 
-## Save the alert rule
+### Save the alert rule
 
 Click **Save** and check the alert is being triggered.
 
