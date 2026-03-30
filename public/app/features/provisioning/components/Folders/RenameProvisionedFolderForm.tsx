@@ -121,6 +121,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       repositoryType: repository?.type ?? 'unknown',
     });
 
+    // Success/error handling is done by useProvisionedRequestHandler via the `request` object.
     replaceFile({
       name: repoName,
       path: folderPath,
