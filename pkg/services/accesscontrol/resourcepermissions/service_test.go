@@ -604,7 +604,12 @@ func TestGetActionSetName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GetActionSetName(tt.k8sFormat, tt.apiGroup, tt.resource, tt.permission)
+			opts := Options{
+				Resource:        tt.resource,
+				APIGroup:        tt.apiGroup,
+				K8sActionFormat: tt.k8sFormat,
+			}
+			result := opts.GetActionSetName(tt.permission)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
