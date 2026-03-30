@@ -891,6 +891,13 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 
 		for _, m := range sectionMappings {
 			if strings.HasPrefix(envKey, m.prefix) {
+				// Skip root feature_toggles section — handled by
+				// applyFeatureToggleEnvOverrides which preserves casing.
+				// Subsections like feature_toggles.openfeature are still
+				// handled here because they match a longer prefix first.
+				if m.section.Name() == "feature_toggles" {
+					break
+				}
 				keyName := strings.ToLower(envKey[len(m.prefix):])
 				if keyName == "" {
 					continue
