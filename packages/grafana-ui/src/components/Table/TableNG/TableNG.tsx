@@ -876,11 +876,12 @@ export function TableNG(props: TableNGProps) {
     }
     for (const row of rows) {
       if (row.__depth > 0) {
+        const rowNestedFrame = nestedData![row.__index]!;
         result.push(
           fromFields(
-            nestedVisibleFields,
+            getVisibleFields(rowNestedFrame.fields),
             nestedFieldWidths,
-            nestedData![row.__index]!,
+            rowNestedFrame,
             nestedRows[row.__index].raw,
             nestedRows[row.__index].final
           )
@@ -888,7 +889,7 @@ export function TableNG(props: TableNGProps) {
       }
     }
     return result;
-  }, [rows, hasNestedFrames, nestedData, nestedRows, nestedVisibleFields, nestedFieldWidths, fromFields]);
+  }, [rows, hasNestedFrames, nestedData, nestedRows, nestedFieldWidths, fromFields]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);

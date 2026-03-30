@@ -91,9 +91,11 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
 const getStyles = (theme: GrafanaTheme2) => ({
   fixMargin: css({
     marginBottom: 0,
+    minWidth: 0,
+    flex: '1 1 0',
   }),
   inputWidth: css({
-    width: 340,
-    flexGrow: 0,
+    width: '100%',
+    minWidth: 220,
   }),
 });

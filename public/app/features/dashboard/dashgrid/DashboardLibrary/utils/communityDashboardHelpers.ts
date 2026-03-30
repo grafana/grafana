@@ -7,24 +7,24 @@ import { type DataSourceInput, type DashboardJson } from 'app/features/manage-da
 import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
-import { type MappingContext } from '../SuggestedDashboardsModal';
+import type { MappingContext } from '../SuggestedDashboardsModal';
 import { fetchCommunityDashboard, type GnetDashboardDependency } from '../api/dashboardLibraryApi';
 import {
   CONTENT_KINDS,
   type ContentKind,
   CREATION_ORIGINS,
   type EventLocation,
-  SOURCE_ENTRY_POINTS,
+  type SourceEntryPoint,
 } from '../constants';
 import { type GnetDashboard, type Link } from '../types';
 
 import { type InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 
-// Constants for community dashboard pagination and API params
-// We want to get the most 6 downloaded dashboards, but we first query 12
-// to be sure the next filters we apply to that list doesn not reduce it below 6
-export const COMMUNITY_PAGE_SIZE_QUERY = 12;
-export const COMMUNITY_RESULT_SIZE = 6;
+export const SEARCH_DEBOUNCE_MS = 500;
+export const DEFAULT_SORT_ORDER = 'downloads';
+export const DEFAULT_SORT_DIRECTION = 'desc';
+export const INCLUDE_LOGO = true;
+export const INCLUDE_SCREENSHOTS = true;
 
 /**
  * Extract thumbnail URL from dashboard screenshots
@@ -94,6 +94,7 @@ export function navigateToTemplate(
   gnetId: number,
   datasourceUid: string,
   mappings: InputMapping[],
+  sourceEntryPoint: SourceEntryPoint,
   eventLocation: EventLocation,
   contentKind: ContentKind,
   datasourceTypes?: string[]
@@ -102,11 +103,12 @@ export function navigateToTemplate(
     datasource: datasourceUid,
     title: dashboardTitle,
     gnetId: String(gnetId),
-    sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+    sourceEntryPoint,
     creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD,
     contentKind,
     eventLocation,
     mappings: JSON.stringify(mappings),
+    suggestedDashboardBanner: 'true',
   });
 
   // Add datasource types for tracking if available
@@ -123,8 +125,8 @@ export function navigateToTemplate(
 interface UseCommunityDashboardParams {
   dashboard: GnetDashboard;
   datasourceUid: string;
-  datasourceType: string;
-  eventLocation: 'empty_dashboard' | 'suggested_dashboards_modal_community_tab';
+  sourceEntryPoint: SourceEntryPoint;
+  eventLocation: EventLocation;
   onShowMapping?: (context: MappingContext) => void;
 }
 
@@ -236,7 +238,7 @@ const canDashboardContainJS = (dashboard: DashboardJson): boolean => {
 export async function onUseCommunityDashboard({
   dashboard,
   datasourceUid,
-  datasourceType,
+  sourceEntryPoint,
   eventLocation,
   onShowMapping,
 }: UseCommunityDashboardParams): Promise<void> {
@@ -278,6 +280,7 @@ export async function onUseCommunityDashboard({
         dashboard.id,
         datasourceUid,
         mappingResult.mappings,
+        sourceEntryPoint,
         eventLocation,
         CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes
@@ -291,7 +294,6 @@ export async function onUseCommunityDashboard({
           unmappedDsInputs: mappingResult.unmappedDsInputs,
           constantInputs,
           existingMappings: mappingResult.mappings,
-          eventLocation,
           contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           onInterpolateAndNavigate: (mappings) =>
             navigateToTemplate(
@@ -299,6 +301,7 @@ export async function onUseCommunityDashboard({
               dashboard.id,
               datasourceUid,
               mappings,
+              sourceEntryPoint,
               eventLocation,
               CONTENT_KINDS.COMMUNITY_DASHBOARD,
               datasourceTypes

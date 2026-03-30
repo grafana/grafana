@@ -36,6 +36,13 @@ jest.mock('./picker/DataSourcePicker', () => ({
   },
 }));
 
+// Mock BuildDashboardButton to avoid needing a Redux Provider
+jest.mock('./BuildDashboardButton', () => ({
+  BuildDashboardButton: ({ dataSource }: { dataSource: { uid: string } }) => (
+    <a href={`dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</a>
+  ),
+}));
+
 // Set default plugin links hook
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 

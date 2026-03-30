@@ -359,6 +359,7 @@ export class RowsLayoutManager
             title: tab.state.title,
             conditionalRendering,
             repeatByVariable: tab.state.repeatByVariable,
+            $variables: tab.state.$variables,
           })
         );
       }

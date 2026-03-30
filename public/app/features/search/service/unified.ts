@@ -466,7 +466,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
         general: {
           kind: 'folder',
           name: 'Dashboards',
-          url: '/dashboards',
+          url: `${config.appSubUrl}/dashboards`,
         }, // share location info with everyone
         sharedwithme: {
           kind: 'sharedwithme',
@@ -488,8 +488,8 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
 
 function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
-    return `/dashboards/f/${name}`;
+    return `${config.appSubUrl}/dashboards/f/${name}`;
   }
   const slug = kbn.slugifyForUrl(title);
-  return `/d/${name}/${slug}`;
+  return `${config.appSubUrl}/d/${name}/${slug}`;
 }

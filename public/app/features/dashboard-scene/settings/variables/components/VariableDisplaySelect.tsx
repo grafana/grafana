@@ -9,10 +9,17 @@ interface Props {
   onChange: (option: VariableHide) => void;
   display: VariableHide;
   type: VariableType;
+  hideControlsMenuOption?: boolean;
   minWidth?: number;
 }
 
-export function VariableDisplaySelect({ onChange, display, type, minWidth = 52 }: PropsWithChildren<Props>) {
+export function VariableDisplaySelect({
+  onChange,
+  display,
+  type,
+  hideControlsMenuOption = false,
+  minWidth = 52,
+}: PropsWithChildren<Props>) {
   const OPTIONS = useMemo(
     () => [
       {
@@ -27,14 +34,18 @@ export function VariableDisplaySelect({ onChange, display, type, minWidth = 52 }
           'Above the dashboard, but without showing the name of variable'
         ),
       },
-      {
-        value: VariableHide.inControlsMenu,
-        label: t('dashboard-scene.variable-display-select.options.controls-menu.label', 'Controls menu'),
-        description: t(
-          'dashboard-scene.variable-display-select.options.controls-menu.description',
-          'Visible when the controls menu is open'
-        ),
-      },
+      ...(!hideControlsMenuOption
+        ? [
+            {
+              value: VariableHide.inControlsMenu,
+              label: t('dashboard-scene.variable-display-select.options.controls-menu.label', 'Controls menu'),
+              description: t(
+                'dashboard-scene.variable-display-select.options.controls-menu.description',
+                'Visible when the controls menu is open'
+              ),
+            },
+          ]
+        : []),
       {
         value: VariableHide.hideVariable,
         label: t('dashboard-scene.variable-display-select.options.hidden.label', 'Hidden'),
@@ -44,7 +55,7 @@ export function VariableDisplaySelect({ onChange, display, type, minWidth = 52 }
         ),
       },
     ],
-    []
+    [hideControlsMenuOption]
   );
   const value = useMemo(() => OPTIONS.find((o) => o.value === display)?.value ?? OPTIONS[0].value, [display, OPTIONS]);
 

@@ -701,13 +701,13 @@ describe('TableNG hooks', () => {
         ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + 16); // 3 rows + header + padding + scrollbar
       });
 
-      it('calculates the height to return using default height', () => {
+      it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
         const frameToRecords = compileFrameToRecords(frame, 'nested');
         const nestedRows = frameToRecords(frame);
         const defaultNonNestedHeight = 60;
-        const defaultHeight = 40;
+        const defaultNestedHeight = 40;
 
         expect(
           renderHook(() => {
@@ -718,7 +718,7 @@ describe('TableNG hooks', () => {
               ],
               columnWidths: [100],
               defaultHeight: defaultNonNestedHeight,
-              defaultNestedHeight: defaultHeight,
+              defaultNestedHeight,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
               nestedRows: [{ raw: nestedRows, final: nestedRows }],
@@ -735,7 +735,8 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 3 + defaultNonNestedHeight + TABLE.CELL_PADDING * 2 + 16); // 3 nested rows + 1 non-nested row + header + padding + scrollbar
+          // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + padding + scrollbar
+        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + 16);
       });
 
       it('uses a string-based default height for the nested rows', () => {
@@ -955,6 +956,68 @@ describe('TableNG hooks', () => {
           'Annie Lennox',
           100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
           fieldsWithWrappedText[0],
+          0,
+          22
+        );
+      });
+
+      it('handles wrapped Time fields in nested frames (uses display-formatted value)', () => {
+        const FORMATTED_TIME = '2024-03-26 14:30:00';
+        const EPOCH_MS = 1711462200000;
+
+        const nestedFieldsWithTime: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [EPOCH_MS, EPOCH_MS, EPOCH_MS],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({ text: FORMATTED_TIME, numeric: EPOCH_MS, color: undefined, title: undefined })),
+          },
+        ];
+
+        const topFrame = createDataFrame({
+          fields: [
+            { name: 'foo', type: FieldType.string, values: ['1'] },
+            {
+              name: 'nested',
+              type: FieldType.nestedFrames,
+              values: [[createDataFrame({ fields: nestedFieldsWithTime })]],
+            },
+          ],
+        });
+        const nestedFrame = createDataFrame({ fields: nestedFieldsWithTime });
+        const nestedFrameToRecords = compileFrameToRecords(nestedFrame, 'nested');
+        const nestedRows = nestedFrameToRecords(nestedFrame, 0);
+
+        const measureHeightFn = jest.fn(() => 40);
+        const estimateHeightFn = jest.fn(() => 40);
+        const { result } = renderHook(() => {
+          const rowHeight = useRowHeight({
+            nestedData: [nestedFrame],
+            fields: topFrame.fields,
+            columnWidths: [330],
+            defaultHeight: 40,
+            defaultNestedHeight: 40,
+            typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
+            hasNestedFrames: true,
+            visibleNestedRowCounts: [3],
+            nestedRows: [{ raw: nestedRows, final: nestedRows }],
+            nestedFields: nestedFieldsWithTime,
+            nestedColWidths: [200],
+          });
+          if (typeof rowHeight !== 'function') {
+            throw new Error('Expected rowHeight to be a function');
+          }
+          return rowHeight;
+        });
+
+        result.current(nestedRows[0]);
+
+        // The measurer must receive the display-formatted string, not the raw epoch timestamp
+        expect(measureHeightFn).toHaveBeenCalledWith(
+          FORMATTED_TIME,
+          200 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
+          nestedFieldsWithTime[0],
           0,
           22
         );
