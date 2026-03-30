@@ -29,7 +29,7 @@ export function WorkbenchRenderer() {
   const { data } = runner.useState();
 
   const [rows, setRows] = useState<ReturnType<typeof convertToWorkbenchRows>>([]);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const hasFiltersApplied = queryFilter.length > 0;
 
   // convertToWorkbenchRows is expensive when processing large datasets.
@@ -77,7 +77,8 @@ export function WorkbenchRenderer() {
   }, [runner]);
 
   const isDataLoading = data?.state === 'Loading';
-  const isLoading = isDataLoading || isPending;
+  const isInitialLoading = isDataLoading && rows.length === 0;
+  const isRefreshing = isDataLoading && rows.length > 0;
 
   return (
     <Workbench
@@ -85,7 +86,8 @@ export function WorkbenchRenderer() {
       domain={domain}
       queryRunner={runner}
       groupBy={groupByKeys}
-      isLoading={isLoading}
+      isInitialLoading={isInitialLoading}
+      isRefreshing={isRefreshing}
       hasActiveFilters={hasFiltersApplied}
     />
   );
