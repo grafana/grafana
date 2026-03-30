@@ -208,7 +208,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	if a.service.options.RequestValidator != nil {
-		if err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID); err != nil {
+		if _, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID); err != nil {
 			return response.Err(err)
 		}
 	}
@@ -328,8 +328,12 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	if a.service.options.RequestValidator != nil {
-		if err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID); err != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
 			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
 		}
 	}
 
@@ -411,8 +415,12 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	if a.service.options.RequestValidator != nil {
-		if err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID); err != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
 			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
 		}
 	}
 
@@ -486,8 +494,12 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	if a.service.options.RequestValidator != nil {
-		if err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID); err != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
 			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
 		}
 	}
 
@@ -553,8 +565,12 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	if a.service.options.RequestValidator != nil {
-		if err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID); err != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
 			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
 		}
 	}
 

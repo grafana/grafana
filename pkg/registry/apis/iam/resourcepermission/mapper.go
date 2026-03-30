@@ -167,11 +167,26 @@ func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
 	return e.enabled == nil || e.enabled()
 }
 
+// datasourceGroupSuffix is the suffix shared by all per-plugin datasource group names.
+const datasourceGroupSuffix = ".datasource.grafana.app"
+
+// extractDatasourceType returns the plugin type from a concrete datasource group name
+// (e.g. "loki.datasource.grafana.app" → "loki"), or "" for non-datasource or wildcard groups.
+func extractDatasourceType(group string) string {
+	typ, ok := strings.CutSuffix(group, datasourceGroupSuffix)
+	if !ok || typ == "" || strings.Contains(typ, ".") || strings.HasPrefix(typ, "*") {
+		return ""
+	}
+	return typ
+}
+
 // ParseScope parses an RBAC scope string (e.g., "folders:uid:abc") into a groupResourceName.
 // Used when reading permissions from the database for two purposes:
 //  1. Populating the ResourcePermission Spec (Group, Resource, Name fields)
 //  2. Making AccessClient Check requests to authorize viewing the resource
-func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
+//
+// datasourceType is the datasource type from the permission row, used to resolve the concrete group.
+func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
@@ -180,16 +195,22 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
-	group := gr.Group
 
-	// FIXME: This is a hack to support wildcard entries, since we have no way to know
-	// the exact concrete group from just the RBAC scope prefix
-	// (e.g., "datasources" -> could be loki, tempo, etc.).
-	// Return "unknown.<suffix>" as a placeholder.
-	if strings.HasPrefix(group, "*.") {
-		group = "unknown" + group[1:] // e.g., "unknown.datasource.grafana.app"
-	}
+	group := resolveDSGroup(gr.Group, datasourceType)
+
 	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
+}
+
+// resolveGroup resolves a wildcard group (e.g. "*.datasource.grafana.app") to a concrete group
+// (e.g. "loki.datasource.grafana.app") using the datasourceType
+func resolveDSGroup(group, datasourceType string) string {
+	if !strings.HasPrefix(group, "*.") || !strings.HasSuffix(group, datasourceGroupSuffix) {
+		return group
+	}
+	if datasourceType == "" {
+		return "unknown" + datasourceGroupSuffix
+	}
+	return datasourceType + group[1:]
 }
 
 // EnabledActionSets returns the action sets for all currently-enabled mappers.

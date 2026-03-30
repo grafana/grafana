@@ -73,6 +73,7 @@ func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID 
 				ResourceID:        resourceID,
 				ResourceAttribute: "uid",
 				Permission:        cmd.Permission,
+				DatasourceType:    cmd.DatasourceType,
 			},
 		})
 	}

@@ -389,11 +389,11 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			// failure, and we want "not being able to set default perms"
 			// to fail the creation.
 			permissions := []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "Query"},
-				{BuiltinRole: "Editor", Permission: "Query"},
+				{BuiltinRole: "Viewer", Permission: "Query", DatasourceType: dataSource.Type},
+				{BuiltinRole: "Editor", Permission: "Query", DatasourceType: dataSource.Type},
 			}
 			if cmd.UserID != 0 {
-				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
+				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin", DatasourceType: dataSource.Type})
 			}
 			if _, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
 				return err
