@@ -1,4 +1,4 @@
-import { DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data';
 
 /**
  * Convert an instant-query DataFrame (one field per label, one row per instance)

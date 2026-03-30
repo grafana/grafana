@@ -1,12 +1,12 @@
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultDataQueryKind,
   defaultVizConfigSpec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { getRuntimePanelDataSource } from '../serialization/layoutSerializers/utils';
 

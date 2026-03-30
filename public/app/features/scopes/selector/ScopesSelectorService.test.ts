@@ -1,12 +1,12 @@
-import { Scope, ScopeNode, Store } from '@grafana/data';
+import { type Scope, type ScopeNode, type Store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { ScopesApiClient } from '../ScopesApiClient';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
-import { ScopeNavigation } from '../dashboards/types';
+import { type ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopeNavigation } from '../dashboards/types';
 
 import { RECENT_SCOPES_KEY, ScopesSelectorService } from './ScopesSelectorService';
-import { RecentScope } from './types';
+import { type RecentScope } from './types';
 
 // Mock locationService
 jest.mock('@grafana/runtime', () => ({

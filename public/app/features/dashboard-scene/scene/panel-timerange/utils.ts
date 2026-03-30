@@ -4,8 +4,8 @@
 
 import { of } from 'rxjs';
 
-import { dateTime, DateTime, rangeUtil, TimeRange } from '@grafana/data';
-import { ExtraQueryDataProcessor } from '@grafana/scenes';
+import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
+import { type ExtraQueryDataProcessor } from '@grafana/scenes';
 
 // rendered appropriately.
 export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, secondary) => {

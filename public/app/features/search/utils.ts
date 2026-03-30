@@ -1,7 +1,7 @@
-import { UrlQueryMap } from '@grafana/data';
+import { type UrlQueryMap } from '@grafana/data';
 
 import { SECTION_STORAGE_KEY } from './constants';
-import { SearchState } from './types';
+import { type SearchState } from './types';
 
 /**
  * Check if search query has filters enabled. Excludes folderId

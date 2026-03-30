@@ -2,7 +2,7 @@ import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 
-import { FolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
+import { type FolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
 
 import { FolderPermissions, MissingFolderMetadataBanner } from './MissingFolderMetadataBanner';
 
