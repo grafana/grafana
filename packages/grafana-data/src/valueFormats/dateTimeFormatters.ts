@@ -1,6 +1,6 @@
 import { localTimeFormat, systemDateFormats } from '../datetime/formats';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '../datetime/formatter';
-import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrapper';
+import { toDuration as duration, toUtc, dateTime } from '../datetime/grafana_datetime_wrapper';
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types/time';
 

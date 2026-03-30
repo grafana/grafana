@@ -1,7 +1,8 @@
 import { each } from 'lodash';
 
 import * as dateMath from './datemath';
-import { dateTime, DurationUnit, DateTime } from './moment_wrapper';
+import { dateTime, getLocale, setLocale } from './grafana_datetime_wrapper';
+import { DurationUnit, DateTime } from './types';
 
 describe('DateMath', () => {
   const spans: DurationUnit[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
@@ -160,6 +161,16 @@ describe('DateMath', () => {
   });
 
   describe('relative time to date parsing', () => {
+    const originalLocale = getLocale();
+
+    beforeEach(() => {
+      setLocale('en-US');
+    });
+
+    afterAll(() => {
+      setLocale(originalLocale);
+    });
+
     it('should handle negative time', () => {
       const date = dateMath.parseDateMath('-2d', dateTime([2014, 1, 5]));
       expect(date!.valueOf()).toEqual(dateTime([2014, 1, 3]).valueOf());

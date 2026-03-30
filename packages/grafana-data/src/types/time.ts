@@ -5,7 +5,7 @@ import {
   defaultTimeZone,
 } from '@grafana/schema';
 
-import { dateTime, DateTime } from '../datetime/moment_wrapper';
+import { dateTime, DateTime } from '../datetime/grafana_datetime_wrapper';
 
 export interface RawTimeRange {
   from: DateTime | string;

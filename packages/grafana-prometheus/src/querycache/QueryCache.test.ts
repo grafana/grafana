@@ -310,7 +310,7 @@ describe('QueryCache: Prometheus', function () {
       };
       const cacheRequest = storage.requestInfo(secondRequestModified);
       expect(cacheRequest.requests[0].targets).toEqual(secondRequestModified.targets);
-      expect(cacheRequest.requests[0].range.to).toEqual(secondRequestModified.range.to);
+      expect(cacheRequest.requests[0].range.to.valueOf()).toEqual(secondRequestModified.range.to.valueOf());
       expect(cacheRequest.requests[0].range.raw).toEqual(secondRequestModified.range.raw);
       expect(cacheRequest.requests[0].range.from.valueOf() - 21000000).toEqual(
         secondRequestModified.range.from.valueOf()

@@ -1,4 +1,4 @@
-import { toUtc, dateTime } from '../datetime/moment_wrapper';
+import { toUtc, dateTime } from '../datetime/grafana_datetime_wrapper';
 
 import {
   dateTimeAsIso,

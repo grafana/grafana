@@ -5,13 +5,12 @@ import { TimeZone } from '@grafana/schema';
 import {
   DateTime,
   dateTime,
-  dateTimeAsMoment,
   dateTimeForTimeZone,
   DateTimeInput,
   DurationUnit,
   isDateTime,
   ISO_8601,
-} from './moment_wrapper';
+} from './grafana_datetime_wrapper';
 
 const units: string[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'] satisfies DurationUnit[];
 const MAX_MATH_TOKEN_DIGITS = 5;
@@ -123,7 +122,7 @@ export function toDateTime(dateTimeRep: string | DateTime | Date, options: Conve
 }
 
 /**
- * Checks if text is a valid date which in this context means that it is either a Moment instance or it can be parsed
+ * Checks if text is a valid date which in this context means that it is either a DateTime instance or it can be parsed
  * by parse function. See parse function to see what is considered acceptable.
  * @param text
  */
@@ -235,7 +234,7 @@ export function roundToFiscal(fyStartMonth: number, dateTime: DateTime, unit: st
       if (roundUp) {
         roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(11, 'M').endOf('M');
       } else {
-        dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 12, 'M').startOf('M');
+        dateTime.subtract(((dateTime.month?.() ?? 0) - fyStartMonth + 12) % 12, 'M').startOf('M');
       }
       return dateTime;
     case 'Q':
@@ -243,7 +242,7 @@ export function roundToFiscal(fyStartMonth: number, dateTime: DateTime, unit: st
         roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(2, 'M').endOf('M');
       } else {
         // why + 12? to ensure this number is always a positive offset from fyStartMonth
-        dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 3, 'M').startOf('M');
+        dateTime.subtract(((dateTime.month?.() ?? 0) - fyStartMonth + 12) % 3, 'M').startOf('M');
       }
       return dateTime;
     default:

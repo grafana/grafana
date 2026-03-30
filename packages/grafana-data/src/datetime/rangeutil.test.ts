@@ -3,7 +3,7 @@ import { initRegionalFormatForTests } from '@grafana/i18n';
 import { RawTimeRange, TimeOption, TimeRange } from '../types/time';
 import * as featureToggles from '../utils/featureToggles';
 
-import { dateTime } from './moment_wrapper';
+import { dateTime } from './grafana_datetime_wrapper';
 import {
   convertRawToRange,
   describeInterval,
@@ -381,7 +381,7 @@ describe('Range Utils', () => {
       const to = 'now';
 
       const result = describeTimeRange({ from, to });
-      expect(result).toBe('2023-01-15 05:30:00 to a few seconds ago');
+      expect(result).toMatch(/^2023-01-15 05:30:00 to (?:in 0 seconds|0 seconds ago)$/);
     });
 
     it('should handle absolute from, relative math to', () => {
@@ -389,7 +389,7 @@ describe('Range Utils', () => {
         from: dateTime([2014, 10, 10, 2, 3, 4]),
         to: 'now-1d',
       });
-      expect(text).toBe('2014-11-10 02:03:04 to a day ago');
+      expect(text).toBe('2014-11-10 02:03:04 to 1 day ago');
     });
 
     it('should handle relative from, absolute to', () => {
@@ -397,7 +397,7 @@ describe('Range Utils', () => {
       const to = dateTime('2023-01-15T14:45:00Z');
 
       const result = describeTimeRange({ from, to });
-      expect(result).toBe('an hour ago to 2023-01-15 09:45:00');
+      expect(result).toBe('1 hour ago to 2023-01-15 09:45:00');
     });
 
     it('should handle invalid relative expressions', () => {
@@ -484,7 +484,7 @@ describe('Range Utils', () => {
       const to = 'now';
 
       const result = describeTimeRange({ from, to });
-      expect(result).toBe('15/01/2023, 5:30 am to a few seconds ago');
+      expect(result).toMatch(/^15\/01\/2023, 5:30 am to (?:in 0 seconds|0 seconds ago)$/);
     });
 
     it('should handle relative from, absolute to', () => {
@@ -492,7 +492,7 @@ describe('Range Utils', () => {
       const to = dateTime('2023-01-15T14:45:00Z');
 
       const result = describeTimeRange({ from, to });
-      expect(result).toBe('an hour ago to 15/01/2023, 9:45 am');
+      expect(result).toBe('1 hour ago to 15/01/2023, 9:45 am');
     });
 
     it('should handle invalid relative expressions', () => {

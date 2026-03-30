@@ -243,10 +243,10 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     const onBlur = useCallback(() => {
       if (!internalDate.invalid && internalDate.value) {
-        const date = dateTimeForTimeZone(getTimeZone({ timeZone }), internalDate.value);
+        const date = dateTimeForTimeZone(getTimeZone({ timeZone }), internalDate.value, format);
         onChange(date);
       }
-    }, [internalDate, onChange, timeZone]);
+    }, [format, internalDate, onChange, timeZone]);
 
     const clearInternalDate = useCallback(() => {
       setInternalDate({ value: '', invalid: false });

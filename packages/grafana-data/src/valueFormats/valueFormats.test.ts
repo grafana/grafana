@@ -1,4 +1,4 @@
-import { dateTime } from '../datetime/moment_wrapper';
+import { dateTime } from '../datetime/grafana_datetime_wrapper';
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types/time';
 

@@ -123,12 +123,12 @@ describe('Logs', () => {
         loading={false}
         loadingState={LoadingState.Done}
         absoluteRange={{
-          from: toUtc('2019-01-01 10:00:00').valueOf(),
-          to: toUtc('2019-01-01 16:00:00').valueOf(),
+          from: toUtc('2019-01-01T10:00:00Z').valueOf(),
+          to: toUtc('2019-01-01T16:00:00Z').valueOf(),
         }}
         range={{
-          from: toUtc('2019-01-01 10:00:00'),
-          to: toUtc('2019-01-01 16:00:00'),
+          from: toUtc('2019-01-01T10:00:00Z'),
+          to: toUtc('2019-01-01T16:00:00Z'),
           raw: { from: 'now-1h', to: 'now' },
         }}
         onChangeTime={() => {}}
@@ -207,12 +207,12 @@ describe('Logs', () => {
           loading={false}
           loadingState={LoadingState.Done}
           absoluteRange={{
-            from: toUtc('2019-01-01 10:00:00').valueOf(),
-            to: toUtc('2019-01-01 16:00:00').valueOf(),
+            from: toUtc('2019-01-01T10:00:00Z').valueOf(),
+            to: toUtc('2019-01-01T16:00:00Z').valueOf(),
           }}
           range={{
-            from: toUtc('2019-01-01 10:00:00'),
-            to: toUtc('2019-01-01 16:00:00'),
+            from: toUtc('2019-01-01T10:00:00Z'),
+            to: toUtc('2019-01-01T16:00:00Z'),
             raw: { from: 'now-1h', to: 'now' },
           }}
           onChangeTime={() => {}}
@@ -256,12 +256,12 @@ describe('Logs', () => {
           loading={false}
           loadingState={LoadingState.Done}
           absoluteRange={{
-            from: toUtc('2019-01-01 10:00:00').valueOf(),
-            to: toUtc('2019-01-01 16:00:00').valueOf(),
+            from: toUtc('2019-01-01T10:00:00Z').valueOf(),
+            to: toUtc('2019-01-01T16:00:00Z').valueOf(),
           }}
           range={{
-            from: toUtc('2019-01-01 10:00:00'),
-            to: toUtc('2019-01-01 16:00:00'),
+            from: toUtc('2019-01-01T10:00:00Z'),
+            to: toUtc('2019-01-01T16:00:00Z'),
             raw: { from: 'now-1h', to: 'now' },
           }}
           onChangeTime={() => {}}
@@ -308,12 +308,12 @@ describe('Logs', () => {
           loading={false}
           loadingState={LoadingState.Done}
           absoluteRange={{
-            from: toUtc('2019-01-01 10:00:00').valueOf(),
-            to: toUtc('2019-01-01 16:00:00').valueOf(),
+            from: toUtc('2019-01-01T10:00:00Z').valueOf(),
+            to: toUtc('2019-01-01T16:00:00Z').valueOf(),
           }}
           range={{
-            from: toUtc('2019-01-01 10:00:00'),
-            to: toUtc('2019-01-01 16:00:00'),
+            from: toUtc('2019-01-01T10:00:00Z'),
+            to: toUtc('2019-01-01T16:00:00Z'),
             raw: { from: 'now-1h', to: 'now' },
           }}
           onChangeTime={() => {}}

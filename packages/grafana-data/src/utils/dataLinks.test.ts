@@ -1,4 +1,4 @@
-import { DateTime, toUtc } from '../datetime/moment_wrapper';
+import { DateTime, toUtc } from '../datetime/grafana_datetime_wrapper';
 import { FieldType } from '../types/dataFrame';
 import { DataLink } from '../types/dataLink';
 import { TimeRange } from '../types/time';

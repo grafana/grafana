@@ -246,8 +246,8 @@ describe('timeSrv', () => {
         timeSrv.init(_dashboard);
 
         const time = timeSrv.timeRange();
-        expect(time.from.toString()).toBe('Wed Jun 19 2024 14:44:17 GMT+0300');
-        expect(time.to.toString()).toBe('Wed Jun 19 2024 20:44:17 GMT+0300');
+        expect(time.from.toISOString(true)).toBe('2024-06-19T14:44:17.286+03:00');
+        expect(time.to.toISOString(true)).toBe('2024-06-19T20:44:17.286+03:00');
       });
     });
   });

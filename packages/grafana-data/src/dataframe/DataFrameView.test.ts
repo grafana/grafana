@@ -1,4 +1,4 @@
-import { DateTime } from '../datetime/moment_wrapper';
+import { DateTime } from '../datetime/grafana_datetime_wrapper';
 import { FieldType, DataFrameDTO } from '../types/dataFrame';
 
 import { DataFrameView } from './DataFrameView';

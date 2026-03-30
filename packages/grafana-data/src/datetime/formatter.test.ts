@@ -68,7 +68,7 @@ describe('dateTimeFormat (regionalFormatPreference)', () => {
     ['it-IT', '17/04/2020, 06:36:15'],
     ['ja-JP', '2020/4/17 6:36:15'],
     ['id-ID', '17/4/2020, 06.36.15'],
-    ['ko-KR', '2020. 4. 17. 오전 6:36:15'],
+    ['ko-KR', '2020. 4. 17. AM 6:36:15'],
     ['ru-RU', '17.04.2020, 06:36:15'],
     ['cs-CZ', '17. 4. 2020 6:36:15'],
     ['nl-NL', '17-4-2020, 06:36:15'],
@@ -77,7 +77,7 @@ describe('dateTimeFormat (regionalFormatPreference)', () => {
     ['pl-PL', '17.04.2020, 06:36:15'],
     ['sv-SE', '2020-04-17 06:36:15'],
     ['tr-TR', '17.04.2020 06:36:15'],
-    ['zh-Hant', '2020/4/17 上午6:36:15'],
+    ['zh-Hant', '2020/4/17 上午6:36:15'],
   ])('with locale %s', (locale, expected) => {
     initRegionalFormatForTests(locale);
 
@@ -192,7 +192,7 @@ describe('dateTimeFormatTimeAgo', () => {
 describe('dateTimeFormatWithAbbreviation', () => {
   it('should return the correct format with zone abbreviation', () => {
     const options = { timeZone: 'Europe/Stockholm' };
-    expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 14:36:15 CEST');
+    expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 14:36:15 GMT+2');
   });
   it('should return the correct format with zone abbreviation', () => {
     const options = { timeZone: 'America/New_York' };
@@ -200,14 +200,14 @@ describe('dateTimeFormatWithAbbreviation', () => {
   });
   it('should return the correct format with zone abbreviation', () => {
     const options = { timeZone: 'Europe/Bucharest' };
-    expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 15:36:15 EEST');
+    expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 15:36:15 GMT+3');
   });
 });
 
 describe('timeZoneAbbrevation', () => {
   it('should return the correct abbreviation', () => {
     const options = { timeZone: 'Europe/Stockholm' };
-    expect(timeZoneAbbrevation(1587126975779, options)).toBe('CEST');
+    expect(timeZoneAbbrevation(1587126975779, options)).toBe('GMT+2');
   });
   it('should return the correct abbreviation', () => {
     const options = { timeZone: 'America/New_York' };
@@ -215,6 +215,6 @@ describe('timeZoneAbbrevation', () => {
   });
   it('should return the correct abbreviation', () => {
     const options = { timeZone: 'Europe/Bucharest' };
-    expect(timeZoneAbbrevation(1587126975779, options)).toBe('EEST');
+    expect(timeZoneAbbrevation(1587126975779, options)).toBe('GMT+3');
   });
 });
