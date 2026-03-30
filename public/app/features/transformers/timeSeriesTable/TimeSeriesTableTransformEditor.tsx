@@ -2,13 +2,13 @@ import { useCallback } from 'react';
 
 import {
   PluginState,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   ReducerID,
   isReducerID,
-  SelectableValue,
-  Field,
-  FieldType,
+  type SelectableValue,
+  type Field,
+  type FieldType,
   isTimeSeriesField,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,7 +20,7 @@ import lightImage from '../images/light/timeSeriesTable.svg';
 
 import {
   getTimeSeriesTableTransformer,
-  TimeSeriesTableTransformerOptions,
+  type TimeSeriesTableTransformerOptions,
   getRefData,
 } from './timeSeriesTableTransformer';
 

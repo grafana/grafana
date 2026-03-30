@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useCallback } from 'react';
 
-import { GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { type GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, useTheme2 } from '@grafana/ui';

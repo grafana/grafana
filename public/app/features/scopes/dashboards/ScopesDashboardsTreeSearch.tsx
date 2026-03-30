@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 

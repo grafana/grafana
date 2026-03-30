@@ -1,24 +1,24 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 import * as React from 'react';
-import { of, OperatorFunction } from 'rxjs';
+import { of, type OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
   FieldType,
   getFieldDisplayName,
-  KeyValue,
-  SelectableValue,
+  type KeyValue,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
   FieldMatcherID,
 } from '@grafana/data';
 import {
   CalculateFieldMode,
-  CalculateFieldTransformerOptions,
+  type CalculateFieldTransformerOptions,
   getNameFromOptions,
   defaultWindowOptions,
 } from '@grafana/data/internal';

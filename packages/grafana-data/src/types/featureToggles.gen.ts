@@ -159,8 +159,8 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Next generation provisioning... and git
-  * @default false
+  * Enables Git Sync and as-code provisioning for Grafana resources
+  * @default true
   */
   provisioning?: boolean;
   /**
@@ -233,11 +233,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesLibraryPanels?: boolean;
-  /**
-  * Use the kubernetes API in the frontend for dashboards
-  * @default true
-  */
-  kubernetesDashboards?: boolean;
   /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
@@ -343,6 +338,11 @@ export interface FeatureToggles {
   * @default false
   */
   datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
+  /**
+  * use raw output mode for the data source querier
+  * @default false
+  */
+  datasourcesQuerierRawOutput?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -865,11 +865,6 @@ export interface FeatureToggles {
   */
   playlistsReconciler?: boolean;
   /**
-  * Enable passwordless login via magic link authentication
-  * @default false
-  */
-  passwordlessMagicLinkAuthentication?: boolean;
-  /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
   */
@@ -955,11 +950,6 @@ export interface FeatureToggles {
   */
   lokiLabelNamesQueryApi?: boolean;
   /**
-  * Enable folder's api server counts
-  * @default false
-  */
-  k8SFolderCounts?: boolean;
-  /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
   * @default true
   */
@@ -981,7 +971,7 @@ export interface FeatureToggles {
   teamLBACApiReadFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
-  * @default false
+  * @default true
   */
   grafanaAdvisor?: boolean;
   /**
@@ -1736,6 +1726,16 @@ export interface FeatureToggles {
   */
   frontendServiceSSOAutoLogin?: boolean;
   /**
+  * Enables the splash screen modal for introducing new Grafana features on first session
+  * @default false
+  */
+  splashScreen?: boolean;
+  /**
+  * Enables forwarding team headers from tempo for streaming requests with LBAC rules
+  * @default false
+  */
+  streamingForwardTeamHeadersTempo?: boolean;
+  /**
   * Aligns query splitting chunks with UTC midnight
   * @default false
   */
@@ -1745,4 +1745,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables the query service to do query caching
+  * @default false
+  */
+  queryServiceQueryCaching?: boolean;
 }

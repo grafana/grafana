@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
-import { OptionPaneItemOverrideInfo } from './types';
+import { type OptionPaneItemOverrideInfo } from './types';
 
 export interface Props {
   overrides: OptionPaneItemOverrideInfo[];

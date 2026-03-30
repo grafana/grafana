@@ -3,18 +3,18 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
-  DataFrame,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   store,
   toDataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
+import { type TempoDatasource } from '@grafana-plugins/tempo/datasource';
 import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
@@ -22,7 +22,7 @@ import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '.
 import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { LogList, Props } from './LogList';
+import { LogList, type Props } from './LogList';
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 

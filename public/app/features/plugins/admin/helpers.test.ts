@@ -16,7 +16,14 @@ import {
   isDisabledAngularPlugin,
 } from './helpers';
 import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './mocks/mockHelpers';
-import { RemotePlugin, LocalPlugin, RemotePluginStatus, Version, CatalogPlugin, PluginUpdateStrategy } from './types';
+import {
+  type RemotePlugin,
+  type LocalPlugin,
+  RemotePluginStatus,
+  type Version,
+  type CatalogPlugin,
+  PluginUpdateStrategy,
+} from './types';
 
 describe('Plugins/Helpers', () => {
   let remotePlugin: RemotePlugin;

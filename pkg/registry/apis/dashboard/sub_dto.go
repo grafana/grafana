@@ -193,8 +193,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		// Annotation permissions - use write permission as proxy
 		access.AnnotationsPermissions = &dashboard.AnnotationPermission{
-			Dashboard:    dashboard.AnnotationActions{CanAdd: writeRes.Allowed, CanEdit: writeRes.Allowed, CanDelete: writeRes.Allowed},
-			Organization: dashboard.AnnotationActions{CanAdd: writeRes.Allowed, CanEdit: writeRes.Allowed, CanDelete: writeRes.Allowed},
+			Dashboard: dashboard.AnnotationActions{CanAdd: writeRes.Allowed, CanEdit: writeRes.Allowed, CanDelete: writeRes.Allowed},
 		}
 
 		title := obj.FindTitle("")

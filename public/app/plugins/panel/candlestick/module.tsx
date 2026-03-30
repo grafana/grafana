@@ -1,7 +1,7 @@
-import { Field, FieldType, getFieldDisplayName, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { type Field, FieldType, getFieldDisplayName, type PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig } from '@grafana/schema';
+import { type GraphFieldConfig } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
@@ -9,7 +9,12 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { CandlestickPanel } from './CandlestickPanel';
 import { defaultOptions } from './defaultOptions';
-import { CandlestickData, getCandlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
+import {
+  type CandlestickData,
+  getCandlestickFieldsInfo,
+  type FieldPickerInfo,
+  prepareCandlestickFields,
+} from './fields';
 import { defaultCandlestickColors, type Options, VizDisplayMode, ColorStrategy, CandleStyle } from './panelcfg.gen';
 import { candlestickSuggestionSupplier } from './suggestions';
 

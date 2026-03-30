@@ -3,8 +3,8 @@ import { of } from 'rxjs';
 import {
   FieldType,
   LoadingState,
-  PanelData,
-  PluginExtensionPanelContext,
+  type PanelData,
+  type PluginExtensionPanelContext,
   PluginExtensionTypes,
   getDefaultTimeRange,
   store,
@@ -24,7 +24,7 @@ import {
 } from '@grafana/scenes';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
-import { GetExploreUrlArguments } from 'app/core/utils/explore';
+import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';

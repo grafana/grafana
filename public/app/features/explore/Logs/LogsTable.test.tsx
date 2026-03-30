@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { DataFrame, FieldType, LogsSortOrder, toUtc, urlUtil } from '@grafana/data';
+import { type DataFrame, FieldType, LogsSortOrder, toUtc, urlUtil } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 

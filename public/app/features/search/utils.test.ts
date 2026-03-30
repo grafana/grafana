@@ -1,4 +1,4 @@
-import { SearchQueryParams } from './types';
+import { type SearchQueryParams } from './types';
 import { parseRouteParams } from './utils';
 
 describe('Search utils', () => {

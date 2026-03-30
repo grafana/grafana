@@ -21,13 +21,13 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-04-12,disableSSEDataplane,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-04-03,renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-06,refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
-2023-05-04,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
+2023-05-05,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 2026-02-18,faroSessionReplay,experimental,@grafana/session-replay,false,false,true
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 2024-09-19,datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
-2024-11-22,provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2024-11-22,provisioning,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-02-23,provisioningFolderMetadata,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-02-23,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-12-06,grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
@@ -42,7 +42,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-09-28,externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 2023-12-05,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
+<<<<<<< HEAD
 2024-06-05,kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,false
+=======
+>>>>>>> main
 2025-07-31,kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 2025-07-31,kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
@@ -64,6 +67,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,datasourcesRerouteLegacyCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-18,datasourcesApiServerEnableResourceEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-03-16,datasourcesApiserverEnableResourceEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-03-30,datasourcesQuerierRawOutput,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-10-20,cloudWatchBatchQueries,GA,@grafana/aws-datasources,false,false,false
 2023-10-12,cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
@@ -164,11 +168,18 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-04,pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 2024-10-17,unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
+<<<<<<< HEAD
 2025-11-04,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
 2025-11-20,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 2024-12-19,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-11-14,passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
+=======
+2025-11-05,timeRangePan,GA,@grafana/dataviz-squad,false,false,true
+2025-11-20,newTimeRangeZoomShortcuts,GA,@grafana/dataviz-squad,false,false,true
+2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
+2024-12-20,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
+>>>>>>> main
 2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 2024-11-05,enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 2024-11-07,enableSCIM,GA,@grafana/identity-access-team,false,false,false
@@ -186,12 +197,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-12-19,unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
 2024-12-12,elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
 2024-12-13,lokiLabelNamesQueryApi,GA,@grafana/oss-big-tent,false,false,false
-2024-12-27,k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 2025-01-09,improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-03-16,teamLBACApiReadFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
-2025-01-20,grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
+2025-01-20,grafanaAdvisor,GA,@grafana/plugins-platform-backend,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/partner-datasources,false,false,false
 2025-01-21,datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 2025-01-29,fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
@@ -276,7 +286,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
 2026-02-18,vizPresets,preview,@grafana/dataviz-squad,false,false,true
 2025-12-01,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
+<<<<<<< HEAD
 2026-03-02,vizLegendSeriesLimit,experimental,@grafana/dataviz-squad,false,false,true
+=======
+2026-03-03,vizLegendSeriesLimit,experimental,@grafana/dataviz-squad,false,false,true
+>>>>>>> main
 2026-03-06,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
 2026-03-10,vizLegendFacetedFilter,experimental,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
@@ -342,5 +356,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-25,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,false
 2026-03-25,useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-03-24,frontendServiceSSOAutoLogin,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-03-25,splashScreen,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-03-27,streamingForwardTeamHeadersTempo,privatePreview,@grafana/oss-big-tent,false,false,false
 2026-03-19,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
 2026-03-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-03-28,queryServiceQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,false,false

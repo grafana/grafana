@@ -1,15 +1,15 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { Resizable, ResizeCallback } from 're-resizable';
+import { Resizable, type ResizeCallback } from 're-resizable';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
-import { DataFrame, store } from '@grafana/data';
+import { type DataFrame, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 
 import { useLogListContext } from '../panel/LogListContext';
 import { reportInteractionOnce } from '../panel/analytics';
-import { LogListModel } from '../panel/processing';
+import { type LogListModel } from '../panel/processing';
 
 import { FieldSelector, FIELD_SELECTOR_MIN_WIDTH, getDefaultFieldSelectorWidth } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';

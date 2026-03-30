@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';

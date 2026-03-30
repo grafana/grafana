@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
-import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
+import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
 import { createLogLine } from '../mocks/logRow';
 import { LogListContext } from '../panel/LogListContext';
 import { defaultValue } from '../panel/__mocks__/LogListContext';
-import { LogListModel } from '../panel/processing';
+import { type LogListModel } from '../panel/processing';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
 import { LogListFieldSelector } from './LogListFieldSelector';

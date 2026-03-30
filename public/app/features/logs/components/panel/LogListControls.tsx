@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { capitalize } from 'lodash';
-import { MouseEvent, useCallback, useMemo } from 'react';
+import { type MouseEvent, useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
-  EventBus,
-  GrafanaTheme2,
+  type EventBus,
+  type GrafanaTheme2,
   LogLevel,
   LogsDedupDescription,
   LogsDedupStrategy,
@@ -17,7 +17,7 @@ import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { LogsVisualisationType } from '../../../explore/Logs/constants';
+import { type LogsVisualisationType } from '../../../explore/Logs/constants';
 import { DownloadFormat } from '../../utils';
 
 import { useLogListContext } from './LogListContext';

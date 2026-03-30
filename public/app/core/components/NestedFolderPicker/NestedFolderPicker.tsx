@@ -4,19 +4,19 @@ import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
-import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { QueryResponse } from 'app/features/search/service/types';
+import { type QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
-import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevel } from 'app/types/acl';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { type PermissionLevel } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';

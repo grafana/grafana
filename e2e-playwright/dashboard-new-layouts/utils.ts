@@ -1,7 +1,7 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
@@ -402,4 +402,22 @@ export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelect
 export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
   await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+}
+
+export async function fillVariableValue(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  varName: string,
+  text: string
+) {
+  const variable = dashboardPage
+    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
+    .locator('..')
+    .locator('input');
+  await variable.click();
+  await variable.clear();
+  await variable.fill(text);
+  await variable.press('Enter');
+  await page.waitForLoadState('networkidle');
 }
