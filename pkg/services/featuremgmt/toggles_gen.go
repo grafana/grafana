@@ -925,4 +925,8 @@ const (
 	// FlagQueryFetchConfigFromSettingsService
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
+
+	// FlagQueryServiceQueryCaching
+	// Enables the query service to do query caching
+	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
 )
