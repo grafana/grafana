@@ -163,7 +163,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	annotationPermissions := &dashboardsV1.AnnotationPermission{}
 	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
-	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 	meta := dtos.DashboardMeta{
 		IsStarred:              isStarred,

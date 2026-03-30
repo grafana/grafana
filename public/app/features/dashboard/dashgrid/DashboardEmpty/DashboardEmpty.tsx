@@ -1,6 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,9 +8,6 @@ import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-
-import { BasicProvisionedDashboardsEmptyPage } from '../DashboardLibrary/BasicProvisionedDashboardsEmptyPage';
-import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -35,28 +31,15 @@ const InternalDashboardEmpty = ({
   onImportDashboard,
 }: InternalProps) => {
   const styles = useStyles2(getStyles);
-  const [searchParams] = useSearchParams();
-  const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
   return (
     <>
       <Stack alignItems="center" justifyContent="center">
-        <div
-          className={cx(styles.wrapper, {
-            [styles.wrapperMaxWidth]:
-              !(config.featureToggles.dashboardLibrary || config.featureToggles.suggestedDashboards) ||
-              !dashboardLibraryDatasourceUid,
-          })}
-        >
+        <div className={`${styles.wrapper} ${styles.wrapperMaxWidth}`}>
           {config.featureToggles.dashboardNewLayouts && dashboard instanceof DashboardScene ? (
-            <NewLayoutEmpty
-              dashboard={dashboard}
-              styles={styles}
-              dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
-            />
+            <NewLayoutEmpty dashboard={dashboard} styles={styles} />
           ) : (
             <OldLayoutEmpty
-              dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
               onAddVisualization={onAddVisualization}
               onAddLibraryPanel={onAddLibraryPanel}
               onImportDashboard={onImportDashboard}
@@ -68,25 +51,6 @@ const InternalDashboardEmpty = ({
   );
 };
 
-const DashboardExtensionsComponents = ({
-  dashboardLibraryDatasourceUid,
-}: {
-  dashboardLibraryDatasourceUid: string | null;
-}) => (
-  <>
-    {/* Suggested Dashboards Section */}
-    {config.featureToggles.suggestedDashboards &&
-      config.featureToggles.dashboardLibrary &&
-      dashboardLibraryDatasourceUid && <SuggestedDashboards datasourceUid={dashboardLibraryDatasourceUid} />}
-
-    {/* Basic Provisioned Dashboards Section that don't include community dashboards */}
-    {config.featureToggles.dashboardLibrary &&
-      !config.featureToggles.suggestedDashboards &&
-      dashboardLibraryDatasourceUid && (
-        <BasicProvisionedDashboardsEmptyPage datasourceUid={dashboardLibraryDatasourceUid} />
-      )}
-  </>
-);
 interface NewLayoutEmptyProps {
   dashboard: DashboardScene;
   styles: {
@@ -94,10 +58,9 @@ interface NewLayoutEmptyProps {
     wrapperMaxWidth: string;
     appsIcon: string;
   };
-  dashboardLibraryDatasourceUid: string | null;
 }
 
-const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: NewLayoutEmptyProps) => {
+const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   const { uid, isEditing, editPane } = dashboard.state;
   const isEditingNewDashboard = isEditing && !uid;
 
@@ -124,23 +87,16 @@ const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: Ne
           </Text>
         </Box>
       </Box>
-      <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
     </Stack>
   );
 };
 
 interface OldLayoutEmptyProps {
-  dashboardLibraryDatasourceUid: string | null;
   onAddVisualization?: () => void;
   onAddLibraryPanel?: () => void;
   onImportDashboard?: () => void;
 }
-const OldLayoutEmpty = ({
-  dashboardLibraryDatasourceUid,
-  onAddVisualization,
-  onAddLibraryPanel,
-  onImportDashboard,
-}: OldLayoutEmptyProps) => (
+const OldLayoutEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: OldLayoutEmptyProps) => (
   <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
     <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>
@@ -168,8 +124,6 @@ const OldLayoutEmpty = ({
         </Button>
       </Stack>
     </Box>
-
-    <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
 
     <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
       <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>

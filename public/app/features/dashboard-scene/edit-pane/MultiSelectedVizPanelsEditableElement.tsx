@@ -7,7 +7,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-import { VizPanelEditableElement } from './VizPanelEditableElement';
+import type { VizPanelEditableElement } from './VizPanelEditableElement';
 
 export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;

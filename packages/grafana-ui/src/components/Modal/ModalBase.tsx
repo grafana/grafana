@@ -45,6 +45,13 @@ export function ModalBase({
 
   const dismiss = useDismiss(context, {
     escapeKey: closeOnEscape,
+    outsidePress: () => {
+      if (onClickBackdrop) {
+        onClickBackdrop();
+        return false;
+      }
+      return closeOnBackdropClick;
+    },
   });
 
   const role = useRole(context, {
@@ -59,11 +66,7 @@ export function ModalBase({
 
   return (
     <OverlayContainer>
-      <div
-        role="presentation"
-        className={styles.modalBackdrop}
-        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
-      />
+      <div role="presentation" className={styles.modalBackdrop} />
       <FloatingFocusManager context={context} modal={trapFocus} getInsideElements={() => [getPortalContainer()]}>
         <div
           className={cx(styles.modal, className)}

@@ -8,7 +8,7 @@ import { Button, ClipboardButton, Stack, CodeEditor, Box, TextLink } from '@graf
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import type { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
 import { DashboardChangeInfo } from './shared';
 

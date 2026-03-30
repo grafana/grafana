@@ -504,6 +504,7 @@ export class TabsLayoutManager
             title: newTitle,
             conditionalRendering,
             repeatByVariable: row.state.repeatByVariable,
+            $variables: row.state.$variables,
           })
         );
       }

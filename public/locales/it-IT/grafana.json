@@ -5577,6 +5577,7 @@
         "panels": "Pannelli",
         "row": "Riga",
         "rows": "Righe",
+        "section-variable": "",
         "tab": "Scheda",
         "tabs": "Schede",
         "variable": "{{type}} variabile",
@@ -5593,6 +5594,10 @@
           "hide": "Nascondi",
           "title": "Intestazione di riga"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5652,11 +5657,7 @@
       "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
-      "show-less-dashboards": "Mostra meno",
-      "show-more-dashboards": "Mostra di più",
-      "start-with-suggested-dashboards": "Inizia con una dashboard predefinita dalla tua origine dei dati",
-      "title": "Nuova dashboard",
-      "use-template-button": "Usa questa dashboard"
+      "title": "Nuova dashboard"
     },
     "errors": {
       "failed-to-load": "Impossibile caricare il dashboard"
@@ -6130,6 +6131,9 @@
           "hide-header": "Nascondi intestazione riga",
           "title": "Titolo"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Il titolo deve essere univoco",
         "title-option": "Titolo"
       },
@@ -6283,6 +6287,9 @@
             "description": "Ripeti questa scheda per ogni valore nella variabile selezionata.",
             "title": "Ripeti per variabile"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Il titolo deve essere univoco",
         "title-option": "Titolo"
@@ -6560,9 +6567,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Scopri Grafana.com",
-    "browse-plugins": "Scopri i plug-in",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Origine dei dati fornita",
@@ -6573,9 +6579,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Nessuna dashboard della community trovata",
-    "community-empty-title-with-datasource": "Nessuna dashboard della community {{datasourceType}} trovata",
-    "community-error-description": "Impossibile caricare la dashboard della community.",
     "community-error-title": "Errore durante il caricamento della dashboard della community",
     "community-mapping-form": {
       "back": "Torna alle dashboard",
@@ -6587,8 +6590,6 @@
       "auto-mapped_other": "{{count}} origini dati sono state configurate automaticamente:"
     },
     "community-mapping-select-datasource": "Seleziona un'origine dati",
-    "community-search-placeholder": "Cerca dashboard della community...",
-    "community-search-placeholder-with-datasource": "Cerca dashboard della community {{datasourceType}}...",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6602,6 +6603,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Origine dati",
@@ -6610,34 +6612,27 @@
         "last-update": "Ultimo aggiornamento",
         "published-by": "Pubblicato da",
         "view-on-grafana-com": "Visualizza su Grafana.com"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Sfoglia e seleziona dall'origine dati fornita o dalle dashboard della community",
-      "tab-community": "Community",
-      "tab-datasource": "Origine dati fornita",
       "title": "Dashboard suggerite",
       "title-mapping-with-name": "Configura le origini dati per {{dashboardName}}",
       "title-with-datasource": "Dashboard suggerite per la tua origine dati {{datasourceType}}"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Prova un termine di ricerca diverso o sfoglia le dashboard per diversi tipi di origini dati su Grafana.com.",
-    "no-community-dashboards-search": "Prova un termine di ricerca diverso o sfoglia più dashboard su Grafana.com.",
-    "no-provisioned-dashboards": "Le dashboard con provisioning sono fornite dai plug-in dell'origine dati. Puoi trovare altri plug-in su Grafana.com.",
-    "provisioned-empty-title": "Nessuna dashboard con provisioning trovata",
-    "provisioned-empty-title-with-datasource": "Nessuna dashboard {{datasourceType}} con provisioning trovata",
-    "retry": "Riprova",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Sfoglia e seleziona dall'origine dati fornita o dalle dashboard della community",
-    "suggested-dashboards-title": "Crea una dashboard utilizzando le opzioni suggerite per l'origine dati selezionata",
-    "suggested-dashboards-title-with-datasource": "Crea una dashboard utilizzando le opzioni suggerite per l'origine dati {{datasourceType}}",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Inizia a utilizzare i modelli Grafana utilizzando i dati di esempio. Collega i tuoi dati per alimentarli con metriche reali.",
       "title": "Crea una dashboard da un modello"
-    },
-    "view-all": "Visualizza tutto"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7460,6 +7455,10 @@
         "title": "Modifiche non salvate"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "JSON dashboard utilizzato per risolvere i problemi di visualizzazione"
@@ -7842,7 +7841,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Fai clic <2>qui</2> per saperne di più su questo errore.",
-    "success-more-details-links": "Successivamente, puoi iniziare a visualizzare i dati <2>creando un dashboard</2> o eseguendo query sui dati nella <5>vista Esplora</5>."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7858,7 +7858,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Crea una dashboard",
-      "aria-label-explore-data": "Esplora i dati"
+      "aria-label-explore-data": "Esplora i dati",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Avvisi non supportati",
@@ -7872,6 +7873,11 @@
       "basic-settings-name-placeholder-name": "Nome",
       "label-default": "Predefinito",
       "label-name": "Nome"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7958,12 +7964,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, scopri di più."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Crea una dashboard",
       "explore": "Esplora"
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
-      "build-a-dashboard": "Crea una dashboard",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -14037,25 +14041,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Dashboard",
-      "app-explore": "Esplora",
-      "app-label": "App:",
-      "assistant-actionable-create": "Descrivi cosa vuoi interrogare e quali approfondimenti stai cercando.",
-      "assistant-actionable-update": "Descrivi cosa vuoi modificare o migliorare in questa query.",
-      "assistant-prompt-create": "Aiutami a creare una nuova query per rispondere alle mie domande e fornire le informazioni di cui ho bisogno.",
-      "assistant-prompt-update": "Aiutami ad aggiornare la query corrente per rispondere alle mie domande e fornire le informazioni di cui ho bisogno.",
       "collapse-row": "Riduci riga della query",
-      "current-query": "Query corrente",
-      "current-query-label": "Query corrente:",
       "datasource-help": "Mostra la guida dell'origine dati",
       "drag-and-drop": "Trascina e rilascia per riordinare",
       "duplicate-query": "Duplica query",
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
-      "other-queries": "Altre query",
-      "query-with-assistant": "Query con Assistente",
       "remove-query": "Rimuovi query",
-      "selected-datasource-label": "Origine dati selezionata:",
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
@@ -14673,6 +14665,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Ordina"
+  },
+  "splash-screen": {
+    "body": "",
+    "get-started": "",
+    "title": ""
   },
   "sql-expressions": {
     "add-query-tooltip": "Aggiungi almeno una query di dati per generare suggerimenti SQL",

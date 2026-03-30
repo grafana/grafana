@@ -1489,13 +1489,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "k8SFolderCounts",
-			Description: "Enable folder's api server counts",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "improvedExternalSessionHandlingSAML",
 			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2754,6 +2747,14 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+		},
+		{
+			Name:         "streamingForwardTeamHeadersTempo",
+			Description:  "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+			Stage:        FeatureStagePrivatePreview,
+			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:        "lokiAlignedQuerySplitting",
