@@ -3,16 +3,14 @@ package testcases
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	collectionsV1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
-
 	authlib "github.com/grafana/authlib/types"
+	collectionsV1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -99,7 +97,7 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 		tc.stars[user] = collectionsV1.StarsResource{
 			Group: "dashboard.grafana.app",
 			Kind:  "Dashboard",
-			Names: []string{"dash-1", "dash-2"},
+			Names: []string{"dash-1", "dash-2"}, // sorted order
 		}
 	}
 
@@ -121,10 +119,10 @@ func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, should
 			},
 		})
 
-		name := user.Identity.GetIdentifier()
-		require.True(t, strings.HasPrefix(name, "user-"))
+		id := user.Identity.GetIdentifier()
+		require.Equal(t, authlib.TypeUser, user.Identity.GetIdentityType())
 		ctx := identity.WithRequester(context.Background(), user.Identity)
-		found, err := client.Resource.Get(ctx, name, v1.GetOptions{})
+		found, err := client.Resource.Get(ctx, "user-"+id, v1.GetOptions{})
 		if !shouldExist {
 			require.Error(t, err, "should not get star for user %s", user)
 			continue
