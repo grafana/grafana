@@ -94,6 +94,7 @@ jobs:
         with:
           name: frontend-build
           path: public
+          include-hidden-files: true
           retention-days: 1
 
   build_backend:
@@ -174,32 +175,87 @@ jobs:
         with:
           name: split-build-targz
           path: _split
-      - name: Extract and compare
+      - name: Extract and compare (directory tree + sizes outside public/build)
         run: |
           set -euo pipefail
           mkdir -p _extract/release _extract/split
-          RELEASE_TAR="$(find _release -maxdepth 1 -type f -name '*.tar.gz' -print | sort | head -n 1)"
-          SPLIT_TAR="$(find _split -maxdepth 1 -type f -name '*.tar.gz' -print | sort | head -n 1)"
+          RELEASE_TAR="$(find _release -maxdepth 1 -type f -name '*.tar.gz' -print | LC_ALL=C sort | head -n 1)"
+          SPLIT_TAR="$(find _split -maxdepth 1 -type f -name '*.tar.gz' -print | LC_ALL=C sort | head -n 1)"
 
           tar -xzf "${RELEASE_TAR}" -C _extract/release
           tar -xzf "${SPLIT_TAR}" -C _extract/split
 
-          RELEASE_TOP="$(find _extract/release -mindepth 1 -maxdepth 1 -type d -print | sort | head -n 1)"
-          SPLIT_TOP="$(find _extract/split -mindepth 1 -maxdepth 1 -type d -print | sort | head -n 1)"
+          RELEASE_TOP="$(find _extract/release -mindepth 1 -maxdepth 1 -type d -print | LC_ALL=C sort | head -n 1)"
+          SPLIT_TOP="$(find _extract/split -mindepth 1 -maxdepth 1 -type d -print | LC_ALL=C sort | head -n 1)"
 
-          set +e
-          DIFF_OUT=$(diff -rq "${RELEASE_TOP}" "${SPLIT_TOP}")
-          set -e
+          rel_from_top() {
+            local top="$1" dir="$2"
+            if [[ "$dir" == "$top" ]]; then
+              printf '%s' "."
+            else
+              printf '%s' "${dir#"${top}"/}"
+            fi
+          }
 
-          # Print only paths present on one side (no file bodies). Suppress "Files a and b differ" lines.
-          echo "${DIFF_OUT}" | grep '^Only in' || true
+          # Sorted list of relative directory paths (layout must match).
+          tree_manifest() {
+            local top="$1" out="$2"
+            find "$top" -type d -print0 | LC_ALL=C sort -z | while IFS= read -r -d '' dir; do
+              rel_from_top "$top" "$dir"
+              printf '\n'
+            done | LC_ALL=C sort >"$out"
+          }
 
-          FAILED=0
-          if echo "${DIFF_OUT}" | grep -q '^Only in'; then
-            FAILED=1
+          skip_du_for_rel() {
+            local rel="$1"
+            # Root and public/ aggregate hashed webpack output; public/build/** differs by platform (arm64 Dagger vs amd64 CI).
+            [[ "$rel" == "." ]] && return 0
+            [[ "$rel" == "public" ]] && return 0
+            [[ "$rel" == "public/build" ]] && return 0
+            [[ "$rel" == public/build/* ]] && return 0
+            return 1
+          }
+
+          # Per-dir recursive byte size (GNU du -sb); omit paths where totals are not expected to match across builds.
+          size_manifest() {
+            local top="$1" out="$2"
+            find "$top" -type d -print0 | LC_ALL=C sort -z | while IFS= read -r -d '' dir; do
+              rel="$(rel_from_top "$top" "$dir")"
+              if skip_du_for_rel "$rel"; then
+                continue
+              fi
+              bytes="$(du -sb "$dir" | cut -f1)"
+              printf '%s\t%s\n' "$rel" "$bytes"
+            done | LC_ALL=C sort -t $'\t' -k1,1 >"$out"
+          }
+
+          tree_manifest "$RELEASE_TOP" /tmp/release-tree.txt
+          tree_manifest "$SPLIT_TOP" /tmp/split-tree.txt
+          size_manifest "$RELEASE_TOP" /tmp/release-sizes.txt
+          size_manifest "$SPLIT_TOP" /tmp/split-sizes.txt
+
+          echo "Compared package roots:"
+          echo "  release: ${RELEASE_TOP}"
+          echo "  split:   ${SPLIT_TOP}"
+          echo ""
+          echo "1) Directory tree (must be identical)."
+          echo "   Directory count — release: $(wc -l </tmp/release-tree.txt)  split: $(wc -l </tmp/split-tree.txt)"
+          echo ""
+          echo "2) Recursive sizes per directory (GNU du -sb), excluding: .  public/  public/build/**"
+          echo "   (Webpack [contenthash] output is not byte-identical between Dagger linux/arm64 Node and native amd64.)"
+          echo "   Sized paths — release: $(wc -l </tmp/release-sizes.txt)  split: $(wc -l </tmp/split-sizes.txt)"
+          echo ""
+
+          ok=1
+          if ! diff -u /tmp/release-tree.txt /tmp/split-tree.txt; then
+            echo >&2 "Compare failed: directory layouts differ."
+            ok=0
           fi
-          if echo "${DIFF_OUT}" | grep -q ' differ$'; then
-            echo >&2 "Compare failed: at least one path exists in both trees with different content (skipping diff body)."
-            FAILED=1
+          if ! diff -u /tmp/release-sizes.txt /tmp/split-sizes.txt; then
+            echo >&2 "Compare failed: directory sizes differ (outside public/build)."
+            ok=0
           fi
-          exit "${FAILED}"
+          if [[ "$ok" -ne 1 ]]; then
+            exit 1
+          fi
+          echo "OK: same directory tree; matching sizes for all directories outside public/build."
