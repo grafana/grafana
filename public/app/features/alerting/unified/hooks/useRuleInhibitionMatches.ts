@@ -1,6 +1,6 @@
 import { matchLabelsSet } from '@grafana/alerting/unstable';
-import { InhibitionRule, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { Labels } from '@grafana/data';
+import { type InhibitionRule, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type Labels } from '@grafana/data';
 
 import { objectLabelsToArray } from '../utils/labels';
 
