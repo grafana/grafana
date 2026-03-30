@@ -1,4 +1,4 @@
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 // Fallback for Loki data source which doesn't have a severity field and uses the detected_level label
 // See https://github.com/grafana/grafana/blob/32b04b72d31b17c5dc81c3090dea30b0ea63951f/public/app/features/logs/logsModel.ts#L422

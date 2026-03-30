@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginListItem } from './PluginListItem';
 

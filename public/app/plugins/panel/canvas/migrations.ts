@@ -1,6 +1,6 @@
-import { PanelModel, OneClickMode } from '@grafana/data';
+import { type PanelModel, OneClickMode } from '@grafana/data';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
   const pluginVersion = panel?.pluginVersion ?? '';

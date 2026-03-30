@@ -1,5 +1,5 @@
 import { PluginState } from '../types/plugin';
-import { SelectableValue } from '../types/select';
+import { type SelectableValue } from '../types/select';
 
 export interface RegistryItem {
   id: string; // Unique Key -- saved in configs

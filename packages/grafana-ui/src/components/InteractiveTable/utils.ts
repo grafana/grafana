@@ -1,7 +1,7 @@
-import { Column as RTColumn } from 'react-table';
+import { type Column as RTColumn } from 'react-table';
 
 import { EmptyExpanderHeader, ExpanderCell, ExpanderHeader } from './Expander';
-import { Column } from './types';
+import { type Column } from './types';
 
 export const EXPANDER_CELL_ID = '__expander' as const;
 

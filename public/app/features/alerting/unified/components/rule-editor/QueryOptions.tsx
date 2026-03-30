@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2, RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TimeRangeLabel } from '../TimeRangeLabel';
 
-import { AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
+import { type AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
 
 export interface QueryOptionsProps {
   query: AlertQuery;

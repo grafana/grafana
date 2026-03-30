@@ -1,10 +1,10 @@
 import { nanoid } from 'nanoid';
 
-import { DataSourceApi } from '@grafana/data';
+import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { SceneVariable } from '@grafana/scenes';
-import { DashboardLink, DataSourceRef } from '@grafana/schema';
-import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type SceneVariable } from '@grafana/scenes';
+import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { reportPerformance } from 'app/core/services/echo/EchoSrv';
 
 export function loadDefaultControlsFromDatasources(refs: DataSourceRef[]) {

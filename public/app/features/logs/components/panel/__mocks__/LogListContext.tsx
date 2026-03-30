@@ -3,8 +3,8 @@ import { createContext, useContext } from 'react';
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
-import { LogListContextData, Props } from '../LogListContext';
-import { LogListModel } from '../processing';
+import { type LogListContextData, type Props } from '../LogListContext';
+import { type LogListModel } from '../processing';
 
 jest.mock('@grafana/assistant', () => {
   return {

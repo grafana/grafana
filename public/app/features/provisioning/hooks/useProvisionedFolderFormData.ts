@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { Folder } from 'app/api/clients/folder/v1beta1';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type Folder } from 'app/api/clients/folder/v1beta1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import {
   getCanPushToConfiguredBranch,
@@ -10,7 +10,7 @@ import {
 } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
-import { BaseProvisionedFormData } from '../types/form';
+import { type BaseProvisionedFormData } from '../types/form';
 
 interface UseProvisionedFolderFormDataProps {
   folderUid?: string;
