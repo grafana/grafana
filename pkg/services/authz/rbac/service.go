@@ -116,6 +116,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		"namespace", req.GetNamespace(),
 		"group", req.GetGroup(),
 		"resource", req.GetResource(),
+		"subresource", req.GetSubresource(),
 		"verb", req.GetVerb(),
 	)
 	defer func(start time.Time) {
@@ -295,7 +296,7 @@ func (s *Service) groupBatchCheckItems(
 	groups := make(map[string]*batchCheckGroup)
 
 	for _, item := range checks {
-		action, actionSets, err := s.validateAction(ctx, item.GetGroup(), item.GetResource(), item.GetVerb())
+		action, actionSets, err := s.validateAction(ctx, item.GetGroup(), item.GetResource(), item.GetSubresource(), item.GetVerb())
 		if err != nil {
 			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
 			continue
@@ -481,7 +482,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
-	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetSubresource(), req.GetVerb())
 	if err != nil {
 		return nil, err
 	}
@@ -494,6 +495,7 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		ActionSets:   actionSets,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
+		Subresource:  req.GetSubresource(),
 		Verb:         req.GetVerb(),
 		Name:         req.GetName(),
 		ParentFolder: req.GetFolder(),
@@ -515,7 +517,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		return nil, err
 	}
 
-	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
+	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetSubresource(), req.GetVerb())
 	if err != nil {
 		return nil, err
 	}
@@ -536,6 +538,7 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 		ActionSets:   actionSets,
 		Group:        req.GetGroup(),
 		Resource:     req.GetResource(),
+		Subresource:  req.GetSubresource(),
 		Verb:         req.GetVerb(),
 		Options:      options,
 	}
@@ -582,18 +585,18 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 }
 
 // Find the action for a selected verb
-func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, []string, error) {
+func (s *Service) validateAction(ctx context.Context, group, resource, subresource, verb string) (string, []string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.Get(group, resource)
+	t, ok := s.mapper.Get(group, resource, subresource)
 	if !ok {
-		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", group, "resource", resource)
-		t = newK8sNativeMapping(group, resource)
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", group, "resource", resource, "subresource", subresource)
+		t = newK8sNativeMapping(group, resource, subresource)
 	}
 
 	action, ok := t.Action(verb)
 	if !ok {
-		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "verb", verb)
+		ctxLogger.Error("unsupported verb", "group", group, "resource", resource, "subresource", subresource, "verb", verb)
 		return "", nil, status.Error(codes.NotFound, "unsupported verb")
 	}
 
@@ -856,10 +859,10 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.Get(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource, req.Subresource)
 	if !ok {
-		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource)
-		t = newK8sNativeMapping(req.Group, req.Resource)
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource, "subresource", req.Subresource)
+		t = newK8sNativeMapping(req.Group, req.Resource, req.Subresource)
 	}
 
 	if req.Name == "" && req.Verb != utils.VerbCreate {
@@ -1017,10 +1020,10 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.Get(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource, req.Subresource)
 	if !ok {
-		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource)
-		t = newK8sNativeMapping(req.Group, req.Resource)
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource, "subresource", req.Subresource)
+		t = newK8sNativeMapping(req.Group, req.Resource, req.Subresource)
 	}
 
 	var tree folderTree
