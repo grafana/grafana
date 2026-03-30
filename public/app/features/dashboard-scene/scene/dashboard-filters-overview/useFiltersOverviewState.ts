@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { fuzzySearch, SelectableValue } from '@grafana/data';
-import { AdHocFilterWithLabels, AdHocFiltersVariable, GroupByVariable, OPERATORS } from '@grafana/scenes';
-import { ComboboxOption } from '@grafana/ui';
+import { fuzzySearch, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import {
+  type AdHocFilterWithLabels,
+  type AdHocFiltersVariable,
+  type GroupByVariable,
+  OPERATORS,
+} from '@grafana/scenes';
+import { type ComboboxOption } from '@grafana/ui';
 
 import { buildAdHocApplyFilters, buildGroupByUpdate, buildOverviewState } from './utils';
 
@@ -18,6 +24,7 @@ export interface FiltersOverviewState {
   isGrouped: Record<string, boolean>;
   isOriginByKey: Record<string, boolean>;
   openGroups: Record<string, boolean>;
+  defaultValuesByKey: Record<string, string>;
 }
 
 export interface FiltersOverviewActions {
@@ -26,6 +33,7 @@ export interface FiltersOverviewActions {
   setSingleValue: (key: string, value: string) => void;
   setMultiValues: (key: string, values: string[]) => void;
   toggleGroupBy: (key: string, nextValue: boolean) => void;
+  restoreDefault: (key: string) => void;
   getValueOptionsForKey: (key: string, operator: string, inputValue: string) => Promise<Array<ComboboxOption<string>>>;
   applyChanges: () => void;
 }
@@ -141,6 +149,7 @@ export function useFiltersOverviewState({
     isGrouped: {},
     isOriginByKey: {},
     openGroups: {},
+    defaultValuesByKey: {},
   });
 
   const [loading, setLoading] = useState(true);
@@ -148,7 +157,7 @@ export function useFiltersOverviewState({
 
   const operatorConfig = useMemo(
     () => ({
-      options: OPERATORS.map((op) => ({ label: op.value, value: op.value })),
+      options: OPERATORS.map((op) => ({ label: op.value, value: op.value, description: op.description })),
     }),
     []
   );
@@ -167,14 +176,18 @@ export function useFiltersOverviewState({
         adhocFilters.state
       );
 
-      const existingKeyValues = new Set(keys.map((k) => k.value ?? k.label).filter(Boolean));
-      for (const key of await adhocFilters._getKeys(null)) {
-        const keyValue = key.value ?? key.label;
-        if (keyValue && !existingKeyValues.has(keyValue)) {
-          keys.push(key);
-          existingKeyValues.add(keyValue);
+      const defaultValuesByKey: Record<string, string> = {};
+      for (const originFilter of adhocFilters.state.originFilters ?? []) {
+        if (originFilter.nonApplicable) {
+          continue;
+        }
+        const original = adhocFilters.getOriginalValue(originFilter);
+        if (original) {
+          defaultValuesByKey[originFilter.key] = original.value[0] ?? '';
         }
       }
+
+      const existingKeyValues = new Set(keys.map((k) => k.value ?? k.label).filter(Boolean));
 
       const isGrouped: Record<string, boolean> = {};
       if (groupByVariable) {
@@ -184,6 +197,14 @@ export function useFiltersOverviewState({
             keys.push({ label: v, value: v });
             existingKeyValues.add(v);
           }
+        }
+      }
+
+      for (const key of await adhocFilters._getKeys(null)) {
+        const keyValue = key.value ?? key.label;
+        if (keyValue && !existingKeyValues.has(keyValue)) {
+          keys.push(key);
+          existingKeyValues.add(keyValue);
         }
       }
 
@@ -199,6 +220,7 @@ export function useFiltersOverviewState({
         isOriginByKey,
         isGrouped,
         openGroups,
+        defaultValuesByKey,
       }));
       setLoading(false);
     };
@@ -243,6 +265,20 @@ export function useFiltersOverviewState({
       setState((prev) => ({ ...prev, isGrouped: { ...prev.isGrouped, [key]: nextValue } }));
     },
 
+    restoreDefault: (key) => {
+      setState((prev) => {
+        const defaultValue = prev.defaultValuesByKey[key];
+        if (defaultValue === undefined) {
+          return prev;
+        }
+        return {
+          ...prev,
+          singleValuesByKey: { ...prev.singleValuesByKey, [key]: defaultValue },
+          multiValuesByKey: { ...prev.multiValuesByKey, [key]: [] },
+        };
+      });
+    },
+
     getValueOptionsForKey: async (key, operator, inputValue) => {
       if (!adhocFilters) {
         return [];
@@ -262,14 +298,36 @@ export function useFiltersOverviewState({
       if (!inputValue) {
         return options;
       }
+
       const lowered = inputValue.toLowerCase();
-      return options.filter((o) => (o.label ?? o.value).toLowerCase().includes(lowered));
+      const filtered = options.filter((o) => (o.label ?? o.value).toLowerCase().includes(lowered));
+
+      const allowCustom = adhocFilters.state.allowCustomValue ?? true;
+      if (allowCustom) {
+        const exactMatch = filtered.some((o) => o.value === inputValue);
+        if (!exactMatch) {
+          filtered.unshift({
+            label: inputValue,
+            value: inputValue,
+            description: t('dashboard.filters-overview.use-custom-value', 'Use custom value'),
+          });
+        }
+      }
+
+      return filtered;
     },
 
     applyChanges: () => {
       if (groupByVariable) {
         const { nextValues, nextText } = buildGroupByUpdate(state.keys, state.isGrouped);
         groupByVariable.changeValueTo(nextValues, nextText, true);
+
+        if (groupByVariable.state.defaultValue) {
+          const isRestorable = groupByVariable.checkIfRestorable(nextValues);
+          if (isRestorable !== groupByVariable.state.restorable) {
+            groupByVariable.setState({ restorable: isRestorable });
+          }
+        }
       }
 
       if (adhocFilters) {

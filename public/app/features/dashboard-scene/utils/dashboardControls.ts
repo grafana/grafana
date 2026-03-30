@@ -1,10 +1,10 @@
 import { nanoid } from 'nanoid';
 
-import { DataSourceApi } from '@grafana/data';
+import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { SceneVariable } from '@grafana/scenes';
-import { DashboardLink, DataSourceRef } from '@grafana/schema';
-import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type SceneVariable } from '@grafana/scenes';
+import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { reportPerformance } from 'app/core/services/echo/EchoSrv';
 
 export function loadDefaultControlsFromDatasources(refs: DataSourceRef[]) {
@@ -41,11 +41,16 @@ async function loadDefaultControlsByRefs(refs: DataSourceRef[], traceId: string)
         });
 
         if (dsVariables && dsVariables.length) {
+          // Replace non-word characters so the name satisfies WORD_CHARACTERS_REGEX
+          // from ../settings/variables/utils (template variable names must match \w+).
+          const sanitizedType = ds.type.replace(/\W/g, '_');
           defaultVariables.push(
             ...dsVariables.map((v) => {
               const variable = { ...v };
               variable.spec = {
                 ...variable.spec,
+                name: `${sanitizedType}_${variable.spec.name}`,
+                label: variable.spec.label || variable.spec.name,
                 origin: {
                   type: 'datasource' as const,
                   group: ds.type,

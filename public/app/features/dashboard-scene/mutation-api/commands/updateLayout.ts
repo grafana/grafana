@@ -8,17 +8,17 @@
  * If layoutType is omitted, keeps the current type and just applies options.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 
 import { resolveLayoutPath } from './layoutPathResolver';
-import { autoGridOptionsSchema, payloads } from './schemas';
+import { type autoGridOptionsSchema, payloads } from './schemas';
 import {
   enterEditModeIfNeeded,
   requiresNewDashboardLayouts,
@@ -178,6 +178,7 @@ export const updateLayoutCommand: MutationCommand<UpdateLayoutPayload> = {
 
   payloadSchema: payloads.updateLayout,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context: MutationContext) => {
     const { scene } = context;

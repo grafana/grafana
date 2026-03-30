@@ -1,23 +1,42 @@
 import { css } from '@emotion/css';
 import { useCallback, useId, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState, SceneVariableSet } from '@grafana/scenes';
+import {
+  type SceneObject,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneVariable,
+  SceneVariableSet,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Box, Card, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { DashboardScene } from '../../scene/DashboardScene';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { type DashboardScene } from '../../scene/DashboardScene';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 
-import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
+import { type EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
 
 export function openAddVariablePane(dashboard: DashboardScene) {
   const element = new VariableAdd({ dashboardRef: dashboard.getRef() });
+  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
+}
+
+export function openAddSectionVariablePane(dashboard: DashboardScene, sectionOwner: SceneObject) {
+  const element = new SectionVariableAdd({
+    dashboardRef: dashboard.getRef(),
+    sectionOwnerRef: sectionOwner.getRef(),
+  });
   dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
 }
 
@@ -26,6 +45,13 @@ export interface VariableAddState extends SceneObjectState {
 }
 
 export class VariableAdd extends SceneObjectBase<VariableAddState> {}
+
+export interface SectionVariableAddState extends SceneObjectState {
+  dashboardRef: SceneObjectRef<DashboardScene>;
+  sectionOwnerRef: SceneObjectRef<SceneObject>;
+}
+
+export class SectionVariableAdd extends SceneObjectBase<SectionVariableAddState> {}
 
 function useEditPaneOptions(
   this: VariableAddEditableElement,
@@ -63,27 +89,45 @@ export class VariableAddEditableElement implements EditableDashboardElement {
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.variableAdd);
 }
 
-/** @internal Exported for testing */
-export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
+function useSectionEditPaneOptions(
+  this: SectionVariableAddEditableElement,
+  sectionVariableAdd: SectionVariableAdd
+): OptionsPaneCategoryDescriptor[] {
+  const id = useId();
+  const options = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'section-variables' }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id,
+        skipField: true,
+        render: () => <SectionVariableTypeSelection sectionVariableAdd={sectionVariableAdd} />,
+      })
+    );
+  }, [sectionVariableAdd, id]);
+
+  return [options];
+}
+
+export class SectionVariableAddEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Variable';
+
+  public constructor(private sectionVariableAdd: SectionVariableAdd) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return {
+      typeName: t('dashboard.edit-pane.elements.section-variable', 'Section Variables'),
+      icon: 'x',
+      instanceName: t('dashboard.edit-pane.elements.section-variable', 'Section Variables'),
+    };
+  }
+
+  public useEditPaneOptions = useSectionEditPaneOptions.bind(this, this.sectionVariableAdd);
+}
+
+function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
-
-  const onAddVariable = useCallback(
-    (type: EditableVariableType) => {
-      const dashboard = variableAdd.state.dashboardRef.resolve();
-      const variablesSet = sceneGraph.getVariables(dashboard);
-
-      if (!(variablesSet instanceof SceneVariableSet)) {
-        return;
-      }
-
-      const newVar = getVariableScene(type, { name: getNextAvailableId(type, variablesSet.state.variables ?? []) });
-      dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
-      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-      DashboardInteractions.newVariableTypeSelected({ type });
-    },
-    [variableAdd]
-  );
 
   return (
     <Stack direction="column" gap={0}>
@@ -95,7 +139,7 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
           <Card
             noMargin
             isCompact
-            onClick={() => onAddVariable(option.value!)}
+            onClick={() => onSelectType(option.value!)}
             key={option.value}
             title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
             data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
@@ -107,6 +151,74 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
       </Stack>
     </Stack>
   );
+}
+
+/** @internal Exported for testing */
+export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
+  const onAddVariable = useCallback(
+    (type: EditableVariableType) => {
+      const dashboard = variableAdd.state.dashboardRef.resolve();
+      const variablesSet = sceneGraph.getVariables(dashboard);
+
+      if (!(variablesSet instanceof SceneVariableSet)) {
+        return;
+      }
+
+      const dashboardVars = variablesSet.state.variables ?? [];
+      const sectionVars = collectDescendantVariables(dashboard);
+      const allVars = [...dashboardVars, ...sectionVars];
+
+      const newVar = getVariableScene(type, { name: getNextAvailableId(type, allVars) });
+      dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
+      DashboardInteractions.newVariableTypeSelected({ type });
+    },
+    [variableAdd]
+  );
+
+  return <VariableTypeSelectionUI onSelectType={onAddVariable} />;
+}
+
+function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableAdd: SectionVariableAdd }) {
+  const onAddVariable = useCallback(
+    (type: EditableVariableType) => {
+      const dashboard = sectionVariableAdd.state.dashboardRef.resolve();
+      const sectionOwner = sectionVariableAdd.state.sectionOwnerRef.resolve();
+
+      const existing = sectionOwner.state.$variables;
+      const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
+
+      if (!(existing instanceof SceneVariableSet)) {
+        sectionOwner.setState({ $variables: variablesSet });
+      }
+
+      const dashboardVars = sceneGraph.getVariables(dashboard).state.variables ?? [];
+      const sectionVars = variablesSet.state.variables ?? [];
+      const allVars = [...dashboardVars, ...sectionVars];
+
+      const newVar = getVariableScene(type, {
+        name: getNextAvailableId(type, allVars),
+      });
+      dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
+      DashboardInteractions.newSectionVariableTypeSelected({ type });
+    },
+    [sectionVariableAdd]
+  );
+
+  return <VariableTypeSelectionUI onSelectType={onAddVariable} />;
+}
+
+/** @internal Exported for testing */
+export function collectDescendantVariables(sceneObject: SceneObject): SceneVariable[] {
+  const result: SceneVariable[] = [];
+  sceneObject.forEachChild((child) => {
+    if (child.state.$variables instanceof SceneVariableSet) {
+      result.push(...child.state.$variables.state.variables);
+    }
+    result.push(...collectDescendantVariables(child));
+  });
+  return result;
 }
 
 function getStyles(theme: GrafanaTheme2) {

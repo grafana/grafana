@@ -252,7 +252,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
-				service.On("Delete", mock.Anything, mock.Anything, mock.Anything).
+				service.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(test.ResponseErr)
 			}
 

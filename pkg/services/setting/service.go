@@ -50,7 +50,7 @@ const LogPrefix = "setting.service"
 const DefaultPageSize = int64(500)
 const DefaultQPS = float32(200)
 const DefaultBurst = 300
-const DefaultCacheTTL = 1 * time.Second
+const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
 
 const (
@@ -269,7 +269,8 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 	defer span.End()
 
 	if !ok || namespace == "" {
-		return nil, tracing.Errorf(span, "missing namespace in context")
+		oErr = tracing.Errorf(span, "missing namespace in context")
+		return nil, oErr
 	}
 	log := s.log.FromContext(ctx).New(ns.Key, ns.Value, "function", "remoteSettingService.List", "traceId", span.SpanContext().TraceID())
 
@@ -291,7 +292,8 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 
 	selector, err := metav1.LabelSelectorAsSelector(&labelSelector)
 	if err != nil {
-		return nil, tracing.Error(span, err)
+		oErr = tracing.Error(span, err)
+		return nil, oErr
 	}
 	if selector.Empty() {
 		log.Debug("empty selector. Fetching all settings")
@@ -322,7 +324,8 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 
 	allSettings, err := s.fetch(ctx, namespace, lSelector, span)
 	if err != nil {
-		return nil, err
+		oErr = err
+		return nil, oErr
 	}
 
 	if s.cache != nil {

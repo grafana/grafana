@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type SceneDataLayerProvider, type SceneVariable } from '@grafana/scenes';
+import { type DashboardLink } from '@grafana/schema';
 import { Box, Menu, useStyles2 } from '@grafana/ui';
 
 import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
 import { DashboardLinkRenderer } from '../DashboardLinkRenderer';
+import { type DashboardScene } from '../DashboardScene';
 import { DataLayerControl } from '../DataLayerControl';
 import { VariableValueSelectWrapper } from '../VariableControls';
 
@@ -17,6 +18,7 @@ interface DashboardControlsMenuProps {
   annotations: SceneDataLayerProvider[];
   dashboardUID?: string;
   isEditing?: boolean;
+  dashboard: DashboardScene;
 }
 
 export function DashboardControlsMenu({
@@ -25,8 +27,11 @@ export function DashboardControlsMenu({
   annotations,
   dashboardUID,
   isEditing,
+  dashboard,
 }: DashboardControlsMenuProps) {
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const fullLinks = dashboard.state.links ?? [];
+
   return (
     <Box
       minWidth={32}
@@ -56,7 +61,7 @@ export function DashboardControlsMenu({
       {annotations.length > 0 &&
         annotations.map((layer, index) => (
           <div key={layer.state.key}>
-            <DataLayerControl layer={layer} inMenu isEditingNewLayouts={isEditingNewLayouts} />
+            <DataLayerControl layer={layer} inMenu />
           </div>
         ))}
 
@@ -66,7 +71,12 @@ export function DashboardControlsMenu({
           {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
           {sortDefaultLinksFirst(links).map((link, index) => (
             <div key={`${link.title}-${index}`}>
-              <DashboardLinkRenderer link={link} dashboardUID={dashboardUID} inMenu />
+              <DashboardLinkRenderer
+                link={link}
+                dashboardUID={dashboardUID}
+                inMenu
+                linkIndex={fullLinks.indexOf(link)}
+              />
             </div>
           ))}
         </>

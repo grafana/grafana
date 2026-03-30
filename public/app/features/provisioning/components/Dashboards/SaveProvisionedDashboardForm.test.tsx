@@ -1,18 +1,17 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { getAppEvents } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 
-import { Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
+import { type Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
 setupProvisioningMswServer();
 
@@ -20,7 +19,6 @@ jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
-    getAppEvents: jest.fn(),
     config: {
       ...actual.config,
       panels: {
@@ -72,6 +70,10 @@ jest.mock('../../hooks/useLastBranch', () => ({
     getLastBranch: jest.fn().mockReturnValue(undefined),
     setLastBranch: jest.fn(),
   }),
+}));
+
+jest.mock('../../hooks/useGetRepositoryFolders', () => ({
+  useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
 }));
 
 jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
@@ -156,7 +158,6 @@ describe('SaveProvisionedDashboardForm', () => {
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
-    (getAppEvents as jest.Mock).mockReturnValue({ publish: jest.fn() });
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
   });
 
@@ -168,7 +169,8 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.getByRole('textbox', { name: /title/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /description/i })).toBeInTheDocument();
     expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: /path/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /filename/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
@@ -218,17 +220,17 @@ describe('SaveProvisionedDashboardForm', () => {
 
     const titleInput = screen.getByRole('textbox', { name: /title/i });
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
-    const pathInput = screen.getByRole('textbox', { name: /path/i });
+    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
 
     await user.clear(titleInput);
     await user.clear(descriptionInput);
-    await user.clear(pathInput);
+    await user.clear(filenameInput);
     await user.clear(commentInput);
 
     await user.type(titleInput, 'New Dashboard');
     await user.type(descriptionInput, 'New Description');
-    await user.type(pathInput, 'test-dashboard.json');
+    await user.type(filenameInput, 'test-dashboard.json');
     await user.type(commentInput, 'Initial commit');
 
     const submitButton = screen.getByRole('button', { name: /save/i });
@@ -338,17 +340,17 @@ describe('SaveProvisionedDashboardForm', () => {
 
     const titleInput = screen.getByRole('textbox', { name: /title/i });
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
-    const pathInput = screen.getByRole('textbox', { name: /path/i });
+    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
 
     await user.clear(titleInput);
     await user.clear(descriptionInput);
-    await user.clear(pathInput);
+    await user.clear(filenameInput);
     await user.clear(commentInput);
 
     await user.type(titleInput, 'New Dashboard');
     await user.type(descriptionInput, 'New Description');
-    await user.type(pathInput, 'error-dashboard.json');
+    await user.type(filenameInput, 'error-dashboard.json');
     await user.type(commentInput, 'Error commit');
 
     const submitButton = screen.getByRole('button', { name: /save/i });

@@ -1,7 +1,7 @@
-import { SyntheticEvent, useState } from 'react';
+import { type SyntheticEvent, useState } from 'react';
 
 import {
-  DataSourcePluginOptionsEditorProps,
+  type DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginJsonDataOption,
@@ -23,7 +23,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 
-import { MySQLOptions } from '../types';
+import { type MySQLOptions } from '../types';
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MySQLOptions>) => {
   const [isOpen, setIsOpen] = useState(true);

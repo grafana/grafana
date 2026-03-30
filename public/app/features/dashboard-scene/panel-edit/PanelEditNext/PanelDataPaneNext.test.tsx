@@ -1,9 +1,20 @@
-import { DataSourceInstanceSettings, DataTransformerConfig, getDataSourceRef, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { SceneDataTransformer, sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import {
+  type DataSourceInstanceSettings,
+  type DataTransformerConfig,
+  getDataSourceRef,
+  PluginType,
+} from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import {
+  SceneDataTransformer,
+  sceneGraph,
+  type SceneObjectRef,
+  type SceneQueryRunner,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 
-import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
+import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 
@@ -14,6 +25,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getInstanceSettings: mockGetInstanceSettings,
   }),
+  reportInteraction: jest.fn(),
 }));
 
 // Mutable state object for the mock queryRunner
@@ -390,6 +402,48 @@ describe('PanelDataPaneNext', () => {
       });
     });
 
+    describe('transformation tracking', () => {
+      beforeEach(() => {
+        jest.mocked(reportInteraction).mockClear();
+      });
+
+      it('reports grafana_panel_transformations_clicked with action add when addTransformation is called', () => {
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+
+        dataPane.addTransformation('seriesToColumns');
+
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+          context: 'query_editor_next',
+          type: 'seriesToColumns',
+          action: 'add',
+        });
+      });
+
+      it('reports grafana_panel_transformations_clicked with action edit when updateTransformation is called', () => {
+        const oldConfig = mockTransformations[1];
+        const newConfig = { id: 'reduce', options: { mode: 'sum' } };
+
+        dataPane.updateTransformation(oldConfig, newConfig);
+
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+          context: 'query_editor_next',
+          type: 'reduce',
+          action: 'edit',
+        });
+      });
+
+      it('reports grafana_panel_transformations_clicked with action delete when deleteTransformation is called', () => {
+        dataPane.deleteTransformation(1);
+
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_panel_transformations_clicked', {
+          context: 'query_editor_next',
+          type: 'reduce',
+          action: 'delete',
+          total_transformations: 2,
+        });
+      });
+    });
+
     describe('toggleTransformationDisabled', () => {
       it('should toggle the disabled state of a transformation', () => {
         dataPane.toggleTransformationDisabled(1);
@@ -501,6 +555,90 @@ describe('PanelDataPaneNext', () => {
             datasource: expressionDs,
           }),
         ]),
+      });
+    });
+  });
+
+  describe('resolveUniformDatasource', () => {
+    it('should collapse from Mixed when all queries use the same datasource', () => {
+      mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'B', datasource: { type: 'prometheus', uid: 'prom-1' } },
+      ];
+
+      dataPane.updateQueries([...mockQueryRunnerState.queries] as DataQuery[]);
+
+      // First call sets queries, second call collapses from Mixed
+      expect(mockQueryRunner.setState).toHaveBeenCalledTimes(2);
+      expect(mockQueryRunner.setState).toHaveBeenLastCalledWith({
+        datasource: { type: 'prometheus', uid: 'prom-1' },
+      });
+    });
+
+    it('should not collapse from Mixed when queries use different datasources', () => {
+      mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'B', datasource: { type: 'graphite', uid: 'graphite-1' } },
+      ];
+
+      dataPane.updateQueries([...mockQueryRunnerState.queries] as DataQuery[]);
+
+      // Only the queries update, no collapse
+      expect(mockQueryRunner.setState).toHaveBeenCalledTimes(1);
+    });
+
+    it('should ignore expression queries when checking for uniform datasource', () => {
+      mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'B', datasource: { type: '__expr__', uid: '__expr__' } },
+        { refId: 'C', datasource: { type: 'prometheus', uid: 'prom-1' } },
+      ];
+
+      dataPane.updateQueries([...mockQueryRunnerState.queries] as DataQuery[]);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledTimes(2);
+      expect(mockQueryRunner.setState).toHaveBeenLastCalledWith({
+        datasource: { type: 'prometheus', uid: 'prom-1' },
+      });
+    });
+
+    it('should not collapse when not in Mixed mode', () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-1', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.updateQueries([...mockQueryRunnerState.queries] as DataQuery[]);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not collapse when there are no regular queries (only expressions)', () => {
+      mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: '__expr__', uid: '__expr__' } }];
+
+      dataPane.updateQueries([...mockQueryRunnerState.queries] as DataQuery[]);
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledTimes(1);
+    });
+
+    it('should collapse after deleteQuery when remaining queries are uniform', () => {
+      mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
+      mockQueryRunnerState.queries = [
+        { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } },
+        { refId: 'B', datasource: { type: 'graphite', uid: 'graphite-1' } },
+      ] as DataQuery[];
+
+      // Simulate deleting query B — after mutateQuery, queries would be just [A]
+      // The mock setState doesn't actually update mockQueryRunnerState, so we
+      // update it manually to simulate the post-mutation state
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }] as DataQuery[];
+
+      dataPane.deleteQuery('B');
+
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        datasource: { type: 'prometheus', uid: 'prom-1' },
       });
     });
   });

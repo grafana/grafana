@@ -1,4 +1,4 @@
-import { FieldConfigSource as FieldConfigSourceV1, SpecialValueMatch as SpecialValueMatchV1 } from '@grafana/data';
+import { type FieldConfigSource as FieldConfigSourceV1, SpecialValueMatch as SpecialValueMatchV1 } from '@grafana/data';
 import {
   VariableHide as VariableHideV1,
   VariableRefresh as VariableRefreshV1,
@@ -8,13 +8,13 @@ import {
   ThresholdsMode as ThresholdsModeV1,
 } from '@grafana/schema';
 import {
-  DashboardCursorSync,
-  VariableHide,
-  VariableRefresh,
-  VariableSort,
-  FieldConfigSource,
-  SpecialValueMatch,
-  ThresholdsMode,
+  type DashboardCursorSync,
+  type VariableHide,
+  type VariableRefresh,
+  type VariableSort,
+  type FieldConfigSource,
+  type SpecialValueMatch,
+  type ThresholdsMode,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {

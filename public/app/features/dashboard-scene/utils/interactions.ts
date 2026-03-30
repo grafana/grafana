@@ -1,6 +1,9 @@
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
+import {
+  type DashboardTrackingInfo,
+  type DynamicDashboardsTrackingInformation,
+} from '../serialization/DashboardSceneSerializer';
 
 let isScenesContextSet = false;
 
@@ -77,8 +80,12 @@ export const DashboardInteractions = {
 
   // grafana_dashboards_outline_item_clicked
   // when a user clicks on an element of the outline
-  outlineItemClicked: (properties: { index: number; depth: number }) => {
-    reportDashboardInteraction('outline_item_clicked', properties);
+  outlineItemClicked: (props: { index: number; depth: number; isEditing?: boolean }) => {
+    reportDashboardInteraction('outline_item_clicked', {
+      index: props.index,
+      depth: props.depth,
+      mode: props.isEditing ? 'edit' : 'view',
+    });
   },
 
   // dashboards_add_variable_button_clicked
@@ -87,10 +94,20 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
+  addLinkButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_link_button_clicked', properties);
+  },
+
   // dashboards_new_variable_type_selected
   // when a user selects a variable type when creating a new variable
   newVariableTypeSelected: (properties: { type: string }) => {
     reportDashboardInteraction('new_variable_type_selected', properties);
+  },
+
+  // dashboards_new_section_variable_type_selected
+  // when a user selects a variable type when creating a new section (row/tab) variable
+  newSectionVariableTypeSelected: (properties: { type: string }) => {
+    reportDashboardInteraction('new_section_variable_type_selected', properties);
   },
 
   // dashboards_delete_variable_button_clicked
@@ -148,8 +165,12 @@ export const DashboardInteractions = {
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
-  trackPastePanelClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
+  trackPastePanelClick(
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    target?: 'row' | 'tab' | 'dashboard',
+    action: 'drop' | 'click' = 'click'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
   trackDeleteDashboardElement(elementType: string) {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });

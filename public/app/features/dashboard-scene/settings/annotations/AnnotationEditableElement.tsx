@@ -1,13 +1,16 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { dataLayers } from '@grafana/scenes';
+import { type dataLayers } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 
 import {
   AnnotationColorPicker,
@@ -21,7 +24,7 @@ import { annotationEditActions } from './actions';
 
 export type AnnotationLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
-function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategoryDescriptor[] {
+function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const annotationCategoryId = useId();
   const annotationNameId = useId();
   const enabledId = useId();
@@ -36,7 +39,7 @@ function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategor
         new OptionsPaneItemDescriptor({
           title: '',
           id: annotationNameId,
-          render: () => <AnnotationNameInput layer={this.layer} />,
+          render: () => <AnnotationNameInput layer={this.layer} autoFocus={isNewElement} />,
         })
       )
       .addItem(
@@ -67,7 +70,7 @@ function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategor
           render: () => <AnnotationPanelFilterPicker layer={this.layer} />,
         })
       );
-  }, [annotationCategoryId, annotationNameId, enabledId, colorId, displayId, showInId]);
+  }, [annotationCategoryId, annotationNameId, enabledId, colorId, displayId, showInId, isNewElement]);
 
   const queryEditorId = useId();
 

@@ -1,5 +1,5 @@
 import deepEqual from 'fast-deep-equal';
-import memoize, { AnyFn, Memoized } from 'micro-memoize';
+import memoize, { type AnyFn, type Memoized } from 'micro-memoize';
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 

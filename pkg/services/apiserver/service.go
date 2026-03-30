@@ -243,6 +243,9 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
+	if registrar, ok := b.(builder.HTTPRouteRegistrar); ok {
+		registrar.RegisterHTTPRoutes(s.rr)
+	}
 }
 
 func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
@@ -320,6 +323,10 @@ func (s *service) start(ctx context.Context) error {
 	apiResourceConfig.EnableVersions(groupVersions...)
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
+		return err
+	}
+
+	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
 	}
 
@@ -459,7 +466,7 @@ func (s *service) start(ctx context.Context) error {
 			if !isDataplaneAggregatorEnabled {
 				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
 				if err != nil {
-					s.log.Error("aggregator runner failed to run", "error", err)
+					s.log.Error("aggregator runner failed to run", "err", err)
 					return err
 				}
 			} else {
@@ -595,6 +602,10 @@ func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.handler.ServeHTTP(w, r)
+}
+
+func (s *service) IsReady() bool {
+	return s.handler != nil
 }
 
 func (s *service) running(ctx context.Context) error {

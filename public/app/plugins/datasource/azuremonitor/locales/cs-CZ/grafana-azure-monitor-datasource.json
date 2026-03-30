@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "ID klienta",
       "aria-label-client-secret": "Tajné heslo klienta",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "Tajné heslo klienta",
       "aria-label-tenant-id": "ID tenanta",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "ID aplikace (klienta)",
       "label-client-secret": "Tajné heslo klienta",
+      "label-private-key": "",
       "label-symbol-client-secret": "Tajné heslo klienta",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "ID adresáře (tenanta)",
       "placeholder-symbol-client-secret": "nastaveno",
       "reset-symbol-client-secret": "Obnovit"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Vyberte typ ověření pro služby Azure",
-      "label-authentication": "Ověření",
+      "label-authentication": "",
       "title-authentication": "Ověření"
     },
     "basic-logs-toggle": {

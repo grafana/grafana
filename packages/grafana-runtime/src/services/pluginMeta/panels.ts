@@ -51,6 +51,10 @@ async function initPanelPluginMetas(): Promise<void> {
   panelsByAliasIDs = resolveAliasIDs(panels);
 }
 
+function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
+  return panels.filter((p) => p.hideFromList === false);
+}
+
 export async function getPanelPluginMetas(): Promise<PanelPluginMeta[]> {
   if (!initialized()) {
     await initPanelPluginMetas();
@@ -59,11 +63,30 @@ export async function getPanelPluginMetas(): Promise<PanelPluginMeta[]> {
   return Object.values(structuredClone(panels));
 }
 
+export async function getListedPanelPluginMetas(): Promise<PanelPluginMeta[]> {
+  const panels = await getPanelPluginMetas();
+  return getListedPanels(panels).sort((a, b) => a.sort - b.sort);
+}
+
 export async function getPanelPluginMetasMap(): Promise<PanelPluginMetas> {
   if (!initialized()) {
     await initPanelPluginMetas();
   }
 
+  return structuredClone(panels);
+}
+
+/**
+ * Get a map of panel plugins keyed by plugin id.
+ * This is a synchronous function that should only be used as an escape hatch in cases where the caller is guaranteed to be called after the panel plugins have been initialized.
+ * In other cases, getPanelPluginMetasMap() should be used instead to ensure the panel plugins have been initialized before accessing them.
+ * @throws Error if the panel plugins have not been initialized yet
+ * @returns a map of panel plugins keyed by plugin id
+ */
+export function getPanelPluginMetasMapSync(): PanelPluginMetas {
+  if (!initialized() && process.env.NODE_ENV === 'development') {
+    throw new Error('getPanelPluginMetasMapSync() was called before panel plugins map was initialized!');
+  }
   return structuredClone(panels);
 }
 
@@ -112,7 +135,7 @@ export async function getPanelPluginVersion(pluginId: string): Promise<string | 
  */
 export async function getListedPanelPluginIds(): Promise<string[]> {
   const panels = await getPanelPluginMetas();
-  return panels.filter((p) => p.hideFromList === false).map((p) => p.id);
+  return getListedPanels(panels).map((p) => p.id);
 }
 
 export function setPanelPluginMetas(override: PanelPluginMetas): void {
@@ -129,10 +152,6 @@ export async function refetchPanelPluginMetas(): Promise<void> {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     panels = settings.panels;
     panelsByAliasIDs = resolveAliasIDs(panels);
-
-    // TODO(@hugohaggmark) remove this as soon as all config.panels occurances have been replaced in core Grafana
-    // eslint-disable-next-line no-restricted-syntax
-    config.panels = settings.panels;
     return;
   }
 

@@ -1,6 +1,6 @@
-import { collectorTypes } from '@opentelemetry/exporter-collector';
+import { type collectorTypes } from '@opentelemetry/exporter-collector';
 
-import { PluginType, DataSourceInstanceSettings, PluginMetaInfo } from '@grafana/data';
+import { type Field, PluginType, type DataSourceInstanceSettings, type PluginMetaInfo } from '@grafana/data';
 
 import {
   transformToOTLP,
@@ -15,7 +15,7 @@ import {
   otlpResponse,
   traceQlResponse,
 } from './test/testResponse';
-import { TraceSearchMetadata } from './types';
+import { type TraceSearchMetadata } from './types';
 
 const defaultSettings: DataSourceInstanceSettings = {
   uid: '0',
@@ -51,6 +51,64 @@ describe('transformFromOTLP()', () => {
       ...otlpDataFrameFromResponse,
       creator: expect.any(Function),
     });
+  });
+
+  test('extracts service.namespace from resource attributes into serviceNamespace column', () => {
+    const batchesWithNamespace = [
+      {
+        ...otlpResponse.batches[0],
+        resource: {
+          attributes: [
+            { key: 'service.name', value: { stringValue: 'cart-service' } },
+            { key: 'service.namespace', value: { stringValue: 'production' } },
+            { key: 'host.name', value: { stringValue: 'host1' } },
+          ],
+        },
+      },
+    ];
+    const res = transformFromOTLP(
+      batchesWithNamespace as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+      false
+    );
+    expect(res.data).toHaveLength(1);
+    const frame = res.data[0];
+    const serviceNamespaceField = frame.fields.find((f: Field) => f.name === 'serviceNamespace');
+    expect(serviceNamespaceField).toBeDefined();
+    expect(serviceNamespaceField!.values[0]).toBe('production');
+    const serviceNameField = frame.fields.find((f: Field) => f.name === 'serviceName');
+    expect(serviceNameField!.values[0]).toBe('cart-service');
+  });
+
+  test('coalesces service.namespace.name when service.namespace is not present', () => {
+    const batchesWithAltNamespace = [
+      {
+        ...otlpResponse.batches[0],
+        resource: {
+          attributes: [
+            { key: 'service.name', value: { stringValue: 'api' } },
+            { key: 'service.namespace.name', value: { stringValue: 'staging' } },
+          ],
+        },
+      },
+    ];
+    const res = transformFromOTLP(
+      batchesWithAltNamespace as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+      false
+    );
+    expect(res.data).toHaveLength(1);
+    const serviceNamespaceField = res.data[0].fields.find((f: Field) => f.name === 'serviceNamespace');
+    expect(serviceNamespaceField).toBeDefined();
+    expect(serviceNamespaceField!.values[0]).toBe('staging');
+  });
+
+  test('leaves serviceNamespace undefined when no namespace attribute is present', () => {
+    const res = transformFromOTLP(
+      otlpResponse.batches as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+      false
+    );
+    const serviceNamespaceField = res.data[0].fields.find((f: Field) => f.name === 'serviceNamespace');
+    expect(serviceNamespaceField).toBeDefined();
+    expect(serviceNamespaceField!.values[0]).toBeUndefined();
   });
 });
 

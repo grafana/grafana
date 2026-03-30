@@ -1,7 +1,7 @@
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useGetActiveJob } from '../useGetActiveJob';
 
@@ -46,7 +46,13 @@ export function SyncRepository({ repository }: Props) {
             ? undefined
             : t('provisioning.sync-repository.tooltip-unhealthy-repository', 'Unable to pull an unhealthy repository')
         }
-        disabled={jobQuery.isLoading || activeJob?.status?.state === 'working' || !name || !isHealthy}
+        disabled={
+          jobQuery.isLoading ||
+          activeJob?.status?.state === 'working' ||
+          activeJob?.status?.state === 'pending' ||
+          !name ||
+          !isHealthy
+        }
         onClick={onClick}
       >
         <Trans i18nKey="provisioning.sync-repository.pull">Pull</Trans>

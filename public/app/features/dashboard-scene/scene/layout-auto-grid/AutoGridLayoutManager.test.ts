@@ -1,27 +1,189 @@
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { DashboardEditActionEvent } from '../../edit-pane/shared';
-import { DashboardScene } from '../DashboardScene';
+import { getQueryRunnerFor } from '../../utils/utils';
+import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 describe('AutoGridLayoutManager', () => {
-  it('can remove panel', () => {
-    const { manager, panel1 } = setup();
+  describe('removePanel', () => {
+    it('can remove panel', () => {
+      const { manager, panel1 } = setup();
 
-    manager.subscribeToEvent(DashboardEditActionEvent, (event) => {
-      event.payload.perform();
+      manager.subscribeToEvent(DashboardEditActionEvent, (event) => {
+        event.payload.perform();
+      });
+
+      manager.removePanel(panel1);
+
+      expect(manager.state.layout.state.children.length).toBe(1);
+    });
+  });
+
+  describe('duplicate', () => {
+    it('returns a new AutoGridLayoutManager instance', () => {
+      const { manager } = setup();
+
+      const duplicated = manager.duplicate() as AutoGridLayoutManager;
+
+      expect(duplicated).toBeInstanceOf(AutoGridLayoutManager);
+      expect(duplicated).not.toBe(manager);
+      expect(duplicated.state.key).not.toBe(manager.state.key);
     });
 
-    manager.removePanel(panel1);
+    it('deep-clones all children', () => {
+      const { manager, gridItems } = setup();
 
-    expect(manager.state.layout.state.children.length).toBe(1);
+      const duplicated = manager.duplicate() as AutoGridLayoutManager;
+
+      const clonedChildren = duplicated.state.layout.state.children;
+
+      expect(clonedChildren.length).toBe(2);
+
+      expect(clonedChildren[0]).not.toBe(gridItems[0]);
+      expect(clonedChildren[0].state.body).not.toBe(gridItems[0].state.body);
+
+      expect(clonedChildren[1]).not.toBe(gridItems[1]);
+      expect(clonedChildren[1].state.body).not.toBe(gridItems[1].state.body);
+    });
+
+    describe('when grid items contain panels', () => {
+      it('assigns unique sequential panel keys, starting after the highest existing id', () => {
+        const { manager } = setup();
+
+        const duplicated = manager.duplicate() as AutoGridLayoutManager;
+
+        const panelKeys = duplicated.getVizPanels().map((p) => p.state.key);
+        expect(panelKeys).toEqual(['panel-3', 'panel-4']);
+      });
+    });
+  });
+  describe('createFromLayout', () => {
+    it('preserves panel pluginId, title and options when creating from DefaultGridLayoutManager', () => {
+      const defaultLayout = setupSceneWithDefaultGrid([getDefaultVizPanel()]);
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(defaultLayout);
+
+      const children = autoLayout.state.layout.state.children;
+      expect(children).toHaveLength(1);
+      const panel = (children[0] as AutoGridItem).state.body;
+      expect(panel.state.pluginId).toBe(panelPluginId);
+      expect(panel.state.title).toBe(panelTitle);
+      expect(panel.state.options).toEqual(panelOptions);
+    });
+
+    it('preserves panel queries when creating from DefaultGridLayoutManager', () => {
+      const defaultLayout = setupSceneWithDefaultGrid([getDefaultVizPanel()]);
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(defaultLayout);
+
+      const children = autoLayout.state.layout.state.children;
+      const panel = (children[0] as AutoGridItem).state.body;
+      const runner = getQueryRunnerFor(panel);
+      expect(runner).toBeDefined();
+      expect(runner?.state.queries).toEqual(queries);
+    });
+
+    it('preserves order of panels when creating AutoGridLayoutManager from DefaultGridLayoutManager', () => {
+      const panelA = new VizPanel({ key: 'panel-a', title: 'Panel A', pluginId: 'table' });
+      const panelB = new VizPanel({ key: 'panel-b', title: 'Panel B', pluginId: 'timeseries' });
+      const panelC = new VizPanel({ key: 'panel-c', title: 'Panel C', pluginId: 'stat' });
+
+      const layout = setupSceneWithDefaultGrid([panelA, panelB, panelC]);
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(layout);
+
+      const children = autoLayout.state.layout.state.children;
+      expect(children).toHaveLength(3);
+      expect(children[0]).toBeInstanceOf(AutoGridItem);
+      expect(children[1]).toBeInstanceOf(AutoGridItem);
+      expect(children[2]).toBeInstanceOf(AutoGridItem);
+      expect((children[0] as AutoGridItem).state.body.state.title).toBe('Panel A');
+      expect((children[1] as AutoGridItem).state.body.state.title).toBe('Panel B');
+      expect((children[2] as AutoGridItem).state.body.state.title).toBe('Panel C');
+    });
+
+    it('preserves repeat variable (variableName) when creating AutoGridLayoutManager from DefaultGridLayoutManager', () => {
+      const variableName = 'myRepeatVar';
+
+      const dashboard = new DashboardScene({
+        body: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: 'gi-1',
+                x: 0,
+                y: 0,
+                width: 8,
+                height: 6,
+                body: getDefaultVizPanel(),
+                variableName,
+              }),
+            ],
+          }),
+        }),
+      });
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(dashboard.state.body);
+
+      const children = autoLayout.state.layout.state.children;
+      expect(children).toHaveLength(1);
+      expect(children[0]).toBeInstanceOf(AutoGridItem);
+      expect((children[0] as AutoGridItem).state.variableName).toBe(variableName);
+    });
+
+    it('does not set variableName when DashboardGridItem has no repeat variable', () => {
+      const layout = setupSceneWithDefaultGrid([getDefaultVizPanel()]);
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(layout);
+
+      const children = autoLayout.state.layout.state.children;
+      expect(children).toHaveLength(1);
+      expect((children[0] as AutoGridItem).state.variableName).toBeUndefined();
+    });
+
+    it('clones panels and does not reuse original panel instances', () => {
+      const panelA = new VizPanel({ key: 'panel-a', title: 'Panel A', pluginId: 'table' });
+      const panelB = new VizPanel({ key: 'panel-b', title: 'Panel B', pluginId: 'timeseries' });
+
+      const layout = setupSceneWithDefaultGrid([panelA, panelB]);
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(layout);
+
+      const children = autoLayout.state.layout.state.children;
+      const clonedBodyA = (children[0] as AutoGridItem).state.body;
+      const clonedBodyB = (children[1] as AutoGridItem).state.body;
+
+      expect(clonedBodyA).not.toBe(panelA);
+      expect(clonedBodyB).not.toBe(panelB);
+      expect(clonedBodyA.state.title).toBe(panelA.state.title);
+      expect(clonedBodyB.state.title).toBe(panelB.state.title);
+    });
+
+    it('sets isDraggable to true when dashboard is in edit mode', () => {
+      const layout = setupSceneWithDefaultGrid([getDefaultVizPanel()], { isEditing: true });
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(layout);
+
+      expect(autoLayout.state.layout.state.isDraggable).toBe(true);
+    });
+
+    it('sets isDraggable to false when dashboard is not in edit mode', () => {
+      const layout = setupSceneWithDefaultGrid([getDefaultVizPanel()], { isEditing: false });
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(layout);
+
+      expect(autoLayout.state.layout.state.isDraggable).toBe(false);
+    });
   });
 });
 
-function setup() {
+export function setup() {
   const panel1 = new VizPanel({
     title: 'Panel A',
     key: 'panel-1',
@@ -31,7 +193,7 @@ function setup() {
 
   const panel2 = new VizPanel({
     title: 'Panel A',
-    key: 'panel-1',
+    key: 'panel-2',
     pluginId: 'table',
     $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
   });
@@ -51,9 +213,41 @@ function setup() {
     }),
   ];
 
-  const manager = new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: gridItems }) });
+  const manager = new AutoGridLayoutManager({
+    key: 'test-AutoGridLayoutManager',
+    layout: new AutoGridLayout({ children: gridItems }),
+  });
 
   new DashboardScene({ body: manager });
 
-  return { manager, panel1, panel2 };
+  return { manager, gridItems, panel1, panel2 };
 }
+
+const panelOptions = { legend: { displayMode: 'list', placement: 'bottom' } };
+const panelTitle = 'Test panel';
+const panelPluginId = 'timeseries';
+const queries = [{ refId: 'A', datasource: { type: 'test', uid: 'ds1' } }];
+
+const getDefaultVizPanel = () =>
+  new VizPanel({
+    key: 'panel-1',
+    pluginId: panelPluginId,
+    title: panelTitle,
+    options: panelOptions,
+    $data: new SceneQueryRunner({ key: 'test', queries }),
+  });
+
+const setupSceneWithDefaultGrid = (panels: VizPanel[], sceneOptions?: Partial<DashboardSceneState>) => {
+  const dashboard = new DashboardScene({
+    ...sceneOptions,
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: panels.map(
+          (panel, index) =>
+            new DashboardGridItem({ key: `gi-${index + 1}`, x: 0, y: 0, width: 8, height: 6, body: panel })
+        ),
+      }),
+    }),
+  });
+  return dashboard.state.body;
+};

@@ -20,7 +20,7 @@ export interface JSONData {
 	backend?: boolean;
 	buildMode?: string;
 	builtIn?: boolean;
-	category?: "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other";
+	category?: string;
 	enterpriseFeatures?: EnterpriseFeatures;
 	executable?: string;
 	hideFromList?: boolean;
@@ -298,6 +298,8 @@ export interface Spec {
 	translations?: Record<string, string>;
 	// +listType=atomic
 	children?: string[];
+	// +listType=atomic
+	aliasIds?: string[];
 }
 
 export const defaultSpec = (): Spec => ({

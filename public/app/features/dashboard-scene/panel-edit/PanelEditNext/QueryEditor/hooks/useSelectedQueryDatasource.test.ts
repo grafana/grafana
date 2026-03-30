@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { useSelectedQueryDatasource } from './useSelectedQueryDatasource';
 
@@ -237,24 +237,37 @@ describe('useSelectedQueryDatasource', () => {
       await waitFor(() => expect(result.current.selectedQueryDsData?.datasource).toBe(mockTestDataDatasource));
     });
 
-    it('should not re-fetch when switching between queries that both inherit from the panel', async () => {
-      // Both queries have no explicit datasource — the dep array values are identical
-      // (selectedDsUid: undefined, panelDsUid: 'testdata-uid'), so useAsync should not re-run.
+    it('should re-load the datasource after returning from alerts/transformation view when query has no explicit datasource', async () => {
+      // Regression: switching to alerts or transformation sets selectedQuery=null, which runs the
+      // async fn and caches value=undefined. When returning to the data view, queryA (no explicit
+      // datasource) produced identical uid/type deps as null — so useAsync skipped the reload and
+      // the cached undefined caused a datasource load error. Including refId in the deps fixes this.
       const queryA: DataQuery = { refId: 'A' };
-      const queryB: DataQuery = { refId: 'B' };
+      const queryBWithExplicitDs: DataQuery = { refId: 'B', datasource: { uid: 'prometheus-uid', type: 'prometheus' } };
 
-      const { rerender } = renderHook(({ query }) => useSelectedQueryDatasource(query, mockTestDataSettings), {
-        initialProps: { query: queryA },
+      const { result, rerender } = renderHook(({ query, settings }) => useSelectedQueryDatasource(query, settings), {
+        initialProps: { query: queryA as DataQuery | null, settings: mockTestDataSettings },
       });
 
-      await waitFor(() => {});
-      const callCountAfterA = (mockGetDataSourceSrv().get as jest.Mock).mock.calls.length;
+      await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
+      expect(result.current.selectedQueryDsData?.dsSettings.uid).toBe('testdata-uid');
 
-      rerender({ query: queryB });
-      await waitFor(() => {});
-      const callCountAfterB = (mockGetDataSourceSrv().get as jest.Mock).mock.calls.length;
+      // User clicks query B (explicit datasource)
+      rerender({ query: queryBWithExplicitDs, settings: mockTestDataSettings });
+      await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
+      expect(result.current.selectedQueryDsData?.dsSettings.uid).toBe('prometheus-uid');
 
-      expect(callCountAfterB).toBe(callCountAfterA);
+      // User navigates to alerts/transformation view — selectedQuery becomes null
+      rerender({ query: null, settings: mockTestDataSettings });
+      await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
+      expect(result.current.selectedQueryDsData).toBeNull();
+
+      // User returns to data view — falls back to queryA (no explicit ds)
+      rerender({ query: queryA, settings: mockTestDataSettings });
+      await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
+
+      expect(result.current.selectedQueryDsData?.datasource).toBe(mockTestDataDatasource);
+      expect(result.current.selectedQueryDsData?.dsSettings.uid).toBe('testdata-uid');
     });
   });
 

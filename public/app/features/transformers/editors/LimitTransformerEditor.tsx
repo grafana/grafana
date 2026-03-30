@@ -3,11 +3,11 @@ import { useCallback, useState } from 'react';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { LimitTransformerOptions } from '@grafana/data/internal';
+import { type LimitTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineFieldRow } from '@grafana/ui';
 

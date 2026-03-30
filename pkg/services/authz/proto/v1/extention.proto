@@ -92,7 +92,7 @@ message DeleteUserOrgRoleOperation {
 }
 
 message CreateRoleBindingOperation {
-  // kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+  // kind of the identity getting the permission (User/Team/ServiceAccount)
   string subject_kind = 1;
   // uid of the identity
   string subject_name = 2;
@@ -103,7 +103,7 @@ message CreateRoleBindingOperation {
 }
 
 message DeleteRoleBindingOperation {
-  // kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+  // kind of the identity getting the permission (User/Team/ServiceAccount)
   string subject_kind = 1;
   // uid of the identity
   string subject_name = 2;
