@@ -130,8 +130,8 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	}
 
 	logger.Debug("users permissions search request",
-		"orgId", c.SignedInUser.GetOrgID(),
-		"callerUserId", c.SignedInUser.UserID,
+		"orgId", c.GetOrgID(),
+		"callerUserId", c.UserID,
 		"namespacedId", c.Query("namespacedId"),
 		"userId", searchOptions.UserID,
 		"action", searchOptions.Action,
@@ -149,7 +149,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	// resources are authoritative in Zanzana while non-migrated ones still
 	// come from legacy.
 	if api.zanzanaResolver != nil {
-		zanzanaPerms, zanzanaErr := api.zanzanaResolver.searchUsersPermissions(ctx, c.SignedInUser, c.SignedInUser.GetOrgID(), searchOptions)
+		zanzanaPerms, zanzanaErr := api.zanzanaResolver.searchUsersPermissions(ctx, c.SignedInUser, c.GetOrgID(), searchOptions)
 		if zanzanaErr == nil {
 			permissions = mergePermissions(permissions, zanzanaPerms)
 		} else {
