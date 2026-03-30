@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,12 +50,17 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	start := time.Now()
+	pluginID := r.builder.pluginJSON.ID
+
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		backend.Logger.Error("failed to get plugin context for datasource in resource handler", "name", name, "error", err)
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			dsSubresourceRequests.WithLabelValues("resource", pluginID, "not_found").Inc()
 			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
 		}
+		dsSubresourceRequests.WithLabelValues("resource", pluginID, "error").Inc()
 		return nil, err
 	}
 
@@ -65,6 +71,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		clonedReq, err := resourceRequest(req)
 		if err != nil {
 			backend.Logger.Error("failed to create resource request", "error", err)
+			dsSubresourceRequests.WithLabelValues("resource", pluginID, "error").Inc()
 			responder.Error(err)
 			return
 		}
@@ -72,6 +79,7 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			backend.Logger.Error("failed to read request body", "error", err)
+			dsSubresourceRequests.WithLabelValues("resource", pluginID, "error").Inc()
 			responder.Error(err)
 			return
 		}
@@ -87,8 +95,13 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 
 		if err != nil {
 			backend.Logger.Error("plugin resource request failed", "error", err)
+			dsSubresourceRequests.WithLabelValues("resource", pluginID, "error").Inc()
 			responder.Error(err)
+			return
 		}
+
+		dsSubresourceRequests.WithLabelValues("resource", pluginID, "success").Inc()
+		dsSubresourceRequestDuration.WithLabelValues("resource", pluginID).Observe(time.Since(start).Seconds())
 	}), nil
 }
 

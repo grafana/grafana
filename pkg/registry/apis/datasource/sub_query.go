@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -56,12 +57,16 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.getPluginContext(ctx, name)
+	start := time.Now()
+	pluginID := r.builder.pluginJSON.ID
 
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			dsSubresourceRequests.WithLabelValues("query", pluginID, "not_found").Inc()
 			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
 		}
+		dsSubresourceRequests.WithLabelValues("query", pluginID, "error").Inc()
 		return nil, err
 	}
 
@@ -69,16 +74,19 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		dqr := data.QueryDataRequest{}
 		err := web.Bind(req, &dqr)
 		if err != nil {
+			dsSubresourceRequests.WithLabelValues("query", pluginID, "error").Inc()
 			responder.Error(err)
 			return
 		}
 
 		queries, dsRef, err := data.ToDataSourceQueries(dqr)
 		if err != nil {
+			dsSubresourceRequests.WithLabelValues("query", pluginID, "error").Inc()
 			responder.Error(err)
 			return
 		}
 		if dsRef != nil && dsRef.UID != name {
+			dsSubresourceRequests.WithLabelValues("query", pluginID, "error").Inc()
 			responder.Error(fmt.Errorf("expected query body datasource and request to match"))
 			return
 		}
@@ -92,9 +100,10 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			Headers:       map[string]string{},
 		})
 
-		// all errors get converted into k8 errors when sent in responder.Error and lose important context like downstream info
 		var e errutil.Error
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
+			dsSubresourceRequests.WithLabelValues("query", pluginID, "error").Inc()
+			dsSubresourceRequestDuration.WithLabelValues("query", pluginID).Observe(time.Since(start).Seconds())
 			responder.Object(int(backend.StatusBadRequest),
 				&dsV0.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
 					"A": {
@@ -108,9 +117,13 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 
 		if err != nil {
+			dsSubresourceRequests.WithLabelValues("query", pluginID, "error").Inc()
 			responder.Error(err)
 			return
 		}
+
+		dsSubresourceRequests.WithLabelValues("query", pluginID, "success").Inc()
+		dsSubresourceRequestDuration.WithLabelValues("query", pluginID).Observe(time.Since(start).Seconds())
 		responder.Object(dsV0.GetResponseCode(rsp),
 			&dsV0.QueryDataResponse{QueryDataResponse: *rsp},
 		)
