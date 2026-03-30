@@ -129,6 +129,16 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 
+	logger.Debug("users permissions search request",
+		"orgId", c.SignedInUser.GetOrgID(),
+		"callerUserId", c.SignedInUser.UserID,
+		"namespacedId", c.Query("namespacedId"),
+		"userId", searchOptions.UserID,
+		"action", searchOptions.Action,
+		"actionPrefix", searchOptions.ActionPrefix,
+		"scope", searchOptions.Scope,
+	)
+
 	// Always query legacy as the baseline — not all permissions are migrated to Zanzana yet.
 	permissions, err := api.Service.SearchUsersPermissions(ctx, c.SignedInUser, searchOptions)
 	if err != nil {
