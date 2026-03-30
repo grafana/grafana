@@ -39,18 +39,26 @@ jobs:
       contents: read
     outputs:
       changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+      main-sha: ${{ steps.get-main-sha.outputs.sha }}
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: true
           fetch-depth: 0
 
+      - name: Get main SHA
+        id: get-main-sha
+        run: |
+          git fetch origin "${{ github.event.pull_request.base.ref }}"
+          MAIN_SHA=$(git rev-parse "origin/${{ github.event.pull_request.base.ref }}")
+          echo "sha=$MAIN_SHA" >> "$GITHUB_OUTPUT"
+          echo "Main branch SHA: $MAIN_SHA"
+
       - name: Merge main into PR branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin "${{ github.event.pull_request.base.ref }}"
-          git merge "origin/${{ github.event.pull_request.base.ref }}" --no-edit
+          git merge "${{ steps.get-main-sha.outputs.sha }}" --no-edit
 
       - name: Detect changed files
         id: changed-files
@@ -249,7 +257,7 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.base.ref }}
+          ref: ${{ needs.detect-changes.outputs.main-sha }}
           path: './main'
           persist-credentials: false
 
@@ -272,7 +280,7 @@ jobs:
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'
-          GITHUB_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_SHA: ${{ needs.detect-changes.outputs.main-sha }}
 
       - name: Save main coverage summary
         if: steps.check-affected.outputs.affected == 'true'
