@@ -101,7 +101,7 @@ const organizeFields = async (
     return Promise.resolve(null);
   }
 
-  const displayedFields = getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName);
+  const displayedFields = getDisplayedFields(options, timeFieldName, levelFieldName);
 
   let indexByName: Record<string, number> = {};
   let includeByName: Record<string, boolean> = {};

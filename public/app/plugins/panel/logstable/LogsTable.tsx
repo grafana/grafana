@@ -207,9 +207,7 @@ export const LogsTable = ({
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
-            displayedFields={untransformDisplayedFields(
-              getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName)
-            )}
+            displayedFields={untransformDisplayedFields(getDisplayedFields(options, timeFieldName, levelFieldName))}
             height={height}
             logsFrame={logsFrame}
             timeFieldName={timeFieldName}
