@@ -1,6 +1,6 @@
 ---
 name: diagram-architect
-model: composer-1.5
+model: composer-2-fast
 description: Diagram architect that converts user context into Mermaid diagrams and outputs them to FigJam via the Figma MCP. Use proactively when the user wants to visualize architecture, flows, sequences, states, timelines, or processes.
 ---
 
