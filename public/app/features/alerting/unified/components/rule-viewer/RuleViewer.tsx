@@ -38,6 +38,7 @@ import { useRuleViewExtensionsNav } from '../../enterprise-components/rule-view-
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isError, useAsync } from '../../hooks/useAsync';
 import { useRuleLocation } from '../../hooks/useCombinedRule';
+import { useHasInhibitedInstances } from '../../hooks/useHasInhibitedInstances';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
@@ -112,6 +113,12 @@ const RuleViewer = () => {
   const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
   const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
 
+  // Only check for inhibited instances on Grafana-managed alerting rules
+  const grafanaAlertingRuleUid = rulerRuleType.grafana.alertingRule(rulerRule)
+    ? rulerRule.grafana_alert.uid
+    : undefined;
+  const { hasInhibitedInstances } = useHasInhibitedInstances(grafanaAlertingRuleUid);
+
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
 
@@ -129,6 +136,7 @@ const RuleViewer = () => {
           isProvisioned={isProvisioned}
           provenance={rulerRuleType.grafana.rule(rulerRule) ? rulerRule.grafana_alert.provenance : undefined}
           state={prometheusRuleType.alertingRule(promRule) ? promRule.state : undefined}
+          isInhibited={hasInhibitedInstances}
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
@@ -307,6 +315,7 @@ interface TitleProps {
   provenance?: string;
   // recording rules don't have a state
   state?: PromAlertingRuleState;
+  isInhibited?: boolean;
   health?: RuleHealth;
   ruleType?: PromRuleType;
   ruleOrigin?: RulePluginOrigin;
@@ -319,6 +328,7 @@ export const Title = ({
   isProvisioned,
   provenance,
   state,
+  isInhibited,
   health,
   ruleType,
   ruleOrigin,
@@ -329,7 +339,7 @@ export const Title = ({
   const { returnTo } = useReturnTo(returnToHref);
 
   const textHealth = normalizeHealth(health);
-  const textState = normalizeState(state);
+  const textState = isInhibited ? 'inhibited' : normalizeState(state);
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
