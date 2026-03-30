@@ -442,11 +442,11 @@ func TestStore_RegisterActionSet(t *testing.T) {
 			pluginID: "test-app",
 			coreActionSets: []ActionSet{
 				{
-					Action:  GetActionSetName(accesscontrol.AlertingManagedRoutesResource, "view"),
+					Action:  accesscontrol.AlertingManagedRoutesResource + ":view",
 					Actions: []string{accesscontrol.ActionAlertingManagedRoutesRead},
 				},
 				{
-					Action: GetActionSetName(accesscontrol.AlertingManagedRoutesResource, "edit"),
+					Action: accesscontrol.AlertingManagedRoutesResource + ":edit",
 					Actions: []string{
 						accesscontrol.ActionAlertingManagedRoutesRead,
 						accesscontrol.ActionAlertingManagedRoutesWrite,
@@ -456,11 +456,11 @@ func TestStore_RegisterActionSet(t *testing.T) {
 			},
 			expectedActionSets: []ActionSet{
 				{
-					Action:  GetActionSetName(accesscontrol.AlertingManagedRoutesResource, "view"),
+					Action:  accesscontrol.AlertingManagedRoutesResource + ":view",
 					Actions: []string{accesscontrol.ActionAlertingManagedRoutesRead},
 				},
 				{
-					Action: GetActionSetName(accesscontrol.AlertingManagedRoutesResource, "edit"),
+					Action: accesscontrol.AlertingManagedRoutesResource + ":edit",
 					Actions: []string{
 						accesscontrol.ActionAlertingManagedRoutesRead,
 						accesscontrol.ActionAlertingManagedRoutesWrite,

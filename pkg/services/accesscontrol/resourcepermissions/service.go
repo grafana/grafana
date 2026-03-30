@@ -376,7 +376,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 
 	// New resources with no legacy granular data go straight to action-set-only.
 	if s.options.Resource == accesscontrol.AlertingManagedRoutesResource {
-		return []string{GetActionSetName(s.options.Resource, permission)}, nil
+		return []string{s.options.GetActionSetName(permission)}, nil
 	}
 
 	for k, v := range s.options.PermissionsToActions {
