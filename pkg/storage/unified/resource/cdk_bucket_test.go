@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -69,6 +70,14 @@ func (f *fakeCDKBucket) Delete(ctx context.Context, key string) error {
 	if f.deleteFunc != nil {
 		return f.deleteFunc(ctx, key)
 	}
+	return nil
+}
+
+func (f *fakeCDKBucket) Upload(_ context.Context, _ string, _ io.Reader, _ *blob.WriterOptions) error {
+	return nil
+}
+
+func (f *fakeCDKBucket) Download(_ context.Context, _ string, _ io.Writer, _ *blob.ReaderOptions) error {
 	return nil
 }
 
