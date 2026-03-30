@@ -1,4 +1,4 @@
-import { EventProperty } from '@grafana/runtime/internal';
+import { type EventProperty } from '@grafana/runtime/internal';
 
 export interface SaveButtonClicked extends EventProperty {
   /** Whether the preference being saved belongs to an org, team, or individual user. */

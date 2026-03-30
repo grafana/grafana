@@ -1,6 +1,6 @@
 import { defineFeatureEvents } from '@grafana/runtime/internal';
 
-import { LanguageChanged, RegionalFormatChanged, SaveButtonClicked, ThemeChanged } from './types';
+import { type LanguageChanged, type RegionalFormatChanged, type SaveButtonClicked, type ThemeChanged } from './types';
 
 /** @owner grafana-frontend-platform */
 const createSharedPreferencesEvents = defineFeatureEvents('grafana', 'preferences');
