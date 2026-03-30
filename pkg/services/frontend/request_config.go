@@ -67,8 +67,8 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 	}
 
 	securitySection := cfg.SectionWithEnvOverrides("security")
-	allowEmbeddingHosts := securitySection.Key("allow_embedding_hosts").Strings(",")
-	formActionHosts := securitySection.Key("form_action_additional_hosts").Strings(",")
+	allowEmbeddingHosts := securitySection.Key("allow_embedding_hosts").Strings(" ")
+	formActionHosts := securitySection.Key("form_action_additional_hosts").Strings(" ")
 
 	return FSRequestConfig{
 		FSFrontendSettings:        frontendSettings,
@@ -169,7 +169,7 @@ func applyString(settings *ini.File, sectionName, keyName string, target *string
 // applyStringSlice applies a space-separated string value from ini settings to a target []string field if it exists.
 func applyStringSlice(settings *ini.File, sectionName, keyName string, target *[]string, logger log.Logger) {
 	if key := getValue(settings, sectionName, keyName); key != nil {
-		*target = strings.Fields(key.String())
+		*target = key.Strings(" ")
 
 		logger.Debug("applying request config override",
 			"section", sectionName,

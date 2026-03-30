@@ -511,7 +511,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should expand $ALLOW_EMBEDDING_HOSTS in CSP template with specific hosts", func(t *testing.T) {
 		raw := ini.Empty()
-		raw.Section("security").Key("allow_embedding_hosts").SetValue("wiki.example.com,foo.example.com")
+		raw.Section("security").Key("allow_embedding_hosts").SetValue("wiki.example.com foo.example.com")
 		cfg := &setting.Cfg{
 			Raw:            raw,
 			HTTPPort:       "3000",
@@ -623,7 +623,7 @@ func TestFrontendService_CSP(t *testing.T) {
 
 	t.Run("should expand $FORM_ACTION_ADDITIONAL_HOSTS in CSP template with specific hosts", func(t *testing.T) {
 		raw := ini.Empty()
-		raw.Section("security").Key("form_action_additional_hosts").SetValue("login.example.com,auth.example.com")
+		raw.Section("security").Key("form_action_additional_hosts").SetValue("login.example.com auth.example.com")
 		cfg := &setting.Cfg{
 			Raw:            raw,
 			HTTPPort:       "3000",
