@@ -307,7 +307,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
     try {
       const data = await this.request('detected_labels', params, true, requestOptions);
       if (Array.isArray(data)) {
-        this.labelKeys = data.map((label) => label.label);
+        this.labelKeys = data
+          .map((label) => label.label)
+          .sort()
+          .filter((label: string) => HIDDEN_LABELS.includes(label) === false);
         return this.labelKeys;
       }
     } catch (error) {
