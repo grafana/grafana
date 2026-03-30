@@ -366,10 +366,13 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     defaultKeys: withDefaultKeys ? [{ text: 'A', value: 'A' }] : undefined,
     enableGroupBy,
   });
+  const renderer = await act(() =>
+    render(<AdHocFiltersVariableEditor variable={variable} onRunQuery={onRunQuery} {...props} />)
+  );
+  // Flush pending microtasks from useAsync hooks (datasource fetch, groupBy keys)
+  await act(async () => {});
   return {
-    renderer: await act(() =>
-      render(<AdHocFiltersVariableEditor variable={variable} onRunQuery={onRunQuery} {...props} />)
-    ),
+    renderer,
     variable,
     user: userEvent.setup(),
     mocks: { onRunQuery },
