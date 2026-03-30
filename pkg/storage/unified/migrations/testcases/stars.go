@@ -44,11 +44,7 @@ func (tc *starsTestCase) RenameTables() []string {
 
 func (tc *starsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
-		{
-			Group:    "collections.grafana.app",
-			Version:  "v1alpha1",
-			Resource: "stars",
-		},
+		collectionsV1.GroupVersion.WithResource("stars"),
 	}
 }
 
@@ -112,11 +108,7 @@ func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, should
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      user,
 			Namespace: namespace,
-			GVR: schema.GroupVersionResource{
-				Group:    "collections.grafana.app",
-				Version:  "v1alpha1",
-				Resource: "stars",
-			},
+			GVR:       collectionsV1.GroupVersion.WithResource("stars"),
 		})
 
 		id := user.Identity.GetIdentifier()

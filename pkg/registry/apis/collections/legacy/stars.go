@@ -300,6 +300,10 @@ func (s *DashboardStarsStorage) DeleteCollection(ctx context.Context, deleteVali
 func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 	slices.Sort(v.Dashboards) // ensure names are in sorted order
 	stars := collections.Stars{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: collections.APIGroup + "/" + collections.APIVersion,
+			Kind:       collections.StarsKind().Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              fmt.Sprintf("user-%s", v.UserUID),
 			Namespace:         ns,
