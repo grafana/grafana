@@ -185,8 +185,6 @@ type Props<TableData extends object> = WithExpandableRow<TableData> | WithoutExp
  * The InteractiveTable is used to display and select data efficiently. It allows for the display and modification of detailed information.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-interactivetable--docs
- *
- * @alpha
  */
 export function InteractiveTable<TableData extends object>({
   autoResetPage,

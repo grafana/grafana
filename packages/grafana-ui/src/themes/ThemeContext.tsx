@@ -41,7 +41,7 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
   return WithTheme as Hoisted;
 };
 
-/** @alpha */
+/** @public */
 export const withTheme2 = <P extends Themeable2, S extends {} = {}>(Component: React.ComponentType<P>) => {
   const WithTheme: React.FunctionComponent<Subtract<P, Themeable2>> = (props) => {
     /**

@@ -150,7 +150,7 @@ export interface BaseTableProps {
   transparent?: boolean;
   /* message to show when no rows are present */
   noValue?: string;
-  /** Used by SparklineCell when provided */
+  /** used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to

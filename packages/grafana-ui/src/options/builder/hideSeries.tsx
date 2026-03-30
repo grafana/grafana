@@ -33,9 +33,6 @@ const SeriesConfigEditor = ({ value, onChange }: StandardEditorProps<HideSeriesC
   );
 };
 
-/**
- * @alpha
- */
 export function addHideFrom(builder: FieldConfigEditorBuilder<HideableFieldConfig>) {
   builder.addCustomEditor({
     id: 'hideFrom',
