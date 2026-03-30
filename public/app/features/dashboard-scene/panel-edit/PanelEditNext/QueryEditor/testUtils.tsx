@@ -95,6 +95,11 @@ export const mockActions: QueryEditorActions = {
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
   reorderTransformations: jest.fn(),
+  bulkDeleteQueries: jest.fn(),
+  bulkToggleQueriesHide: jest.fn(),
+  bulkDeleteTransformations: jest.fn(),
+  bulkToggleTransformationsDisabled: jest.fn(),
+  bulkChangeDataSource: jest.fn(),
 };
 
 export const mockOptions: QueryGroupOptions = {
@@ -130,6 +135,13 @@ export const mockUIStateBase = {
   pendingTransformation: null,
   setPendingTransformation: jest.fn(),
   finalizePendingTransformation: jest.fn(),
+  selectedQueryRefIds: [] satisfies readonly string[],
+  selectedTransformationIds: [] satisfies readonly string[],
+  toggleQuerySelection: jest.fn(),
+  toggleTransformationSelection: jest.fn(),
+  clearSelection: jest.fn(),
+  isStackedView: false,
+  setStackedView: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -203,8 +215,15 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultUiState: QueryEditorUIState = {
     selectedQuery,
     selectedTransformation,
+    selectedQueryRefIds: selectedQuery ? [selectedQuery.refId] : [],
+    selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),
+    toggleQuerySelection: jest.fn(),
+    toggleTransformationSelection: jest.fn(),
+    clearSelection: jest.fn(),
+    isStackedView: false,
+    setStackedView: jest.fn(),
     queryOptions: mockQueryOptionsState,
     selectedQueryDsData: null,
     selectedQueryDsLoading: false,

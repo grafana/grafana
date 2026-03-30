@@ -121,6 +121,13 @@ describe('QueryEditorRenderer', () => {
             pendingSavedQuery: null,
             setPendingSavedQuery: jest.fn(),
             showVersionBanner: false,
+            selectedQueryRefIds: [],
+            selectedTransformationIds: [],
+            toggleQuerySelection: jest.fn(),
+            toggleTransformationSelection: jest.fn(),
+            clearSelection: jest.fn(),
+            isStackedView: false,
+            setStackedView: jest.fn(),
           }}
           actions={mockActions}
         >

@@ -60,20 +60,46 @@ export interface QueryOptionsState {
   focusedField: QueryOptionField | null;
 }
 
-interface TransformationToggles {
+export interface TransformationToggleState {
   showHelp: boolean;
-  toggleHelp: () => void;
   showDebug: boolean;
+}
+
+interface TransformationToggles extends TransformationToggleState {
+  toggleHelp: () => void;
   toggleDebug: () => void;
+}
+
+export interface SelectionModifiers {
+  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
+  multi?: boolean;
+  /** True when Shift is held — range-selects from the last selected card to this one. */
+  range?: boolean;
 }
 
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
+  /**
+   * Ordered selection array. The last element is the primary (editor-visible) item.
+   * Single-select is always a single-element array; multi-select adds to the end.
+   */
+  selectedQueryRefIds: readonly string[];
+  /**
+   * Ordered selection array. The last element is the primary (editor-visible) item.
+   * Single-select is always a single-element array; multi-select adds to the end.
+   */
+  selectedTransformationIds: readonly string[];
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
+  toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
+  toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
+  clearSelection: () => void;
+  /** When true and 2+ queries are selected, the editor area renders all selected queries stacked vertically. */
+  isStackedView: boolean;
+  setStackedView: (stacked: boolean) => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
@@ -111,6 +137,12 @@ export interface QueryEditorActions {
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
+  // Bulk actions
+  bulkDeleteQueries: (refIds: readonly string[]) => void;
+  bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => void;
+  bulkDeleteTransformations: (transformIds: readonly string[]) => void;
+  bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => void;
+  bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);
