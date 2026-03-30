@@ -275,6 +275,7 @@
 /devenv/dev-dashboards/panel-common @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-dashlist @grafana/dashboards-squad
 /devenv/dev-dashboards/live @grafana/dashboards-squad
+/devenv/dev-dashboards/section-variables @grafana/dashboards-squad
 
 /devenv/dev-dashboards/panel-flamegraph/ @grafana/observability-traces-and-profiling
 /devenv/dev-dashboards/panel-polystat @grafana/dataviz-squad
@@ -361,7 +362,6 @@
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/oss-big-tent
-/pkg/tsdb/elasticsearch/ @grafana/partner-datasources
 /pkg/tsdb/loki/ @grafana/oss-big-tent
 /pkg/tsdb/tempo/ @grafana/oss-big-tent
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/oss-big-tent
@@ -446,6 +446,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/V2DashWithRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRowRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabRepeats.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/V2DashWithTabs.json @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/adhoc-filter-from-panel.spec.ts @grafana/datapro
 /e2e-playwright/dashboards-suite/dashboard-browse-nested.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-browse.spec.ts @grafana/grafana-frontend-navigation
@@ -698,7 +699,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/dashboard @grafana/dashboards-squad
 /packages/grafana-schema/src/**/dashboardlist @grafana/grafana-frontend-navigation
 /packages/grafana-schema/src/**/debug @ryantxu
-/packages/grafana-schema/src/**/elasticsearch @grafana/partner-datasources
 /packages/grafana-schema/src/**/gauge @grafana/dataviz-squad
 /packages/grafana-schema/src/**/geomap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/googlecloudmonitoring @grafana/partner-datasources
@@ -849,6 +849,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/Select/ @grafana/grafana-frontend-platform
 /public/app/core/components/SharedPreferences/ @grafana/grafana-frontend-platform
 /public/app/core/components/Signup/ @grafana/grafana-frontend-navigation
+/public/app/core/components/SplashScreenModal/ @grafana/grafana-frontend-platform
 /public/app/core/components/SplitPaneWrapper/ @grafana/observability-traces-and-profiling
 /public/app/core/components/SVG/ @grafana/dataviz-squad
 /public/app/core/components/TagFilter/ @grafana/grafana-frontend-platform
@@ -1068,6 +1069,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 
 /scripts/benchmark-access-control.sh @grafana/access-squad
+/scripts/build-targz.sh @grafana/grafana-backend-services-squad
 /scripts/check-breaking-changes.sh @grafana/grafana-frontend-platform
 /scripts/ci-* @grafana/grafana-developer-enablement-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-developer-enablement-squad @grafana/grafana-frontend-platform
@@ -1112,7 +1114,6 @@ eslint-suppressions.json @grafanabot
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
-/public/app/plugins/datasource/elasticsearch/ @grafana/partner-datasources
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources

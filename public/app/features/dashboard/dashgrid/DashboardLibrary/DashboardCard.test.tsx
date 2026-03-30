@@ -183,6 +183,34 @@ describe('DashboardCard', () => {
 
       expect(screen.queryByText('Data source provided')).not.toBeInTheDocument();
     });
+
+    it('should show community badge when showCommunityBadge is true', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          showCommunityBadge={true}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.getByText('Community')).toBeInTheDocument();
+    });
+
+    it('should not show community badge when showCommunityBadge is false', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          showCommunityBadge={false}
+          kind="suggested_dashboard"
+        />
+      );
+
+      expect(screen.queryByText('Community')).not.toBeInTheDocument();
+    });
   });
 
   describe('Details tooltip', () => {

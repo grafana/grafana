@@ -8,7 +8,7 @@ import { Field, Input, Select, Switch, TagsInput } from '@grafana/ui';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 
-import { LinkEdit } from './LinkAddEditableElement';
+import type { LinkEdit } from './LinkAddEditableElement';
 import { linkEditActions } from './actions';
 import { LINK_ICON_MAP } from './utils';
 

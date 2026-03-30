@@ -29,6 +29,7 @@ interface Props {
   height: number;
   timeFieldName: string;
   bodyFieldName: string;
+  levelFieldName: string;
 }
 
 export function LogsTableFields({
@@ -40,6 +41,7 @@ export function LogsTableFields({
   onDisplayedFieldsChange,
   timeFieldName,
   bodyFieldName,
+  levelFieldName,
   logsFrame,
   onFieldSelectorWidthChange,
 }: Props) {
@@ -50,7 +52,10 @@ export function LogsTableFields({
     setContainerRefState(node);
   }, []);
 
-  const defaultDisplayedFields = useMemo(() => [timeFieldName, bodyFieldName], [timeFieldName, bodyFieldName]);
+  const defaultDisplayedFields = useMemo(
+    () => [timeFieldName, levelFieldName, bodyFieldName],
+    [timeFieldName, levelFieldName, bodyFieldName]
+  );
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | null>(null);
 
   const handleSetColumnsWithMeta = useCallback((columnsWithMeta: FieldNameMetaStore) => {

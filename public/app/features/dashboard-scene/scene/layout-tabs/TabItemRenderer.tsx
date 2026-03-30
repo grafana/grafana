@@ -1,17 +1,19 @@
 import { css, cx } from '@emotion/css';
 import { Draggable, DraggableStateSnapshot } from '@hello-pangea/dnd';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useLocation } from 'react-router';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { getDashboardSceneFor, useDashboardState } from '../../utils/utils';
+import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { SectionVariableControls } from '../VariableControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
@@ -20,7 +22,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { title, isDropTarget, layout, key, repeatSourceKey } = model.useState();
   const parentLayout = model.getParentLayout();
   const { currentTabSlug, isDropTarget: isParentDropTarget } = parentLayout.useState();
-  const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
+  const titleInterpolated = interpolateSectionTitle(model, title);
+
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const { isEditing } = useDashboardState(model);
@@ -152,12 +155,15 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     tab.state.conditionalRendering
   );
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const tabVariablesSet = tab.state.$variables;
 
   return (
     <TabContent
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
+      {sectionVariablesEnabled && tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

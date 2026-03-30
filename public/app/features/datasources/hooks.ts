@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useLocalStorage } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, ScopedVars } from '@grafana/data';
 import { GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
 
 export const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
@@ -52,14 +52,17 @@ export function useDatasources(filters: GetDataSourceListFilters, datasources?: 
   return dataSources;
 }
 
-export function useDatasource(dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined) {
+export function useDatasource(
+  dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined,
+  scopedVars?: ScopedVars
+) {
   const dataSourceSrv = getDataSourceSrv();
 
   if (typeof dataSource === 'string') {
-    return dataSourceSrv.getInstanceSettings(dataSource);
+    return dataSourceSrv.getInstanceSettings(dataSource, scopedVars);
   }
 
-  return dataSourceSrv.getInstanceSettings(dataSource);
+  return dataSourceSrv.getInstanceSettings(dataSource, scopedVars);
 }
 
 export interface KeybaordNavigatableListProps {

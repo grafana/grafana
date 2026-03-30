@@ -13,7 +13,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 
-import { AnnotationLayer } from './AnnotationEditableElement';
+import type { AnnotationLayer } from './AnnotationEditableElement';
 
 export function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
   const { queryLibraryEnabled } = useQueryLibraryContext();
