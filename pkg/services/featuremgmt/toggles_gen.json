@@ -5248,12 +5248,16 @@
     {
       "metadata": {
         "name": "vizLegendSeriesLimit",
-        "resourceVersion": "1772507615654",
-        "creationTimestamp": "2026-03-03T03:13:35Z"
+        "resourceVersion": "1774902435260",
+        "creationTimestamp": "2026-03-03T03:13:35Z",
+        "deletionTimestamp": "2026-03-30T20:28:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 20:27:15.260821 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Limit the number of legend items by default, with an option to show all",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
