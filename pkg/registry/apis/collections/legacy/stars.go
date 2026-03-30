@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -293,10 +294,11 @@ func (s *DashboardStarsStorage) Delete(ctx context.Context, name string, deleteV
 
 // DeleteCollection implements rest.CollectionDeleter.
 func (s *DashboardStarsStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented yet")
+	return nil, fmt.Errorf("not implemented")
 }
 
 func asStarsResource(ns string, v *dashboardStars) collections.Stars {
+	slices.Sort(v.Dashboards) // ensure names are in sorted order
 	stars := collections.Stars{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              fmt.Sprintf("user-%s", v.UserUID),

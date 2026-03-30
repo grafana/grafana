@@ -53,7 +53,6 @@ func (stars *StarsSpec) Normalize() {
 					found[name] = true
 				}
 			}
-			slices.Sort(unique) // ensure names are in sorted order
 			r.Names = unique
 			resources = append(resources, r)
 		}
