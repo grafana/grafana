@@ -965,9 +965,9 @@ func TestStore_StoreActionSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			asService := NewInMemoryActionSetStore()
-			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
+			asService.StoreActionSet(GetActionSetName(false, "", tt.resource, tt.action), tt.actions)
 
-			actionSetName := GetActionSetName(tt.resource, tt.action)
+			actionSetName := GetActionSetName(false, "", tt.resource, tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
 			require.Equal(t, tt.actions, actionSet)
 		})

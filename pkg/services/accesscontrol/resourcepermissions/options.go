@@ -23,6 +23,11 @@ type Options struct {
 	// APIGroup is the Kubernetes API group for the resource (e.g. "folder.grafana.app")
 	// If not set, defaults to "{Resource}.grafana.app"
 	APIGroup string
+	// K8sActionFormat enables Kubernetes-native action and scope format.
+	// When enabled, actions use "{APIGroup}/{Resource}:get_permissions" format
+	// instead of "{Resource}.permissions:read" format.
+	// Requires APIGroup to be non-empty.
+	K8sActionFormat bool
 	// OnlyManaged will tell the service to return all permissions if set to false and only managed permissions if set to true
 	OnlyManaged bool
 	// ResourceTranslator is a translator function that will be called before each action, it can be used to translate a resource id to a different format.

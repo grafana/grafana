@@ -71,6 +71,10 @@ func New(cfg *setting.Cfg,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
+	if options.K8sActionFormat && options.APIGroup == "" {
+		return nil, fmt.Errorf("APIGroup is required when K8sActionFormat is enabled")
+	}
+
 	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -78,7 +82,7 @@ func New(cfg *setting.Cfg,
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
-		actionSetService.StoreActionSet(GetActionSetName(options.Resource, permission), actions)
+		actionSetService.StoreActionSet(GetActionSetName(options.K8sActionFormat, options.APIGroup, options.Resource, permission), actions)
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -163,7 +167,7 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 	resourcePermissions, err := s.store.GetResourcePermissions(ctx, user.GetOrgID(), GetResourcePermissionsQuery{
 		User:                 user,
 		Actions:              actions,
-		Resource:             s.options.Resource,
+		Resource:             s.scopeResource(),
 		ResourceID:           resourceID,
 		ResourceAttribute:    s.options.ResourceAttribute,
 		InheritedScopes:      inheritedScopes,
@@ -224,7 +228,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	return s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
-		Resource:          s.options.Resource,
+		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
 	}, s.options.OnSetUser)
@@ -250,7 +254,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
-		Resource:          s.options.Resource,
+		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
 	}, s.options.OnSetTeam)
@@ -276,7 +280,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
-		Resource:          s.options.Resource,
+		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
 	}, s.options.OnSetBuiltInRole)
@@ -320,7 +324,7 @@ func (s *Service) SetPermissions(
 			BuiltinRole: cmd.BuiltinRole,
 			SetResourcePermissionCommand: SetResourcePermissionCommand{
 				Actions:           actions,
-				Resource:          s.options.Resource,
+				Resource:          s.scopeResource(),
 				ResourceID:        resourceID,
 				ResourceAttribute: s.options.ResourceAttribute,
 				Permission:        cmd.Permission,
@@ -346,7 +350,7 @@ func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string
 
 func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
 	return s.store.DeleteResourcePermissions(ctx, orgID, &DeleteResourcePermissionsCmd{
-		Resource:          s.options.Resource,
+		Resource:          s.scopeResource(),
 		ResourceAttribute: s.options.ResourceAttribute,
 		ResourceID:        resourceID,
 	})
@@ -361,7 +365,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 
 	// Write action sets for folders and dashboards
 	if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
-		actions = append(actions, GetActionSetName(s.options.Resource, permission))
+		actions = append(actions, s.getActionSetName(permission))
 
 		// If we only want to store action sets, return now
 		//nolint:staticcheck // not yet migrated to OpenFeature
@@ -440,14 +444,14 @@ func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) e
 }
 
 func (s *Service) declareFixedRoles() error {
-	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
+	scopeAll := s.getScope("*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
+			Name:        s.getRoleName("reader"),
 			DisplayName: s.options.ReaderRoleName,
 			Group:       s.options.RoleGroup,
 			Permissions: []accesscontrol.Permission{
-				{Action: fmt.Sprintf("%s.permissions:read", s.options.Resource), Scope: scopeAll},
+				{Action: s.getAction("read"), Scope: scopeAll},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -455,11 +459,11 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
+			Name:        s.getRoleName("writer"),
 			DisplayName: s.options.WriterRoleName,
 			Group:       s.options.RoleGroup,
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: fmt.Sprintf("%s.permissions:write", s.options.Resource), Scope: scopeAll},
+				{Action: s.getAction("write"), Scope: scopeAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -604,10 +608,61 @@ func isFolderOrDashboardAction(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
 }
 
-// GetActionSetName function creates an action set from a list of actions and stores it inmemory.
-func GetActionSetName(resource, permission string) string {
-	// lower cased
+// GetActionSetName builds an action set name. Extended with k8sFormat and apiGroup params.
+// K8s:    "dashboard.grafana.app/dashboards:view"
+// Legacy: "dashboards:view"  (pass k8sFormat=false, apiGroup="" for legacy behavior)
+func GetActionSetName(k8sFormat bool, apiGroup, resource, permission string) string {
 	resource = strings.ToLower(resource)
 	permission = strings.ToLower(permission)
+	if k8sFormat {
+		return fmt.Sprintf("%s/%s:%s", strings.ToLower(apiGroup), resource, permission)
+	}
 	return fmt.Sprintf("%s:%s", resource, permission)
+}
+
+// getActionSetName is a convenience wrapper for use after Service construction.
+func (s *Service) getActionSetName(permission string) string {
+	return GetActionSetName(s.options.K8sActionFormat, s.options.APIGroup, s.options.Resource, permission)
+}
+
+// getAction returns the permission action string for a given verb.
+// K8s:    "dashboard.grafana.app/dashboards:get_permissions"
+// Legacy: "dashboards.permissions:read"
+func (s *Service) getAction(verb string) string {
+	if s.options.K8sActionFormat {
+		k8sVerb := map[string]string{"read": "get_permissions", "write": "set_permissions"}[verb]
+		return fmt.Sprintf("%s/%s:%s", s.options.APIGroup, s.options.Resource, k8sVerb)
+	}
+	return fmt.Sprintf("%s.permissions:%s", s.options.Resource, verb)
+}
+
+// getScope returns a scope string using the appropriate resource prefix.
+// K8s:    "dashboard.grafana.app/dashboards:uid:abc123"
+// Legacy: "dashboards:uid:abc123"
+func (s *Service) getScope(parts ...string) string {
+	if s.options.K8sActionFormat {
+		prefix := fmt.Sprintf("%s/%s", s.options.APIGroup, s.options.Resource)
+		return accesscontrol.Scope(append([]string{prefix}, parts...)...)
+	}
+	return accesscontrol.Scope(append([]string{s.options.Resource}, parts...)...)
+}
+
+// scopeResource returns the resource prefix used for Resource fields in commands/queries.
+// K8s:    "dashboard.grafana.app/dashboards"
+// Legacy: "dashboards"
+func (s *Service) scopeResource() string {
+	if s.options.K8sActionFormat {
+		return fmt.Sprintf("%s/%s", s.options.APIGroup, s.options.Resource)
+	}
+	return s.options.Resource
+}
+
+// getRoleName returns a fixed role name with the given suffix.
+// K8s:    "fixed:dashboard.grafana.app:dashboards.permissions:reader"
+// Legacy: "fixed:dashboards.permissions:reader"
+func (s *Service) getRoleName(suffix string) string {
+	if s.options.K8sActionFormat {
+		return fmt.Sprintf("fixed:%s:%s.permissions:%s", s.options.APIGroup, s.options.Resource, suffix)
+	}
+	return fmt.Sprintf("fixed:%s.permissions:%s", s.options.Resource, suffix)
 }

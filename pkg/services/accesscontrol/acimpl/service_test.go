@@ -940,8 +940,8 @@ func TestIntegrationService_SearchUsersPermissions_ActionSets(t *testing.T) {
 
 	// Set up action sets
 	actionSetSvc := resourcepermissions.NewActionSetService()
-	actionSetSvc.StoreActionSet(resourcepermissions.GetActionSetName("dashboards", "view"), []string{"dashboards:read"})
-	actionSetSvc.StoreActionSet(resourcepermissions.GetActionSetName("dashboards", "edit"), []string{"dashboards:read", "dashboards:write"})
+	actionSetSvc.StoreActionSet(resourcepermissions.GetActionSetName(false, "", "dashboards", "view"), []string{"dashboards:read"})
+	actionSetSvc.StoreActionSet(resourcepermissions.GetActionSetName(false, "", "dashboards", "edit"), []string{"dashboards:read", "dashboards:write"})
 	ac.actionResolver = actionSetSvc
 
 	ac.roles = map[string]*accesscontrol.RoleDTO{}
@@ -1185,11 +1185,11 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := setupTestEnv(t, true)
 			if tt.withActionSets {
-				actionSetSvc := resourcepermissions.NewActionSetService()
-				for set, actions := range tt.actionSets {
-					actionSetName := resourcepermissions.GetActionSetName(strings.Split(set, ":")[0], strings.Split(set, ":")[1])
-					actionSetSvc.StoreActionSet(actionSetName, actions)
-				}
+			actionSetSvc := resourcepermissions.NewActionSetService()
+			for set, actions := range tt.actionSets {
+				actionSetName := resourcepermissions.GetActionSetName(false, "", strings.Split(set, ":")[0], strings.Split(set, ":")[1])
+				actionSetSvc.StoreActionSet(actionSetName, actions)
+			}
 				ac.actionResolver = actionSetSvc
 			}
 

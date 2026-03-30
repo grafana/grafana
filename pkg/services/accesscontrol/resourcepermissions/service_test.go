@@ -308,11 +308,11 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 					assert.ElementsMatch(t, expectedActionSet.Actions, actionSet)
 				}
 			} else {
-				// Check that action sets have not been registered
-				for permission := range tt.options.PermissionsToActions {
-					actionSetName := GetActionSetName(tt.options.Resource, permission)
-					assert.Nil(t, actionSets.ResolveActionSet(actionSetName))
-				}
+			// Check that action sets have not been registered
+			for permission := range tt.options.PermissionsToActions {
+				actionSetName := GetActionSetName(tt.options.K8sActionFormat, tt.options.APIGroup, tt.options.Resource, permission)
+				assert.Nil(t, actionSets.ResolveActionSet(actionSetName))
+			}
 			}
 		})
 	}
@@ -467,6 +467,145 @@ func TestStore_RegisterActionSet(t *testing.T) {
 					assert.Empty(t, registeredActions, "no actions from plugin action sets should have been registered")
 				}
 			}
+		})
+	}
+}
+
+func TestService_K8sActionFormat(t *testing.T) {
+	tests := []struct {
+		name             string
+		opts             Options
+		expectErr        bool
+		expectedAction   string
+		expectedScope    string
+		expectedRoleName string
+		expectedActionSetName string
+	}{
+		{
+			name: "legacy format",
+			opts: Options{
+				Resource:        "dashboards",
+				APIGroup:        "",
+				K8sActionFormat: false,
+			},
+			expectErr:             false,
+			expectedAction:        "dashboards.permissions:read",
+			expectedScope:         "dashboards:uid:abc123",
+			expectedRoleName:    "fixed:dashboards.permissions:reader",
+			expectedActionSetName: "dashboards:view",
+		},
+		{
+			name: "k8s format",
+			opts: Options{
+				Resource:        "dashboards",
+				APIGroup:        "dashboard.grafana.app",
+				K8sActionFormat: true,
+			},
+			expectErr:             false,
+			expectedAction:        "dashboard.grafana.app/dashboards:get_permissions",
+			expectedScope:         "dashboard.grafana.app/dashboards:uid:abc123",
+			expectedRoleName:    "fixed:dashboard.grafana.app:dashboards.permissions:reader",
+			expectedActionSetName: "dashboard.grafana.app/dashboards:view",
+		},
+		{
+			name: "k8s format without api group should fail",
+			opts: Options{
+				Resource:        "dashboards",
+				APIGroup:        "",
+				K8sActionFormat: true,
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql := db.InitTestDB(t)
+			cfg := setting.NewCfg()
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+			acService := &actest.FakeService{}
+			features := featuremgmt.WithFeatures()
+			ac := acimpl.ProvideAccessControl(features)
+
+			service, err := New(
+				cfg, tt.opts, features, routing.NewRouteRegister(), license,
+				ac, acService, sql, nil, nil, NewActionSetService(),
+			)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+
+			// Test getAction
+			action := service.getAction("read")
+			assert.Equal(t, tt.expectedAction, action)
+
+			// Test getScope
+			scope := service.getScope("uid", "abc123")
+			assert.Equal(t, tt.expectedScope, scope)
+
+			// Test getRoleName
+			roleName := service.getRoleName("reader")
+			assert.Equal(t, tt.expectedRoleName, roleName)
+
+			// Test getActionSetName
+			actionSetName := service.getActionSetName("View")
+			assert.Equal(t, tt.expectedActionSetName, actionSetName)
+		})
+	}
+}
+
+func TestGetActionSetName(t *testing.T) {
+	tests := []struct {
+		name        string
+		k8sFormat   bool
+		apiGroup    string
+		resource    string
+		permission  string
+		expected    string
+	}{
+		{
+			name:       "legacy format",
+			k8sFormat:  false,
+			apiGroup:   "",
+			resource:   "dashboards",
+			permission: "View",
+			expected:   "dashboards:view",
+		},
+		{
+			name:       "k8s format",
+			k8sFormat:  true,
+			apiGroup:   "dashboard.grafana.app",
+			resource:   "dashboards",
+			permission: "View",
+			expected:   "dashboard.grafana.app/dashboards:view",
+		},
+		{
+			name:       "legacy format lowercase",
+			k8sFormat:  false,
+			apiGroup:   "",
+			resource:   "Dashboards",
+			permission: "View",
+			expected:   "dashboards:view",
+		},
+		{
+			name:       "k8s format lowercase",
+			k8sFormat:  true,
+			apiGroup:   "Dashboard.Grafana.App",
+			resource:   "Dashboards",
+			permission: "View",
+			expected:   "dashboard.grafana.app/dashboards:view",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GetActionSetName(tt.k8sFormat, tt.apiGroup, tt.resource, tt.permission)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
