@@ -3,7 +3,9 @@ package legacy
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +56,7 @@ func (m *starsMigrator) MigrateStars(ctx context.Context, orgId int64, opts migr
 	}
 
 	for i, user := range users {
-		s, err := store.Get(ctx, user, &metav1.GetOptions{})
+		s, err := store.Get(ctx, "user-"+user, &metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -81,6 +83,13 @@ func (m *starsMigrator) MigrateStars(ctx context.Context, orgId int64, opts migr
 		}
 
 		opts.Progress(i, fmt.Sprintf("%s (%d)", obj.GetName(), len(req.Value)))
+		err = stream.Send(req)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
+			return err
+		}
 	}
 
 	opts.Progress(-2, fmt.Sprintf("finished stars... (%d)", len(users)))
