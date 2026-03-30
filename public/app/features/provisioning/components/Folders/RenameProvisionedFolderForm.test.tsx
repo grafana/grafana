@@ -1,67 +1,51 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { HttpResponse, delay, http } from 'msw';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderDTO } from 'app/types/folders';
 
 import {
   ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { RenameProvisionedFolderForm } from './RenameProvisionedFolderForm';
 
-// Mock dependencies
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom-v5-compat', () => ({
-  useNavigate: () => mockNavigate,
-  useLocation: () => ({ search: '' }),
+setupProvisioningMswServer();
+
+jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
+  useProvisionedRequestHandler: jest.fn(),
 }));
 
-jest.mock('react-redux', () => {
-  const actual = jest.requireActual('react-redux');
+jest.mock('../../hooks/usePRBranch', () => ({
+  usePRBranch: jest.fn().mockReturnValue(undefined),
+}));
+
+jest.mock('../../hooks/useLastBranch', () => ({
+  useLastBranch: jest.fn().mockReturnValue({
+    getLastBranch: jest.fn().mockReturnValue(undefined),
+    setLastBranch: jest.fn(),
+  }),
+}));
+
+jest.mock('../../hooks/useGetRepositoryFolders', () => ({
+  useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
+}));
+
+jest.mock('../../hooks/useProvisionedFolderFormData', () => ({
+  useProvisionedFolderFormData: jest.fn(),
+}));
+
+jest.mock('react-router-dom-v5-compat', () => {
+  const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
     ...actual,
-    useDispatch: () => jest.fn(),
+    useNavigate: () => jest.fn(),
   };
 });
-
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useReplaceRepositoryFilesWithPathMutation: jest.fn(),
-  provisioningAPI: {
-    endpoints: {
-      listRepository: {
-        select: jest.fn(() => () => ({ data: { items: [] } })),
-      },
-    },
-  },
-  provisioningAPIv0alpha1: {
-    endpoints: {
-      listRepository: {
-        select: jest.fn(() => () => ({ data: { items: [] } })),
-      },
-    },
-  },
-}));
-
-jest.mock('../../hooks/useProvisionedFolderFormData');
-
-jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
-  ResourceEditFormSharedFields: () => <div data-testid="shared-fields" />,
-}));
-
-jest.mock('app/core/navigation/hooks', () => ({
-  useUrlParams: () => [new URLSearchParams(), jest.fn()],
-}));
-
-const mockUseReplaceRepositoryFilesMutation = useReplaceRepositoryFilesWithPathMutation as jest.MockedFunction<
-  typeof useReplaceRepositoryFilesWithPathMutation
->;
-const mockUseProvisionedFolderFormData = useProvisionedFolderFormData as jest.MockedFunction<
-  typeof useProvisionedFolderFormData
->;
-
-const mockReplaceFile = jest.fn();
 
 const mockFolder: FolderDTO = {
   id: 1,
@@ -86,7 +70,7 @@ const mockRepository: RepositoryView = {
   target: 'folder' as const,
   title: 'Test Repository',
   type: 'git' as const,
-  workflows: [],
+  workflows: ['write', 'branch'],
 };
 
 const mockFormData = {
@@ -116,23 +100,8 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   canPushToConfiguredBranch: true,
 };
 
-function setup(
-  props: Partial<Parameters<typeof RenameProvisionedFolderForm>[0]> = {},
-  hookData = defaultHookData,
-  requestState: { isLoading: boolean; isSuccess: boolean; isError: boolean; error: Error | null } = {
-    isLoading: false,
-    isSuccess: false,
-    isError: false,
-    error: null,
-  }
-) {
-  const mockMutationResult = [mockReplaceFile, requestState] as unknown as ReturnType<
-    typeof useReplaceRepositoryFilesWithPathMutation
-  >;
-  const mockHookResult = hookData as ReturnType<typeof useProvisionedFolderFormData>;
-
-  mockUseReplaceRepositoryFilesMutation.mockReturnValue(mockMutationResult);
-  mockUseProvisionedFolderFormData.mockReturnValue(mockHookResult);
+function setup(props: Partial<Parameters<typeof RenameProvisionedFolderForm>[0]> = {}, hookData = defaultHookData) {
+  (useProvisionedFolderFormData as jest.Mock).mockReturnValue(hookData);
 
   const onDismiss = jest.fn();
   const defaultProps = {
@@ -140,35 +109,35 @@ function setup(
     onDismiss,
   };
 
-  const renderResult = render(<RenameProvisionedFolderForm {...defaultProps} {...props} />);
-
-  const clickRenameButton = async () => {
-    const renameButton = screen.getByRole('button', { name: /^rename$/i });
-    await userEvent.click(renameButton);
-  };
-
   return {
-    ...renderResult,
+    ...render(<RenameProvisionedFolderForm {...defaultProps} {...props} />),
     onDismiss,
-    mockReplaceFile,
-    clickRenameButton,
   };
 }
 
+function requireCapturedRequest(req: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
+  expect(req).not.toBeNull();
+  return req as { url: URL; body: unknown };
+}
+
 describe('RenameProvisionedFolderForm', () => {
+  let capturedRequest: { url: URL; body: unknown } | null = null;
+
   beforeEach(() => {
+    capturedRequest = null;
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   describe('rendering', () => {
-    it('should render the form with pre-filled folder name', () => {
+    it('should render the form with pre-filled folder name', async () => {
       setup();
 
-      expect(screen.getByDisplayValue('Test Folder')).toBeInTheDocument();
+      expect(await screen.findByDisplayValue('Test Folder')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^rename$/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-      expect(screen.getByTestId('shared-fields')).toBeInTheDocument();
+      // ResourceEditFormSharedFields renders real fields (comment input)
+      expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     });
 
     it('should show read-only banner when repository is read-only', () => {
@@ -186,79 +155,112 @@ describe('RenameProvisionedFolderForm', () => {
 
   describe('form submission', () => {
     it('should call replaceFile with folder metadata body for branch workflow', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          const url = new URL(request.url);
+          capturedRequest = { url, body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
       const branchFormData = {
         ...mockFormData,
         workflow: 'branch' as const,
         ref: 'my-branch',
       };
-      const { clickRenameButton } = setup({}, { ...defaultHookData, initialValues: branchFormData });
+      const { user } = setup({}, { ...defaultHookData, initialValues: branchFormData });
 
-      await clickRenameButton();
+      const renameButton = await screen.findByRole('button', { name: /^rename$/i });
+      await user.click(renameButton);
 
       await waitFor(() => {
-        expect(mockReplaceFile).toHaveBeenCalledWith({
-          name: 'test-repo',
-          path: 'folders/test-folder/',
-          ref: 'my-branch',
-          message: 'Rename folder',
-          body: {
-            metadata: { name: 'folder-uid' },
-            spec: { title: 'Test Folder' },
-          },
-        });
+        expect(capturedRequest).not.toBeNull();
+      });
+
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.pathname).toContain('/repositories/test-repo/files/');
+      expect(request.url.searchParams.get('ref')).toBe('my-branch');
+      expect(request.url.searchParams.get('message')).toBe('Rename folder');
+      expect(request.body).toEqual({
+        metadata: { name: 'folder-uid' },
+        spec: { title: 'Test Folder' },
       });
     });
 
     it('should clear ref for write workflow', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          const url = new URL(request.url);
+          capturedRequest = { url, body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
       const writeFormData = {
         ...mockFormData,
         workflow: 'write' as const,
         ref: 'main',
       };
-      const { clickRenameButton } = setup({}, { ...defaultHookData, initialValues: writeFormData });
+      const { user } = setup({}, { ...defaultHookData, initialValues: writeFormData });
 
-      await clickRenameButton();
+      const renameButton = await screen.findByRole('button', { name: /^rename$/i });
+      await user.click(renameButton);
 
       await waitFor(() => {
-        expect(mockReplaceFile).toHaveBeenCalledWith(
-          expect.objectContaining({
-            ref: undefined,
-          })
-        );
+        expect(capturedRequest).not.toBeNull();
       });
+
+      const request = requireCapturedRequest(capturedRequest);
+      // Write workflow sends no ref query param
+      expect(request.url.searchParams.get('ref')).toBeNull();
     });
 
     it('should keep path unchanged (no path calculation)', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          const url = new URL(request.url);
+          capturedRequest = { url, body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
       const branchFormData = {
         ...mockFormData,
         workflow: 'branch' as const,
         ref: 'my-branch',
       };
-      setup({}, { ...defaultHookData, initialValues: branchFormData });
+      const { user } = setup({}, { ...defaultHookData, initialValues: branchFormData });
 
       // Change the title — path should NOT change
-      const input = screen.getByDisplayValue('Test Folder');
-      await userEvent.clear(input);
-      await userEvent.type(input, 'New Folder Name');
+      const input = await screen.findByDisplayValue('Test Folder');
+      await user.clear(input);
+      await user.type(input, 'New Folder Name');
 
       const renameButton = screen.getByRole('button', { name: /^rename$/i });
-      await userEvent.click(renameButton);
+      await user.click(renameButton);
 
       await waitFor(() => {
-        expect(mockReplaceFile).toHaveBeenCalledWith(
-          expect.objectContaining({
-            // Path stays the same — only the title in the body changes
-            path: 'folders/test-folder/',
-            body: {
-              metadata: { name: 'folder-uid' },
-              spec: { title: 'New Folder Name' },
-            },
-          })
-        );
+        expect(capturedRequest).not.toBeNull();
+      });
+
+      const request = requireCapturedRequest(capturedRequest);
+      // Path stays the same — only the title in the body changes
+      expect(request.url.pathname).toContain('folders/test-folder/');
+      expect(request.body).toEqual({
+        metadata: { name: 'folder-uid' },
+        spec: { title: 'New Folder Name' },
       });
     });
 
     it('should send path from initialValues directly without modification', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          const url = new URL(request.url);
+          capturedRequest = { url, body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
       // The hook normalizes the trailing slash; the form must pass it through as-is.
       const formDataWithTrailingSlash = {
         ...mockFormData,
@@ -266,65 +268,103 @@ describe('RenameProvisionedFolderForm', () => {
         workflow: 'branch' as const,
         ref: 'my-branch',
       };
-      const { clickRenameButton } = setup({}, { ...defaultHookData, initialValues: formDataWithTrailingSlash });
+      const { user } = setup({}, { ...defaultHookData, initialValues: formDataWithTrailingSlash });
 
-      await clickRenameButton();
+      const renameButton = await screen.findByRole('button', { name: /^rename$/i });
+      await user.click(renameButton);
 
       await waitFor(() => {
-        expect(mockReplaceFile).toHaveBeenCalledWith(
-          expect.objectContaining({
-            path: 'folders/my-folder/',
-          })
-        );
+        expect(capturedRequest).not.toBeNull();
       });
+
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.pathname).toContain('folders/my-folder/');
     });
 
     it('should use custom commit message when provided', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          const url = new URL(request.url);
+          capturedRequest = { url, body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
       const customFormData = {
         ...mockFormData,
         comment: 'Custom rename message',
       };
-      const { clickRenameButton } = setup({}, { ...defaultHookData, initialValues: customFormData });
+      const { user } = setup({}, { ...defaultHookData, initialValues: customFormData });
 
-      await clickRenameButton();
+      const renameButton = await screen.findByRole('button', { name: /^rename$/i });
+      await user.click(renameButton);
 
       await waitFor(() => {
-        expect(mockReplaceFile).toHaveBeenCalledWith(
-          expect.objectContaining({
-            message: 'Custom rename message',
-          })
-        );
+        expect(capturedRequest).not.toBeNull();
       });
+
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.searchParams.get('message')).toBe('Custom rename message');
     });
 
     it('should not submit if repository name is missing', async () => {
-      const { clickRenameButton } = setup({}, { ...defaultHookData, repository: undefined });
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          const url = new URL(request.url);
+          capturedRequest = { url, body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
 
-      await clickRenameButton();
+      const { user } = setup({}, { ...defaultHookData, repository: undefined });
 
+      const renameButton = await screen.findByRole('button', { name: /^rename$/i });
+      await user.click(renameButton);
+
+      // Give some time for a request to fire (it should not)
       await waitFor(() => {
-        expect(mockReplaceFile).not.toHaveBeenCalled();
+        expect(capturedRequest).toBeNull();
       });
     });
   });
 
   describe('loading state', () => {
-    it('should show loading text and disable button when request is loading', () => {
-      setup({}, defaultHookData, { isLoading: true, isSuccess: false, isError: false, error: null });
+    it('should show loading text and disable button when request is loading', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async () => {
+          await delay('infinite');
+          return HttpResponse.json({});
+        })
+      );
 
-      const renameButton = screen.getByRole('button', { name: /renaming/i });
-      expect(renameButton).toBeDisabled();
+      const { user } = setup();
+
+      const renameButton = await screen.findByRole('button', { name: /^rename$/i });
+      await user.click(renameButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /renaming/i })).toBeDisabled();
+      });
     });
   });
 
   describe('error handling', () => {
-    it('should handle request failure gracefully', () => {
-      const error = new Error('API Error');
-      const errorState = { isLoading: false, isSuccess: false, isError: true, error };
-      setup({}, defaultHookData, errorState);
+    it('should handle request failure gracefully', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, () => {
+          return HttpResponse.json({ message: 'API Error' }, { status: 500 });
+        })
+      );
+
+      const { user } = setup();
+
+      const renameButton = await screen.findByRole('button', { name: /^rename$/i });
+      await user.click(renameButton);
 
       // Component should handle error gracefully without crashing
-      expect(screen.getByRole('button', { name: /^rename$/i })).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /^rename$/i })).toBeInTheDocument();
+      });
     });
   });
 });
