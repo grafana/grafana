@@ -37,9 +37,6 @@ describe('useCorrelationsK8s', () => {
         kind: 'testKind',
         metadata: {
           name: 'testUid',
-          annotations: {
-            'grafana.app/managerAllowsEdits': 'true',
-          },
         },
         spec: {
           label: 'testLabel',
@@ -58,9 +55,6 @@ describe('useCorrelationsK8s', () => {
         kind: 'testKind',
         metadata: {
           name: 'testUid',
-          annotations: {
-            'grafana.app/managerAllowsEdits': 'true',
-          },
         },
         spec: {
           label: 'testLabel',
@@ -80,9 +74,6 @@ describe('useCorrelationsK8s', () => {
         kind: 'testKind',
         metadata: {
           name: 'testUid',
-          annotations: {
-            'grafana.app/managerAllowsEdits': 'true',
-          },
         },
         spec: {
           label: 'testLabel',
@@ -109,9 +100,6 @@ describe('useCorrelationsK8s', () => {
         kind: 'testKind',
         metadata: {
           name: 'testUid',
-          annotations: {
-            'grafana.app/managerAllowsEdits': 'true',
-          },
         },
         spec: {
           label: 'testLabel',
@@ -155,6 +143,40 @@ describe('useCorrelationsK8s', () => {
         description: 'testDesc',
         label: 'testLabel',
         provisioned: true,
+        source: { type: 'foundUid', uid: 'foundUid' },
+        target: { type: 'foundUid', uid: 'foundUid' },
+        targetUID: 'foundUid',
+        type: 'query',
+        uid: 'testUid',
+      });
+    });
+
+    it('marks a correlation with a manager that allows edits as not provisioned', () => {
+      const correlation = toEnrichedCorrelationDataK8s({
+        apiVersion: 'testApiVer',
+        kind: 'testKind',
+        metadata: {
+          name: 'testUid',
+          annotations: {
+            'grafana.app/managedBy': 'something',
+            'grafana.app/managerAllowsEdits': 'true',
+          },
+        },
+        spec: {
+          label: 'testLabel',
+          description: 'testDesc',
+          source: { group: 'notFoundGroup', name: 'foundUid' },
+          target: { group: 'notFoundGroup', name: 'foundUid' },
+          type: 'query',
+          config: { field: 'testField', target: { url: 'testUrl' } },
+        },
+      });
+
+      expect(correlation).toStrictEqual({
+        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined },
+        description: 'testDesc',
+        label: 'testLabel',
+        provisioned: false,
         source: { type: 'foundUid', uid: 'foundUid' },
         target: { type: 'foundUid', uid: 'foundUid' },
         targetUID: 'foundUid',
