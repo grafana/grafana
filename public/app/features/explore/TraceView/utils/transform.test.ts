@@ -19,7 +19,7 @@ describe('transformTraceDataFrame()', () => {
       spans: [
         {
           dataFrameRowIndex: 0,
-          duration: NaN,
+          duration: 0,
           flags: 0,
           kind: 'server',
           logs: [],
@@ -27,7 +27,7 @@ describe('transformTraceDataFrame()', () => {
           processID: 'span1',
           references: [],
           spanID: 'span1',
-          startTime: NaN,
+          startTime: 0,
           tags: [{ key: 'key1', value: 'value1' }],
           traceID: 'trace1',
         },

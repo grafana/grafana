@@ -186,8 +186,11 @@ export function transformFromOTLP(
             instrumentationLibraryVersion: librarySpan.instrumentationLibrary?.version,
             traceState: span.traceState,
             serviceTags,
-            startTime: span.startTimeUnixNano! / 1000000,
-            duration: (span.endTimeUnixNano! - span.startTimeUnixNano!) / 1000000,
+            startTime: (span.startTimeUnixNano ?? 0) / 1000000,
+            duration:
+              span.endTimeUnixNano && span.startTimeUnixNano
+                ? (span.endTimeUnixNano - span.startTimeUnixNano) / 1000000
+                : 0,
             tags: getSpanTags(span),
             logs: getLogs(span),
             references: getReferences(span),
@@ -939,7 +942,7 @@ function transformSpanToTraceData(span: Span, spanSet: Spanset, trace: TraceSear
     traceName: trace.rootTraceName || '',
     spanID: span.spanID,
     time: spanStartTimeUnixMs,
-    duration: parseInt(span.durationNanos, 10),
+    duration: span.durationNanos ? parseInt(span.durationNanos, 10) : 0,
     name: span.name,
   };
 
