@@ -3,11 +3,11 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { FolderDTO } from 'app/types/folders';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type FolderDTO } from 'app/types/folders';
 
 import {
-  ProvisionedFolderFormDataResult,
+  type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
 import { setupProvisioningMswServer } from '../../mocks/server';
