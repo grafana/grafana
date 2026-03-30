@@ -120,7 +120,7 @@ func NewStorageBackend(
 			},
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
-			TmpDir:                  filepath.Join(cfg.DataPath, "tmp"),
+			TmpDir:                  filepath.Join(cfg.DataPath, "tmp"), // only used by the SQL backend path
 			DisableStorageServices:  disableStorageServices,
 			DisablePruner:           cfg.DisablePruner,
 		})
@@ -259,6 +259,11 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		tmpDir:                  opts.TmpDir,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
+	}
+	if opts.TmpDir != "" {
+		if err := os.MkdirAll(opts.TmpDir, 0750); err != nil {
+			return nil, fmt.Errorf("create tmp dir: %w", err)
+		}
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err

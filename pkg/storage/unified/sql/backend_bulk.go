@@ -168,13 +168,6 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 		useParquet = resource.ParquetBufferFromContext(clientCtx)
 	}
 	if useParquet && b.dialect.DialectName() == "sqlite" {
-		if b.tmpDir != "" {
-			if err := os.MkdirAll(b.tmpDir, 0750); err != nil {
-				return &resourcepb.BulkResponse{
-					Error: resource.AsErrorResult(fmt.Errorf("create tmp dir: %w", err)),
-				}
-			}
-		}
 		file, err := os.CreateTemp(b.tmpDir, "grafana-bulk-export-*.parquet")
 		if err != nil {
 			return &resourcepb.BulkResponse{
@@ -194,6 +187,13 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 		rsp := writer.ProcessBulk(ctx, setting, iter)
 		if rsp.Error != nil {
 			return rsp
+		}
+
+		// Ensure the parquet file is flushed before the reader opens it
+		if err := file.Close(); err != nil {
+			return &resourcepb.BulkResponse{
+				Error: resource.AsErrorResult(err),
+			}
 		}
 
 		b.log.Info("using parquet buffer", "path", file.Name(), "processed", rsp.Processed)
