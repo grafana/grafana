@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 const getStyles = (theme: GrafanaTheme2) => ({

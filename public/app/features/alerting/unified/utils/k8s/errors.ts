@@ -1,7 +1,7 @@
 import { get } from 'lodash';
 
 import { t } from '@grafana/i18n';
-import { FetchError, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 
 import { getErrorCode } from '../misc';
 

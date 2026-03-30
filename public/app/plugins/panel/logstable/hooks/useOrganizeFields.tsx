@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
-import { DataFrame, FieldConfigSource, transformDataFrame } from '@grafana/data';
-import { CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { type DataFrame, type FieldConfigSource, transformDataFrame } from '@grafana/data';
+import { type CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
+import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
 import { getLogLevelColumnEnhancements } from '../fields/defaultLogLevelColumnConfig';
@@ -14,7 +14,7 @@ import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fi
 import { getDisplayedFields } from '../options/getDisplayedFields';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
 import { organizeLogsFieldsTransform } from '../transforms/organizeLogsFieldsTransform';
-import { BuildLinkToLogLine, isBuildLinkToLogLine } from '../types';
+import { type BuildLinkToLogLine, isBuildLinkToLogLine } from '../types';
 
 interface Props {
   extractedFrame: DataFrame | null;

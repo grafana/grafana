@@ -1,6 +1,6 @@
 import { Component } from 'react';
 import * as React from 'react';
-import { Observable, Unsubscribable } from 'rxjs';
+import { type Observable, type Unsubscribable } from 'rxjs';
 
 interface Props<T> {
   watch: Observable<T>;

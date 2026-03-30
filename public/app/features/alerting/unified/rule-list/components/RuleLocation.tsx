@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Icon, Stack, TextLink, Tooltip } from '@grafana/ui';
-import { RulesSourceIdentifier } from 'app/types/unified-alerting';
-import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import { type RulesSourceIdentifier } from 'app/types/unified-alerting';
+import { type RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { isUngroupedRuleGroup } from '../../utils/rules';
 

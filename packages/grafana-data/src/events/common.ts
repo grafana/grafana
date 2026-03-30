@@ -1,5 +1,5 @@
-import { AnnotationEvent } from '../types/annotations';
-import { DataFrame } from '../types/dataFrame';
+import { type AnnotationEvent } from '../types/annotations';
+import { type DataFrame } from '../types/dataFrame';
 
 import { BusEventBase, BusEventWithPayload } from './types';
 

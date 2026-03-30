@@ -1,16 +1,16 @@
 import { of } from 'rxjs';
-import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
+import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from 'src/services';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponseData,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponseData,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
   createDataFrame,
-  AdHocVariableFilter,
-  ScopedVars,
+  type AdHocVariableFilter,
+  type ScopedVars,
   getDefaultTimeRange,
 } from '@grafana/data';
 
@@ -18,7 +18,7 @@ import { config } from '../config';
 
 import {
   DataSourceWithBackend,
-  HealthCheckResult,
+  type HealthCheckResult,
   HealthStatus,
   isExpressionReference,
   standardStreamOptionsProvider,

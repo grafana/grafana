@@ -1,6 +1,6 @@
-import { CSSInterpolation } from '@emotion/serialize';
+import { type CSSInterpolation } from '@emotion/serialize';
 
-import { GrafanaTheme2, ThemeBreakpointsKey } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeBreakpointsKey } from '@grafana/data';
 
 /**
  * Type that represents a prop that can be responsive.

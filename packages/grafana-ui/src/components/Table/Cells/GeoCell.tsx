@@ -2,7 +2,7 @@ import WKT from 'ol/format/WKT';
 import { Geometry } from 'ol/geom';
 import type { JSX } from 'react';
 
-import { TableCellProps } from '../types';
+import { type TableCellProps } from '../types';
 
 export function GeoCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps } = props;

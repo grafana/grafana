@@ -1,14 +1,14 @@
 import { startCase, uniq } from 'lodash';
 
-import { ScopedVars, SelectableValue } from '@grafana/data';
+import { type ScopedVars, type SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
-import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { getEscapedRegexValues, getEscapedValues } from '../datasource';
-import TempoLanguageProvider from '../language_provider';
+import type TempoLanguageProvider from '../language_provider';
 import { intrinsics } from '../traceql/traceql';
-import { Scope } from '../types';
+import { type Scope } from '../types';
 
 export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: ScopedVars) => {
   const interpolatedFilters = filters.map((filter) => {

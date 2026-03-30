@@ -1,28 +1,28 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { Fragment, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { Fragment, type ReactNode, useCallback, useEffect, useMemo } from 'react';
 import {
-  HeaderGroup,
-  PluginHook,
-  Row,
-  SortingRule,
-  TableOptions,
+  type HeaderGroup,
+  type PluginHook,
+  type Row,
+  type SortingRule,
+  type TableOptions,
   useExpanded,
   usePagination,
   useSortBy,
   useTable,
 } from 'react-table';
 
-import { GrafanaTheme2, IconName, isTruthy } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isTruthy } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { Pagination } from '../Pagination/Pagination';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { PopoverContent } from '../Tooltip/types';
+import { type PopoverContent } from '../Tooltip/types';
 
-import { Column } from './types';
+import { type Column } from './types';
 import { EXPANDER_CELL_ID, getColumns } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {

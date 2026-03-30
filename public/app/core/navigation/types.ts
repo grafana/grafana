@@ -1,8 +1,8 @@
-import { Location } from 'history';
-import { ComponentType } from 'react';
-import { Params } from 'react-router-dom-v5-compat';
+import { type Location } from 'history';
+import { type ComponentType } from 'react';
+import { type Params } from 'react-router-dom-v5-compat';
 
-import { UrlQueryMap } from '@grafana/data';
+import { type UrlQueryMap } from '@grafana/data';
 
 export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> {
   route: RouteDescriptor;

@@ -199,6 +199,12 @@ module.exports = [
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          fixStyle: 'inline-type-imports',
+        },
+      ],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
       'no-restricted-syntax': [

@@ -1,4 +1,4 @@
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 
 import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
 
@@ -6,7 +6,7 @@ import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataPane, shouldShowAlertingTab } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { PanelDataPaneTab, TabId } from './types';
+import { type PanelDataPaneTab, TabId } from './types';
 
 /**
  * Create a data pane for the given panel.

@@ -1,8 +1,8 @@
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, FieldType } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 
 import { migrateVariableQuery, convertFieldsToVariableFields, updateFrame } from './SQLVariableUtils';
-import { QueryFormat, SQLQuery, SQLQueryMeta } from './types';
+import { QueryFormat, type SQLQuery, type SQLQueryMeta } from './types';
 
 const refId = 'SQLVariableQueryEditor-VariableQuery';
 const sampleQuery = 'SELECT * FROM users';

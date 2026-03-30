@@ -1,25 +1,25 @@
 import { Point } from 'ol/geom';
-import { SortColumn } from 'react-data-grid';
+import { type SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
   createTheme,
-  DataFrame,
-  DataFrameWithValue,
-  DataLink,
-  DisplayValue,
-  Field,
+  type DataFrame,
+  type DataFrameWithValue,
+  type DataLink,
+  type DisplayValue,
+  type Field,
   FieldType,
-  GrafanaTheme2,
-  LinkModel,
-  ValueLinkConfig,
+  type GrafanaTheme2,
+  type LinkModel,
+  type ValueLinkConfig,
 } from '@grafana/data';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { MeasureCellHeightEntry, TableRow } from './types';
+import { type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
   applySort,

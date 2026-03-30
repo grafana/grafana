@@ -2,21 +2,21 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVisualizationOptions } from './getVisualizationOptions';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { getRecentOptions } from './state/getRecentOptions';
-import { OptionPaneRenderProps } from './types';
+import { type OptionPaneRenderProps } from './types';
 
 export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   const { plugin, panel } = props;
