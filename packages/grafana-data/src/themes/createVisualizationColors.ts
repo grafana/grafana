@@ -360,6 +360,7 @@ export function getColorblindPalette(): string[] {
     '#D55E00', // vermilion
     '#F0E442', // yellow
     '#000000', // black
+    '#FFFFFF', // white
     '#0077BB', // tol blue
     '#33BBEE', // tol cyan
     '#EE7733', // tol orange

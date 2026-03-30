@@ -93,8 +93,12 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       name: 'Colorblind safe',
       isContinuous: false,
       isByValue: false,
-      getColors: () => {
-        return getColorblindPalette();
+      getColors: (theme: GrafanaTheme2) => {
+        return getColorblindPalette().filter(
+          (color) =>
+            getContrastRatio(theme.visualization.getColorByName(color), theme.colors.background.primary) >=
+            theme.colors.contrastThreshold
+        );
       },
       group: accessibleGroup,
     }),
