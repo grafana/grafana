@@ -245,7 +245,6 @@ export function setupExplore(options?: SetupOptions): {
     if (options?.clearLocalStorage !== false) {
       window.localStorage.clear();
     }
-    setTestFlags({});
   };
 
   return {
