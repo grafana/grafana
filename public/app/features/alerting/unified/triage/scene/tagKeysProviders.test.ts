@@ -40,6 +40,8 @@ describe('tagKeysProviders', () => {
     it('should show promoted labels first and remaining sorted under All', async () => {
       mockGetDataSourceSrv({
         getTagKeys: jest.fn().mockResolvedValue([
+          { text: 'cluster_name', value: 'cluster_name' },
+          { text: 'exported_namespace', value: 'exported_namespace' },
           { text: 'severity', value: 'severity' },
           { text: 'grafana_folder', value: 'grafana_folder' },
           { text: '__name__', value: '__name__' },
@@ -55,6 +57,8 @@ describe('tagKeysProviders', () => {
       expect(result.replace).toBe(true);
       expect(result.values).toEqual([
         { value: 'grafana_folder', text: 'Folder', group: 'Common' },
+        { value: 'cluster', text: 'Cluster', group: 'Common' },
+        { value: 'namespace', text: 'Namespace', group: 'Common' },
         { text: 'severity', value: 'severity', group: 'All' },
         { text: 'team', value: 'team', group: 'All' },
       ]);
@@ -70,7 +74,11 @@ describe('tagKeysProviders', () => {
 
       const result = await getGroupByTagKeysProvider(variable, null);
 
-      expect(result.values).toEqual([{ value: 'grafana_folder', text: 'Folder', group: 'Common' }]);
+      expect(result.values).toEqual([
+        { value: 'grafana_folder', text: 'Folder', group: 'Common' },
+        { value: 'cluster', text: 'Cluster', group: 'Common' },
+        { value: 'namespace', text: 'Namespace', group: 'Common' },
+      ]);
     });
   });
 
@@ -81,6 +89,9 @@ describe('tagKeysProviders', () => {
           { text: 'alertstate', value: 'alertstate' },
           { text: 'alertname', value: 'alertname' },
           { text: 'grafana_folder', value: 'grafana_folder' },
+          { text: 'cluster_name', value: 'cluster_name' },
+          { text: 'exported_namespace', value: 'exported_namespace' },
+          { text: 'namespace_extracted', value: 'namespace_extracted' },
           { text: 'severity', value: 'severity' },
           { text: 'environment', value: 'environment' },
           { text: '__name__', value: '__name__' },
@@ -108,6 +119,15 @@ describe('tagKeysProviders', () => {
       expect(result.values).not.toEqual(expect.arrayContaining([{ text: 'service', value: 'service', group: 'All' }]));
       expect(result.values).not.toEqual(
         expect.arrayContaining([{ text: 'service_name', value: 'service_name', group: 'All' }])
+      );
+      expect(result.values).not.toEqual(
+        expect.arrayContaining([{ text: 'cluster_name', value: 'cluster_name', group: 'All' }])
+      );
+      expect(result.values).not.toEqual(
+        expect.arrayContaining([{ text: 'exported_namespace', value: 'exported_namespace', group: 'All' }])
+      );
+      expect(result.values).not.toEqual(
+        expect.arrayContaining([{ text: 'namespace_extracted', value: 'namespace_extracted', group: 'All' }])
       );
     });
   });
@@ -163,6 +183,85 @@ describe('tagKeysProviders', () => {
         { text: 'payments', value: 'payments' },
       ]);
     });
+
+    it('merges and deduplicates values for combined cluster key', async () => {
+      const getTagValues = jest.fn().mockImplementation(({ key }: { key: string }) => {
+        if (key === 'cluster') {
+          return [
+            { text: 'prod-a', value: 'prod-a' },
+            { text: 'prod-b', value: 'prod-b' },
+          ];
+        }
+        if (key === 'cluster_name') {
+          return [
+            { text: 'prod-a', value: 'prod-a' },
+            { text: 'prod-c', value: 'prod-c' },
+          ];
+        }
+        return [];
+      });
+
+      mockGetDataSourceSrv({ getTagValues });
+
+      const variable = new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'test' } });
+      activateWithScene(variable);
+
+      const result = await getAdHocTagValuesProvider(variable, {
+        key: 'cluster',
+        operator: '=',
+        value: '',
+      });
+
+      expect(result.replace).toBe(true);
+      expect(result.values).toEqual([
+        { text: 'prod-a', value: 'prod-a' },
+        { text: 'prod-b', value: 'prod-b' },
+        { text: 'prod-c', value: 'prod-c' },
+      ]);
+    });
+
+    it('merges and deduplicates values for combined namespace key', async () => {
+      const getTagValues = jest.fn().mockImplementation(({ key }: { key: string }) => {
+        if (key === 'namespace') {
+          return [
+            { text: 'payments', value: 'payments' },
+            { text: 'checkout', value: 'checkout' },
+          ];
+        }
+        if (key === 'exported_namespace') {
+          return [
+            { text: 'checkout', value: 'checkout' },
+            { text: 'identity', value: 'identity' },
+          ];
+        }
+        if (key === 'namespace_extracted') {
+          return [
+            { text: 'payments', value: 'payments' },
+            { text: 'observability', value: 'observability' },
+          ];
+        }
+        return [];
+      });
+
+      mockGetDataSourceSrv({ getTagValues });
+
+      const variable = new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'test' } });
+      activateWithScene(variable);
+
+      const result = await getAdHocTagValuesProvider(variable, {
+        key: 'namespace',
+        operator: '=',
+        value: '',
+      });
+
+      expect(result.replace).toBe(true);
+      expect(result.values).toEqual([
+        { text: 'checkout', value: 'checkout' },
+        { text: 'identity', value: 'identity' },
+        { text: 'observability', value: 'observability' },
+        { text: 'payments', value: 'payments' },
+      ]);
+    });
   });
 
   describe('edge cases', () => {
@@ -174,7 +273,11 @@ describe('tagKeysProviders', () => {
 
       const result = await getGroupByTagKeysProvider(variable, null);
 
-      expect(result.values).toEqual([{ value: 'grafana_folder', text: 'Folder', group: 'Common' }]);
+      expect(result.values).toEqual([
+        { value: 'grafana_folder', text: 'Folder', group: 'Common' },
+        { value: 'cluster', text: 'Cluster', group: 'Common' },
+        { value: 'namespace', text: 'Namespace', group: 'Common' },
+      ]);
     });
   });
 });

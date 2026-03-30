@@ -36,4 +36,21 @@ describe('triage queries service combined filter', () => {
     expect(query).toContain('service="payments"');
     expect(query).toContain('service_name="payments"');
   });
+
+  it('expands cluster key to cluster OR cluster_name', () => {
+    const query = summaryChartQuery('cluster="prod-a"').expr;
+
+    expect(query).toContain('cluster="prod-a"');
+    expect(query).toContain('cluster_name="prod-a"');
+    expect(query).toContain(' or ');
+  });
+
+  it('expands namespace key to namespace OR exported_namespace OR namespace_extracted', () => {
+    const query = uniqueAlertInstancesQuery('namespace="payments"').expr;
+
+    expect(query).toContain('namespace="payments"');
+    expect(query).toContain('exported_namespace="payments"');
+    expect(query).toContain('namespace_extracted="payments"');
+    expect(query).toContain(' or ');
+  });
 });

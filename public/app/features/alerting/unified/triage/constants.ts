@@ -31,6 +31,14 @@ export const DATASOURCE_UID = config.unifiedAlerting.stateHistory?.prometheusTar
 export const METRIC_NAME = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
 
 export const SERVICE_FILTER_LABEL_KEYS = ['service', 'service_name'] as const;
+export const CLUSTER_FILTER_LABEL_KEYS = ['cluster', 'cluster_name'] as const;
+export const NAMESPACE_FILTER_LABEL_KEYS = ['namespace', 'exported_namespace', 'namespace_extracted'] as const;
+
+export const COMBINED_FILTER_LABEL_KEYS = {
+  service: SERVICE_FILTER_LABEL_KEYS,
+  cluster: CLUSTER_FILTER_LABEL_KEYS,
+  namespace: NAMESPACE_FILTER_LABEL_KEYS,
+} as const;
 
 /**
  * Internal/structural labels to exclude from frequency counting.

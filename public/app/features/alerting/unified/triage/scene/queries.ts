@@ -1,7 +1,7 @@
 import { SceneDataQuery } from '@grafana/scenes';
 
 import { parsePromQLStyleMatcherLooseSafe, quoteWithEscape } from '../../utils/matchers';
-import { METRIC_NAME, SERVICE_FILTER_LABEL_KEYS } from '../constants';
+import { COMBINED_FILTER_LABEL_KEYS, METRIC_NAME } from '../constants';
 
 import { getDataQuery } from './utils';
 
@@ -38,29 +38,38 @@ function serializeMatchers(matchers: MatcherExpr[]): string {
 
 /**
  * Builds one or more metric selectors from the current ad-hoc filter string.
- 
- * For Service filter: user-facing key is `service`, but data can be
- * labeled as either `service` or `service_name
+ *
+ * Combined filters use a single user-facing key (for example `service`) while
+ * alert series may have one of several backing label keys (`service`, `service_name`).
+ * We expand those matchers into OR selectors so filtering is consistent.
  */
 function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = []): string[] {
   const allMatchers = [...parseFilterMatchers(filter), ...extraMatchers];
-  const serviceCombinedMatchers = allMatchers.filter((m) => m.name === 'service');
-  const baseMatchers = allMatchers.filter((m) => m.name !== 'service');
+  const combinedMatchers = Object.entries(COMBINED_FILTER_LABEL_KEYS)
+    .map(([canonicalKey, labelKeys]) => ({
+      canonicalKey,
+      labelKeys,
+      matchers: allMatchers.filter((m) => m.name === canonicalKey),
+    }))
+    .filter((entry) => entry.matchers.length > 0);
 
-  if (serviceCombinedMatchers.length === 0) {
-    return [`${METRIC_NAME}{${serializeMatchers(baseMatchers)}}`];
+  const combinedCanonicalKeys = new Set(combinedMatchers.map((entry) => entry.canonicalKey));
+  const baseMatchers = allMatchers.filter((m) => !combinedCanonicalKeys.has(m.name));
+
+  let branches: MatcherExpr[][] = [baseMatchers];
+  for (const entry of combinedMatchers) {
+    branches = branches.flatMap((branch) =>
+      entry.labelKeys.map((labelKey) => [
+        ...branch,
+        ...entry.matchers.map((matcher) => ({
+          ...matcher,
+          name: labelKey,
+        })),
+      ])
+    );
   }
 
-  return SERVICE_FILTER_LABEL_KEYS.map((serviceKey) => {
-    const branchMatchers = [
-      ...baseMatchers,
-      ...serviceCombinedMatchers.map((matcher) => ({
-        ...matcher,
-        name: serviceKey,
-      })),
-    ];
-    return `${METRIC_NAME}{${serializeMatchers(branchMatchers)}}`;
-  });
+  return branches.map((branchMatchers) => `${METRIC_NAME}{${serializeMatchers(branchMatchers)}}`);
 }
 
 function orSelectors(selectors: string[]): string {
