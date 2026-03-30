@@ -12,7 +12,7 @@ import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/Da
 import { SuggestedDashboardsLoader } from 'app/features/datasources/components/SuggestedDashboardsLoader';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 interface Props {
   route?: string;

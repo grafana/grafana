@@ -1,13 +1,18 @@
-import { HideSeriesConfig } from '@grafana/schema';
+import { type HideSeriesConfig } from '@grafana/schema';
 
-import { ScopedVars } from './ScopedVars';
-import { Action } from './action';
-import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DataLink, LinkModel } from './dataLink';
-import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFactors } from './displayValue';
-import { FieldColor } from './fieldColor';
-import { ThresholdsConfig } from './thresholds';
-import { ValueMapping } from './valueMapping';
+import { type ScopedVars } from './ScopedVars';
+import { type Action } from './action';
+import { type QueryResultBase, type Labels, type NullValueMode } from './data';
+import { type DataLink, type LinkModel } from './dataLink';
+import {
+  type DecimalCount,
+  type DisplayProcessor,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+} from './displayValue';
+import { type FieldColor } from './fieldColor';
+import { type ThresholdsConfig } from './thresholds';
+import { type ValueMapping } from './valueMapping';
 
 /** @public */
 export enum FieldType {

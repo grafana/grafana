@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole } from '@grafana/data';
-import { ApiKey } from 'app/types/apiKeys';
-import { ServiceAccountDTO } from 'app/types/serviceaccount';
+import { type ApiKey } from 'app/types/apiKeys';
+import { type ServiceAccountDTO } from 'app/types/serviceaccount';
 
-import { ServiceAccountPageUnconnected, Props } from './ServiceAccountPage';
+import { ServiceAccountPageUnconnected, type Props } from './ServiceAccountPage';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {

@@ -3,14 +3,14 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncFn, useDebounce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { FilterInput, Grid, Pagination, Stack, useStyles2 } from '@grafana/ui';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
-import { CompatibilityState } from '../CompatibilityBadge';
+import { type CompatibilityState } from '../CompatibilityBadge';
 import { DashboardCard } from '../DashboardCard';
 import type { MappingContext } from '../SuggestedDashboardsModal';
 import { useTrackingContext } from '../TrackingContext';
@@ -18,7 +18,7 @@ import { checkDashboardCompatibility } from '../api/compatibilityApi';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, PAGE_SIZE } from '../constants';
 import { DashboardLibraryInteractions } from '../interactions';
-import { GnetDashboard } from '../types';
+import { type GnetDashboard } from '../types';
 import { onUseCommunityDashboard, interpolateDashboardForCompatibilityCheck } from '../utils/communityDashboardHelpers';
 import { getPageSlice } from '../utils/suggestedDashboardHelpers';
 

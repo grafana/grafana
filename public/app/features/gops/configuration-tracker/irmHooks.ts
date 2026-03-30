@@ -7,11 +7,15 @@ import { useNotificationPolicyRoute } from 'app/features/alerting/unified/compon
 import { useIrmPlugin, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { type RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { isOnCallContactPointReady, useIsCreateAlertRuleDone } from './alerting/hooks';
 import { isContactPointReady } from './alerting/utils';
-import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from './components/ConfigureIRM';
+import {
+  ConfigurationStepsEnum,
+  type DataSourceConfigurationData,
+  type IrmCardConfiguration,
+} from './components/ConfigureIRM';
 import { useGetIncidentPluginConfig } from './incidents/hooks';
 import { useOnCallChatOpsConnections, useOnCallOptions } from './onCall/hooks';
 import { useSloChecks } from './slo/hooks';

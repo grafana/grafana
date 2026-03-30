@@ -1,11 +1,11 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { config } from '@grafana/runtime';
-import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
+import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
-import { RepoType } from '../Wizard/types';
+import { type RepoType } from '../Wizard/types';
 import { getIsReadOnlyRepo } from '../utils/repository';
 
 interface GetResourceRepositoryArgs {

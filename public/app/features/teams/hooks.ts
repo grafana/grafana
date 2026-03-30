@@ -5,15 +5,15 @@ import { config } from '@grafana/runtime';
 import {
   API_GROUP,
   API_VERSION,
-  GetTeamApiArg,
-  Team,
+  type GetTeamApiArg,
+  type Team,
   useLazyGetSearchTeamsQuery as useLazyGetSearchTeamsQueryIam,
   useLazyGetTeamQuery as useLazyGetTeamQueryIam,
   useGetTeamQuery as useGetTeamQueryIam,
 } from 'app/api/clients/iam/v0alpha1';
 import {
-  TeamDto,
-  UpdateTeamCommand,
+  type TeamDto,
+  type UpdateTeamCommand,
   useDeleteTeamByIdMutation,
   useGetTeamByIdQuery,
   useLazyGetTeamByIdQuery as useLazyGetTeamByIdQueryLegacy,

@@ -1,4 +1,4 @@
-import { BaseQueryFn } from '@reduxjs/toolkit/query';
+import { type BaseQueryFn } from '@reduxjs/toolkit/query';
 import { lastValueFrom } from 'rxjs';
 
 import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';

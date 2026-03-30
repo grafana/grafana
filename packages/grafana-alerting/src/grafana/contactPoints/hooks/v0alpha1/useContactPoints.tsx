@@ -1,13 +1,13 @@
 import {
   type TypedUseMutationResult,
   type TypedUseQueryHookResult,
-  fetchBaseQuery,
+  type fetchBaseQuery,
 } from '@reduxjs/toolkit/query/react';
-import { OverrideProperties } from 'type-fest';
+import { type OverrideProperties } from 'type-fest';
 
 import {
-  CreateReceiverApiArg,
-  ListReceiverApiArg,
+  type CreateReceiverApiArg,
+  type ListReceiverApiArg,
   generatedAPI as notificationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 

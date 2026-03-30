@@ -1,14 +1,14 @@
 import { uniqueId } from 'lodash';
 
 import {
-  DataSourcePluginOptionsEditorProps,
+  type DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, SecretInput } from '@grafana/ui';
 
-import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
+import { type InfluxOptions, type InfluxSecureJsonData } from '../../../types';
 
 import { WIDTH_SHORT } from './constants';
 import {

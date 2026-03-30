@@ -3,8 +3,8 @@ import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { GrafanaSearcher, SearchQuery } from './types';
-import { toDashboardResults, SearchHit, SearchAPIResponse, UnifiedSearcher } from './unified';
+import { type GrafanaSearcher, type SearchQuery } from './types';
+import { toDashboardResults, type SearchHit, type SearchAPIResponse, UnifiedSearcher } from './unified';
 
 beforeEach(() => {
   jest.clearAllMocks();

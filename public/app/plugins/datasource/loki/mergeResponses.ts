@@ -1,14 +1,14 @@
 import {
   closestIdx,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
-  DataQueryResponse,
-  DataQueryResponseData,
-  Field,
+  type DataQueryResponse,
+  type DataQueryResponseData,
+  type Field,
   FieldType,
   LoadingState,
-  QueryResultMetaNotice,
-  QueryResultMetaStat,
+  type QueryResultMetaNotice,
+  type QueryResultMetaStat,
   shallowCompare,
 } from '@grafana/data';
 
