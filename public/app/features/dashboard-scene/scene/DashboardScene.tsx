@@ -304,12 +304,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public addDefaultVariables(defaultVariables: VariableKind[]) {
-    if (defaultVariables.length === 0) {
-      return;
-    }
-
+  public setDefaultVariables(defaultVariables: VariableKind[]) {
     const variableSet = sceneGraph.getVariables(this);
+    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
     const defaultVarObjects = defaultVariables
       .map((v) => {
         try {
@@ -321,19 +318,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       })
       .filter((v): v is SceneVariable => Boolean(v));
 
-    variableSet.setState({
-      variables: [...defaultVarObjects, ...variableSet.state.variables],
-    });
+    variableSet.setState({ variables: [...defaultVarObjects, ...userVars] });
   }
 
-  public addDefaultLinks(defaultLinks: DashboardLink[]) {
-    if (defaultLinks.length === 0) {
-      return;
-    }
-
-    this.setState({
-      links: [...defaultLinks, ...this.state.links],
-    });
+  public setDefaultLinks(defaultLinks: DashboardLink[]) {
+    const userLinks = this.state.links.filter((l) => !l.origin);
+    this.setState({ links: [...defaultLinks, ...userLinks] });
   }
 
   public clearDefaultControls() {

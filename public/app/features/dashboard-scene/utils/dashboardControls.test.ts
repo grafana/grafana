@@ -3,7 +3,12 @@ import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { DashboardLink, DataSourceRef } from '@grafana/schema';
 import { defaultDataQueryKind, QueryVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { DefaultControlEvent, loadDefaultControls$ } from './dashboardControls';
+import {
+  loadDefaultControlsShared$,
+  loadDefaultLinks$,
+  loadDefaultVariables$,
+  DefaultControlEvent,
+} from './dashboardControls';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -111,11 +116,11 @@ describe('dashboardControls', () => {
     jest.clearAllMocks();
   });
 
-  describe('loadDefaultControls$', () => {
+  describe('loadDefaultControlsShared$', () => {
     it('should complete immediately when refs is empty', (done) => {
       const events: DefaultControlEvent[] = [];
 
-      loadDefaultControls$([]).subscribe({
+      loadDefaultControlsShared$([]).subscribe({
         next: (event) => events.push(event),
         complete: () => {
           expect(events).toEqual([]);
@@ -157,7 +162,7 @@ describe('dashboardControls', () => {
 
       const events: DefaultControlEvent[] = [];
 
-      loadDefaultControls$(refs).subscribe({
+      loadDefaultControlsShared$(refs).subscribe({
         next: (event) => events.push(event),
         complete: () => {
           const variableEvents = events.filter((e) => e.type === 'variables');
@@ -197,7 +202,7 @@ describe('dashboardControls', () => {
 
       const events: DefaultControlEvent[] = [];
 
-      loadDefaultControls$(refs).subscribe({
+      loadDefaultControlsShared$(refs).subscribe({
         next: (event) => events.push(event),
         complete: () => {
           expect(events).toHaveLength(1);
@@ -227,7 +232,7 @@ describe('dashboardControls', () => {
 
       const events: DefaultControlEvent[] = [];
 
-      loadDefaultControls$(refs).subscribe({
+      loadDefaultControlsShared$(refs).subscribe({
         next: (event) => events.push(event),
         complete: () => {
           expect(events).toHaveLength(1);
@@ -254,7 +259,7 @@ describe('dashboardControls', () => {
       getDataSourceSrvMock.mockReturnValue(mockSrv);
 
       const events: DefaultControlEvent[] = [];
-      const subscription = loadDefaultControls$(refs).subscribe({
+      const subscription = loadDefaultControlsShared$(refs).subscribe({
         next: (event) => events.push(event),
       });
 
@@ -271,6 +276,173 @@ describe('dashboardControls', () => {
 
       // No events should have been emitted
       expect(events).toEqual([]);
+    });
+  });
+
+  describe('loadDefaultVariables$', () => {
+    it('should accumulate and sort variables by origin.group then name', (done) => {
+      const refs: DataSourceRef[] = [
+        { uid: 'ds-1', type: 'zulu' },
+        { uid: 'ds-2', type: 'alpha' },
+      ];
+
+      const mockDs1 = createMockDatasource({
+        uid: 'ds-1',
+        type: 'zulu',
+        getDefaultVariables: () => Promise.resolve([mockVariable2, mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+
+      const mockDs2 = createMockDatasource({
+        uid: 'ds-2',
+        type: 'alpha',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn((ref) => {
+          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
+            return Promise.resolve(mockDs1);
+          }
+          return Promise.resolve(mockDs2);
+        }),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const emissions: Array<Array<import('@grafana/schema/apis/dashboard.grafana.app/v2').VariableKind>> = [];
+      const shared$ = loadDefaultControlsShared$(refs);
+
+      loadDefaultVariables$(shared$).subscribe({
+        next: (vars) => emissions.push(vars),
+        complete: () => {
+          // The final emission should contain all 3 variables sorted by group then name
+          const finalVars = emissions[emissions.length - 1];
+          expect(finalVars).toHaveLength(3);
+
+          // alpha group should come before zulu group
+          expect(finalVars[0].spec.origin?.group).toBe('alpha');
+          expect(finalVars[1].spec.origin?.group).toBe('zulu');
+          expect(finalVars[2].spec.origin?.group).toBe('zulu');
+
+          // Within zulu group, var1 should come before var2
+          expect(finalVars[1].spec.name).toBe('zulu_var1');
+          expect(finalVars[2].spec.name).toBe('zulu_var2');
+          done();
+        },
+      });
+    });
+
+    it('should not emit when there are no variable events', (done) => {
+      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
+
+      const mockDs = createMockDatasource({
+        uid: 'ds-1',
+        type: 'prometheus',
+        getDefaultVariables: undefined,
+        getDefaultLinks: () => Promise.resolve([mockLink1]),
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const emissions: Array<Array<import('@grafana/schema/apis/dashboard.grafana.app/v2').VariableKind>> = [];
+      const shared$ = loadDefaultControlsShared$(refs);
+
+      loadDefaultVariables$(shared$).subscribe({
+        next: (vars) => emissions.push(vars),
+        complete: () => {
+          expect(emissions).toHaveLength(0);
+          done();
+        },
+      });
+    });
+  });
+
+  describe('loadDefaultLinks$', () => {
+    it('should accumulate and sort links by origin.group then title', (done) => {
+      const refs: DataSourceRef[] = [
+        { uid: 'ds-1', type: 'zulu' },
+        { uid: 'ds-2', type: 'alpha' },
+      ];
+
+      const mockLink2: DashboardLink = {
+        ...mockLink1,
+        title: 'Alpha Link',
+      };
+
+      const mockDs1 = createMockDatasource({
+        uid: 'ds-1',
+        type: 'zulu',
+        getDefaultVariables: undefined,
+        getDefaultLinks: () => Promise.resolve([mockLink1]),
+      });
+
+      const mockDs2 = createMockDatasource({
+        uid: 'ds-2',
+        type: 'alpha',
+        getDefaultVariables: undefined,
+        getDefaultLinks: () => Promise.resolve([mockLink2]),
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn((ref) => {
+          if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-1') {
+            return Promise.resolve(mockDs1);
+          }
+          return Promise.resolve(mockDs2);
+        }),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const emissions: DashboardLink[][] = [];
+      const shared$ = loadDefaultControlsShared$(refs);
+
+      loadDefaultLinks$(shared$).subscribe({
+        next: (links) => emissions.push(links),
+        complete: () => {
+          const finalLinks = emissions[emissions.length - 1];
+          expect(finalLinks).toHaveLength(2);
+
+          // alpha group should come before zulu group
+          expect(finalLinks[0].origin?.group).toBe('alpha');
+          expect(finalLinks[1].origin?.group).toBe('zulu');
+          done();
+        },
+      });
+    });
+
+    it('should not emit when there are no link events', (done) => {
+      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
+
+      const mockDs = createMockDatasource({
+        uid: 'ds-1',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const emissions: DashboardLink[][] = [];
+      const shared$ = loadDefaultControlsShared$(refs);
+
+      loadDefaultLinks$(shared$).subscribe({
+        next: (links) => emissions.push(links),
+        complete: () => {
+          expect(emissions).toHaveLength(0);
+          done();
+        },
+      });
     });
   });
 });

@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { Observable, Subscriber } from 'rxjs';
+import { filter, Observable, scan, share, Subscriber } from 'rxjs';
 
 import { DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -26,7 +26,7 @@ export type DefaultControlEvent =
   | { type: 'variables'; data: VariableKind[] }
   | { type: 'links'; data: DashboardLink[] };
 
-export function loadDefaultControls$(refs: DataSourceRef[]): Observable<DefaultControlEvent> {
+function loadDefaultControlsRaw$(refs: DataSourceRef[]): Observable<DefaultControlEvent> {
   return new Observable((subscriber) => {
     if (refs.length === 0) {
       subscriber.complete();
@@ -38,6 +38,45 @@ export function loadDefaultControls$(refs: DataSourceRef[]): Observable<DefaultC
 
     Promise.all(promises).then(() => subscriber.complete());
   });
+}
+
+// share() multicasts the raw observable so that loadDefaultVariables$ and
+// loadDefaultLinks$ reuse a single subscription — without it, each stream
+// would independently load all datasources, doubling the network requests.
+export function loadDefaultControlsShared$(refs: DataSourceRef[]) {
+  return loadDefaultControlsRaw$(refs).pipe(share());
+}
+
+export function loadDefaultVariables$(source$: Observable<DefaultControlEvent>): Observable<VariableKind[]> {
+  return source$.pipe(
+    filter((e): e is Extract<DefaultControlEvent, { type: 'variables' }> => e.type === 'variables'),
+    scan<Extract<DefaultControlEvent, { type: 'variables' }>, VariableKind[]>(
+      (acc, event) => [...acc, ...event.data].sort(sortVariables),
+      []
+    )
+  );
+}
+
+export function loadDefaultLinks$(source$: Observable<DefaultControlEvent>): Observable<DashboardLink[]> {
+  return source$.pipe(
+    filter((e): e is Extract<DefaultControlEvent, { type: 'links' }> => e.type === 'links'),
+    scan<Extract<DefaultControlEvent, { type: 'links' }>, DashboardLink[]>(
+      (acc, event) => [...acc, ...event.data].sort(sortLinks),
+      []
+    )
+  );
+}
+
+const collator = new Intl.Collator();
+
+function sortVariables(a: VariableKind, b: VariableKind): number {
+  const groupCmp = collator.compare(a.spec.origin?.group ?? '', b.spec.origin?.group ?? '');
+  return groupCmp !== 0 ? groupCmp : collator.compare(a.spec.name, b.spec.name);
+}
+
+function sortLinks(a: DashboardLink, b: DashboardLink): number {
+  const groupCmp = collator.compare(a.origin?.group ?? '', b.origin?.group ?? '');
+  return groupCmp !== 0 ? groupCmp : collator.compare(a.title ?? '', b.title ?? '');
 }
 
 async function loadControlsFromRef(ref: DataSourceRef, traceId: string, subscriber: Subscriber<DefaultControlEvent>) {

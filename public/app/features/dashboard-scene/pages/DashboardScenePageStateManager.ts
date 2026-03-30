@@ -50,7 +50,7 @@ import {
   SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
-import { loadDefaultControls$ } from '../utils/dashboardControls';
+import { loadDefaultControlsShared$, loadDefaultLinks$, loadDefaultVariables$ } from '../utils/dashboardControls';
 import { getDsRefsFromV1Dashboard, getDsRefsFromV2Dashboard } from '../utils/dashboardDsRefs';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
@@ -158,7 +158,8 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract getDatasourceRefs(rsp: T): DataSourceRef[];
 
   protected cache: Record<string, DashboardScene> = {};
-  private defaultControlsSubscription?: Subscription;
+  private defaultVariablesSubscription?: Subscription;
+  private defaultLinksSubscription?: Subscription;
 
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
   protected dashboardCache?: DashboardCacheEntry<T>;
@@ -480,21 +481,24 @@ abstract class DashboardScenePageStateManagerBase<T>
       return;
     }
 
-    this.defaultControlsSubscription = loadDefaultControls$(refs).subscribe({
-      next: (event) => {
-        if (event.type === 'variables') {
-          scene.addDefaultVariables(event.data);
-        } else if (event.type === 'links') {
-          scene.addDefaultLinks(event.data);
-        }
-      },
+    const shared$ = loadDefaultControlsShared$(refs);
+
+    this.defaultVariablesSubscription = loadDefaultVariables$(shared$).subscribe({
+      next: (vars) => scene.setDefaultVariables(vars),
       error: (err) => {
-        console.warn('Failed to load default controls', err);
-        scene.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
+        console.warn('Failed to load default variables', err);
+        scene.setState({ defaultVariablesLoading: false });
       },
-      complete: () => {
-        scene.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
+      complete: () => scene.setState({ defaultVariablesLoading: false }),
+    });
+
+    this.defaultLinksSubscription = loadDefaultLinks$(shared$).subscribe({
+      next: (links) => scene.setDefaultLinks(links),
+      error: (err) => {
+        console.warn('Failed to load default links', err);
+        scene.setState({ defaultLinksLoading: false });
       },
+      complete: () => scene.setState({ defaultLinksLoading: false }),
     });
   }
 
@@ -513,7 +517,8 @@ abstract class DashboardScenePageStateManagerBase<T>
   }
 
   public clearState() {
-    this.defaultControlsSubscription?.unsubscribe();
+    this.defaultVariablesSubscription?.unsubscribe();
+    this.defaultLinksSubscription?.unsubscribe();
     this.state.dashboard?.clearDefaultControls();
     getDashboardSrv().setCurrent(undefined);
 

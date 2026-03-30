@@ -1721,9 +1721,9 @@ describe('DashboardScene', () => {
     });
   });
 
-  describe('addDefaultVariables', () => {
+  describe('setDefaultVariables', () => {
     it('should prepend default variables to existing variables', () => {
-      const scene = buildTestScene();
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
 
       const defaultVariables = [
         {
@@ -1738,27 +1738,18 @@ describe('DashboardScene', () => {
       ] as VariableKind[];
 
       const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
-      scene.addDefaultVariables(defaultVariables);
+      scene.setDefaultVariables(defaultVariables);
 
       const variables = sceneGraph.getVariables(scene).state.variables;
       expect(variables.length).toBe(existingVarCount + 1);
       expect(variables[0].state.name).toBe('defaultVar');
     });
 
-    it('should not modify variables when no default variables are provided', () => {
-      const scene = buildTestScene();
-      const originalVars = sceneGraph.getVariables(scene).state.variables;
-
-      scene.addDefaultVariables([]);
-
-      expect(sceneGraph.getVariables(scene).state.variables).toBe(originalVars);
-    });
-
-    it('should accumulate variables from multiple calls', () => {
-      const scene = buildTestScene();
+    it('should replace previous defaults on subsequent calls', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
       const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
 
-      scene.addDefaultVariables([
+      scene.setDefaultVariables([
         {
           kind: 'CustomVariable' as const,
           spec: {
@@ -1770,7 +1761,8 @@ describe('DashboardScene', () => {
         },
       ] as VariableKind[]);
 
-      scene.addDefaultVariables([
+      // Second call should replace, not append
+      scene.setDefaultVariables([
         {
           kind: 'CustomVariable' as const,
           spec: {
@@ -1783,11 +1775,13 @@ describe('DashboardScene', () => {
       ] as VariableKind[]);
 
       const variables = sceneGraph.getVariables(scene).state.variables;
-      expect(variables.length).toBe(existingVarCount + 2);
+      // Only 1 default + existing user vars (not 2 defaults)
+      expect(variables.length).toBe(existingVarCount + 1);
+      expect(variables[0].state.name).toBe('varFromDs2');
     });
   });
 
-  describe('addDefaultLinks', () => {
+  describe('setDefaultLinks', () => {
     it('should prepend default links to existing links', () => {
       const scene = buildTestScene();
       const existingLinkCount = scene.state.links.length;
@@ -1808,26 +1802,27 @@ describe('DashboardScene', () => {
         },
       ];
 
-      scene.addDefaultLinks(defaultLinks);
+      scene.setDefaultLinks(defaultLinks);
 
       expect(scene.state.links.length).toBe(existingLinkCount + 1);
       expect(scene.state.links[0].title).toBe('Default Link');
     });
 
-    it('should not modify links when no default links are provided', () => {
+    it('should preserve user links when no default links are provided', () => {
       const scene = buildTestScene();
-      const originalLinks = scene.state.links;
+      const originalLinkTitles = scene.state.links.map((l) => l.title);
 
-      scene.addDefaultLinks([]);
+      scene.setDefaultLinks([]);
 
-      expect(scene.state.links).toBe(originalLinks);
+      const linkTitles = scene.state.links.map((l) => l.title);
+      expect(linkTitles).toEqual(originalLinkTitles);
     });
 
-    it('should accumulate links from multiple calls', () => {
+    it('should replace previous defaults on subsequent calls', () => {
       const scene = buildTestScene();
       const existingLinkCount = scene.state.links.length;
 
-      scene.addDefaultLinks([
+      scene.setDefaultLinks([
         {
           title: 'Link from DS1',
           url: 'http://ds1.com',
@@ -1843,7 +1838,8 @@ describe('DashboardScene', () => {
         },
       ]);
 
-      scene.addDefaultLinks([
+      // Second call should replace, not append
+      scene.setDefaultLinks([
         {
           title: 'Link from DS2',
           url: 'http://ds2.com',
@@ -1859,16 +1855,18 @@ describe('DashboardScene', () => {
         },
       ]);
 
-      expect(scene.state.links.length).toBe(existingLinkCount + 2);
+      // Only 1 default + existing user links (not 2 defaults)
+      expect(scene.state.links.length).toBe(existingLinkCount + 1);
+      expect(scene.state.links[0].title).toBe('Link from DS2');
     });
   });
 
   describe('clearDefaultControls', () => {
     it('should remove only origin-bearing variables and links', () => {
-      const scene = buildTestScene();
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
 
       // Add default variables (with origin)
-      scene.addDefaultVariables([
+      scene.setDefaultVariables([
         {
           kind: 'CustomVariable' as const,
           spec: {
@@ -1881,7 +1879,7 @@ describe('DashboardScene', () => {
       ] as VariableKind[]);
 
       // Add default links (with origin)
-      scene.addDefaultLinks([
+      scene.setDefaultLinks([
         {
           title: 'DS Link',
           url: 'http://example.com',
@@ -1912,7 +1910,7 @@ describe('DashboardScene', () => {
     });
 
     it('should prevent accumulation when called before re-adding defaults', () => {
-      const scene = buildTestScene();
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
       const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
       const existingLinkCount = scene.state.links.length;
 
@@ -1945,13 +1943,13 @@ describe('DashboardScene', () => {
       ];
 
       // First load
-      scene.addDefaultVariables(defaultVars);
-      scene.addDefaultLinks(defaultLinks);
+      scene.setDefaultVariables(defaultVars);
+      scene.setDefaultLinks(defaultLinks);
 
       // Simulate re-navigation: clear then reload
       scene.clearDefaultControls();
-      scene.addDefaultVariables(defaultVars);
-      scene.addDefaultLinks(defaultLinks);
+      scene.setDefaultVariables(defaultVars);
+      scene.setDefaultLinks(defaultLinks);
 
       expect(sceneGraph.getVariables(scene).state.variables.length).toBe(existingVarCount + 1);
       expect(scene.state.links.length).toBe(existingLinkCount + 1);
