@@ -66,16 +66,18 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	userID, err := helper.Org1.Admin.Identity.GetInternalID()
 	require.NoError(t, err)
 
-	stars.Add(ctx, &star.StarDashboardCommand{
+	err = stars.Add(ctx, &star.StarDashboardCommand{
 		UserID:       userID,
 		OrgID:        helper.Org1.OrgID,
 		DashboardUID: "dash-1",
 	})
-	stars.Add(ctx, &star.StarDashboardCommand{
+	require.NoError(t, err)
+	err = stars.Add(ctx, &star.StarDashboardCommand{
 		UserID:       userID,
 		OrgID:        helper.Org1.OrgID,
 		DashboardUID: "dash-2",
 	})
+	require.NoError(t, err)
 
 	res, err := stars.GetByUser(context.Background(), &star.GetUserStarsQuery{
 		UserID: userID,

@@ -63,6 +63,9 @@ func (m *starsMigrator) MigrateStars(ctx context.Context, orgId int64, opts migr
 
 		rv++
 		obj, err := utils.MetaAccessor(s)
+		if err != nil {
+			return err
+		}
 		obj.SetResourceVersion(strconv.FormatInt(rv, 10))
 		obj.SetCreationTimestamp(metav1.NewTime(ts))
 
