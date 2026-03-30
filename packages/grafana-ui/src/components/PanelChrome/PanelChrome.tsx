@@ -246,10 +246,12 @@ export function PanelChrome({
       // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
       // '[role="columnheader"]' targets table column headers (e.g. react-data-grid), preventing sort clicks
       // and column resize drags from selecting the panel in edit mode.
+      // '.u-axis' targets uPlot axis elements, preventing axis interactions from selecting the panel.
       if (
         evt.target instanceof Element &&
         (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container,[role="columnheader"]') ||
-          evt.target.classList.contains('u-over'))
+          evt.target.classList.contains('u-over') ||
+          evt.target.classList.contains('u-axis'))
       ) {
         // Stop propagation otherwise row config editor will get selected
         evt.stopPropagation();
