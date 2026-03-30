@@ -2,8 +2,11 @@ package teamapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	"go.opentelemetry.io/otel/codes"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -23,12 +26,17 @@ func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage
 
 	cfg := tapi.clientConfigProvider.GetDirectRestConfig(c)
 	if cfg == nil {
-		return response.Error(http.StatusInternalServerError, "REST config not available", nil)
+		err := fmt.Errorf("REST config not available")
+		span.SetStatus(codes.Error, "REST config not available")
+		span.RecordError(err)
+		return response.Error(http.StatusInternalServerError, "REST config not available", err)
 	}
 	cfg = dynamic.ConfigFor(cfg)
 	cfg.GroupVersion = &iamv0alpha1.GroupVersion
 	restClient, err := rest.RESTClientFor(cfg)
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to create REST client")
+		span.RecordError(err)
 		return response.Error(http.StatusInternalServerError, "Failed to create REST client", err)
 	}
 
@@ -48,6 +56,8 @@ func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage
 
 	result := req.Do(ctx)
 	if err := result.Error(); err != nil {
+		span.SetStatus(codes.Error, "failed to search teams")
+		span.RecordError(err)
 		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
 	}
 
@@ -55,6 +65,8 @@ func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage
 
 	var searchResp iamv0alpha1.GetSearchTeamsResponse
 	if err := json.Unmarshal(body, &searchResp); err != nil {
+		span.SetStatus(codes.Error, "failed to parse search response")
+		span.RecordError(err)
 		return response.Error(http.StatusInternalServerError, "Failed to parse search response", err)
 	}
 
