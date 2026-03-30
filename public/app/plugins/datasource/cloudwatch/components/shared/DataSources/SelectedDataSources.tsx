@@ -1,4 +1,4 @@
-import { LogDataSource } from '../../../dataquery.gen';
+import { type LogDataSource } from '../../../dataquery.gen';
 import { SelectionChipList } from '../SelectionChipList';
 
 type Props = {

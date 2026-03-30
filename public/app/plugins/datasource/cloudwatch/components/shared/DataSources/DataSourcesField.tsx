@@ -1,8 +1,8 @@
 import { Box, Stack } from '@grafana/ui';
 
-import { LogDataSource } from '../../../dataquery.gen';
-import { CloudWatchDatasource } from '../../../datasource';
-import { ListDataSourcesRequest } from '../../../resources/types';
+import { type LogDataSource } from '../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../datasource';
+import { type ListDataSourcesRequest } from '../../../resources/types';
 
 import { DataSourcesSelector } from './DataSourcesSelector';
 import { SelectedDataSources } from './SelectedDataSources';

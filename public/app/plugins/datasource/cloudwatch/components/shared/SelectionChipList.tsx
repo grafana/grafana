@@ -80,7 +80,6 @@ export const SelectionChipList = <T,>({
         body={clearBody}
         confirmText="Yes"
         dismissText="No"
-        icon="exclamation-triangle"
         onConfirm={() => {
           setShowConfirm(false);
           onChange([]);

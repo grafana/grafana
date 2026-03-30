@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { EditorField } from '@grafana/plugin-ui';
 import { Alert, Button, Checkbox, Label, LoadingPlaceholder, Modal, Space, useStyles2 } from '@grafana/ui';
 
-import { LogDataSource } from '../../../dataquery.gen';
-import { ListDataSourcesRequest, ResourceResponse, LogDataSourceResponse } from '../../../resources/types';
+import { type LogDataSource } from '../../../dataquery.gen';
+import { type ListDataSourcesRequest, type ResourceResponse, type LogDataSourceResponse } from '../../../resources/types';
 import getStyles from '../../styles';
 
 import Search from './Search';

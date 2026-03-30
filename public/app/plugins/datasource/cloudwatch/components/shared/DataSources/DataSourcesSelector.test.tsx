@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ResourceResponse, LogDataSourceResponse } from '../../../resources/types';
+import { type ResourceResponse, type LogDataSourceResponse } from '../../../resources/types';
 
 import { DataSourcesSelector } from './DataSourcesSelector';
 
