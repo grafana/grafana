@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, LinkButton, Stack } from '@grafana/ui';
+import { Alert, Button, Field, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import {
   ValidationLabels,
@@ -19,9 +19,10 @@ export interface Props {
   user: UserDTO;
   isSaving: boolean;
   onChangePassword: (payload: ChangePasswordFields) => void;
+  isExternalUser?: boolean;
 }
 
-export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
+export const ChangePasswordForm = ({ user, onChangePassword, isSaving, isExternalUser = false }: Props) => {
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
 
@@ -45,12 +46,27 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
     );
   }
 
+  const handleSubmit = (payload: ChangePasswordFields) => {
+    if (isExternalUser) {
+      return;
+    }
+    onChangePassword(payload);
+  };
+  const isFormDisabled = isExternalUser;
+
   return (
-    <Form onSubmit={onChangePassword} maxWidth={400}>
+    <Form onSubmit={handleSubmit} maxWidth={400}>
       {({ register, errors, getValues, watch }) => {
         const newPassword = watch('newPassword');
         return (
           <>
+            {isFormDisabled && (
+              <Alert severity="info" title={t('profile.change-password.external-user-title', 'Managed externally')}>
+                <Trans i18nKey="profile.change-password.external-user-message">
+                  Your password is managed outside of Grafana. Contact your administrator to make changes.
+                </Trans>
+              </Alert>
+            )}
             <Field
               label={t('profile.change-password.old-password-label', 'Old password')}
               invalid={!!errors.oldPassword}
@@ -59,6 +75,7 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
               <PasswordField
                 id="current-password"
                 autoComplete="current-password"
+                disabled={isFormDisabled}
                 {...register('oldPassword', {
                   required: t('profile.change-password.old-password-required', 'Old password is required'),
                 })}
@@ -74,6 +91,7 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
                 id="new-password"
                 autoComplete="new-password"
                 onFocus={() => setDisplayValidationLabels(true)}
+                disabled={isFormDisabled}
                 {...register('newPassword', {
                   onBlur: () => setPristine(false),
                   required: t('profile.change-password.new-password-required', 'New password is required'),
@@ -107,6 +125,7 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
               <PasswordField
                 id="confirm-new-password"
                 autoComplete="new-password"
+                disabled={isFormDisabled}
                 {...register('confirmNew', {
                   required: t(
                     'profile.change-password.confirm-password-required',
@@ -119,7 +138,7 @@ export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) 
               />
             </Field>
             <Stack>
-              <Button variant="primary" disabled={isSaving} type="submit">
+              <Button variant="primary" disabled={isSaving || isFormDisabled} type="submit">
                 <Trans i18nKey="profile.change-password.change-password-button">Change Password</Trans>
               </Button>
               <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`} fill="outline">

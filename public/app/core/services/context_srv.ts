@@ -16,6 +16,12 @@ import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
 
+type CurrentUserWithExternalFlag = {
+  isExternal?: boolean;
+};
+
+const PASSWORD_AUTH_MODULE = 'password';
+
 // When set to auto, the interval will be based on the query range
 // NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
 export const AutoRefreshInterval = 'auto';
@@ -182,6 +188,16 @@ export class ContextSrv {
       return intervals.filter((str) => str !== '').filter(this.isAllowedInterval);
     }
     return intervals;
+  }
+
+  isExternalUser() {
+    const user = this.user as CurrentUserWithExternalFlag;
+    if (user?.isExternal) {
+      return true;
+    }
+
+    const authModule = this.user?.authenticatedBy;
+    return Boolean(authModule && authModule !== PASSWORD_AUTH_MODULE);
   }
 
   hasAccessToExplore() {

@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
@@ -10,7 +11,7 @@ export const HOME_NAV_ID = 'home';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = cloneDeep(config.bootData.navTree);
+  const rootNodes = filterNavTree(cloneDeep(config.bootData.navTree));
   const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
   const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
 
@@ -22,6 +23,33 @@ export function buildInitialState(): NavIndex {
   buildNavIndex(navIndex, otherRootNodes, navIndex[HOME_NAV_ID]);
 
   return navIndex;
+}
+
+function filterNavTree(children: NavModelItem[]) {
+  const shouldHideChangePassword = contextSrv.isExternalUser();
+  const filterFn = (item: NavModelItem) => {
+    if (!shouldHideChangePassword) {
+      return true;
+    }
+    return item.id !== 'profile/password';
+  };
+
+  return mapAndFilter(children, filterFn);
+}
+
+function mapAndFilter(children: NavModelItem[], filterFn: (item: NavModelItem) => boolean) {
+  const filtered: NavModelItem[] = [];
+
+  for (const child of children) {
+    if (child.children) {
+      child.children = mapAndFilter(child.children, filterFn);
+    }
+    if (filterFn(child)) {
+      filtered.push(child);
+    }
+  }
+
+  return filtered;
 }
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {

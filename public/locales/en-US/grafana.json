@@ -12854,6 +12854,8 @@
       "change-password-button": "Change Password",
       "confirm-password-label": "Confirm password",
       "confirm-password-required": "New password confirmation is required",
+      "external-user-title": "Managed externally",
+      "external-user-message": "Your password is managed outside of Grafana. Contact your administrator to make changes.",
       "ldap-auth-proxy-message": "You cannot change password when signed in with LDAP or auth proxy.",
       "new-password-label": "New password",
       "new-password-required": "New password is required",

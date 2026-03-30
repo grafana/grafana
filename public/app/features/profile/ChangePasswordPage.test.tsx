@@ -109,4 +109,18 @@ describe('ChangePasswordPage', () => {
     expect(screen.getByText('Password cannot be changed here.')).toBeInTheDocument();
     config.disableLoginForm = false;
   });
+
+  it('should disable inputs when user is external', async () => {
+    await getTestContext({
+      user: { ...defaultProps.user!, isExternal: true },
+    });
+
+    expect(
+      screen.getByText('Your password is managed outside of Grafana. Contact your administrator to make changes.')
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Old password')).toBeDisabled();
+    expect(screen.getByLabelText('New password')).toBeDisabled();
+    expect(screen.getByLabelText('Confirm password')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Change Password' })).toBeDisabled();
+  });
 });

@@ -9,9 +9,10 @@ import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 export interface TopNavBarMenuProps {
   node: NavModelItem;
   children?: React.ReactNode;
+  filterItem?: (item: NavModelItem) => boolean;
 }
 
-export function TopNavBarMenu({ node: nodePlain, children }: TopNavBarMenuProps) {
+export function TopNavBarMenu({ node: nodePlain, children, filterItem = () => true }: TopNavBarMenuProps) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(nodePlain), false);
 
@@ -31,7 +32,7 @@ export function TopNavBarMenu({ node: nodePlain, children }: TopNavBarMenuProps)
         </div>
       }
     >
-      {node.children?.map((item) => {
+      {node.children?.filter(filterItem).map((item) => {
         return item.url ? (
           <MenuItem url={item.url} label={item.text} icon={item.icon} target={item.target} key={item.id} />
         ) : (
