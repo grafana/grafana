@@ -28,6 +28,7 @@ export function DataSourceCardItem({
     <DataSourceCard
       data-testid="data-source-card"
       {...(enableKeyboardNavigation && {
+        'data-role': 'keyboardSelectableItem',
         'data-selecteditem': isSelected ? 'true' : 'false',
       })}
       ds={ds}
