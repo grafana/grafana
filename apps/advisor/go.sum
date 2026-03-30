@@ -887,8 +887,6 @@ github.com/mithrandie/go-text v1.6.0 h1:8gOXTMPbMY8DJbKMTv8kHhADcJlDWXqS/YQH4SyW
 github.com/mithrandie/go-text v1.6.0/go.mod h1:xCgj1xiNbI/d4xA9sLVvXkjh5B2tNx2ZT2/3rpmh8to=
 github.com/mithrandie/ternary v1.1.1 h1:k/joD6UGVYxHixYmSR8EGgDFNONBMqyD373xT4QRdC4=
 github.com/mithrandie/ternary v1.1.1/go.mod h1:0D9Ba3+09K2TdSZO7/bFCC0GjSXetCvYuYq0u8FY/1g=
-github.com/mocktools/go-smtp-mock/v2 v2.5.1 h1:QcMJMChSgG1olVj4o6xxQFdrWzRjYNrcq660HAjd0wA=
-github.com/mocktools/go-smtp-mock/v2 v2.5.1/go.mod h1:Rr8M2njlxx//l5INl2+uESnsL2lDsL24teEykCrGfmE=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w8PVh93nsPXa1VrQ6jlwL5oN8l14QlcNfg=
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=

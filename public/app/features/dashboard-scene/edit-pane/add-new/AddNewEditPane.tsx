@@ -123,7 +123,7 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedEl
       </AddNewSection>
       <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
         {config.featureToggles.dashboardUnifiedDrilldownControls && <AddFilters dashboardScene={dashboardScene} />}
-        <AddVariable dashboardScene={dashboardScene} />
+        <AddVariable dashboardScene={dashboardScene} selectedElement={selectedElement} />
         <AddAnnotationQuery dashboardScene={dashboardScene} />
         <AddLink dashboardScene={dashboardScene} />
       </AddNewSection>

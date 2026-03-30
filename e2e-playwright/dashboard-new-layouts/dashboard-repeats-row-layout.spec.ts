@@ -25,7 +25,6 @@ const getRepeatedPanelTitle = (row: number, panel: number) => `repeated-row-${ro
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },

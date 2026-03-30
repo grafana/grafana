@@ -225,7 +225,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		body := recorder.Body.String()
 
 		// Check that the generic error message is in the response
-		assert.Contains(t, body, "loginError", "Should contain loginError when cookie is present")
+		assert.Contains(t, body, `"loginError"`, "Should contain loginError when cookie is present")
 		assert.Contains(t, body, "oauth.login.error", "Should contain the generic OAuth error message")
 
 		// Check that the cookie was deleted (MaxAge=-1)
@@ -261,8 +261,10 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		// The page should render but without the login error
 		assert.Contains(t, body, "window.grafanaBootData")
 		// Check that loginError is not set (or is empty/omitted in JSON)
-		// Since it's omitempty, it shouldn't appear at all
-		assert.NotContains(t, body, "loginError", "Should not contain loginError when cookie is absent")
+		// Since it's omitempty, it shouldn't appear at all.
+		// Note: the static JS in the template contains "loginError" as a property accessor,
+		// so we check for the JSON-quoted form which only appears when the value is serialized.
+		assert.NotContains(t, body, `"loginError":`, "Should not contain loginError when cookie is absent")
 	})
 
 	t.Run("should handle custom OAuth error message from config", func(t *testing.T) {

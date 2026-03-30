@@ -1,6 +1,6 @@
 import { EventProperty } from '@grafana/runtime/internal';
 
-import type { ContentKind, SourceEntryPoint, EventLocation, DiscoveryMethod, FeatureVariant } from '../constants';
+import type { ContentKind, SourceEntryPoint, EventLocation, DiscoveryMethod } from '../constants';
 
 export interface LoadedProperties extends EventProperty {
   numberOfItems: number;
@@ -8,7 +8,6 @@ export interface LoadedProperties extends EventProperty {
   datasourceTypes: string[];
   sourceEntryPoint: SourceEntryPoint;
   eventLocation: EventLocation;
-  featureVariant?: FeatureVariant;
   isDashboardAssistantEnabled?: boolean;
 }
 
@@ -20,7 +19,6 @@ export interface ItemClickedProperties extends EventProperty {
   sourceEntryPoint: SourceEntryPoint;
   eventLocation: EventLocation;
   discoveryMethod: DiscoveryMethod;
-  featureVariant?: FeatureVariant;
   isDashboardAssistantEnabled?: boolean;
 }
 

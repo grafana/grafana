@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
@@ -42,6 +43,8 @@ const v2Dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
 
 describe('validateUid', () => {
   beforeAll(() => {
+    config.featureToggles.kubernetesDashboards = false;
+
     setDashboardAPI({
       legacy: {
         getDashboardDTO: jest.fn().mockResolvedValue(legacyDashboard),

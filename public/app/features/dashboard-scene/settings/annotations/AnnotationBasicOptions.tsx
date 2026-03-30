@@ -11,7 +11,7 @@ import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
-import { AnnotationLayer } from './AnnotationEditableElement';
+import type { AnnotationLayer } from './AnnotationEditableElement';
 import { annotationEditActions } from './actions';
 
 export function AnnotationNameInput({ layer, autoFocus }: { layer: AnnotationLayer; autoFocus: boolean }) {

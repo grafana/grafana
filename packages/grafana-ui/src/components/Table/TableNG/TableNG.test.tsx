@@ -1763,5 +1763,85 @@ describe('TableNG', () => {
 
       expect(screen.queryByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeInTheDocument();
     });
+
+    it('uses the correct row nested frame fields for data links', async () => {
+      // Each outer row has a different nested frame with a different State value and different link titles.
+      // The bug caused all nested sub-tables to use the first outer row's field (and its getLinks), so
+      // clicking any nested cell always showed links from row 0 regardless of which row was expanded.
+      const nestedFrameRow0 = withFieldOverrides(
+        toDataFrame({
+          name: 'NestedRow0',
+          fields: [
+            {
+              name: 'State',
+              type: FieldType.string,
+              values: ['Down'],
+              config: {
+                custom: {},
+                links: [
+                  { url: 'http://example.com/?state=Down&link=1', title: 'Down Link 1' },
+                  { url: 'http://example.com/?state=Down&link=2', title: 'Down Link 2' },
+                ],
+              },
+            },
+          ],
+        })
+      );
+
+      const nestedFrameRow1 = withFieldOverrides(
+        toDataFrame({
+          name: 'NestedRow1',
+          fields: [
+            {
+              name: 'State',
+              type: FieldType.string,
+              values: ['Up'],
+              config: {
+                custom: {},
+                links: [
+                  { url: 'http://example.com/?state=Up&link=1', title: 'Up Link 1' },
+                  { url: 'http://example.com/?state=Up&link=2', title: 'Up Link 2' },
+                ],
+              },
+            },
+          ],
+        })
+      );
+
+      const outerFrame = withFieldOverrides(
+        toDataFrame({
+          name: 'TestData',
+          fields: [
+            { name: 'Name', type: FieldType.string, values: ['A', 'B'], config: { custom: {} } },
+            {
+              name: '__nestedFrames',
+              type: FieldType.nestedFrames,
+              values: [[nestedFrameRow0], [nestedFrameRow1]],
+              config: { custom: {} },
+            },
+          ],
+        })
+      );
+
+      const { container } = render(<TableNG enableVirtualization={false} data={outerFrame} width={800} height={600} />);
+
+      // Expand the second outer row (index 1), which has State='Up'
+      const expandButtons = container.querySelectorAll('[aria-label="Expand row"]');
+      expect(expandButtons).toHaveLength(2);
+      await user.click(expandButtons[1]);
+
+      // Click the 'Up' state cell in the expanded nested sub-table
+      const upCell = screen.getByText('Up');
+      await user.click(upCell);
+
+      // Should show links from row 1's nested frame ('Up Link *')
+      // Before the fix this showed row 0's links ('Down Link *') because nestedColumnsMatrix
+      // used nestedVisibleFields (from the first row) for all rows' columns.
+      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+      expect(tooltip).toBeInTheDocument();
+      expect(screen.getByText('Up Link 1')).toBeInTheDocument();
+      expect(screen.getByText('Up Link 2')).toBeInTheDocument();
+      expect(screen.queryByText('Down Link 1')).not.toBeInTheDocument();
+    });
   });
 });

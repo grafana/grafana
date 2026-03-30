@@ -15,7 +15,7 @@ import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { createListFilterLink } from '../../utils/navigation';
 import { getRuleName, isPluginProvidedRule } from '../../utils/rules';
 
-import { ImportFormValues } from './ImportToGMARules';
+import type { ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
 import { parseYamlFileToRulerRulesConfigDTO } from './yamlToRulerConverter';
 
