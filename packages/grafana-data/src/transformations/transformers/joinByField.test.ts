@@ -608,7 +608,6 @@ describe('JOIN Transformer', () => {
         expect(data[0].length).toBe(0);
       });
     });
-
   });
 
   describe('inner join', () => {
