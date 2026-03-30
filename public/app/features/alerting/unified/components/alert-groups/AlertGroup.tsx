@@ -3,8 +3,10 @@ import { useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { createContactPointSearchLink } from '../../utils/misc';
@@ -26,6 +28,9 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
   // When group is grouped, receiver.name is 'NONE' as it can contain multiple receivers
   const receiverInGroup = group.receiver.name !== 'NONE';
   const contactPoint = group.receiver.name;
+  const canViewContactPoint =
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
   return (
     <div className={styles.wrapper}>
@@ -45,14 +50,25 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
                 <MetaText icon="at">
                   <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
                     Delivered to{' '}
-                    <TextLink
-                      href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
-                      variant="bodySmall"
-                      color="primary"
-                      inline={false}
-                    >
-                      {'{{name}}'}
-                    </TextLink>
+                    {canViewContactPoint ? (
+                      <TextLink
+                        href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
+                        variant="bodySmall"
+                        color="primary"
+                        inline={false}
+                      >
+                        {'{{name}}'}
+                      </TextLink>
+                    ) : (
+                      <Tooltip
+                        content={t(
+                          'alerting.alert-group.view-contact-point-no-permission',
+                          'You do not have permission to view contact points'
+                        )}
+                      >
+                        <span className={styles.disabledContactPointName}>{'{{name}}'}</span>
+                      </Tooltip>
+                    )}
                   </Trans>
                 </MetaText>
               )}
@@ -91,5 +107,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+  }),
+  disabledContactPointName: css({
+    opacity: 0.7,
+    cursor: 'not-allowed',
   }),
 });
