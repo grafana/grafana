@@ -62,7 +62,7 @@ interface NewLayoutEmptyProps {
   };
 }
 
-const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: NewLayoutEmptyProps) => {
+const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   const { uid, isEditing, editPane, body } = dashboard.useState();
   const isEditingNewDashboard = isEditing && !uid;
   const isAutoGrid = body instanceof AutoGridLayoutManager;

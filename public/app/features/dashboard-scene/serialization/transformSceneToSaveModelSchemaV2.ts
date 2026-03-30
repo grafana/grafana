@@ -53,7 +53,7 @@ import {
   defaultTimeSettingsSpec,
   defaultDashboardLinkType,
   defaultDashboardLink,
-  Preferences,
+  type Preferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
