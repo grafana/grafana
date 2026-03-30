@@ -154,8 +154,6 @@ To add a filter, follow these steps:
 1. Click the **Add new element** icon (blue plus sign) and select **Filter**.
 1. Choose a filter type from the list.
 
-{{< shared-snippet path="/docs/grafana/latest/visualizations/..." id="add-filter" >}}
-
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
