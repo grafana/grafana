@@ -3,7 +3,6 @@ package connectors
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -11,12 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	mapperMatchAllOrgID = -1
-	escapeStr           = `\`
-)
-
-var separatorRegexp = regexp.MustCompile(":")
+const mapperMatchAllOrgID = -1
 
 // OrgRoleMapper maps external orgs/groups to Grafana orgs and basic roles.
 type OrgRoleMapper struct {
@@ -226,7 +220,7 @@ func splitOrgMapping(mapping string) []string {
 			// Split on unescaped separators only.
 			result = append(result, current)
 			current = ""
-		// Note that this case is matching against an a single backslash.
+		// Note that this case is matching against a single backslash.
 		case '\\':
 			// Only `\:` is a special escape sequence for org_mapping parsing.
 			// Preserve backslashes verbatim for values like domain\\group.
