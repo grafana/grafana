@@ -155,7 +155,7 @@ const defineFeatureEventsRule = createRule({
               init.callee.name;
             const factoryNode = calleeName && factoryDeclarations.get(calleeName);
             const factoryHasOwner =
-              factoryNode !== undefined &&
+              !!factoryNode &&
               context.sourceCode
                 .getCommentsBefore(factoryNode.parent)
                 .some((c) => c.type === 'Block' && c.value.includes('@owner'));
