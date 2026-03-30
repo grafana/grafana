@@ -354,3 +354,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-01,enableDatasourceMetaApiPluginLoading,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-03-30,inlinedBootScript,experimental,@grafana/grafana-frontend-platform,false,false,false

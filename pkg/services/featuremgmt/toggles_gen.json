@@ -2622,6 +2622,20 @@
     },
     {
       "metadata": {
+        "name": "inlinedBootScript",
+        "resourceVersion": "1774872588935",
+        "creationTimestamp": "2026-03-30T12:09:48Z"
+      },
+      "spec": {
+        "description": "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "interactiveLearning",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-22T08:06:21Z"
