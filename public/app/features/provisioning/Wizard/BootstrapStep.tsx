@@ -109,7 +109,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
               )
             : t(
                 'provisioning.bootstrap-step.error-quota-exceeded-message',
-                'This repository foldercontains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
+                'This repository folder contains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
                 { fileCount, limit: maxResourcesPerRepository }
               ),
         },
