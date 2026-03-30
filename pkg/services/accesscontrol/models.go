@@ -501,8 +501,8 @@ const (
 	ActionAlertingManagedRoutesDelete = AlertingManagedRoutesResource + ":delete"
 
 	// Alerting routes permissions actions. Should match the resource name (see	https://github.com/grafana/grafana/blob/15c4cd5135056f50c75cfd1d872b11988fffad53/pkg/services/accesscontrol/resourcepermissions/api.go#L102 )
-	ActionAlertingRoutesPermissionsRead  = AlertingManagedRoutesResource + ":set_permission"
-	ActionAlertingRoutesPermissionsWrite = AlertingManagedRoutesResource + ":get_permission"
+	ActionAlertingRoutesPermissionsRead  = AlertingManagedRoutesResource + ":set_permissions"
+	ActionAlertingRoutesPermissionsWrite = AlertingManagedRoutesResource + ":get_permissions"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
