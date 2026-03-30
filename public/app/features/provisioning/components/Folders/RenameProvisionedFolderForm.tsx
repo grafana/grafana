@@ -15,7 +15,6 @@ import { BaseProvisionedFormData } from '../../types/form';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
-import { buildNewPullRequestUrl } from '../utils/url';
 
 interface FormProps extends RenameProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
@@ -55,20 +54,10 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     { ref: branchRef, urls }: { ref: string; path: string; urls?: Record<string, string> },
     info: ProvisionedOperationInfo
   ) => {
-    // Prefer the backend-provided PR URL; construct one client-side as a fallback
-    const prUrl =
-      urls?.newPullRequestURL ??
-      buildNewPullRequestUrl({
-        repoUrl: repository?.url,
-        repoType: info.repoType,
-        baseBranch: repository?.branch,
-        headBranch: branchRef,
-      });
-
     // locationService.partial merges with existing params, so explicitly clear
     // competing banner params to avoid stale state from previous attempts.
     const params: Record<string, string | null> = {
-      new_pull_request_url: prUrl ?? null,
+      new_pull_request_url: urls?.newPullRequestURL ?? null,
       repo_url: null,
       resource_pushed_to: null,
       pull_request_url: null,
@@ -111,10 +100,8 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       return;
     }
 
-    // For write workflow, clear ref so it writes to the configured branch
-    if (workflow === 'write') {
-      ref = undefined;
-    }
+    // For write workflow, write to the configured branch; otherwise use the selected branch
+    const branchRef = workflow === 'write' ? undefined : ref;
 
     reportInteraction('grafana_provisioning_folder_rename_submitted', {
       workflow,
@@ -125,7 +112,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     replaceFile({
       name: repoName,
       path: folderPath,
-      ref,
+      ref: branchRef,
       message: comment || t('browse-dashboards.rename-provisioned-folder-form.commit', 'Rename folder'),
       body: {
         metadata: { name: folder.uid },
