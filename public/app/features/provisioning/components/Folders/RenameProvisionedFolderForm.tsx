@@ -4,9 +4,12 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Field, Input, Stack } from '@grafana/ui';
+import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderDTO } from 'app/types/folders';
+import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
@@ -15,7 +18,6 @@ import { BaseProvisionedFormData } from '../../types/form';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
-
 interface FormProps extends RenameProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
@@ -28,6 +30,7 @@ interface RenameProvisionedFolderFormProps {
 }
 
 function FormContent({ initialValues, folder, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
+  const dispatch = useDispatch();
   const [error, setError] = useState<string | undefined>(undefined);
   const [replaceFile, request] = useReplaceRepositoryFilesWithPathMutation();
 
@@ -54,20 +57,29 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     { ref: branchRef, urls }: { ref: string; path: string; urls?: Record<string, string> },
     info: ProvisionedOperationInfo
   ) => {
+    const prUrl = urls?.newPullRequestURL;
+    // Fall back to the repository URL so the banner link button stays visible
+    // even for providers that don't return a PR URL (Bitbucket, generic git).
+    const linkUrl = prUrl ?? repository?.url ?? '';
+
     // locationService.partial merges with existing params, so explicitly clear
     // competing banner params to avoid stale state from previous attempts.
     const params: Record<string, string | null> = {
-      new_pull_request_url: urls?.newPullRequestURL ?? null,
+      new_pull_request_url: linkUrl || null,
       repo_url: null,
       resource_pushed_to: null,
       pull_request_url: null,
       repo_type: info.repoType ?? null,
+      action: 'update',
     };
 
     updateUrlParams(params);
   };
 
   const onWriteSuccess = () => {
+    // Invalidate folder caches so the page header and breadcrumbs pick up the new title.
+    dispatch(folderAPIv1beta1.util.invalidateTags([{ type: 'Folder', id: folder.uid }]));
+    dispatch(browseDashboardsAPI.util.invalidateTags(['getFolder']));
     onDismiss?.();
   };
 
