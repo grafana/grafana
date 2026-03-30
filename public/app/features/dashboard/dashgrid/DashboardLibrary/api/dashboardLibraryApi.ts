@@ -125,7 +125,7 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
     const dashboards = await getBackendSrv().get(`api/plugins/${datasourceType}/dashboards`, undefined, undefined, {
       showErrorAlert: false,
     });
-    return Array.isArray(dashboards) ? dashboards : [];
+    return Array.isArray(dashboards) ? dashboards.filter((dashboard) => !dashboard.removed) : [];
   } catch (error) {
     console.error('Error loading provisioned dashboards', error);
     return [];
