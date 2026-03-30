@@ -511,9 +511,9 @@ describe('Panel mutation commands', () => {
                 spec: {
                   transformations: [
                     {
-                      kind: 'limit',
+                      kind: 'Transformation',
+                      group: 'limit',
                       spec: {
-                        id: 'limit',
                         disabled: false,
                         filter: { id: 'byName', options: 'temperature' },
                         topic: 'series',
