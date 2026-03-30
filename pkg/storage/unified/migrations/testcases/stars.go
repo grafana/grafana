@@ -3,8 +3,6 @@ package testcases
 import (
 	"context"
 	"encoding/json"
-	"maps"
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,13 +20,13 @@ import (
 
 // starsTestCase tests the "playlists" ResourceMigration
 type starsTestCase struct {
-	stars []string
+	stars map[string]collectionsV1.StarsResource
 }
 
 // NewStarsTestCase creates a test case for the stars migrator
 func NewStarsTestCase() ResourceMigratorTestCase {
 	return &starsTestCase{
-		stars: []string{},
+		stars: map[string]collectionsV1.StarsResource{},
 	}
 }
 
@@ -85,7 +83,14 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	require.Len(t, res.UserStars, 2)
-	tc.stars = slices.Collect(maps.Keys(res.UserStars))
+
+	tc.stars = map[string]collectionsV1.StarsResource{
+		"user-" + helper.Org1.Admin.Identity.GetUID(): {
+			Group: "dashboard.grafana.app",
+			Kind:  "Dashboard",
+			Names: []string{"dash-1", "dash-2"},
+		},
+	}
 
 	return true // will exist in mode0
 }
@@ -107,19 +112,16 @@ func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, should
 		},
 	})
 
-	found, err := client.Resource.Get(context.Background(),
-		"user-"+helper.Org1.Admin.Identity.GetUID(), v1.GetOptions{})
-	require.NoError(t, err)
+	for user, expected := range tc.stars {
+		found, err := client.Resource.Get(context.Background(), user, v1.GetOptions{})
+		require.NoError(t, err)
 
-	tmp, err := found.MarshalJSON()
-	require.NoError(t, err)
-	typedobj := &collectionsV1.Stars{}
-	err = json.Unmarshal(tmp, typedobj)
-	require.NoError(t, err)
-	require.Len(t, typedobj.Spec.Resource, 1)
-
-	res := typedobj.Spec.Resource[0]
-	require.Equal(t, "Dashboard", res.Kind)
-	require.Equal(t, "dashboard.grafana.app", res.Group)
-	require.Equal(t, tc.stars, res.Names)
+		tmp, err := found.MarshalJSON()
+		require.NoError(t, err)
+		typedobj := &collectionsV1.Stars{}
+		err = json.Unmarshal(tmp, typedobj)
+		require.NoError(t, err)
+		require.Len(t, typedobj.Spec.Resource, 1)
+		require.Equal(t, expected, typedobj.Spec.Resource[0])
+	}
 }
