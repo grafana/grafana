@@ -339,10 +339,10 @@ describe('TemplateDashboardModal', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: 'View template' })).toHaveLength(2);
+      expect(screen.getAllByRole('button', { name: /^View template:/i })).toHaveLength(2);
     });
 
-    await user.click(screen.getAllByRole('button', { name: 'View template' })[0]);
+    await user.click(screen.getAllByRole('button', { name: /^View template:/i })[0]);
 
     expect(mockNewItemClicked).toHaveBeenCalledWith(
       expect.objectContaining({

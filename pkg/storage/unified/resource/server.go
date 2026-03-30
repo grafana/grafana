@@ -246,6 +246,9 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
+
+	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
+	SelectableFieldsForKinds map[string][]string
 }
 
 type ResourceServerOptions struct {
@@ -1439,6 +1442,10 @@ func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
 	return utils.MetaAccessor(partial)
 }
 
+// producerChanSize is the buffer for the channel that feeds events into the
+// broadcaster. Controls backpressure on the event-writing (producer) side.
+const producerChanSize = 100
+
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	events, err := s.backend.WatchWriteEvents(s.ctx)
@@ -1446,7 +1453,7 @@ func (s *server) initWatcher() error {
 		return err
 	}
 
-	out := make(chan *WrittenEvent, chanBufferLen)
+	out := make(chan *WrittenEvent, producerChanSize)
 	go func() {
 		defer close(out)
 		for v := range events {
@@ -1898,7 +1905,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
-		if s.quotasConfig.EnforceQuotas {
+		if s.quotasConfig.ShouldEnforce(nsr.Group, nsr.Resource) {
 			return QuotaExceededError{
 				Resource:       nsr.Resource,
 				Used:           stats[0].Count,
