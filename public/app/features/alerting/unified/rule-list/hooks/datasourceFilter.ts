@@ -1,11 +1,11 @@
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type PromRuleDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { RulesFilter } from '../../search/rulesSearchParser';
+import { type RulesFilter } from '../../search/rulesSearchParser';
 
 import { normalizeFilterState } from './filterNormalization';
 import {
-  GroupFilterConfig,
-  RuleFilterConfig,
+  type GroupFilterConfig,
+  type RuleFilterConfig,
   contactPointFilter,
   dashboardUidFilter,
   dataSourceNamesFilter,

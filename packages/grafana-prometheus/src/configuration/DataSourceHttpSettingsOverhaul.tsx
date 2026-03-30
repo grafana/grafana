@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/DataSourceHttpSettingsOverhaul.tsx
-import { DataSourceSettings } from '@grafana/data';
+import { type DataSourceSettings } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Auth, AuthMethod, ConnectionSettings, convertLegacyAuthProps } from '@grafana/plugin-ui';
 import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 
-import { PromOptions } from '../types';
+import { type PromOptions } from '../types';
 
 import { docsTip, overhaulStyles } from './shared/utils';
 

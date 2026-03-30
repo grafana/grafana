@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
+import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 
-import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { type GrafanaTheme2, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 import { LTTB_THRESHOLD, lttbPreviewData } from 'app/plugins/panel/timeseries/utils';

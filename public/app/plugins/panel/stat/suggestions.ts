@@ -1,11 +1,11 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
+import { FieldType, type VisualizationSuggestion, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(s, {

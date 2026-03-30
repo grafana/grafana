@@ -4,17 +4,23 @@ import {
   DataFrameType,
   DataTransformerID,
   FieldType,
-  PanelPluginVisualizationSuggestion,
-  VisualizationSuggestion,
+  type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestion,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
+import {
+  GraphDrawStyle,
+  type GraphFieldConfig,
+  GraphGradientMode,
+  LineInterpolation,
+  StackingMode,
+} from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const MAX_BARS = 100;
 const MAX_ROWS_SMOOTH_CHART = 200;

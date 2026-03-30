@@ -1,22 +1,22 @@
 import {
-  Subscription,
-  JoinContext,
-  LeaveContext,
-  PublicationContext,
-  SubscriptionErrorContext,
-  SubscribedContext,
-  UnsubscribedContext,
+  type Subscription,
+  type JoinContext,
+  type LeaveContext,
+  type PublicationContext,
+  type SubscriptionErrorContext,
+  type SubscribedContext,
+  type UnsubscribedContext,
 } from 'centrifuge';
 import { Subject, of, Observable } from 'rxjs';
 
 import {
-  LiveChannelStatusEvent,
-  LiveChannelEvent,
+  type LiveChannelStatusEvent,
+  type LiveChannelEvent,
   LiveChannelEventType,
   LiveChannelConnectionState,
-  LiveChannelPresenceStatus,
-  LiveChannelAddress,
-  DataFrameJSON,
+  type LiveChannelPresenceStatus,
+  type LiveChannelAddress,
+  type DataFrameJSON,
   isValidLiveChannelAddress,
 } from '@grafana/data';
 

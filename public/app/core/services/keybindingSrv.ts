@@ -1,12 +1,12 @@
 import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
-import { LocationService, config } from '@grafana/runtime';
+import { type LocationService, config } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import {
@@ -19,9 +19,9 @@ import {
   CopyTimeEvent,
   PasteTimeEvent,
 } from '../../types/events';
-import { AppChromeService } from '../components/AppChrome/AppChromeService';
+import { type AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
-import { RouteDescriptor } from '../navigation/types';
+import { type RouteDescriptor } from '../navigation/types';
 import { contextSrv } from '../services/context_srv';
 
 import { mousetrap } from './mousetrap';

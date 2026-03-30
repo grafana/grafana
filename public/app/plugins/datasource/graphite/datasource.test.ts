@@ -1,33 +1,33 @@
 import { isArray } from 'lodash';
 import moment from 'moment';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
   CoreApp,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   dateMath,
   dateTime,
   FieldType,
   getFrameDisplayName,
-  MetricFindValue,
+  type MetricFindValue,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
 import {
-  BackendSrvRequest,
+  type BackendSrvRequest,
   config,
-  FetchResponse,
+  type FetchResponse,
   getTemplateSrv,
-  TemplateSrv,
-  VariableInterpolation,
+  type TemplateSrv,
+  type VariableInterpolation,
 } from '@grafana/runtime';
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
+import { type GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 const fetchMock = jest.fn();

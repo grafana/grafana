@@ -1,11 +1,11 @@
 import { normalizeError } from '@grafana/api-clients';
 import { isObject } from '@grafana/data';
-import { ThunkDispatch } from 'app/types/store';
+import { type ThunkDispatch } from 'app/types/store';
 
 import { createErrorNotification } from '../core/copy/appNotification';
 import { notifyApp } from '../core/reducers/appNotification';
 import { isStatusFailure } from '../features/apiserver/guards';
-import { K8sStatusCause } from '../features/apiserver/types';
+import { type K8sStatusCause } from '../features/apiserver/types';
 
 /**
  * Handle an error from a k8s API call

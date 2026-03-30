@@ -1,20 +1,20 @@
 import { isString } from 'lodash';
-import { Observable, of, OperatorFunction } from 'rxjs';
+import { type Observable, of, type OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  AnnotationEvent,
+  type AnnotationEvent,
   AnnotationEventFieldSource,
-  AnnotationEventMappings,
-  AnnotationQuery,
-  AnnotationSupport,
-  DataFrame,
-  DataSourceApi,
-  DataTransformContext,
-  Field,
+  type AnnotationEventMappings,
+  type AnnotationQuery,
+  type AnnotationSupport,
+  type DataFrame,
+  type DataSourceApi,
+  type DataTransformContext,
+  type Field,
   FieldType,
   getFieldDisplayName,
-  KeyValue,
+  type KeyValue,
   standardTransformers,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';

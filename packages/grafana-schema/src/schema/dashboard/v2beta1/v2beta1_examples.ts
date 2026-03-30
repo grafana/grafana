@@ -1,4 +1,4 @@
-import { defaultDataQueryKind, Spec } from './types.spec.gen';
+import { defaultDataQueryKind, type Spec } from './types.spec.gen';
 
 export const handyTestingSchema: Spec = {
   title: 'Default Dashboard',

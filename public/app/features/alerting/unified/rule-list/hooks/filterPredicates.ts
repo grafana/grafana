@@ -1,10 +1,10 @@
 import { attempt, compact, isString } from 'lodash';
 import memoize from 'micro-memoize';
 
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type PromRuleDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { RulesFilter } from '../../search/rulesSearchParser';
+import { type RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';

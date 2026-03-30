@@ -1,4 +1,4 @@
-import { UserEvent } from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { setBackendSrv } from '@grafana/runtime';

@@ -1,7 +1,7 @@
 import memoizeOne from 'memoize-one';
 
-import { DataSourcePluginMeta, DataSourceSettings, UrlQueryValue } from '@grafana/data';
-import { DataSourcesState } from 'app/types/datasources';
+import { type DataSourcePluginMeta, type DataSourceSettings, type UrlQueryValue } from '@grafana/data';
+import { type DataSourcesState } from 'app/types/datasources';
 
 // Use consistent references for empty objects to prevent infinite re-renders
 const EMPTY_DATASOURCE = {} as DataSourceSettings;

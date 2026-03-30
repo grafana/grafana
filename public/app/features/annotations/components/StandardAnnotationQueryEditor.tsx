@@ -1,25 +1,25 @@
-import { PureComponent, ReactElement } from 'react';
+import { PureComponent, type ReactElement } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
-  AnnotationEventMappings,
-  AnnotationQuery,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  type AnnotationEventMappings,
+  type AnnotationQuery,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   LoadingState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
-import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { Alert, type AlertVariant, Button, Space, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { shouldUseLegacyRunner, shouldUseMappingUI, standardAnnotationSupport } from '../standardAnnotationSupport';
-import { AnnotationQueryResponse } from '../types';
+import { type AnnotationQueryResponse } from '../types';
 import { updateAnnotationFromSavedQuery } from '../utils/savedQueryUtils';
 
 import { AnnotationQueryEditorActionsWrapper } from './AnnotationQueryEditorActionsWrapper';

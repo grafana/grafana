@@ -1,4 +1,4 @@
-import { DashboardPage, E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import { setupAnnotationApiMock } from '../utils/annotation-api-mock';
 

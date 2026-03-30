@@ -1,22 +1,22 @@
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
   getDisplayProcessor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isBooleanUnit,
-  PanelData,
-  TimeRange,
+  type TimeRange,
+  type PanelData,
   cacheFieldDisplayNames,
   applyNullInsertThreshold,
   nullToValue,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
-import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
-import { AdHocFilterItem } from '@grafana/ui';
+import { type GraphFieldConfig, LineInterpolation, TooltipDisplayMode, type VizTooltipOptions } from '@grafana/schema';
+import { type AdHocFilterItem } from '@grafana/ui';
 import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
 
-import { HeatmapTooltip } from '../heatmap/panelcfg.gen';
+import { type HeatmapTooltip } from '../heatmap/panelcfg.gen';
 
 type ScaleKey = string;
 

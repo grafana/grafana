@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { PropsOf } from '@emotion/react';
+import { type PropsOf } from '@emotion/react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
@@ -29,9 +29,9 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RuleHealth, RuleSource, RulesFilter } from '../../search/rulesSearchParser';
+import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 
-import { AdvancedFilters } from './types';
+import { type AdvancedFilters } from './types';
 import {
   advancedFiltersToRulesFilter,
   searchQueryToDefaultValues,

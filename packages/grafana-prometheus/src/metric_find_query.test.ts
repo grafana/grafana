@@ -1,6 +1,6 @@
-import { getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { getDefaultTimeRange, type TimeRange } from '@grafana/data';
 
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 
 jest.mock('./datasource');

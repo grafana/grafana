@@ -1,6 +1,6 @@
-import { Meta } from '@storybook/react';
+import { type Meta } from '@storybook/react';
 
-import { InlineLabel, Props } from './InlineLabel';
+import { InlineLabel, type Props } from './InlineLabel';
 import mdx from './InlineLabel.mdx';
 
 const meta: Meta<typeof InlineLabel> = {

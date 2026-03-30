@@ -1,7 +1,7 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame, PanelData } from '@grafana/data';
+import { createTheme, FieldType, createDataFrame, toDataFrame, type PanelData } from '@grafana/data';
 import { LineInterpolation } from '@grafana/ui';
 
-import { AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
+import { type AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
 
 import { getGroupedFilters, lttbPreviewData, prepareGraphableFields } from './utils';
 

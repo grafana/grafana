@@ -2,25 +2,25 @@
 import Prism from 'prismjs';
 
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
-  AbstractQuery,
-  AdHocVariableFilter,
+  type AbstractQuery,
+  type AdHocVariableFilter,
   getDefaultTimeRange,
-  Scope,
+  type Scope,
   scopeFilterOperatorMap,
-  ScopeSpecFilter,
-  TimeRange,
+  type ScopeSpecFilter,
+  type TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest } from '@grafana/runtime';
+import { type BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import { extractLabelMatchers, fixSummariesMetadata, toPromLikeQuery } from './language_utils';
 import { promqlGrammar } from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
-import { PromMetricsMetadata, PromQuery } from './types';
+import { LabelsApiClient, type ResourceApiClient, SeriesApiClient } from './resource_clients';
+import { type PromMetricsMetadata, type PromQuery } from './types';
 
 interface PrometheusBaseLanguageProvider {
   datasource: PrometheusDatasource;
