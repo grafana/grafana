@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import DashboardPageProxy, { type DashboardPageProxyProps } from './DashboardPageProxy';
@@ -54,6 +54,7 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
 describe('DashboardPageProxy', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    config.featureToggles.kubernetesDashboards = false;
   });
 
   it('should render DashboardScenePage for home route', async () => {
