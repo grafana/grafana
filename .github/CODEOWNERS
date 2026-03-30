@@ -1335,6 +1335,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-artifact.yml @grafana/grafana-developer-enablement-squad
 /.github/actions/changelog @zserge
 /.github/workflows/check-frontend-test-coverage.yml @grafana/dataviz-squad
+/.github/workflows/report-frontend-coverage-to-bench.yaml @grafana/dataviz-squad
 /.github/workflows/swagger-gen.yml @grafana/grafana-backend-group
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
