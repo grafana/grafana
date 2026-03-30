@@ -361,7 +361,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       layout: 'combobox',
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
@@ -507,7 +508,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.spec.defaultValue

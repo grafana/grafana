@@ -178,7 +178,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       layout: 'combobox',
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       supportsMultiValueOperators: Boolean(
@@ -316,7 +317,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:
