@@ -317,7 +317,7 @@ export enum ScaleDirection {
  */
 export interface LineStyle {
   dash?: Array<number>;
-  fill?: ('solid' | 'dash' | 'dot' | 'square' | 'colorblind');
+  fill?: ('solid' | 'dash' | 'dot' | 'square' | 'auto');
 }
 
 export const defaultLineStyle: Partial<LineStyle> = {

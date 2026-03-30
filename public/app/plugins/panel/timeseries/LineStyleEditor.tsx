@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { type LineStyle } from '@grafana/schema';
 import { IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
-type LineFill = 'solid' | 'dash' | 'dot' | 'colorblind';
+type LineFill = 'solid' | 'dash' | 'dot' | 'auto';
 
 const dashOptions: Array<SelectableValue<string>> = [
   '10, 10', // default
@@ -56,7 +56,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
     },
     {
       label: t('timeseries.line-style-editor.line-fill-options.label-auto', 'Auto'),
-      value: 'colorblind',
+      value: 'auto',
     },
   ];
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
@@ -93,7 +93,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
           });
         }}
       />
-      {value?.fill && value?.fill !== 'solid' && value?.fill !== 'colorblind' && (
+      {value?.fill && value?.fill !== 'solid' && value?.fill !== 'auto' && (
         <>
           <Select
             allowCustomValue={true}

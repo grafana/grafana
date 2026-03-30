@@ -52,7 +52,7 @@ const COLORBLIND_LINE_STYLES: LineStyle[] = [
  * Non-colorblind line styles pass through unchanged.
  */
 function resolveLineStyle(lineStyle: LineStyle | undefined, seriesIndex: number): LineStyle | undefined {
-  if (!lineStyle || lineStyle.fill !== 'colorblind') {
+  if (!lineStyle || lineStyle.fill !== 'auto') {
     return lineStyle;
   }
   return COLORBLIND_LINE_STYLES[seriesIndex % COLORBLIND_LINE_STYLES.length];
