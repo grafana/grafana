@@ -91,6 +91,7 @@ export type SpanDetailRowProps = {
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
+  instrumentationScopeToggle: (spanID: string) => void;
   referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   referencesToggle: (spanID: string) => void;
   warningsToggle: (spanID: string) => void;
@@ -126,6 +127,7 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
     logItemToggle,
     logsToggle,
     processToggle,
+    instrumentationScopeToggle,
     referenceItemToggle,
     referencesToggle,
     warningsToggle,
@@ -178,6 +180,7 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
               logItemToggle={logItemToggle}
               logsToggle={logsToggle}
               processToggle={processToggle}
+              instrumentationScopeToggle={instrumentationScopeToggle}
               referenceItemToggle={referenceItemToggle}
               referencesToggle={referencesToggle}
               warningsToggle={warningsToggle}

@@ -91,6 +91,28 @@ function getSpanTags(span: collectorTypes.opentelemetryProto.trace.v1.Span): Tra
   return spanTags;
 }
 
+function getInstrumentationLibraryTags(
+  instrumentationLibrary: collectorTypes.opentelemetryProto.common.v1.InstrumentationLibrary | undefined
+): TraceKeyValuePair[] {
+  const tags: TraceKeyValuePair[] = [];
+
+  // The InstrumentationScope (formerly InstrumentationLibrary) may contain attributes
+  // that are scope-level metadata and should not be mixed with span-level attributes.
+  const libWithAttrs = instrumentationLibrary as
+    | (collectorTypes.opentelemetryProto.common.v1.InstrumentationLibrary & {
+        attributes?: collectorTypes.opentelemetryProto.common.v1.KeyValue[];
+      })
+    | undefined;
+
+  if (libWithAttrs?.attributes) {
+    for (const attribute of libWithAttrs.attributes) {
+      tags.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
+    }
+  }
+
+  return tags;
+}
+
 function getSpanKind(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
   let kind = undefined;
   if (span.kind) {
@@ -159,6 +181,7 @@ export function transformFromOTLP(
       { name: 'logs', type: FieldType.other, values: [] },
       { name: 'references', type: FieldType.other, values: [] },
       { name: 'tags', type: FieldType.other, values: [] },
+      { name: 'instrumentationLibraryTags', type: FieldType.other, values: [] },
     ],
     meta: {
       preferredVisualisationType: 'trace',
@@ -191,6 +214,7 @@ export function transformFromOTLP(
             tags: getSpanTags(span),
             logs: getLogs(span),
             references: getReferences(span),
+            instrumentationLibraryTags: getInstrumentationLibraryTags(librarySpan.instrumentationLibrary),
           });
         }
       }
