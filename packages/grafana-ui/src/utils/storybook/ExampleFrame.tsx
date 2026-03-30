@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import { Source, Unstyled } from '@storybook/blocks';
+import { css, cx } from '@emotion/css';
+import { Source } from '@storybook/blocks';
 import { Children, isValidElement, type ReactNode, useMemo, useState } from 'react';
 import reactElementToJSXString from 'react-element-to-jsx-string';
 
@@ -31,11 +31,9 @@ export function ExampleFrame(props: ExampleFrameProps) {
   }, [children]);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, 'sb-unstyled')}>
       <Stack gap={0} direction="column">
-        <Unstyled>
-          <div className={styles.preview}>{children}</div>
-        </Unstyled>
+        <div className={styles.preview}>{children}</div>
         {isExpanded && (
           <div className={styles.source}>
             <Source dark={theme.isDark} code={sourceString} language="tsx" />
@@ -43,7 +41,7 @@ export function ExampleFrame(props: ExampleFrameProps) {
         )}
         <button className={styles.toggle} onClick={() => setIsExpanded(!isExpanded)}>
           {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-          {isExpanded ? 'Hide source' : 'Show source'}
+          {isExpanded ? 'Hide code' : 'Show code'}
         </button>
       </Stack>
     </div>
@@ -55,6 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css({
       border: `1px solid ${theme.colors.border.medium}`,
       borderRadius: theme.shape.radius.default,
+      margin: theme.spacing(2, 0),
       overflow: 'hidden',
     }),
     preview: css({
@@ -64,7 +63,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderTop: `1px solid ${theme.colors.border.medium}`,
       // Reset Storybook Source margins/border-radius so it sits flush
       '& .docblock-source': {
-        background: 'unset',
         border: 'none',
         borderRadius: 'unset',
         margin: 0,
