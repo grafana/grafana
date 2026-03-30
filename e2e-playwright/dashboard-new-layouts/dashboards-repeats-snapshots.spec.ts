@@ -48,7 +48,6 @@ async function publishDashboardSnapshot(
 
 test.use({
   featureToggles: {
-    scenes: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },

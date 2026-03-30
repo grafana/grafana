@@ -534,10 +534,6 @@ export function hasActualSaveChanges(dashboard: DashboardScene) {
   return !!changes.diffCount;
 }
 
-export function isDashboardSceneEnabled(): boolean {
-  return !!(config.featureToggles.dashboardScene || config.featureToggles.dashboardNewLayouts);
-}
-
-export function isPublicDashboardsSceneEnabled(): boolean {
-  return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
+export function isDashboardNewLayoutsEnabled(): boolean {
+  return !!config.featureToggles.dashboardNewLayouts;
 }

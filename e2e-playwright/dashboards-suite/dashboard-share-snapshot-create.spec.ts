@@ -4,7 +4,6 @@ import { SnapshotCreateResponse } from '../../public/app/features/dashboard/serv
 
 test.use({
   featureToggles: {
-    scenes: true,
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

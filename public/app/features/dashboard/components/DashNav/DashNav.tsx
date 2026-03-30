@@ -37,7 +37,6 @@ import {
   registerDynamicDashNavAction,
 } from '../../../dashboard-scene/utils/registerDynamicDashNavAction';
 
-import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ShareButton } from './ShareButton';
 
@@ -148,8 +147,6 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const renderLeftActions = () => {
-    const isDevEnv = config.buildInfo.env === 'development';
-
     const { dashboard, kioskMode } = props;
     const { canStar } = dashboard.meta;
     const buttons: ReactNode[] = [];
@@ -173,19 +170,6 @@ export const DashNav = memo<Props>((props) => {
 
     if (dashboard.uid) {
       buttons.push(<PublicDashboardBadgeLegacy key="public-dashboard-badge" uid={dashboard.uid} />);
-    }
-
-    if (isDevEnv && config.featureToggles.dashboardScene) {
-      buttons.push(
-        <DashNavButton
-          key="button-scenes"
-          tooltip={t('dashboard.dash-nav.render-left-actions.tooltip-view-as-scene', 'View as Scene')}
-          icon="apps"
-          onClick={() => {
-            locationService.partial({ scenes: true });
-          }}
-        />
-      );
     }
 
     addCustomContent(dynamicDashNavActions.left, buttons);
