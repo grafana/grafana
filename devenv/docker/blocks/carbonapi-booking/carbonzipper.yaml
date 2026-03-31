@@ -1,0 +1,22 @@
+listen: ":7680"
+listenInternal: ":7681"
+maxProcs: 0
+buckets: 10
+timeouts:
+  global: "10s"
+  afterStarted: "10s"
+  connect: "200ms"
+# concurrencyLimit must be > 0. A zero value produces an unbuffered semaphore
+# channel that deadlocks all backend find/info requests in NewBackend.Proc().
+concurrencyLimit: 20
+keepAliveInterval: "30s"
+maxIdleConnsPerHost: 100
+expireDelaySec: 0
+# "go-carbon" resolves to the go-carbon container over the Docker bridge network.
+backends:
+  - "http://go-carbon:8080"
+graphite09compat: false
+loggerConfig:
+  outputPaths: ["stdout"]
+  level: "info"
+  encoding: "console"

@@ -565,6 +565,22 @@ test-go-integration-redis: ## Run integration tests for redis cache.
 	REDIS_URL=localhost:6379 $(GO) test $(GO_TEST_FLAGS) -run IntegrationRedis -covermode=atomic -timeout=2m \
 		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
+.PHONY: test-go-integration-graphite
+test-go-integration-graphite: ## Run integration tests for Graphite datasource. Requires a running Graphite server (make devenv sources=graphite).
+	@echo "test backend integration graphite tests"
+	$(GO) clean -testcache
+	GRAPHITE_URL=http://localhost:8180 $(GO) test $(GO_TEST_FLAGS) -run IntegrationGraphite -covermode=atomic -timeout=3m \
+		./pkg/tsdb/graphite/...
+
+.PHONY: test-go-integration-graphite-booking
+test-go-integration-graphite-booking: ## Run integration tests for Graphite datasource against bookingcom/carbonapi (built from source).
+	@echo "Building and starting bookingcom/carbonapi stack..."
+	docker compose -f devenv/docker/blocks/carbonapi-booking/docker-compose.yaml up -d --build --wait --timeout 120
+	@echo "Running integration tests..."
+	$(GO) clean -testcache
+	GRAPHITE_URL=http://localhost:8580 $(GO) test $(GO_TEST_FLAGS) -run IntegrationGraphite -covermode=atomic -timeout=3m \
+		./pkg/tsdb/graphite/...
+
 .PHONY: test-go-integration-memcached
 test-go-integration-memcached: ## Run integration tests for memcached cache.
 	@echo "test backend integration memcached tests"

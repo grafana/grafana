@@ -1,0 +1,13 @@
+FROM golang:alpine AS builder
+RUN apk add --no-cache git gcc musl-dev
+RUN git clone --depth=1 https://github.com/bookingcom/carbonapi /src
+WORKDIR /src
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/carbonapi ./cmd/carbonapi/
+
+FROM alpine:latest
+COPY --from=builder /usr/local/bin/carbonapi /usr/local/bin/carbonapi
+COPY carbonapi.yaml /etc/carbonapi/carbonapi.yaml
+COPY carbonzipper.yaml /etc/carbonapi/carbonzipper.yaml
+
+EXPOSE 8580
+CMD ["/usr/local/bin/carbonapi", "-config", "/etc/carbonapi/carbonapi.yaml"]

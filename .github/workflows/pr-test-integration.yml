@@ -329,6 +329,69 @@ jobs:
         run: |
           make devenv-down sources=postgres_tests
 
+  # Graphite datasource integration tests — run against multiple Graphite server versions.
+  # Tests in pkg/tsdb/graphite/graphite_integration_test.go are skipped when GRAPHITE_URL
+  # is absent, making them zero-cost for regular runs and opt-in for local dev.
+  graphite:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    name: Graphite integration (${{ matrix.graphite.name }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        graphite:
+          - name: graphite-1.0
+            image: graphiteapp/graphite-statsd:1.0.2-3
+            port: 80
+            url: http://localhost:8180
+          - name: graphite-1.1
+            image: graphiteapp/graphite-statsd:latest
+            port: 80
+            url: http://localhost:8180
+          - name: carbonapi
+            compose: devenv/docker/blocks/carbonapi/docker-compose.yaml
+            port: 8480
+            url: http://localhost:8480
+          # bookingcom/carbonapi does not publish Docker images; build from source.
+          # This exercises the backend-routing behaviour (strict query formatting,
+          # separate carbonzipper model) that caused the Booking.com regressions.
+          - name: bookingcom-carbonapi
+            build: source
+            url: http://localhost:8580
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+
+      - name: Start Graphite (${{ matrix.graphite.name }})
+        if: ${{ matrix.graphite.image != '' && matrix.graphite.image != null }}
+        run: |
+          docker run -d --name graphite -p 8180:${{ matrix.graphite.port }} \
+            ${{ matrix.graphite.image }}
+          timeout 60 bash -c 'until curl -sf http://localhost:8180/; do sleep 2; done'
+
+      - name: Start carbonapi stack
+        if: ${{ matrix.graphite.compose != '' && matrix.graphite.compose != null }}
+        run: |
+          docker compose -f ${{ matrix.graphite.compose }} up -d
+          timeout 90 bash -c 'until curl -sf http://localhost:8480/; do sleep 3; done'
+
+      - name: Build and start bookingcom/carbonapi
+        if: ${{ matrix.graphite.build == 'source' }}
+        run: |
+          docker compose -f devenv/docker/blocks/carbonapi-booking/docker-compose.yaml up -d --build --wait --timeout 120
+
+      - name: Run integration tests
+        env:
+          GRAPHITE_URL: ${{ matrix.graphite.url }}
+        run: |
+          go test -run '^TestIntegrationGraphite' -timeout=3m -v ./pkg/tsdb/graphite/...
+
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests and shards.
   # Future work also allows us to start skipping some tests based on changed files.
