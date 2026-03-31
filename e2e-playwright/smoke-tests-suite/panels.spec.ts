@@ -45,9 +45,6 @@ test.describe(
         }
 
         try {
-          // Select the panel type in the viz picker
-          await expect(vizPicker.filter({ hasText: 'Change' }), 'we should be viewing panel options').toBeVisible();
-          await vizPicker.click({ force: true });
           await dashboardPage
             .getByGrafanaSelector(
               selectors.components.Tab.title(VisualizationSelectPaneTab[VisualizationSelectPaneTab.Visualizations])
@@ -69,6 +66,10 @@ test.describe(
             page.getByText('An unexpected error happened'),
             'ensure no unexpected error occurred'
           ).toBeHidden();
+
+          // open the viz picker to get ready to select the next panel type
+          await expect(vizPicker.filter({ hasText: 'Change' }), 'we should be viewing panel options').toBeVisible();
+          await vizPicker.click({ force: true });
         } catch (error) {
           throw new Error(`Panel '${panel.name}' failed: ${error}`);
         }

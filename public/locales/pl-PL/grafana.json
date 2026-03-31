@@ -2624,6 +2624,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Nie można wyświetlić podglądu zapytania. Niektóre źródła danych używane w zapytaniach są niedostępne.",
       "preview-alerts": "Podgląd alertów",
@@ -3145,6 +3148,7 @@
     "rules-filter": {
       "clear-filters": "Wyczyść filtry",
       "configured-alert-rules": "Źródła danych zawierające skonfigurowane reguły alertów to źródła danych Mimir lub Loki, w przypadku których reguły alertów są przechowywane i oceniane w samym źródle danych.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtruje reguły alertów, które kierują bezpośrednio do wybranego punktu kontaktu. Reguły alertów kierowane do zasad powiadomień nie będą wyświetlane.",
       "contact-point-tooltip-title": "Pomoc dotycząca filtrów punktów kontaktu",
       "dashboard": "Pulpit",
@@ -3169,7 +3173,11 @@
       "placeholder-data-sources": "Wybierz źródła danych",
       "placeholder-group-search": "Szukaj grupy",
       "placeholder-labels": "Wybierz etykiety",
+      "placeholder-policy": "",
       "plugin-rules": "Reguły dotyczące wtyczek",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Zarządzane przez źródło danych",
         "grafana": "Zarządzane przez Grafanę"
@@ -3250,6 +3258,7 @@
       "title-group": "Grupa",
       "title-health": "Zdrowie",
       "title-labels": "Etykiety",
+      "title-policy": "",
       "title-rule": "Reguła",
       "title-state": "Stan",
       "title-type": "Typ"
@@ -7340,6 +7349,9 @@
           "metrics-drilldown": "Analiza szczegółowa wskaźników"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14842,6 +14854,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },
