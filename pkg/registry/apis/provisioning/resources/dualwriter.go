@@ -196,7 +196,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 			}
 			// Not found: write a new folder metadata file
 			uid := util.GenerateShortUID()
-			manifest := NewFolderManifest(uid, safepath.Base(folderPath))
+			manifest := NewFolderManifest(uid, safepath.Base(folderPath), r.folders.FolderGVK())
 			var writeErr error
 			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
 			if writeErr != nil {
@@ -488,18 +488,19 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 		return nil, err
 	}
 
+	gvk := r.folders.FolderGVK()
 	parsed := &ParsedResource{
 		Action: provisioning.ResourceActionMove,
 		Info: &repository.FileInfo{
 			Path: opts.Path,
 			Ref:  opts.Ref,
 		},
-		GVK: schema.GroupVersionKind{
-			Group:   FolderResource.Group,
-			Version: FolderResource.Version,
-			Kind:    "Folder",
+		GVK: gvk,
+		GVR: schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: FolderResource.Resource,
 		},
-		GVR:  FolderResource,
 		URLs: urls,
 		Repo: provisioning.ResourceRepositoryInfo{
 			Type:      cfg.Spec.Type,
@@ -657,7 +658,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("error deleting folder from repository: %w", err)
 	}
 
-	return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo)
+	return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo, r.folders.FolderGVK())
 }
 
 func getFolderURLs(ctx context.Context, path, ref string, repo repository.Repository) (*provisioning.RepositoryURLs, error) {
@@ -679,7 +680,7 @@ func getPathType(isDir bool) string {
 	return "file (no trailing '/')"
 }
 
-func folderDeleteResponse(ctx context.Context, path, ref string, repo repository.Repository) (*ParsedResource, error) {
+func folderDeleteResponse(ctx context.Context, path, ref string, repo repository.Repository, gvk schema.GroupVersionKind) (*ParsedResource, error) {
 	urls, err := getFolderURLs(ctx, path, ref, repo)
 	if err != nil {
 		return nil, err
@@ -691,12 +692,12 @@ func folderDeleteResponse(ctx context.Context, path, ref string, repo repository
 			Path: path,
 			Ref:  ref,
 		},
-		GVK: schema.GroupVersionKind{
-			Group:   FolderResource.Group,
-			Version: FolderResource.Version,
-			Kind:    "Folder",
+		GVK: gvk,
+		GVR: schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: FolderResource.Resource,
 		},
-		GVR: FolderResource,
 		Repo: provisioning.ResourceRepositoryInfo{
 			Type:      repo.Config().Spec.Type,
 			Namespace: repo.Config().Namespace,
