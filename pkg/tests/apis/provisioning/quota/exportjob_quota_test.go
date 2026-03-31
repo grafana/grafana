@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -126,8 +126,8 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		for i, name := range []string{"export-test-folder-1", "export-test-folder-2"} {
 			folderObj := &unstructured.Unstructured{
 				Object: map[string]interface{}{
-					"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
-					"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+					"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
+					"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
 					"metadata": map[string]interface{}{
 						"name": name,
 					},

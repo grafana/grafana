@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
-import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { TagFilter, type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { SearchLayout, SearchState } from '../../types';
+import { SearchLayout, type SearchState } from '../../types';
 
 function getLayoutOptions() {
   return [

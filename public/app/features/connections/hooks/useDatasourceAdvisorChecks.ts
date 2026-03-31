@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
 import {
-  Check,
-  CheckType,
+  type Check,
+  type CheckType,
   useGetCheckTypeQuery,
   useListCheckQuery,
   useUpdateCheckMutation,

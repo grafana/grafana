@@ -1,4 +1,4 @@
-import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
+import { type PluginError, type PluginMeta, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { isVersionGtOrEq } from 'app/core/utils/version';
@@ -6,14 +6,14 @@ import { isVersionGtOrEq } from 'app/core/utils/version';
 import { API_ROOT, GCOM_API_ROOT, INSTANCE_API_ROOT } from './constants';
 import { isLocalPluginVisibleByConfig, isRemotePluginVisibleByConfig } from './helpers';
 import {
-  LocalPlugin,
-  RemotePlugin,
-  CatalogPluginDetails,
-  CatalogPluginInsights,
-  Version,
-  PluginVersion,
-  InstancePlugin,
-  ProvisionedPlugin,
+  type LocalPlugin,
+  type RemotePlugin,
+  type CatalogPluginDetails,
+  type CatalogPluginInsights,
+  type Version,
+  type PluginVersion,
+  type InstancePlugin,
+  type ProvisionedPlugin,
 } from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {

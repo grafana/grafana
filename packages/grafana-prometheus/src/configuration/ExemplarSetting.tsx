@@ -1,14 +1,14 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ExemplarSetting.tsx
 import { useState } from 'react';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, Input, Switch, useTheme2 } from '@grafana/ui';
 
 import { PROM_CONFIG_LABEL_WIDTH } from '../constants';
-import { ExemplarTraceIdDestination } from '../types';
+import { type ExemplarTraceIdDestination } from '../types';
 
 import { docsTip, overhaulStyles } from './shared/utils';
 

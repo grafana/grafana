@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
-import { PageInfoItem } from 'app/core/components/Page/types';
+import { type PageInfoItem } from 'app/core/components/Page/types';
 
 import { DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
 

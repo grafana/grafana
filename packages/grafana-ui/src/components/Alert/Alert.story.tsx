@@ -1,11 +1,11 @@
 import { action } from '@storybook/addon-actions';
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { Alert, AlertVariant } from './Alert';
+import { Alert, type AlertVariant } from './Alert';
 import mdx from './Alert.mdx';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];

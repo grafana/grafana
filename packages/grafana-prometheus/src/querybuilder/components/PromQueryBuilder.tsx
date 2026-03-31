@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx
 import { memo } from 'react';
 
-import { PanelData } from '@grafana/data';
+import { type PanelData } from '@grafana/data';
 
-import { PrometheusDatasource } from '../../datasource';
-import { PromVisualQuery } from '../types';
+import { type PrometheusDatasource } from '../../datasource';
+import { type PromVisualQuery } from '../types';
 
 import { NestedQueryList } from './NestedQueryList';
 import { QueryBuilderContent } from './QueryBuilderContent';

@@ -5,9 +5,9 @@ import { render } from 'test/test-utils';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
+import { type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
-import PublicDashboardPageProxy, { PublicDashboardPageProxyProps } from './PublicDashboardPageProxy';
+import PublicDashboardPageProxy, { type PublicDashboardPageProxyProps } from './PublicDashboardPageProxy';
 
 const { PublicDashboardScene, PublicDashboard } = e2eSelectors.pages;
 

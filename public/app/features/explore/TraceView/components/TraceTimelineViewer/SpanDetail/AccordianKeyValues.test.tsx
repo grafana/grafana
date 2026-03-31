@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import AccordianKeyValues, { KeyValuesSummary, AccordianKeyValuesProps } from './AccordianKeyValues';
+import AccordianKeyValues, { KeyValuesSummary, type AccordianKeyValuesProps } from './AccordianKeyValues';
 
 const tags = [
   { key: 'span.kind', value: 'client' },

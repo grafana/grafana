@@ -1,8 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
 
 import {
-  Check,
-  CheckType,
+  type Check,
+  type CheckType,
   useGetCheckTypeQuery,
   useListCheckQuery,
   useUpdateCheckMutation,

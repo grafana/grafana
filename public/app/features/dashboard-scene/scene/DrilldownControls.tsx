@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
+import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { VariableValueSelectWrapper } from './VariableControls';
