@@ -317,6 +317,13 @@ func (s *Service) SetPermissions(
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	dbCommands := make([]SetResourcePermissionsCommand, 0, len(commands))
 	for _, cmd := range commands {
 		if cmd.UserID != 0 {
@@ -348,6 +355,7 @@ func (s *Service) SetPermissions(
 				ResourceID:        resourceID,
 				ResourceAttribute: s.options.ResourceAttribute,
 				Permission:        cmd.Permission,
+				DatasourceType:    datasourceType,
 			},
 		})
 	}
