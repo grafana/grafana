@@ -94,7 +94,7 @@ export const AnnotationsPlugin2Cluster = ({
 
   const { xAnnos, xyAnnos } = useAnnotations({ annotations, newRange });
 
-  const clusteredAnnos = useAnnotationClustering({
+  const { annotations: clusteredAnnos, rendered } = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
     plotWidth: plotRef.current?.bbox.width,
@@ -243,7 +243,7 @@ export const AnnotationsPlugin2Cluster = ({
         forceUpdate();
       }, 0);
     }
-  }, [xAnnos]);
+  }, [xAnnos, rendered]);
 
   if (plotRef.current && xAxisRef.current) {
     const plot = plotRef.current;
