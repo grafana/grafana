@@ -484,8 +484,17 @@ func (k *SqlKV) batchPerItem(ctx context.Context, tx *sql.Tx, qb *queryBuilder, 
 		switch op.Mode {
 		case BatchOpPut:
 			if section == DataSection {
-				query, args := qb.buildUpsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
-				_, err = tx.ExecContext(ctx, query, args...)
+				// key_path is not unique on resource_history, so ON CONFLICT
+				// cannot be used. Check existence and insert or update.
+				if exists, e := keyExistsTx(ctx, tx, qb, keyPath); e != nil {
+					return &BatchError{Err: e, Index: i, Op: op}
+				} else if exists {
+					query, args := qb.buildUpdateDatastoreQuery(keyPath, op.Value)
+					_, err = tx.ExecContext(ctx, query, args...)
+				} else {
+					query, args := qb.buildInsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
+					_, err = tx.ExecContext(ctx, query, args...)
+				}
 			} else {
 				query, args := qb.buildUpsertQuery(keyPath, op.Value)
 				_, err = tx.ExecContext(ctx, query, args...)
