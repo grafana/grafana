@@ -10,18 +10,18 @@ export interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-interface CreateBaseQueryOptions {
-  baseURL: string;
-}
+export type CreateBaseQueryOptions = { baseURL: string } | { getBaseURL: () => Promise<string> };
 
-export function createBaseQuery({ baseURL }: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
+export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
+      const baseURL = 'getBaseURL' in options ? await options.getBaseURL() : options.baseURL;
+
       const headers: Record<string, string> = {
         ...requestOptions.headers,
       };
 
-      if (requestOptions.method?.toUpperCase() === 'PATCH' && baseURL?.startsWith('/apis/')) {
+      if (requestOptions.method?.toUpperCase() === 'PATCH' && baseURL.startsWith('/apis/')) {
         // If we're trying to do some `json-patch` operation, set Content-Type header accordingly
         if (requestOptions.body && Array.isArray(requestOptions.body) && requestOptions.body.some((item) => item.op)) {
           headers['Content-Type'] = 'application/json-patch+json';
