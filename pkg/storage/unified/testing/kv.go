@@ -952,7 +952,7 @@ func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, ke
 
 func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-batch"
+	section := testSection
 
 	t.Run("batch with empty section", func(t *testing.T) {
 		err := kv.Batch(ctx, "", nil)
