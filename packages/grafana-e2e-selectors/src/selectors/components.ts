@@ -697,9 +697,6 @@ export const versionedComponents = {
       },
     },
     ElementEditPane: {
-      variableType: {
-        '12.0.0': (type?: string) => `data-testid variable type ${type}`,
-      },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },

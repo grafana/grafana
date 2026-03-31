@@ -5,6 +5,18 @@ import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plu
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
+const VARIABLE_TYPE_OPTION_LABELS: Record<string, string> = {
+  query: 'Query',
+  custom: 'Custom',
+  textbox: 'Textbox',
+  constant: 'Constant',
+  interval: 'Interval',
+  datasource: 'Data source',
+  adhoc: 'Filter',
+  groupby: 'Group by',
+  switch: 'Switch',
+};
+
 const deselectPanels = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
   await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls).click({
     position: { x: 0, y: 0 },
@@ -61,9 +73,12 @@ export const flows = {
     selectors: E2ESelectorGroups,
     variable: Variable
   ) {
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
-      .click();
+    const variableTypeOption = VARIABLE_TYPE_OPTION_LABELS[variable.type] ?? variable.type;
+    const typeSelect = dashboardPage
+      .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2)
+      .locator('input');
+    await typeSelect.fill(variableTypeOption);
+    await typeSelect.press('Enter');
 
     // New variable creation schedules a delayed autofocus to name input
     // Let that timer finish before we interact to prevent focus on the wrong input
