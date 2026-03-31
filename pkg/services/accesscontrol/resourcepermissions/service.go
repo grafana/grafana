@@ -221,12 +221,20 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetUser)
 }
 
@@ -247,12 +255,20 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetTeam)
 }
 
@@ -273,12 +289,20 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetBuiltInRole)
 }
 

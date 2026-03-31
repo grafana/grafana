@@ -207,6 +207,12 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	if a.service.options.RequestValidator != nil {
+		if _, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID); err != nil {
+			return response.Err(err)
+		}
+	}
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) &&
 		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
@@ -321,6 +327,16 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	}
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	if a.service.options.RequestValidator != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
+			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
+		}
+	}
+
 	resp := a.validateTeamResource(c, resourceID)
 	if resp != nil {
 		return resp
@@ -398,6 +414,16 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	}
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	if a.service.options.RequestValidator != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
+			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
+		}
+	}
+
 	var cmd setPermissionCommand
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -467,6 +493,16 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	if a.service.options.RequestValidator != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
+			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
+		}
+	}
+
 	cmd := setPermissionCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -527,6 +563,16 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	defer span.End()
 
 	resourceID := web.Params(c.Req)[":resourceID"]
+
+	if a.service.options.RequestValidator != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
+			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
+		}
+	}
 
 	cmd := setPermissionsCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
