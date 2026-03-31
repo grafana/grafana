@@ -16175,9 +16175,9 @@
   },
   "trend": {
     "category-x-axis": "X axis",
-    "description-x-field": "An increasing numeric value",
+    "description-x-field": "A numeric or categorical field for the X axis",
     "name-x-field": "X field",
-    "placeholder-x-field": "First numeric value"
+    "placeholder-x-field": "First numeric or string field"
   },
   "upgrade-box": {
     "discovery-text": "You’ve discovered a Pro feature!",
