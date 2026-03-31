@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { AppEvents, CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
@@ -42,7 +42,7 @@ import { DashboardScene } from './DashboardScene';
 export const UNCONFIGURED_PANEL_PLUGIN_ID = '__unconfigured-panel';
 const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
 
-function UnconfiguredPanelComp(props: PanelProps) {
+export function UnconfiguredPanelComp(props: PanelProps) {
   const panelContext = usePanelContext();
   const styles = useStyles2(getStyles);
   const { openDrawer, queryLibraryEnabled = false } = useQueryLibraryContext();
@@ -145,24 +145,20 @@ function UnconfiguredPanelComp(props: PanelProps) {
   const buttons: Array<{
     key: string;
     icon: IconName;
-    label: ReactNode;
+    label: string;
     onClick: () => void;
     variant?: ButtonVariant;
   }> = [
     {
       key: 'configure',
       icon: 'sliders-v-alt',
-      label: isCompact ? (
-        <Trans i18nKey="dashboard.new-panel.configure">Configure</Trans>
-      ) : (
-        <Trans i18nKey="dashboard.new-panel.configure-visualization">Configure visualization</Trans>
-      ),
+      label: t('dashboard.new-panel.configure-visualization', 'Configure visualization'),
       onClick: onConfigure,
     },
     {
       key: 'library-panel',
       icon: 'library-panel',
-      label: <Trans i18nKey="dashboard.new-panel.menu-use-library-panel">Use library panel</Trans>,
+      label: t('dashboard.new-panel.menu-use-library-panel', 'Use library panel'),
       onClick: onUseLibraryPanel,
       variant: 'secondary',
     },
@@ -172,13 +168,11 @@ function UnconfiguredPanelComp(props: PanelProps) {
     buttons.splice(1, 0, {
       key: 'saved-query',
       icon: 'book-open',
-      label: <Trans i18nKey="dashboard.new-panel.menu-use-saved-query">Use saved query</Trans>,
+      label: t('dashboard.new-panel.menu-use-saved-query', 'Use saved query'),
       onClick: onUseSavedQuery,
       variant: 'secondary',
     });
   }
-
-  const visibleButtons = isCompact ? buttons.filter((b) => b.key === 'configure') : buttons;
 
   return (
     <div
@@ -219,11 +213,11 @@ function UnconfiguredPanelComp(props: PanelProps) {
           </div>
 
           <div
-            className={cx(styles.buttonList, !isButtonsVisible && styles.hidden)}
+            className={cx(styles.buttonList, isCompact && styles.buttonListCompact, !isButtonsVisible && styles.hidden)}
             aria-hidden={!isButtonsVisible}
             {...(!isButtonsVisible ? { inert: '' } : {})}
           >
-            {visibleButtons.map((button, i) => (
+            {buttons.map((button, i) => (
               <div
                 key={button.key}
                 className={cx(
@@ -237,9 +231,13 @@ function UnconfiguredPanelComp(props: PanelProps) {
                     : undefined
                 }
               >
-                <Button icon={button.icon} variant={button.variant} onClick={button.onClick} fullWidth>
-                  {button.label}
-                </Button>
+                {isCompact ? (
+                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} tooltip={button.label} />
+                ) : (
+                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} fullWidth>
+                    {button.label}
+                  </Button>
+                )}
               </div>
             ))}
           </div>
@@ -344,6 +342,10 @@ function getStyles(theme: GrafanaTheme2) {
         flexDirection: 'row',
         alignItems: 'center',
       },
+    }),
+    buttonListCompact: css({
+      flexDirection: 'row',
+      alignItems: 'center',
     }),
     buttonWrapper: css({
       display: 'flex',
