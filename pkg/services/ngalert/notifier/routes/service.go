@@ -378,8 +378,10 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
-			return err
+		if action == "Deleted" { // do not delete permissions on reset of default route
+			if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
+				return err
+			}
 		}
 		return nps.provenanceStore.DeleteProvenance(ctx, existing, orgID)
 	})
