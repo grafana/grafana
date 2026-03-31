@@ -17,7 +17,7 @@ import { useTrackingContext } from '../TrackingContext';
 import { checkDashboardCompatibility } from '../api/compatibilityApi';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, PAGE_SIZE } from '../constants';
-import { DashboardLibraryInteractions } from '../interactions';
+import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from '../interactions';
 import { type GnetDashboard } from '../types';
 import { onUseCommunityDashboard, interpolateDashboardForCompatibilityCheck } from '../utils/communityDashboardHelpers';
 import { getPageSlice } from '../utils/suggestedDashboardHelpers';
@@ -310,7 +310,7 @@ export const SuggestedDashboardsList = ({
 
   // Provisioned dashboard click handler
   const onClickProvisionedDashboard = (dashboard: PluginDashboard, customizeWithAssistant?: boolean) => {
-    DashboardLibraryInteractions.itemClicked({
+    void SuggestedDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
@@ -318,6 +318,7 @@ export const SuggestedDashboardsList = ({
       sourceEntryPoint,
       eventLocation,
       discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+      action: customizeWithAssistant ? 'assistant' : 'use_dashboard',
     });
 
     const params = new URLSearchParams({
@@ -344,7 +345,7 @@ export const SuggestedDashboardsList = ({
   // Community dashboard click handler
   const [{ error: isPreviewDashboardError }, onClickCommunityDashboard] = useAsyncFn(
     async (dashboard: GnetDashboard, customizeWithAssistant?: boolean) => {
-      DashboardLibraryInteractions.itemClicked({
+      await SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [datasourceType],
         libraryItemId: String(dashboard.id),
@@ -352,6 +353,7 @@ export const SuggestedDashboardsList = ({
         sourceEntryPoint,
         eventLocation,
         discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+        action: customizeWithAssistant ? 'assistant' : 'use_dashboard',
       });
 
       await onUseCommunityDashboard({
