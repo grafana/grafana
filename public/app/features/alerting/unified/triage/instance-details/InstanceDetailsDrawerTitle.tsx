@@ -4,9 +4,9 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
-import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
+import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { createBridgeURL } from '../../components/PluginBridge';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';

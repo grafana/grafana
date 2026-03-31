@@ -6,8 +6,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { createContactPointSearchLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
