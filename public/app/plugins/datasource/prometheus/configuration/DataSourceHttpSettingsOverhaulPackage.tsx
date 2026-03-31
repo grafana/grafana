@@ -170,6 +170,11 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
               ...options.jsonData,
               azureCredentials: method === azureAuthId ? options.jsonData.azureCredentials : undefined,
               sigV4Auth: method === sigV4Id,
+              sigV4AuthType: method === sigV4Id ? options.jsonData.sigV4AuthType : undefined,
+              sigV4AssumeRoleArn: method === sigV4Id ? options.jsonData.sigV4AssumeRoleArn : undefined,
+              sigV4ExternalId: method === sigV4Id ? options.jsonData.sigV4ExternalId : undefined,
+              sigV4Profile: method === sigV4Id ? options.jsonData.sigV4Profile : undefined,
+              sigV4Region: method === sigV4Id ? options.jsonData.sigV4Region : undefined,
               oauthPassThru: method === AuthMethod.OAuthForward,
             },
           });
