@@ -569,7 +569,7 @@ describe('when useMTPlugins flag is disabled', () => {
     it('should return the last result for concurrent calls', async () => {
       backendSrv.get = jest
         .fn()
-        .mockResolvedValueOnce({ testPanels })
+        .mockResolvedValueOnce({ panels: testPanels })
         .mockResolvedValue({ panels: { alertlist: testPanels.alertlist } });
 
       const promise1 = refetchPanelPluginMetas();

@@ -3,12 +3,6 @@ import { type LogContext } from '@grafana/faro-web-sdk';
 
 import { createMonitoringLogger, type MonitoringLogger } from '../../utils/logging';
 
-const FALLBACK_TO_BOOTDATA_WARNING = `PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata`;
-
-interface LogErrorArgs {
-  type: PluginType;
-}
-
 let logger: MonitoringLogger;
 
 function getLogger() {
@@ -19,11 +13,11 @@ function getLogger() {
   return logger;
 }
 
-export function logWarning({ type }: LogErrorArgs): void {
+export function logWarning(message: string, type: PluginType): void {
   const context: LogContext = { type };
 
-  getLogger().logWarning(FALLBACK_TO_BOOTDATA_WARNING, context);
-  console.warn(FALLBACK_TO_BOOTDATA_WARNING);
+  getLogger().logWarning(message, context);
+  console.warn(message);
 }
 
 export function setLogger(override: MonitoringLogger) {

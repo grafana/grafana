@@ -4,6 +4,7 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { getBackendSrv } from '../backendSrv';
 
+import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
@@ -38,8 +39,7 @@ function resolveAliasIDs(panels: PanelPluginMetas): PanelPluginMetas {
   return panelsByAliasIDs;
 }
 
-// eslint-disable-next-line no-restricted-syntax
-function setPanelsAndAliases(input: PanelPluginMetas = config.panels) {
+function setPanelsAndAliases(input: PanelPluginMetas) {
   panels = input;
   panelsByAliasIDs = resolveAliasIDs(panels);
 }
@@ -48,8 +48,9 @@ function setMetas(metas: PluginMetasResponse) {
   if (!metas.items.length) {
     // something failed while trying to fetch plugin meta
     // fallback to config.panels from bootdata
-    setPanelsAndAliases();
-    logWarning({ type: PluginType.panel });
+    // eslint-disable-next-line no-restricted-syntax
+    setPanelsAndAliases(config.panels);
+    logWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.panel);
     return;
   }
 
@@ -59,7 +60,8 @@ function setMetas(metas: PluginMetasResponse) {
 
 async function initPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    setPanelsAndAliases();
+    // eslint-disable-next-line no-restricted-syntax
+    setPanelsAndAliases(config.panels);
     return;
   }
 

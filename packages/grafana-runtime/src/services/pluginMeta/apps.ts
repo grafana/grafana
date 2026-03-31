@@ -3,6 +3,7 @@ import { type AppPluginConfig, PluginType } from '@grafana/data';
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 
+import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
 import { initPluginMetas } from './plugins';
@@ -14,8 +15,7 @@ function initialized(): boolean {
   return Boolean(Object.keys(apps).length);
 }
 
-// eslint-disable-next-line no-restricted-syntax
-function setApps(input: AppPluginMetas = config.apps) {
+function setApps(input: AppPluginMetas) {
   apps = input;
 }
 
@@ -23,8 +23,9 @@ function setMetas(metas: PluginMetasResponse) {
   if (!metas.items.length) {
     // something failed while trying to fetch plugin meta
     // fallback to config.panels from bootdata
-    setApps();
-    logWarning({ type: PluginType.app });
+    // eslint-disable-next-line no-restricted-syntax
+    setApps(config.apps);
+    logWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.app);
     return;
   }
 
@@ -34,7 +35,8 @@ function setMetas(metas: PluginMetasResponse) {
 
 async function initAppPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    setApps();
+    // eslint-disable-next-line no-restricted-syntax
+    setApps(config.apps);
     return;
   }
 
