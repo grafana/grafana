@@ -1,4 +1,4 @@
-import { type BackendSrv } from '@grafana/runtime';
+import { BackendSrv } from '@grafana/runtime';
 
 const PREFIX = 'com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1';
 
