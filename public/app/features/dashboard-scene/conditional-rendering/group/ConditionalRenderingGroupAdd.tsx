@@ -4,10 +4,10 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ValuePicker } from '@grafana/ui';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import { ObjectsWithConditionalRendering } from '../object';
 
 import { GroupConditionConditionType } from './types';
-import { DashboardInteractions } from '../../utils/interactions';
 
 interface Props {
   objectType: ObjectsWithConditionalRendering;
@@ -38,7 +38,7 @@ export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }
   }, [objectType, hasVariables]);
 
   const onAddRuleClick = (option: SelectableValue<GroupConditionConditionType>) => {
-    DashboardInteractions.clickAddConditionalRuleButton({ ruleName: option.label ?? option.value! });
+    DashboardInteractions.clickAddConditionalRuleButton({ ruleName: option.value ?? '' });
     onAdd(option);
   };
 
