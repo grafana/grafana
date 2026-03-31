@@ -89,8 +89,8 @@ type kvStorageBackend struct {
 
 	searchLookback time.Duration
 
-	// stopCleanups cancels the context used by the runCleanups goroutine.
-	stopCleanups context.CancelFunc
+	// cancel stops all background goroutines owned by the backend.
+	cancel context.CancelFunc
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -98,7 +98,7 @@ var _ KVBackend = &kvStorageBackend{}
 type KVBackend interface {
 	StorageBackend
 	resourcepb.DiagnosticsServer //nolint:staticcheck
-	Stop()
+	ResourceServerStopper
 }
 
 type KVBackendOptions struct {
@@ -151,7 +151,6 @@ func getSnowflakeNode() (*snowflake.Node, error) {
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
-	ctx := context.Background()
 	kv := opts.KvStore
 
 	logger := opts.Log
@@ -163,6 +162,8 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
 	eventStore := newEventStore(kv)
 
 	eventRetentionPeriod := opts.EventRetentionPeriod
@@ -204,6 +205,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		searchLookback:          opts.SearchLookback,
 		disablePruner:           opts.DisablePruner,
 		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
+		cancel:                  cancel,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -234,9 +236,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	// Start the cleanup background job.
-	cleanupCtx, cleanupCancel := context.WithCancel(ctx)
-	backend.stopCleanups = cleanupCancel
-	go backend.runCleanups(cleanupCtx)
+	go backend.runCleanups(ctx)
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
@@ -256,9 +256,9 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 }
 
 // Stop shuts down services owned by the backend.
-func (k *kvStorageBackend) Stop() {
-	if k.stopCleanups != nil {
-		k.stopCleanups()
+func (k *kvStorageBackend) Stop(_ context.Context) error {
+	if k.historyPruner != nil {
+		k.historyPruner.Stop()
 	}
 	if k.tenantWatcher != nil {
 		k.tenantWatcher.Stop()
@@ -266,6 +266,9 @@ func (k *kvStorageBackend) Stop() {
 	if k.tenantDeleter != nil {
 		k.tenantDeleter.Stop()
 	}
+	// Cancel the background context to stop runCleanups, GC, and other goroutines.
+	k.cancel()
+	return nil
 }
 
 // runCleanups starts periodically cleans up old events and last import times.
@@ -401,7 +404,11 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	go func() {
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
 		jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
-		<-time.After(jitter)
+		select {
+		case <-time.After(jitter):
+		case <-ctx.Done():
+			return
+		}
 
 		ticker := time.NewTicker(b.garbageCollection.Interval)
 		defer ticker.Stop()
@@ -698,18 +705,30 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
 		// Check if resource already exists for create operations
-		_, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Namespace: namespace,
 			Name:      event.Key.Name,
 		})
 		if err == nil {
-			// Resource exists, return already exists error
-			return 0, ErrResourceAlreadyExists
-		}
-		if !errors.Is(err, ErrNotFound) {
-			// Some other error occurred
+			if latestKey.Action == kv.DataActionUpdated {
+				return 0, ErrResourceAlreadyExists
+			}
+
+			// A creation event was found, but it might be a transient write from a
+			// concurrent create that hasn't gone through the optimistic lock
+			// checks. Confirm via the event store before returning AlreadyExists.
+			committed, err := k.confirmExistence(ctx, latestKey)
+			if err != nil {
+				return 0, fmt.Errorf("checking concurrent creation in event store: %w", err)
+			}
+			if committed {
+				return 0, ErrResourceAlreadyExists
+			}
+			// Not confirmed: the data is likely transient. Proceed with the
+			// write and let the optimistic lock checks determine the winner.
+		} else if !errors.Is(err, ErrNotFound) {
 			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 		}
 	case resourcepb.WatchEvent_MODIFIED:
@@ -848,6 +867,40 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	k.notifier.Publish(eventData)
 
 	return rv, nil
+}
+
+// confirmExistence checks whether a resource with the given `key` is genuinely
+// committed. During concurrent creates, the datastore can contain transient
+// writes that haven't survived the post-write optimistic lock checks. The
+// eventstore is used as a commit signal: an event is written only after the
+// optimistic locking checks, so its presence proves the write is committed.
+func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (bool, error) {
+	const eventThreshold = 30 * time.Second
+
+	// Extract the timestamp from the snowflake-formatted RV.
+	rvTime := time.Unix(0, snowflake.ID(key.ResourceVersion).Time()*int64(time.Millisecond))
+	if time.Since(rvTime) > eventThreshold {
+		// Old RV: by this point, it can be assumed to be committed.
+		return true, nil
+	}
+
+	// Recent RV: look up the corresponding event to confirm it was committed.
+	_, err := k.eventStore.Get(ctx, EventKey{
+		Namespace:       key.Namespace,
+		Group:           key.Group,
+		Resource:        key.Resource,
+		Name:            key.Name,
+		ResourceVersion: key.ResourceVersion,
+		Action:          key.Action,
+		Folder:          key.Folder,
+	})
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, ErrNotFound) {
+		return false, nil
+	}
+	return false, err
 }
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {

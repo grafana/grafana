@@ -2576,6 +2576,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "無法顯示查詢預覽。查詢中使用的某些資料來源不可用。",
       "preview-alerts": "預覽警報",
@@ -3088,6 +3091,7 @@
     "rules-filter": {
       "clear-filters": "清除篩選",
       "configured-alert-rules": "包含已設定警報規則的資料來源是 Mimir 或 Loki 資料來源，其中警報規則儲存在資料來源本身並進行評估。",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "篩選直接導向所選聯絡點的警報規則。導向通知政策的警報規則不會顯示。",
       "contact-point-tooltip-title": "聯絡點篩選器說明",
       "dashboard": "儀表板",
@@ -3112,7 +3116,11 @@
       "placeholder-data-sources": "選擇資料來源",
       "placeholder-group-search": "搜尋群組",
       "placeholder-labels": "選擇標籤",
+      "placeholder-policy": "",
       "plugin-rules": "外掛程式規則",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "資料來源已管理",
         "grafana": "Grafana 管理"
@@ -3193,6 +3201,7 @@
       "title-group": "群組",
       "title-health": "使用情況",
       "title-labels": "標籤",
+      "title-policy": "",
       "title-rule": "規則",
       "title-state": "狀態",
       "title-type": "類型"
@@ -7226,6 +7235,9 @@
           "metrics-drilldown": "指標深入分析"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14581,6 +14593,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },
