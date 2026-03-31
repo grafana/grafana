@@ -52,8 +52,7 @@ type IndexViewData struct {
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
 
-	BootScript        template.JS
-	InlinedBootScript bool
+	BootScript template.JS
 }
 
 // Templates setup.
@@ -134,7 +133,10 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		Settings:                   fsSettings,
 		RenderBindingSupported:     renderBindingSupported,
 		BootScript:                 p.bootScript,
-		InlinedBootScript:          inlinedBootScript,
+	}
+
+	if p.bootScript == "" && inlinedBootScript {
+		p.log.Error("Feature flag inlinedBootScript is enabled but boot.js is empty - grafanaBootData will not be populated.")
 	}
 
 	// TODO -- reevaluate with mt authnz
