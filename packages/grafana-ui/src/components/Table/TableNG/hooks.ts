@@ -299,9 +299,14 @@ export const useNestedRows = (
       }
 
       const rawRows = frameToRecords(nestedFrame, parentRow.__index);
-      const { filteredRows } = applyFilter(rawRows, filter, nestedFrame.fields);
-      const sortedRows = applySort(filteredRows, nestedFrame.fields, sortColumns, getColumnTypes(nestedFrame.fields));
-      result[parentRow.__index] = { raw: rawRows, final: sortedRows };
+      const filterResult = applyFilter(rawRows, filter, nestedFrame.fields);
+      const sortedRows = applySort(
+        filterResult.filteredRows,
+        nestedFrame.fields,
+        sortColumns,
+        getColumnTypes(nestedFrame.fields)
+      );
+      result[parentRow.__index] = { raw: rawRows, final: sortedRows, filterResult };
     }
 
     return result;

@@ -88,7 +88,6 @@ import {
   type TableSummaryRow,
 } from './types';
 import {
-  applyFilter,
   calculateFooterHeight,
   canFieldBeColorized,
   compileFrameToRecords,
@@ -554,12 +553,12 @@ export function TableNG(props: TableNGProps) {
         cellRootRenderers: {},
       };
 
-      // Compute cross-filter rows scoped to the nesting level of this table instance.
-      // For top-level tables, reuse the result already computed by useFilteredRows (free).
-      // For nested tables, parentIndex is defined and we must compute their own scoped result.
+      // Reuse pre-computed filter results — no re-scanning of rows needed.
+      // Top-level tables use filterResult from useFilteredRows; nested tables use the
+      // filterResult stored on their NestedRowEntry by useNestedRows.
       const parentIndex = visibleRows[0]?.__parentIndex;
       const { crossFilterRows, crossFilterTailRows } =
-        parentIndex == null ? filterResult : applyFilter(rawRows, filter, f, false, parentIndex);
+        parentIndex == null ? filterResult : nestedRows[parentIndex].filterResult;
 
       let lastRowIdx = -1;
       // shared when whole row will be styled by a single cell's color
@@ -857,26 +856,27 @@ export function TableNG(props: TableNGProps) {
       return result;
     },
     [
-      theme,
-      onCellFilterAdded,
-      rowHeight,
-      maxRowHeight,
       applyToRowBgFn,
-      frozenColumns,
-      numFrozenColsFullyInView,
-      getCellColorInlineStyles,
-      rowHeightFn,
-      timeRange,
-      getCellActions,
+      disableKeyboardEvents,
       disableSanitizeHtml,
-      getTextColorForBackground,
       filter,
       filterResult,
-      setFilter,
-      disableKeyboardEvents,
-      showTypeIcons,
       footers,
+      frozenColumns,
+      getCellActions,
+      getCellColorInlineStyles,
+      getTextColorForBackground,
       isUniformFooter,
+      maxRowHeight,
+      nestedRows,
+      numFrozenColsFullyInView,
+      onCellFilterAdded,
+      rowHeight,
+      rowHeightFn,
+      setFilter,
+      showTypeIcons,
+      theme,
+      timeRange,
     ]
   );
 

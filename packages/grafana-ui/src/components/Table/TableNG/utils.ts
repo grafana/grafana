@@ -713,7 +713,7 @@ export function applySort(
     : [...rows].sort(compareRows);
 }
 
-interface ApplyFilterResult {
+export interface ApplyFilterResult {
   crossFilterOrder: string[];
   crossFilterRows: Record<string, TableRow[]>;
   crossFilterTailRows: TableRow[];
