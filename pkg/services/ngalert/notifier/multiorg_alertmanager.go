@@ -404,7 +404,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 				moa.logger.Error("Failed to apply the default Alertmanager configuration", "org", orgID)
 				continue
 			}
-			// init the permisisons for the basic role
+			// init the permissions for the basic role
 			moa.logger.Debug("Setting default permissions for the basic roles")
 			if err := moa.routesResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, models.DefaultRoutingTreeName); err != nil {
 				moa.logger.Error("Failed to set default permissions for the basic roles", "org", orgID, "error", err)

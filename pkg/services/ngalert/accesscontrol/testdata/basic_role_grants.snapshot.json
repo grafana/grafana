@@ -99,21 +99,6 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes.managed:create"
-      },
-      {
-        "action": "alert.notifications.routes.managed:delete",
-        "scope": "routes:*"
-      },
-      {
-        "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
-      },
-      {
-        "action": "alert.notifications.routes.managed:write",
-        "scope": "routes:*"
-      },
-      {
         "action": "alert.notifications.routes:read"
       },
       {
@@ -208,20 +193,35 @@
         "scope": "folders:*"
       },
       {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get_permissions",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:set_permissions",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
         "action": "receivers.permissions:read",
         "scope": "receivers:*"
       },
       {
         "action": "receivers.permissions:write",
         "scope": "receivers:*"
-      },
-      {
-        "action": "routes.permissions:read",
-        "scope": "routes:*"
-      },
-      {
-        "action": "routes.permissions:write",
-        "scope": "routes:*"
       }
     ]
   },
@@ -307,9 +307,6 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes.managed:create"
-      },
-      {
         "action": "alert.notifications.templates.test:write"
       },
       {
@@ -374,6 +371,9 @@
       {
         "action": "alert.silences:write",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
       }
     ]
   },
