@@ -93,7 +93,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,reportingV2Layouts,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-02-19,reportRenderBinding,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2024-01-02,canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
-2025-07-24,timeComparison,experimental,@grafana/dataviz-squad,false,false,true
+2025-07-24,timeComparison,preview,@grafana/dataviz-squad,false,false,true
 2023-12-13,tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 2024-01-10,cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 2024-01-10,alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
@@ -286,7 +286,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 2026-02-18,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
-2025-10-29,panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
+2025-10-29,panelTimeSettings,preview,@grafana/dashboards-squad,false,false,false
 2025-12-15,elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false
 2026-01-21,elasticsearchESQLQuery,experimental,@grafana/partner-datasources,false,false,false
 2025-11-12,awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
