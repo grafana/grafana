@@ -443,6 +443,9 @@ export function lttbPreviewData(data: PanelData, threshold = LTTB_THRESHOLD): Pa
         fields: frame.fields.map((field) => ({
           ...field,
           values: indices.map((i) => field.values[i]),
+          ...(field.type === FieldType.time && {
+            config: { ...field.config, interval: undefined },
+          }),
         })),
       };
     }),
