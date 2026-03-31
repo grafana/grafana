@@ -4440,14 +4440,17 @@
     {
       "metadata": {
         "name": "renderAuthJWT",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-04-03T16:53:38Z"
+        "resourceVersion": "1774338929389",
+        "creationTimestamp": "2023-04-03T16:53:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-24 07:55:29.389845 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Uses JWT-based auth for rendering instead of relying on remote cache",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
