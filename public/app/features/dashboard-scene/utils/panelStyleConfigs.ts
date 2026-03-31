@@ -11,7 +11,7 @@ export interface PanelStyleConfig {
     /** Top-level (non-custom) fieldConfig.defaults keys to include in style copy, e.g. 'color' */
     defaultsProps: ReadonlyArray<keyof FieldConfig>;
     /** Keys within fieldConfig.defaults.custom to include in style copy */
-    defaults: readonly string[];
+    customProps: readonly string[];
   };
   /** Top-level panel options keys to include in style copy */
   options?: {
