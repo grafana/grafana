@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import uPlot from 'uplot';
 
 import { type DataFrame, FieldType } from '@grafana/data';
@@ -20,9 +20,6 @@ export enum ClusteringMode {
 }
 
 export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange }: Props) => {
-  // set state on initial render so consumer can redraw canvas when annotations are clustered before initial render
-  const [rendered, setRendered] = useState(false);
-
   const { outAnnos } = useMemo(() => {
     const clusteredAnnotations: DataFrame[] = [];
 
@@ -31,9 +28,6 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
       return { outAnnos: [] };
     }
 
-    if (!rendered) {
-      setRendered(true);
-    }
     if (clusteringMode === ClusteringMode.Render) {
       // per-frame clustering
       for (let frameIdx = 0; frameIdx < annotations.length; frameIdx++) {
@@ -141,9 +135,9 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
             )
           : annotations,
     };
-  }, [annotations, clusteringMode, plotWidth, timeRange, rendered, setRendered]);
+  }, [annotations, clusteringMode, plotWidth, timeRange]);
 
-  return { annotations: outAnnos, rendered };
+  return { annotations: outAnnos };
 };
 
 const buildAnnotationClusters = (

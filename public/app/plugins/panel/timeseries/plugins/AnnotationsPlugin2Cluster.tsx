@@ -94,7 +94,7 @@ export const AnnotationsPlugin2Cluster = ({
 
   const { xAnnos, xyAnnos } = useAnnotations({ annotations, newRange });
 
-  const { annotations: clusteredAnnos, rendered } = useAnnotationClustering({
+  const { annotations: clusteredAnnos } = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
     plotWidth: plotRef.current?.bbox.width,
@@ -234,16 +234,9 @@ export const AnnotationsPlugin2Cluster = ({
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {
     if (plotRef.current) {
-      plotRef.current.redraw();
-
-      // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
-      // and ensures the anno marker positions in the dom are re-rendered in correct places
-      // (this is temp fix until uPlot integration is refactored)
-      setTimeout(() => {
-        forceUpdate();
-      }, 0);
+      plotRef.current.redraw(false, true);
     }
-  }, [xAnnos, rendered]);
+  }, [clusteredAnnos]);
 
   if (plotRef.current && xAxisRef.current) {
     const plot = plotRef.current;
