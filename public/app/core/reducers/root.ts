@@ -1,5 +1,5 @@
-import { ReducersMapObject } from '@reduxjs/toolkit';
-import { AnyAction, combineReducers } from 'redux';
+import { type ReducersMapObject } from '@reduxjs/toolkit';
+import { type AnyAction, combineReducers } from 'redux';
 
 import { generatedAPI as legacyAPI } from '@grafana/api-clients/internal/rtkq/legacy';
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';

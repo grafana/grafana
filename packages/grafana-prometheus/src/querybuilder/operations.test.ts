@@ -1,6 +1,6 @@
 import { getOperationDefinitions, addOperationWithRangeVector } from './operations';
-import { QueryBuilderOperation, VisualQueryModeller } from './shared/types';
-import { PromOperationId, PromVisualQuery } from './types';
+import { type QueryBuilderOperation, type VisualQueryModeller } from './shared/types';
+import { PromOperationId, type PromVisualQuery } from './types';
 
 describe('getOperationDefinitions', () => {
   it('returns a list containing operation IDs', () => {

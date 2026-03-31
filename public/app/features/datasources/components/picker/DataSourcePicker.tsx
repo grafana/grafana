@@ -6,16 +6,16 @@ import { useOverlay } from '@react-aria/overlays';
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, GrafanaTheme2, ScopedVars } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
+import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
 import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource, useDatasources } from '../../hooks';
 

@@ -29,6 +29,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchCrossAccountQuerying`      | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
 | `lokiQuerySplitting`                  | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`            | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
+| `renderAuthJWT`                       | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                          | Yes                |
 | `logsExploreTableVisualisation`       | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`       | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `provisioning`                        | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
@@ -59,6 +60,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch data source                                                                                                 |                    |
 | `lokiLabelNamesQueryApi`              | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
+| `grafanaAdvisor`                      | Enables Advisor app                                                                                                                                           | Yes                |
 | `newLogsPanel`                        | Enables the new logs panel                                                                                                                                    | Yes                |
 | `alertingMigrationUI`                 | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
@@ -66,6 +68,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
+| `newVizSuggestions`                   | Enable new visualization suggestions                                                                                                                          | Yes                |
+| `externalVizSuggestions`              | Enable all plugins to supply visualization suggestions (including 3rd party plugins)                                                                          | Yes                |
 | `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 | `multiPropsVariables`                 | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 
@@ -77,7 +81,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | --------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `panelTitleSearch`                | Search for dashboards using panel title                                                                |
 | `grpcServer`                      | Run the GRPC server                                                                                    |
-| `renderAuthJWT`                   | Uses JWT-based auth for rendering instead of relying on remote cache                                   |
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
@@ -96,7 +99,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |

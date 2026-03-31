@@ -8,7 +8,7 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { getStyles } from './LogLine';
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 interface Props {
   log: LogListModel;

@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Sorgu ön izlemesi görüntülenemiyor. Sorgularda kullanılan bazı veri kaynakları mevcut değil.",
       "preview-alerts": "Uyarıları ön izle",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Filtreleri temizle",
       "configured-alert-rules": "Yapılandırılmış uyarı kurallarını içeren veri kaynakları, uyarı kurallarının kaydedilip değerlendirildiği Mimir veya Loki veri kaynaklarıdır.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Seçili iletişim noktasına doğrudan yönlendirilen uyarı kurallarını filtreler. Bildirim ilkelerine yönlendirilen uyarı kuralları görüntülenmez.",
       "contact-point-tooltip-title": "İletişim noktası filtresi yardımı",
       "dashboard": "Pano",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Veri kaynaklarını seçin",
       "placeholder-group-search": "Grup ara",
       "placeholder-labels": "Etiketleri seçin",
+      "placeholder-policy": "",
       "plugin-rules": "Eklenti kuralları",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Veri kaynağı tarafından yönetilen",
         "grafana": "Grafana tarafından yönetilen"
@@ -3212,6 +3220,7 @@
       "title-group": "Grup",
       "title-health": "Sağlık",
       "title-labels": "Etiketler",
+      "title-policy": "",
       "title-rule": "Kural",
       "title-state": "Durum",
       "title-type": "Tür"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Metrikler ayrıntılı incelemesi"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

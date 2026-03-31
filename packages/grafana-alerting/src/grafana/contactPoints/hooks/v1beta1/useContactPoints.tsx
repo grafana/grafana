@@ -1,17 +1,17 @@
 import {
   type TypedUseMutationResult,
   type TypedUseQueryHookResult,
-  fetchBaseQuery,
+  type fetchBaseQuery,
 } from '@reduxjs/toolkit/query/react';
-import { OverrideProperties } from 'type-fest';
+import { type OverrideProperties } from 'type-fest';
 
 import {
-  CreateReceiverApiArg,
-  ListReceiverApiArg,
-  generatedAPI as notificationsAPIv0alpha1,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+  type CreateReceiverApiArg,
+  type ListReceiverApiArg,
+  generatedAPI as notificationsAPIv1beta1,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
-import type { ContactPoint, EnhancedListReceiverApiResponse } from '../../../api/notifications/v0alpha1/types';
+import type { ContactPoint, EnhancedListReceiverApiResponse } from '../../../api/notifications/v1beta1/types';
 
 // this is a workaround for the fact that the generated types are not narrow enough
 type ListContactPointsHookResult = TypedUseQueryHookResult<
@@ -23,17 +23,17 @@ type ListContactPointsHookResult = TypedUseQueryHookResult<
 // Type for the options that can be passed to the hook
 // Based on the pattern used for mutation options in this file
 type ListContactPointsQueryArgs = Parameters<
-  typeof notificationsAPIv0alpha1.endpoints.listReceiver.useQuery<ListContactPointsHookResult>
+  typeof notificationsAPIv1beta1.endpoints.listReceiver.useQuery<ListContactPointsHookResult>
 >[0];
 
 type ListContactPointsQueryOptions = Parameters<
-  typeof notificationsAPIv0alpha1.endpoints.listReceiver.useQuery<ListContactPointsHookResult>
+  typeof notificationsAPIv1beta1.endpoints.listReceiver.useQuery<ListContactPointsHookResult>
 >[1];
 
 /**
  * useListContactPoints is a hook that fetches a list of contact points
  *
- * This function wraps the notificationsAPIv0alpha1.useListReceiverQuery with proper typing
+ * This function wraps the notificationsAPIv1beta1.useListReceiverQuery with proper typing
  * to ensure that the returned ContactPoints are correctly typed in the data.items array.
  *
  * It automatically uses the configured namespace for the query.
@@ -45,7 +45,7 @@ export function useListContactPoints(
   queryArgs: ListContactPointsQueryArgs = {},
   queryOptions: ListContactPointsQueryOptions = {}
 ): ListContactPointsHookResult {
-  return notificationsAPIv0alpha1.useListReceiverQuery<ListContactPointsHookResult>(queryArgs, queryOptions);
+  return notificationsAPIv1beta1.useListReceiverQuery<ListContactPointsHookResult>(queryArgs, queryOptions);
 }
 
 // type narrowing mutations requires us to define a few helper types
@@ -61,7 +61,7 @@ type CreateContactPointMutation = TypedUseMutationResult<
 >;
 
 type UseCreateContactPointOptions = Parameters<
-  typeof notificationsAPIv0alpha1.endpoints.createReceiver.useMutation<CreateContactPointMutation>
+  typeof notificationsAPIv1beta1.endpoints.createReceiver.useMutation<CreateContactPointMutation>
 >[0];
 
 /**
@@ -75,11 +75,11 @@ export function useCreateContactPoint(
 ): readonly [
   (
     args: CreateContactPointArgs
-  ) => ReturnType<ReturnType<typeof notificationsAPIv0alpha1.endpoints.createReceiver.useMutation>[0]>,
-  ReturnType<typeof notificationsAPIv0alpha1.endpoints.createReceiver.useMutation<CreateContactPointMutation>>[1],
+  ) => ReturnType<ReturnType<typeof notificationsAPIv1beta1.endpoints.createReceiver.useMutation>[0]>,
+  ReturnType<typeof notificationsAPIv1beta1.endpoints.createReceiver.useMutation<CreateContactPointMutation>>[1],
 ] {
   const [updateFn, result] =
-    notificationsAPIv0alpha1.endpoints.createReceiver.useMutation<CreateContactPointMutation>(options);
+    notificationsAPIv1beta1.endpoints.createReceiver.useMutation<CreateContactPointMutation>(options);
 
   const typedUpdateFn = (args: CreateContactPointArgs) => {
     // @ts-expect-error this one is just impossible for me to figure out

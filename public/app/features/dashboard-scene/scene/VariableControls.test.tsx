@@ -5,7 +5,7 @@ import {
   CustomVariable,
   LocalValueVariable,
   SceneGridLayout,
-  SceneVariable,
+  type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
   TextBoxVariable,

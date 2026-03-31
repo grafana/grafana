@@ -1,18 +1,18 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { VariableRefresh } from '@grafana/data';
+import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
-  MultiValueVariable,
+  type MultiValueVariable,
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
   UrlSyncManager,
-  VariableValueOption,
+  type VariableValueOption,
   PanelBuilders,
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';

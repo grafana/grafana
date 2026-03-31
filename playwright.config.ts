@@ -1,7 +1,7 @@
-import { defineConfig, devices, PlaywrightTestConfig, Project } from '@playwright/test';
+import { defineConfig, devices, type PlaywrightTestConfig, type Project } from '@playwright/test';
 import path, { dirname } from 'path';
 
-import { PluginOptions } from '@grafana/plugin-e2e';
+import { type PluginOptions } from '@grafana/plugin-e2e';
 
 export const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');

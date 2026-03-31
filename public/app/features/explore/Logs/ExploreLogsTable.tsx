@@ -1,21 +1,21 @@
 import { useCallback, useMemo } from 'react';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
-  EventBus,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  type EventBus,
   EventBusSrv,
-  FieldConfigSource,
-  PanelData,
+  type FieldConfigSource,
+  type PanelData,
   urlUtil,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
+import { type AdHocFilterItem, PanelContextProvider } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { LogsTable } from 'app/plugins/panel/logstable/LogsTable';
-import { Options } from 'app/plugins/panel/logstable/options/types';
+import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { defaultOptions as logsTablePanelDefaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
-import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
+import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 
 /**
  * New Logs Table panel

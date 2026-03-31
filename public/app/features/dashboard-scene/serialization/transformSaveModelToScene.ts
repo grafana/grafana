@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
+import { type DataFrameDTO, type DataFrameJSON } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -10,14 +10,14 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   SceneRefreshPicker,
-  SceneObject,
+  type SceneObject,
   VizPanelMenu,
   behaviors,
-  VizPanelState,
-  SceneGridItemLike,
-  SceneDataLayerProvider,
+  type VizPanelState,
+  type SceneGridItemLike,
+  type SceneDataLayerProvider,
   UserActionEvent,
-  SceneObjectState,
+  type SceneObjectState,
   LocalValueVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
@@ -29,11 +29,11 @@ import {
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
-import { LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
+import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -47,7 +47,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
-import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
+import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
@@ -56,7 +56,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
 import { getVizPanelKeyForPanelId } from '../utils/utils';

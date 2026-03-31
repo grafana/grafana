@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useRef, useState } from 'react';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';

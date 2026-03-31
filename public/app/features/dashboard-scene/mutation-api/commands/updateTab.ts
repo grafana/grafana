@@ -4,7 +4,7 @@
  * Update a tab's metadata (title) by path.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 

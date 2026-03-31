@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
-import { DataSourceSettings } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { type DataSourceSettings } from '@grafana/data';
+import { type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 import {
@@ -9,9 +9,9 @@ import {
   deleteDataSource,
   convertK8sDatasourceSettingsToLegacyDatasourceSettings,
   convertLegacyDatasourceSettingsToK8sDatasourceSettings,
-  DataSourceSettingsK8s,
-  K8sMetadata,
-  DatasourceInstanceK8sSpec,
+  type DataSourceSettingsK8s,
+  type K8sMetadata,
+  type DatasourceInstanceK8sSpec,
 } from './api';
 
 jest.mock('app/core/services/backend_srv');

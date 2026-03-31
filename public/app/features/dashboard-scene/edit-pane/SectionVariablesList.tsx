@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneObject, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Stack } from '@grafana/ui';
 
 import { openAddSectionVariablePane } from '../settings/variables/VariableAddEditableElement';

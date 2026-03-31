@@ -5,7 +5,7 @@
  * and a trimmed elements map (title, description, vizConfig.group only).
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import type { Element, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 

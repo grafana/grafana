@@ -13,7 +13,7 @@ import {
   Space,
   Stack,
   Text,
-  ComboboxOption,
+  type ComboboxOption,
   Alert,
   useStyles2,
 } from '@grafana/ui';
@@ -28,8 +28,8 @@ import {
   trackInfluxDBConfigV2QueryLanguageSelected,
   trackInfluxDBConfigV2URLInputField,
 } from './tracking';
-import { Props } from './types';
-import { INFLUXDB_VERSION_MAP, InfluxDBProduct } from './versions';
+import { type Props } from './types';
+import { INFLUXDB_VERSION_MAP, type InfluxDBProduct } from './versions';
 
 const getQueryLanguageOptions = (productName: string): Array<{ value: string }> => {
   const product = INFLUXDB_VERSION_MAP.find(({ name }) => name === productName);
