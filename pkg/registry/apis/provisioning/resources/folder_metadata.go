@@ -153,6 +153,7 @@ func IsFolderMetadataFile(path string) bool {
 // gvk determines the apiVersion stamped on the manifest.
 func NewFolderManifest(uid, title string, gvk schema.GroupVersionKind) *folders.Folder {
 	f := folders.NewFolder()
+	// TODO: This is safe beacuse v1 and v1beta1 are aliases of each other, we should update this to use the right version type.
 	f.SetGroupVersionKind(gvk)
 	f.Name = uid
 	f.Spec.Title = title
