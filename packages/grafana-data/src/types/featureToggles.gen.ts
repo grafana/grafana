@@ -120,7 +120,7 @@ export interface FeatureToggles {
   disableSSEDataplane?: boolean;
   /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default false
+  * @default true
   */
   renderAuthJWT?: boolean;
   /**
@@ -343,6 +343,11 @@ export interface FeatureToggles {
   * @default false
   */
   datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
+  /**
+  * use raw output mode for the data source querier
+  * @default false
+  */
+  datasourcesQuerierRawOutput?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -950,11 +955,6 @@ export interface FeatureToggles {
   */
   lokiLabelNamesQueryApi?: boolean;
   /**
-  * Enable folder's api server counts
-  * @default false
-  */
-  k8SFolderCounts?: boolean;
-  /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
   * @default true
   */
@@ -976,7 +976,7 @@ export interface FeatureToggles {
   teamLBACApiReadFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
-  * @default false
+  * @default true
   */
   grafanaAdvisor?: boolean;
   /**
@@ -1241,11 +1241,6 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Enables the UI to see imported Alertmanager configuration
-  * @default false
-  */
-  alertingImportAlertmanagerUI?: boolean;
-  /**
   * Disables the DMA feature in the UI
   * @default false
   */
@@ -1382,7 +1377,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new visualization suggestions
-  * @default false
+  * @default true
   */
   newVizSuggestions?: boolean;
   /**
@@ -1397,14 +1392,9 @@ export interface FeatureToggles {
   vizPresets?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default false
+  * @default true
   */
   externalVizSuggestions?: boolean;
-  /**
-  * Limit the number of legend items by default, with an option to show all
-  * @default false
-  */
-  vizLegendSeriesLimit?: boolean;
   /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
@@ -1420,6 +1410,11 @@ export interface FeatureToggles {
   * @default false
   */
   heatmapRowsAxisOptions?: boolean;
+  /**
+  * Enable gradient color scheme option for the pie chart panel
+  * @default false
+  */
+  pieChartGradientColorScheme?: boolean;
   /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
@@ -1736,6 +1731,11 @@ export interface FeatureToggles {
   */
   splashScreen?: boolean;
   /**
+  * Enables forwarding team headers from tempo for streaming requests with LBAC rules
+  * @default false
+  */
+  streamingForwardTeamHeadersTempo?: boolean;
+  /**
   * Aligns query splitting chunks with UTC midnight
   * @default false
   */
@@ -1745,4 +1745,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables the query service to do query caching
+  * @default false
+  */
+  queryServiceQueryCaching?: boolean;
 }

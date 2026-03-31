@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
-import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
@@ -18,7 +18,7 @@ import { useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 export interface Props {
   settingsData?: RepositoryViewList;

@@ -5,14 +5,14 @@ import {
   DataTransformerID,
   ReducerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
-import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
+import { type GroupByFieldOptions, GroupByOperationID, type GroupByTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, ComboboxOption } from '@grafana/ui';
+import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, type ComboboxOption } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/groupBy.svg';

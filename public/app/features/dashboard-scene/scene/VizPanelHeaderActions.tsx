@@ -1,15 +1,15 @@
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import {
   GroupByVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';

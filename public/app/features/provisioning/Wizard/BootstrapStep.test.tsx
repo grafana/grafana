@@ -1,16 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { BootstrapStep, Props } from './BootstrapStep';
+import { BootstrapStep, type Props } from './BootstrapStep';
 import { StepStatusProvider, useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesQuery: jest.fn(),

@@ -1760,6 +1760,19 @@
     },
     {
       "metadata": {
+        "name": "datasourcesQuerierRawOutput",
+        "resourceVersion": "1774855676428",
+        "creationTimestamp": "2026-03-30T07:27:56Z"
+      },
+      "spec": {
+        "description": "use raw output mode for the data source querier",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesRerouteLegacyCRUDAPIs",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -2022,15 +2035,18 @@
     {
       "metadata": {
         "name": "externalVizSuggestions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-01T23:22:22Z"
+        "resourceVersion": "1774877899502",
+        "creationTimestamp": "2025-12-01T23:22:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 13:38:19.502534 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2166,6 +2182,21 @@
     },
     {
       "metadata": {
+        "name": "forwardTeamHeadersTempo",
+        "resourceVersion": "1771611370728",
+        "creationTimestamp": "2026-02-20T18:16:10Z",
+        "deletionTimestamp": "2026-03-27T01:08:07Z"
+      },
+      "spec": {
+        "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/oss-big-tent",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendServiceSSOAutoLogin",
         "resourceVersion": "1774373752487",
         "creationTimestamp": "2026-03-24T17:35:52Z"
@@ -2254,14 +2285,17 @@
     {
       "metadata": {
         "name": "grafanaAdvisor",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-01-20T10:08:00Z"
+        "resourceVersion": "1774448820925",
+        "creationTimestamp": "2025-01-20T10:08:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-25 14:27:00.925614 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Advisor app",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2372,6 +2406,20 @@
       },
       "spec": {
         "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pieChartGradientColorScheme",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2026-03-30T00:00:00Z"
+      },
+      "spec": {
+        "description": "Enable gradient color scheme option for the pie chart panel",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
@@ -2516,7 +2564,8 @@
       "metadata": {
         "name": "k8SFolderCounts",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-12-27T17:10:44Z"
+        "creationTimestamp": "2024-12-27T17:10:44Z",
+        "deletionTimestamp": "2026-03-29T14:31:36Z"
       },
       "spec": {
         "description": "Enable folder's api server counts",
@@ -3677,15 +3726,18 @@
     {
       "metadata": {
         "name": "newVizSuggestions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-12T19:26:29Z"
+        "resourceVersion": "1774878275721",
+        "creationTimestamp": "2025-11-12T19:26:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 13:44:35.72192 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable new visualization suggestions",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4234,6 +4286,19 @@
     },
     {
       "metadata": {
+        "name": "queryServiceQueryCaching",
+        "resourceVersion": "1774711941702",
+        "creationTimestamp": "2026-03-28T15:32:21Z"
+      },
+      "spec": {
+        "description": "Enables the query service to do query caching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryServiceRewrite",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-04-19T09:26:21Z"
@@ -4375,14 +4440,17 @@
     {
       "metadata": {
         "name": "renderAuthJWT",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-04-03T16:53:38Z"
+        "resourceVersion": "1774338929389",
+        "creationTimestamp": "2023-04-03T16:53:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-24 07:55:29.389845 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Uses JWT-based auth for rendering instead of relying on remote cache",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4752,6 +4820,20 @@
         "description": "Configurable storage for dashboards, datasources, and resources",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "streamingForwardTeamHeadersTempo",
+        "resourceVersion": "1774573687389",
+        "creationTimestamp": "2026-03-27T01:08:07Z"
+      },
+      "spec": {
+        "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/oss-big-tent",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -5183,12 +5265,16 @@
     {
       "metadata": {
         "name": "vizLegendSeriesLimit",
-        "resourceVersion": "1772507615654",
-        "creationTimestamp": "2026-03-03T03:13:35Z"
+        "resourceVersion": "1774902435260",
+        "creationTimestamp": "2026-03-03T03:13:35Z",
+        "deletionTimestamp": "2026-03-30T20:28:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 20:27:15.260821 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Limit the number of legend items by default, with an option to show all",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"

@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { Menu } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getCopiedPanelPlugin,
   onAddLibraryPanel,

@@ -3,9 +3,9 @@ import { useCallback, useMemo } from 'react';
 import {
   DataTransformerID,
   PluginState,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  SelectableValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  type SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -24,7 +24,7 @@ import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/partitionByValues.svg';
 import lightImage from '../images/light/partitionByValues.svg';
 
-import { getPartitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
+import { getPartitionByValuesTransformer, type PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
   input,

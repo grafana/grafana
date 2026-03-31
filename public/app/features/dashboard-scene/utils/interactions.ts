@@ -1,6 +1,9 @@
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
+import {
+  type DashboardTrackingInfo,
+  type DynamicDashboardsTrackingInformation,
+} from '../serialization/DashboardSceneSerializer';
 
 let isScenesContextSet = false;
 
@@ -99,6 +102,12 @@ export const DashboardInteractions = {
   // when a user selects a variable type when creating a new variable
   newVariableTypeSelected: (properties: { type: string }) => {
     reportDashboardInteraction('new_variable_type_selected', properties);
+  },
+
+  // dashboards_new_section_variable_type_selected
+  // when a user selects a variable type when creating a new section (row/tab) variable
+  newSectionVariableTypeSelected: (properties: { type: string }) => {
+    reportDashboardInteraction('new_section_variable_type_selected', properties);
   },
 
   // dashboards_delete_variable_button_clicked

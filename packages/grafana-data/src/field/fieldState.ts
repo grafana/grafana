@@ -1,13 +1,13 @@
 import { getFieldMatcher } from '../transformations/matchers';
-import { Labels } from '../types/data';
+import { type Labels } from '../types/data';
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
-  Field,
+  type Field,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '../types/dataFrame';
-import { FieldConfigSource } from '../types/fieldOverrides';
+import { type FieldConfigSource } from '../types/fieldOverrides';
 import { findUniqueLabels, formatLabels } from '../utils/labels';
 
 /**

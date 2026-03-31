@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -562,7 +563,7 @@ func TestFrontendService_CSP(t *testing.T) {
 		assert.Contains(t, cspHeader, "frame-ancestors *")
 	})
 
-	t.Run("should not add frame-ancestors to CSP when allow_embedding_hosts is empty", func(t *testing.T) {
+	t.Run("should disallow iframing when allow_embedding_hosts is empty", func(t *testing.T) {
 		cfg := &setting.Cfg{
 			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
@@ -570,7 +571,7 @@ func TestFrontendService_CSP(t *testing.T) {
 			BuildVersion:   "10.3.0",
 			AppURL:         "https://grafana.example.com",
 			CSPEnabled:     true,
-			CSPTemplate:    "script-src 'self'",
+			CSPTemplate:    "script-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
 		}
 		service := createTestService(t, cfg)
 
@@ -584,7 +585,40 @@ func TestFrontendService_CSP(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		cspHeader := recorder.Header().Get("Content-Security-Policy")
-		assert.NotContains(t, cspHeader, "frame-ancestors")
+		assert.Contains(t, cspHeader, "frame-ancestors 'none'")
+	})
+
+	t.Run("should apply per-tenant allow_embedding_hosts override to CSP header", func(t *testing.T) {
+		enableSettingsOverridesToggle(t)
+
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
+		}
+		service := createTestService(t, cfg)
+		service.settingsService = &mockSettingsService{
+			settings: []*settingservice.Setting{
+				{Section: "security", Key: "allow_embedding_hosts", Value: "tenant.example.com wiki.example.com"},
+			},
+		}
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("baggage", "namespace=stacks-tenant-1")
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "frame-ancestors tenant.example.com wiki.example.com")
 	})
 
 	t.Run("should use base config when Tenant-ID header is present", func(t *testing.T) {

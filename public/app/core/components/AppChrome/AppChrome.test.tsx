@@ -1,14 +1,14 @@
 import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 
-import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { type DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
+import { type DashboardQueryResult, type QueryResponse } from 'app/features/search/service/types';
 
 import { Page } from '../Page/Page';
 

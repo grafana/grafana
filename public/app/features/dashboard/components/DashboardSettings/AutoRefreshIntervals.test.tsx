@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 
 import { defaultIntervals } from '@grafana/ui';
 
-import { TimeSrv } from '../../services/TimeSrv';
+import { type TimeSrv } from '../../services/TimeSrv';
 
-import { AutoRefreshIntervals, getValidIntervals, Props, validateIntervals } from './AutoRefreshIntervals';
+import { AutoRefreshIntervals, getValidIntervals, type Props, validateIntervals } from './AutoRefreshIntervals';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {

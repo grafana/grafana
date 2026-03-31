@@ -1,9 +1,9 @@
 import { act, render, renderHook, waitFor } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 
-import { PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { getMockTimeRange } from '../../../test/mocks/datasource';
 
 import { DEFAULT_RESULTS_PER_PAGE, MetricsModalContextProvider, useMetricsModal } from './MetricsModalContext';

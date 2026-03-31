@@ -1,10 +1,10 @@
 import { cloneDeep } from 'lodash';
 
-import { AdHocVariableModel } from '@grafana/data';
+import { type AdHocVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { dispatch } from '../../../store/store';
-import { VariableAdapter } from '../adapters';
+import { type VariableAdapter } from '../adapters';
 import { toKeyedVariableIdentifier } from '../utils';
 
 import { AdHocVariableEditor } from './AdHocVariableEditor';

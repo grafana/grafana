@@ -1,4 +1,4 @@
-import { CSSProperties, FC, useRef } from 'react';
+import { type CSSProperties, type FC, useRef } from 'react';
 import * as React from 'react';
 import Transition from 'react-transition-group/Transition';
 

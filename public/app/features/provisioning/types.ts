@@ -1,13 +1,13 @@
-import { Path } from 'react-hook-form';
+import { type Path } from 'react-hook-form';
 
 import {
-  BitbucketRepositoryConfig,
-  ConnectionSpec,
-  GitHubRepositoryConfig,
-  GitLabRepositoryConfig,
-  GitRepositoryConfig,
-  LocalRepositoryConfig,
-  RepositorySpec,
+  type BitbucketRepositoryConfig,
+  type ConnectionSpec,
+  type GitHubRepositoryConfig,
+  type GitLabRepositoryConfig,
+  type GitRepositoryConfig,
+  type LocalRepositoryConfig,
+  type RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
 
 export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';

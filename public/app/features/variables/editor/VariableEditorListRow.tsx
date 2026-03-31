@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
+import { type GrafanaTheme2, type TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -10,9 +10,9 @@ import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { hasOptions } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
-import { UsagesToNetwork, VariableUsageTree } from '../inspect/types';
+import { type UsagesToNetwork, type VariableUsageTree } from '../inspect/types';
 import { getVariableUsages } from '../inspect/utils';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 export interface VariableEditorListRowProps {

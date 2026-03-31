@@ -2,16 +2,16 @@
 
 import { memo } from 'react';
 
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
 import { AutoSizeInput, Input, Space } from '@grafana/ui';
 
 import { PromQueryCodeEditor } from '../querybuilder/components/PromQueryCodeEditor';
-import { PromQuery } from '../types';
+import { type PromQuery } from '../types';
 
-import { PromQueryEditorProps } from './types';
+import { type PromQueryEditorProps } from './types';
 
 type Props = PromQueryEditorProps & {
   annotation?: AnnotationQuery<PromQuery>;

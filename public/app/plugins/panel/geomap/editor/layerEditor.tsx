@@ -1,14 +1,14 @@
 import { get as lodashGet, isEqual } from 'lodash';
 
-import { FrameGeometrySourceMode, getFrameMatchers, MapLayerOptions } from '@grafana/data';
-import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
+import { FrameGeometrySourceMode, getFrameMatchers, type MapLayerOptions } from '@grafana/data';
+import { type NestedPanelOptions, type NestedValueAccess } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry, getLayersOptions } from '../layers/registry';
-import { MapLayerState } from '../types';
+import { type MapLayerState } from '../types';
 
 import { FrameSelectionEditor } from './FrameSelectionEditor';
 

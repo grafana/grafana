@@ -3,11 +3,11 @@ import { isEmpty, omit } from 'lodash';
 import { ReducerID, getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { isStrictReducer } from 'app/features/expressions/utils/expressionTypes';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { KVObject, RuleFormValues, SimpleCondition } from '../types/rule-form';
+import { type KVObject, type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 import { defaultAnnotations } from '../utils/constants';
 import { isSupportedExternalRulesSourceType } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
