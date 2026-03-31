@@ -1386,7 +1386,8 @@ function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueM
     case 'empty':
       return SpecialValueMatchV1.Empty;
     default:
-      throw new Error(`Unknown match type: ${match}`);
+      console.warn(`Unknown special value match type: "${match}", falling back to "null"`);
+      return SpecialValueMatchV1.Null;
   }
 }
 
