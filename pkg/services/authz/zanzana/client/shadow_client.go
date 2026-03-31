@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -59,10 +60,10 @@ func (c *ShadowClient) Check(ctx context.Context, id authlib.AuthInfo, req authl
 
 		if acErr == nil {
 			if res.Allowed != acRes.Allowed {
-				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+				c.metrics.evaluationStatusTotal.WithLabelValues("error", "check", formatCheck(req), req.Namespace).Inc()
 				c.logger.Warn("Zanzana check result does not match", "expected", acRes.Allowed, "actual", res.Allowed, "user", id.GetUID(), "request", req)
 			} else {
-				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+				c.metrics.evaluationStatusTotal.WithLabelValues("success", "check", formatCheck(req), req.Namespace).Inc()
 			}
 		}
 	}()
@@ -185,16 +186,36 @@ func (c *ShadowClient) compareBatchCheckResults(acRes, zanzanaRes authlib.BatchC
 		checkItem := checkItems[correlationID]
 
 		if !ok {
-			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
 			c.logger.Warn("Zanzana batch check missing result", "item", checkItem, "user", id.GetUID())
 			continue
 		}
 
 		if acResult.Allowed != zanzanaResult.Allowed {
-			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
 			c.logger.Warn("Zanzana batch check result does not match", "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "item", checkItem, "user", id.GetUID())
 		} else {
-			c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+			c.metrics.evaluationStatusTotal.WithLabelValues("success", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
 		}
 	}
+}
+
+func formatCheck(req authlib.CheckRequest) string {
+	return formatResource(req.Group, req.Resource, req.Subresource)
+}
+
+func formatBatchCheck(req authlib.BatchCheckItem) string {
+	return formatResource(req.Group, req.Resource, req.Subresource)
+}
+
+func formatResource(group, resource, subresource string) string {
+	res := ""
+	if group == "" && resource == "" {
+		return "other"
+	}
+	res = fmt.Sprintf("%s/%s", group, resource)
+	if subresource != "" {
+		res = fmt.Sprintf("%s/%s", res, subresource)
+	}
+	return res
 }
