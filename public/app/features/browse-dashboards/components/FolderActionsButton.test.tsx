@@ -1,5 +1,6 @@
-import { render, screen, testWithFeatureToggles, userEvent } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -201,7 +202,9 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   describe('with provisioningFolderMetadata feature flag', () => {
-    testWithFeatureToggles({ enable: ['provisioningFolderMetadata'] });
+    beforeEach(() => {
+      setTestFlags({ provisioningFolderMetadata: true });
+    });
 
     it('renders the "Manage permissions" option for provisioned folders', async () => {
       render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} />);

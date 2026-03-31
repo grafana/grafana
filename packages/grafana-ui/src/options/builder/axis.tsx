@@ -23,9 +23,6 @@ import { Stack } from '../../components/Layout/Stack/Stack';
 import { Select } from '../../components/Select/Select';
 import { getGraphFieldOptions } from '../../components/uPlot/config';
 
-/**
- * @alpha
- */
 export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, defaultConfig: AxisConfig) {
   // options for axis appearance
   addAxisPlacement(builder);
