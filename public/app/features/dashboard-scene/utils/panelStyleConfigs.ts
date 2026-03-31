@@ -67,10 +67,90 @@ const graphPanelStyleConfig: PanelStyleConfig = {
   },
 };
 
+/**
+ * Style config for the bar chart panel.
+ *
+ * fieldConfig.defaults:
+ *   color      – color scheme
+ *   thresholds – threshold config (used by thresholdsStyle overlay)
+ *
+ * fieldConfig.defaults.custom:
+ *   lineWidth       – bar border width
+ *   fillOpacity     – bar fill opacity
+ *   gradientMode    – gradient fill mode
+ *   thresholdsStyle – threshold overlay style (lines/dashed/area)
+ *   transform       – constant or negative-Y transform
+ *   axisPlacement   – axis placement (auto, left, right, hidden)
+ *   axisLabel       – axis label
+ *   axisWidth       – axis width
+ *   axisSoftMin     – soft minimum for axis scale
+ *   axisSoftMax     – soft maximum for axis scale
+ *   axisGridShow    – show axis grid lines
+ *   axisBorderShow  – show axis border
+ *   axisCenteredZero – center axis at zero
+ *   axisColorMode   – axis color mode
+ *   scaleDistribution – axis scale (linear, log, symlog)
+ *
+ * options:
+ *   orientation          – vertical or horizontal bars
+ *   xTickLabelRotation   – x-axis tick label rotation
+ *   xTickLabelMaxLength  – x-axis tick label truncation length
+ *   xTickLabelSpacing    – x-axis tick label minimum spacing
+ *   showValue            – show value labels on bars (auto, always, never)
+ *   stacking             – stacking mode (none, normal, percent)
+ *   groupWidth           – width of bar groups
+ *   barWidth             – width of individual bars
+ *   barRadius            – corner radius of bars
+ *   fullHighlight        – highlight full bar area on hover
+ *   tooltip              – tooltip options
+ *   legend               – legend options
+ *   text                 – text size options
+ */
+const barChartPanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color', 'thresholds'],
+    defaults: [
+      'lineWidth',
+      'fillOpacity',
+      'gradientMode',
+      'thresholdsStyle',
+      'transform',
+      'axisPlacement',
+      'axisLabel',
+      'axisWidth',
+      'axisSoftMin',
+      'axisSoftMax',
+      'axisGridShow',
+      'axisBorderShow',
+      'axisCenteredZero',
+      'axisColorMode',
+      'scaleDistribution',
+    ],
+  },
+  options: {
+    props: [
+      'orientation',
+      'xTickLabelRotation',
+      'xTickLabelMaxLength',
+      'xTickLabelSpacing',
+      'showValue',
+      'stacking',
+      'groupWidth',
+      'barWidth',
+      'barRadius',
+      'fullHighlight',
+      'tooltip',
+      'legend',
+      'text',
+    ],
+  },
+};
+
 const PANEL_STYLE_CONFIGS: Record<string, PanelStyleConfig> = {
   timeseries: graphPanelStyleConfig,
   trend: graphPanelStyleConfig,
   candlestick: graphPanelStyleConfig,
+  barchart: barChartPanelStyleConfig,
 };
 
 /**

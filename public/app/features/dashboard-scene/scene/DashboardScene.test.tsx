@@ -733,6 +733,120 @@ describe('DashboardScene', () => {
           expect(stored.styles).toBeDefined();
         });
 
+        it('Should copy fieldConfig and options styles from a bar chart panel', () => {
+          const barChartPanel = new VizPanel({
+            title: 'Bar Chart Panel',
+            key: `panel-barchart-${Math.random()}`,
+            pluginId: 'barchart',
+            options: {
+              orientation: 'vertical',
+              showValue: 'auto',
+              stacking: 'none',
+              groupWidth: 0.7,
+              barWidth: 0.97,
+              barRadius: 0.1,
+              fullHighlight: false,
+              xTickLabelRotation: -45,
+              xTickLabelMaxLength: 20,
+              xTickLabelSpacing: 0,
+              legend: { showLegend: true, placement: 'bottom' },
+              tooltip: { mode: 'single' },
+              text: { valueSize: 12 },
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'palette-classic' },
+                custom: {
+                  lineWidth: 1,
+                  fillOpacity: 80,
+                  gradientMode: 'none',
+                  axisPlacement: 'auto',
+                  axisSoftMin: 0,
+                  scaleDistribution: { type: 'linear' },
+                  hideFrom: { tooltip: false, viz: false, legend: false }, // should NOT be captured
+                },
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(barChartPanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('barchart');
+
+          // fieldConfig.defaults style props
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'palette-classic' });
+          expect(stored.styles.fieldConfig.defaults.custom.lineWidth).toBe(1);
+          expect(stored.styles.fieldConfig.defaults.custom.fillOpacity).toBe(80);
+          expect(stored.styles.fieldConfig.defaults.custom.gradientMode).toBe('none');
+          expect(stored.styles.fieldConfig.defaults.custom.axisPlacement).toBe('auto');
+          expect(stored.styles.fieldConfig.defaults.custom.scaleDistribution).toEqual({ type: 'linear' });
+          expect(stored.styles.fieldConfig.defaults.custom.hideFrom).toBeUndefined();
+
+          // options style props
+          expect(stored.styles.options.orientation).toBe('vertical');
+          expect(stored.styles.options.showValue).toBe('auto');
+          expect(stored.styles.options.stacking).toBe('none');
+          expect(stored.styles.options.barWidth).toBe(0.97);
+          expect(stored.styles.options.barRadius).toBe(0.1);
+          expect(stored.styles.options.xTickLabelRotation).toBe(-45);
+          expect(stored.styles.options.legend).toEqual({ showLegend: true, placement: 'bottom' });
+          expect(stored.styles.options.tooltip).toEqual({ mode: 'single' });
+          expect(stored.styles.options.text).toEqual({ valueSize: 12 });
+
+          // non-style options must NOT be captured
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+        });
+
+        it('Should paste fieldConfig and options styles into a bar chart panel', () => {
+          const barChartPanel = new VizPanel({
+            title: 'Bar Chart Panel',
+            key: `panel-barchart-${Math.random()}`,
+            pluginId: 'barchart',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          barChartPanel.onFieldConfigChange = mockOnFieldConfigChange;
+          barChartPanel.onOptionsChange = mockOnOptionsChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'barchart',
+              styles: {
+                fieldConfig: {
+                  defaults: {
+                    color: { mode: 'palette-classic' },
+                    custom: { lineWidth: 2, fillOpacity: 60, gradientMode: 'opacity' },
+                  },
+                },
+                options: {
+                  orientation: 'horizontal',
+                  stacking: 'normal',
+                  barRadius: 0.2,
+                  legend: { showLegend: false },
+                },
+              },
+            })
+          );
+
+          scene.pastePanelStyles(barChartPanel);
+
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({
+              orientation: 'horizontal',
+              stacking: 'normal',
+              barRadius: 0.2,
+              legend: { showLegend: false },
+            })
+          );
+        });
+
         it('Should paste styles from a trend panel into another trend panel', () => {
           const trendPanel = new VizPanel({
             title: 'Trend Panel',
