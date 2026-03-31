@@ -1,5 +1,5 @@
-import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
+import { type EvalFunction } from 'app/features/alerting/state/alertDef';
+import { type AlertQuery, type GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
   grafana = 'grafana-alerting',

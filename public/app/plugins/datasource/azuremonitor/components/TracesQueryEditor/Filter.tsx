@@ -1,17 +1,17 @@
 import { cx } from '@emotion/css';
-import { RefCallback, SyntheticEvent, useState, type JSX } from 'react';
+import { type RefCallback, type SyntheticEvent, useState, type JSX } from 'react';
 import * as React from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
+import { CoreApp, type DataFrame, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, useTheme2, Checkbox, Stack } from '@grafana/ui';
 
-import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
-import Datasource from '../../datasource';
-import { VariableOptionGroup } from '../../types/types';
+import { type AzureMonitorQuery, AzureQueryType, type AzureTracesFilter } from '../../dataquery.gen';
+import type Datasource from '../../datasource';
+import { type VariableOptionGroup } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 
 export interface FilterProps {

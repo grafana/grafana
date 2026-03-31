@@ -2,17 +2,17 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
-  AlertmanagerApiFeatures,
-  PromApiFeatures,
+  type AlertmanagerApiFeatures,
+  type PromApiFeatures,
   PromApplication,
-  PromBuildInfoResponse,
+  type PromBuildInfoResponse,
 } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 import {
   GRAFANA_RULES_SOURCE_NAME,
   SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
-  SupportedExternalRulesSourceType,
+  type SupportedExternalRulesSourceType,
   getDataSourceByName,
   getRulesDataSourceByUID,
   isSupportedExternalRulesSourceType,

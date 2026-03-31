@@ -909,7 +909,13 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 
 		if err != nil {
 			if isRowAlreadyExistsError(err) {
-				return ErrResourceAlreadyExists
+				// This can only happen if a concurrent write was attempted: the validation in
+				// WriteEvent guarantees that we return early when the resource already exists
+				// before entering the transaction.
+				//
+				// TODO: mark this and optimistic locking errors as conflicts (409) so that they
+				// can be identified by callers.
+				return fmt.Errorf("conflict: concurrent creation detected")
 			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}

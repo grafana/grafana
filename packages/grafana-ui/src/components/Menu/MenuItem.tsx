@@ -1,13 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSProperties, AriaRole } from 'react';
+import {
+  type ReactElement,
+  useCallback,
+  useState,
+  useRef,
+  useImperativeHandle,
+  type CSSProperties,
+  type AriaRole,
+} from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, LinkTarget } from '@grafana/data';
+import { type GrafanaTheme2, type LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 

@@ -2,7 +2,7 @@ import moment from 'moment';
 import { Fragment } from 'react';
 
 import { Stack } from '@grafana/ui';
-import { AlertmanagerConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerConfig, type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import {
   getDaysOfMonthString,

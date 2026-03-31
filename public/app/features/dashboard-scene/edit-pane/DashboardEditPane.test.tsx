@@ -1,7 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
-  MultiValueVariable,
+  type MultiValueVariable,
   SceneGridLayout,
   SceneTimeRange,
   SceneVariableSet,
@@ -22,10 +22,10 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { performTabRepeats } from '../scene/layout-tabs/TabItemRepeater';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

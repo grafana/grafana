@@ -3,8 +3,8 @@ import { createTheme, LogsSortOrder } from '@grafana/data';
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
-import { LogListModel, PreProcessOptions } from './processing';
-import { LogLineVirtualization, getLogLineSize, DisplayOptions } from './virtualization';
+import { type LogListModel, type PreProcessOptions } from './processing';
+import { LogLineVirtualization, getLogLineSize, type DisplayOptions } from './virtualization';
 
 describe('Virtualization', () => {
   let log: LogListModel, container: HTMLDivElement;
