@@ -202,7 +202,16 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string, submitted *folders.Folder) (string, error) {
 	existing, _, err := ReadFolderMetadata(ctx, repo, folderPath, ref)
 	if err != nil {
-		return "", fmt.Errorf("read existing folder metadata: %w", err)
+		// When the target branch doesn't exist yet, fall back to reading from
+		// the configured branch. ensureBranchExists (called by repo.Update)
+		// creates the new branch from the configured branch, so the content is
+		// identical at creation time.
+		if errors.Is(err, repository.ErrRefNotFound) {
+			existing, _, err = ReadFolderMetadata(ctx, repo, folderPath, "")
+		}
+		if err != nil {
+			return "", fmt.Errorf("read existing folder metadata: %w", err)
+		}
 	}
 
 	if submitted.Name != "" && submitted.Name != existing.Name {

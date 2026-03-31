@@ -19,7 +19,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-02-01,influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
 2023-07-13,lokiLogsDataplane,experimental,@grafana/oss-big-tent,false,false,false
 2023-04-12,disableSSEDataplane,experimental,@grafana/grafana-datasources-core-services,false,false,false
-2023-04-03,renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
+2023-04-03,renderAuthJWT,GA,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-06,refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 2023-05-05,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 2026-02-18,faroSessionReplay,experimental,@grafana/session-replay,false,false,true
