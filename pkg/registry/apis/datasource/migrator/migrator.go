@@ -91,6 +91,24 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		return err
 	}
 
+	// Clean up any existing secrets in the MT secret service
+	plugins := map[string]bool{}
+	for _, ds := range datasources {
+		if !plugins[ds.Config.Type] {
+			if err = m.secretStore.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
+				APIGroup:   ds.Config.Type + ".datasource.grafana.app",
+				APIVersion: "v0alpha1",
+				Namespace:  opts.Namespace,
+				Kind:       "DataSource",
+				Name:       "*",
+				UID:        "*",
+			}, "*"); err != nil {
+				return fmt.Errorf("error deleting secrets for datasource type %s: %w", ds.Config.Type, err)
+			}
+		}
+		plugins[ds.Config.Type] = true
+	}
+
 	namespacer := func(orgId int64) string {
 		return opts.Namespace
 	}
