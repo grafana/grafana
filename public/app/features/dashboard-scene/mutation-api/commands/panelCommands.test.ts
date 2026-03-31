@@ -185,6 +185,7 @@ describe('Panel mutation commands', () => {
 
       const result = await client.execute({ type: 'LIST_PANELS', payload: {} });
 
+      // flaky
       expect(result.success).toBe(true);
       const data = result.data as PanelElementsData;
       expect(data.elements).toHaveLength(2);
