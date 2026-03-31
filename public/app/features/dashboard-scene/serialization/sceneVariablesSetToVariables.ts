@@ -232,9 +232,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
         defaultKeys: variable.state.defaultKeys,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
-        enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-          ? (variable.state.enableGroupBy ?? false)
-          : false,
       };
       variables.push(adhocVariable);
     } else if (sceneUtils.isSwitchVariable(variable)) {
