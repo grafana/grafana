@@ -2576,6 +2576,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "クエリプレビューを表示できません。クエリで使用されているデータソースの一部が利用できません。",
       "preview-alerts": "アラートをプレビュー",
@@ -3088,6 +3091,7 @@
     "rules-filter": {
       "clear-filters": "フィルタをクリア",
       "configured-alert-rules": "アラートルールが設定されているデータソースは、MimirまたはLokiデータソースで、アラートルールはデータソース自体に保存され評価されます。",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "選択したコンタクトポイントに直接ルーティングするアラートルールを絞り込みます。通知ポリシーにルーティングされたアラートルールは表示されません。",
       "contact-point-tooltip-title": "コンタクトポイントフィルターのヘルプ",
       "dashboard": "ダッシュボード",
@@ -3112,7 +3116,11 @@
       "placeholder-data-sources": "データソースを選択してください",
       "placeholder-group-search": "グループを検索",
       "placeholder-labels": "ラベルを選択してください",
+      "placeholder-policy": "",
       "plugin-rules": "プラグインルール",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "データソース管理",
         "grafana": "Grafana管理"
@@ -3193,6 +3201,7 @@
       "title-group": "グループ",
       "title-health": "健康",
       "title-labels": "ラベル",
+      "title-policy": "",
       "title-rule": "ルール",
       "title-state": "ステート",
       "title-type": "タイプ"
@@ -5547,6 +5556,7 @@
         "panels": "パネル",
         "row": "行",
         "rows": "行",
+        "section-variable": "",
         "tab": "タブ",
         "tabs": "タブ",
         "variable": "{{type}}変数",
@@ -5563,6 +5573,10 @@
           "hide": "非表示",
           "title": "行ヘッダー"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
       },
       "variable": {
         "custom-options": {
@@ -5622,11 +5636,7 @@
       "import-a-dashboard-body": "ファイルまたは<1>grafana.com</1>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
-      "show-less-dashboards": "一部を表示",
-      "show-more-dashboards": "さらに表示",
-      "start-with-suggested-dashboards": "データソースの事前作成済みダッシュボードから始める",
-      "title": "新しいダッシュボード",
-      "use-template-button": "このダッシュボードを使用"
+      "title": "新しいダッシュボード"
     },
     "errors": {
       "failed-to-load": "ダッシュボードの読み込みに失敗しました"
@@ -6099,6 +6109,9 @@
           "hide-header": "行ヘッダーを非表示",
           "title": "タイトル"
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "タイトルは重複しないようにしてください",
         "title-option": "タイトル"
       },
@@ -6252,6 +6265,9 @@
             "description": "選択した変数の値ごとにこのタブを繰り返します。",
             "title": "変数で繰り返す"
           }
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "タイトルは重複しないようにしてください",
         "title-option": "タイトル"
@@ -6442,6 +6458,7 @@
       "description": {
         "action": "変数の説明を変更"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "変数の非表示オプションを変更"
       },
@@ -6528,9 +6545,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Grafana.comを参照",
-    "browse-plugins": "プラグインを参照",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "データソースが提供されました",
@@ -6541,9 +6557,6 @@
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "コミュニティダッシュボードが見つかりません",
-    "community-empty-title-with-datasource": "{{datasourceType}}コミュニティダッシュボードが見つかりません",
-    "community-error-description": "コミュニティダッシュボードの読み込みに失敗しました。",
     "community-error-title": "コミュニティダッシュボードの読み込みエラー",
     "community-mapping-form": {
       "back": "ダッシュボードに戻る",
@@ -6554,8 +6567,6 @@
       "auto-mapped_other": "{{count}}件のデータソースが自動的に設定されました："
     },
     "community-mapping-select-datasource": "データソースを選択",
-    "community-search-placeholder": "コミュニティダッシュボードを検索...",
-    "community-search-placeholder-with-datasource": "{{datasourceType}}コミュニティダッシュボードを検索...",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6569,6 +6580,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "データソース",
@@ -6577,34 +6589,27 @@
         "last-update": "最終更新",
         "published-by": "公開者",
         "view-on-grafana-com": "Grafana.comで表示"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "提供されたデータソースまたはコミュニティダッシュボードを参照して選択します",
-      "tab-community": "コミュニティ",
-      "tab-datasource": "提供されたデータソース",
       "title": "推奨ダッシュボード",
       "title-mapping-with-name": "{{dashboardName}}のデータソースを設定する",
       "title-with-datasource": "{{datasourceType}}データソース向けの推奨ダッシュボード"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "別の検索語を試すか、Grafana.comで別のデータソースタイプのダッシュボードを参照してください。",
-    "no-community-dashboards-search": "別の検索語を試すか、Grafana.comで他のダッシュボードを参照してください。",
-    "no-provisioned-dashboards": "プロビジョニングされたダッシュボードは、データソースプラグインによって提供されます。その他のプラグインは、Grafana.comで見つけることができます。",
-    "provisioned-empty-title": "プロビジョニングされたダッシュボードが見つかりませんでした",
-    "provisioned-empty-title-with-datasource": "{{datasourceType}}のプロビジョニングされたダッシュボードが見つかりませんでした",
-    "retry": "再試行",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "提供されたデータソースまたはコミュニティダッシュボードを参照して選択します",
-    "suggested-dashboards-title": "選択したデータソース向けの推奨オプションを使用してダッシュボードを作成します",
-    "suggested-dashboards-title-with-datasource": "{{datasourceType}}データソース向けの推奨オプションを使用してダッシュボードを作成します",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "サンプルデータを使用してGrafanaテンプレートを使い始めましょう。データを接続すると、実際のメトリクスを使用できます。",
       "title": "テンプレートからダッシュボードを開始する"
-    },
-    "view-all": "すべて表示"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -6614,9 +6619,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "アドホックオプション",
-      "alert-not-supported": "このデータソースはアドホックフィルターをサポートしていません",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "ユーザーがリストにカスタム値を追加できるようにします",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "CSV形式で次のように次元を指定：{{name}}, {{value}}",
@@ -6978,7 +6987,7 @@
         "values-timespans": "値は時間範囲です。例：1m、1h、1d"
       },
       "name": {
-        "ad-hoc-filters": "アドホックフィルター",
+        "ad-hoc-filters": "",
         "constant": "定数",
         "custom": "カスタム",
         "data-source": "データソース",
@@ -7227,7 +7236,11 @@
         }
       }
     },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
+    },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -7414,6 +7427,10 @@
         "text": "このダッシュボードには未保存の変更があります。共有する前に保存する必要があります。",
         "title": "未保存の変更"
       }
+    },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
     },
     "support-snapshot-service": {
       "description": {
@@ -7793,7 +7810,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "このエラーの詳細については、<2>こちら</2>をクリックしてください。",
-    "success-more-details-links": "次に、<2>ダッシュボードを構築</2>するか、<5>Exploreビュー</5>でデータをクエリすることで、データの視覚化を開始できます。"
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7809,7 +7827,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "ダッシュボードを作成",
-      "aria-label-explore-data": "データを調査"
+      "aria-label-explore-data": "データを調査",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "アラート非対応",
@@ -7823,6 +7842,11 @@
       "basic-settings-name-placeholder-name": "名前",
       "label-default": "初期設定",
       "label-name": "名前"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -7909,12 +7933,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}、詳細はこちら。"
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "ダッシュボードを作成",
       "explore": "探検"
     },
     "edit-data-source-actions": {
       "add-favorite": "お気に入りに追加",
-      "build-a-dashboard": "ダッシュボードを作成",
       "explore-data": "データを調査",
       "open-in-explore": "Exploreビューで開く",
       "remove-favorite": "お気に入りから削除"
@@ -7964,6 +7986,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "スター付き"
     },
     "new-data-source-view": {
@@ -10292,6 +10318,7 @@
         "expander-column-name": "",
         "no-data": "データなし"
       },
+      "no-rows": "",
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
       "sort-by-column": "",
@@ -10944,24 +10971,14 @@
     },
     "forgot-password": "パスワードを忘れましたか？",
     "form": {
-      "confirmation-code": "確認コードが必要です",
-      "confirmation-code-label": "確認コード",
-      "confirmation-code-placeholder": "確認コード",
-      "email-label": "メール",
-      "email-placeholder": "メールアドレス",
-      "email-required": "メールアドレスを入力してください",
-      "name-label": "名前",
       "password-label": "パスワード",
       "password-placeholder": "パスワード",
       "password-required": "パスワードは必須です",
-      "passwordless-username-label": "ユーザー名",
       "submit-label": "ログイン",
       "submit-loading-label": "ログイン中…",
       "username-label": "メールアドレスまたはユーザー名",
       "username-placeholder": "メールアドレスまたはユーザー名",
-      "username-required": "メールアドレスまたはユーザー名が必要です",
-      "verify-email-label": "確認メールを送信",
-      "verify-email-loading-label": "メールを送信中…"
+      "username-required": "メールアドレスまたはユーザー名が必要です"
     },
     "layout": {
       "update-password": "パスワードを更新"
@@ -13952,25 +13969,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "ダッシュボード",
-      "app-explore": "探索",
-      "app-label": "アプリ：",
-      "assistant-actionable-create": "クエリを行いたい内容と、どのような洞察を求めているかを説明してください。",
-      "assistant-actionable-update": "このクエリで変更または改善したい点を説明してください。",
-      "assistant-prompt-create": "質問に答え、必要な洞察を得られるように新しいクエリの作成を手伝ってください。",
-      "assistant-prompt-update": "質問に答え、必要な洞察を得られるように現在のクエリの更新を手伝ってください。",
       "collapse-row": "クエリ行を折りたたむ",
-      "current-query": "現在のクエリ",
-      "current-query-label": "現在のクエリ：",
       "datasource-help": "データソースヘルプを表示",
       "drag-and-drop": "ドラッグアンドドロップで並べ替え",
       "duplicate-query": "クエリを複製",
       "expand-row": "クエリ行を展開",
       "hide-response": "回答を非表示にする",
-      "other-queries": "その他のクエリ",
-      "query-with-assistant": "Assistantによるクエリ",
       "remove-query": "クエリを削除",
-      "selected-datasource-label": "選択したデータソース：",
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
@@ -14586,6 +14591,12 @@
   "sort-picker": {
     "select-aria-label": "並べ替え"
   },
+  "splash-screen": {
+    "body": "",
+    "close": "",
+    "get-started": "",
+    "title": ""
+  },
   "sql-expressions": {
     "add-query-tooltip": "SQL候補を生成するために少なくとも1つのデータクエリを追加します",
     "ai-explain-title": "AIを活用したSQL式の説明",
@@ -14852,6 +14863,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "ヘッダーテキストの折り返し",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "自動",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",

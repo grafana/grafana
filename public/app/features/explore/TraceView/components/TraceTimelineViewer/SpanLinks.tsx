@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, MenuItem, Icon, ContextMenu, useTheme2 } from '@grafana/ui';
 
-import { SpanLinkDef } from '../types/links';
+import { type SpanLinkDef } from '../types/links';
 
 interface SpanLinksProps {
   links: SpanLinkDef[];

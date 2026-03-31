@@ -3,12 +3,12 @@ package sourcepathguard
 import (
 	"testing"
 
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-var env = gitcommon.NewSharedGitEnv()
+var env = common.NewSharedGitEnv()
 
-func sharedGitHelper(t *testing.T) *gitcommon.GitTestHelper {
+func sharedGitHelper(t *testing.T) *common.GitTestHelper {
 	t.Helper()
 	return env.GetCleanHelper(t)
 }

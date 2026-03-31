@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
@@ -19,7 +19,7 @@ import { config, getAppEvents } from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
-import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
+import { type LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 
 import { LogsPanel } from './LogsPanel';
 

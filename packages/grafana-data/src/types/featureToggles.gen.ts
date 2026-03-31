@@ -99,11 +99,6 @@ export interface FeatureToggles {
   */
   starsFromAPIServer?: boolean;
   /**
-  * Routes stars requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesStars?: boolean;
-  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   * @default false
   */
@@ -125,7 +120,7 @@ export interface FeatureToggles {
   disableSSEDataplane?: boolean;
   /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default false
+  * @default true
   */
   renderAuthJWT?: boolean;
   /**
@@ -169,8 +164,8 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Next generation provisioning... and git
-  * @default false
+  * Enables Git Sync and as-code provisioning for Grafana resources
+  * @default true
   */
   provisioning?: boolean;
   /**
@@ -193,11 +188,6 @@ export interface FeatureToggles {
   * @default true
   */
   awsAsyncQueryCaching?: boolean;
-  /**
-  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
-  * @default false
-  */
-  queryCacheRequestDeduplication?: boolean;
   /**
   * Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
   * @default false
@@ -248,11 +238,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesLibraryPanels?: boolean;
-  /**
-  * Use the kubernetes API in the frontend for dashboards
-  * @default true
-  */
-  kubernetesDashboards?: boolean;
   /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
@@ -359,6 +344,11 @@ export interface FeatureToggles {
   */
   datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
   /**
+  * use raw output mode for the data source querier
+  * @default false
+  */
+  datasourcesQuerierRawOutput?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -418,6 +408,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enables default layout selector in dashboard settings
+  * @default false
+  */
+  dashboardDefaultLayoutSelector?: boolean;
   /**
   * Enables the assistant prompt popover on panel click in dashboard view mode
   * @default false
@@ -565,7 +560,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default false
+  * @default true
   */
   sqlExpressions?: boolean;
   /**
@@ -880,11 +875,6 @@ export interface FeatureToggles {
   */
   playlistsReconciler?: boolean;
   /**
-  * Enable passwordless login via magic link authentication
-  * @default false
-  */
-  passwordlessMagicLinkAuthentication?: boolean;
-  /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
   */
@@ -970,11 +960,6 @@ export interface FeatureToggles {
   */
   lokiLabelNamesQueryApi?: boolean;
   /**
-  * Enable folder's api server counts
-  * @default false
-  */
-  k8SFolderCounts?: boolean;
-  /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
   * @default true
   */
@@ -996,7 +981,7 @@ export interface FeatureToggles {
   teamLBACApiReadFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
-  * @default false
+  * @default true
   */
   grafanaAdvisor?: boolean;
   /**
@@ -1217,7 +1202,7 @@ export interface FeatureToggles {
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
-  * @default false
+  * @default true
   */
   restoreDashboards?: boolean;
   /**
@@ -1260,11 +1245,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
-  /**
-  * Enables the UI to see imported Alertmanager configuration
-  * @default false
-  */
-  alertingImportAlertmanagerUI?: boolean;
   /**
   * Disables the DMA feature in the UI
   * @default false
@@ -1402,7 +1382,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new visualization suggestions
-  * @default false
+  * @default true
   */
   newVizSuggestions?: boolean;
   /**
@@ -1417,14 +1397,9 @@ export interface FeatureToggles {
   vizPresets?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default false
+  * @default true
   */
   externalVizSuggestions?: boolean;
-  /**
-  * Limit the number of legend items by default, with an option to show all
-  * @default false
-  */
-  vizLegendSeriesLimit?: boolean;
   /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
@@ -1440,6 +1415,11 @@ export interface FeatureToggles {
   * @default false
   */
   heatmapRowsAxisOptions?: boolean;
+  /**
+  * Enable gradient color scheme option for the pie chart panel
+  * @default false
+  */
+  pieChartGradientColorScheme?: boolean;
   /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
@@ -1750,4 +1730,29 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceSSOAutoLogin?: boolean;
+  /**
+  * Enables the splash screen modal for introducing new Grafana features on first session
+  * @default false
+  */
+  splashScreen?: boolean;
+  /**
+  * Enables forwarding team headers from tempo for streaming requests with LBAC rules
+  * @default false
+  */
+  streamingForwardTeamHeadersTempo?: boolean;
+  /**
+  * Aligns query splitting chunks with UTC midnight
+  * @default false
+  */
+  lokiAlignedQuerySplitting?: boolean;
+  /**
+  * Enables the query service to fetch the configuration from the settings service
+  * @default false
+  */
+  queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables the query service to do query caching
+  * @default false
+  */
+  queryServiceQueryCaching?: boolean;
 }

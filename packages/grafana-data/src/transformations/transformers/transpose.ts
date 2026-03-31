@@ -1,8 +1,8 @@
 import { map } from 'rxjs/operators';
 
 import { cacheFieldDisplayNames } from '../../field/fieldState';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerInfo, SpecialValue } from '../../types/transformations';
+import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
+import { type DataTransformerInfo, SpecialValue } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 import { getSpecialValue } from './utils';

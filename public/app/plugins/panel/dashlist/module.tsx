@@ -5,7 +5,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { DashList } from './DashList';
 import { dashlistMigrationHandler } from './migrations';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(DashList)
   .setPanelOptions((builder) => {

@@ -1,29 +1,29 @@
-import { Property } from 'csstype';
+import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import WKT from 'ol/format/WKT';
 import Geometry from 'ol/geom/Geometry';
-import { CSSProperties } from 'react';
-import { SortColumn } from 'react-data-grid';
+import { type CSSProperties } from 'react';
+import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { Count, varPreLine } from 'uwrap';
+import { type Count, varPreLine } from 'uwrap';
 
 import {
   FieldType,
-  Field,
+  type Field,
   formattedValueToString,
-  GrafanaTheme2,
-  DisplayValue,
-  LinkModel,
-  DisplayValueAlignmentFactors,
-  DataFrame,
-  DisplayProcessor,
+  type GrafanaTheme2,
+  type DisplayValue,
+  type LinkModel,
+  type DisplayValueAlignmentFactors,
+  type DataFrame,
+  type DisplayProcessor,
   isDataFrame,
-  FieldSparkline,
-  DecimalCount,
+  type FieldSparkline,
+  type DecimalCount,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
-  FieldTextAlignment,
+  type FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
@@ -31,20 +31,20 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellOptions } from '../types';
+import { type TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
-  TableRow,
-  ColumnTypes,
-  FrameToRowsConverter,
-  Comparator,
-  TypographyCtx,
-  MeasureCellHeight,
-  MeasureCellHeightEntry,
-  FilterType,
+  type TableRow,
+  type ColumnTypes,
+  type FrameToRowsConverter,
+  type Comparator,
+  type TypographyCtx,
+  type MeasureCellHeight,
+  type MeasureCellHeightEntry,
+  type FilterType,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -315,10 +315,9 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (
-        field.type === FieldType.string &&
-        getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer
-      ) {
+      } else if (getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
+        // Any field rendered by AutoCellRenderer (string, time, number, boolean, etc.) can
+        // produce a multi-line formatted string, so we include it in height measurement.
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
       } else {
         // no measurer was configured for this cell type
@@ -376,11 +375,18 @@ export function getRowHeight(
       // special case: for the header, provide `-1` as the row index.
       const cellValueRaw = row.__index === -1 ? displayName : row[displayName];
       if (cellValueRaw != null) {
+        // For non-string fields (e.g. Time, Number), the raw value is a number/epoch that
+        // AutoCell formats via field.display() before rendering. Measure the rendered string
+        // so the height matches what is actually displayed in the cell.
+        const cellValueForMeasuring =
+          field.type !== FieldType.string && row.__index !== -1 && field.display != null
+            ? formattedValueToString(field.display(cellValueRaw))
+            : cellValueRaw;
         const colWidth = columnWidths[fieldIdx];
-        const estimatedHeight = measurer(cellValueRaw, colWidth, field, row.__index, lineHeight);
+        const estimatedHeight = measurer(cellValueForMeasuring, colWidth, field, row.__index, lineHeight);
         if (estimatedHeight > maxHeight) {
           maxHeight = estimatedHeight;
-          maxValue = cellValueRaw;
+          maxValue = cellValueForMeasuring;
           maxWidth = colWidth;
           maxField = field;
           preciseMeasurer = isEstimating ? measure : undefined;

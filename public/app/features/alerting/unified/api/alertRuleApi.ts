@@ -1,37 +1,37 @@
-import { RelativeTimeRange } from '@grafana/data';
+import { type RelativeTimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AlertmanagerAlert, Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { type AlertmanagerAlert, type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type RuleIdentifier, type RuleNamespace, type RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
-  AlertQuery,
-  Annotations,
-  GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
-  Labels,
-  PostableRulerRuleGroupDTO,
-  PromRulesResponse,
-  RulerGrafanaRuleDTO,
-  RulerGrafanaRulesConfigDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type AlertQuery,
+  type Annotations,
+  type GrafanaAlertStateDecision,
+  type GrafanaRuleDefinition,
+  type Labels,
+  type PostableRulerRuleGroupDTO,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+  type RulerGrafanaRulesConfigDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { ExportFormats } from '../components/export/providers';
-import { Folder } from '../types/rule-form';
+import { type ExportFormats } from '../components/export/providers';
+import { type Folder } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier, rulerRuleType } from '../utils/rules';
 
-import { RulerGroupUpdatedResponse } from './alertRuleModel';
-import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { type RulerGroupUpdatedResponse } from './alertRuleModel';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import {
-  FetchPromRulesFilter,
+  type FetchPromRulesFilter,
   getRulesFilterSearchParams,
   groupRulesByFileName,
   paramsWithMatcherAndState,
 } from './prometheus';
-import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
+import { type FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
 export type PreviewResponse = Array<
   Pick<AlertmanagerAlert, 'annotations' | 'endsAt' | 'startsAt' | 'generatorURL' | 'labels'>
