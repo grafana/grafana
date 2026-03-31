@@ -27,10 +27,7 @@ const GROUPBY_PROMOTED: MetricFindValue[] = [
 ];
 
 /** Labels promoted to the top of the Filter dropdown */
-const FILTER_PROMOTED: MetricFindValue[] = [
-  { value: 'alertname', text: 'Rule name', group: COMMON_GROUP },
-  { value: 'grafana_folder', text: 'Folder', group: COMMON_GROUP },
-];
+const FILTER_PROMOTED: MetricFindValue[] = [];
 
 /** Labels that should never appear in dropdowns */
 const EXCLUDED = new Set<string>([
@@ -107,7 +104,7 @@ export function getGroupByTagKeysProvider(variable: GroupByVariable, _currentKey
 
 /**
  * Provider for the AdHoc Filters variable.
- * Shows promoted labels in "Common" group, remaining labels under "Labels".
+ * Returns datasource labels under the "All" group.
  */
 export function getAdHocTagKeysProvider(variable: AdHocFiltersVariable, _currentKey: string | null) {
   const timeRange = sceneGraph.getTimeRange(variable).state.value;

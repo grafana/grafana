@@ -83,7 +83,7 @@ describe('tagKeysProviders', () => {
   });
 
   describe('getAdHocTagKeysProvider', () => {
-    it('should show promoted labels first and remaining sorted under All', async () => {
+    it('should return all labels sorted under All', async () => {
       mockGetDataSourceSrv({
         getTagKeys: jest.fn().mockResolvedValue([
           { text: 'alertstate', value: 'alertstate' },
@@ -107,14 +107,15 @@ describe('tagKeysProviders', () => {
       expect(result.replace).toBe(true);
       expect(result.values).toEqual(
         expect.arrayContaining([
-          { value: 'alertname', text: 'Rule name', group: 'Common' },
-          { value: 'grafana_folder', text: 'Folder', group: 'Common' },
           { text: 'alertstate', value: 'alertstate', group: 'All' },
+          { text: 'alertname', value: 'alertname', group: 'All' },
+          { text: 'grafana_folder', value: 'grafana_folder', group: 'All' },
           { text: 'environment', value: 'environment', group: 'All' },
           { text: 'severity', value: 'severity', group: 'All' },
           { text: 'team', value: 'team', group: 'All' },
         ])
       );
+      expect(result.values).not.toEqual(expect.arrayContaining([expect.objectContaining({ group: 'Common' })]));
       expect(result.values).not.toEqual(
         expect.arrayContaining([
           { value: 'service', text: 'Service', group: 'Common' },

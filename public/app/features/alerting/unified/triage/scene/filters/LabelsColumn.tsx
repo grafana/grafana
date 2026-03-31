@@ -151,8 +151,10 @@ function StateFilter() {
   );
 }
 
-type SidebarFilterKey = 'service' | 'team' | 'namespace';
+type SidebarFilterKey = 'alertname' | 'grafana_folder' | 'service' | 'team' | 'namespace';
 const SIDEBAR_FILTERS: Array<{ key: SidebarFilterKey; label: string }> = [
+  { key: 'alertname', label: 'Rule name' },
+  { key: 'grafana_folder', label: 'Folder' },
   { key: 'service', label: 'Service' },
   { key: 'team', label: 'Team' },
   { key: 'namespace', label: 'Namespace' },
