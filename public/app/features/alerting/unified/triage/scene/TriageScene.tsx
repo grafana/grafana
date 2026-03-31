@@ -5,7 +5,7 @@ import {
   GroupByVariable,
   SceneControlsSpacer,
   SceneFlexLayout,
-  SceneObject,
+  type SceneObject,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,

@@ -3,14 +3,14 @@ import { useClick, useDismiss, useFloating, useInteractions } from '@floating-ui
 import { FocusScope } from '@react-aria/focus';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2, type TimeRange, dateMath, makeTimeRange, rangeUtil } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange, dateMath, makeTimeRange, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
+  type SceneObjectUrlValues,
   sceneGraph,
 } from '@grafana/scenes';
 import { useTimeRange } from '@grafana/scenes-react';
