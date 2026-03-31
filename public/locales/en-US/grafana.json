@@ -6949,8 +6949,8 @@
     },
     "default-value-editor": {
       "aria-label": "Default value",
-      "description": "Values that are pre-selected by default.",
-      "label": "Default value",
+      "description": "Group by dimensions that are pre-selected by default.",
+      "label": "Default group by",
       "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
