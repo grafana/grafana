@@ -290,7 +290,7 @@ export const SuggestedDashboardsList = ({
         contentKinds.push(CONTENT_KINDS.COMMUNITY_DASHBOARD);
       }
 
-      DashboardLibraryInteractions.loaded({
+      void SuggestedDashboardInteractions.loaded({
         numberOfItems: provisionedDashboards.length + communityDashboards.length,
         contentKinds,
         datasourceTypes: [datasourceType],
