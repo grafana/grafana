@@ -761,12 +761,10 @@ export function applyFilter(
     crossFilterRows[filterKey] = crossFilterTailRows;
     // Advance the chain by applying this filter
     crossFilterTailRows = crossFilterTailRows.filter((row) => {
-      const field = fields.find((f) => getDisplayName(f) === filterEntry.displayName);
-      if (!field || !field.display) {
+      if (!fields.some((f) => getDisplayName(f) === filterEntry.displayName)) {
         return true;
       }
-      const displayedValue = formattedValueToString(field.display(row[filterEntry.displayName]));
-      return filterEntry.filteredSet.has(displayedValue);
+      return filterEntry.filteredSet.has(String(row[filterEntry.displayName]));
     });
   }
 

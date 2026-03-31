@@ -84,8 +84,8 @@ export const FilterPopup = memo(
 
     const onFilter = useCallback(() => {
       if (values.length !== 0) {
-        // create a Set for faster filtering
-        const filteredSet = new Set(values.map((item) => item.value));
+        // Flatten: each option.value is string[] (all raw values sharing that display label)
+        const filteredSet = new Set(values.flatMap((item) => (Array.isArray(item.value) ? item.value : [])));
 
         setFilter((filter: FilterType) => ({
           ...filter,
@@ -178,6 +178,7 @@ export const FilterPopup = memo(
             caseSensitive={matchCase}
             searchFilter={searchFilter}
             operator={operator}
+            fieldType={field?.type}
           />
 
           <Stack justifyContent="end" direction="row-reverse">
