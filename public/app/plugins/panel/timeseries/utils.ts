@@ -444,6 +444,7 @@ export function lttbPreviewData(data: PanelData, threshold = LTTB_THRESHOLD): Pa
           ...field,
           values: indices.map((i) => field.values[i]),
           ...(field.type === FieldType.time && {
+            // since lttb may pick points further apart than timeField.config.interval, we clear it out to avoid gap insertion
             config: { ...field.config, interval: undefined },
           }),
         })),
