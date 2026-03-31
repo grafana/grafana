@@ -1,4 +1,4 @@
-import { PluginType, SelectableValue } from '@grafana/data';
+import { PluginType, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 export const FILTER_BY_OPTIONS = (): SelectableValue[] => [

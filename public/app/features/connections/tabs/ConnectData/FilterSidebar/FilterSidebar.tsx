@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import type { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, RadioButtonList, Tooltip, Select, Combobox, useStyles2 } from '@grafana/ui';
 

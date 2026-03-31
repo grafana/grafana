@@ -4933,13 +4933,28 @@
       "filter-by-category": "Filter by category",
       "filter-by-options": {
         "label": {
-          "all": "All"
+          "all": "All",
+          "installed": "Installed",
+          "new-updates": "New Updates"
         }
       },
       "filter-by-state-disabled": "This filter has been disabled because the Grafana server cannot access grafana.com",
       "filter-by-type": "Filter by type",
       "filters": "Filters",
       "group-by": "Group by",
+      "group-by-options": {
+        "label": {
+          "category": "Category",
+          "type": "Type"
+        }
+      },
+      "label": {
+        "by-downloads": "By downloads",
+        "by-name-az": "By name (A-Z)",
+        "by-name-za": "By name (Z-A)",
+        "by-published-date": "By published date",
+        "by-updated-date": "By updated date"
+      },
       "reset-filters": "Reset filters",
       "sort": "Sort",
       "sort-list": "Sort Plugins List",

@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
-import { PluginType, SelectableValue } from '@grafana/data';
+import { PluginType, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { CatalogPlugin } from '../../../../plugins/admin/types';
+import type { CatalogPlugin } from '../../../../plugins/admin/types';
 import { ROUTES } from '../../../constants';
-import { CardGridItem } from '../CardGrid/CardGrid';
+import type { CardGridItem } from '../CardGrid/CardGrid';
 
 const CATEGORY_ORDER = ['tsdb', 'logging', 'tracing', 'profiling', 'sql', 'cloud', 'enterprise', 'iot', 'other'];
 const collator = new Intl.Collator();

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState, MouseEvent } from 'react';
+import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import type { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -22,7 +22,7 @@ import { useHistory } from 'app/features/plugins/admin/hooks/useHistory';
 import { useGetAll, useIsRemotePluginsAvailable } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { CardGridItem } from './CardGrid/CardGrid';
+import type { CardGridItem } from './CardGrid/CardGrid';
 import { FilterSidebar } from './FilterSidebar/FilterSidebar';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
 import { PluginContentView } from './components/PluginContentView';
