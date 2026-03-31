@@ -24,14 +24,24 @@ interface Props {
   field?: Field;
   iconClassName?: string;
   parentIndex?: number;
-  /** Cross-filter rows keyed by filter key. Each entry holds the rows available
-   *  *before* that filter was applied. '__tail' holds rows surviving all active
-   *  filters and is used for brand-new (not-yet-active) filter popups. */
+  /** Cross-filter rows keyed by filter key. Each entry holds the rows available *before* that filter was applied.  */
   crossFilterRows: Record<string, TableRow[]>;
+  /** Rows surviving all active filters. Used for brand-new (not-yet-active) filter popups. */
+  crossFilterTailRows: TableRow[];
 }
 
 export const Filter = memo(
-  ({ name, rows, filter, setFilter, field, iconClassName, parentIndex, crossFilterRows }: Props) => {
+  ({
+    name,
+    rows,
+    filter,
+    setFilter,
+    field,
+    iconClassName,
+    parentIndex,
+    crossFilterRows,
+    crossFilterTailRows,
+  }: Props) => {
     const filterKey = typeof parentIndex === 'number' ? `${name}-${parentIndex}` : name;
     const filterValue = filter[filterKey]?.filtered;
 
@@ -48,8 +58,7 @@ export const Filter = memo(
     // - Active filter: rows available before that filter was applied (keeps its own options visible).
     // - New filter: rows surviving all active filters (the tail).
     // - No active filters at all: fall back to raw rows.
-    const rowsForPopup =
-      filterKey in crossFilterRows ? crossFilterRows[filterKey] : (crossFilterRows['__tail'] ?? rows);
+    const rowsForPopup = filterKey in crossFilterRows ? crossFilterRows[filterKey] : crossFilterTailRows;
 
     return (
       <button

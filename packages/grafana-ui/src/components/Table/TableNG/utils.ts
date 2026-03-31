@@ -743,43 +743,46 @@ export function applyFilter(
     : rows.filter(filterRows);
 }
 
+interface CrossFilterResult {
+  crossFilterOrder: string[];
+  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterTailRows: TableRow[];
+}
+
 /**
- * Computes cross-filter metadata for use in filter popups, scoped to a nesting level.
+ * @internal
+ * Computes cross-filter metadata for use in filter popups, scoped to the nested level of a given table.
  *
- * For each active filter key in the given scope, `crossFilterRows[key]` holds the rows
+ * For each filter key in the current scope, `crossFilterRows[key]` represents the rows
  * available *before* that filter was applied (i.e. the rows that passed all preceding
- * filters in the same scope).  `crossFilterRows['__tail']` holds the rows that survive
- * *all* active filters in the scope, which is used for brand-new filters not yet in the
- * order.
- *
- * Scope is determined by `parentIndex`:
- *   - `undefined`  → top-level rows (depth === 0)
- *   - a number     → nested rows belonging to that parent (already pre-scoped by the caller)
+ * filters in the same scope). `crossFilterTailRows` holds the rows that survive
+ * *all* filters - we use this for new filters that may be added.
  */
 export function computeCrossFilterRows(
   rows: TableRow[],
   filter: FilterType,
   fields: Field[],
   parentIndex?: number
-): { crossFilterOrder: string[]; crossFilterRows: Record<string, TableRow[]> } {
+): CrossFilterResult {
   // Scope rows to the relevant nesting level
-  const scopedRows = parentIndex === undefined ? rows.filter((r) => r.__depth === 0) : rows;
+  const isNested = parentIndex !== undefined;
+  const scopedRows = !isNested ? rows.filter((r) => r.__depth === 0) : rows;
 
   // Collect filter keys that belong to this scope (preserving JS insertion order)
   const crossFilterOrder = Object.keys(filter).filter((key) => {
     const entry = filter[key];
-    return parentIndex === undefined ? entry.parentIndex == null : entry.parentIndex === parentIndex;
+    return !isNested ? entry.parentIndex == null : entry.parentIndex === parentIndex;
   });
 
   const crossFilterRows: Record<string, TableRow[]> = {};
-  let chainRows = scopedRows;
+  let crossFilterTailRows = scopedRows;
 
   for (const filterKey of crossFilterOrder) {
     const filterEntry = filter[filterKey];
     // Store rows available *before* this filter is applied
-    crossFilterRows[filterKey] = chainRows;
+    crossFilterRows[filterKey] = crossFilterTailRows;
     // Advance the chain by applying this filter
-    chainRows = chainRows.filter((row) => {
+    crossFilterTailRows = crossFilterTailRows.filter((row) => {
       const field = fields.find((f) => getDisplayName(f) === filterEntry.displayName);
       if (!field || !field.display) {
         return true;
@@ -789,10 +792,7 @@ export function computeCrossFilterRows(
     });
   }
 
-  // Rows surviving all current filters — used as options for brand-new filter popups
-  crossFilterRows['__tail'] = chainRows;
-
-  return { crossFilterOrder, crossFilterRows };
+  return { crossFilterOrder, crossFilterRows, crossFilterTailRows };
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */

@@ -557,7 +557,7 @@ export function TableNG(props: TableNGProps) {
       // Compute cross-filter rows scoped to the nesting level of this table instance.
       // For top-level tables parentIndex is undefined; for nested tables it matches the parent row index.
       const parentIndex = visibleRows[0]?.__parentIndex;
-      const { crossFilterRows } = computeCrossFilterRows(rawRows, filter, f, parentIndex);
+      const { crossFilterRows, crossFilterTailRows } = computeCrossFilterRows(rawRows, filter, f, parentIndex);
 
       let lastRowIdx = -1;
       // shared when whole row will be styled by a single cell's color
@@ -832,6 +832,7 @@ export function TableNG(props: TableNGProps) {
               showTypeIcons={showTypeIcons}
               parentIndex={parentIndex}
               crossFilterRows={crossFilterRows}
+              crossFilterTailRows={crossFilterTailRows}
               selectFirstCell={() => {
                 gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
               }}

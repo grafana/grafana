@@ -1930,22 +1930,22 @@ describe('TableNG utils', () => {
     ];
 
     it('returns empty crossFilterOrder and full rows as tail when no filters active', () => {
-      const { crossFilterOrder, crossFilterRows } = computeCrossFilterRows(rows, {}, fields);
+      const { crossFilterOrder, crossFilterTailRows } = computeCrossFilterRows(rows, {}, fields);
       expect(crossFilterOrder).toEqual([]);
-      expect(crossFilterRows['__tail']).toHaveLength(rows.length);
+      expect(crossFilterTailRows).toHaveLength(rows.length);
     });
 
     it('stores all rows before the first filter and the filtered subset as tail', () => {
       const filter = {
         category: { filteredSet: new Set(['A']), displayName: 'category' },
       };
-      const { crossFilterOrder, crossFilterRows } = computeCrossFilterRows(rows, filter, fields);
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = computeCrossFilterRows(rows, filter, fields);
       expect(crossFilterOrder).toEqual(['category']);
       // before the first filter: all rows
       expect(crossFilterRows['category']).toHaveLength(5);
       // tail: only rows with category A
-      expect(crossFilterRows['__tail']).toHaveLength(2);
-      expect(crossFilterRows['__tail'].every((r) => r['category'] === 'A')).toBe(true);
+      expect(crossFilterTailRows).toHaveLength(2);
+      expect(crossFilterTailRows.every((r) => r['category'] === 'A')).toBe(true);
     });
 
     it('builds a cascading chain for multiple filters', () => {
@@ -1953,14 +1953,14 @@ describe('TableNG utils', () => {
         category: { filteredSet: new Set(['A', 'B']), displayName: 'category' },
         status: { filteredSet: new Set(['up']), displayName: 'status' },
       };
-      const { crossFilterOrder, crossFilterRows } = computeCrossFilterRows(rows, filter, fields);
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = computeCrossFilterRows(rows, filter, fields);
       expect(crossFilterOrder).toEqual(['category', 'status']);
       // before category filter: all 5 rows
       expect(crossFilterRows['category']).toHaveLength(5);
       // before status filter: rows passing category (A or B) = 4 rows
       expect(crossFilterRows['status']).toHaveLength(4);
       // tail: rows passing both = A-up and B-up
-      expect(crossFilterRows['__tail']).toHaveLength(2);
+      expect(crossFilterTailRows).toHaveLength(2);
     });
 
     it('scopes top-level cross-filter to depth-0 rows only', () => {
@@ -1986,12 +1986,17 @@ describe('TableNG utils', () => {
       const filter = {
         'category-7': { filteredSet: new Set(['A']), displayName: 'category', parentIndex: 7 },
       };
-      const { crossFilterOrder, crossFilterRows } = computeCrossFilterRows(nestedRows, filter, fields, 7);
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = computeCrossFilterRows(
+        nestedRows,
+        filter,
+        fields,
+        7
+      );
       expect(crossFilterOrder).toEqual(['category-7']);
       // before the filter: all 3 nested rows
       expect(crossFilterRows['category-7']).toHaveLength(3);
       // tail: only the 2 rows with category A
-      expect(crossFilterRows['__tail']).toHaveLength(2);
+      expect(crossFilterTailRows).toHaveLength(2);
     });
 
     it('ignores filters from a different nesting scope', () => {
