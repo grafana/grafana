@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -184,21 +183,21 @@ func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResour
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
 
-	group := resolveDSGroup(gr.Group, datasourceType)
+	group := resolveGroup(gr.Group, datasourceType)
 
 	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
 }
 
 // resolveGroup resolves a wildcard group (e.g. "*.datasource.grafana.app") to a concrete group
-// (e.g. "loki.datasource.grafana.app") using the datasourceType
-func resolveDSGroup(group, datasourceType string) string {
-	if !strings.HasPrefix(group, "*.") || !strings.HasSuffix(group, datasourcek8s.K8sDatasourceAPIGroupSuffix) {
+// (e.g. "loki.datasource.grafana.app") using the prefix
+func resolveGroup(group, prefix string) string {
+	if !strings.HasPrefix(group, "*.") {
 		return group
 	}
-	if datasourceType == "" {
-		return "unknown" + datasourcek8s.K8sDatasourceAPIGroupSuffix
+	if prefix == "" {
+		return "unknown" + group[1:]
 	}
-	return datasourceType + group[1:]
+	return prefix + group[1:]
 }
 
 // EnabledActionSets returns the action sets for all currently-enabled mappers.
