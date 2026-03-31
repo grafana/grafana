@@ -21,6 +21,7 @@ import {
   isTriagePredefinedSearchId,
 } from '../triagePredefinedSearches';
 
+import { TRIAGE_TIME_MODE_KEY, TriageTimeModeControl } from './TriageTimeModeControl';
 import {
   applyTriageSavedSearchState,
   generateTriageUrl,
@@ -85,10 +86,15 @@ function TriageSavedSearchesControlRenderer({ model }: SceneComponentProps<Triag
   const filtersState = filtersVar instanceof AdHocFiltersVariable ? filtersVar.useState() : undefined;
   const filters = filtersState?.filters;
 
+  // Get triage mode if the control exists in the scene
+  const modeControl = sceneGraph.findObject(model, (obj) => obj.state.key === TRIAGE_TIME_MODE_KEY);
+  const modeState = modeControl instanceof TriageTimeModeControl ? modeControl.useState() : undefined;
+  const triageMode = modeState?.mode;
+
   // Serialize Scene state to a query string (reactive to changes)
   const currentSearchQuery = useMemo(() => {
-    return serializeTriageState(filters ?? [], groupBy, timeRange.raw);
-  }, [timeRange, filters, groupBy]);
+    return serializeTriageState(filters ?? [], groupBy, timeRange.raw, triageMode);
+  }, [timeRange, filters, groupBy, triageMode]);
 
   /**
    * Apply a saved search by programmatically updating Scene variables.

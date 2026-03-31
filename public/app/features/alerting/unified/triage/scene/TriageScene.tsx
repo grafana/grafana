@@ -1,9 +1,11 @@
 import { DashboardCursorSync } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
   SceneControlsSpacer,
   SceneFlexLayout,
+  SceneObject,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -16,12 +18,20 @@ import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 import { DATASOURCE_UID } from '../constants';
 
 import { TriageSavedSearchesControl } from './TriageSavedSearchesControl';
+import { TriageTimeModeControl } from './TriageTimeModeControl';
 import { WorkbenchSceneObject } from './Workbench';
 import { prometheusExpressionBuilder } from './expressionBuilder';
 import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
 import { defaultTimeRange } from './utils';
 
 const cursorSync = new behaviors.CursorSync({ key: 'triage-cursor-sync', sync: DashboardCursorSync.Crosshair });
+
+function getTimeControls(): SceneObject[] {
+  if (config.featureToggles.alertingTriageLiveMode) {
+    return [new TriageTimeModeControl({})];
+  }
+  return [new SceneTimePicker({}), new SceneRefreshPicker({})];
+}
 
 export const triageScene = new EmbeddedSceneWithContext({
   // this will allow us to share the cursor between all vizualizations
@@ -30,8 +40,7 @@ export const triageScene = new EmbeddedSceneWithContext({
     new VariableValueSelectors({}),
     new TriageSavedSearchesControl({}),
     new SceneControlsSpacer(),
-    new SceneTimePicker({}),
-    new SceneRefreshPicker({}),
+    ...getTimeControls(),
   ],
   $timeRange: new SceneTimeRange(defaultTimeRange),
   $variables: new SceneVariableSet({

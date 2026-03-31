@@ -796,6 +796,21 @@
     },
     {
       "metadata": {
+        "name": "alertingTriageLiveMode",
+        "resourceVersion": "1774887572279",
+        "creationTimestamp": "2026-03-30T16:19:32Z"
+      },
+      "spec": {
+        "description": "Enables live/history mode toggle on the alert activity triage page",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingTriageSavedSearches",
         "resourceVersion": "1769704033471",
         "creationTimestamp": "2026-01-29T16:27:13Z"

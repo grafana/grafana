@@ -41,6 +41,7 @@ type WorkbenchProps = {
   isInitialLoading?: boolean;
   isRefreshing?: boolean;
   hasActiveFilters?: boolean;
+  isLiveMode?: boolean;
 };
 
 const initialSize = 1 / 2;
@@ -139,6 +140,7 @@ export function Workbench({
   isInitialLoading = false,
   isRefreshing = false,
   hasActiveFilters = false,
+  isLiveMode = false,
 }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
@@ -223,10 +225,12 @@ export function Workbench({
             </Box>
           ) : (
             <>
-              <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-                <SummaryStatsReact />
-                <SummaryChartReact />
-              </div>
+              {!isLiveMode && (
+                <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
+                  <SummaryStatsReact />
+                  <SummaryChartReact />
+                </div>
+              )}
               {groupBy && groupBy.length > 0 && (
                 <div className={styles.expandCollapseToolbar}>
                   <Button

@@ -69,8 +69,46 @@ function uniqueAlertInstancesExpr(filter: string): string {
   );
 }
 
+/**
+ * Live-mode variant of uniqueAlertInstancesExpr with a fixed 1m lookback
+ * instead of the full $__range. The 1m window covers typical evaluation
+ * intervals (10s–60s) while keeping results limited to currently-active
+ * alerts. Client-side retention in WorkbenchRenderer handles the grace
+ * period for recently-inactive rows.
+ */
+function liveUniqueAlertInstancesExpr(filter: string): string {
+  const firingFilter = filter ? `alertstate="firing",${filter}` : 'alertstate="firing"';
+  const pendingFilter = filter ? `alertstate="pending",${filter}` : 'alertstate="pending"';
+  return (
+    `last_over_time(${METRIC_NAME}{${firingFilter}}[1m]) or ` +
+    `(last_over_time(${METRIC_NAME}{${pendingFilter}}[1m]) ` +
+    `unless ignoring(alertstate, grafana_alertstate) ` +
+    `last_over_time(${METRIC_NAME}{${firingFilter}}[1m]))`
+  );
+}
+
 function getAlertsSummariesQuery(countBy: string, filter: string): string {
   return `count by (${countBy}) (${uniqueAlertInstancesExpr(filter)})`;
+}
+
+function getLiveAlertsSummariesQuery(countBy: string, filter: string): string {
+  return `count by (${countBy}) (${liveUniqueAlertInstancesExpr(filter)})`;
+}
+
+/** Live-mode workbench queries: Query A unchanged (full range), Query B uses 1m lookback */
+export function getLiveWorkbenchQueries(countBy: string, filter: string): [SceneDataQuery, SceneDataQuery] {
+  return [
+    getDataQuery(`count by (${countBy}) (${METRIC_NAME}{${filter}})`, {
+      refId: 'A',
+      format: 'table',
+    }),
+    getDataQuery(getLiveAlertsSummariesQuery(countBy, filter), {
+      refId: 'B',
+      instant: true,
+      range: false,
+      format: 'table',
+    }),
+  ];
 }
 
 /** Instant table query returning one row per unique alert instance (for label breakdown). */

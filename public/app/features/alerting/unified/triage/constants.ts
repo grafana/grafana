@@ -14,6 +14,7 @@ export const URL_PARAMS = {
   groupBy: 'var-groupBy',
   timeFrom: 'from',
   timeTo: 'to',
+  triageMode: 'triageMode',
 } as const;
 
 /**
@@ -25,6 +26,7 @@ export const TRIAGE_STATE_URL_PARAMS = [
   URL_PARAMS.groupBy,
   URL_PARAMS.timeFrom,
   URL_PARAMS.timeTo,
+  URL_PARAMS.triageMode,
 ] as const;
 
 export const DATASOURCE_UID = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
