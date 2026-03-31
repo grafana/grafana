@@ -12,6 +12,8 @@ import {
   type ResourceResponse,
   type DescribeLogGroupsRequest,
   type LogGroupResponse,
+  type ListDataSourcesRequest,
+  type LogDataSourceResponse,
   type GetMetricsRequest,
   type GetDimensionKeysRequest,
   type GetDimensionValuesRequest,
@@ -75,6 +77,14 @@ export class ResourcesAPI extends CloudWatchRequest {
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
       accountId: this.templateSrv.replace(params.accountId),
       listAllLogGroups: params.listAllLogGroups ? 'true' : 'false',
+    });
+  }
+
+  getDataSources(params: ListDataSourcesRequest): Promise<Array<ResourceResponse<LogDataSourceResponse>>> {
+    return this.memoizedGetRequest<Array<ResourceResponse<LogDataSourceResponse>>>('data-sources', {
+      ...params,
+      region: this.templateSrv.replace(this.getActualRegion(params.region)),
+      pattern: params.pattern ?? '',
     });
   }
 
