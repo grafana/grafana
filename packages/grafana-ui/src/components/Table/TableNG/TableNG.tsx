@@ -88,10 +88,10 @@ import {
   type TableSummaryRow,
 } from './types';
 import {
+  applyFilter,
   calculateFooterHeight,
   canFieldBeColorized,
   compileFrameToRecords,
-  computeCrossFilterRows,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -205,7 +205,7 @@ export function TableNG(props: TableNGProps) {
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
 
-  const { rows: filteredRows, filter, setFilter } = useFilteredRows(rows, data.fields, hasNestedFrames);
+  const { rows: filteredRows, filter, setFilter, filterResult } = useFilteredRows(rows, data.fields, hasNestedFrames);
 
   const {
     rows: sortedRows,
@@ -555,9 +555,11 @@ export function TableNG(props: TableNGProps) {
       };
 
       // Compute cross-filter rows scoped to the nesting level of this table instance.
-      // For top-level tables parentIndex is undefined; for nested tables it matches the parent row index.
+      // For top-level tables, reuse the result already computed by useFilteredRows (free).
+      // For nested tables, parentIndex is defined and we must compute their own scoped result.
       const parentIndex = visibleRows[0]?.__parentIndex;
-      const { crossFilterRows, crossFilterTailRows } = computeCrossFilterRows(rawRows, filter, f, parentIndex);
+      const { crossFilterRows, crossFilterTailRows } =
+        parentIndex == null ? filterResult : applyFilter(rawRows, filter, f, false, parentIndex);
 
       let lastRowIdx = -1;
       // shared when whole row will be styled by a single cell's color
@@ -869,6 +871,7 @@ export function TableNG(props: TableNGProps) {
       disableSanitizeHtml,
       getTextColorForBackground,
       filter,
+      filterResult,
       setFilter,
       disableKeyboardEvents,
       showTypeIcons,

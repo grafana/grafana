@@ -713,57 +713,35 @@ export function applySort(
     : [...rows].sort(compareRows);
 }
 
-export function applyFilter(
-  rows: TableRow[],
-  filter: FilterType,
-  fields: Field[],
-  hasNestedFrames?: boolean
-): TableRow[] {
-  const filterValues = Object.entries(filter);
-
-  const filterRows = (row: TableRow): boolean => {
-    for (const [, value] of filterValues) {
-      if (value.parentIndex != null && row.__parentIndex !== value.parentIndex) {
-        continue;
-      }
-      const field = fields.find((field) => getDisplayName(field) === value.displayName);
-      if (!field || !field.display) {
-        continue;
-      }
-      const displayedValue = formattedValueToString(field.display(row[value.displayName]));
-      if (!value.filteredSet.has(displayedValue)) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  return hasNestedFrames
-    ? processNestedTableRows(rows, (parents) => parents.filter(filterRows))
-    : rows.filter(filterRows);
-}
-
-interface CrossFilterResult {
+interface ApplyFilterResult {
   crossFilterOrder: string[];
   crossFilterRows: Record<string, TableRow[]>;
   crossFilterTailRows: TableRow[];
+  filteredRows: TableRow[];
 }
 
 /**
  * @internal
- * Computes cross-filter metadata for use in filter popups, scoped to the nested level of a given table.
+ * Applies active filters to `rows` and computes cross-filter metadata for filter popup UIs.
  *
- * For each filter key in the current scope, `crossFilterRows[key]` represents the rows
- * available *before* that filter was applied (i.e. the rows that passed all preceding
- * filters in the same scope). `crossFilterTailRows` holds the rows that survive
- * *all* filters - we use this for new filters that may be added.
+ * Filters are chained sequentially so that for each filter key, `crossFilterRows[key]`
+ * holds the rows available *before* that filter was applied (i.e. the rows that passed all
+ * preceding filters in the same scope). `crossFilterTailRows` holds the rows that survive
+ * *all* filters — used for new filters that have not yet been applied.
+ *
+ * `filteredRows` is the display-ready result: equal to `crossFilterTailRows` for flat tables,
+ * or wrapped with `processNestedTableRows` to preserve parent-child structure when
+ * `hasNestedFrames` is true.
+ *
+ * When called for a nested table instance, pass `parentIndex` to scope filters to that level.
  */
-export function computeCrossFilterRows(
+export function applyFilter(
   rows: TableRow[],
   filter: FilterType,
   fields: Field[],
+  hasNestedFrames?: boolean,
   parentIndex?: number
-): CrossFilterResult {
+): ApplyFilterResult {
   // Scope rows to the relevant nesting level
   const isNested = parentIndex !== undefined;
   const scopedRows = !isNested ? rows.filter((r) => r.__depth === 0) : rows;
@@ -792,7 +770,15 @@ export function computeCrossFilterRows(
     });
   }
 
-  return { crossFilterOrder, crossFilterRows, crossFilterTailRows };
+  // For nested frames, wrap with processNestedTableRows so parent rows that have matching
+  // children are preserved for the expander UI. Use a Set for O(1) membership checks.
+  let filteredRows = crossFilterTailRows;
+  if (hasNestedFrames) {
+    const tailSet = new Set(crossFilterTailRows);
+    filteredRows = processNestedTableRows(rows, (parents) => parents.filter((row) => tailSet.has(row)));
+  }
+
+  return { crossFilterOrder, crossFilterRows, crossFilterTailRows, filteredRows };
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */

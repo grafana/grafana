@@ -23,7 +23,6 @@ import { type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
   applySort,
-  computeCrossFilterRows,
   buildCellHeightMeasurers,
   buildHeaderHeightMeasurers,
   buildInspectValue,
@@ -1707,7 +1706,7 @@ describe('TableNG utils', () => {
         ],
       });
       const frameToRecords = compileFrameToRecords(frame);
-      const filtered = applyFilter(frameToRecords(frame), {}, frame.fields, false);
+      const { filteredRows: filtered } = applyFilter(frameToRecords(frame), {}, frame.fields, false);
       expect(filtered).toMatchObject([
         { time: 1, value: 10 },
         { time: 1, value: 20 },
@@ -1734,7 +1733,7 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time' } },
         frame.fields,
@@ -1764,7 +1763,7 @@ describe('TableNG utils', () => {
         ],
       });
       const frameToRecords = compileFrameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         frameToRecords(frame),
         {
           time: { filteredSet: new Set(['1', '2']), displayName: 'time' },
@@ -1804,7 +1803,7 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame, 'nested');
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         {
           time: { filteredSet: new Set(['1']), displayName: 'time' },
@@ -1842,11 +1841,12 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame, 'nested');
       const records = frameToRecords(frame, 3);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 3 } },
         frame.fields,
-        false
+        false,
+        3
       );
       expect(filtered).toMatchObject([
         { time: 1, value: 10 },
@@ -1854,7 +1854,7 @@ describe('TableNG utils', () => {
       ]);
 
       // using a parent index that doesn't match the rows in the set, the rows should not be filtered.
-      const filtered2 = applyFilter(
+      const { filteredRows: filtered2 } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 2 } },
         frame.fields,
@@ -1886,7 +1886,7 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time' } },
         frame.fields,
@@ -1904,7 +1904,7 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('computeCrossFilterRows', () => {
+  describe('cross-filter metadata', () => {
     const makeField = (name: string, values: unknown[]) => ({
       name,
       type: FieldType.string,
@@ -1930,7 +1930,7 @@ describe('TableNG utils', () => {
     ];
 
     it('returns empty crossFilterOrder and full rows as tail when no filters active', () => {
-      const { crossFilterOrder, crossFilterTailRows } = computeCrossFilterRows(rows, {}, fields);
+      const { crossFilterOrder, crossFilterTailRows } = applyFilter(rows, {}, fields);
       expect(crossFilterOrder).toEqual([]);
       expect(crossFilterTailRows).toHaveLength(rows.length);
     });
@@ -1939,7 +1939,7 @@ describe('TableNG utils', () => {
       const filter = {
         category: { filteredSet: new Set(['A']), displayName: 'category' },
       };
-      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = computeCrossFilterRows(rows, filter, fields);
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(rows, filter, fields);
       expect(crossFilterOrder).toEqual(['category']);
       // before the first filter: all rows
       expect(crossFilterRows['category']).toHaveLength(5);
@@ -1953,7 +1953,7 @@ describe('TableNG utils', () => {
         category: { filteredSet: new Set(['A', 'B']), displayName: 'category' },
         status: { filteredSet: new Set(['up']), displayName: 'status' },
       };
-      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = computeCrossFilterRows(rows, filter, fields);
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(rows, filter, fields);
       expect(crossFilterOrder).toEqual(['category', 'status']);
       // before category filter: all 5 rows
       expect(crossFilterRows['category']).toHaveLength(5);
@@ -1972,7 +1972,7 @@ describe('TableNG utils', () => {
       const filter = {
         category: { filteredSet: new Set(['A']), displayName: 'category' },
       };
-      const { crossFilterRows } = computeCrossFilterRows(mixedRows, filter, fields);
+      const { crossFilterRows } = applyFilter(mixedRows, filter, fields);
       // depth-1 row must not be counted
       expect(crossFilterRows['category']).toHaveLength(5);
     });
@@ -1986,10 +1986,11 @@ describe('TableNG utils', () => {
       const filter = {
         'category-7': { filteredSet: new Set(['A']), displayName: 'category', parentIndex: 7 },
       };
-      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = computeCrossFilterRows(
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(
         nestedRows,
         filter,
         fields,
+        false,
         7
       );
       expect(crossFilterOrder).toEqual(['category-7']);
@@ -2005,7 +2006,7 @@ describe('TableNG utils', () => {
         category: { filteredSet: new Set(['A']), displayName: 'category' },
         'status-7': { filteredSet: new Set(['up']), displayName: 'status', parentIndex: 7 },
       };
-      const { crossFilterOrder } = computeCrossFilterRows(rows, filter, fields, 7);
+      const { crossFilterOrder } = applyFilter(rows, filter, fields, false, 7);
       // only the nested filter for parentIndex 7 should appear
       expect(crossFilterOrder).toEqual(['status-7']);
     });
