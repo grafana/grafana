@@ -1921,7 +1921,7 @@ describe('TableNG utils', () => {
       });
       const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set([String(rawTimestamp)]), displayName: 'time' } },
         frame.fields,
