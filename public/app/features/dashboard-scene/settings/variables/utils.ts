@@ -211,6 +211,11 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       return new AdHocFiltersVariable({
         ...initialState,
         layout: 'combobox',
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls && {
+          hide: VariableHide.hideLabel,
+          enableGroupBy: true,
+          collapsible: true,
+        }),
       });
     case 'groupby':
       return new GroupByVariable(initialState);
