@@ -236,36 +236,66 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     );
     await expect(filterContainer).toBeVisible();
 
-    const allMinOptionCount = await filterContainer.locator('[title]').count();
+    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    const allMinOptionCount = parseInt(
+      (
+        (await filterContainer
+          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
+          .textContent()) ?? ''
+      ).match(/(\d+) selected/)?.[1] ?? '0',
+      10
+    );
 
     await filterContainer.getByRole('button', { name: 'Cancel' }).click();
     await expect(filterContainer).not.toBeVisible();
 
-    // --- Apply Info=up filter on the first nested table ---
+    // sort the info column descending to ensure the "down fast" value is first
+    const infoHeader = firstNestedTable.getByRole('columnheader').nth(infoColumnIdx);
+    await infoHeader.getByText('Info').click({ modifiers: ['ControlOrMeta'] });
+    await infoHeader.getByText('Info').click({ modifiers: ['ControlOrMeta'] });
+    const firstInfoCell = getCell(firstNestedTable, 1, infoColumnIdx);
+    await expect(
+      firstInfoCell,
+      'first info cell has "down fast" after adding Info column descending sort to first nested table with two clicks'
+    ).toContainText('down fast');
+
+    // --- Apply Info=down filter on the first nested table ---
     const infoColumnHeader = firstNestedTable.getByRole('columnheader').nth(infoColumnIdx);
     await infoColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
-    await expect(filterContainer).toBeVisible();
+    await expect(filterContainer, 'filter container is visible after clicking info column header').toBeVisible();
 
-    // Deselect all, then select only "up"
-    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    // select only "down"
+    await filterContainer.getByTitle('down', { exact: true }).locator('label').click();
     await filterContainer.getByRole('button', { name: 'Ok' }).click();
-    await expect(filterContainer).not.toBeVisible();
+    await expect(filterContainer, 'filter container is closed after applying filter').not.toBeVisible();
 
     // Verify the nested table rows are filtered
-    await expect(getCell(firstNestedTable, 1, infoColumnIdx)).toHaveText('up');
+    await expect(firstInfoCell, 'first info cell is filtered after applying Info=down filter').not.toHaveText(
+      'down fast'
+    );
 
     // --- Open Min filter popup: cross-filter should restrict options ---
     await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
-    await expect(filterContainer).toBeVisible();
+    await expect(filterContainer, 'filter container is visible after clicking min column header').toBeVisible();
 
-    const crossFilteredMinOptionCount = await filterContainer.locator('[title]').count();
+    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    const crossFilteredMinOptionCount = parseInt(
+      (
+        (await filterContainer
+          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
+          .textContent()) ?? ''
+      ).match(/(\d+) selected/)?.[1] ?? '0',
+      10
+    );
 
     // With Info filtered to "up", Min options must be a subset of the unfiltered set
-    expect(crossFilteredMinOptionCount).toBeLessThanOrEqual(allMinOptionCount);
+    expect(
+      crossFilteredMinOptionCount,
+      'cross-filtered min option count is less than all min option count'
+    ).toBeLessThanOrEqual(allMinOptionCount);
 
     await filterContainer.getByRole('button', { name: 'Cancel' }).click();
-    await expect(filterContainer).not.toBeVisible();
+    await expect(filterContainer, 'filter container is closed after clicking cancel').not.toBeVisible();
 
     // --- Verify filter is scoped to the first nested table only ---
     // The second nested table should be unaffected by the first nested table's filter.
@@ -274,28 +304,42 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     const secondMinHeader = secondNestedTable.getByRole('columnheader').nth(secondNestedMinColumnIdx);
     await secondMinHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
-    await expect(filterContainer).toBeVisible();
+    await expect(filterContainer, 'filter container is visible after clicking min column header').toBeVisible();
 
-    const secondNestedMinOptionCount = await filterContainer.locator('[title]').count();
+    await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    const secondNestedMinOptionCount = parseInt(
+      (
+        (await filterContainer
+          .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
+          .textContent()) ?? ''
+      ).match(/(\d+) selected/)?.[1] ?? '0',
+      10
+    );
 
     // Second nested table sees its own full set of Min options (not restricted by first table's filter)
-    expect(secondNestedMinOptionCount).toBeGreaterThanOrEqual(crossFilteredMinOptionCount);
+    expect(
+      secondNestedMinOptionCount,
+      'second nested table min option count is greater than cross-filtered min option count'
+    ).toBeGreaterThan(crossFilteredMinOptionCount);
 
     await filterContainer.getByRole('button', { name: 'Cancel' }).click();
     // Verify second nested table still shows all Info values (not filtered)
     const secondNestedRowCount = await secondNestedTable.locator('[role="row"]').count();
-    expect(secondNestedRowCount).toBeGreaterThan(1); // header + at least one row
+    expect(
+      secondNestedRowCount,
+      'second nested table still has rows after first nested table applied filters'
+    ).toBeGreaterThan(1); // header + at least one row
 
     // Cross-check: second nested table should show both "up" and non-"up" rows
     const secondTableInfoValues = new Set<string>();
     for (let i = 1; i < secondNestedRowCount; i++) {
       const text = await getCell(secondNestedTable, i, secondNestedInfoColumnIdx).textContent();
       if (text) {
-        secondTableInfoValues.add(text.trim().split(' ')[0]); // normalize "up fast" → "up"
+        secondTableInfoValues.add(text.trim());
       }
     }
     // The second table should have rows that are not "up" (since its filter is not restricted)
-    expect(secondTableInfoValues.size).toBeGreaterThan(0);
+    expect(secondTableInfoValues.size, 'second nested table should show both "up" and "up fast" rows').toBe(2);
   });
 
   test('word wrap, hover overflow, max cell height, and cell inspect', async ({
