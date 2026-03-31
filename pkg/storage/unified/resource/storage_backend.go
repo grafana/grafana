@@ -1898,6 +1898,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 	// Track ADDED resources accepted in the pending buffer to catch duplicates before flush.
 	seenCreates := make(map[string]bool)
+	// Track unflushed DELETEs so that a subsequent ADDED skips the storage check
+	// (the delete hasn't been persisted yet, so storage still shows the resource).
+	pendingDeletes := make(map[string]bool)
 
 	// Accumulate validated items for batch save instead of saving one at a time.
 	type pendingItem struct {
@@ -1953,6 +1956,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		pending = pending[:0]
+		clear(pendingDeletes)
 		return nil
 	}
 
@@ -1985,28 +1989,31 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				})
 				continue
 			}
-			// Check if resource already exists in storage
-			_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-				Group:     req.Key.Group,
-				Resource:  req.Key.Resource,
-				Namespace: req.Key.Namespace,
-				Name:      req.Key.Name,
-			})
-			if err == nil {
-				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-					Key:    req.Key,
-					Action: req.Action,
-					Error:  "resource already exists",
+			// Check if resource already exists in storage, but skip if a pending
+			// delete for this resource hasn't been flushed yet.
+			if !pendingDeletes[createID] {
+				_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+					Group:     req.Key.Group,
+					Resource:  req.Key.Resource,
+					Namespace: req.Key.Namespace,
+					Name:      req.Key.Name,
 				})
-				continue
-			}
-			if !errors.Is(err, ErrNotFound) {
-				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-					Key:    req.Key,
-					Action: req.Action,
-					Error:  fmt.Sprintf("failed to check if resource exists: %s", err),
-				})
-				continue
+				if err == nil {
+					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+						Key:    req.Key,
+						Action: req.Action,
+						Error:  "resource already exists",
+					})
+					continue
+				}
+				if !errors.Is(err, ErrNotFound) {
+					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+						Key:    req.Key,
+						Action: req.Action,
+						Error:  fmt.Sprintf("failed to check if resource exists: %s", err),
+					})
+					continue
+				}
 			}
 		case resourcepb.WatchEvent_MODIFIED:
 			action = DataActionUpdated
@@ -2057,8 +2064,10 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		switch action {
 		case DataActionCreated:
 			seenCreates[createID] = true
+			delete(pendingDeletes, createID)
 		case DataActionDeleted:
 			delete(seenCreates, createID)
+			pendingDeletes[createID] = true
 		case DataActionUpdated:
 			// no-op for duplicate tracking
 		}
