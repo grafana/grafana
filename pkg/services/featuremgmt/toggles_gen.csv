@@ -77,6 +77,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-12,annotationsClustering,experimental,@grafana/dataviz-squad,false,false,true
 2023-11-13,dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 2024-10-23,dashboardNewLayouts,preview,@grafana/dashboards-squad,false,false,false
+2026-03-19,dashboardDefaultLayoutSelector,experimental,@grafana/dashboards-squad,false,false,true
 2026-03-10,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 2025-10-10,unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
@@ -234,7 +235,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-12,kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-03-16,kubernetesAuthzRolesAndRoleBindingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-03-17,kubernetesAuthzDatasourceResourcePermissions,experimental,@grafana/identity-access-team,false,false,false
-2025-05-23,restoreDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,false
+2025-05-23,restoreDashboards,GA,@grafana/grafana-frontend-navigation,false,false,false
 2025-12-10,recentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-01-13,experimentRecentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-02-24,createdByMeSearchFilter,experimental,@grafana/grafana-frontend-navigation,false,false,true

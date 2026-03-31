@@ -626,6 +626,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardDefaultLayoutSelector",
+			Description:  "Enables default layout selector in dashboard settings",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardAssistantPopover",
 			Description:  "Enables the assistant prompt popover on panel click in dashboard view mode",
 			Stage:        FeatureStageExperimental,
@@ -1885,9 +1893,9 @@ var (
 		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "recentlyViewedDashboards",
