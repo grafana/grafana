@@ -17,28 +17,16 @@ import {
   type SelectionModifiers,
 } from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
-import { useMultiSelection } from './hooks/useMultiSelection';
 import { usePendingExpression } from './hooks/usePendingExpression';
 import { usePendingTransformation } from './hooks/usePendingTransformation';
 import { useQueryEditorUIToggles } from './hooks/useQueryEditorUIToggles';
 import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
+import { useSelectionState } from './hooks/useSelectionState';
 import { useTransformations } from './hooks/useTransformations';
 import { type AlertRule, type Transformation } from './types';
 import { getEditorType, getTransformId } from './utils';
-
-/**
- * Keeps query selection stable across refId renames.
- * When the currently selected query is renamed, selection should follow the new refId.
- */
-export function getNextSelectedQueryRefIds(
-  currentSelectedRefIds: string[],
-  originalRefId: string,
-  updatedRefId: string
-) {
-  return currentSelectedRefIds.map((id) => (id === originalRefId ? updatedRefId : id));
-}
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -94,7 +82,7 @@ export function QueryEditorContextWrapper({
     clearSelection: clearSelectionRaw,
     removeQueryFromSelection,
     removeTransformationFromSelection,
-  } = useMultiSelection({
+  } = useSelectionState({
     queries: queryRunnerState?.queries ?? [],
     transformations,
     // Stable callback — always delegates to the latest clearSideEffects via ref.
@@ -189,7 +177,7 @@ export function QueryEditorContextWrapper({
     setPendingSavedQueryState(null);
   }, [resetUIToggles, clearPendingExpression, clearPendingTransformation]);
 
-  // Update the ref every render so the stable callback inside useMultiSelection
+  // Update the ref every render so the stable callback inside useSelectionState
   // always delegates to the latest clearSideEffects.
   clearSideEffectsRef.current = clearSideEffects;
 

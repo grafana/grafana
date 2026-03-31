@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react';
 
-import { QueryOptionField } from '../types';
+import { type TransformationToggleState } from '../QueryEditorContext';
+import { type QueryOptionField } from '../types';
 
 export interface UseQueryEditorUITogglesResult {
   isQueryOptionsOpen: boolean;
   focusedField: QueryOptionField | null;
   showingDatasourceHelp: boolean;
-  transformTogglesState: { showHelp: boolean; showDebug: boolean };
+  transformTogglesState: TransformationToggleState;
   openSidebar: (focusField?: QueryOptionField) => void;
   closeSidebar: () => void;
   resetUIToggles: () => void;

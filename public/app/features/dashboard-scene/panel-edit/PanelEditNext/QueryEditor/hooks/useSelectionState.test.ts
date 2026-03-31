@@ -1,10 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
-import { Transformation } from '../types';
+import { type Transformation } from '../types';
 
-import { useMultiSelection, UseMultiSelectionOptions } from './useMultiSelection';
+import { useSelectionState, type UseSelectionStateOptions } from './useSelectionState';
 
 const mockQueries: DataQuery[] = [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }, { refId: 'D' }];
 
@@ -14,17 +14,17 @@ const mockTransformations: Transformation[] = [
   { transformId: 'tx-2', registryItem: undefined, transformConfig: { id: 'filter', options: {} } },
 ];
 
-const defaultProps: UseMultiSelectionOptions = {
+const defaultProps: UseSelectionStateOptions = {
   queries: mockQueries,
   transformations: mockTransformations,
   onClearSideEffects: jest.fn(),
 };
 
-function setup(props: UseMultiSelectionOptions = defaultProps) {
-  return renderHook(() => useMultiSelection(props));
+function setup(props: UseSelectionStateOptions = defaultProps) {
+  return renderHook(() => useSelectionState(props));
 }
 
-describe('useMultiSelection', () => {
+describe('useSelectionState', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });

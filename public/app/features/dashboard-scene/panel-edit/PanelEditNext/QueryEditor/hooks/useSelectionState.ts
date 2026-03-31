@@ -6,24 +6,21 @@ import { type ExpressionQuery } from 'app/features/expressions/types';
 import { type SelectionModifiers } from '../QueryEditorContext';
 import { type Transformation } from '../types';
 
-export interface UseMultiSelectionOptions {
+export interface UseSelectionStateOptions {
   queries: DataQuery[];
   transformations: Transformation[];
   onClearSideEffects?: () => void;
 }
 
-export interface UseMultiSelectionResult {
+export interface UseSelectionStateResult {
   selectedQueryRefIds: string[];
   selectedTransformationIds: string[];
   onCardSelectionChange: (queryRefId: string | null, transformationId: string | null) => void;
-  /** Updates selection to track a refId rename so the editor stays open on the renamed query. */
   trackQueryRename: (originalRefId: string, updatedRefId: string) => void;
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
   toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
   clearSelection: () => void;
-  /** Removes a query from selection (e.g. when deleted). */
   removeQueryFromSelection: (refId: string) => void;
-  /** Removes a transformation from selection (e.g. when deleted). */
   removeTransformationFromSelection: (transformId: string) => void;
 }
 
@@ -43,19 +40,22 @@ function computeRangeSelection(
 ): string[] | null {
   const anchorIdx = orderedIds.indexOf(anchorId);
   const clickedIdx = orderedIds.indexOf(clickedId);
+
   if (anchorIdx === -1 || clickedIdx === -1) {
     return null;
   }
-  const [start, end] = anchorIdx <= clickedIdx ? [anchorIdx, clickedIdx] : [clickedIdx, anchorIdx];
+
+  const start = Math.min(anchorIdx, clickedIdx);
+  const end = Math.max(anchorIdx, clickedIdx);
   const rangeIds = orderedIds.slice(start, end + 1);
-  // Union: keep any existing selections outside the range, then append the full range.
-  // This preserves manually-added items while the range becomes the contiguous tail.
-  const existingWithoutRange = existingSelection.filter((id) => !rangeIds.includes(id));
+
+  const rangeSet = new Set(rangeIds);
+  const existingWithoutRange = existingSelection.filter((id) => !rangeSet.has(id));
   return [...existingWithoutRange, ...rangeIds];
 }
 
 /**
- * Manages the ordered multi-selection state for queries and transformations.
+ * Manages the ordered selection state for queries and transformations.
  * The last element of each array is the "primary" item shown in the editor pane.
  *
  * Supports three click modes:
@@ -66,11 +66,11 @@ function computeRangeSelection(
  * Query and transformation selections are mutually exclusive — selecting one type
  * clears the other.
  */
-export function useMultiSelection({
+export function useSelectionState({
   queries,
   transformations,
   onClearSideEffects,
-}: UseMultiSelectionOptions): UseMultiSelectionResult {
+}: UseSelectionStateOptions): UseSelectionStateResult {
   const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>([]);
   const [selectedTransformationIds, setSelectedTransformationIds] = useState<string[]>([]);
 
@@ -109,9 +109,10 @@ export function useMultiSelection({
         // so Shift+Click works immediately on page load.
         const currentSelection = selectedQueryRefIdsRef.current;
         const anchorRefId = currentSelection.at(-1) ?? queries[0]?.refId ?? null;
+
         if (anchorRefId) {
           const rangeSelection = computeRangeSelection(
-            queries.map((q) => q.refId),
+            queries.map(({ refId }) => refId),
             currentSelection,
             anchorRefId,
             query.refId

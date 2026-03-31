@@ -169,6 +169,7 @@ function getStyles(
   const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
   const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+
   const {
     ghostBackgroundColor,
     ghostBorderColor,
@@ -270,6 +271,8 @@ function getStyles(
       justifyContent: 'space-between',
 
       width: '100%',
+      // TODO: Consider extracting selection-based styling (background, boxShadow, width)
+      // into a helper or computed variable to avoid nested ternaries.
       background: isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',

@@ -106,7 +106,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate, readOnly }: E
   if (readOnly) {
     return (
       <span className={styles.queryNameText}>
-        <Text color="primary" element="p" truncate variant="code">
+        <Text color="primary" truncate variant="code">
           {query.refId}
         </Text>
       </span>
