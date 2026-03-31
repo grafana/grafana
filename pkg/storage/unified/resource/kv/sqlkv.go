@@ -407,9 +407,9 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 	return nil
 }
 
-// Batch executes all operations atomically within a single transaction.
-// All-Put batches on DataSection use multi-row INSERT for maximum throughput.
-// All other operations fall back to per-item execution within the transaction.
+// Batch executes a batch of Create operations on DataSection using multi-row INSERT.
+// Keys must be unique and new (collection cleared before import, keys embed fresh RV).
+// All other operation modes or sections return an error.
 func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
 	if section == "" {
 		return fmt.Errorf("section is required")
@@ -421,18 +421,17 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
 	}
 
-	// Validate all ops upfront.
 	for i, op := range ops {
-		switch op.Mode {
-		case BatchOpPut, BatchOpCreate, BatchOpUpdate:
-			if len(op.Value) == 0 {
-				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
-			}
-		case BatchOpDelete:
-			// OK
-		default:
-			return &BatchError{Err: fmt.Errorf("unknown operation mode: %d", op.Mode), Index: i, Op: op}
+		if op.Mode != BatchOpCreate {
+			return &BatchError{Err: fmt.Errorf("only BatchOpCreate is supported for sqlKV"), Index: i, Op: op}
 		}
+		if len(op.Value) == 0 {
+			return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+		}
+	}
+
+	if section != DataSection {
+		return fmt.Errorf("Batch only supports DataSection for sqlKV")
 	}
 
 	qb, err := k.getQueryBuilder(section)
@@ -448,107 +447,14 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		defer tx.Rollback() //nolint:errcheck
 	}
 
-	// Fast path: all-Create on DataSection uses multi-row INSERT.
-	// Keys are guaranteed unique by the caller (collection cleared, keys embed fresh RV).
-	if section == DataSection && allCreate(ops) {
-		if err := k.batchInsertDatastore(ctx, tx, qb, ops); err != nil {
-			return err
-		}
-	} else {
-		// Fallback: per-item execution for mixed modes or non-DataSection.
-		if err := k.batchPerItem(ctx, tx, qb, section, ops); err != nil {
-			return err
-		}
+	if err := k.batchInsertDatastore(ctx, tx, qb, ops); err != nil {
+		return err
 	}
 
 	if owned {
 		return tx.Commit()
 	}
 	return nil
-}
-
-// allCreate returns true if every op is a BatchOpCreate.
-func allCreate(ops []BatchOp) bool {
-	for _, op := range ops {
-		if op.Mode != BatchOpCreate {
-			return false
-		}
-	}
-	return true
-}
-
-// batchPerItem executes each op individually within the given transaction.
-func (k *SqlKV) batchPerItem(ctx context.Context, tx *sql.Tx, qb *queryBuilder, section string, ops []BatchOp) error {
-	for i, op := range ops {
-		keyPath := getKeyPath(section, op.Key)
-		var err error
-		switch op.Mode {
-		case BatchOpPut:
-			if section == DataSection {
-				// key_path is not unique on resource_history, so ON CONFLICT
-				// cannot be used. Check existence and insert or update.
-				if exists, e := keyExistsTx(ctx, tx, qb, keyPath); e != nil {
-					return &BatchError{Err: e, Index: i, Op: op}
-				} else if exists {
-					query, args := qb.buildUpdateDatastoreQuery(keyPath, op.Value)
-					_, err = tx.ExecContext(ctx, query, args...)
-				} else {
-					query, args := qb.buildInsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
-					_, err = tx.ExecContext(ctx, query, args...)
-				}
-			} else {
-				query, args := qb.buildUpsertQuery(keyPath, op.Value)
-				_, err = tx.ExecContext(ctx, query, args...)
-			}
-		case BatchOpCreate:
-			if exists, e := keyExistsTx(ctx, tx, qb, keyPath); e != nil {
-				return &BatchError{Err: e, Index: i, Op: op}
-			} else if exists {
-				return &BatchError{Err: ErrKeyAlreadyExists, Index: i, Op: op}
-			}
-			if section == DataSection {
-				query, args := qb.buildInsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
-				_, err = tx.ExecContext(ctx, query, args...)
-			} else {
-				query, args := qb.buildUpsertQuery(keyPath, op.Value)
-				_, err = tx.ExecContext(ctx, query, args...)
-			}
-		case BatchOpUpdate:
-			if exists, e := keyExistsTx(ctx, tx, qb, keyPath); e != nil {
-				return &BatchError{Err: e, Index: i, Op: op}
-			} else if !exists {
-				return &BatchError{Err: ErrNotFound, Index: i, Op: op}
-			}
-			if section == DataSection {
-				query, args := qb.buildUpdateDatastoreQuery(keyPath, op.Value)
-				_, err = tx.ExecContext(ctx, query, args...)
-			} else {
-				query, args := qb.buildUpsertQuery(keyPath, op.Value)
-				_, err = tx.ExecContext(ctx, query, args...)
-			}
-		case BatchOpDelete:
-			query, args := qb.buildDeleteQuery(keyPath)
-			_, err = tx.ExecContext(ctx, query, args...)
-		}
-		if err != nil {
-			return &BatchError{Err: err, Index: i, Op: op}
-		}
-	}
-	return nil
-}
-
-func keyExistsTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, keyPath string) (bool, error) {
-	query, args := qb.buildGetQuery(keyPath)
-	row := tx.QueryRowContext(ctx, query, args...)
-	var value []byte
-	err := row.Scan(&value)
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	return true, nil
 }
 
 func (k *SqlKV) batchInsertDatastore(ctx context.Context, tx *sql.Tx, qb *queryBuilder, ops []BatchOp) error {
