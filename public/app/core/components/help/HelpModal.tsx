@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
-import { FeatureState, GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Grid, Modal, useStyles2, Text, FeatureBadge } from '@grafana/ui';

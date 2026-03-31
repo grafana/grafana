@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode } from 'react';
+import { type PropsWithChildren, type ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, IconButton, LinkButton, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
-import { GrafanaRulesSourceSymbol, RulesSourceIdentifier } from 'app/types/unified-alerting';
-import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import { GrafanaRulesSourceSymbol, type RulesSourceIdentifier } from 'app/types/unified-alerting';
+import { type RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
@@ -114,5 +114,6 @@ const getStyles = (theme: GrafanaTheme2, isCollapsed = false) => ({
   dataSourceSectionTitle: css({
     background: theme.colors.background.secondary,
     padding: theme.spacing(1, 1.5),
+    borderRadius: theme.shape.radius.default,
   }),
 });

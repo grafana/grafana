@@ -1,10 +1,17 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
-import { Spec as DashboardV2Spec, VariableKind, DashboardLink } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type Spec as DashboardV2Spec,
+  type VariableKind,
+  type DashboardLink,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type GetRepositoryFilesWithPathApiResponse,
+  provisioningAPIv0alpha1,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -16,8 +23,9 @@ import {
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
-import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec, isV2StoredVersion } from 'app/features/dashboard/api/utils';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -28,23 +36,23 @@ import { initializeScenePerformanceLogger } from 'app/features/dashboard/service
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ProvisioningPreview } from 'app/features/provisioning/types';
+import { type ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
 import {
-  DashboardDataDTO,
-  DashboardDTO,
+  type DashboardDataDTO,
+  type DashboardDTO,
   DashboardRoutes,
-  HomeDashboardRedirectDTO,
+  type HomeDashboardRedirectDTO,
   isRedirectResponse,
 } from 'app/types/dashboard';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import {
   createV2RowsLayout,
-  SceneCreationOptions,
+  type SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
@@ -311,7 +319,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
-    if (dryRun.apiVersion.split('/')[1] === 'v2beta1') {
+    if (dryRun.apiVersion.split('/')[1].startsWith('v2')) {
       return {
         ...dryRun,
         kind: 'DashboardWithAccessInfo',
@@ -381,7 +389,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
-      const isRenderTarget = options.route === DashboardRoutes.Report || options.route === DashboardRoutes.Embedded;
+      const isRenderTarget =
+        options.route === DashboardRoutes.Report ||
+        options.route === DashboardRoutes.Embedded ||
+        (options.route === DashboardRoutes.Normal && contextSrv.user?.authenticatedBy === 'render');
       const enableProfiling =
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1 ||
         isRenderTarget;
@@ -442,6 +453,9 @@ abstract class DashboardScenePageStateManagerBase<T>
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
+
+    // Resolve API versions before synchronous getV1()/getV2() calls downstream.
+    await dashboardAPIVersionResolver.resolve();
 
     // Home dashboard is not handled through legacy API and is not versioned.
     // Handling home dashboard flow separately from regular dashboard flow.
@@ -563,6 +577,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       if (isDashboardV2Spec(rsp.dashboard)) {
         throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
       }
+
+      rsp.meta.snapshotKey = slug;
 
       // Snapshots should use default v1 layout
       const scene = transformSaveModelToScene(rsp, undefined, getSceneCreationOptions(undefined, { isSnapshot: true }));
@@ -905,6 +921,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     if (v2Response.spec) {
       const scene = transformSaveModelSchemaV2ToScene(v2Response);
+      scene.setState({ meta: { ...scene.state.meta, snapshotKey: slug } });
       return scene;
     }
 
@@ -978,7 +995,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             throw new DashboardVersionError('v0alpha1', 'Assistant preview contains V1 dashboard');
           }
           return {
-            apiVersion: 'v2beta1',
+            apiVersion: dashboardAPIVersionResolver.getV2(),
             kind: 'DashboardWithAccessInfo',
             metadata: {
               creationTimestamp: '',

@@ -1,4 +1,4 @@
-import { render, RenderResult, screen } from '@testing-library/react';
+import { render, type RenderResult, screen } from '@testing-library/react';
 import { noop } from 'lodash';
 
 import { CoreApp } from '@grafana/data';

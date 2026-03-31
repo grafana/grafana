@@ -5,7 +5,7 @@
 // in that case please add the attribute data-testid={selector} in the component and
 // prefix your selector string with 'data-testid' so that when we create the selectors we know to search for it on the right attribute
 
-import { VersionedSelectorGroup } from '../types';
+import { type VersionedSelectorGroup } from '../types';
 
 import { MIN_GRAFANA_VERSION } from './constants';
 
@@ -705,6 +705,9 @@ export const versionedComponents = {
       },
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
+      },
+      addLinkButton: {
+        '12.6.0': 'data-testid add link button',
       },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',

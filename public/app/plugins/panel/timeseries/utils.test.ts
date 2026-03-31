@@ -1,9 +1,9 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, createDataFrame, toDataFrame, type PanelData } from '@grafana/data';
 import { LineInterpolation } from '@grafana/ui';
 
-import { AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
+import { type AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
 
-import { getGroupedFilters, prepareGraphableFields } from './utils';
+import { getGroupedFilters, LTTB_THRESHOLD, lttbPreviewData, prepareGraphableFields } from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -17,6 +17,21 @@ describe('prepare timeseries graph', () => {
     ];
     const frames = prepareGraphableFields(input, createTheme());
     expect(frames).toBeNull();
+  });
+
+  it('does not needlessly copy clean arrays', () => {
+    const values = [1, 2];
+
+    const df = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'a', values },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme());
+
+    const field = frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values).toBe(values);
   });
 
   it('requires a number or boolean value', () => {
@@ -82,7 +97,7 @@ describe('prepare timeseries graph', () => {
     const df = createDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, values: [995, 9996, 9997, 9998, 9999] },
-        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
+        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity, null] },
       ],
     });
     const frames = prepareGraphableFields([df], createTheme());
@@ -93,6 +108,7 @@ describe('prepare timeseries graph', () => {
         -10,
         null,
         10,
+        null,
         null,
         null,
       ]
@@ -258,5 +274,101 @@ describe('prepare timeseries graph', () => {
         },
       ]);
     });
+  });
+});
+
+describe('lttbPreviewData', () => {
+  const range = (n: number) => Array.from({ length: n }, (_, i) => i);
+
+  const makeFrame = (length: number, extraFields?: Array<{ name: string; type: FieldType; values: unknown[] }>) => {
+    return createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: range(length) },
+        { name: 'value', type: FieldType.number, values: range(length) },
+        ...(extraFields ?? []),
+      ],
+    });
+  };
+
+  it('returns frames unchanged when below the threshold', () => {
+    const result = lttbPreviewData({ series: [makeFrame(3)] } as PanelData);
+
+    expect(result.series[0].length).toBe(3);
+    expect(result.series[0].fields[0].values).toEqual([0, 1, 2]);
+  });
+
+  it('returns frames unchanged when there is no time field', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'b', type: FieldType.number, values: [4, 5, 6] },
+      ],
+    });
+    const result = lttbPreviewData({ series: [frame] } as PanelData);
+
+    expect(result.series[0].length).toBe(3);
+  });
+
+  it('returns frames unchanged when there is no numeric field', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'label', type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+    const result = lttbPreviewData({ series: [frame] } as PanelData);
+
+    expect(result.series[0].length).toBe(3);
+  });
+
+  it('downsamples frames exceeding the threshold to LTTB_THRESHOLD points', () => {
+    const result = lttbPreviewData({ series: [makeFrame(1000)] } as PanelData);
+
+    expect(result.series[0].length).toBe(LTTB_THRESHOLD);
+    expect(result.series[0].fields[0].values).toHaveLength(LTTB_THRESHOLD);
+    expect(result.series[0].fields[1].values).toHaveLength(LTTB_THRESHOLD);
+  });
+
+  it('always preserves the first and last data points', () => {
+    const result = lttbPreviewData({ series: [makeFrame(1000)] } as PanelData);
+
+    const outTimes = result.series[0].fields[0].values;
+    expect(outTimes[0]).toBe(0);
+    expect(outTimes[outTimes.length - 1]).toBe(999);
+  });
+
+  it('processes each frame independently', () => {
+    const result = lttbPreviewData({ series: [makeFrame(3), makeFrame(500)] } as PanelData);
+
+    expect(result.series[0].length).toBe(3);
+    expect(result.series[1].length).toBe(LTTB_THRESHOLD);
+  });
+
+  it('does not mutate the original data', () => {
+    const frame = makeFrame(500);
+    const data = { series: [frame] } as PanelData;
+    lttbPreviewData(data);
+
+    expect(data.series[0].fields[0].values).toHaveLength(500);
+    expect(data.series[0].length).toBe(500);
+  });
+
+  it('downsamples to a custom threshold when provided', () => {
+    const result = lttbPreviewData({ series: [makeFrame(100)] } as PanelData, 30);
+
+    expect(result.series[0].length).toBe(30);
+    expect(result.series[0].fields[0].values).toHaveLength(30);
+    expect(result.series[0].fields[1].values).toHaveLength(30);
+
+    const outTimes = result.series[0].fields[0].values;
+    expect(outTimes[0]).toBe(0);
+    expect(outTimes[outTimes.length - 1]).toBe(99);
+  });
+
+  it('skips frames at or below the custom threshold', () => {
+    const result = lttbPreviewData({ series: [makeFrame(30)] } as PanelData, 30);
+
+    expect(result.series[0].length).toBe(30);
+    expect(result.series[0].fields[0].values).toEqual(range(30));
   });
 });

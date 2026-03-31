@@ -1,15 +1,20 @@
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 
-import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
-import { PanelDataPaneNext } from '../PanelDataPaneNext';
+import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { PendingExpression, PendingSavedQuery, PendingTransformation, QueryEditorProvider } from './QueryEditorContext';
+import {
+  type PendingExpression,
+  type PendingSavedQuery,
+  type PendingTransformation,
+  QueryEditorProvider,
+} from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
 import { usePendingTransformation } from './hooks/usePendingTransformation';
@@ -18,7 +23,7 @@ import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
-import { AlertRule, Transformation } from './types';
+import { type AlertRule, type Transformation } from './types';
 import { getEditorType, getTransformId } from './utils';
 
 /**

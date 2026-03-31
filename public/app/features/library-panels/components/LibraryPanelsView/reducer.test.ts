@@ -1,15 +1,15 @@
 import { LoadingState } from '@grafana/data';
-import { Panel } from '@grafana/schema';
+import { type Panel } from '@grafana/schema';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
-import { LibraryElementDTO } from '../../types';
+import { type LibraryElementDTO } from '../../types';
 
 import {
   changePage,
   initialLibraryPanelsViewState,
   initSearch,
   libraryPanelsViewReducer,
-  LibraryPanelsViewState,
+  type LibraryPanelsViewState,
   searchCompleted,
 } from './reducer';
 

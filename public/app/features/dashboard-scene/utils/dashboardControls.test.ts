@@ -1,7 +1,7 @@
-import { DataQuery, DataSourceApi, DataSourceJsonData } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { DashboardLink, DataSourceRef } from '@grafana/schema';
-import { defaultDataQueryKind, QueryVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DataQuery, type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import { defaultDataQueryKind, type QueryVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { reportPerformance } from 'app/core/services/echo/EchoSrv';
 
 import { loadDefaultControlsFromDatasources } from './dashboardControls';
@@ -228,6 +228,39 @@ describe('dashboardControls', () => {
         },
       });
       expect(result.defaultLinks).toEqual([]);
+    });
+
+    it('should preserve default variable descriptions from datasources', async () => {
+      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
+      const describedVariable: QueryVariableKind = {
+        ...mockVariable1,
+        spec: {
+          ...mockVariable1.spec,
+          description: 'Read docs at https://grafana.com/docs',
+        },
+      };
+
+      const mockDs = createMockDatasource({
+        uid: 'ds-1',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.resolve([describedVariable]),
+        getDefaultLinks: undefined,
+        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const result = await loadDefaultControlsFromDatasources(refs);
+
+      expect(result.defaultVariables[0]).toMatchObject({
+        spec: {
+          description: 'Read docs at https://grafana.com/docs',
+        },
+      });
     });
 
     it('should collect default links from datasources', async () => {

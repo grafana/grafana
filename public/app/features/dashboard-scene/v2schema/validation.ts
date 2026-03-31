@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 import {
-  GridLayoutItemKind,
-  PanelKind,
-  QueryGroupKind,
-  VizConfigKind,
-  PanelQueryKind,
-  TransformationKind,
+  type GridLayoutItemKind,
+  type PanelKind,
+  type QueryGroupKind,
+  type VizConfigKind,
+  type PanelQueryKind,
+  type TransformationKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 function isObject(value: unknown): value is Record<string, unknown> {

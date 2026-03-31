@@ -1,4 +1,4 @@
-import { Page, Response, Request } from '@playwright/test';
+import { type Page, type Response, type Request } from '@playwright/test';
 import * as prom from 'prom-client';
 
 /**

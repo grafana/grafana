@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { fuzzySearch, SelectableValue } from '@grafana/data';
+import { fuzzySearch, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AdHocFilterWithLabels, AdHocFiltersVariable, GroupByVariable, OPERATORS } from '@grafana/scenes';
-import { ComboboxOption } from '@grafana/ui';
+import {
+  type AdHocFilterWithLabels,
+  type AdHocFiltersVariable,
+  type GroupByVariable,
+  OPERATORS,
+} from '@grafana/scenes';
+import { type ComboboxOption } from '@grafana/ui';
 
 import { buildAdHocApplyFilters, buildGroupByUpdate, buildOverviewState } from './utils';
 

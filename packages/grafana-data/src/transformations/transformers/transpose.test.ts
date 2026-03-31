@@ -1,4 +1,4 @@
-import { DataTransformerConfig } from '@grafana/schema';
+import { type DataTransformerConfig } from '@grafana/schema';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
@@ -7,7 +7,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { transposeTransformer, TransposeTransformerOptions } from './transpose';
+import { transposeTransformer, type TransposeTransformerOptions } from './transpose';
 
 describe('Transpose transformer', () => {
   beforeAll(() => {

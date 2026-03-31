@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 
 import {
   FieldMatcherID,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   PluginState,
-  SelectableValue,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type SelectableValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -17,7 +17,7 @@ import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfi
 import darkImage from '../images/dark/configFromData.svg';
 import lightImage from '../images/light/configFromData.svg';
 
-import { getConfigFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
+import { getConfigFromDataTransformer, type ConfigFromQueryTransformOptions } from './configFromQuery';
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 
@@ -84,6 +84,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
             data={input}
             options={currentMatcher.options}
             onChange={onMatcherConfigChange}
+            scope={currentMatcher.scope}
           />
         </InlineField>
       </InlineFieldRow>

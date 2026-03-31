@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { TypedVariableModel } from '@grafana/data';
+import { type TypedVariableModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';

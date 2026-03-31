@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { TimeRange } from '@grafana/data';
-import { Cascader, CascaderOption } from '@grafana/ui';
+import { type TimeRange } from '@grafana/data';
+import { Cascader, type CascaderOption } from '@grafana/ui';
 
-import { PyroscopeDataSource } from '../datasource';
-import { ProfileTypeMessage } from '../types';
+import { type PyroscopeDataSource } from '../datasource';
+import { type ProfileTypeMessage } from '../types';
 
 type Props = {
   initialProfileTypeId?: string;

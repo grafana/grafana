@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { memo, ReactNode, useMemo } from 'react';
+import { memo, type ReactNode, useMemo } from 'react';
 
-import { LogRowModel } from '@grafana/data';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type LogRowModel } from '@grafana/data';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogRowMenuCell } from './LogRowMenuCell';
-import { LogRowStyles } from './getLogRowStyles';
+import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
+import { type LogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 
 export interface Props {

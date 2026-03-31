@@ -1,6 +1,7 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
@@ -10,11 +11,12 @@ import {
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
+import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
 
-import { CommandPaletteAction } from '../types';
+import { type CommandPaletteAction } from '../types';
 import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
 // TODO: Clean this once ID is mandatory on nav items
@@ -142,6 +144,8 @@ function getGlobalActions(): CommandPaletteAction[] {
 
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
 
@@ -157,10 +161,15 @@ export function useStaticActions(): CommandPaletteAction[] {
           section: t('command-palette.section.actions', 'Actions'),
           priority: ACTIONS_PRIORITY,
           perform: () => {
-            DashboardLibraryInteractions.entryPointClicked({
-              entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
-              contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-            });
+            isAnalyticsFrameworkEnabled
+              ? NewDashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                })
+              : DashboardLibraryInteractions.entryPointClicked({
+                  entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                });
             locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
           },
         });
@@ -181,5 +190,5 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
     return [...getGlobalActions(), ...navBarActions];
-  }, [navBarTree]);
+  }, [isAnalyticsFrameworkEnabled, navBarTree]);
 }

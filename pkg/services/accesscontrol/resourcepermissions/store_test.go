@@ -526,7 +526,7 @@ func seedResourcePermissions(
 
 	usrSvc, err := userimpl.ProvideService(
 		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -964,10 +964,14 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			opts := Options{
+				Resource:        tt.resource,
+				K8sActionFormat: false,
+			}
 			asService := NewInMemoryActionSetStore()
-			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
+			asService.StoreActionSet(opts.GetActionSetName(tt.action), tt.actions)
 
-			actionSetName := GetActionSetName(tt.resource, tt.action)
+			actionSetName := opts.GetActionSetName(tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
 			require.Equal(t, tt.actions, actionSet)
 		})
@@ -979,6 +983,8 @@ func TestStore_ResolveActionSet(t *testing.T) {
 	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":view", []string{accesscontrol.ActionAlertingManagedRoutesRead})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":edit", []string{accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite})
 
 	type actionSetTest struct {
 		desc               string
@@ -1006,6 +1012,14 @@ func TestStore_ResolveActionSet(t *testing.T) {
 			desc:               "should be able to resolve multiple action sets for the resource of a different type",
 			action:             "dashboards:read",
 			expectedActionSets: []string{"folders:view", "folders:edit", "dashboards:view"},
+		},
+		{
+			desc:   "should support routes",
+			action: accesscontrol.ActionAlertingManagedRoutesRead,
+			expectedActionSets: []string{
+				accesscontrol.AlertingRoutesKind + ":view",
+				accesscontrol.AlertingRoutesKind + ":edit",
+			},
 		},
 	}
 
