@@ -99,9 +99,9 @@ func (a *api) registerEndpoints() {
 	}(a.service.options.ResourceTranslator)
 
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
-		actionRead := fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
-		actionWrite := fmt.Sprintf("%s.permissions:write", a.service.options.Resource)
-		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
+		actionRead := a.service.options.GetAction("read")
+		actionWrite := a.service.options.GetAction("write")
+		scope := a.service.options.GetScope(a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
 		r.Get("/description", auth(accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
 		r.Get("/:resourceID", resourceResolver, auth(accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
 		r.Post("/:resourceID", resourceResolver, licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))

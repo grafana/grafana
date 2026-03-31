@@ -5414,6 +5414,45 @@
         },
         "type": "object"
       },
+      "ExternalAlertmanagerConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "ExternalAlertmanagerStatus": {
+        "properties": {
+          "cluster": {
+            "$ref": "#/components/schemas/clusterStatus"
+          },
+          "config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "uptime": {
+            "description": "uptime",
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionInfo": {
+            "$ref": "#/components/schemas/versionInfo"
+          }
+        },
+        "required": [
+          "cluster",
+          "config",
+          "uptime",
+          "versionInfo"
+        ],
+        "type": "object"
+      },
       "ExtraConfiguration": {
         "properties": {
           "alertmanager_config": {
