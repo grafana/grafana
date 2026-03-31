@@ -18,7 +18,7 @@ func TestAlertmanagerAggregatedMetrics_DescribeMetricNames(t *testing.T) {
 	m.Describe(ch)
 	close(ch)
 
-	var names []string
+	names := make([]string, 0, len(ch))
 	for desc := range ch {
 		names = append(names, desc.String())
 	}
