@@ -218,6 +218,7 @@ type Cfg struct {
 	FormActionAdditionalHosts       []string
 	EnableFrontendSandboxForPlugins []string
 	DisableGravatar                 bool
+	GravatarURL                     string
 	DataProxyWhiteList              map[string]bool
 	ActionsAllowPostURL             string
 
@@ -1844,6 +1845,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	cfg.SecretKey = valueAsString(security, "secret_key", "")
 	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+	cfg.GravatarURL = security.Key("gravatar_url").MustString("https://secure.gravatar.com/avatar")
 
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
