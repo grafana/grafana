@@ -666,10 +666,6 @@ describe('align frames', () => {
       expect(isLikelyAscendingVector([null, 1, null], 3)).toBeTruthy();
     });
   });
-
-  it('true = true', () => {
-    expect(true).toBe(true);
-  });
 });
 
 function getFieldDisplayNames(data: DataFrame[]): string[] {
