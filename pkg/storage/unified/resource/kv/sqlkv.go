@@ -484,7 +484,7 @@ func (k *SqlKV) batchPerItem(ctx context.Context, tx *sql.Tx, qb *queryBuilder, 
 		switch op.Mode {
 		case BatchOpPut:
 			if section == DataSection {
-				query, args := qb.buildInsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
+				query, args := qb.buildUpsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
 				_, err = tx.ExecContext(ctx, query, args...)
 			} else {
 				query, args := qb.buildUpsertQuery(keyPath, op.Value)

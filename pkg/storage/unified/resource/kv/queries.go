@@ -180,6 +180,43 @@ func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, 
 	return query, []interface{}{guid, keyPath, value, "", "", "", "", 0, ""}
 }
 
+// buildUpsertDatastoreQuery generates an upsert for the datastore section (9 columns).
+// On conflict with key_path, only value is updated; guid and legacy columns are left unchanged.
+func (qb *queryBuilder) buildUpsertDatastoreQuery(keyPath string, value []byte, guid string) (string, []interface{}) {
+	cols := []string{"guid", "key_path", "value", "group", "resource", "namespace", "name", "action", "folder"}
+	quoted := make([]string, len(cols))
+	for i, c := range cols {
+		quoted[i] = qb.dialect.QuoteIdent(c)
+	}
+	placeholders := make([]string, len(cols))
+	for i := range cols {
+		placeholders[i] = qb.dialect.Placeholder(i + 1)
+	}
+	baseArgs := []interface{}{guid, keyPath, value, "", "", "", "", 0, ""}
+
+	switch qb.dialect.Name() {
+	case "mysql":
+		query := fmt.Sprintf(
+			"INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s = %s",
+			qb.dialect.QuoteIdent(qb.tableName),
+			strings.Join(quoted, ", "),
+			strings.Join(placeholders, ", "),
+			qb.dialect.QuoteIdent("value"), qb.dialect.Placeholder(len(cols)+1),
+		)
+		return query, append(baseArgs, value)
+	default: // postgres, sqlite
+		query := fmt.Sprintf(
+			"INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s = %s",
+			qb.dialect.QuoteIdent(qb.tableName),
+			strings.Join(quoted, ", "),
+			strings.Join(placeholders, ", "),
+			qb.dialect.QuoteIdent("key_path"),
+			qb.dialect.QuoteIdent("value"), qb.dialect.Placeholder(len(cols)+1),
+		)
+		return query, append(baseArgs, value)
+	}
+}
+
 // batchInsertRow represents a single row for batch INSERT into the datastore
 type batchInsertRow struct {
 	GUID    string
