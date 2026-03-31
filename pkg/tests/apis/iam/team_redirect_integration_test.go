@@ -457,17 +457,6 @@ func teamsByUID(teams []*team.TeamDTO) map[string]*team.TeamDTO {
 	return m
 }
 
-func assertSearchTeamsMatch(t *testing.T, legacy, k8s *team.TeamDTO) {
-	t.Helper()
-	assert.Equal(t, legacy.UID, k8s.UID)
-	assert.Equal(t, legacy.OrgID, k8s.OrgID)
-	assert.Equal(t, legacy.Name, k8s.Name)
-	assert.Equal(t, legacy.Email, k8s.Email)
-	assert.Equal(t, legacy.ExternalUID, k8s.ExternalUID)
-	assert.Equal(t, legacy.IsProvisioned, k8s.IsProvisioned)
-	assert.Equal(t, legacy.MemberCount, k8s.MemberCount)
-}
-
 // --- Assertion helpers ---
 
 func assertTeamsMatch(t *testing.T, legacy, k8s teamResponse) {
@@ -489,4 +478,15 @@ func assertRedirectMatchesK8sAPI(t *testing.T, redirectTeam, directK8sTeam teamR
 	assert.Equal(t, redirectTeam.Email, directK8sTeam.Email)
 	assert.Equal(t, redirectTeam.ExternalUID, directK8sTeam.ExternalUID)
 	assert.Equal(t, redirectTeam.IsProvisioned, directK8sTeam.IsProvisioned)
+}
+
+func assertSearchTeamsMatch(t *testing.T, legacy, k8s *team.TeamDTO) {
+	t.Helper()
+	assert.Equal(t, legacy.UID, k8s.UID)
+	assert.Equal(t, legacy.OrgID, k8s.OrgID)
+	assert.Equal(t, legacy.Name, k8s.Name)
+	assert.Equal(t, legacy.Email, k8s.Email)
+	assert.Equal(t, legacy.ExternalUID, k8s.ExternalUID)
+	assert.Equal(t, legacy.IsProvisioned, k8s.IsProvisioned)
+	assert.Equal(t, legacy.MemberCount, k8s.MemberCount)
 }
