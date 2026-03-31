@@ -124,8 +124,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const [showRenameDrawer, setShowRenameDrawer] = useState(false);
-  const canRenameProvisioned = canEditFolders && !!folderUID && isProvisionedFolder && !isReadOnlyRepo;
-  const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
+  const showEditTitle = canEditFolders && !!folderUID;
   const permissions = {
     canEditFolders,
     canEditDashboards,
@@ -156,7 +155,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     return (
       <Stack alignItems={'center'} gap={2}>
         <Text element={'h1'}>{title}</Text>
-        {canRenameProvisioned && (
+        {showEditTitle && isProvisionedFolder && !isReadOnlyRepo && (
           <IconButton
             name="pen"
             size="lg"
@@ -173,7 +172,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
-      onEditTitle={showEditTitle ? onEditTitle : undefined}
+      onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
       actions={<FolderDetailsActions folderDTO={folderDTO} />}
     >
