@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/k8s"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/client_golang/prometheus"
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,16 +34,15 @@ var (
 )
 
 type AppInstaller struct {
-	metaManager        *meta.ProviderManager
-	cfgProvider        configprovider.ConfigProvider
-	restConfigProvider apiserver.RestConfigProvider
+	metaManager *meta.ProviderManager
+	cfgProvider configprovider.ConfigProvider
 
 	*pluginsapp.PluginAppInstaller
 }
 
 func ProvideAppInstaller(
 	cfgProvider configprovider.ConfigProvider,
-	restConfigProvider apiserver.RestConfigProvider,
+	clientGenerator resource.ClientGenerator,
 	pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
 	features featuremgmt.FeatureToggles, registerer prometheus.Registerer,
@@ -75,13 +73,6 @@ func ProvideAppInstaller(
 	}
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
-
-	// Create InstallRegistrar with a client generator that will be initialized lazily
-	restCfg, err := restConfigProvider.GetRestConfig(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get rest config: %w", err)
-	}
-	clientGenerator := k8s.NewClientRegistry(*restCfg, k8s.DefaultClientConfig())
 	registrar := install.NewInstallRegistrar(logger, clientGenerator)
 
 	// Create single-tenant lifecycle manager for on-prem deployments
@@ -95,7 +86,6 @@ func ProvideAppInstaller(
 	return &AppInstaller{
 		metaManager:        metaProviderManager,
 		cfgProvider:        cfgProvider,
-		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
 	}, nil
 }
