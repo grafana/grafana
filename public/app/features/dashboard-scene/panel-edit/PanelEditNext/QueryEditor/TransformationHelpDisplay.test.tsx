@@ -1,13 +1,13 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataTransformerInfo, TransformerRegistryItem } from '@grafana/data';
+import type { DataTransformerInfo, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTransformationContent } from 'app/features/transformers/docs/getTransformationContent';
 
 import { TransformationHelpDisplay } from './TransformationHelpDisplay';
 import { mockTransformToggles, renderWithQueryEditorProvider } from './testUtils';
-import { Transformation } from './types';
+import type { Transformation } from './types';
 
 jest.mock('app/features/transformers/docs/getTransformationContent', () => ({
   getTransformationContent: jest.fn(),
