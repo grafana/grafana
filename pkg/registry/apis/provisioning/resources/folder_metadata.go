@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -202,7 +202,16 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string, submitted *folders.Folder) (string, error) {
 	existing, _, err := ReadFolderMetadata(ctx, repo, folderPath, ref)
 	if err != nil {
-		return "", fmt.Errorf("read existing folder metadata: %w", err)
+		// When the target branch doesn't exist yet, fall back to reading from
+		// the configured branch. ensureBranchExists (called by repo.Update)
+		// creates the new branch from the configured branch, so the content is
+		// identical at creation time.
+		if errors.Is(err, repository.ErrRefNotFound) {
+			existing, _, err = ReadFolderMetadata(ctx, repo, folderPath, "")
+		}
+		if err != nil {
+			return "", fmt.Errorf("read existing folder metadata: %w", err)
+		}
 	}
 
 	if submitted.Name != "" && submitted.Name != existing.Name {

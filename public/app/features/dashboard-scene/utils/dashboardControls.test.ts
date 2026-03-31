@@ -1,7 +1,7 @@
-import { DataQuery, DataSourceApi, DataSourceJsonData } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { DashboardLink, DataSourceRef } from '@grafana/schema';
-import { defaultDataQueryKind, QueryVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DataQuery, type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
+import { defaultDataQueryKind, type QueryVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { reportPerformance } from 'app/core/services/echo/EchoSrv';
 
 import { loadDefaultControlsFromDatasources } from './dashboardControls';

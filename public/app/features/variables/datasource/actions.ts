@@ -2,14 +2,14 @@ import { chain } from 'lodash';
 
 import { stringToJsRegex } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { ThunkResult } from 'app/types/store';
+import { type ThunkResult } from 'app/types/store';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toVariablePayload } from '../utils';
 
 import { createDataSourceOptions } from './reducer';

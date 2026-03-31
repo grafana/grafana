@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Stack, useStyles2 } from '@grafana/ui';

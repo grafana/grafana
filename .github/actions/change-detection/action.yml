@@ -168,6 +168,7 @@ runs:
             - '${{ inputs.self }}'
           devenv:
             - 'devenv/**'
+            - '.dockerignore'
             - '${{ inputs.self }}'
     - name: Print all change groups
       shell: bash

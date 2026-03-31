@@ -1,4 +1,4 @@
-import { fieldReducers, FieldReducerInfo, ReducerID } from '../transformations/fieldReducer';
+import { fieldReducers, type FieldReducerInfo, ReducerID } from '../transformations/fieldReducer';
 
 import { Registry } from './Registry';
 

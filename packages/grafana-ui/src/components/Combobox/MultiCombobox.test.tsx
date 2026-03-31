@@ -1,9 +1,9 @@
 import { act, render, screen } from '@testing-library/react';
-import userEvent, { UserEvent } from '@testing-library/user-event';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
-import { ComboboxOption } from './types';
+import { MultiCombobox, type MultiComboboxProps } from './MultiCombobox';
+import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {

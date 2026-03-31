@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/stretchr/testify/assert"
@@ -68,7 +68,7 @@ func TestReadFolderMetadata(t *testing.T) {
 	t.Run("missing metadata.name returns invalid folder metadata error", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
-			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`)}, nil)
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`)}, nil)
 
 		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
 
@@ -134,7 +134,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 			if err := json.Unmarshal(b, &f); err != nil {
 				return false
 			}
-			return f.APIVersion == "folder.grafana.app/v1" &&
+			return f.APIVersion == "folder.grafana.app/v1beta1" &&
 				f.Kind == "Folder" &&
 				f.Name == uid &&
 				f.Spec.Title == "myfolder"
@@ -288,7 +288,7 @@ func TestNewFolderManifest(t *testing.T) {
 
 	gvk := f.GetObjectKind().GroupVersionKind()
 	assert.Equal(t, "folder.grafana.app", gvk.Group)
-	assert.Equal(t, "v1", gvk.Version)
+	assert.Equal(t, "v1beta1", gvk.Version)
 	assert.Equal(t, "Folder", gvk.Kind)
 }
 
@@ -630,7 +630,7 @@ func TestParseFolderResource(t *testing.T) {
 
 			// Verify GVK and GVR
 			assert.Equal(t, "folder.grafana.app", result.GVK.Group)
-			assert.Equal(t, "v1", result.GVK.Version)
+			assert.Equal(t, "v1beta1", result.GVK.Version)
 			assert.Equal(t, "Folder", result.GVK.Kind)
 		})
 	}
@@ -820,6 +820,50 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "branch-hash", hash)
 		rw.AssertExpectations(t)
+	})
+
+	t.Run("falls back to configured branch when ref not found", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		// First read with new-branch ref returns ErrRefNotFound
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(nil, repository.ErrRefNotFound).Once()
+		// Fallback read with empty ref (configured branch) returns existing data
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		// Update writes to the new branch (ensureBranchExists creates it)
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "new-branch", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Name == existingUID && f.Spec.Title == "New Title"
+		}), "rename folder").Return(nil)
+		// Re-read after update to get new hash
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-branch-hash"}, nil).Once()
+
+		submitted := NewFolderManifest(existingUID, "New Title")
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "rename folder", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "new-branch-hash", hash)
+		rw.AssertExpectations(t)
+	})
+
+	t.Run("returns error when both ref and configured branch fail", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		// First read with new-branch ref returns ErrRefNotFound
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(nil, repository.ErrRefNotFound).Once()
+		// Fallback read with empty ref also fails
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound).Once()
+
+		submitted := NewFolderManifest("any-uid", "Title")
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "", submitted)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "read existing folder metadata")
 	})
 }
 

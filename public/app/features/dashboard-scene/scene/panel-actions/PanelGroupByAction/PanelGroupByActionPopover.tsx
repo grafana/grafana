@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { GroupByVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
+import { type GroupByVariable, type VariableValueOption, type VariableValueSingle } from '@grafana/scenes';
 import { Button, Checkbox, ClickOutsideWrapper, FilterInput, Stack, useStyles2 } from '@grafana/ui';
 
 interface Props {

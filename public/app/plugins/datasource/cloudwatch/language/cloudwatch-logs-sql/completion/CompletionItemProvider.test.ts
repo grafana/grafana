@@ -1,7 +1,7 @@
-import { CustomVariableModel } from '@grafana/data';
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { type CustomVariableModel } from '@grafana/data';
+import { type Monaco, type monacoTypes } from '@grafana/ui';
 
-import { LogGroup } from '../../../dataquery.gen';
+import { type LogGroup } from '../../../dataquery.gen';
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../mocks/CloudWatchDataSource';
 import { multiLineFullQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQuery';
 import { multiLineFullQueryWithCaseClause } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause';
@@ -10,9 +10,9 @@ import { singleLineFullQuery } from '../../../mocks/cloudwatch-logs-sql-test-dat
 import { whitespaceQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/whitespaceQuery';
 import MonacoMock from '../../../mocks/monarch/Monaco';
 import TextModel from '../../../mocks/monarch/TextModel';
-import { ResourcesAPI } from '../../../resources/ResourcesAPI';
-import { ResourceResponse } from '../../../resources/types';
-import { LogGroupField } from '../../../types';
+import { type ResourcesAPI } from '../../../resources/ResourcesAPI';
+import { type ResourceResponse } from '../../../resources/types';
+import { type LogGroupField } from '../../../types';
 import cloudWatchLogsLanguageDefinition from '../definition';
 import {
   SELECT,

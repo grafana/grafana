@@ -2,7 +2,7 @@ import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from 'app/core/navigation/types';
+import { type RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { checkRequiredFeatures } from '../GettingStarted/features';

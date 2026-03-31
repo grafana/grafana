@@ -1,6 +1,12 @@
-import { AnnotationQuery, CoreApp, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
+import {
+  type AnnotationQuery,
+  CoreApp,
+  type DataSourceApi,
+  hasQueryExportSupport,
+  hasQueryImportSupport,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { standardAnnotationSupport } from '../standardAnnotationSupport';
 
