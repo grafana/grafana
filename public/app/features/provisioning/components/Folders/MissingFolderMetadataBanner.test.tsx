@@ -1,6 +1,7 @@
 import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type FolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
 
@@ -71,10 +72,14 @@ describe('MissingFolderMetadataBanner', () => {
 });
 
 describe('FolderPermissions', () => {
-  testWithFeatureToggles({ enable: ['provisioning', 'provisioningFolderMetadata'] });
+  testWithFeatureToggles({ enable: ['provisioning'] });
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  beforeEach(() => {
+    setTestFlags({ provisioningFolderMetadata: true });
   });
 
   it('renders permissions directly when folder is not provisioned', () => {
