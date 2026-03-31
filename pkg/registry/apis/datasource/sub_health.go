@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,16 +47,17 @@ func (r *subHealthREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	start := time.Now()
-	pluginID := r.builder.pluginJSON.ID
+	m := newConnectMetric("health", r.builder.pluginJSON.ID)
 
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			dsSubresourceRequests.WithLabelValues("health", pluginID, "not_found").Inc()
+			m.SetNotFound()
+			m.Record()
 			return nil, r.builder.datasourceResourceInfo.NewNotFound(name)
 		}
-		dsSubresourceRequests.WithLabelValues("health", pluginID, "error").Inc()
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
@@ -67,11 +67,14 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		PluginContext: pluginCtx,
 	})
 	if err != nil {
-		dsSubresourceRequests.WithLabelValues("health", pluginID, "error").Inc()
+		m.SetError()
+		m.Record()
 		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer m.Record()
+
 		rsp := &datasource.HealthCheckResult{}
 		rsp.Code = int(healthResponse.Status)
 		rsp.Status = healthResponse.Status.String()
@@ -80,7 +83,6 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		if len(healthResponse.JSONDetails) > 0 {
 			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
 			if err != nil {
-				dsSubresourceRequests.WithLabelValues("health", pluginID, "error").Inc()
 				responder.Error(err)
 				return
 			}
@@ -88,13 +90,8 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 
 		statusCode := http.StatusOK
 		if healthResponse.Status != backend.HealthStatusOk {
-			dsSubresourceRequests.WithLabelValues("health", pluginID, "error").Inc()
 			statusCode = http.StatusBadRequest
 		}
-
-		dsSubresourceRequests.WithLabelValues("health", pluginID, "success").Inc()
-		dsSubresourceRequestDuration.WithLabelValues("health", pluginID).Observe(time.Since(start).Seconds())
-
 		responder.Object(statusCode, rsp)
 	}), nil
 }
