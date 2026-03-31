@@ -493,16 +493,15 @@ const (
 	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
 	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
 
-	AlertingManagedRoutesResource = "notifications.alerting.grafana.app/routingtrees"
+	AlertingNotificationsApiGroup = "notifications.alerting.grafana.app"
+	AlertingRoutesResource        = "routingtrees"
 	// Alerting managed routes actions (new, scoped per-resource)
-	ActionAlertingManagedRoutesRead   = AlertingManagedRoutesResource + ":get"
-	ActionAlertingManagedRoutesWrite  = AlertingManagedRoutesResource + ":update"
-	ActionAlertingManagedRoutesCreate = AlertingManagedRoutesResource + ":create"
-	ActionAlertingManagedRoutesDelete = AlertingManagedRoutesResource + ":delete"
-
-	// Alerting routes permissions actions. Should match the resource name (see	https://github.com/grafana/grafana/blob/15c4cd5135056f50c75cfd1d872b11988fffad53/pkg/services/accesscontrol/resourcepermissions/api.go#L102 )
-	ActionAlertingRoutesPermissionsRead  = AlertingManagedRoutesResource + ":set_permissions"
-	ActionAlertingRoutesPermissionsWrite = AlertingManagedRoutesResource + ":get_permissions"
+	ActionAlertingManagedRoutesRead      = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":get"
+	ActionAlertingManagedRoutesWrite     = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":update"
+	ActionAlertingManagedRoutesCreate    = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":create"
+	ActionAlertingManagedRoutesDelete    = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":delete"
+	ActionAlertingRoutesPermissionsRead  = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":set_permissions"
+	ActionAlertingRoutesPermissionsWrite = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":get_permissions"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"

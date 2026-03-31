@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"strings"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -52,11 +51,9 @@ func ProvideRoutePermissionsService(
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*RoutePermissionsService, error) {
-	groupAndResource := strings.Split(accesscontrol.AlertingManagedRoutesResource, "/")
-
 	options := resourcepermissions.Options{
-		APIGroup:          groupAndResource[0],
-		Resource:          groupAndResource[1],
+		APIGroup:          accesscontrol.AlertingNotificationsApiGroup,
+		Resource:          accesscontrol.AlertingRoutesResource,
 		ResourceAttribute: "uid",
 		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 			return resourceID, nil
@@ -82,7 +79,7 @@ func ProvideRoutePermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions." + accesscontrol.AlertingManagedRoutesResource)}, nil
+	return &RoutePermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions." + accesscontrol.AlertingRoutesResource)}, nil
 }
 
 var _ accesscontrol.RoutePermissionsService = new(RoutePermissionsService)
