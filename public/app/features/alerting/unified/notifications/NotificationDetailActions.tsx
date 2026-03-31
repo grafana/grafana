@@ -1,4 +1,4 @@
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';

@@ -1,9 +1,9 @@
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 import { getDistinctLabels } from 'app/features/transformers/utils';
 
 import { getSuggestedOTelDisplayFormat } from '../otel/formats';
 
-import { FieldWithStats } from './FieldSelector';
+import { type FieldWithStats } from './FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from './logFields';
 
 export function getSuggestedFieldsFromTable(_: DataFrame, displayedFields: string[], defaultFields: string[] = []) {

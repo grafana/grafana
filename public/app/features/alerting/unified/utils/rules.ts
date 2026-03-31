@@ -1,55 +1,57 @@
 import { capitalize } from 'lodash';
 
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { AlertState } from '@grafana/data';
 import {
-  Alert,
-  AlertingRule,
-  CloudRuleIdentifier,
-  CombinedRule,
-  CombinedRuleGroup,
-  CombinedRuleWithLocation,
-  EditableRuleIdentifier,
-  GrafanaRuleIdentifier,
-  PromRuleWithLocation,
-  PrometheusRuleIdentifier,
-  RecordingRule,
-  Rule,
-  RuleGroupIdentifier,
-  RuleIdentifier,
-  RuleNamespace,
-  RuleWithLocation,
-  RulesSource,
+  type Alert,
+  type AlertingRule,
+  type CloudRuleIdentifier,
+  type CombinedRule,
+  type CombinedRuleGroup,
+  type CombinedRuleWithLocation,
+  type EditableRuleIdentifier,
+  type GrafanaRuleIdentifier,
+  type PromRuleWithLocation,
+  type PrometheusRuleIdentifier,
+  type RecordingRule,
+  type Rule,
+  type RuleGroupIdentifier,
+  type RuleIdentifier,
+  type RuleNamespace,
+  type RuleWithLocation,
+  type RulesSource,
 } from 'app/types/unified-alerting';
 import {
-  Annotations,
+  type Annotations,
   GrafanaAlertState,
-  GrafanaAlertStateWithReason,
-  GrafanaAlertingRuleDefinition,
-  GrafanaPromAlertingRuleDTO,
-  GrafanaPromRecordingRuleDTO,
-  GrafanaRecordingRuleDefinition,
-  PostableRuleDTO,
+  type GrafanaAlertStateWithReason,
+  type GrafanaAlertingRuleDefinition,
+  type GrafanaNotificationSettings,
+  type GrafanaPromAlertingRuleDTO,
+  type GrafanaPromRecordingRuleDTO,
+  type GrafanaRecordingRuleDefinition,
+  type PostableRuleDTO,
   PromAlertingRuleState,
-  PromRuleDTO,
+  type PromRuleDTO,
   PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerCloudRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
+  type RulerAlertingRuleDTO,
+  type RulerCloudRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
-import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
-import { State } from '../components/StateTag';
+import { type CombinedRuleNamespace } from '../../../../types/unified-alerting';
+import { type State } from '../components/StateTag';
 import { RuleHealth, RuleSource } from '../search/rulesSearchParser';
-import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
-import { AsyncRequestState } from './redux';
+import { type AsyncRequestState } from './redux';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 /* Grafana managed rules */
@@ -64,6 +66,16 @@ function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO
 
 function isGrafanaRecordingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO<GrafanaRecordingRuleDefinition> {
   return isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert;
+}
+
+export function ruleUsesDefaultPolicy(notificationSettings?: GrafanaNotificationSettings): boolean {
+  if (notificationSettings?.receiver) {
+    return false;
+  }
+  if (notificationSettings?.policy && notificationSettings.policy !== USER_DEFINED_TREE_NAME) {
+    return false;
+  }
+  return true;
 }
 
 export function isPausedRule(rule: RulerGrafanaRuleDTO) {

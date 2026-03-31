@@ -1,7 +1,7 @@
 import { fireEvent, render, waitFor } from 'test/test-utils';
 
-import { SqlExprContextValue } from './SqlExprContext';
-import { SqlQueryActions, SqlQueryActionsProps } from './SqlQueryActions';
+import { type SqlExprContextValue } from './SqlExprContext';
+import { SqlQueryActions, type SqlQueryActionsProps } from './SqlQueryActions';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),

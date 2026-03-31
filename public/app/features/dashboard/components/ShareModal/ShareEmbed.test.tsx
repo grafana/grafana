@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 
-import { BootData } from '@grafana/data';
+import { type BootData } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
-import { contextSrv, User } from '../../../../core/services/context_srv';
+import { contextSrv, type User } from '../../../../core/services/context_srv';
 import { Echo } from '../../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 

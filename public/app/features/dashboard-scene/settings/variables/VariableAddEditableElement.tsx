@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { useCallback, useId, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneVariable,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneVariable,
   SceneVariableSet,
   sceneGraph,
 } from '@grafana/scenes';
@@ -18,11 +18,14 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { DashboardScene } from '../../scene/DashboardScene';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { type DashboardScene } from '../../scene/DashboardScene';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 
-import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
+import { type EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
 
 export function openAddVariablePane(dashboard: DashboardScene) {
   const element = new VariableAdd({ dashboardRef: dashboard.getRef() });

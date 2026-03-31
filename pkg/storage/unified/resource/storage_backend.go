@@ -37,7 +37,6 @@ import (
 const (
 	defaultListBufferSize             = 100
 	defaultEventRetentionPeriod       = 1 * time.Hour
-	defaultEventPruningLimit          = 20
 	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
@@ -55,20 +54,21 @@ type GarbageCollectionConfig struct {
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake            *snowflake.Node
-	kv                   KV
-	bulkLock             *BulkLock
-	dataStore            *dataStore
-	eventStore           *eventStore
-	notifier             notifier
-	log                  log.Logger
-	disablePruner        bool
-	eventRetentionPeriod time.Duration
-	eventPruningInterval time.Duration
-	historyPruner        Pruner
-	garbageCollection    GarbageCollectionConfig
-	lastImportStore      *lastImportStore
-	lastImportTimeMaxAge time.Duration
+	snowflake               *snowflake.Node
+	kv                      KV
+	bulkLock                *BulkLock
+	dataStore               *dataStore
+	eventStore              *eventStore
+	notifier                notifier
+	log                     log.Logger
+	disablePruner           bool
+	dashboardVersionsToKeep int
+	eventRetentionPeriod    time.Duration
+	eventPruningInterval    time.Duration
+	historyPruner           Pruner
+	garbageCollection       GarbageCollectionConfig
+	lastImportStore         *lastImportStore
+	lastImportTimeMaxAge    time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
@@ -133,6 +133,8 @@ type KVBackendOptions struct {
 	// SearchLookback is the duration subtracted from sinceRv in calls to ListModifiedSince.
 	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
 	SearchLookback time.Duration
+
+	DashboardVersionsToKeep int
 }
 
 var (
@@ -184,23 +186,24 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	backend := &kvStorageBackend{
-		kv:                   kv,
-		bulkLock:             NewBulkLock(),
-		dataStore:            newDataStore(kv),
-		eventStore:           eventStore,
-		notifier:             newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
-		watchOpts:            opts.WatchOptions.normalize(),
-		snowflake:            s,
-		log:                  logger,
-		eventRetentionPeriod: eventRetentionPeriod,
-		eventPruningInterval: eventPruningInterval,
-		rvManager:            opts.RvManager,
-		dbKeepAlive:          opts.DBKeepAlive,
-		lastImportStore:      newLastImportStore(kv),
-		lastImportTimeMaxAge: opts.LastImportTimeMaxAge,
-		garbageCollection:    garbageCollection,
-		searchLookback:       opts.SearchLookback,
-		disablePruner:        opts.DisablePruner,
+		kv:                      kv,
+		bulkLock:                NewBulkLock(),
+		dataStore:               newDataStore(kv),
+		eventStore:              eventStore,
+		notifier:                newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		watchOpts:               opts.WatchOptions.normalize(),
+		snowflake:               s,
+		log:                     logger,
+		eventRetentionPeriod:    eventRetentionPeriod,
+		eventPruningInterval:    eventPruningInterval,
+		rvManager:               opts.RvManager,
+		dbKeepAlive:             opts.DBKeepAlive,
+		lastImportStore:         newLastImportStore(kv),
+		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
+		garbageCollection:       garbageCollection,
+		searchLookback:          opts.SearchLookback,
+		disablePruner:           opts.DisablePruner,
+		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -315,7 +318,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		return fmt.Errorf("invalid pruning key: group, resource, and name must be set: %+v", key)
 	}
 
-	prunerMaxLimit := k.prunerHistoryLimit(key.Group, key.Resource)
+	prunerMaxLimit := LookupPrunerHistoryLimit(key.Group, key.Resource, k.dashboardVersionsToKeep)
 	counter := 0
 	deleted := 0
 	// iterate over all keys for the resource and delete versions beyond the configured limit
@@ -654,13 +657,6 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 	return cutoffTimestamp
 }
 
-func (b *kvStorageBackend) prunerHistoryLimit(group, resource string) int {
-	if limit, ok := LookupCustomPrunerHistoryLimit(group, resource); ok {
-		return limit
-	}
-	return defaultEventPruningLimit
-}
-
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 //
 //nolint:gocyclo
@@ -702,18 +698,30 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
 		// Check if resource already exists for create operations
-		_, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Namespace: namespace,
 			Name:      event.Key.Name,
 		})
 		if err == nil {
-			// Resource exists, return already exists error
-			return 0, ErrResourceAlreadyExists
-		}
-		if !errors.Is(err, ErrNotFound) {
-			// Some other error occurred
+			if latestKey.Action == kv.DataActionUpdated {
+				return 0, ErrResourceAlreadyExists
+			}
+
+			// A creation event was found, but it might be a transient write from a
+			// concurrent create that hasn't gone through the optimistic lock
+			// checks. Confirm via the event store before returning AlreadyExists.
+			committed, err := k.confirmExistence(ctx, latestKey)
+			if err != nil {
+				return 0, fmt.Errorf("checking concurrent creation in event store: %w", err)
+			}
+			if committed {
+				return 0, ErrResourceAlreadyExists
+			}
+			// Not confirmed: the data is likely transient. Proceed with the
+			// write and let the optimistic lock checks determine the winner.
+		} else if !errors.Is(err, ErrNotFound) {
 			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 		}
 	case resourcepb.WatchEvent_MODIFIED:
@@ -852,6 +860,40 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	k.notifier.Publish(eventData)
 
 	return rv, nil
+}
+
+// confirmExistence checks whether a resource with the given `key` is genuinely
+// committed. During concurrent creates, the datastore can contain transient
+// writes that haven't survived the post-write optimistic lock checks. The
+// eventstore is used as a commit signal: an event is written only after the
+// optimistic locking checks, so its presence proves the write is committed.
+func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (bool, error) {
+	const eventThreshold = 30 * time.Second
+
+	// Extract the timestamp from the snowflake-formatted RV.
+	rvTime := time.Unix(0, snowflake.ID(key.ResourceVersion).Time()*int64(time.Millisecond))
+	if time.Since(rvTime) > eventThreshold {
+		// Old RV: by this point, it can be assumed to be committed.
+		return true, nil
+	}
+
+	// Recent RV: look up the corresponding event to confirm it was committed.
+	_, err := k.eventStore.Get(ctx, EventKey{
+		Namespace:       key.Namespace,
+		Group:           key.Group,
+		Resource:        key.Resource,
+		Name:            key.Name,
+		ResourceVersion: key.ResourceVersion,
+		Action:          key.Action,
+		Folder:          key.Folder,
+	})
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, ErrNotFound) {
+		return false, nil
+	}
+	return false, err
 }
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {

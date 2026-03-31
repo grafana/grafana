@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef } from 'react';
 
 import { CoreApp, DataSourcePluginContextProvider } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Alert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';

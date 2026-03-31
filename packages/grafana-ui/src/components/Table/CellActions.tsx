@@ -4,13 +4,13 @@ import * as React from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { IconSize } from '../../types/icon';
+import { type IconSize } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
-import { TooltipPlacement } from '../Tooltip/types';
+import { type TooltipPlacement } from '../Tooltip/types';
 
 import { TableCellInspectorMode } from './TableCellInspector';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {

@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { type DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
 // Internal package imports, but not exposed to end users, how do we expect plugin developers to test anything that contains a transform?
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { TableCellDisplayMode } from '@grafana/ui';

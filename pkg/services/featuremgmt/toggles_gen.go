@@ -207,6 +207,10 @@ const (
 	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiserverEnableResourceEndpointRedirect = "datasourcesApiserverEnableResourceEndpointRedirect"
 
+	// FlagDatasourcesQuerierRawOutput
+	// use raw output mode for the data source querier
+	FlagDatasourcesQuerierRawOutput = "datasourcesQuerierRawOutput"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -670,10 +674,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagAlertingImportAlertmanagerUI
-	// Enables the UI to see imported Alertmanager configuration
-	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
-
 	// FlagAlertingDisableDMAinUI
 	// Disables the DMA feature in the UI
 	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
@@ -921,4 +921,8 @@ const (
 	// FlagQueryFetchConfigFromSettingsService
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
+
+	// FlagQueryServiceQueryCaching
+	// Enables the query service to do query caching
+	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
 )

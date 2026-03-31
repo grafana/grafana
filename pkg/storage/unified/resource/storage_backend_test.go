@@ -1836,9 +1836,9 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Update the resource defaultEventPruningLimit times. This will create one more event than the pruner limit.
+		// Update the resource defaultPrunerHistoryLimit times. This will create one more event than the pruner limit.
 		previousRV := rv1
-		for i := 0; i < defaultEventPruningLimit; i++ {
+		for i := 0; i < defaultPrunerHistoryLimit; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -1870,7 +1870,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		_, err = backend.dataStore.Get(ctx, eventKey1)
 		require.Error(t, err) // Should return error as event is pruned
 
-		// assert defaultEventPruningLimit most recent events exist
+		// assert defaultPrunerHistoryLimit most recent events exist
 		counter := 0
 		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
 			Namespace: "default",
@@ -1882,7 +1882,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			require.NotEqual(t, rv1, datakey.ResourceVersion)
 			counter++
 		}
-		require.Equal(t, defaultEventPruningLimit, counter)
+		require.Equal(t, defaultPrunerHistoryLimit, counter)
 	})
 
 	t.Run("will not prune events when less than limit", func(t *testing.T) {
@@ -1914,9 +1914,9 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Update the resource defaultEventPruningLimit-1 times. This will create same number of events as the pruner limit.
+		// Update the resource defaultPrunerHistoryLimit-1 times. This will create same number of events as the pruner limit.
 		previousRV := rv1
-		for i := 0; i < defaultEventPruningLimit-1; i++ {
+		for i := 0; i < defaultPrunerHistoryLimit-1; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -1947,7 +1947,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			require.NoError(t, err)
 			counter++
 		}
-		require.Equal(t, defaultEventPruningLimit, counter)
+		require.Equal(t, defaultPrunerHistoryLimit, counter)
 	})
 
 	t.Run("will not prune deleted events", func(t *testing.T) {
@@ -1979,12 +1979,12 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Create defaultEventPruningLimit deleted events by repeatedly deleting and recreating the resource
-		// This will create: 1 initial ADDED + defaultEventPruningLimit cycles of (DELETE + ADDED)
+		// Create defaultPrunerHistoryLimit deleted events by repeatedly deleting and recreating the resource
+		// This will create: 1 initial ADDED + defaultPrunerHistoryLimit cycles of (DELETE + ADDED)
 		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
 		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
-		for i := 0; i < defaultEventPruningLimit; i++ {
+		for i := 0; i < defaultPrunerHistoryLimit; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
 			metaAccessor, err := utils.MetaAccessor(testObj)
 			require.NoError(t, err)
@@ -2036,8 +2036,8 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			}
 			counter++
 		}
-		require.Equal(t, defaultEventPruningLimit, deletedCount, "All deleted events should be kept")
-		require.Equal(t, defaultEventPruningLimit*2, counter, "Should have 20 deleted + 20 non-deleted events")
+		require.Equal(t, defaultPrunerHistoryLimit, deletedCount, "All deleted events should be kept")
+		require.Equal(t, defaultPrunerHistoryLimit*2, counter, "Should have 20 deleted + 20 non-deleted events")
 	})
 
 	t.Run("will prune oldest events for cluster-scoped resources", func(t *testing.T) {
@@ -2069,9 +2069,9 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Update the resource defaultEventPruningLimit times to exceed the pruner limit
+		// Update the resource defaultPrunerHistoryLimit times to exceed the pruner limit
 		previousRV := rv1
-		for i := 0; i < defaultEventPruningLimit; i++ {
+		for i := 0; i < defaultPrunerHistoryLimit; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2105,7 +2105,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		require.Error(t, err) // Should return error as event is pruned
 		require.ErrorIs(t, err, ErrNotFound)
 
-		// assert defaultEventPruningLimit most recent events exist
+		// assert defaultPrunerHistoryLimit most recent events exist
 		counter := 0
 		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
 			Namespace: "",
@@ -2117,7 +2117,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			require.NotEqual(t, rv1, datakey.ResourceVersion)
 			counter++
 		}
-		require.Equal(t, defaultEventPruningLimit, counter)
+		require.Equal(t, defaultPrunerHistoryLimit, counter)
 	})
 
 	t.Run("will not prune events for cluster-scoped resources when less than limit", func(t *testing.T) {
@@ -2149,9 +2149,9 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Update defaultEventPruningLimit-1 times (total events = limit, nothing to prune)
+		// Update defaultPrunerHistoryLimit-1 times (total events = limit, nothing to prune)
 		previousRV := rv1
-		for i := 0; i < defaultEventPruningLimit-1; i++ {
+		for i := 0; i < defaultPrunerHistoryLimit-1; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2182,7 +2182,88 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			require.NoError(t, err)
 			counter++
 		}
-		require.Equal(t, defaultEventPruningLimit, counter)
+		require.Equal(t, defaultPrunerHistoryLimit, counter)
+	})
+
+	t.Run("honours DashboardVersionsToKeep for dashboard resources", func(t *testing.T) {
+		dashboardVersionsToKeep := 5
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.DashboardVersionsToKeep = dashboardVersionsToKeep
+		})
+		ctx := t.Context()
+
+		ns := NamespacedResource{
+			Namespace: "default",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		}
+		testObj, err := createTestObjectWithName("my-dashboard", ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Name:      "my-dashboard",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Update the dashboard dashboardVersionsToKeep times to exceed the configured limit.
+		// Total events: 1 (create) + dashboardVersionsToKeep (updates) = limit + 1.
+		previousRV := rv1
+		for i := 0; i < dashboardVersionsToKeep; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "default",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Name:      "my-dashboard",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// The first event (rv1) should have been pruned
+		eventKey1 := DataKey{
+			Namespace:       "default",
+			Group:           "dashboard.grafana.app",
+			Resource:        "dashboards",
+			Name:            "my-dashboard",
+			Action:          DataActionCreated,
+			ResourceVersion: rv1,
+		}
+		_, err = backend.dataStore.Get(ctx, eventKey1)
+		require.ErrorIs(t, err, ErrNotFound, "oldest event should be pruned")
+
+		// Exactly dashboardVersionsToKeep events should remain
+		counter := 0
+		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "default",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Name:      "my-dashboard",
+		}, SortOrderDesc) {
+			require.NoError(t, err)
+			require.Greater(t, datakey.ResourceVersion, rv1)
+			counter++
+		}
+		require.Equal(t, dashboardVersionsToKeep, counter)
 	})
 }
 
@@ -2533,42 +2614,6 @@ func testClusterScopedResources(t *testing.T, backend *kvStorageBackend) {
 		case <-ctx.Done():
 			t.Fatalf("Timeout waiting for event %d", i)
 		}
-	}
-}
-
-func TestKvStorageBackend_prunerHistoryLimit(t *testing.T) {
-	tests := []struct {
-		name     string
-		group    string
-		resource string
-		expected int
-	}{
-		{
-			name:     "plugin resource returns custom limit",
-			group:    "plugins.grafana.app",
-			resource: "plugins",
-			expected: 3,
-		},
-		{
-			name:     "dashboard resource returns default limit",
-			group:    "dashboard.grafana.app",
-			resource: "dashboards",
-			expected: defaultEventPruningLimit,
-		},
-		{
-			name:     "other resource returns default limit",
-			group:    "some.app",
-			resource: "resources",
-			expected: defaultEventPruningLimit,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			backend := setupTestStorageBackend(t)
-			limit := backend.prunerHistoryLimit(tc.group, tc.resource)
-			require.Equal(t, tc.expected, limit)
-		})
 	}
 }
 

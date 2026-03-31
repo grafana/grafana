@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
-import { Badge, IconName } from '@grafana/ui';
-import { ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { Badge, type IconName } from '@grafana/ui';
+import { type ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 interface Props {
   status?: ConnectionStatus;

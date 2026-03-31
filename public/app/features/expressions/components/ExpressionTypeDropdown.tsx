@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { memo, ReactElement, useCallback, useMemo } from 'react';
+import { memo, type ReactElement, useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Dropdown, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 

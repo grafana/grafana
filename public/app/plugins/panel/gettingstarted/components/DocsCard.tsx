@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { TextLink, useStyles2 } from '@grafana/ui';
 
-import { Card } from '../types';
+import { type Card } from '../types';
 
 import { cardContent, cardStyle } from './sharedStyles';
 

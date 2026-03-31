@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Nem lehet megjeleníteni a lekérdezés előnézetét. A lekérdezésekben használt adatforrások némelyike nem érhető el.",
       "preview-alerts": "Riasztások előnézete",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Szűrők törlése",
       "configured-alert-rules": "A konfigurált riasztási szabályokat tartalmazó adatforrások a Mimir- vagy Loki-adatforrások, ahol a riasztási szabályokat magában az adatforrásban tárolja és értékeli a rendszer.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Szűri azokat a riasztási szabályokat, amelyek közvetlenül a kiválasztott kapcsolattartási ponthoz irányítanak. Az értesítési szabályokra irányító riasztási szabályok nem jelennek meg.",
       "contact-point-tooltip-title": "Kapcsolattartási pont szűrőjének súgója",
       "dashboard": "Irányítópult",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Adatforrások kiválasztása",
       "placeholder-group-search": "Csoport keresése",
       "placeholder-labels": "Címkék kiválasztása",
+      "placeholder-policy": "",
       "plugin-rules": "Bővítményszabályok",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Adatforrás által felügyelt",
         "grafana": "Grafana által felügyelt"
@@ -3212,6 +3220,7 @@
       "title-group": "Csoport",
       "title-health": "Állapot",
       "title-labels": "Címkék",
+      "title-policy": "",
       "title-rule": "Szabály",
       "title-state": "Állapot",
       "title-type": "Típus"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Metrics Drilldown"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

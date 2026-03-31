@@ -1493,6 +1493,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@base2/pretty-print-object@npm:1.0.2":
+  version: 1.0.2
+  resolution: "@base2/pretty-print-object@npm:1.0.2"
+  checksum: 10/8a0c84c7d1ed7c92493238b9815be2eed412d70c13bc889ba6cc3ec6146b886121fe0fbbea01699a1681927c659a37a67b77a8971a009ad35556f064e131e335
+  languageName: node
+  linkType: hard
+
 "@bcoe/v8-coverage@npm:^0.2.3":
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3"
@@ -1746,30 +1753,6 @@ __metadata:
   version: 1.0.0
   resolution: "@egjs/list-differ@npm:1.0.0"
   checksum: 10/803d8e981886d47c42601b0f02ebcc43407f175f1dc6c8777529c99184f5cde5f2721dfadfa2b66bd6d131d27cbb59887142631fc69caed84cfe5f3ca3af0d0e
-  languageName: node
-  linkType: hard
-
-"@elastic/esql@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "@elastic/esql@npm:1.0.2"
-  dependencies:
-    antlr4: "npm:4.13.2"
-    tree-dump: "npm:1.1.0"
-    tslib: "npm:2.8.1"
-  checksum: 10/6ea71344b7a7e9e518dd4b694db9056fb7d64a24865634ce1a83f7ea85c36923bed5c79d673a13a3b613e1e6f613054897fc608bc07e75f7c344f710fbb02fee
-  languageName: node
-  linkType: hard
-
-"@elastic/monaco-esql@npm:^3.1.19":
-  version: 3.1.19
-  resolution: "@elastic/monaco-esql@npm:3.1.19"
-  peerDependencies:
-    monaco-editor: "*"
-    monaco-promql: "*"
-  peerDependenciesMeta:
-    monaco-promql:
-      optional: true
-  checksum: 10/3654438770894228ef1c1512b7db8d24918135827672ba08877f27ab54c5d4f9a930690b3fe8a21cf65962312ece41499d17e0b9fcd82156420031d79f9d0713
   languageName: node
   linkType: hard
 
@@ -2659,55 +2642,6 @@ __metadata:
   checksum: 10/eb12a7f5367bbecdfafc20d7f005559ce840f420e970f425c5213d35e94e86dfe75bde03464971a26494bf8427d4961269db22ecad2834f2a19d888b5d9cc064
   languageName: node
   linkType: hard
-
-"@grafana-plugins/elasticsearch@workspace:public/app/plugins/datasource/elasticsearch":
-  version: 0.0.0-use.local
-  resolution: "@grafana-plugins/elasticsearch@workspace:public/app/plugins/datasource/elasticsearch"
-  dependencies:
-    "@elastic/esql": "npm:^1.0.2"
-    "@elastic/monaco-esql": "npm:^3.1.19"
-    "@emotion/css": "npm:11.13.5"
-    "@grafana/aws-sdk": "npm:^0.10.1"
-    "@grafana/data": "npm:13.0.0-pre"
-    "@grafana/e2e-selectors": "npm:13.0.0-pre"
-    "@grafana/plugin-configs": "npm:13.0.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.0.0-pre"
-    "@grafana/schema": "npm:13.0.0-pre"
-    "@grafana/ui": "npm:13.0.0-pre"
-    "@reduxjs/toolkit": "npm:2.10.1"
-    "@testing-library/dom": "npm:10.4.1"
-    "@testing-library/jest-dom": "npm:6.6.4"
-    "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
-    "@types/jest": "npm:29.5.14"
-    "@types/lodash": "npm:4.17.20"
-    "@types/lucene": "npm:^2"
-    "@types/node": "npm:24.10.1"
-    "@types/react": "npm:18.3.18"
-    "@types/react-dom": "npm:18.3.5"
-    "@types/semver": "npm:7.7.1"
-    jest: "npm:29.7.0"
-    lodash: "npm:^4.17.23"
-    lucene: "npm:^2.1.1"
-    react: "npm:18.3.1"
-    react-dom: "npm:18.3.1"
-    react-redux: "npm:9.2.0"
-    react-select: "npm:5.10.2"
-    react-select-event: "npm:5.5.1"
-    react-use: "npm:17.6.0"
-    redux: "npm:5.0.1"
-    redux-thunk: "npm:3.1.0"
-    rxjs: "npm:7.8.2"
-    semver: "npm:7.7.3"
-    ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
-    typescript: "npm:5.9.2"
-    webpack: "npm:^5.105.0"
-  peerDependencies:
-    "@grafana/runtime": "*"
-  languageName: unknown
-  linkType: soft
 
 "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor":
   version: 0.0.0-use.local
@@ -4220,6 +4154,7 @@ __metadata:
     react-data-grid: "grafana/react-data-grid#a10c748f40edc538425b458af4e471a8262ec4ed"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.8"
+    react-element-to-jsx-string: "npm:^17.0.1"
     react-highlight-words: "npm:0.21.0"
     react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^15.0.0"
@@ -13030,13 +12965,6 @@ __metadata:
   version: 3.4.0
   resolution: "ansis@npm:3.4.0"
   checksum: 10/828ad5a8235ff9e745b9b16e7f8f42efc86943cd2ca8fd253a5a18497a573bb2a5d2abdce8c86805c94b67b9a29d9802a27d5299f04e97775d948ba9363ddd78
-  languageName: node
-  linkType: hard
-
-"antlr4@npm:4.13.2":
-  version: 4.13.2
-  resolution: "antlr4@npm:4.13.2"
-  checksum: 10/23ab4742ec937adaaf20d13228c8cca58638e1aafeb28919bdeb4860776a403d0c7eb85a3f07fadc27fc03f773eed6bcc82bd8369b9d0e258e6502ba514cf87e
   languageName: node
   linkType: hard
 
@@ -22063,6 +21991,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-plain-object@npm:5.0.0, is-plain-object@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "is-plain-object@npm:5.0.0"
+  checksum: 10/e32d27061eef62c0847d303125440a38660517e586f2f3db7c9d179ae5b6674ab0f469d519b2e25c147a1a3bc87156d0d5f4d8821e0ce4a9ee7fe1fcf11ce45c
+  languageName: node
+  linkType: hard
+
 "is-plain-object@npm:^2.0.4":
   version: 2.0.4
   resolution: "is-plain-object@npm:2.0.4"
@@ -22076,13 +22011,6 @@ __metadata:
   version: 3.0.1
   resolution: "is-plain-object@npm:3.0.1"
   checksum: 10/d13fe75db350d4ac669595cdfe0242ae87fcecddf2bca858d2dd443a6ed6eb1f69951fac8c2fa85b16106c6b0d7738fea86c2aca2ecee7fd61de15c1574f2cc5
-  languageName: node
-  linkType: hard
-
-"is-plain-object@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "is-plain-object@npm:5.0.0"
-  checksum: 10/e32d27061eef62c0847d303125440a38660517e586f2f3db7c9d179ae5b6674ab0f469d519b2e25c147a1a3bc87156d0d5f4d8821e0ce4a9ee7fe1fcf11ce45c
   languageName: node
   linkType: hard
 
@@ -28864,6 +28792,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-element-to-jsx-string@npm:^17.0.1":
+  version: 17.0.1
+  resolution: "react-element-to-jsx-string@npm:17.0.1"
+  dependencies:
+    "@base2/pretty-print-object": "npm:1.0.2"
+    is-plain-object: "npm:5.0.0"
+  peerDependencies:
+    react: ^19.0.0
+    react-dom: ^19.0.0
+    react-is: ^19.0.0
+  checksum: 10/d5d611f55d3bb8a29dcc253cdf78d6b7eed6ad76466dccfb8d866988bbf7007d2ba3471b4b251bcb4f806331c6d71eb493497dd8bc016270abec4a51a3d3f247
+  languageName: node
+  linkType: hard
+
 "react-fast-compare@npm:^3.0.1":
   version: 3.2.0
   resolution: "react-fast-compare@npm:3.2.0"
@@ -32957,15 +32899,6 @@ __metadata:
   version: 1.0.1
   resolution: "tracelib@npm:1.0.1"
   checksum: 10/4d7f5e6e38611d3920744c71bd33b29e24c84bde1d750a6735e95a45be041e9ceef0de595ec60a337dc9c0abbacc852268619af99d35843458a2ee5233d64b60
-  languageName: node
-  linkType: hard
-
-"tree-dump@npm:1.1.0":
-  version: 1.1.0
-  resolution: "tree-dump@npm:1.1.0"
-  peerDependencies:
-    tslib: 2
-  checksum: 10/2c20118d2671996aa6f1ba1310cef1404fb525bde5d989ab542013f62b23a3633c0f0b32cbd516ee6205051ec21912b2470dabca006d19c9eba0740b567e2b60
   languageName: node
   linkType: hard
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
+import { type PanelData, type QueryResultMetaStat, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 

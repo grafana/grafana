@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { sceneUtils } from '@grafana/scenes';
