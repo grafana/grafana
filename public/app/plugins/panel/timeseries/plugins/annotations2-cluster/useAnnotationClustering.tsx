@@ -12,8 +12,7 @@ interface Props {
   clusteringMode: ClusteringMode | null;
   timeRange: TimeRange2;
   plotWidth: number | undefined;
-  // When
-  onAnnotationMutate: () => void;
+  onChange: () => void;
 }
 
 export enum ClusteringMode {
@@ -21,13 +20,7 @@ export enum ClusteringMode {
   Render = 'render',
 }
 
-export const useAnnotationClustering = ({
-  annotations,
-  clusteringMode,
-  plotWidth,
-  timeRange,
-  onAnnotationMutate,
-}: Props) => {
+export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange, onChange }: Props) => {
   const { outAnnos } = useMemo(() => {
     const clusteredAnnotations: DataFrame[] = [];
 
@@ -49,7 +42,6 @@ export const useAnnotationClustering = ({
             // Copy values
             values: [...field.values],
           }));
-
           clusteredFields.push({
             type: FieldType.number,
             name: 'clusterIdx',
@@ -61,8 +53,7 @@ export const useAnnotationClustering = ({
             fields: clusteredFields,
           };
 
-          const timeEndFieldIdx = frameWithCluster.fields.findIndex((field) => field.name === 'timeEnd');
-          const hasTimeEndField = timeEndFieldIdx !== -1;
+          const hasTimeEndField = frameWithCluster.fields.findIndex((field) => field.name === 'timeEnd') !== -1;
 
           // If the annotation frame doesn't already have an end field defined we'll need to add one so we can create valid annotation regions
           if (!hasTimeEndField) {
@@ -74,6 +65,7 @@ export const useAnnotationClustering = ({
             });
           }
 
+          // add new isCluster field to annotation frame so we can determine which annotations are clustered
           frameWithCluster.fields.push({
             type: FieldType.boolean,
             name: 'isCluster',
@@ -128,7 +120,7 @@ export const useAnnotationClustering = ({
     }
 
     if (clusteredAnnotations.length > 0) {
-      onAnnotationMutate();
+      onChange();
     }
 
     // Sort clustered frames
@@ -143,7 +135,7 @@ export const useAnnotationClustering = ({
             )
           : annotations,
     };
-  }, [annotations, clusteringMode, onAnnotationMutate, plotWidth, timeRange]);
+  }, [annotations, clusteringMode, onChange, plotWidth, timeRange]);
 
   return outAnnos;
 };
@@ -203,7 +195,6 @@ const buildAnnotationClusters = (
     const endTimeWithinClusterThreshold = startTime - clusterEndTime <= mergeThreshold;
     const regionsOverlap = clusterEndTime > startTime - mergeThreshold;
 
-    // Region anno comparisons
     if (prevIdx != null) {
       // Point annotation clusters
       if (!isRegionVals[j]) {
@@ -236,7 +227,7 @@ const buildAnnotationClusters = (
     clusters.push(cluster);
   }
 
-  return { clusterIdx: clusterIdx, clusters: clusters };
+  return { clusterIdx, clusters };
 };
 
 const calculateMergeThreshold = (timeRange: TimeRange2, plotWidth: number) => {

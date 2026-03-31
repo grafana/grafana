@@ -100,7 +100,7 @@ export const AnnotationsPlugin2Cluster = ({
     plotWidth: plotRef.current?.bbox.width,
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
     timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
-    onAnnotationMutate: () => {
+    onChange: () => {
       // drawback of using references is that the hook isn't called when our annotations are changed by this hook
       // so we must manually re-draw the annotation canvas elements in case the annos were clustered
       const shouldRenderRegion = shouldRenderAnnotationRegion(options?.regions?.opacity, options?.multiLane);
