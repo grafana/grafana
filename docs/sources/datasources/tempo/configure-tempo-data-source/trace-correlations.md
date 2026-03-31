@@ -13,7 +13,9 @@ labels:
     - oss
 menuTitle: Trace correlations
 title: Trace correlations
-weight: 1000
+weight: 900
+aliases:
+  - ../traces-in-grafana/trace-correlations/
 ---
 
 # Trace correlations
