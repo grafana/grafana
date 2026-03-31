@@ -307,7 +307,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (getPanelStyleConfig(panel.state.pluginId) && config.featureToggles.panelStyleActions && dashboard.state.isEditing) {
+    if (
+      getPanelStyleConfig(panel.state.pluginId) &&
+      config.featureToggles.panelStyleActions &&
+      dashboard.state.isEditing
+    ) {
       const stylesSubMenu: PanelMenuItem[] = [];
 
       stylesSubMenu.push({
