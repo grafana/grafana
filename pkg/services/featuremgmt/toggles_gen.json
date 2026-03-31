@@ -1371,6 +1371,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardDefaultLayoutSelector",
+        "resourceVersion": "1773923636566",
+        "creationTimestamp": "2026-03-19T12:33:56Z"
+      },
+      "spec": {
+        "description": "Enables default layout selector in dashboard settings",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-11T16:52:46Z"
@@ -2406,20 +2420,6 @@
       },
       "spec": {
         "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "pieChartGradientColorScheme",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-03-30T00:00:00Z"
-      },
-      "spec": {
-        "description": "Enable gradient color scheme option for the pie chart panel",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
@@ -3902,6 +3902,20 @@
         "description": "Enables viewing non-applicable drilldowns on a panel level",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pieChartGradientColorScheme",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2026-03-30T00:00:00Z"
+      },
+      "spec": {
+        "description": "Enable gradient color scheme option for the pie chart panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
       }
