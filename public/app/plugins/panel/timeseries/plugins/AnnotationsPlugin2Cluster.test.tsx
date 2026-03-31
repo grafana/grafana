@@ -23,6 +23,7 @@ import {
   allAnnotations,
   mockAlertingFrame,
   mockAnnotationFrame,
+  mockClusterRegions,
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
   mockIRMClusteringAnnotation,
@@ -32,6 +33,8 @@ import { ANNOTATION_LANE_SIZE } from './utils';
 const minTime = 1759388895560;
 const maxTime = 1759390250000 + 1;
 const plotWidth = 600;
+// 2257.4ms per pixel (maxTime - minTime / plotWidth)
+// 108355.2ms per cluster region (2257.4ms * 24px * 2)
 
 jest.mock('uplot', () => {
   const setDataMock = jest.fn();
@@ -569,7 +572,7 @@ describe('AnnotationsPlugin2', () => {
         expect(markers.length).toEqual(4);
       });
 
-      it('should cluster', async () => {
+      it('should cluster points', async () => {
         // should cluster all points within 48px
         setUp({
           annotations: [mockIRMClusteringAnnotation],
@@ -609,6 +612,52 @@ describe('AnnotationsPlugin2', () => {
         expect(texts[0]).toHaveTextContent('(>16MB)');
         expect(texts[1]).toHaveTextContent('(>32MB)');
         expect(texts[2]).toHaveTextContent('Declared by Ada');
+      });
+      it('should cluster regions', async () => {
+        setUp({
+          annotations: [mockClusterRegions],
+          options: {
+            clustering: DEFAULT_CLUSTERING_ANNOTATION_SPACING,
+          },
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers.length).toEqual(1);
+        await userEvent.click(markers[0]);
+
+        // All annos should get clustered, format the dates from the raw frames
+        const startTime = dateTimeFormat(mockClusterRegions.fields[2].values[0], {
+          format: systemDateFormats.fullDate,
+        });
+
+        const endTime = dateTimeFormat(mockClusterRegions.fields[3].values[4], {
+          format: systemDateFormats.fullDate,
+        });
+
+        expect(screen.getByText(`${startTime} - ${endTime}`));
+
+        // Assert the tooltip body contains the title and the text
+        const titles = screen.getAllByTestId('mock-annotation-title');
+        expect(titles).toHaveLength(6);
+        expect(titles[0]).toBeVisible();
+
+        const texts = screen.getAllByTestId('mock-annotation-text');
+        expect(texts).toHaveLength(6);
+        expect(texts[0]).toBeVisible();
+
+        // Assert all of the titles are rolled-up and rendered
+        expect(titles[0]).toHaveTextContent('prod-000-writes-error');
+        expect(titles[1]).toHaveTextContent('prod-001-writes-error');
+        expect(titles[2]).toHaveTextContent('LogsDeleteRequestProcessingStuck (dev-us-west-0, notify)');
+        expect(titles[3]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
+        expect(titles[4]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
+        expect(titles[5]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
+        // Assert all of the text are rolled-up and rendered
+        expect(texts[0]).toHaveTextContent('(>16MB)');
+        expect(texts[1]).toHaveTextContent('(>32MB)');
+        expect(texts[2]).toHaveTextContent('Declared by Ada');
+        expect(texts[3]).toHaveTextContent('Declared by Theo');
+        expect(texts[4]).toHaveTextContent('Declared by Theo');
+        expect(texts[5]).toHaveTextContent('Declared by Theo');
       });
 
       it.each([userEvent.hover, userEvent.click])('clusters should render links and actions', async (event) => {
