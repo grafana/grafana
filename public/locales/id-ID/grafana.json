@@ -2576,6 +2576,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Tidak dapat menampilkan pratinjau kueri. Beberapa sumber data yang digunakan di kueri tidak tersedia.",
       "preview-alerts": "Pratinjau peringatan",
@@ -3088,6 +3091,7 @@
     "rules-filter": {
       "clear-filters": "Hapus filter",
       "configured-alert-rules": "Sumber data yang berisi aturan peringatan yang dikonfigurasi adalah sumber data Mimir atau Loki tempat aturan peringatan disimpan dan dievaluasi dalam sumber data itu sendiri.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filter aturan peringatan yang dirutekan langsung ke titik kontak yang dipilih. Aturan peringatan yang dirutekan ke kebijakan notifikasi tidak akan ditampilkan.",
       "contact-point-tooltip-title": "Bantuan filter titik kontak",
       "dashboard": "Dasbor",
@@ -3112,7 +3116,11 @@
       "placeholder-data-sources": "Pilih sumber data",
       "placeholder-group-search": "Cari grup",
       "placeholder-labels": "Pilih label",
+      "placeholder-policy": "",
       "plugin-rules": "Aturan plugin",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Sumber data dikelola",
         "grafana": "Grafana dikelola"
@@ -3193,6 +3201,7 @@
       "title-group": "Grup",
       "title-health": "Kesehatan",
       "title-labels": "Label",
+      "title-policy": "",
       "title-rule": "Aturan",
       "title-state": "Status",
       "title-type": "Jenis"
@@ -7226,6 +7235,9 @@
           "metrics-drilldown": "Drilldown metrik"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14581,6 +14593,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

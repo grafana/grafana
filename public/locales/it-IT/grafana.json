@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Impossibile visualizzare l'anteprima della query. Alcune delle origini dati utilizzate nelle query non sono disponibili.",
       "preview-alerts": "Anteprima avvisi",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Cancella i filtri",
       "configured-alert-rules": "Le origini dei dati contenenti regole di avviso configurate sono origini dati Mimir o Loki in cui le regole di avviso vengono archiviate e valutate nell'origine dei dati stessa.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtra le regole di avviso che instradano direttamente al punto di contatto selezionato. Le regole di avviso instradate ai criteri di notifica non verranno visualizzate.",
       "contact-point-tooltip-title": "Guida all'uso del filtro per il punto di contatto",
       "dashboard": "Dashboard",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Seleziona origini dati",
       "placeholder-group-search": "Cerca gruppo",
       "placeholder-labels": "Seleziona etichette",
+      "placeholder-policy": "",
       "plugin-rules": "Regole dei componenti aggiuntivi",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Origine dei dati gestita",
         "grafana": "Gestito da Grafana"
@@ -3212,6 +3220,7 @@
       "title-group": "Gruppo",
       "title-health": "Stato",
       "title-labels": "Etichette",
+      "title-policy": "",
       "title-rule": "Regola",
       "title-state": "Stato",
       "title-type": "Tipo"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Drill-down metriche"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

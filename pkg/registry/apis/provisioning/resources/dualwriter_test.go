@@ -1154,6 +1154,53 @@ func TestUpdateFolderMetadata(t *testing.T) {
 			errContains: "read existing folder metadata",
 		},
 		{
+			name: "successful title update on new branch (ref not found fallback)",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.GitRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+						Sync:      provisioning.SyncOptions{Enabled: false},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				existingData := makeExistingData(t)
+				// First Read with new branch ref returns ErrRefNotFound
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "folder-rename/new-title").
+					Return(nil, repository.ErrRefNotFound).Once()
+				// Fallback Read with empty ref (configured branch) returns existing metadata
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: existingData, Hash: "main-hash"}, nil).Once()
+				// Update writes to the new branch (repo.Update calls ensureBranchExists)
+				rw.On("Update", mock.Anything, "myfolder/_folder.json", "folder-rename/new-title", mock.Anything, "rename folder").Return(nil)
+				// Re-read after update returns new hash from the newly created branch
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "folder-rename/new-title").
+					Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-branch-hash"}, nil).Once()
+
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{
+					repo:                  rw,
+					authorizer:            NewAuthorizer(config, rw, accessMock, false),
+					folderMetadataEnabled: true,
+				}
+				return dw, DualWriteOptions{
+					Path:    "myfolder/",
+					Ref:     "folder-rename/new-title",
+					Message: "rename folder",
+					Data:    makeSubmitBody(t, existingUID, "New Title"),
+				}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.Equal(t, "folder-rename/new-title", result.Ref)
+				assert.Equal(t, "new-branch-hash", result.Hash)
+				assert.Equal(t, provisioning.ResourceActionUpdate, result.Resource.Action)
+			},
+		},
+		{
 			name: "sync enabled: updates Grafana DB and populates Upsert",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := newSyncEnabledConfig("test-repo")
