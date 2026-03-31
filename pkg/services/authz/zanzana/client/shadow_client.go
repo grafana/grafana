@@ -175,17 +175,24 @@ func (c *ShadowClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req 
 // compareBatchCheckResults compares the results from RBAC and Zanzana batch checks
 // and logs any discrepancies.
 func (c *ShadowClient) compareBatchCheckResults(acRes, zanzanaRes authlib.BatchCheckResponse, id authlib.AuthInfo, req authlib.BatchCheckRequest) {
-	for key, acResult := range acRes.Results {
-		zanzanaResult, ok := zanzanaRes.Results[key]
+	checkItems := make(map[string]authlib.BatchCheckItem, len(req.Checks))
+	for _, checkItem := range req.Checks {
+		checkItems[checkItem.CorrelationID] = checkItem
+	}
+
+	for correlationID, acResult := range acRes.Results {
+		zanzanaResult, ok := zanzanaRes.Results[correlationID]
+		checkItem := checkItems[correlationID]
+
 		if !ok {
 			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-			c.logger.Warn("Zanzana batch check missing result", "key", key, "user", id.GetUID())
+			c.logger.Warn("Zanzana batch check missing result", "item", checkItem, "user", id.GetUID())
 			continue
 		}
 
 		if acResult.Allowed != zanzanaResult.Allowed {
 			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-			c.logger.Warn("Zanzana batch check result does not match", "key", key, "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "user", id.GetUID())
+			c.logger.Warn("Zanzana batch check result does not match", "expected", acResult.Allowed, "actual", zanzanaResult.Allowed, "item", checkItem, "user", id.GetUID())
 		} else {
 			c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
 		}
