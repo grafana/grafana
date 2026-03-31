@@ -34,34 +34,6 @@ var (
 	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
 
-// folderGVR builds the GVR for the folder API based on the requested version.
-// A concrete version (e.g. "v1", "v1beta1") produces a fully-versioned GVR.
-// "preferred" or "" produces a versionless GVR that triggers discovery resolution.
-func folderGVR(folderAPIVersion string) schema.GroupVersionResource {
-	version := folderAPIVersion
-	if version == "preferred" {
-		version = ""
-	}
-	return schema.GroupVersionResource{
-		Group:    FolderResource.Group,
-		Version:  version,
-		Resource: FolderResource.Resource,
-	}
-}
-
-// FolderGVKForVersion returns a GVK for a concrete folder API version.
-// For "preferred" or "" it returns the default FolderKind (v1beta1).
-func FolderGVKForVersion(version string) schema.GroupVersionKind {
-	if version == "" || version == "preferred" {
-		return FolderKind
-	}
-	return schema.GroupVersionKind{
-		Group:   FolderKind.Group,
-		Version: version,
-		Kind:    FolderKind.Kind,
-	}
-}
-
 // ClientFactory is a factory for creating clients for a given namespace
 //
 //go:generate mockery --name ClientFactory --structname MockClientFactory --inpackage --filename client_factory_mock.go --with-expecter
