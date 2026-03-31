@@ -23,6 +23,7 @@ export enum ClusteringMode {
 export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange, onChange }: Props) => {
   const { outAnnos } = useMemo(() => {
     const clusteredAnnotations: DataFrame[] = [];
+    let hasClusters = false;
 
     // per-frame clustering
     if (clusteringMode === ClusteringMode.Render) {
@@ -35,6 +36,9 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
 
         if (timeVals.length > 1 && plotWidth) {
           const { clusterIdx, clusters } = buildAnnotationClusters(frame, timeVals, timeEndVals, plotWidth, timeRange);
+          if (clusters.length) {
+            hasClusters = true;
+          }
 
           // Shallow copy fields and values and append the clusterIdx field
           const clusteredFields = frame.fields.map((field) => ({
@@ -119,7 +123,7 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
       console.warn('Hover mode not implemented');
     }
 
-    if (clusteredAnnotations.length > 0) {
+    if (clusteredAnnotations.length > 0 && hasClusters) {
       onChange();
     }
 
