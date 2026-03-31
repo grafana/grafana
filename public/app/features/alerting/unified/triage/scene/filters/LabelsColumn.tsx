@@ -22,7 +22,7 @@ const COLLAPSED_WIDTH = 36;
  * Contains a state filter (firing / pending) and the full label breakdown.
  */
 export function LabelsColumn() {
-  const { labels, isLoading } = useLabelsBreakdown();
+  const { labels } = useLabelsBreakdown();
   const [open, toggleOpen] = useToggle(true);
   const [labelFilter, setLabelFilter] = useState('');
   const styles = useStyles2(getStyles);
@@ -73,7 +73,7 @@ export function LabelsColumn() {
                 className={styles.labelFilterInput}
               />
             </div>
-            {!isLoading && labels.length > 0 && <AllLabelsContent allLabels={labels} labelFilter={labelFilter} />}
+            {labels.length > 0 && <AllLabelsContent allLabels={labels} labelFilter={labelFilter} />}
           </div>
         </ScrollContainer>
       )}

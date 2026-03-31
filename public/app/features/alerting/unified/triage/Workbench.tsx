@@ -264,7 +264,7 @@ export function Workbench({
                   <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
                     {isRefreshing && (
                       <div className={styles.loadingBarContainer}>
-                        <LoadingBar width={leftColumnWidth} />
+                        <LoadingBar width={leftColumnWidth + rightColumnWidth} />
                       </div>
                     )}
                     {isInitialLoading && (

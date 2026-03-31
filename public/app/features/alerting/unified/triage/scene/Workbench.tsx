@@ -76,7 +76,7 @@ export function WorkbenchRenderer() {
     return () => subscription.unsubscribe();
   }, [runner]);
 
-  const isDataLoading = data?.state === 'Loading';
+  const isDataLoading = data?.state === 'Loading' || data?.state === 'NotStarted' || data === undefined;
   const isInitialLoading = (isDataLoading || isPending) && rows.length === 0;
   const isRefreshing = isDataLoading && rows.length > 0;
 
