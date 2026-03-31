@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -254,6 +255,7 @@ func setupWorkers(
 	features := featuremgmt.ProvideToggles(featureManager)
 	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+	folderAPIVersion := folderv1beta1.APIVersion
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
@@ -272,7 +274,7 @@ func setupWorkers(
 		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	workers := make([]jobs.Worker, 0)
@@ -303,6 +305,7 @@ func setupWorkers(
 		stageIfPossible,
 		metrics,
 		exportEnabled,
+		folderAPIVersion,
 	)
 	workers = append(workers, exportWorker)
 
@@ -316,6 +319,7 @@ func setupWorkers(
 		stageIfPossible,
 		metrics,
 		exportEnabled,
+		folderAPIVersion,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -335,7 +339,7 @@ func setupWorkers(
 	workers = append(workers, moveWorker)
 
 	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker()
+	fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(folderAPIVersion))
 	workers = append(workers, fixMetadataWorker)
 
 	// Release Resources (orphan cleanup — removes ownership annotations)
