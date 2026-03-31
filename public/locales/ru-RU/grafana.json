@@ -2624,6 +2624,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Невозможно отобразить предварительный просмотр запроса. Некоторые источники данных, используемые в запросах, недоступны.",
       "preview-alerts": "Просмотр оповещений",
@@ -3145,6 +3148,7 @@
     "rules-filter": {
       "clear-filters": "Очистить фильтры",
       "configured-alert-rules": "Источники данных, содержащие настроенные правила оповещений принадлежат к источникам Mimir или Loki, где правила оповещения хранятся и оцениваются в самом источнике данных.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Этот фильтр позволяет просматривать правила оповещений, которые направляются непосредственно в выбранную точку контакта. Правила, направленные в политики уведомлений, отображаться не будут.",
       "contact-point-tooltip-title": "Информация о фильтре по точкам контакта",
       "dashboard": "Дашборд",
@@ -3169,7 +3173,11 @@
       "placeholder-data-sources": "Выбрать источники данных",
       "placeholder-group-search": "Поиск группы",
       "placeholder-labels": "Выбрать метки",
+      "placeholder-policy": "",
       "plugin-rules": "Правила плагинов",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Управляется источником данных",
         "grafana": "Управляется Grafana"
@@ -3250,6 +3258,7 @@
       "title-group": "Группа",
       "title-health": "Работоспособность",
       "title-labels": "Метки",
+      "title-policy": "",
       "title-rule": "Правило",
       "title-state": "Состояние",
       "title-type": "Тип"
@@ -7340,6 +7349,9 @@
           "metrics-drilldown": "Детализация метрик"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14842,6 +14854,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },
