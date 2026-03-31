@@ -3,11 +3,11 @@ import { useCallback, useState } from 'react';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
+import { histogramFieldInfo, type HistogramTransformerInputs } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 

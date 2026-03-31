@@ -1,23 +1,23 @@
 import {
-  Field,
+  type Field,
   formattedValueToString,
   getFieldMatcher,
   FieldType,
   getFieldDisplayName,
-  DataFrame,
+  type DataFrame,
   FrameMatcherID,
-  MatcherConfig,
+  type MatcherConfig,
   FieldColorModeId,
   cacheFieldDisplayNames,
   FieldMatcherID,
-  FieldConfigSource,
+  type FieldConfigSource,
 } from '@grafana/data';
 import { decoupleHideFromState } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { VisibilityMode } from '@grafana/schema';
 
-import { XYShowMode, SeriesMapping, XYSeriesConfig } from './panelcfg.gen';
-import { XYSeries } from './types2';
+import { XYShowMode, SeriesMapping, type XYSeriesConfig } from './panelcfg.gen';
+import { type XYSeries } from './types2';
 
 export function fmt(field: Field, val: number): string {
   if (field.display) {

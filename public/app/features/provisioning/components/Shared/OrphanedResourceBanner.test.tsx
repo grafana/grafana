@@ -1,7 +1,7 @@
 import { within } from '@testing-library/react';
 import { render, screen } from 'test/test-utils';
 
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { useOrphanedResourceActions } from '../../hooks/useOrphanedResourceActions';

@@ -1,19 +1,19 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
 import {
-  DataFrame,
+  type DataFrame,
   EventBusSrv,
-  ExplorePanelsState,
+  type ExplorePanelsState,
   LoadingState,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   toUtc,
   createDataFrame,
-  ExploreLogsPanelState,
-  DataQuery,
+  type ExploreLogsPanelState,
+  type DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';

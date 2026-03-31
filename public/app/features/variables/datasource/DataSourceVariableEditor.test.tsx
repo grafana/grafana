@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
-import { Store } from 'redux';
+import { type Store } from 'redux';
 
 import { initialVariableEditorState } from '../editor/reducer';
 import { getPreloadedState } from '../state/helpers';

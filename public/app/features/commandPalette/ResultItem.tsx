@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { ActionId, ActionImpl } from 'kbar';
+import { type ActionId, type ActionImpl } from 'kbar';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 export const ResultItem = React.forwardRef(

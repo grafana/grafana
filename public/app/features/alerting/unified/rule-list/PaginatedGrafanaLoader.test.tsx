@@ -2,7 +2,7 @@ import { render, screen } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
-import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { mockFolderApi, setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockFolder, mockGrafanaPromAlertingRule } from '../mocks';

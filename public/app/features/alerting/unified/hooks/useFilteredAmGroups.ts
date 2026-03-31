@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { labelsMatchMatchers } from '../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';

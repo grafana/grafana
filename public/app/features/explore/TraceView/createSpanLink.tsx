@@ -1,36 +1,36 @@
 import {
-  DataFrame,
-  DataLink,
-  DataLinkPostProcessor,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
+  type DataFrame,
+  type DataLink,
+  type DataLinkPostProcessor,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
   dateTime,
-  Field,
-  LinkModel,
+  type Field,
+  type LinkModel,
   mapInternalLinkToExplore,
   rangeUtil,
-  ScopedVars,
-  SplitOpen,
-  TimeRange,
+  type ScopedVars,
+  type SplitOpen,
+  type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
-  TraceToProfilesOptions,
-  TraceToMetricsOptions,
-  TraceToLogsOptionsV2,
-  TraceToLogsTag,
+  type TraceToProfilesOptions,
+  type TraceToMetricsOptions,
+  type TraceToLogsOptionsV2,
+  type TraceToLogsTag,
 } from '@grafana/o11y-ds-frontend';
-import { PromQuery } from '@grafana/prometheus';
+import { type PromQuery } from '@grafana/prometheus';
 import { getTemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
+import { type LokiQuery } from '../../../plugins/datasource/loki/types';
+import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { SpanLinkDef, SpanLinkFunc, SpanLinkType } from './components/types/links';
-import { Trace, TraceSpan, TraceSpanReference } from './components/types/trace';
+import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
+import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case

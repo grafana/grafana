@@ -1,12 +1,12 @@
 import {
-  DataSourceInstanceSettings,
-  DataSourcePluginOptionsEditorProps,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 
-import { TempoJsonData } from '../types';
+import { type TempoJsonData } from '../types';
 
 import { getStyles } from './QuerySettings';
 
