@@ -4,12 +4,12 @@ keywords:
   - Quickstart
   - Grafana Cloud
   - Terraform
-title: Creating and managing a Grafana Cloud stack using Terraform
+title: Create and manage a Grafana Cloud stack using Terraform
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-cloud-stack/
 ---
 
-# Creating and managing a Grafana Cloud stack using Terraform
+# Create and manage a Grafana Cloud stack using Terraform
 
 Learn how to add a data source, a dashboard, and a folder to a Grafana Cloud stack using Terraform.
 

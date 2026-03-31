@@ -16,8 +16,8 @@ The [Grafana Terraform provider](https://registry.terraform.io/providers/grafana
 
 The following guides help you get started using Terraform to manage your Grafana Cloud stack:
 
-- [Creating and managing a Grafana Cloud stack using Terraform](terraform-cloud-stack/): Learn how to create a Grafana Cloud stack and add a data source and dashboard using Terraform.
-- [Creating and managing dashboards using Terraform and GitHub Actions](dashboards-github-action/): Learn how to create and manage multiple dashboards represented as JSON source code for Grafana using Terraform and GitHub Actions.
+- [Create and manage a Grafana Cloud stack using Terraform](terraform-cloud-stack/): Learn how to create a Grafana Cloud stack and add a data source and dashboard using Terraform.
+- [Create and manage dashboards using Terraform and GitHub Actions](dashboards-github-action/): Learn how to create and manage multiple dashboards represented as JSON source code for Grafana using Terraform and GitHub Actions.
 - [Managing IRM on Grafana Cloud using Terraform](terraform-oncall/): Learn how to connect an integration to Grafana IRM, configure escalation policies, and add your on-call schedule using Terraform.
 - [Managing Fleet Management in Grafana Cloud using Terraform](https://grafana.com/docs/grafana-cloud/as-code/infrastructure-as-code/terraform/terraform-fleet-management/): Learn how to create collectors and pipelines in Grafana Fleet Management using Terraform.
 - [Managing Frontend Observability in Grafana Cloud using Terraform](https://grafana.com/docs/grafana-cloud/as-code/infrastructure-as-code/terraform/terraform-frontend-observability/): Learn how to manage resources in Frontend Observability using Terraform.
