@@ -2,6 +2,7 @@ package features
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -71,6 +72,7 @@ func (c *cachedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 func entryToResponse(e *cachedEntry) *http.Response {
 	return &http.Response{
 		StatusCode: e.status,
+		Status:     fmt.Sprintf("%d %s", e.status, http.StatusText(e.status)),
 		Header:     e.headers.Clone(),
 		Body:       io.NopCloser(bytes.NewReader(e.body)),
 	}

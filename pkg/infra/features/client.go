@@ -45,7 +45,7 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 
 	middlewares := opts.Middlewares
 	if opts.CacheTTL > 0 {
-		middlewares = append(middlewares, newCacheMiddleware(opts.CacheTTL))
+		middlewares = append([]sdkhttpclient.Middleware{newCacheMiddleware(opts.CacheTTL)}, middlewares...)
 	}
 
 	options := sdkhttpclient.Options{
