@@ -877,8 +877,8 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
-	// If the resource already exists, the create will return an already exists error that is remapped appropriately by AsErrorResult.
-	// This also benefits from ACID behaviours on our databases, so we avoid race conditions.
+	// If the resource already exists, the create will return an already exists or a
+	// conflict error that is remapped appropriately by AsErrorResult.
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
@@ -949,10 +949,6 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		}
 		return rsp, nil
 	}
-	if req.ResourceVersion < 0 {
-		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
-		return rsp, nil
-	}
 
 	var (
 		res *resourcepb.UpdateResponse
@@ -978,19 +974,12 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		Key: req.Key,
 	})
 	if latest.Error != nil {
+		rsp.Error = latest.Error
 		return rsp, nil
 	}
 	if latest.Value == nil {
 		rsp.Error = NewBadRequestError("current value does not exist")
 		return rsp, nil
-	}
-
-	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
-	// See: https://github.com/grafana/grafana/pull/111866
-	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
-		return &resourcepb.UpdateResponse{
-			Error: &ErrOptimisticLockingFailed,
-		}, nil
 	}
 
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
@@ -1000,7 +989,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 	}
 
 	event.Type = resourcepb.WatchEvent_MODIFIED
-	event.PreviousRV = latest.ResourceVersion
+	event.PreviousRV = req.ResourceVersion
 
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
@@ -1020,9 +1009,6 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 	defer s.inflight.Done()
 
 	rsp := &resourcepb.DeleteResponse{}
-	if req.ResourceVersion < 0 {
-		return nil, apierrors.NewBadRequest("update must include the previous version")
-	}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		rsp.Error = &resourcepb.ErrorResult{
@@ -1060,10 +1046,6 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		rsp.Error = latest.Error
 		return rsp, nil
 	}
-	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
-		rsp.Error = &ErrOptimisticLockingFailed
-		return rsp, nil
-	}
 
 	access, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "delete",
@@ -1087,7 +1069,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	event := WriteEvent{
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
-		PreviousRV: latest.ResourceVersion,
+		PreviousRV: req.ResourceVersion,
 		GUID:       uuid.New().String(),
 	}
 	marker := &unstructured.Unstructured{}

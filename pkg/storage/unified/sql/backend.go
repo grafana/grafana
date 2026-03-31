@@ -24,7 +24,6 @@ import (
 	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -665,6 +664,10 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	if b.disableStorageServices {
 		return 0, fmt.Errorf("storage backend is not enabled")
 	}
+	if err := event.Validate(); err != nil {
+		return 0, fmt.Errorf("invalid event: %w", err)
+	}
+
 	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
@@ -901,10 +904,7 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 	if rows > 0 {
 		return fmt.Errorf("multiple rows effected (%d)", rows)
 	}
-	return apierrors.NewConflict(schema.GroupResource{
-		Group:    key.Group,
-		Resource: key.Resource,
-	}, key.Name, fmt.Errorf("resource version does not match current value"))
+	return resource.NewConflictStatusError(key.Group, key.Resource, key.Name, "requested RV does not match current RV")
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
