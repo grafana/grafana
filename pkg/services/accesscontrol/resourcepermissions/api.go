@@ -561,6 +561,7 @@ type SetResourcePermissionsParams struct {
 func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.resourcepermissions.setPermissions")
 	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
 
 	resourceID := web.Params(c.Req)[":resourceID"]
 
@@ -592,7 +593,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	}
 
 	metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_bulk", a.service.options.Resource, a.getFallbackStatus()).Inc()
-	_, err := a.service.SetPermissions(ctx, c.GetOrgID(), resourceID, cmd.Permissions...)
+	_, err := a.service.SetPermissions(c.Req.Context(), c.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Err(err)
 	}
