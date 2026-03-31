@@ -400,7 +400,7 @@ Or using a Kubernetes format, for example `kubernetes-dashboard.json`:
 ```json
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "metadata": {
     "name": "dashboard-uid"
   },

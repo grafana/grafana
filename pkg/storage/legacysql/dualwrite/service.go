@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -105,23 +104,12 @@ func ProvideService(
 	metrics := provideDualWriterMetrics(reg)
 
 	if cfg != nil {
-		if !enabled {
-			return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
-		}
-
-		foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
-		dashboardsMode := cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
-
-		// If both are fully on unified (Mode5), the dynamic service is not needed.
-		if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
-			return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
-		}
-
-		if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
-			return nil, fmt.Errorf("dashboards and folders must use the same mode when reading from unified storage")
-		}
+		// in G13, folders and dashboards are ALWAYS in mode5, so the dynamic version is not needed
+		// We should either remove this entirely, or use it to support other resources
+		return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
 	}
 
+	// TODO... this should not be possible
 	return &service{
 		db: &keyvalueDB{
 			db:     kv,

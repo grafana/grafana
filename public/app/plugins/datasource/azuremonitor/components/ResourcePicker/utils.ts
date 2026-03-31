@@ -3,11 +3,11 @@ import { produce } from 'immer';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
-import { AzureMonitorResource } from '../../dataquery.gen';
-import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorResource } from '../../dataquery.gen';
+import { type ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
+import { type AzureMonitorQuery } from '../../types/query';
 
-import { ResourceRow, ResourceRowGroup } from './types';
+import { type ResourceRow, type ResourceRowGroup } from './types';
 
 // This regex matches URIs representing:
 //  - subscriptions: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572

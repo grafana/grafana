@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import { PropsWithChildren, RefCallback, type JSX } from 'react';
+import { type PropsWithChildren, type RefCallback, type JSX } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, getTimeZoneInfo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';

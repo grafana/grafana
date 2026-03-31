@@ -1,10 +1,10 @@
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 
-import { PanelOptionsEditorProps, PanelProps } from '@grafana/data';
+import { type PanelOptionsEditorProps, type PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Input, usePanelContext } from '@grafana/ui';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export function StateView(props: PanelProps<Options>) {
   const context = usePanelContext();

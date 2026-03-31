@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -100,7 +100,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		require.NoError(t, err, "_folder.json should be created for a newly exported folder when the flag is enabled")
 
 		// The manifest must carry the actual K8s name as the stable UID.
-		var manifest foldersV1.Folder
+		var manifest foldersV1beta1.Folder
 		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json should be valid JSON")
 		require.Equal(t, folderUID, manifest.Name, "_folder.json should store the folder's K8s name as stable UID")
 		require.Equal(t, folderTitle, manifest.Spec.Title, "_folder.json should store the folder title")
@@ -139,11 +139,11 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 // TestIntegrationProvisioning_ExportJob_NestedFolders verifies that export correctly
 // handles nested folder hierarchies: paths, _folder.json placement, and UID/title content.
 func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
-	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
+	readFolderManifest := func(t *testing.T, path string) foldersV1beta1.Folder {
 		t.Helper()
 		data, err := os.ReadFile(path) //nolint:gosec
 		require.NoError(t, err, "_folder.json should exist at %s", path)
-		var manifest foldersV1.Folder
+		var manifest foldersV1beta1.Folder
 		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json at %s should be valid JSON", path)
 		return manifest
 	}

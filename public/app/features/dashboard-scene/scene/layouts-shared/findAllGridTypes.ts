@@ -1,6 +1,6 @@
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 export function findAllGridTypes(layout: DashboardLayoutManager): string[] {
   if (layout.descriptor.isGridLayout) {

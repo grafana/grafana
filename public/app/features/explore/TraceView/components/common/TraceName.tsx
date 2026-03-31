@@ -15,11 +15,11 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { FALLBACK_TRACE_NAME } from '../constants';
-import TNil from '../types/TNil';
+import type TNil from '../types/TNil';
 
 import BreakableText from './BreakableText';
 

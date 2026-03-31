@@ -1,4 +1,9 @@
-import { DataFrame, getPanelDataSummary, PanelPlugin, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  type DataFrame,
+  getPanelDataSummary,
+  type PanelPlugin,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 /**

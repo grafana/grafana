@@ -1,4 +1,4 @@
-import { LineStyle } from '@grafana/schema';
+import { type LineStyle } from '@grafana/schema';
 
 export enum ColorIndicator {
   series = 'series',

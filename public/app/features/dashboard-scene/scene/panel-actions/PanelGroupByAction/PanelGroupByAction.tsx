@@ -4,7 +4,12 @@ import { lastValueFrom } from 'rxjs';
 import { fuzzySearch } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { GroupByVariable, SceneDataQuery, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
+import {
+  type GroupByVariable,
+  type SceneDataQuery,
+  type VariableValueOption,
+  type VariableValueSingle,
+} from '@grafana/scenes';
 import { Button, Icon, Popover } from '@grafana/ui';
 import { getApplicableGroupByOptions } from 'app/features/dashboard-scene/utils/getApplicableGroupByOptions';
 

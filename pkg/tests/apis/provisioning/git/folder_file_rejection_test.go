@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,7 +38,7 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 	const repoName = "full-folder-file-warning"
 
 	helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": gitcommon.DashboardJSON("full-folder-dash", "Dashboard", 1),
+		"dashboard.json": common.DashboardJSON("full-folder-dash", "Dashboard", 1),
 		"folder.json":    folderJSON("folder-uid", "A Folder"),
 	})
 
@@ -55,9 +55,9 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 		"full sync should finish in warning state when a folder file is present")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"full sync should produce at least one warning for the folder file")
-	gitcommon.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
+	common.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
 
-	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning
@@ -70,11 +70,11 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 	const repoName = "incr-folder-file-create"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": gitcommon.DashboardJSON("folder-create-dash", "Dashboard", 1),
+		"dashboard.json": common.DashboardJSON("folder-create-dash", "Dashboard", 1),
 	})
 
 	helper.SyncAndWait(t, repoName)
-	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 
 	require.NoError(t, local.CreateFile("new-folder.json", string(folderJSON("new-folder", "New Folder"))))
 	_, err := local.Git("add", ".")
@@ -97,9 +97,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 		"incremental sync should finish in warning state when a folder file is created")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"incremental sync should produce at least one warning for the folder file")
-	gitcommon.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
+	common.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
 
-	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning
@@ -114,7 +114,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 
 	// Seed the repo with a dashboard and a folder-typed JSON file.
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": gitcommon.DashboardJSON("folder-test-dash", "Dashboard", 1),
+		"dashboard.json": common.DashboardJSON("folder-test-dash", "Dashboard", 1),
 		"my-folder.json": folderJSON("my-folder-uid", "My Folder"),
 	})
 
@@ -123,7 +123,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
 	})
-	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 
 	// Delete the folder file from git.
 	_, err := local.Git("rm", "my-folder.json")
@@ -147,9 +147,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 		"incremental sync should finish in warning state when a folder file is deleted")
 	require.NotEmpty(t, incrJobObj.Status.Warnings,
 		"incremental sync should produce at least one warning for the deleted folder file")
-	gitcommon.RequireJobWarningContains(t, incrJobObj, "cannot declare folders through files")
+	common.RequireJobWarningContains(t, incrJobObj, "cannot declare folders through files")
 
-	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 }
 
 // TestIntegrationGitFiles_CreateFolderFileRejected verifies that creating a

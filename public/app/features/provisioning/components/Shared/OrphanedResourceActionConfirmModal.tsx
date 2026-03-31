@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 
-import { JobType } from '../../types';
+import { type JobType } from '../../types';
 
 export type OrphanedResourceAction = Extract<JobType, 'releaseResources' | 'deleteResources'>;
 
