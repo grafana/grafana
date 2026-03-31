@@ -31,6 +31,7 @@ export function DashboardControlsMenu({
 }: DashboardControlsMenuProps) {
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
   const fullLinks = dashboard.state.links ?? [];
+  const styles = useStyles2(getStyles);
 
   return (
     <Box
@@ -38,49 +39,47 @@ export function DashboardControlsMenu({
       borderColor={'weak'}
       borderStyle={'solid'}
       boxShadow={'z3'}
-      display={'flex'}
-      direction={'column'}
       borderRadius={'default'}
       backgroundColor={'primary'}
-      padding={1}
-      gap={0.5}
       onClick={(e) => {
         // Normally, clicking the overlay closes the dropdown.
         // We stop event propagation here to keep it open while users interact with variable controls.
         e.stopPropagation();
       }}
     >
-      {/* Variables */}
-      {sortDefaultVarsFirst(variables).map((variable, index) => (
-        <div key={variable.state.key}>
-          <VariableValueSelectWrapper variable={variable} inMenu isEditingNewLayouts={isEditingNewLayouts} />
-        </div>
-      ))}
-
-      {/* Annotation layers */}
-      {annotations.length > 0 &&
-        annotations.map((layer, index) => (
-          <div key={layer.state.key}>
-            <DataLayerControl layer={layer} inMenu />
+      <div className={styles.scrollable}>
+        {/* Variables */}
+        {sortDefaultVarsFirst(variables).map((variable) => (
+          <div key={variable.state.key}>
+            <VariableValueSelectWrapper variable={variable} inMenu isEditingNewLayouts={isEditingNewLayouts} />
           </div>
         ))}
 
-      {/* Links */}
-      {links.length > 0 && dashboardUID && (
-        <>
-          {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
-          {sortDefaultLinksFirst(links).map((link, index) => (
-            <div key={`${link.title}-${index}`}>
-              <DashboardLinkRenderer
-                link={link}
-                dashboardUID={dashboardUID}
-                inMenu
-                linkIndex={fullLinks.indexOf(link)}
-              />
+        {/* Annotation layers */}
+        {annotations.length > 0 &&
+          annotations.map((layer) => (
+            <div key={layer.state.key}>
+              <DataLayerControl layer={layer} inMenu />
             </div>
           ))}
-        </>
-      )}
+
+        {/* Links */}
+        {links.length > 0 && dashboardUID && (
+          <>
+            {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
+            {sortDefaultLinksFirst(links).map((link, index) => (
+              <div key={`${link.title}-${index}`}>
+                <DashboardLinkRenderer
+                  link={link}
+                  dashboardUID={dashboardUID}
+                  inMenu
+                  linkIndex={fullLinks.indexOf(link)}
+                />
+              </div>
+            ))}
+          </>
+        )}
+      </div>
     </Box>
   );
 }
@@ -96,6 +95,15 @@ function MenuDivider() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  scrollable: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(1),
+    maxHeight: 'calc(100vh - 80px)',
+    overflowY: 'auto',
+    scrollbarWidth: 'thin',
+  }),
   divider: css({
     marginTop: theme.spacing(1),
     padding: theme.spacing(0, 0.5),
