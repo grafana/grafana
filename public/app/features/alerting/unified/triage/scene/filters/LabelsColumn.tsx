@@ -29,11 +29,20 @@ export function LabelsColumn() {
   const [open, toggleOpen] = useToggle(true);
   const [labelFilter, setLabelFilter] = useState('');
   const styles = useStyles2(getStyles);
-  const showSeverityFilter = hasSeverityFilterValues(labels);
-  const visibleSidebarFilters = SIDEBAR_FILTERS.map((filter) => ({
-    ...filter,
-    values: getSidebarFilterValues(labels, filter.key),
-  })).filter((filter) => filter.values.length > 0);
+  const activeSeverityValue = useFilterValue('severity');
+  const activeSidebarFilterValues: Record<SidebarFilterKey, string | undefined> = {
+    alertname: useFilterValue('alertname'),
+    grafana_folder: useFilterValue('grafana_folder'),
+    service: useFilterValue('service'),
+    team: useFilterValue('team'),
+    namespace: useFilterValue('namespace'),
+  };
+  const showSeverityFilter = hasSeverityFilterValues(labels) || Boolean(activeSeverityValue);
+  const visibleSidebarFilters = SIDEBAR_FILTERS.map((filter) => {
+    const values = getSidebarFilterValues(labels, filter.key);
+    const activeValue = activeSidebarFilterValues[filter.key];
+    return { ...filter, values, activeValue };
+  }).filter((filter) => filter.values.length > 0 || Boolean(filter.activeValue));
 
   return (
     <div className={cx(styles.column, !open && styles.columnCollapsed)}>
@@ -80,13 +89,13 @@ export function LabelsColumn() {
                 <div className={styles.divider} />
               </>
             )}
-            {visibleSidebarFilters.map(({ key, label, values }) => (
+            {visibleSidebarFilters.map(({ key, labelI18nKey, defaultLabel, values, activeValue }) => (
               <div key={key}>
                 <div className={styles.section}>
                   <Text weight="medium" variant="bodySmall" color="secondary">
-                    {label}
+                    {t(labelI18nKey, defaultLabel)}
                   </Text>
-                  <SidebarFilterGroup filterKey={key} values={values} />
+                  <SidebarFilterGroup filterKey={key} values={values} activeValue={activeValue} />
                 </div>
                 <div className={styles.divider} />
               </div>
@@ -152,12 +161,12 @@ function StateFilter() {
 }
 
 type SidebarFilterKey = 'alertname' | 'grafana_folder' | 'service' | 'team' | 'namespace';
-const SIDEBAR_FILTERS: Array<{ key: SidebarFilterKey; label: string }> = [
-  { key: 'alertname', label: 'Rule name' },
-  { key: 'grafana_folder', label: 'Folder' },
-  { key: 'service', label: 'Service' },
-  { key: 'team', label: 'Team' },
-  { key: 'namespace', label: 'Namespace' },
+const SIDEBAR_FILTERS: Array<{ key: SidebarFilterKey; labelI18nKey: string; defaultLabel: string }> = [
+  { key: 'alertname', labelI18nKey: 'alerting.triage.rule-name-filter-title', defaultLabel: 'Rule name' },
+  { key: 'grafana_folder', labelI18nKey: 'alerting.triage.folder-filter-title', defaultLabel: 'Folder' },
+  { key: 'service', labelI18nKey: 'alerting.triage.service-filter-title', defaultLabel: 'Service' },
+  { key: 'team', labelI18nKey: 'alerting.triage.team-filter-title', defaultLabel: 'Team' },
+  { key: 'namespace', labelI18nKey: 'alerting.triage.namespace-filter-title', defaultLabel: 'Namespace' },
 ];
 const sidebarCollator = new Intl.Collator();
 const MAX_VISIBLE_VALUES = 8;
@@ -169,10 +178,17 @@ type SidebarFilterValue = {
   total: number;
 };
 
-function SidebarFilterGroup({ filterKey, values }: { filterKey: SidebarFilterKey; values: SidebarFilterValue[] }) {
+function SidebarFilterGroup({
+  filterKey,
+  values,
+  activeValue,
+}: {
+  filterKey: SidebarFilterKey;
+  values: SidebarFilterValue[];
+  activeValue: string | undefined;
+}) {
   const styles = useStyles2(getStyles);
   const sceneContext = useSceneContext();
-  const activeValue = useFilterValue(filterKey);
 
   return (
     <Stack direction="column" gap={0.25}>
