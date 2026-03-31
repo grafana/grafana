@@ -3,38 +3,45 @@ import userEvent from '@testing-library/user-event';
 // eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
 
-import Search from './Search';
+import { SelectionSearchInput } from './SelectionSearchInput';
 
 const defaultProps = {
+  ariaLabel: 'selection search',
+  placeholder: 'search here',
   searchPhrase: '',
   searchFn: jest.fn(),
 };
+
 const originalDebounce = lodash.debounce;
 
-describe('Search', () => {
+describe('SelectionSearchInput', () => {
   beforeEach(() => {
     lodash.debounce = jest.fn().mockImplementation((fn) => {
       fn.cancel = () => {};
       return fn;
     });
   });
+
   afterEach(() => {
     lodash.debounce = originalDebounce;
   });
-  it('displays the search phrase passed in if it exists', async () => {
-    render(<Search {...defaultProps} searchPhrase={'testPhrase'} />);
+
+  it('displays the provided search phrase', async () => {
+    render(<SelectionSearchInput {...defaultProps} searchPhrase="testPhrase" />);
     expect(await screen.findByDisplayValue('testPhrase')).toBeInTheDocument();
   });
 
-  it('displays placeholder text if search phrase is not passed in', async () => {
-    render(<Search {...defaultProps} />);
-    expect(await screen.findByPlaceholderText('search by log group name prefix')).toBeInTheDocument();
+  it('displays the provided placeholder text', async () => {
+    render(<SelectionSearchInput {...defaultProps} />);
+    expect(await screen.findByPlaceholderText('search here')).toBeInTheDocument();
   });
 
   it('calls a debounced version of searchFn when typed in', async () => {
     const searchFn = jest.fn();
-    render(<Search {...defaultProps} searchFn={searchFn} />);
-    await userEvent.type(await screen.findByLabelText('log group search'), 'something');
+    render(<SelectionSearchInput {...defaultProps} searchFn={searchFn} />);
+
+    await userEvent.type(await screen.findByLabelText('selection search'), 'something');
+
     expect(searchFn).toBeCalledWith('s');
     expect(searchFn).toHaveBeenLastCalledWith('something');
   });
