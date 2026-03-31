@@ -83,6 +83,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 		if len(healthResponse.JSONDetails) > 0 {
 			err = json.Unmarshal(healthResponse.JSONDetails, &rsp.Details)
 			if err != nil {
+				m.SetError()
 				responder.Error(err)
 				return
 			}
@@ -90,6 +91,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 
 		statusCode := http.StatusOK
 		if healthResponse.Status != backend.HealthStatusOk {
+			m.SetError()
 			statusCode = http.StatusBadRequest
 		}
 		responder.Object(statusCode, rsp)

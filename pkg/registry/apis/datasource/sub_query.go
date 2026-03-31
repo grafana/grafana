@@ -102,6 +102,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			Headers:       map[string]string{},
 		})
 
+		// all errors get converted into k8s errors when sent in responder.Error and lose important context like downstream info
 		var e errutil.Error
 		if errors.As(err, &e) && e.Source == errutil.SourceDownstream {
 			m.SetError()
