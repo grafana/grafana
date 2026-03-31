@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import uPlot from 'uplot';
 
 import { DataFrame, FieldType } from '@grafana/data';
@@ -21,7 +21,7 @@ export enum ClusteringMode {
 }
 
 export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange, onChange }: Props) => {
-  const { outAnnos } = useMemo(() => {
+  const { outAnnos, shouldRedraw } = useMemo(() => {
     const clusteredAnnotations: DataFrame[] = [];
     let hasClusters = false;
 
@@ -123,12 +123,11 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
       console.warn('Hover mode not implemented');
     }
 
-    if (clusteredAnnotations.length > 0 && hasClusters) {
-      onChange();
-    }
+    const shouldRedraw = clusteredAnnotations.length > 0 && hasClusters;
 
     // Sort clustered frames
     return {
+      shouldRedraw: shouldRedraw,
       outAnnos:
         clusteredAnnotations.length > 0
           ? clusteredAnnotations.map((frame) =>
@@ -139,7 +138,14 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
             )
           : annotations,
     };
-  }, [annotations, clusteringMode, onChange, plotWidth, timeRange]);
+  }, [annotations, clusteringMode, plotWidth, timeRange]);
+
+  // Redraw after clustering mutates frames so uPlot canvas hooks see clustered data (must not run inside useMemo).
+  useEffect(() => {
+    if (shouldRedraw) {
+      onChange();
+    }
+  }, [shouldRedraw, onChange, outAnnos]);
 
   return outAnnos;
 };
