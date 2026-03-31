@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -397,7 +398,10 @@ func TestIntegrationServerListStreamDeadline(t *testing.T) {
 		}
 	}
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil)
+	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
+	require.NoError(t, err)
+
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { srv.Close() })
 

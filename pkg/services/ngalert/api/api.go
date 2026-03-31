@@ -112,29 +112,23 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
-	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
-		api.DatasourceCache,
-		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{
-			crypto:         api.MultiOrgAlertmanager.Crypto,
-			log:            logger,
-			ac:             api.AccessControl,
-			mam:            api.MultiOrgAlertmanager,
-			featureManager: api.FeatureManager,
-			silenceSvc: notifier.NewSilenceService(
-				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
-				api.TransactionManager,
-				logger,
-				api.MultiOrgAlertmanager,
-				api.RuleStore,
-				ruleAuthzService,
-				api.SilenceLimitsProvider,
-			),
-			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
-		},
-		convertSrv,
-		api.FeatureManager,
-	), m)
+	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(api.DatasourceCache, NewLotexAM(proxy, logger), &AlertmanagerSrv{
+		crypto:         api.MultiOrgAlertmanager.Crypto,
+		log:            logger,
+		ac:             api.AccessControl,
+		mam:            api.MultiOrgAlertmanager,
+		featureManager: api.FeatureManager,
+		silenceSvc: notifier.NewSilenceService(
+			accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
+			api.TransactionManager,
+			logger,
+			api.MultiOrgAlertmanager,
+			api.RuleStore,
+			ruleAuthzService,
+			api.SilenceLimitsProvider,
+		),
+		receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
+	}), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,

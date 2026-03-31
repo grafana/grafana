@@ -244,6 +244,13 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 
   let joined: Array<Array<number | string | null | undefined>> = [];
 
+  if (allData.length === 0) {
+    return {
+      length: 0,
+      fields: originalFields,
+    };
+  }
+
   if (options.mode === JoinMode.outerTabular) {
     joined = joinTabular(allData, true);
   } else if (options.mode === JoinMode.inner) {
