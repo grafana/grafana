@@ -67,6 +67,63 @@ func TestListPermissions_AllTrue_IncludesDashboardAndFolderWildcardsForDashboard
 	}, perms)
 }
 
+func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
+	fake := &fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{
+			Items: []string{"uid-1"},
+		},
+	}
+	r := &zanzanaPermissionResolver{client: fake}
+
+	result, err := r.searchPermissionsForIdentity(
+		context.Background(),
+		1,
+		42,
+		"user-uid",
+		false,
+		ac.SearchOptions{},
+	)
+	require.NoError(t, err)
+
+	perms := result[42]
+	require.NotEmpty(t, perms, "should return permissions when neither action nor actionPrefix is set")
+
+	supported := common.SupportedActions()
+	require.True(t, len(perms) >= len(supported),
+		"should have at least one permission per supported action (got %d perms for %d actions)", len(perms), len(supported))
+
+	actions := map[string]bool{}
+	for _, p := range perms {
+		actions[p.Action] = true
+	}
+	for _, entry := range supported {
+		require.True(t, actions[entry.Action], "expected action %s to be present in results", entry.Action)
+	}
+}
+
+func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
+	fake := &fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{
+			Items: []string{"dash-1"},
+		},
+	}
+	r := &zanzanaPermissionResolver{client: fake}
+
+	result, err := r.searchPermissionsForIdentity(
+		context.Background(),
+		1,
+		42,
+		"user-uid",
+		false,
+		ac.SearchOptions{Action: "dashboards:read"},
+	)
+	require.NoError(t, err)
+
+	perms := result[42]
+	require.Len(t, perms, 1)
+	require.Equal(t, "dashboards:read", perms[0].Action)
+}
+
 func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
 	fake := &fakeZanzanaClient{

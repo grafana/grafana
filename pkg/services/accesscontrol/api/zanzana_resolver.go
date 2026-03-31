@@ -82,6 +82,12 @@ func (r *zanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		// Neither action nor prefix specified (namespacedId-only query): list every supported action.
+		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, "", options.Scope)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(permissions) > 0 {
