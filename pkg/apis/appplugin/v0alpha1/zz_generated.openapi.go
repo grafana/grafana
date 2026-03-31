@@ -134,26 +134,26 @@ func schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref common.ReferenceCallbac
 							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
-					"secureJsonFields": {
+					"secure": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
+							Description: "Secure values allows setting values that are never shown to users The returned properties are only the names of the configured values",
+							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: false,
-										Type:    []string{"boolean"},
-										Format:  "",
+										Default: map[string]interface{}{},
+										Ref:     ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"enabled", "pinned", "jsonData", "secureJsonFields"},
+				Required: []string{"enabled", "pinned", "jsonData"},
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.Unstructured{}.OpenAPIModelName()},
+			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), commonv0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }

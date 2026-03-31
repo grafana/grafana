@@ -79,11 +79,13 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 		obj.Spec.Pinned = ps.Pinned
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
 
-		secureFields := make(map[string]bool, len(ps.SecureJSONData))
+		secureValues := make(common.InlineSecureValues, len(ps.SecureJSONData))
 		for k, v := range ps.SecureJSONData {
-			secureFields[k] = len(v) > 0
+			if len(v) > 0 {
+				secureValues[k] = common.InlineSecureValue{Name: k}
+			}
 		}
-		obj.Spec.SecureJsonFields = secureFields
+		obj.Spec.Secure = secureValues
 	}
 
 	return obj, nil
