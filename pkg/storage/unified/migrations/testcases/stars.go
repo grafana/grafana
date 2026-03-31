@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -102,18 +103,24 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 
 func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
+	apiList := &v1.APIResourceList{}
+
+	time.Sleep(15 * time.Second) // wait for the apiserver to be ready
 
 	for user, expected := range tc.stars {
 		namespace := authlib.OrgNamespaceFormatter(user.Identity.GetOrgID())
+		id := user.Identity.GetIdentifier()
+		require.Equal(t, authlib.TypeUser, user.Identity.GetIdentityType())
+		ctx := identity.WithRequester(context.Background(), user.Identity)
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      user,
 			Namespace: namespace,
 			GVR:       collectionsV1.GroupVersion.WithResource("stars"),
 		})
+		client2 := user.RESTClient(t, &collectionsV1.GroupVersion)
+		err := client2.Get().Do(ctx).Into(apiList)
+		require.NoError(t, err, "unable to see the apiserver")
 
-		id := user.Identity.GetIdentifier()
-		require.Equal(t, authlib.TypeUser, user.Identity.GetIdentityType())
-		ctx := identity.WithRequester(context.Background(), user.Identity)
 		found, err := client.Resource.Get(ctx, "user-"+id, v1.GetOptions{})
 		if !shouldExist {
 			require.Error(t, err, "should not get star for user %s", user)
