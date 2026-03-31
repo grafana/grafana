@@ -727,7 +727,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const customDefaults: Record<string, unknown> = {};
       const panelCustom: Record<string, unknown> = panel.state.fieldConfig.defaults.custom;
 
-      for (const key of styleConfig.fieldConfig.defaults) {
+      for (const key of styleConfig.fieldConfig.customProps) {
         const value = panelCustom[key];
         if (value !== undefined) {
           customDefaults[key] = value;

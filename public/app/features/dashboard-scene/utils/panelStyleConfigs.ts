@@ -26,7 +26,7 @@ export interface PanelStyleConfig {
 const graphPanelStyleConfig: PanelStyleConfig = {
   fieldConfig: {
     defaultsProps: ['color'],
-    defaults: [
+    customProps: [
       // Line config
       'lineColor',
       'lineInterpolation',
