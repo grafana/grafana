@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
@@ -6,7 +6,7 @@ import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardInteractions } from '../../utils/interactions';
 
-import { ConditionalRenderingConditions } from './types';
+import { type ConditionalRenderingConditions } from './types';
 import { getConditionIndex, removeCondition, undoRemoveCondition } from './utils';
 
 interface Props {

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useContext } from 'react';
+import { type ReactNode, useContext } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -11,7 +11,12 @@ import { getPortalContainer } from '../Portal/Portal';
 import { SidebarButton } from './SidebarButton';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
 import { SidebarResizer } from './SidebarResizer';
-import { SIDE_BAR_WIDTH_ICON_ONLY, SIDE_BAR_WIDTH_WITH_TEXT, SidebarContext, SidebarContextValue } from './useSidebar';
+import {
+  SIDE_BAR_WIDTH_ICON_ONLY,
+  SIDE_BAR_WIDTH_WITH_TEXT,
+  SidebarContext,
+  type SidebarContextValue,
+} from './useSidebar';
 import { useCustomClickAway } from './useSidebarClickAway';
 
 export interface Props {

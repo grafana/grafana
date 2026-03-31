@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ValuePicker } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { ObjectsWithConditionalRendering } from '../object';
+import { type ObjectsWithConditionalRendering } from '../object';
 
-import { GroupConditionConditionType } from './types';
+import { type GroupConditionConditionType } from './types';
 
 interface Props {
   objectType: ObjectsWithConditionalRendering;

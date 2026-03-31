@@ -1,7 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
-import { InspectTab } from 'app/features/inspector/types';
+import { type InspectTab } from 'app/features/inspector/types';
 
-import { EventTrackingNamespace, SearchLayout } from '../types';
+import { type EventTrackingNamespace, type SearchLayout } from '../types';
 
 interface QueryProps {
   layout: SearchLayout;

@@ -3,17 +3,17 @@ import {
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
-  SetFieldConfigOptionsArgs,
-  Field,
+  type SetFieldConfigOptionsArgs,
+  type Field,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  LineStyle,
+  type LineStyle,
   VisibilityMode,
   StackingMode,
   GraphThresholdsStyleMode,

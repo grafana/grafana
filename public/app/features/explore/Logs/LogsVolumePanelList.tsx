@@ -4,25 +4,25 @@ import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   arrayToDataFrame,
-  DataFrame,
-  DataQueryResponse,
+  type DataFrame,
+  type DataQueryResponse,
   DataTopic,
   dateTime,
-  EventBus,
+  type EventBus,
   getFrameDisplayName,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   LoadingState,
-  LogRowModel,
+  type LogRowModel,
   shallowCompare,
-  SplitOpen,
-  TimeRange,
-  TimeZone,
+  type SplitOpen,
+  type TimeRange,
+  type TimeZone,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { Button, InlineField, Alert, useStyles2, type SeriesVisibilityChangeMode } from '@grafana/ui';
 
 import {
   mergeLogsVolumeDataFrames,

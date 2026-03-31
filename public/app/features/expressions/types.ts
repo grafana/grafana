@@ -1,4 +1,4 @@
-import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
+import { type DataQuery, ReducerID, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { EvalFunction } from '../alerting/state/alertDef';

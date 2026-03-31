@@ -3,10 +3,10 @@ import 'react-data-grid/lib/styles.css';
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import {
-  CSSProperties,
+  type CSSProperties,
   type JSX,
-  Key,
-  ReactNode,
+  type Key,
+  type ReactNode,
   useCallback,
   useEffect,
   useId,
@@ -16,37 +16,37 @@ import {
 } from 'react';
 import {
   Cell,
-  CellRendererProps,
+  type CellRendererProps,
   DataGrid,
-  DataGridHandle,
-  DataGridProps,
-  RenderCellProps,
-  Renderers,
-  RenderRowProps,
+  type DataGridHandle,
+  type DataGridProps,
+  type RenderCellProps,
+  type Renderers,
+  type RenderRowProps,
   Row,
-  SortColumn,
+  type SortColumn,
 } from 'react-data-grid';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
   FALLBACK_COLOR,
-  Field,
+  type Field,
   FieldType,
   getDisplayProcessor,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId, TableCellTooltipPlacement, TableFooterOptions } from '@grafana/schema';
+import { FieldColorModeId, TableCellTooltipPlacement, type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { Pagination } from '../../Pagination/Pagination';
-import { PanelContext, usePanelContext } from '../../PanelChrome';
+import { type PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellDisplayMode } from '../types';
-import { DataLinksActionsTooltipState } from '../utils';
+import { type DataLinksActionsTooltipState } from '../utils';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
@@ -78,14 +78,14 @@ import {
   getTooltipStyles,
 } from './styles';
 import {
-  CellRootRenderer,
-  FromFieldsResult,
-  InspectCellProps,
-  TableCellStyleOptions,
-  TableColumn,
-  TableNGProps,
-  TableRow,
-  TableSummaryRow,
+  type CellRootRenderer,
+  type FromFieldsResult,
+  type InspectCellProps,
+  type TableCellStyleOptions,
+  type TableColumn,
+  type TableNGProps,
+  type TableRow,
+  type TableSummaryRow,
 } from './types';
 import {
   calculateFooterHeight,
@@ -876,11 +876,12 @@ export function TableNG(props: TableNGProps) {
     }
     for (const row of rows) {
       if (row.__depth > 0) {
+        const rowNestedFrame = nestedData![row.__index]!;
         result.push(
           fromFields(
-            nestedVisibleFields,
+            getVisibleFields(rowNestedFrame.fields),
             nestedFieldWidths,
-            nestedData![row.__index]!,
+            rowNestedFrame,
             nestedRows[row.__index].raw,
             nestedRows[row.__index].final
           )
@@ -888,7 +889,7 @@ export function TableNG(props: TableNGProps) {
       }
     }
     return result;
-  }, [rows, hasNestedFrames, nestedData, nestedRows, nestedVisibleFields, nestedFieldWidths, fromFields]);
+  }, [rows, hasNestedFrames, nestedData, nestedRows, nestedFieldWidths, fromFields]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);

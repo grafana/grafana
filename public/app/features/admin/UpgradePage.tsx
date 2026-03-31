@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { GrafanaTheme2, NavModel } from '@grafana/data';
+import { type GrafanaTheme2, type NavModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 import checkmarkSvg from 'img/licensing/checkmark.svg';
 import customerSupportSvg from 'img/licensing/customer_support.svg';
 import handinhandSupportSvg from 'img/licensing/handinhand_support.svg';

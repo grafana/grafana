@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { CSSObject } from '@emotion/serialize';
+import { type CSSObject } from '@emotion/serialize';
 import { createElement } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

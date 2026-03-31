@@ -1,12 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import { useParams } from 'react-router-dom-v5-compat';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
 import { config, locationService } from '@grafana/runtime';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import DashboardPageProxy, { DashboardPageProxyProps } from './DashboardPageProxy';
+import DashboardPageProxy, { type DashboardPageProxyProps } from './DashboardPageProxy';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -55,6 +55,7 @@ describe('DashboardPageProxy', () => {
   describe('when dashboardScene feature toggle is enabled (default)', () => {
     beforeEach(() => {
       jest.clearAllMocks();
+      config.featureToggles.kubernetesDashboards = false;
       config.featureToggles.dashboardScene = true;
     });
 

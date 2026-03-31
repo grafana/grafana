@@ -1,11 +1,11 @@
 import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
-  SceneObjectRef,
-  VizPanel,
+  type SceneObjectState,
+  type SceneObjectRef,
+  type VizPanel,
 } from '@grafana/scenes';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';

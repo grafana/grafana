@@ -5,9 +5,12 @@ import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../scene/types/EditableDashboardElement';
 
-import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { type VizPanelEditableElement } from './VizPanelEditableElement';
 
 export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
