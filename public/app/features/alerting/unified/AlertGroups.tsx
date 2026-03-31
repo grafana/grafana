@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { type AlertState, type AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
+import { AlertState, AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
 
 import { type AlertGroupsFilter, alertmanagerApi } from './api/alertmanagerApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
