@@ -1,5 +1,6 @@
 import path, { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
+import remarkGfm from 'remark-gfm';
 import { copyAssetsSync } from './copyAssets';
 
 const coreComponentsGlobs: StorybookConfig['stories'] = ['../src/Intro.mdx', '../src/**/*.story.tsx'];
@@ -25,6 +26,16 @@ copyAssetsSync();
 const mainConfig: StorybookConfig = {
   stories,
   addons: [
+    {
+      name: '@storybook/addon-docs',
+      options: {
+        mdxPluginOptions: {
+          mdxCompileOptions: {
+            remarkPlugins: [remarkGfm],
+          },
+        },
+      },
+    },
     {
       name: '@storybook/addon-essentials',
       options: {
@@ -64,7 +75,7 @@ const mainConfig: StorybookConfig = {
     },
   },
   logLevel: 'debug',
-  staticDirs: ['static'],
+  staticDirs: ['static', 'images'],
   typescript: {
     check: true,
     reactDocgen: 'react-docgen-typescript',
