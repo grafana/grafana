@@ -50,6 +50,7 @@ test.describe(
       // see e.g. https://github.com/microsoft/playwright/issues/21451#issuecomment-1502251404
       await page.waitForURL('/profile');
       await page.waitForLoadState('networkidle');
+      await expect(page.getByTestId(selectors.components.TimeZonePicker.containerV2)).toContainText('Asia/Tokyo');
 
       // Open dashboard with time range from 8th to end of 10th.
       // Will be Tokyo time because of above preference
