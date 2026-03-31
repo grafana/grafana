@@ -25,7 +25,7 @@ The new Grafana HTTP APIs follow a standardized API structure alongside consiste
 
 ## API structure
 
-### API path 
+### API path
 
 All Grafana APIs follow this standardized format:
 
