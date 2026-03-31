@@ -180,12 +180,13 @@ const buildAnnotationClusters = (
     }
 
     const pushCluster = (prevIdx: number) => {
-      // open cluster
+      // add previous anno if cluster is empty
       if (cluster.length === 0) {
         cluster.push(prevIdx);
         clusterIdx[prevIdx] = clusters.length;
       }
 
+      // Add this anno to cluster
       cluster.push(j);
       clusterIdx[j] = clusters.length;
     };
@@ -205,14 +206,10 @@ const buildAnnotationClusters = (
     if (prevIdx != null) {
       // Point annotation clusters
       if (!isRegionVals[j]) {
-        // if we're within the threshold
         if (startTimeWithinClusterThreshold || endTimeWithinClusterThreshold) {
           pushCluster(prevIdx);
-        } else {
-          // close cluster
-          if (cluster.length > 0) {
-            closeCluster();
-          }
+        } else if (cluster.length > 0) {
+          closeCluster();
         }
       }
       // region annotation clusters
@@ -233,9 +230,7 @@ const buildAnnotationClusters = (
     clusters.push(cluster);
   }
 
-  const regionClusterIdx: Array<number | null> = Array(timeVals.length).fill(null);
-  prevIdx = null;
-  return { clusterIdx: clusterIdx, clusters: clusters, regionClusterIdx };
+  return { clusterIdx: clusterIdx, clusters: clusters };
 };
 
 const calculateMergeThreshold = (timeRange: TimeRange2, plotWidth: number) => {
