@@ -43,10 +43,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-09-28,externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 2023-12-05,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
-<<<<<<< HEAD
-2024-06-05,kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,false
-=======
->>>>>>> main
 2025-07-31,kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 2025-07-31,kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
