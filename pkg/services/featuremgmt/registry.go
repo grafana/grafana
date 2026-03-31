@@ -1893,9 +1893,9 @@ var (
 		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "recentlyViewedDashboards",

@@ -4542,14 +4542,17 @@
     {
       "metadata": {
         "name": "restoreDashboards",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-05-23T14:35:54Z"
+        "resourceVersion": "1774951865910",
+        "creationTimestamp": "2025-05-23T14:35:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-31 10:11:05.910542 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables restore deleted dashboards feature",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-navigation",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
