@@ -1,6 +1,6 @@
 import { type FormEvent, useId, useMemo, useRef, useState } from 'react';
 
-import { VariableHide } from '@grafana/data';
+import { type SelectableValue, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -26,7 +26,8 @@ import {
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
-import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
+import { VariableTypeSelect } from '../../settings/variables/components/VariableTypeSelect';
+import { type EditableVariableType, getEditableVariableDefinition, isEditableVariableType, validateVariableName } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
@@ -36,6 +37,7 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
   const variable = this.variable;
   const variableOptionsCategoryId = useId();
   const variableNameId = useId();
+  const variableTypeId = useId();
   const labelId = useId();
   const descriptionId = useId();
   const variableDisplayId = useId();
@@ -51,6 +53,14 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
 
   const basicOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({ title: '', id: variableOptionsCategoryId })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: variableTypeId,
+          skipField: true,
+          render: () => <VariableTypeInput variable={variable} />,
+        })
+      )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: '',
@@ -82,7 +92,7 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
           render: () => <VariableDisplayInput variable={variable} />,
         })
       );
-  }, [variableOptionsCategoryId, variableNameId, labelId, descriptionId, variableDisplayId, variable, isNewElement]);
+  }, [variableOptionsCategoryId, variableNameId, labelId, descriptionId, variableDisplayId, variable, isNewElement, variableTypeId]);
 
   const categories = [basicOptions];
   const typeCategory = useVariableTypeCategory(variable);
@@ -111,10 +121,8 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       };
     }
 
-    const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
-
     return {
-      typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
+      typeName: t('dashboard.edit-pane.elements.variable', 'Variable'),
       icon: 'dollar-alt',
       instanceName: this.variable.state.name,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
@@ -312,6 +320,25 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
       onChange={onChange}
     />
   );
+}
+
+function VariableTypeInput({ variable }: VariableInputProps) {
+  const { type } = variable.useState();
+
+  if (!isEditableVariableType(type)) {
+    return null;
+  }
+
+  const onChange = (option: SelectableValue<EditableVariableType>) => {
+    if (!option.value || option.value === type) {
+      return;
+    }
+
+    dashboardEditActions.changeVariableType({ source: variable, newType: option.value });
+    DashboardInteractions.newVariableTypeSelected({ type: option.value });
+  };
+
+  return <VariableTypeSelect onChange={onChange} type={type} />;
 }
 
 export function shouldHideControlsMenuOption(variable: SceneVariable): boolean {

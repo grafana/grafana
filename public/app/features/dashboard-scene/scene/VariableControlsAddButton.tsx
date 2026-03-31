@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { openAddVariablePane } from '../settings/variables/VariableAddEditableElement';
+import { openAddVariablePane } from '../settings/variables/actions';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { type DashboardScene } from './DashboardScene';

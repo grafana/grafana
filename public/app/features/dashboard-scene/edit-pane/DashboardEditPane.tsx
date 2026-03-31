@@ -163,16 +163,20 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     /**
      * Some edit actions also require clearing selection or selecting new objects
      */
-    if (action.addedObject) {
-      this.clearSelection();
-    }
+    if (action.selectObjectAfterUndo) {
+      this.selectActionObject(action.selectObjectAfterUndo);
+    } else {
+      if (action.addedObject) {
+        this.clearSelection();
+      }
 
-    if (action.movedObject) {
-      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
-    }
+      if (action.movedObject) {
+        this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
+      }
 
-    if (action.removedObject) {
-      this.newObjectAddedToCanvas(action.removedObject);
+      if (action.removedObject) {
+        this.newObjectAddedToCanvas(action.removedObject);
+      }
     }
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
@@ -185,16 +189,20 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     action.perform();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    if (action.addedObject) {
-      this.newObjectAddedToCanvas(action.addedObject);
-    }
+    if (action.selectObjectAfterPerform) {
+      this.selectActionObject(action.selectObjectAfterPerform);
+    } else {
+      if (action.addedObject) {
+        this.newObjectAddedToCanvas(action.addedObject);
+      }
 
-    if (action.movedObject) {
-      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
-    }
+      if (action.movedObject) {
+        this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
+      }
 
-    if (action.removedObject) {
-      this.clearSelection();
+      if (action.removedObject) {
+        this.clearSelection();
+      }
     }
   }
 
@@ -354,6 +362,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
     this.state.selection?.markAsNewElement();
+  }
+
+  private selectActionObject(obj: SceneObject) {
+    this.selectObject(obj, obj.state.key!, { force: true });
   }
 
   public addNewPanel(targetElement?: SceneObject) {

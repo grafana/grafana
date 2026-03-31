@@ -7,6 +7,7 @@ import {
   FieldType,
   LoadingState,
   type PanelData,
+  VariableHide,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,
@@ -19,6 +20,8 @@ import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyV
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
@@ -119,10 +122,12 @@ describe('VariablesEditView', () => {
   });
 
   describe('Dashboard Variables actions', () => {
+    let dashboard: DashboardScene;
     let variableView: VariablesEditView;
 
     beforeEach(async () => {
       const result = await buildTestScene();
+      dashboard = result.dashboard;
       variableView = result.variableView;
     });
 
@@ -179,6 +184,11 @@ describe('VariablesEditView', () => {
 
     it('should change the variable type creating a new variable object', () => {
       const previousVariable = variableView.getVariables()[1] as CustomVariable;
+      previousVariable.setState({
+        label: 'Custom label',
+        description: 'Custom description',
+        hide: VariableHide.inControlsMenu,
+      });
       variableView.onEdit('customVar2');
 
       variableView.onTypeChange('adhoc');
@@ -190,6 +200,38 @@ describe('VariablesEditView', () => {
       // Values to be kept between the old and new variable
       expect(variable.state.name).toEqual(previousVariable.state.name);
       expect(variable.state.label).toEqual(previousVariable.state.label);
+      expect(variable.state.description).toEqual(previousVariable.state.description);
+      expect(variable.state.hide).toEqual(previousVariable.state.hide);
+    });
+
+    it('should change the variable type even when edit pane is not activated', () => {
+      const variableView = new VariablesEditView({});
+      new DashboardScene({
+        title: 'Dashboard with variables',
+        uid: 'dash-variables-no-edit-pane',
+        meta: {
+          canEdit: true,
+        },
+        $timeRange: new SceneTimeRange({}),
+        $variables: new SceneVariableSet({
+          variables: [
+            new CustomVariable({
+              name: 'customVar',
+              query: 'test, test2',
+              value: 'test',
+              text: 'test',
+            }),
+          ],
+        }),
+        body: DefaultGridLayoutManager.fromVizPanels([]),
+        editview: variableView,
+      });
+
+      variableView.onEdit('customVar');
+      variableView.onTypeChange('textbox');
+
+      expect(variableView.getVariables()).toHaveLength(1);
+      expect(variableView.getVariables()[0].state.type).toBe('textbox');
     });
 
     it('should reset editing variable when going back', () => {
@@ -204,6 +246,31 @@ describe('VariablesEditView', () => {
       variableView.onAdd();
       expect(variableView.getVariables()).toHaveLength(4);
       expect(variableView.getVariables()[3].state.name).toBe('query0');
+      expect(variableView.getVariables()[3].state.type).toBe('query');
+    });
+
+    it('should avoid section variable name collisions when onAdd creates a global dashboard variable', () => {
+      const sectionVariable = new CustomVariable({
+        name: 'query0',
+        query: 'sec1,sec2',
+        value: ['sec1'],
+        text: ['sec1'],
+      });
+      const row = new RowItem({
+        title: 'Row with section variable',
+        $variables: new SceneVariableSet({ variables: [sectionVariable] }),
+      });
+
+      dashboard.setState({
+        body: new RowsLayoutManager({
+          rows: [row],
+        }),
+      });
+
+      variableView.onAdd();
+
+      expect(variableView.getVariables()).toHaveLength(4);
+      expect(variableView.getVariables()[3].state.name).toBe('query1');
       expect(variableView.getVariables()[3].state.type).toBe('query');
     });
 

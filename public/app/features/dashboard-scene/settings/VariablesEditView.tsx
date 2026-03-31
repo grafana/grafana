@@ -23,6 +23,7 @@ import { ProvisionedVariablesSection } from './variables/ProvisionedVariablesSec
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
 import { VariablesUnknownTable } from './variables/VariablesUnknownTable';
+import { collectDescendantVariables } from './variables/actions';
 import {
   type EditableVariableType,
   RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
@@ -70,9 +71,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       return;
     }
 
-    const updatedVariables = [...variables.slice(0, variableIndex), newVariable, ...variables.slice(variableIndex + 1)];
-
-    // Update the state or the variables array
+    const updatedVariables = [...variables];
+    updatedVariables[variableIndex] = newVariable;
     this.getVariableSet().setState({ variables: updatedVariables });
   };
 
@@ -161,7 +161,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const variables = this.getVariables();
     const variableIndex = variables.length;
     //add the new variable to the end of the array
-    const defaultNewVariable = getVariableDefault(variables);
+    const defaultNewVariable = getVariableDefault([...variables, ...collectDescendantVariables(this.getDashboard())]);
 
     this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
     this.setState({ editIndex: variableIndex });
@@ -179,8 +179,20 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       return;
     }
 
-    const { name, label } = variable.state;
-    const newVariable = getVariableScene(type, { name, label });
+    if (variable.state.type === type) {
+      return;
+    }
+
+    const newVariable = getVariableScene(type, {
+      name: variable.state.name,
+      label: variable.state.label,
+    });
+
+    newVariable.setState({
+      description: variable.state.description,
+      hide: variable.state.hide,
+    });
+
     this.replaceEditVariable(newVariable);
   };
 

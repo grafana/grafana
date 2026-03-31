@@ -21,15 +21,9 @@ import { AnnotationEditableElement } from '../settings/annotations/AnnotationEdi
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
 import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
-import {
-  SectionVariableAdd,
-  SectionVariableAddEditableElement,
-  VariableAdd,
-  VariableAddEditableElement,
-} from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
-import { isSceneVariable } from '../settings/variables/utils';
+import { type EditableVariableType, getVariableScene, isSceneVariable } from '../settings/variables/utils';
 
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
@@ -70,14 +64,6 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (isSceneVariable(sceneObj)) {
     return new VariableEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof VariableAdd) {
-    return new VariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof SectionVariableAdd) {
-    return new SectionVariableAddEditableElement(sceneObj);
   }
 
   if (sceneObj instanceof LinkEdit) {
@@ -129,6 +115,18 @@ export interface RemoveElementActionHelperProps {
   source: SceneObject;
   perform: () => void;
   undo: () => void;
+}
+
+export interface ReplaceVariableActionHelperProps {
+  oldVariable: SceneVariable;
+  newVariable: SceneVariable;
+  source: SceneVariableSet;
+  description?: string;
+}
+
+export interface ChangeVariableTypeActionHelperProps {
+  newType: EditableVariableType;
+  source: SceneVariable;
 }
 
 export interface AddVariableActionHelperProps {
@@ -243,6 +241,58 @@ export const dashboardEditActions = {
       undo() {
         source.setState({ variables: varsBeforeRemoval });
       },
+    });
+  },
+  replaceVariable({ source, oldVariable, newVariable, description }: ReplaceVariableActionHelperProps) {
+    const variablesBeforeReplacement = [...source.state.variables];
+    const variableIndex = variablesBeforeReplacement.indexOf(oldVariable);
+
+    if (variableIndex === -1) {
+      console.error('Variable not found');
+      return;
+    }
+
+    const variablesAfterReplacement = [...variablesBeforeReplacement];
+    variablesAfterReplacement[variableIndex] = newVariable;
+
+    dashboardEditActions.edit({
+      description: description ?? t('dashboard.variable.replace.action', 'Replace variable'),
+      source,
+      perform: () => {
+        source.setState({ variables: variablesAfterReplacement });
+      },
+      undo: () => {
+        source.setState({ variables: variablesBeforeReplacement });
+      },
+      selectObjectAfterPerform: newVariable,
+      selectObjectAfterUndo: oldVariable,
+    });
+  },
+  changeVariableType({ source, newType }: ChangeVariableTypeActionHelperProps) {
+    const variableSet = source.parent;
+    if (!(variableSet instanceof SceneVariableSet)) {
+      return;
+    }
+
+    if (source.state.type === newType) {
+      return;
+    }
+
+    const newVariable = getVariableScene(newType, {
+      name: source.state.name,
+      label: source.state.label,
+    });
+
+    newVariable.setState({
+      description: source.state.description,
+      hide: source.state.hide,
+    });
+
+    dashboardEditActions.replaceVariable({
+      source: variableSet,
+      oldVariable: source,
+      newVariable,
+      description: t('dashboard.variable.type.action', 'Change variable type'),
     });
   },
   changeVariableName: makeEditAction<SceneVariable, 'name'>({
