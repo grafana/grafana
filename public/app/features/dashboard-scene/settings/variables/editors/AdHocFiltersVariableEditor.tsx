@@ -1,10 +1,11 @@
 import { noop } from 'lodash';
-import { FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
+import { type DataSourceInstanceSettings, type MetricFindValue, getDataSourceRef } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, AdHocFilterWithLabels, SceneVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
@@ -18,7 +19,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, defaultKeys, allowCustomValue } = variable.useState();
+  const { datasource: datasourceRef, defaultKeys, allowCustomValue, enableGroupBy } = variable.useState();
 
   const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
   const [originalFilters, setOriginalFilters] = useState(() => variable.getOriginalFilters());
@@ -60,15 +61,25 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   }, [datasourceRef]);
 
   const message = datasourceSettings?.getTagKeys
-    ? 'Ad hoc filters are applied automatically to all queries that target this data source'
-    : 'This data source does not support ad hoc filters.';
+    ? t(
+        'dashboard-scene.ad-hoc-filters-variable-editor.message-supported',
+        'Filters are applied automatically to all queries that target this data source'
+      )
+    : t(
+        'dashboard-scene.ad-hoc-filters-variable-editor.message-not-supported',
+        'This data source does not support filters.'
+      );
 
-  const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
+  const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
+    const dsInstance = await getDataSourceSrv().get(dsRef);
 
     variable.setState({
       datasource: dsRef,
       supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
+      ...(config.featureToggles.dashboardUnifiedDrilldownControls && {
+        enableGroupBy: !!dsInstance?.getGroupByKeys,
+      }),
     });
   };
 
@@ -82,18 +93,25 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     variable.setState({ allowCustomValue: event.currentTarget.checked });
   };
 
+  const onEnableGroupByChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ enableGroupBy: event.currentTarget.checked });
+  };
+
   return (
     <AdHocVariableForm
       datasource={datasourceRef ?? undefined}
       infoText={message}
       allowCustomValue={allowCustomValue}
+      enableGroupBy={enableGroupBy}
       onDataSourceChange={onDataSourceChange}
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      onEnableGroupByChange={onEnableGroupByChange}
       originFiltersController={originFiltersController}
       inline={props.inline}
       datasourceSupported={datasourceSettings?.getTagKeys ? true : false}
+      datasourceSupportsGroupBy={!!datasourceSettings?.getGroupByKeys}
     />
   );
 }

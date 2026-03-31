@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
-import { AlertRule, EMPTY_ALERT, Transformation } from '../types';
+import { type AlertRule, EMPTY_ALERT, type Transformation } from '../types';
 
 /**
  * Hook to resolve the currently selected query, transformation, or alert.

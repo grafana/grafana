@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { MenuItem, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 import {
   DashboardLinkButton,

@@ -2,20 +2,20 @@ import { css, cx } from '@emotion/css';
 import {
   DragDropContext,
   Draggable,
-  DraggableProvided,
-  DropResult,
+  type DraggableProvided,
+  type DropResult,
   Droppable,
-  DroppableProvided,
+  type DroppableProvided,
 } from '@hello-pangea/dnd';
 import { produce } from 'immer';
 import { forwardRef, useCallback, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
+import { type SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
 import { hashRulerRule } from '../../utils/rule-id';
 import { getNumberEvaluationsToStartAlerting, getRuleName, rulerRuleType } from '../../utils/rules';
 

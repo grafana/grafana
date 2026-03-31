@@ -964,10 +964,14 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			opts := Options{
+				Resource:        tt.resource,
+				K8sActionFormat: false,
+			}
 			asService := NewInMemoryActionSetStore()
-			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
+			asService.StoreActionSet(opts.GetActionSetName(tt.action), tt.actions)
 
-			actionSetName := GetActionSetName(tt.resource, tt.action)
+			actionSetName := opts.GetActionSetName(tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
 			require.Equal(t, tt.actions, actionSet)
 		})

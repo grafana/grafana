@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	authtypes "github.com/grafana/authlib/types"
 	"google.golang.org/grpc"
@@ -32,9 +34,9 @@ import (
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -46,48 +48,68 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg        *setting.Cfg
-	k8sAdapter *k8sRESTAdapter
+	k8sAdapter    *k8sRESTAdapter
+	cleanupCancel context.CancelFunc
+	cleanupWg     sync.WaitGroup
+	logger        log.Logger
 }
 
-// RegisterAppInstaller Layers (from bottom to top):
-//  1. annotations.Repository - old Grafana annotation service
-//  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
-//  3. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+// RegisterAppInstaller is the wire entry point for the ST server.
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
+	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient)
+}
+
+// NewAppInstaller Layers (from bottom to top):
+//  1. annotations.Repository - old Grafana annotation service
+//  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
+//  3. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+func NewAppInstaller(
+	cfg Config,
+	service annotations.Repository,
+	cleaner annotations.Cleaner,
+	accessClient authtypes.AccessClient,
+) (*AppInstaller, error) {
 	installer := &AppInstaller{
-		cfg: cfg,
+		logger: log.New("annotation.app"),
 	}
 
-	mapper := grafrequest.GetNamespaceMapper(cfg)
-
-	// Choose storage backend based on configuration
 	var store Store
 	var err error
-	switch cfg.AnnotationAppPlatform.StoreBackend {
+	switch cfg.StoreBackend {
+	case "memory":
+		store = NewMemoryStore()
 	case "grpc":
 		store, err = newGRPCStore(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gRPC store: %w", err)
 		}
-	case "sql":
-		// sql is the default, but we allow explicitly specifying it for clarity
+	case "postgres":
+		store, err = newPostgresStore(context.Background(), cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Postgres store: %w", err)
+		}
+	case "legacy-sql":
+		// legacy-sql is the default, but we allow explicitly specifying it for clarity
 		fallthrough
 	default:
 		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
-		store = NewSQLAdapter(service, cleaner, mapper, cfg)
+		store = NewSQLAdapter(service, cleaner, cfg.CleanupSettings)
 	}
 
-	// Layer 2→3: Wrap Store interface with K8s REST adapter
+	// Start background cleanup if the store supports lifecycle management
+	if lifecycleMgr, ok := store.(LifecycleManager); ok {
+		installer.startCleanup(context.Background(), lifecycleMgr, cfg.RetentionTTL)
+	}
+
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:        store,
-		mapper:       mapper,
 		accessClient: accessClient,
+		installer:    installer,
 	}
 
 	// Create the tags handler
@@ -120,9 +142,9 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func newGRPCStore(cfg *setting.Cfg) (Store, error) {
+func newGRPCStore(cfg Config) (Store, error) {
 	var dialOpts []grpc.DialOption
-	if cfg.AnnotationAppPlatform.GRPCUseTLS {
+	if cfg.GRPCUseTLS {
 		tlsConfig, err := loadTLSConfig(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS config: %w", err)
@@ -133,20 +155,20 @@ func newGRPCStore(cfg *setting.Cfg) (Store, error) {
 	}
 
 	grpcConn, err := grpc.NewClient(
-		cfg.AnnotationAppPlatform.GRPCAddress,
+		cfg.GRPCAddress,
 		dialOpts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to annotation gRPC server at %s: %w",
-			cfg.AnnotationAppPlatform.GRPCAddress, err)
+			cfg.GRPCAddress, err)
 	}
 	return NewStoreGRPC(grpcConn), nil
 }
 
-func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
+func loadTLSConfig(cfg Config) (*tls.Config, error) {
 	tlsConfig := &tls.Config{}
-	if cfg.AnnotationAppPlatform.GRPCTLSCAFile != "" {
-		caCert, err := os.ReadFile(cfg.AnnotationAppPlatform.GRPCTLSCAFile)
+	if cfg.GRPCTLSCAFile != "" {
+		caCert, err := os.ReadFile(cfg.GRPCTLSCAFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read CA file: %w", err)
 		}
@@ -158,11 +180,73 @@ func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
 		tlsConfig.RootCAs = caCertPool
 	}
 
-	if cfg.AnnotationAppPlatform.GRPCTLSSkipVerify {
+	if cfg.GRPCTLSSkipVerify {
 		tlsConfig.InsecureSkipVerify = true
 	}
 
 	return tlsConfig, nil
+}
+
+func newPostgresStore(ctx context.Context, cfg Config) (Store, error) {
+	if cfg.PostgresConnectionString == "" {
+		return nil, fmt.Errorf("postgres connection string is required")
+	}
+
+	pgCfg := PostgreSQLStoreConfig{
+		ConnectionString: cfg.PostgresConnectionString,
+		MaxConnections:   cfg.PostgresMaxConnections,
+		MaxIdleConns:     cfg.PostgresMaxIdleConns,
+		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
+		RetentionTTL:     cfg.RetentionTTL,
+		TagCacheTTL:      cfg.PostgresTagCacheTTL,
+		TagCacheSize:     cfg.PostgresTagCacheSize,
+	}
+
+	return NewPostgreSQLStore(ctx, pgCfg)
+}
+
+// startCleanup starts a background goroutine that periodically runs cleanup on the store
+func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr LifecycleManager, retentionTTL time.Duration) {
+	ctx, cancel := context.WithCancel(parentCtx)
+	a.cleanupCancel = cancel
+
+	a.cleanupWg.Add(1)
+	go func() {
+		defer a.cleanupWg.Done()
+
+		ticker := time.NewTicker(cleanupInterval)
+		defer ticker.Stop()
+
+		a.logger.Info("Starting annotation cleanup loop", "interval", cleanupInterval, "retention", retentionTTL)
+
+		// Run immediately on startup
+		a.runCleanup(ctx, lifecycleMgr)
+
+		for {
+			select {
+			case <-ticker.C:
+				a.runCleanup(ctx, lifecycleMgr)
+			case <-ctx.Done():
+				a.logger.Info("Stopping annotation cleanup loop")
+				return
+			}
+		}
+	}()
+}
+
+// runCleanup executes the cleanup operation with a timeout
+func (a *AppInstaller) runCleanup(ctx context.Context, lifecycleMgr LifecycleManager) {
+	// Set a 5-minute timeout for the cleanup
+	cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
+	start := time.Now()
+	deleted, err := lifecycleMgr.Cleanup(cleanupCtx)
+	if err != nil {
+		a.logger.Error("Annotation cleanup failed", "error", err, "duration", time.Since(start))
+	} else if deleted > 0 {
+		a.logger.Info("Annotation cleanup completed", "rows_deleted", deleted, "duration", time.Since(start))
+	}
 }
 
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
@@ -229,16 +313,28 @@ var (
 // and delegates actual storage operations to the Store interface.
 type k8sRESTAdapter struct {
 	store          Store
-	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
 	accessClient   authtypes.AccessClient
+	installer      *AppInstaller
 }
 
 func (s *k8sRESTAdapter) New() runtime.Object {
 	return annotationV0.AnnotationKind().ZeroValue()
 }
 
-func (s *k8sRESTAdapter) Destroy() {}
+func (s *k8sRESTAdapter) Destroy() {
+	// Stop background cleanup goroutines
+	if s.installer != nil && s.installer.cleanupCancel != nil {
+		s.installer.cleanupCancel()
+		s.installer.cleanupWg.Wait()
+	}
+
+	// Call Close() on the PostgreSQL store to cleanup connection pool
+	// TODO: add Close() to the Store interface so we can do proper cleanup for other store types
+	if pg, ok := s.store.(*PostgreSQLStore); ok {
+		pg.Close()
+	}
+}
 
 func (s *k8sRESTAdapter) NamespaceScoped() bool {
 	return true // namespace == org

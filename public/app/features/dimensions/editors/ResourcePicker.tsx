@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Button,
@@ -19,7 +19,7 @@ import { closePopover } from '@grafana/ui/internal';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
-import { MediaType, ResourceFolderName, ResourcePickerSize } from '../types';
+import { type MediaType, type ResourceFolderName, ResourcePickerSize } from '../types';
 
 import { ResourcePickerPopover } from './ResourcePickerPopover';
 

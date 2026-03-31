@@ -4,14 +4,14 @@ import * as React from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
-import { IconName, Menu, ModalsContext } from '@grafana/ui';
+import { type VizPanel } from '@grafana/scenes';
+import { type IconName, Menu, ModalsContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 import { SaveBeforeShareModal } from '../SaveBeforeShareModal';
 

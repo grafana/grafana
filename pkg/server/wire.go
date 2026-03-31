@@ -46,6 +46,7 @@ import (
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
+	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -195,7 +196,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -251,6 +251,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardmigrator.ProvideFoldersDashboardsMigrator,
 	playlistmigrator.ProvidePlaylistMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
+	dsmigrator.ProvideDataSourceMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
@@ -321,7 +322,6 @@ var wireBasicSet = wire.NewSet(
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
-	elasticsearch.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,
 	zipkin.ProvideService,
@@ -597,10 +597,12 @@ func provideMigrationRegistry(
 	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
+	dataSourceMigrator dsmigrator.DataSourceMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
+	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
 	return r
 }

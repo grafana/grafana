@@ -63,8 +63,9 @@ func FullSync(
 	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.full.compare")
 	var changes []ResourceFileChange
 	var missingFolderMetadata []string
+	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, missingFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef)
+		changes, missingFolderMetadata, invalidFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
 		return
 	}, metrics)
 	compareSpan.End()
@@ -90,10 +91,29 @@ func FullSync(
 		}
 	}
 
+	if folderMetadataEnabled && len(invalidFolderMetadata) > 0 {
+		for _, invalid := range invalidFolderMetadata {
+			action := invalid.Action
+			if action == "" {
+				action = repository.FileActionIgnored
+			}
+			progress.Record(ctx, jobs.NewFolderResult(invalid.Path).
+				WithAction(action).
+				WithWarning(invalid).
+				Build())
+		}
+	}
+
 	if len(changes) == 0 {
 		progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
+
+	// Detect file renames: collapse delete+create pairs that share the same
+	// content hash into a single update so K8s UIDs are preserved.
+	_, renameSpan := tracer.Start(ctx, "provisioning.sync.full.detect_renames")
+	changes = DetectRenames(changes)
+	renameSpan.End()
 
 	// Check quota before applying changes
 	if err := checkQuotaBeforeSync(ctx, repo, changes, tracer); err != nil {
@@ -105,7 +125,7 @@ func FullSync(
 	}
 	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled)
+	return applyChanges(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled)
 }
 
 // shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
@@ -145,6 +165,7 @@ func applyChange(
 	ctx context.Context,
 	change ResourceFileChange,
 	clients resources.ResourceClients,
+	currentRef string,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -214,7 +235,13 @@ func applyChange(
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 
-		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
+		// For updated folders, remove the old UID from the tree so EnsureFolderPathExist
+		// doesn't skip it. This handles both title changes (hash mismatch) and UID changes.
+		if change.Action == repository.FileActionUpdated && change.Existing != nil {
+			repositoryResources.RemoveFolderFromTree(change.Existing.Name)
+		}
+
+		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef)
 		if err != nil {
 			resultBuilder.WithError(fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err))
 			ensureFolderSpan.RecordError(err)
@@ -240,7 +267,19 @@ func applyChange(
 	}
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
-	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
+	var name string
+	var gvk schema.GroupVersionKind
+	var err error
+
+	if change.Action == repository.FileActionUpdated && change.Existing != nil && change.Existing.Name != "" {
+		oldGVR := schema.GroupVersionResource{
+			Group:    change.Existing.Group,
+			Resource: change.Existing.Resource,
+		}
+		name, gvk, err = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, currentRef, change.Existing.Name, oldGVR)
+	} else {
+		name, gvk, err = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, currentRef)
+	}
 	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(change.Action).WithPath(change.Path)
 	if err != nil {
 		writeSpan.RecordError(err)
@@ -270,6 +309,7 @@ func applyChanges(
 	ctx context.Context,
 	changes []ResourceFileChange,
 	clients resources.ResourceClients,
+	currentRef string,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -285,36 +325,38 @@ func applyChanges(
 	)
 	defer applyChangesSpan.End()
 
-	// Separate changes into four categories for proper ordering:
-	// 1. File deletions (must happen before folder deletions)
-	// 2. Folder deletions
-	// 3. Folder creations (must happen before file creations)
-	// 4. File creations (must happen after folder creations)
+	// Separate changes into categories for proper ordering:
+	// 1. File deletions (free up folder contents early, must happen before folder deletions)
+	// 2. Folder creations (destination folders must exist before renames/creates)
+	// 3. File renames (after destination folders exist, before old folders are deleted)
+	// 4. Folder deletions (old folders are now empty)
+	// 5. File creations/updates (must happen after folder creations)
+	// 6. Old folder deletions (must happen after all children have been re-parented)
 	var fileDeletions []ResourceFileChange
-	var folderDeletions []ResourceFileChange
 	var folderCreations []ResourceFileChange
+	var fileRenames []ResourceFileChange
+	var folderDeletions []ResourceFileChange
 	var fileCreations []ResourceFileChange
 
 	for _, change := range changes {
 		isFolder := safepath.IsDir(change.Path)
-		isDeleted := change.Action == repository.FileActionDeleted
 
-		if isDeleted {
-			if isFolder {
-				folderDeletions = append(folderDeletions, change)
-			} else {
-				fileDeletions = append(fileDeletions, change)
-			}
-		} else {
-			if isFolder {
-				folderCreations = append(folderCreations, change)
-			} else {
-				fileCreations = append(fileCreations, change)
-			}
+		switch {
+		case change.Action == repository.FileActionRenamed && !isFolder:
+			fileRenames = append(fileRenames, change)
+		case change.Action == repository.FileActionDeleted && !isFolder:
+			fileDeletions = append(fileDeletions, change)
+		case change.Action == repository.FileActionDeleted && isFolder:
+			folderDeletions = append(folderDeletions, change)
+		case isFolder:
+			folderCreations = append(folderCreations, change)
+		default:
+			fileCreations = append(fileCreations, change)
 		}
 	}
 
 	applyChangesSpan.SetAttributes(
+		attribute.Int("file_renames", len(fileRenames)),
 		attribute.Int("file_deletions", len(fileDeletions)),
 		attribute.Int("folder_deletions", len(folderDeletions)),
 		attribute.Int("folder_creations", len(folderCreations)),
@@ -323,15 +365,7 @@ func applyChanges(
 
 	if len(fileDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
-			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
-		}, metrics); err != nil {
-			return err
-		}
-	}
-
-	if len(folderDeletions) > 0 {
-		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
-			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+			return applyResourcesInParallel(ctx, fileDeletions, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -339,7 +373,23 @@ func applyChanges(
 
 	if len(folderCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+			return applyFoldersSerially(ctx, folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+		}, metrics); err != nil {
+			return err
+		}
+	}
+
+	if len(fileRenames) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileRenames, func() error {
+			return applyResourcesInParallel(ctx, fileRenames, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+		}, metrics); err != nil {
+			return err
+		}
+	}
+
+	if len(folderDeletions) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
+			return applyFoldersSerially(ctx, folderDeletions, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -347,7 +397,56 @@ func applyChanges(
 
 	if len(fileCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
-			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+			return applyResourcesInParallel(ctx, fileCreations, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+		}, metrics); err != nil {
+			return err
+		}
+	}
+
+	// Collect and delete old folders after all children have been re-parented.
+	type oldFolder struct {
+		Path string
+		UID  string
+	}
+	var oldFolders []oldFolder
+	for _, change := range folderCreations {
+		if change.FolderRenamed {
+			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.Existing.Name})
+		}
+	}
+
+	if len(oldFolders) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseOldFolderCleanup, func() error {
+			safepath.SortByDepth(oldFolders, func(f oldFolder) string { return f.Path }, false)
+			for _, old := range oldFolders {
+				if ctx.Err() != nil {
+					break
+				}
+
+				if err := progress.TooManyErrors(); err != nil {
+					return err
+				}
+
+				// Skip if the replacement folder failed to be created.
+				if progress.HasDirPathFailedCreation(old.Path) {
+					skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
+					progress.Record(skipCtx, jobs.NewPathOnlyResult(old.Path).
+						WithError(fmt.Errorf("old folder was not deleted because the replacement folder could not be created")).
+						AsSkipped().
+						Build())
+					skipSpan.End()
+					continue
+				}
+
+				resultBuilder := jobs.NewFolderResult(old.Path).
+					WithAction(repository.FileActionDeleted).
+					WithName(old.UID)
+				if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
+					resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
+				}
+				progress.Record(ctx, resultBuilder.Build())
+			}
+			return nil
 		}, metrics); err != nil {
 			return err
 		}
@@ -361,6 +460,7 @@ func applyFoldersSerially(
 	ctx context.Context,
 	folders []ResourceFileChange,
 	clients resources.ResourceClients,
+	currentRef string,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -377,7 +477,7 @@ func applyFoldersSerially(
 		}
 
 		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+			applyChange(timeoutCtx, folder, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		})
 	}
 
@@ -390,6 +490,7 @@ func applyResourcesInParallel(
 	ctx context.Context,
 	resources []ResourceFileChange,
 	clients resources.ResourceClients,
+	currentRef string,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -426,7 +527,7 @@ loop:
 			defer func() { <-sem }()
 
 			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+				applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 			})
 		}(change)
 	}

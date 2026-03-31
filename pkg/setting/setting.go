@@ -56,6 +56,9 @@ const (
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
 
+// Default renderer auth token from [rendering]renderer_token.
+const DefaultRendererAuthToken = "-"
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -311,8 +314,6 @@ type Cfg struct {
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
 
-	PasswordlessMagicLinkAuth AuthPasswordlessMagicLinkSettings
-
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
 	SSOSettingsConfigurableProviders map[string]bool
@@ -555,6 +556,7 @@ type Cfg struct {
 	ZanzanaClient     ZanzanaClientSettings
 	ZanzanaServer     ZanzanaServerSettings
 	ZanzanaReconciler ZanzanaReconcilerSettings
+	ZanzanaGRPCStore  ZanzanaGRPCStoreSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -572,6 +574,10 @@ type Cfg struct {
 
 	// DatabaseRegisterDeprecatedMetrics decides whether to register the deprecated `grafana_database_conn_*` and `go_sql_stats_*` metrics.
 	DatabaseRegisterDeprecatedMetrics bool
+
+	// DatabaseForceDashboardTitleIndex (MySQL only): when true, dashboard search uses FORCE INDEX (IDX_dashboard_title).
+	// Set to false to let the optimizer choose the index (can be faster for selective filters).
+	DatabaseForceDashboardTitleIndex bool
 
 	// Public dashboards
 	PublicDashboardsEnabled bool
@@ -608,8 +614,6 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
-	// DisableDataMigrations will disable resources data migration to unified storage at startup
-	DisableDataMigrations bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -658,7 +662,7 @@ type Cfg struct {
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
-	EnforceQuotas                              bool
+	EnforcedQuotaResources                     []string
 	QuotasErrorMessageSupportInfo              string
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
@@ -666,10 +670,11 @@ type Cfg struct {
 	GarbageCollectionDryRun                    bool
 	GarbageCollectionInterval                  time.Duration
 	GarbageCollectionBatchSize                 int
+	GarbageCollectionBatchWait                 time.Duration
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
 	// StorageModeCacheTTL is the TTL for caching statusReader results in the dynamic dualwrite service.
-	// Default: 0 (no expiration).
+	// Default: 5 seconds, 0 or negative means no expiration.
 	StorageModeCacheTTL time.Duration
 
 	EventRetentionPeriod time.Duration
@@ -683,6 +688,9 @@ type Cfg struct {
 	TenantApiServerAddress        string
 	TenantWatcherAllowInsecureTLS bool
 	TenantWatcherCAFile           string
+	EnableTenantDeleter           bool
+	TenantDeleterDryRun           bool
+	TenantDeleterInterval         time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -885,6 +893,13 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 
 		for _, m := range sectionMappings {
 			if strings.HasPrefix(envKey, m.prefix) {
+				// Skip root feature_toggles section — handled by
+				// applyFeatureToggleEnvOverrides which preserves casing.
+				// Subsections like feature_toggles.openfeature are still
+				// handled here because they match a longer prefix first.
+				if m.section.Name() == "feature_toggles" {
+					break
+				}
 				keyName := strings.ToLower(envKey[len(m.prefix):])
 				if keyName == "" {
 					continue
@@ -997,23 +1012,43 @@ type AnnotationCleanupSettings struct {
 }
 
 type AnnotationAppPlatformSettings struct {
-	Enabled           bool
-	StoreBackend      string // "sql" (default) or "grpc"
+	Enabled      bool
+	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
+	RetentionTTL time.Duration // Retention TTL for annotations
+
 	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
 	GRPCTLSCAFile     string // Path to CA certificate file (optional)
 	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
+
+	// Postgres store configuration
+	PostgresConnectionString string        // PostgreSQL connection string
+	PostgresMaxConnections   int           // Maximum number of connections in the pool
+	PostgresMaxIdleConns     int           // Maximum number of idle connections
+	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
+	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
+	PostgresTagCacheSize     int           // Size of the tag query cache
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("sql"),
+		Enabled:      appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend: appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL: appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
 		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
 		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
+
+		// Postgres configuration
+		PostgresConnectionString: appPlatformSection.Key("postgres_connection_string").MustString(""),
+		PostgresMaxConnections:   appPlatformSection.Key("postgres_max_connections").MustInt(10),
+		PostgresMaxIdleConns:     appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
+		PostgresConnMaxLifetime:  appPlatformSection.Key("postgres_conn_max_lifetime").MustDuration(time.Hour),
+		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
+		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
 	}
 }
 
@@ -1532,7 +1567,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
-	cfg.readPasswordlessMagicLinkSettings()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
 	}
@@ -1612,6 +1646,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
+	cfg.DatabaseForceDashboardTitleIndex = databaseSection.Key("force_dashboard_title_index").MustBool(true)
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
@@ -2067,7 +2102,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererServerUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
-	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
+	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", DefaultRendererAuthToken)
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
@@ -2166,7 +2201,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
-	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
+	cfg.EnableGzip = server.Key("enable_gzip").MustBool(true)
 	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	staticRoot := valueAsString(server, "static_root_path", "")
 	cfg.StaticRootPath = makeAbsolute(staticRoot, cfg.HomePath)

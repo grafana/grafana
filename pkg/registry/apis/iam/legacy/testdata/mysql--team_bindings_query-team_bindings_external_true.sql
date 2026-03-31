@@ -6,5 +6,5 @@ WHERE
   tm.org_id = 1
     AND tm.id > 2
     AND tm.external = TRUE
-ORDER BY t.id ASC
+ORDER BY tm.id ASC
 LIMIT 1;
