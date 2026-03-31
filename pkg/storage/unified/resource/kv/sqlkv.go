@@ -23,7 +23,6 @@ const (
 )
 
 var _ KV = &SqlKV{}
-var _ HistoryImporter = &SqlKV{}
 
 var batchSavepointCounter uint64
 

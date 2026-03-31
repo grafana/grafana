@@ -127,18 +127,14 @@ type KV interface {
 	//   - BatchOpUpdate: Fail with ErrNotFound if key doesn't exist
 	//   - BatchOpDelete: Idempotent, never fails on key state
 	Batch(ctx context.Context, section string, ops []BatchOp) error
-}
 
-// HistoryImporter is an optional fast path used only by ProcessBulk-style
-// migration imports. Unlike KV.Batch, it appends already-validated authoritative
-// history rows to DataSection and does not implement generic
-// Put/Create/Update/Delete semantics.
-type HistoryImporter interface {
+	// ImportHistory appends already-validated authoritative DataSection history
+	// rows for ProcessBulk-style migration imports. Unlike Batch, it does not
+	// implement generic Put/Create/Update/Delete semantics.
 	ImportHistory(ctx context.Context, rows []HistoryImportRow) error
 }
 
 var _ KV = &badgerKV{}
-var _ HistoryImporter = &badgerKV{}
 
 // Reference implementation of the KV interface using BadgerDB
 // This is only used for testing purposes, and will not work HA

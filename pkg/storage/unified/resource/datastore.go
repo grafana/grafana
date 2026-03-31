@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"errors"
@@ -600,27 +599,18 @@ func (d *dataStore) importHistoryBatch(ctx context.Context, items []historyImpor
 		}
 	}
 
-	if importer, ok := d.kv.(kvpkg.HistoryImporter); ok {
-		rows := make([]kvpkg.HistoryImportRow, len(items))
-		for i, item := range items {
-			key := item.Key.String()
-			if item.Key.GUID != "" {
-				key = item.Key.StringWithGUID()
-			}
-			rows[i] = kvpkg.HistoryImportRow{
-				Key:   key,
-				Value: item.Value,
-			}
-		}
-		return importer.ImportHistory(ctx, rows)
-	}
-
+	rows := make([]kvpkg.HistoryImportRow, len(items))
 	for i, item := range items {
-		if err := d.Save(ctx, item.Key, bytes.NewReader(item.Value)); err != nil {
-			return fmt.Errorf("import history item %d: %w", i, err)
+		key := item.Key.String()
+		if item.Key.GUID != "" {
+			key = item.Key.StringWithGUID()
+		}
+		rows[i] = kvpkg.HistoryImportRow{
+			Key:   key,
+			Value: item.Value,
 		}
 	}
-	return nil
+	return d.kv.ImportHistory(ctx, rows)
 }
 
 // ParseKey parses a string key into a DataKey struct
