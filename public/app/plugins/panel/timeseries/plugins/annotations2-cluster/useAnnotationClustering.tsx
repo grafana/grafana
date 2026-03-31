@@ -81,17 +81,27 @@ export const useAnnotationClustering = ({
             config: {},
           });
 
-          console.log('timeEndFrame', { frameWithCluster, frame, timeEndVals, timeVals, pointClusters: clusters });
-
           // append cluster annotation regions to frame
           for (let ci = 0; ci < clusters.length; ci++) {
             const idxs = clusters[ci];
+            let maxTimeEnd = -1;
+
+            // If region annotations are in the cluster we need to check if the end time is later then
+            for (let i = 0; i < idxs.length; i++) {
+              const timeEnd = timeEndVals[idxs[i]];
+              if (timeEnd && timeEnd > maxTimeEnd) {
+                maxTimeEnd = timeEnd;
+              }
+            }
+
+            const lastTimeVal = timeVals[idxs[idxs.length - 1]];
+
+            // Annos are sorted by start time
             const valMapping: Record<string, () => number | boolean | string> = {
-              // Push the first clustered annotation as the annotation region start time
+              // Push the first clustered annotation
               time: () => timeVals[idxs[0]],
-              // push the last clustered annotation as the annotation region end time
-              // @todo not correct
-              timeEnd: () => timeVals[idxs[idxs.length - 1]],
+              // push the max annotation end time
+              timeEnd: () => (maxTimeEnd > lastTimeVal ? maxTimeEnd : lastTimeVal),
               // Clusters are regions
               isRegion: () => true,
               // Push color of the first annotation in the region
@@ -153,12 +163,21 @@ const buildAnnotationClusters = (
   let cluster: number[] = [];
   let prevIdx: null | number = null;
   const mergeThreshold = calculateMergeThreshold(timeRange, plotWidth);
-  //
-  // // point annotation clusters
+
+  let clusterEndTime = -1;
+  let clusterStartTime = Infinity;
+
   for (let j = 0; j < timeVals.length; j++) {
     const startTime = timeVals[j];
     const prevStartTime = prevIdx != null ? timeVals?.[prevIdx] : null;
     const prevEndTime = prevIdx != null ? timeEndVals[prevIdx] : null;
+
+    if (prevEndTime && prevEndTime > clusterEndTime) {
+      clusterEndTime = prevEndTime;
+    }
+    if (prevStartTime && prevStartTime < clusterStartTime) {
+      clusterStartTime = prevStartTime;
+    }
 
     const pushCluster = (prevIdx: number) => {
       // open cluster
@@ -166,53 +185,42 @@ const buildAnnotationClusters = (
         cluster.push(prevIdx);
         clusterIdx[prevIdx] = clusters.length;
       }
+
       cluster.push(j);
       clusterIdx[j] = clusters.length;
     };
 
-    if (!isRegionVals[j]) {
-      if (prevStartTime != null && prevIdx != null) {
+    const closeCluster = () => {
+      clusters.push(cluster);
+      cluster = [];
+      clusterEndTime = -1;
+      clusterStartTime = Infinity;
+    };
+
+    const startTimeWithinClusterThreshold = startTime - clusterStartTime <= mergeThreshold;
+    const endTimeWithinClusterThreshold = startTime - clusterEndTime <= mergeThreshold;
+    const regionsOverlap = clusterEndTime > startTime - mergeThreshold;
+
+    // Region anno comparisons
+    if (prevIdx != null) {
+      // Point annotation clusters
+      if (!isRegionVals[j]) {
         // if we're within the threshold
-        // @todo need case for previous endTime
-        if (startTime - prevStartTime <= mergeThreshold) {
-          pushCluster(prevIdx);
-        } else if (prevEndTime != null && startTime - prevEndTime <= mergeThreshold) {
+        if (startTimeWithinClusterThreshold || endTimeWithinClusterThreshold) {
           pushCluster(prevIdx);
         } else {
           // close cluster
           if (cluster.length > 0) {
-            clusters.push(cluster);
-            cluster = [];
+            closeCluster();
           }
         }
       }
-    } else {
-      const endTime = timeEndVals[j];
-
-      // this region anno, previous any anno
-      if (prevStartTime != null && prevIdx != null && endTime != null) {
-        // @todo missing internal case and simplify
-        // If region start is within threshold of previous start
-        if (startTime - prevStartTime <= mergeThreshold) {
-          pushCluster(prevIdx);
-        }
-        // if region end is within threshold of previous start?
-        else if (endTime - prevStartTime <= mergeThreshold) {
-          pushCluster(prevIdx);
-        }
-        // if prev region end time within threshold of current start
-        else if (prevEndTime != null && startTime - prevEndTime <= mergeThreshold) {
-          pushCluster(prevIdx);
-        }
-        // if prev region end within threshold of current end
-        else if (prevEndTime != null && endTime - prevEndTime <= mergeThreshold) {
+      // region annotation clusters
+      else {
+        if (regionsOverlap || startTimeWithinClusterThreshold || endTimeWithinClusterThreshold) {
           pushCluster(prevIdx);
         } else if (cluster.length > 0) {
-          clusters.push(cluster);
-          cluster = [];
-        } else {
-          // @todo remove debug
-          console.log('Unexpected', { startTime, endTime, prevStartTime, prevEndTime });
+          closeCluster();
         }
       }
     }

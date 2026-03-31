@@ -19,7 +19,12 @@ import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
 import { AnnotationVals, XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
-import { ANNOTATION_LANE_SIZE, getAnnoRegionBoxStyle } from './utils';
+import {
+  ANNOTATION_LANE_SIZE,
+  getAnnoRegionBoxStyle,
+  shouldRenderAnnotationLine,
+  shouldRenderAnnotationRegion,
+} from './utils';
 
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
@@ -53,7 +58,6 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
 
   return vals;
 }
-
 /**
  * Refactored version of the AnnotationsPlugin2 behind `annotationsClustering` feature flag.
  * @param annotations
@@ -97,14 +101,18 @@ export const AnnotationsPlugin2Cluster = ({
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
     timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
     onAnnotationMutate: () => {
-      if (plotRef.current) {
-        console.log('re-drawing on anno mutate');
+      // drawback of using references is that the hook isn't called when our annotations are changed by this hook
+      // so we must manually re-draw the annotation canvas elements in case the annos were clustered
+      const shouldRenderRegion = shouldRenderAnnotationRegion(options?.regions?.opacity, options?.multiLane);
+      const shouldRenderLine = shouldRenderAnnotationLine(options?.lines?.width, options?.multiLane);
+      // Only re-draw if there are canvas elements that are changed by clustering (anno lines & regions)
+      if (plotRef.current && (shouldRenderRegion || shouldRenderLine)) {
+        // @todo causes flickering as annotations are clustered after they are already rendered
         plotRef.current.redraw(false, false);
       }
     },
   });
 
-  console.log('full annos', clusteredAnnos);
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
   }, [setNewRange]);
@@ -141,10 +149,10 @@ export const AnnotationsPlugin2Cluster = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
+      const shouldRenderRegion = shouldRenderAnnotationRegion(options?.regions?.opacity, options?.multiLane);
+      const shouldRenderLine = shouldRenderAnnotationLine(options?.lines?.width, options?.multiLane);
       const regionOpacity = options?.regions?.opacity;
       const lineWidth = options?.lines?.width;
-      const shouldRenderRegion = (regionOpacity !== undefined ? regionOpacity > 0 : undefined) ?? !options?.multiLane;
-      const shouldRenderLine = (lineWidth !== undefined ? lineWidth > 0 : undefined) ?? !options?.multiLane;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
@@ -343,9 +351,6 @@ export const AnnotationsPlugin2Cluster = ({
  * @param i
  */
 const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
-  if (!vals.isCluster?.[i] && vals.clusterIdx?.[i] != null && vals.clusterIdx?.[i] >= 0) {
-    console.log('skip clustered anno', vals, vals.clusterIdx?.[i]);
-  }
   return (
     // We use the clusterIdx to define when an annotation is a cluster
     !vals.isCluster?.[i] && vals.clusterIdx?.[i] != null && vals.clusterIdx?.[i] >= 0
