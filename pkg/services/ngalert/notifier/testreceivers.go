@@ -3,9 +3,11 @@ package notifier
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -17,10 +19,23 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	for _, r := range c.Receivers {
 		integrations := make([]*models.IntegrationConfig, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.GrafanaManagedReceivers {
+			iType, err := alertingNotify.IntegrationTypeFromString(gr.Type)
+			if err != nil {
+				return nil, 0, err
+			}
+			iVersion := schema.V1
+			if gr.Version != "" {
+				iVersion = schema.Version(gr.Version)
+				if _, ok := alertingNotify.GetSchemaVersionForIntegration(iType, iVersion); !ok {
+					return nil, 0, fmt.Errorf("integration version %s is not available for integration type %s", gr.Version, gr.Type)
+				}
+			}
+
 			integrations = append(integrations, &models.IntegrationConfig{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
-				Type:                  gr.Type,
+				Type:                  iType,
+				Version:               iVersion,
 				DisableResolveMessage: gr.DisableResolveMessage,
 				Settings:              json.RawMessage(gr.Settings),
 				SecureSettings:        gr.SecureSettings,

@@ -1102,6 +1102,7 @@ type GettableGrafanaReceiver struct {
 	UID                   string          `json:"uid"`
 	Name                  string          `json:"name"`
 	Type                  string          `json:"type"`
+	Version               string          `json:"version,omitempty"`
 	DisableResolveMessage bool            `json:"disableResolveMessage"`
 	Settings              RawMessage      `json:"settings,omitempty"`
 	SecureFields          map[string]bool `json:"secureFields"`
