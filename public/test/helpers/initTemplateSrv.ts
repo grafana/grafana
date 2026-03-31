@@ -1,4 +1,4 @@
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../app/features/templating/template_srv';
 

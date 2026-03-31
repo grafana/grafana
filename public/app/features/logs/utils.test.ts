@@ -1,17 +1,24 @@
 import saveAs from 'file-saver';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   FieldType,
-  Labels,
+  type Labels,
   LogLevel,
-  LogRowModel,
-  LogsModel,
+  type LogRowModel,
+  type LogsModel,
   LogsSortOrder,
   MutableDataFrame,
-  DataFrame,
+  type DataFrame,
+  standardTransformers,
+  toDataFrame,
+  DataFrameType,
 } from '@grafana/data';
+import { mockTransformationsRegistry } from '@grafana/data/internal';
+import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
+
+import { downloadDataFrameAsCsv } from '../inspector/utils/download';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { createLogRow } from './components/mocks/logRow';
@@ -34,6 +41,11 @@ import {
 } from './utils';
 
 jest.mock('file-saver', () => jest.fn());
+
+jest.mock('../inspector/utils/download', () => ({
+  ...jest.requireActual('../inspector/utils/download'),
+  downloadDataFrameAsCsv: jest.fn(),
+}));
 
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
@@ -665,6 +677,77 @@ describe('downloadLogs', () => {
           fields: { otherLabel: 'other value' },
         })
       );
+    });
+  });
+
+  describe('CSV format', () => {
+    beforeAll(() => {
+      mockTransformationsRegistry([
+        extractFieldsTransformer,
+        standardTransformers.organizeFieldsTransformer,
+        standardTransformers.filterFieldsByNameTransformer,
+      ]);
+    });
+
+    beforeEach(() => {
+      jest.mocked(downloadDataFrameAsCsv).mockClear();
+    });
+
+    it('includes the log line when log line body field is selected', async () => {
+      const csvLogs = [
+        createLogRow({
+          timeEpochMs: 100,
+          entry: 'test entry',
+          labels: { label: 'value' },
+          dataFrame: toDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [100] },
+              { name: 'Line', type: FieldType.string, values: ['test entry'] },
+              { name: 'labels', type: FieldType.other, values: [{ label: 'value' }] },
+            ],
+          }),
+          rowIndex: 0,
+        }),
+      ];
+
+      await downloadLogs(DownloadFormat.CSV, csvLogs, [], [LOG_LINE_BODY_FIELD_NAME]);
+
+      expect(downloadDataFrameAsCsv).toHaveBeenCalledTimes(1);
+      const exportedFrame = jest.mocked(downloadDataFrameAsCsv).mock.calls[0][0];
+      const lineField = exportedFrame.fields.find((f) => f.name === 'Line');
+      expect(lineField).toBeDefined();
+      expect(lineField?.values).toContain('test entry');
+    });
+
+    it('includes the data plane log line when log line body field is selected', async () => {
+      const csvLogs = [
+        createLogRow({
+          timeEpochMs: 100,
+          entry: 'test entry',
+          labels: { label: 'value' },
+          dataFrame: toDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'timestamp', type: FieldType.time, values: [100] },
+              { name: 'body', type: FieldType.string, values: ['test entry'] },
+              { name: 'labels', type: FieldType.other, values: [{ label: 'value' }] },
+            ],
+            meta: {
+              type: DataFrameType.LogLines,
+            },
+          }),
+          rowIndex: 0,
+        }),
+      ];
+
+      await downloadLogs(DownloadFormat.CSV, csvLogs, [], [LOG_LINE_BODY_FIELD_NAME]);
+
+      expect(downloadDataFrameAsCsv).toHaveBeenCalledTimes(1);
+      const exportedFrame = jest.mocked(downloadDataFrameAsCsv).mock.calls[0][0];
+      const lineField = exportedFrame.fields.find((f) => f.name === 'body');
+      expect(lineField).toBeDefined();
+      expect(lineField?.values).toContain('test entry');
     });
   });
 });

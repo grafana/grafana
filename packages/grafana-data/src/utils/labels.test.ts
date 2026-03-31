@@ -1,6 +1,6 @@
 import { getFieldDisplayName } from '../field/fieldState';
-import { Labels } from '../types/data';
-import { DataFrame, FieldType } from '../types/dataFrame';
+import { type Labels } from '../types/data';
+import { type DataFrame, FieldType } from '../types/dataFrame';
 
 import {
   parseLabels,
@@ -89,9 +89,9 @@ describe('matchAllLabels()', () => {
   });
 });
 
-function makeFrame(fields: Array<{ name?: string; labels?: Labels; type?: FieldType }>): DataFrame {
+function makeFrame(fields: Array<{ name?: string; labels?: Labels; type?: FieldType }>, frameName = 'test'): DataFrame {
   return {
-    name: 'test',
+    name: frameName,
     length: 0,
     fields: fields.map((f) => ({
       name: f.name ?? 'value',
@@ -145,6 +145,16 @@ describe('extractFacetedLabels()', () => {
     expect(extractFacetedLabels([frame])).toEqual({ host: ['a', 'b'] });
     expect(extractFacetedLabels([frame])[FIELD_NAME_FACET_KEY]).toBeUndefined();
   });
+
+  it('falls back to frame names when all fields share the same raw name', () => {
+    const frames = [
+      makeFrame([{ name: 'Value' }], 'io'),
+      makeFrame([{ name: 'Value' }], 'ir'),
+      makeFrame([{ name: 'Value' }], 'ov'),
+    ];
+    const result = extractFacetedLabels(frames);
+    expect(result[FIELD_NAME_FACET_KEY]).toEqual(['io', 'ir', 'ov']);
+  });
 });
 
 describe('resolveFacetedFilterNames()', () => {
@@ -182,9 +192,15 @@ describe('resolveFacetedFilterNames()', () => {
     expect(result).toEqual([]);
   });
 
-  it('matches fields using the __name__ facet', () => {
+  it('matches fields using the __name__ facet by field name', () => {
     const result = resolveFacetedFilterNames(frames, { [FIELD_NAME_FACET_KEY]: ['cpu'] }, getFieldDisplayName);
     expect(result).toEqual(['cpu {host="a", region="us"}', 'cpu {host="b", region="eu"}']);
+  });
+
+  it('matches __name__ facet by frame name when fields share the same raw name', () => {
+    const multiQueryFrames = [makeFrame([{ name: 'Value' }], 'io'), makeFrame([{ name: 'Value' }], 'ir')];
+    const result = resolveFacetedFilterNames(multiQueryFrames, { [FIELD_NAME_FACET_KEY]: ['io'] }, getFieldDisplayName);
+    expect(result).toEqual(['io']);
   });
 
   it('combines __name__ and label filters with AND', () => {

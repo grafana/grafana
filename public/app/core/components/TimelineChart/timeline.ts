@@ -1,12 +1,12 @@
-import uPlot, { Series } from 'uplot';
+import uPlot, { type Series } from 'uplot';
 
-import { GrafanaTheme2, TimeRange, colorManipulator } from '@grafana/data';
-import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
+import { type GrafanaTheme2, type TimeRange, colorManipulator } from '@grafana/data';
+import { type TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
-import { FieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';
-import { FieldConfig as StatusHistoryFieldConfig } from 'app/plugins/panel/status-history/panelcfg.gen';
+import { Quadtree, type Rect } from 'app/plugins/panel/barchart/quadtree';
+import { type FieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';
+import { type FieldConfig as StatusHistoryFieldConfig } from 'app/plugins/panel/status-history/panelcfg.gen';
 
 import { TimelineMode } from './utils';
 

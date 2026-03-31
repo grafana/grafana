@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
 import { FilterInput, Icon, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -66,7 +66,7 @@ export function LabelsColumn() {
                 <Trans i18nKey="alerting.triage.labels-column-title">Labels</Trans>
               </Text>
               <FilterInput
-                placeholder={t('alerting.triage.filter-labels-placeholder', 'Filter')}
+                placeholder={t('alerting.triage.filter-labels-placeholder', 'Search labels')}
                 value={labelFilter}
                 onChange={setLabelFilter}
                 aria-label={t('alerting.triage.filter-labels', 'Filter labels')}

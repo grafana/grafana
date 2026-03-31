@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { type DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { LogsTableCustomCellRenderer } from './LogsTableCustomCellRenderer';
@@ -106,6 +106,8 @@ describe('LogsTableCustomCellRenderer', () => {
     });
 
     it('Should inspect body if body is not selected', async () => {
+      // Something is complaining about invalid timezone, ignore it for now
+      jest.spyOn(console, 'warn').mockImplementation();
       // Remove body from data frame passed to the table (but it should be in the logs frame)
       const dataFrame: DataFrame = { ...testLogsDataFrame[0], fields: [testLogsDataFrame[0].fields[0]] };
       render(

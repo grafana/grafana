@@ -1,5 +1,5 @@
 import { PromVisualQueryOperationCategory } from '../../types';
-import { PrometheusVisualQuery, QueryBuilderOperation, QueryBuilderOperationDef } from '../types';
+import { type PrometheusVisualQuery, type QueryBuilderOperation, type QueryBuilderOperationDef } from '../types';
 
 /**
  * Renders operations

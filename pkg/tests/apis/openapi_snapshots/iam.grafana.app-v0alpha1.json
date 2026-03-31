@@ -988,11 +988,48 @@
             }
           },
           {
+            "name": "membercount",
+            "in": "query",
+            "description": "when true, includes member count for each team in the response",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "accesscontrol",
             "in": "query",
             "description": "when true, includes access control metadata in the response",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "sortable field",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "default sorting"
+              },
+              "-email": {
+                "summary": "email descending",
+                "value": "-email"
+              },
+              "-title": {
+                "summary": "title descending",
+                "value": "-title"
+              },
+              "email": {
+                "summary": "email ascending",
+                "value": "email"
+              },
+              "title": {
+                "summary": "title ascending",
+                "value": "title"
+              }
             }
           }
         ],
@@ -4929,6 +4966,10 @@
           "externalUID": {
             "type": "string",
             "default": ""
+          },
+          "memberCount": {
+            "type": "integer",
+            "format": "int64"
           },
           "name": {
             "type": "string",

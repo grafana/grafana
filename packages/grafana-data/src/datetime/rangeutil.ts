@@ -1,11 +1,18 @@
 import { formatDateRange, t } from '@grafana/i18n';
 
-import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
+import {
+  type RawTimeRange,
+  type TimeRange,
+  type TimeZone,
+  type IntervalValues,
+  type RelativeTimeRange,
+  type TimeOption,
+} from '../types/time';
 import { getFeatureToggle } from '../utils/featureToggles';
 
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
-import { isDateTime, DateTime, dateTime } from './moment_wrapper';
+import { isDateTime, type DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {

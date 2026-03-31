@@ -1,13 +1,13 @@
 import { of } from 'rxjs';
 
 import {
-  DataSourceApi,
+  type DataSourceApi,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
@@ -24,7 +24,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
+import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
 
 import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
@@ -1418,6 +1418,7 @@ describe('sceneVariablesSetToVariables', () => {
         ],
         "defaultKeys": [],
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
@@ -1508,6 +1509,7 @@ describe('sceneVariablesSetToVariables', () => {
           },
         ],
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
@@ -1522,6 +1524,57 @@ describe('sceneVariablesSetToVariables', () => {
       },
     }
     `);
+    });
+
+    describe('when the dashboardUnifiedDrilldownControls feature toggle is enabled', () => {
+      beforeAll(() => {
+        config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      });
+
+      afterAll(() => {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      });
+
+      it('should persist enableGroupBy as enableGroupBy', () => {
+        const variable = new AdHocFiltersVariable({
+          name: 'test',
+          label: 'test-label',
+          description: 'test-desc',
+          hide: VariableHide.inControlsMenu,
+          datasource: { uid: 'fake-uid', type: 'fake-type' },
+          filters: [],
+          baseFilters: [],
+          enableGroupBy: true,
+        });
+        const set = new SceneVariableSet({
+          variables: [variable],
+        });
+
+        const result = sceneVariablesSetToSchemaV2Variables(set);
+
+        expect(result).toHaveLength(1);
+        expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(true);
+      });
+
+      it('should persist enableGroupBy as false when enableGroupBy is not set', () => {
+        const variable = new AdHocFiltersVariable({
+          name: 'test',
+          label: 'test-label',
+          description: 'test-desc',
+          hide: VariableHide.inControlsMenu,
+          datasource: { uid: 'fake-uid', type: 'fake-type' },
+          filters: [],
+          baseFilters: [],
+        });
+        const set = new SceneVariableSet({
+          variables: [variable],
+        });
+
+        const result = sceneVariablesSetToSchemaV2Variables(set);
+
+        expect(result).toHaveLength(1);
+        expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(false);
+      });
     });
 
     describe('when the groupByVariable feature toggle is enabled', () => {

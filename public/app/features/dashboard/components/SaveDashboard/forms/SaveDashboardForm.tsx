@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { Button, Checkbox, TextArea, useStyles2, Stack } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';
-import { SaveDashboardData, SaveDashboardOptions } from '../types';
+import { type SaveDashboardData, type SaveDashboardOptions } from '../types';
 
 export type SaveProps = {
   dashboard: DashboardModel; // original

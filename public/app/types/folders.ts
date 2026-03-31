@@ -1,6 +1,6 @@
-import { WithAccessControlMetadata } from '@grafana/data';
+import { type WithAccessControlMetadata } from '@grafana/data';
 
-import { ManagerKind } from '../features/apiserver/types';
+import { type ManagerKind } from '../features/apiserver/types';
 
 export interface FolderListItemDTO {
   uid: string;

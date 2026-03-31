@@ -3,11 +3,11 @@ import { locationService } from '../services';
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
 
 import {
-  ExperimentViewEchoEvent,
-  InteractionEchoEvent,
-  MetaAnalyticsEvent,
-  MetaAnalyticsEventPayload,
-  PageviewEchoEvent,
+  type ExperimentViewEchoEvent,
+  type InteractionEchoEvent,
+  type MetaAnalyticsEvent,
+  type MetaAnalyticsEventPayload,
+  type PageviewEchoEvent,
 } from './types';
 
 /**
