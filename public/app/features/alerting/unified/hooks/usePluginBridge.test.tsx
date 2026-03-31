@@ -262,6 +262,7 @@ describe('canAccessPluginPage', () => {
       includes: [
         {
           type: PluginIncludeType.page,
+          name: 'Declare incident',
           path: '/a/grafana-incident-app/incidents/declare',
           action: 'grafana-incident-app.incidents:write',
         },
@@ -278,6 +279,7 @@ describe('canAccessPluginPage', () => {
       includes: [
         {
           type: PluginIncludeType.page,
+          name: 'Declare incident',
           path: '/a/grafana-incident-app/incidents/declare',
           action: 'grafana-incident-app.incidents:write',
         },
@@ -295,6 +297,7 @@ describe('canAccessPluginPage', () => {
       includes: [
         {
           type: PluginIncludeType.page,
+          name: 'Declare incident',
           path: '/a/grafana-incident-app/incidents/declare',
           role: OrgRole.Editor,
         },
