@@ -15,15 +15,17 @@ labels:
     - oss
     - cloud
 title: New API Structure
+menuTitle: New API Structure
+weight: 01
 ---
 
-# Grafana's New API Structure
+# The new API structure in Grafana
 
-## Overview
+The new Grafana HTTP APIs follow a standardized API structure alongside consistent API versioning.
 
-Going forward, Grafana's HTTP API will follow a standardized API structure alongside consistent API versioning.
+## API structure
 
-### API Path Structure
+### API path 
 
 All Grafana APIs follow this standardized format:
 
@@ -33,9 +35,9 @@ All Grafana APIs follow this standardized format:
 
 Where the final `/<name>` segment is used for operations on individual resources (like Get, Update, Delete) and omitted for collection operations (like List, Create).
 
-### API Response Format
+### API response format
 
-All Grafana API responses will follow this structure:
+All Grafana API responses follow this structure:
 
 ```
 {
@@ -56,7 +58,7 @@ All Grafana API responses will follow this structure:
 }
 ```
 
-## Understanding the Components
+## Understand the components
 
 ### Group (`<group>`)
 

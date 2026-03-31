@@ -91,10 +91,10 @@ resource "grafana_folder" "AWS" {
 
 ## Terraform configuration for dashboards
 
-This Terraform configuration iterates through the JSON files in the three folders (`elasticsearch`, `influxdb` and `aws`) you created in the GitHub repository and adds them to the respective folders in the Grafana instance using a Grafana dashboard resource:
+This Terraform configuration iterates through the JSON files in the three folders (`elasticsearch`, `influxdb` and `aws`) you created in the GitHub repository and adds them to the respective folders in the Grafana instance using a Grafana dashboard resource. Available resources include:
 
 - [`grafana_dashboard` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/dashboard).
-- Starting with Grafana v13, use the [`grafana_apps_dashboard_dashboard_v2` (Resource)](https://github.com/grafana/terraform-provider-grafana/blob/main/docs/resources/apps_dashboard_dashboard_v2.md) for Kubernetes-style dashboards.
+- For Kubernetes-style dashboards in Grafana v13 or later, use the appropiate resource depending on your dashboard's Kubernetes version.Refer to [Grafana resources](https://github.com/grafana/terraform-provider-grafana/blob/main/docs/resources) for details on the available resources, such as `grafana_apps_dashboard_dashboard_v1beta1`, `grafana_apps_dashboard_dashboard_v2`, or `grafana_apps_dashboard_dashboard_v2beta1`.
 
 For example, the dashboard represented as JSON source code in the `elasticsearch` folder in the GitHub repository will be created in the `ElasticSearch` folder in the Grafana instance.
 
