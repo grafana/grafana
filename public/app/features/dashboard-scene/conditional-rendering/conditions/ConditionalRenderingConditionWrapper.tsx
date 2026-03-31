@@ -5,6 +5,7 @@ import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardInteractions } from '../../utils/interactions';
+import { GroupConditionConditionType } from '../group/types';
 
 import { type ConditionalRenderingConditions } from './types';
 import { getConditionIndex, removeCondition, undoRemoveCondition } from './utils';
@@ -15,12 +16,20 @@ interface Props {
   isObjectSupported: boolean;
   model: ConditionalRenderingConditions;
   title: string;
+  ruleId: GroupConditionConditionType;
 }
 
-export function ConditionalRenderingConditionWrapper({ children, info, isObjectSupported, model, title }: Props) {
+export function ConditionalRenderingConditionWrapper({
+  children,
+  info,
+  isObjectSupported,
+  model,
+  title,
+  ruleId,
+}: Props) {
   const onDeleteconditionalRenderingRule = () => {
     const index = getConditionIndex(model);
-    DashboardInteractions.clickRemoveConditionalRuleButton({ ruleName: title });
+    DashboardInteractions.clickRemoveConditionalRuleButton({ ruleId });
     dashboardEditActions.edit({
       description: t('dashboard.conditional-rendering.conditions.wrapper.delete-condition', 'Delete Condition'),
       source: model,

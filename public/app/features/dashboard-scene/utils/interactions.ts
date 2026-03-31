@@ -1,5 +1,6 @@
 import { config, reportInteraction } from '@grafana/runtime';
 
+import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
 import {
   type DashboardTrackingInfo,
   type DynamicDashboardsTrackingInformation,
@@ -187,10 +188,10 @@ export const DashboardInteractions = {
 
   //Conditional rendering
   // track when user clicks on Add and Remove rules button in conditional rendering
-  clickAddConditionalRuleButton: (properties: { ruleName: string }) => {
+  clickAddConditionalRuleButton: (properties: { ruleId: GroupConditionConditionType }) => {
     reportDashboardInteraction('click_add_conditional_rule_button', properties);
   },
-  clickRemoveConditionalRuleButton: (properties: { ruleName: string }) => {
+  clickRemoveConditionalRuleButton: (properties: { ruleId: GroupConditionConditionType }) => {
     reportDashboardInteraction('click_remove_conditional_rule_button', properties);
   },
 

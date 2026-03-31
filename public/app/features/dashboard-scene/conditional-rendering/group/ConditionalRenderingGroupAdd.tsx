@@ -38,7 +38,7 @@ export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }
   }, [objectType, hasVariables]);
 
   const onAddRuleClick = (option: SelectableValue<GroupConditionConditionType>) => {
-    DashboardInteractions.clickAddConditionalRuleButton({ ruleName: option.value ?? '' });
+    DashboardInteractions.clickAddConditionalRuleButton({ ruleId: option.value! });
     onAdd(option);
   };
 
