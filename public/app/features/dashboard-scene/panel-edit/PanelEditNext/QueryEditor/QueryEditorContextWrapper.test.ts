@@ -2,15 +2,15 @@ import { act, renderHook } from '@testing-library/react';
 import React from 'react';
 
 import { AlertState } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 
-import { PanelDataPaneNext } from '../PanelDataPaneNext';
+import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { useActionsContext, useQueryEditorUIContext } from './QueryEditorContext';
 import { QueryEditorContextWrapper, getNextSelectedQueryRefIds } from './QueryEditorContextWrapper';
-import { AlertRule, Transformation } from './types';
+import { type AlertRule, type Transformation } from './types';
 
 jest.mock('../../../utils/utils', () => ({
   getQueryRunnerFor: jest.fn().mockReturnValue(null),

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { TransformationToggleState } from '../QueryEditorContext';
-import { QueryOptionField } from '../types';
+import { type TransformationToggleState } from '../QueryEditorContext';
+import { type QueryOptionField } from '../types';
 
 export interface UseQueryEditorUITogglesResult {
   isQueryOptionsOpen: boolean;
