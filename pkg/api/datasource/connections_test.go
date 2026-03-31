@@ -199,4 +199,3 @@ type mockDataSourceService struct {
 func (m *mockDataSourceService) GetDataSource(_ context.Context, _ *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	return m.response, m.error
 }
-
