@@ -15,6 +15,7 @@ import { addOrReplaceFilter, removeFilter, useFilterValue, useQueryFilter } from
 
 import { AllLabelsContent } from './LabelsContent';
 import { SeverityFilter } from './SeverityFilter';
+import { canonicalSeverity } from './severity';
 
 export const LABELS_COLUMN_WIDTH = 250;
 const COLLAPSED_WIDTH = 36;
@@ -28,6 +29,11 @@ export function LabelsColumn() {
   const [open, toggleOpen] = useToggle(true);
   const [labelFilter, setLabelFilter] = useState('');
   const styles = useStyles2(getStyles);
+  const showSeverityFilter = hasSeverityFilterValues(labels);
+  const visibleSidebarFilters = SIDEBAR_FILTERS.map((filter) => ({
+    ...filter,
+    values: getSidebarFilterValues(labels, filter.key),
+  })).filter((filter) => filter.values.length > 0);
 
   return (
     <div className={cx(styles.column, !open && styles.columnCollapsed)}>
@@ -63,20 +69,24 @@ export function LabelsColumn() {
               <StateFilter />
             </div>
             <div className={styles.divider} />
-            <div className={styles.section}>
-              <Text weight="medium" variant="bodySmall" color="secondary">
-                <Trans i18nKey="alerting.triage.severity-filter-title">Severity</Trans>
-              </Text>
-              <SeverityFilter labels={labels} />
-            </div>
-            <div className={styles.divider} />
-            {SIDEBAR_FILTERS.map(({ key, label }) => (
+            {showSeverityFilter && (
+              <>
+                <div className={styles.section}>
+                  <Text weight="medium" variant="bodySmall" color="secondary">
+                    <Trans i18nKey="alerting.triage.severity-filter-title">Severity</Trans>
+                  </Text>
+                  <SeverityFilter labels={labels} />
+                </div>
+                <div className={styles.divider} />
+              </>
+            )}
+            {visibleSidebarFilters.map(({ key, label, values }) => (
               <div key={key}>
                 <div className={styles.section}>
                   <Text weight="medium" variant="bodySmall" color="secondary">
                     {label}
                   </Text>
-                  <SidebarFilterGroup labels={labels} filterKey={key} />
+                  <SidebarFilterGroup filterKey={key} values={values} />
                 </div>
                 <div className={styles.divider} />
               </div>
@@ -150,15 +160,17 @@ const SIDEBAR_FILTERS: Array<{ key: SidebarFilterKey; label: string }> = [
 const sidebarCollator = new Intl.Collator();
 const MAX_VISIBLE_VALUES = 8;
 
-function SidebarFilterGroup({ labels, filterKey }: { labels: LabelStats[]; filterKey: SidebarFilterKey }) {
+type SidebarFilterValue = {
+  value: string;
+  firing: number;
+  pending: number;
+  total: number;
+};
+
+function SidebarFilterGroup({ filterKey, values }: { filterKey: SidebarFilterKey; values: SidebarFilterValue[] }) {
   const styles = useStyles2(getStyles);
   const sceneContext = useSceneContext();
   const activeValue = useFilterValue(filterKey);
-  const values = getSidebarFilterValues(labels, filterKey);
-
-  if (values.length === 0) {
-    return null;
-  }
 
   return (
     <Stack direction="column" gap={0.25}>
@@ -185,9 +197,17 @@ function SidebarFilterGroup({ labels, filterKey }: { labels: LabelStats[]; filte
   );
 }
 
-function getSidebarFilterValues(labels: LabelStats[], key: SidebarFilterKey) {
+function hasSeverityFilterValues(labels: LabelStats[]): boolean {
+  return COMBINED_FILTER_LABEL_KEYS.severity.some((key) =>
+    labels.some(
+      (label) => label.key === key && label.values.some((value) => canonicalSeverity(value.value) !== undefined)
+    )
+  );
+}
+
+function getSidebarFilterValues(labels: LabelStats[], key: SidebarFilterKey): SidebarFilterValue[] {
   const keys = key === 'service' || key === 'namespace' ? COMBINED_FILTER_LABEL_KEYS[key] : ([key] as const);
-  const merged = new Map<string, { value: string; firing: number; pending: number; total: number }>();
+  const merged = new Map<string, SidebarFilterValue>();
 
   for (const labelKey of keys) {
     const stat = labels.find((label) => label.key === labelKey);
