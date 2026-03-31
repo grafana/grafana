@@ -3,7 +3,7 @@ package annotation
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/app"
 )
@@ -19,12 +19,23 @@ type tagItem struct {
 
 func newTagsHandler(tagProvider TagProvider) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-		fmt.Println("Handling /tags request")
 		namespace := request.ResourceIdentifier.Namespace
-		if namespace == "" {
-			namespace = "default"
+
+		opts := TagListOptions{}
+		queryParams := request.URL.Query()
+
+		if v := queryParams.Get("prefix"); v != "" {
+			opts.Prefix = v
 		}
-		tags, err := tagProvider.ListTags(ctx, namespace, TagListOptions{})
+
+		opts.Limit = 100 // default limit
+		if v := queryParams.Get("limit"); v != "" {
+			if limit, err := strconv.Atoi(v); err == nil && limit > 0 {
+				opts.Limit = limit
+			}
+		}
+
+		tags, err := tagProvider.ListTags(ctx, namespace, opts)
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,6 @@
-import { SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
+import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import {
-  UseGenericSavedSearchesResult,
+  type UseGenericSavedSearchesResult,
   createAppliedTracker,
   createAutoApplyTracker,
   createStorageLoader,

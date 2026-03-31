@@ -4,19 +4,19 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { colorManipulator, DataFrame, InterpolateFunction } from '@grafana/data';
-import { TimeZone, VizAnnotations } from '@grafana/schema';
+import { colorManipulator, type DataFrame, type InterpolateFunction } from '@grafana/data';
+import { type TimeZone, type VizAnnotations } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
   getPortalContainer,
-  UPlotConfigBuilder,
+  type UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TimeRange2 } from '@grafana/ui/internal';
+import { type TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
-import { AnnotationVals, XYAnnoVals } from './annotations2-cluster/types';
+import { type AnnotationVals, type XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
 import {

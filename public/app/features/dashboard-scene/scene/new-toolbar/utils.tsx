@@ -1,12 +1,12 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { DynamicDashNavButtonModel } from '../../utils/registerDynamicDashNavAction';
-import { DashboardScene } from '../DashboardScene';
+import { type DynamicDashNavButtonModel } from '../../utils/registerDynamicDashNavAction';
+import { type DashboardScene } from '../DashboardScene';
 
-import { ToolbarAction } from './types';
+import { type ToolbarAction } from './types';
 
 export function renderActionElements(toolbarActions: ToolbarAction[], dashboard: DashboardScene): ReactNode[] {
   const actionElements: ReactNode[] = [];

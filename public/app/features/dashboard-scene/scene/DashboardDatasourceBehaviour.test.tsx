@@ -1,14 +1,14 @@
 import { map, of } from 'rxjs';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
+  type PanelData,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';

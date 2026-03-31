@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import Prism from 'prismjs';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Collapse, useStyles2, Text, TextLink } from '@grafana/ui';
 import { flattenTokens } from '@grafana/ui/internal';
 
-import { CloudWatchLogsQuery, LogsQueryLanguage } from '../../dataquery.gen';
+import { type CloudWatchLogsQuery, LogsQueryLanguage } from '../../dataquery.gen';
 import { trackSampleQuerySelection } from '../../tracking';
-import { CloudWatchQuery } from '../../types';
+import { type CloudWatchQuery } from '../../types';
 
 import * as sampleQueries from './sampleQueries';
 import { cwliTokenizer, pplTokenizer, sqlTokenizer } from './tokenizer';

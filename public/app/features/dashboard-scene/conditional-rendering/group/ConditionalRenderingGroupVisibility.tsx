@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { getTranslatedObjectType, ObjectsWithConditionalRendering } from '../object';
+import { getTranslatedObjectType, type ObjectsWithConditionalRendering } from '../object';
 
-import { GroupConditionVisibility } from './types';
+import { type GroupConditionVisibility } from './types';
 
 interface Props {
   objectType: ObjectsWithConditionalRendering;

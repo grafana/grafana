@@ -12,7 +12,7 @@ import { getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import MuteTimingsSelector from './MuteTimingsSelector';

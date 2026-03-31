@@ -1,10 +1,10 @@
-import { i18n } from 'i18next';
+import { type i18n } from 'i18next';
 
 import * as i18nModule from '@grafana/i18n/internal';
 
 import { server } from '../loader/pluginLoader.mock';
 import { SystemJS } from '../loader/systemjs';
-import { SystemJSWithLoaderHooks } from '../loader/types';
+import { type SystemJSWithLoaderHooks } from '../loader/types';
 
 import { addTranslationsToI18n } from './addTranslationsToI18n';
 

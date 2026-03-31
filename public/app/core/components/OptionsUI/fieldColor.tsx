@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
-import { CSSProperties, FC } from 'react';
+import { type CSSProperties, type FC } from 'react';
 
 import {
-  StandardEditorProps,
+  type StandardEditorProps,
   FieldColorModeId,
-  SelectableValue,
-  FieldColor,
+  type SelectableValue,
+  type FieldColor,
   fieldColorModeRegistry,
-  FieldColorMode,
-  GrafanaTheme2,
-  FieldColorConfigSettings,
-  FieldColorSeriesByMode,
+  type FieldColorMode,
+  type GrafanaTheme2,
+  type FieldColorConfigSettings,
+  type FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';

@@ -13,8 +13,8 @@ import {
   systemDateFormats,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PanelContext, UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
-import { TimeRange2 } from '@grafana/ui/internal';
+import { type PanelContext, type UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
+import { type TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationsPlugin2Cluster } from './AnnotationsPlugin2Cluster';
 import { DEFAULT_CLUSTERING_ANNOTATION_SPACING } from './annotations2-cluster/constants';

@@ -1,9 +1,9 @@
 import { t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type SceneObject } from '@grafana/scenes';
+import { type DashboardLink } from '@grafana/schema';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 
 export const linkEditActions = {
   addLink({

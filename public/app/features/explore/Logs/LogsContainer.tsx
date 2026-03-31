@@ -1,34 +1,34 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
-  LoadingState,
-  LogRowModel,
-  RawTimeRange,
-  EventBus,
-  SplitOpen,
-  DataFrame,
+  type LoadingState,
+  type LogRowModel,
+  type RawTimeRange,
+  type EventBus,
+  type SplitOpen,
+  type DataFrame,
   SupplementaryQueryType,
-  DataQueryResponse,
-  LogRowContextOptions,
-  DataSourceWithLogsContextSupport,
-  DataSourceApi,
+  type DataQueryResponse,
+  type LogRowContextOptions,
+  type DataSourceWithLogsContextSupport,
+  type DataSourceApi,
   hasToggleableQueryFiltersSupport,
-  DataSourceWithQueryModificationSupport,
+  type DataSourceWithQueryModificationSupport,
   hasQueryModificationSupport,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { PanelChrome } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
-import { ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../../profile/state/selectors';
 import { loadSupplementaryQueryData, selectIsWaitingForData, setSupplementaryQueryEnabled } from '../state/query';
