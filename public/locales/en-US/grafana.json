@@ -3015,7 +3015,7 @@
     },
     "rule-list-v2": {
       "import-to-gma": "Import alert rules",
-      "import-to-gma-tool": "Import to GMA"
+      "import-to-gma-tool": "Import to Grafana Alerting"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
