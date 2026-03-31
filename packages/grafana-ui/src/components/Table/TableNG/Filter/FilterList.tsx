@@ -4,7 +4,13 @@ import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
-import { type GrafanaTheme2, formattedValueToString, getValueFormat, type SelectableValue } from '@grafana/data';
+import {
+  FieldType,
+  type GrafanaTheme2,
+  formattedValueToString,
+  getValueFormat,
+  type SelectableValue,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -21,6 +27,7 @@ interface Props {
   caseSensitive?: boolean;
   searchFilter: string;
   operator: SelectableValue<FilterOperator>;
+  fieldType?: FieldType;
 }
 
 const ITEM_HEIGHT = 32;
@@ -51,7 +58,26 @@ const comparableValue = (value: string): string | number | Date | boolean => {
   return value;
 };
 
-export const FilterList = ({ options, values, caseSensitive, onChange, searchFilter, operator }: Props) => {
+/**
+ * Converts a time value (either a Unix epoch ms integer or a date string) to a
+ * canonical ISO string so that both option values (raw ms) and user-typed search
+ * filters (e.g. "2024-03-31" or "1743379200000") are comparable on equal footing.
+ */
+const toComparableTimeValue = (value: string): string | number | Date | boolean => {
+  const trimmed = value.trim().replace(/\\/g, '');
+
+  // Unix epoch ms — any integer that is plausibly a timestamp (post year 2001)
+  const num = parseFloat(trimmed);
+  if (!isNaN(num) && num > 978_307_200_000) {
+    const fmt = getValueFormat('dateTimeAsIso');
+    return formattedValueToString(fmt(num));
+  }
+
+  // Fall back to the standard handler which already parses YYYY-MM-DD date strings
+  return comparableValue(trimmed);
+};
+
+export const FilterList = ({ options, values, caseSensitive, onChange, searchFilter, operator, fieldType }: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>
@@ -69,7 +95,8 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
             const xpr = searchFilter.replace(/\\/g, '');
             const fnc = new Function('$', `'use strict'; return ${xpr};`);
             // option.value is string[] — use the first raw value as representative
-            const val = comparableValue(Array.isArray(option.value) ? option.value[0] : option.value);
+            const rawFirst = Array.isArray(option.value) ? option.value[0] : option.value;
+            const val = fieldType === FieldType.time ? toComparableTimeValue(rawFirst) : comparableValue(rawFirst);
             return fnc(val);
           } catch (_) {}
           return false;
@@ -79,8 +106,10 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
           }
 
           // option.value is string[] — use the first raw value as representative
-          const value1 = comparableValue(Array.isArray(option.value) ? option.value[0] : option.value);
-          const value2 = comparableValue(searchFilter);
+          const rawFirst = Array.isArray(option.value) ? option.value[0] : option.value;
+          const value1 = fieldType === FieldType.time ? toComparableTimeValue(rawFirst) : comparableValue(rawFirst);
+          const value2 =
+            fieldType === FieldType.time ? toComparableTimeValue(searchFilter) : comparableValue(searchFilter);
 
           switch (operator.value) {
             case '=':
@@ -99,7 +128,7 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
           return false;
         }
       }),
-    [options, regex, operator, searchFilter]
+    [options, regex, operator, searchFilter, fieldType]
   );
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 

@@ -178,6 +178,7 @@ export const FilterPopup = memo(
             caseSensitive={matchCase}
             searchFilter={searchFilter}
             operator={operator}
+            fieldType={field?.type}
           />
 
           <Stack justifyContent="end" direction="row-reverse">
