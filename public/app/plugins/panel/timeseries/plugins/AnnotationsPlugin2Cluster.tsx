@@ -102,7 +102,7 @@ export const AnnotationsPlugin2Cluster = ({
     // Only re-draw if there are canvas elements that are changed by clustering (anno lines & regions)
     if (plotRef.current && (shouldRenderRegion || shouldRenderLine)) {
       // @todo causes flickering as annotations are clustered after they are already rendered
-      plotRef.current.redraw(false, false);
+      plotRef.current.redraw(false, true);
     }
   }, [options?.regions?.opacity, options?.multiLane, options?.lines?.width]);
 
