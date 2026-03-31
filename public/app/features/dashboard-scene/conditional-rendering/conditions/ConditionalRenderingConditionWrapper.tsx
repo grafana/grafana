@@ -5,7 +5,7 @@ import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardInteractions } from '../../utils/interactions';
-import { GroupConditionConditionType } from '../group/types';
+import { type GroupConditionConditionType } from '../group/types';
 
 import { type ConditionalRenderingConditions } from './types';
 import { getConditionIndex, removeCondition, undoRemoveCondition } from './utils';
