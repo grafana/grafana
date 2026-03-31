@@ -94,23 +94,25 @@ export const AnnotationsPlugin2Cluster = ({
 
   const { xAnnos, xyAnnos } = useAnnotations({ annotations, newRange });
 
+  const onChange = useCallback(() => {
+    // drawback of using references is that the hook isn't called when our annotations are changed by this hook
+    // so we must manually re-draw the annotation canvas elements in case the annos were clustered
+    const shouldRenderRegion = shouldRenderAnnotationRegion(options?.regions?.opacity, options?.multiLane);
+    const shouldRenderLine = shouldRenderAnnotationLine(options?.lines?.width, options?.multiLane);
+    // Only re-draw if there are canvas elements that are changed by clustering (anno lines & regions)
+    if (plotRef.current && (shouldRenderRegion || shouldRenderLine)) {
+      // @todo causes flickering as annotations are clustered after they are already rendered
+      plotRef.current.redraw(false, false);
+    }
+  }, [options?.regions?.opacity, options?.multiLane, options?.lines?.width]);
+
   const clusteredAnnos = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
     plotWidth: plotRef.current?.bbox.width,
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
     timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
-    onChange: () => {
-      // drawback of using references is that the hook isn't called when our annotations are changed by this hook
-      // so we must manually re-draw the annotation canvas elements in case the annos were clustered
-      const shouldRenderRegion = shouldRenderAnnotationRegion(options?.regions?.opacity, options?.multiLane);
-      const shouldRenderLine = shouldRenderAnnotationLine(options?.lines?.width, options?.multiLane);
-      // Only re-draw if there are canvas elements that are changed by clustering (anno lines & regions)
-      if (plotRef.current && (shouldRenderRegion || shouldRenderLine)) {
-        // @todo causes flickering as annotations are clustered after they are already rendered
-        plotRef.current.redraw(false, false);
-      }
-    },
+    onChange,
   });
 
   const exitWipEdit = useCallback(() => {

@@ -169,7 +169,7 @@ describe('AnnotationsPlugin2', () => {
         await event(firstMarker);
         expect(screen.queryByTestId('mock-annotation-text')).toBeVisible();
         expect(screen.queryByTestId('mock-annotation-text')).toHaveTextContent(
-          'A very large label value payload (>16MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation. Declared by your mom'
+          'A very large label value payload (>16MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation. Declared by Batman'
         );
       });
       it.each([userEvent.hover, userEvent.click])('title', async (event) => {
