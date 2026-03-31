@@ -113,7 +113,9 @@ func (m *mockStorageBackend) ReadResource(ctx context.Context, req *resourcepb.R
 }
 
 func (m *mockStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
-	return nil, nil
+	ch := make(chan *WrittenEvent)
+	context.AfterFunc(ctx, func() { close(ch) })
+	return ch, nil
 }
 
 func (m *mockStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {

@@ -19,7 +19,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-02-01,influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,false,false
 2023-07-13,lokiLogsDataplane,experimental,@grafana/oss-big-tent,false,false,false
 2023-04-12,disableSSEDataplane,experimental,@grafana/grafana-datasources-core-services,false,false,false
-2023-04-03,renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,false
+2023-04-03,renderAuthJWT,GA,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-06,refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 2023-05-05,faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 2026-02-18,faroSessionReplay,experimental,@grafana/session-replay,false,false,true
@@ -243,7 +243,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 2026-03-05,alertEnrichmentPreview,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
-2025-07-31,alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
 2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
@@ -271,14 +270,14 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-08-29,cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
-2025-11-12,newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
+2025-11-12,newVizSuggestions,GA,@grafana/dataviz-squad,false,false,true
 2026-02-18,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
 2026-02-18,vizPresets,preview,@grafana/dataviz-squad,false,false,true
-2025-12-01,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
-2026-03-03,vizLegendSeriesLimit,experimental,@grafana/dataviz-squad,false,false,true
+2025-12-01,externalVizSuggestions,GA,@grafana/dataviz-squad,false,false,true
 2026-03-06,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
 2026-03-10,vizLegendFacetedFilter,experimental,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
+2026-03-30,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -345,3 +344,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-27,streamingForwardTeamHeadersTempo,privatePreview,@grafana/oss-big-tent,false,false,false
 2026-03-19,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
 2026-03-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-03-28,queryServiceQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,false,false

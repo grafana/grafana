@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -832,6 +833,7 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		c.teamSvc,
 		c.userSvc,
 		resourcepermissions.NewActionSetService(),
+		apiserver.ProvideDirectRestConfigProvider(),
 	)
 	require.NoError(c.t, err)
 

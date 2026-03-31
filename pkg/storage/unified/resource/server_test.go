@@ -62,6 +62,11 @@ func TestSimpleServer(t *testing.T) {
 		Backend: store,
 	})
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = server.Stop(ctx)
+	})
 
 	t.Run("playlist happy CRUD paths", func(t *testing.T) {
 		raw := []byte(`{
@@ -604,13 +609,16 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
+		ctx:                            ctx,
 	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
-		slept := s.sleepAfterSuccessfulWriteOperation("test", &resourcepb.ResourceKey{}, res, err)
+		slept := s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, res, err)
 		require.Equal(t, expectedSleep, slept)
 	}
 
@@ -933,6 +941,11 @@ func TestGracefulShutdown(t *testing.T) {
 			Backend: store,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = srv.Stop(ctx)
+		})
 		return srv
 	}
 

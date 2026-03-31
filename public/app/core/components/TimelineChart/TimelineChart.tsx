@@ -14,9 +14,6 @@ import { getXAxisConfig } from '../TimeSeries/utils';
 
 import { preparePlotConfigBuilder, type TimelineMode } from './utils';
 
-/**
- * @alpha
- */
 export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
   rowHeight?: number;
