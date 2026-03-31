@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"k8s.io/client-go/dynamic"
@@ -65,6 +66,14 @@ type Options struct {
 	LicenseMW web.Handler
 	// RestConfigProvider if configured enables K8s API redirect for resource permissions
 	RestConfigProvider apiserver.DirectRestConfigProvider
+	// RequestValidator if configured is called before each handler. Return an error to abort the request.
+	// The returned context, if non-nil, replaces the request context for subsequent processing.
+	// This allows validators to cache resource metadata in the context so that downstream Set* methods
+	// can read it without an additional DB lookup. Return (nil, nil) on success if no enrichment needed.
+	RequestValidator func(r *http.Request, orgID int64, resourceID string) (context.Context, error)
+	// DatasourceTypeResolver if configured resolves the datasource plugin type for a given resource UID.
+	// Only set for datasource permission services. Used to populate datasource_type on new permission rows.
+	DatasourceTypeResolver func(ctx context.Context, orgID int64, resourceID string) (string, error)
 }
 
 // GetAction returns the permission action string for a given verb.
