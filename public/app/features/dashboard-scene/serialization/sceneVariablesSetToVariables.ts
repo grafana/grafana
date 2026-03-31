@@ -227,11 +227,11 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       const adhocVariable: VariableModel = {
         ...commonProperties,
         datasource: variable.state.datasource,
+        // @ts-expect-error
         baseFilters: variable.state.baseFilters || [],
         filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
         defaultKeys: variable.state.defaultKeys,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
-        // @ts-expect-error
         enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
           ? (variable.state.enableGroupBy ?? false)
           : false,
