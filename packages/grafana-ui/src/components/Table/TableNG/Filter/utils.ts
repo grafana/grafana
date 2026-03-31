@@ -9,7 +9,7 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
     return {};
   }
 
-  const set: Record<string, string> = {};
+  const set: Record<string, string[]> = {};
 
   for (const row of rows) {
     if (row.__depth > 0) {
@@ -19,7 +19,10 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
     const rawStr = String(fieldValue);
     const displayStr = field.display ? formattedValueToString(field.display(fieldValue)) : rawStr;
     const label = displayStr || t('grafana-ui.table.filter.blanks', '(Blanks)');
-    set[label] = rawStr;
+    if (!set[label]) {
+      set[label] = [];
+    }
+    set[label].push(rawStr);
   }
 
   return set;
@@ -30,7 +33,7 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
     return [];
   }
 
-  return options.filter((option) => filterValues.some((filtered) => filtered.value === option.value));
+  return options.filter((option) => filterValues.some((filtered) => filtered.label === option.label));
 }
 
 export function valuesToOptions(unique: Record<string, unknown>): SelectableValue[] {

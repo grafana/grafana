@@ -68,7 +68,8 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
           try {
             const xpr = searchFilter.replace(/\\/g, '');
             const fnc = new Function('$', `'use strict'; return ${xpr};`);
-            const val = comparableValue(option.value);
+            // option.value is string[] — use the first raw value as representative
+            const val = comparableValue(Array.isArray(option.value) ? option.value[0] : option.value);
             return fnc(val);
           } catch (_) {}
           return false;
@@ -77,7 +78,8 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
             return false;
           }
 
-          const value1 = comparableValue(option.value);
+          // option.value is string[] — use the first raw value as representative
+          const value1 = comparableValue(Array.isArray(option.value) ? option.value[0] : option.value);
           const value2 = comparableValue(searchFilter);
 
           switch (operator.value) {

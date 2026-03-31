@@ -37,7 +37,7 @@ describe('calculateUniqueFieldValues', () => {
 
     expect(options).toHaveLength(1);
     expect(options[0].label).toBe(formattedDisplay);
-    expect(options[0].value).toBe(String(rawTimestamp));
+    expect(options[0].value).toEqual([String(rawTimestamp)]);
   });
 
   it('stores raw value as option value and display string as label for number fields with units', () => {
@@ -58,7 +58,7 @@ describe('calculateUniqueFieldValues', () => {
 
     expect(options).toHaveLength(2);
     const opt100 = options.find((o) => o.label === '100 MB');
-    expect(opt100?.value).toBe('100');
+    expect(opt100?.value).toEqual(['100']);
   });
 
   it('skips rows with depth > 0', () => {
@@ -94,6 +94,33 @@ describe('calculateUniqueFieldValues', () => {
     const options = valuesToOptions(unique);
 
     expect(options).toHaveLength(2);
+  });
+
+  it('collects all raw values sharing the same display label into one option', () => {
+    // Two distinct timestamps that both display as "20 minutes ago"
+    const ts1 = 1743379200000;
+    const ts2 = 1743379201000;
+    const frame = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [ts1, ts2],
+          display: (_v) => ({ text: '20 minutes ago', numeric: NaN }),
+        },
+      ],
+    });
+    const frameToRecords = compileFrameToRecords(frame);
+    const rows = frameToRecords(frame);
+    const unique = calculateUniqueFieldValues(rows, frame.fields[0]);
+    const options = valuesToOptions(unique);
+
+    // Only one option visible (same label)
+    expect(options).toHaveLength(1);
+    expect(options[0].label).toBe('20 minutes ago');
+    // But both raw values are stored so filtering includes both rows
+    expect(options[0].value).toEqual(expect.arrayContaining([String(ts1), String(ts2)]));
+    expect((options[0].value as string[]).length).toBe(2);
   });
 
   it('uses (Blanks) label for empty display strings', () => {
