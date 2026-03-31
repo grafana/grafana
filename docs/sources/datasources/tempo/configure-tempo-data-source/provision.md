@@ -22,7 +22,7 @@ aliases:
 
 You can define and configure the Tempo data source in YAML files as part of the Grafana provisioning system.
 
-You can use version control, like git, to track and manage file changes.
+You can use version control, like Git, to track and manage file changes.
 Changes can be updated or rolled back as needed.
 
 {{< admonition type="note" >}}

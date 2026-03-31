@@ -58,7 +58,7 @@ If you cloned a provisioned data source (for example, the Grafana Cloud Traces d
 
 The **Node graph** setting enables the [node graph visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/), which isn't activated by default.
 
-Once activated, Grafana displays the node graph above the trace view.
+After it's activated, Grafana displays the node graph above the trace view.
 
 ## Tempo search
 
