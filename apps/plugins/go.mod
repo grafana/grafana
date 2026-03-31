@@ -105,7 +105,6 @@ require (
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/alerting v0.0.0-20260330164719-5946ccd00861 // indirect
 	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
