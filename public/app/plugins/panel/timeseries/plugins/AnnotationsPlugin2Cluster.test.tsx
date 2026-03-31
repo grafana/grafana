@@ -311,11 +311,6 @@ describe('AnnotationsPlugin2', () => {
             newRange: { from: minTime + 10, to: minTime + 10 },
           });
 
-          // Wait for AnnotationsPlugin2 setTimeout(forceUpdate) to complete
-          await act(async () => {
-            await new Promise((resolve) => setTimeout(resolve, 0));
-          });
-
           // WIP edit state should be visible
           expect(screen.getByText('Add annotation')).toBeVisible();
 
