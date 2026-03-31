@@ -3,7 +3,16 @@ import type { StorybookConfig } from '@storybook/react-webpack5';
 import remarkGfm from 'remark-gfm';
 import { copyAssetsSync } from './copyAssets';
 
-const coreComponentsGlobs: StorybookConfig['stories'] = ['../src/Intro.mdx', '../src/**/*.story.tsx'];
+const coreComponentsGlobs: StorybookConfig['stories'] = [
+  // Specific high-level documentation pages
+  '../src/Intro.mdx',
+  '../src/DesignPrinciples.mdx',
+  '../src/VoiceAndTone.mdx',
+  '../src/Accessibility.mdx',
+
+  // All the other stories
+  '../src/**/*.story.tsx',
+];
 
 const alertingComponentsGlobs: StorybookConfig['stories'] = [
   {
