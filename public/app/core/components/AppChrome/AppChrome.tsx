@@ -5,8 +5,9 @@ import { Resizable } from 're-resizable';
 import { type PropsWithChildren, useEffect } from 'react';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
+import { config, locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -164,7 +165,9 @@ export function AppChrome({ children }: Props) {
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
-      {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
+      {!state.chromeless && isSplashScreenEnabled && config.buildInfo.edition === GrafanaEdition.OpenSource && (
+        <SplashScreenModal />
+      )}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
