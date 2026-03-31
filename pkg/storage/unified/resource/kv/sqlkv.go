@@ -407,9 +407,8 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 	return nil
 }
 
-// Batch executes a batch of Create operations on DataSection using multi-row INSERT.
-// Keys must be unique and new (collection cleared before import, keys embed fresh RV).
-// All other operation modes or sections return an error.
+// Batch executes a batch of operations. All-Create on DataSection uses multi-row
+// INSERT for maximum throughput. Everything else falls back to per-item Save/Delete.
 func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
 	if section == "" {
 		return fmt.Errorf("section is required")
@@ -422,39 +421,82 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	}
 
 	for i, op := range ops {
-		if op.Mode != BatchOpCreate {
-			return &BatchError{Err: fmt.Errorf("only BatchOpCreate is supported for sqlKV"), Index: i, Op: op}
+		switch op.Mode {
+		case BatchOpPut, BatchOpCreate, BatchOpUpdate:
+			if len(op.Value) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
+		case BatchOpDelete:
+			// OK
+		default:
+			return &BatchError{Err: fmt.Errorf("unknown operation mode: %d", op.Mode), Index: i, Op: op}
 		}
-		if len(op.Value) == 0 {
-			return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+	}
+
+	// Fast path: all-Create on DataSection uses multi-row INSERT.
+	if section == DataSection && allCreate(ops) {
+		qb, err := k.getQueryBuilder(section)
+		if err != nil {
+			return err
 		}
+		tx, owned, err := k.borrowOrBeginTx(ctx)
+		if err != nil {
+			return err
+		}
+		if owned {
+			defer tx.Rollback() //nolint:errcheck
+		}
+		if err := k.batchInsertDatastore(ctx, tx, qb, ops); err != nil {
+			return err
+		}
+		if owned {
+			return tx.Commit()
+		}
+		return nil
 	}
 
-	if section != DataSection {
-		return fmt.Errorf("Batch only supports DataSection for sqlKV")
-	}
-
-	qb, err := k.getQueryBuilder(section)
-	if err != nil {
-		return err
-	}
-
-	tx, owned, err := k.borrowOrBeginTx(ctx)
-	if err != nil {
-		return err
-	}
-	if owned {
-		defer tx.Rollback() //nolint:errcheck
-	}
-
-	if err := k.batchInsertDatastore(ctx, tx, qb, ops); err != nil {
-		return err
-	}
-
-	if owned {
-		return tx.Commit()
+	// Fallback: per-item execution using existing Save/Delete methods.
+	for i, op := range ops {
+		switch op.Mode {
+		case BatchOpPut, BatchOpCreate:
+			w, err := k.Save(ctx, section, op.Key)
+			if err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+			if _, err := w.Write(op.Value); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+			if err := w.Close(); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+		case BatchOpUpdate:
+			w, err := k.Save(ctx, section, op.Key)
+			if err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+			if _, err := w.Write(op.Value); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+			if err := w.Close(); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+		case BatchOpDelete:
+			if err := k.Delete(ctx, section, op.Key); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+		}
 	}
 	return nil
+}
+
+// allCreate returns true if every op is a BatchOpCreate.
+func allCreate(ops []BatchOp) bool {
+	for _, op := range ops {
+		if op.Mode != BatchOpCreate {
+			return false
+		}
+	}
+	return true
 }
 
 func (k *SqlKV) batchInsertDatastore(ctx context.Context, tx *sql.Tx, qb *queryBuilder, ops []BatchOp) error {
