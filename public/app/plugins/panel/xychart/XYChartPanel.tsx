@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { colorManipulator, FALLBACK_COLOR, PanelProps } from '@grafana/data';
+import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   TooltipDisplayMode,
@@ -9,7 +9,7 @@ import {
   UPlotChart,
   VizLayout,
   VizLegend,
-  VizLegendItem,
+  type VizLegendItem,
   useStyles2,
   useTheme2,
   usePanelContext,
@@ -19,7 +19,7 @@ import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal
 import { getDataLinks } from '../status-history/utils';
 
 import { XYChartTooltip } from './XYChartTooltip';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { prepConfig } from './scatter';
 import { prepSeries } from './utils';
 

@@ -3,11 +3,11 @@ import { setIn } from 'immutable';
 import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
-import { Scope, ScopeNode } from '@grafana/data';
+import { type Scope, type ScopeNode } from '@grafana/data';
 
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
-import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
-import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
+import { type ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
+import { type NodesMap, type SelectedScope, type TreeNode } from '../../scopes/selector/types';
 import { SCOPES_PRIORITY } from '../values';
 
 import { mapScopeNodeToAction, mapScopesNodesTreeToActions, useScopeServicesState } from './scopesUtils';

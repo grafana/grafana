@@ -1,5 +1,5 @@
-import { SelectableValue } from '@grafana/data';
-import { AdHocFilterWithLabels, OPERATORS } from '@grafana/scenes';
+import { type SelectableValue } from '@grafana/data';
+import { type AdHocFilterWithLabels, OPERATORS } from '@grafana/scenes';
 
 export const MULTI_OPERATOR_VALUES = new Set(OPERATORS.filter((op) => op.isMulti).map((op) => op.value));
 

@@ -2,9 +2,9 @@ import { throttle } from 'lodash';
 
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataTransformerConfig,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataTransformerConfig,
   getDataSourceRef,
   getNextRefId,
 } from '@grafana/data';
@@ -12,17 +12,17 @@ import { config, getDataSourceSrv, isExpressionReference, reportInteraction } fr
 import {
   SceneDataTransformer,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneQueryRunner,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneQueryRunner,
+  type VizPanel,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { QueryGroupOptions } from 'app/types/query';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';

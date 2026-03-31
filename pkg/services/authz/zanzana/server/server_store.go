@@ -93,6 +93,36 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 	return nil, zanzana.ErrStoreNotFound
 }
 
+// DeleteStore removes a store from the local cache and deletes it from OpenFGA.
+// This is used by the reconciler to clean up stores for deleted/archived namespaces.
+func (s *Server) DeleteStore(ctx context.Context, namespace string) error {
+	info, ok := s.removeStore(namespace)
+	if !ok {
+		// Fallback: look up directly from OpenFGA in case the cache is stale.
+		store, err := s.GetStore(ctx, namespace)
+		if err != nil {
+			if errors.Is(err, zanzana.ErrStoreNotFound) {
+				return nil
+			}
+			return err
+		}
+		info = *store
+		s.removeStore(namespace)
+	}
+
+	_, err := s.openFGAClient.DeleteStore(ctx, &openfgav1.DeleteStoreRequest{StoreId: info.ID})
+	return err
+}
+
+func (s *Server) removeStore(namespace string) (zanzana.StoreInfo, bool) {
+	s.storesMU.Lock()
+	defer s.storesMU.Unlock()
+
+	info, ok := s.stores[namespace]
+	delete(s.stores, namespace)
+	return info, ok
+}
+
 func (s *Server) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
 	var continuationToken string
 
@@ -162,5 +192,19 @@ func (s *Server) ListAllStores(ctx context.Context) ([]zanzana.StoreInfo, error)
 		continuationToken = res.GetContinuationToken()
 	}
 
+	// Populate the cache so DeleteStore can resolve names without a separate lookup.
+	s.populateStoreCache(stores)
+
 	return stores, nil
+}
+
+func (s *Server) populateStoreCache(stores []zanzana.StoreInfo) {
+	s.storesMU.Lock()
+	defer s.storesMU.Unlock()
+
+	for _, info := range stores {
+		if _, ok := s.stores[info.Name]; !ok {
+			s.stores[info.Name] = info
+		}
+	}
 }

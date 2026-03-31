@@ -1,7 +1,12 @@
-import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelModel } from '@grafana/data';
+import { FieldMatcherID, FrameMatcherID, type MatcherConfig, type PanelModel } from '@grafana/data';
 
-import { XYSeriesConfig, Options } from './panelcfg.gen';
-import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig, Options as PrevOptions } from './panelcfgold.gen';
+import { type XYSeriesConfig, type Options } from './panelcfg.gen';
+import {
+  type ScatterSeriesConfig,
+  SeriesMapping,
+  type XYDimensionConfig,
+  type Options as PrevOptions,
+} from './panelcfgold.gen';
 
 export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';

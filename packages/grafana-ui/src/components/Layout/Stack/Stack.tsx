@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { AlignItems, Direction, FlexProps, JustifyContent, Wrap } from '../types';
-import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
-import { getSizeStyles, SizeProps } from '../utils/styles';
+import { type AlignItems, type Direction, type FlexProps, type JustifyContent, type Wrap } from '../types';
+import { type ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
+import { getSizeStyles, type SizeProps } from '../utils/styles';
 
 interface StackProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   gap?: ResponsiveProp<ThemeSpacingTokens>;

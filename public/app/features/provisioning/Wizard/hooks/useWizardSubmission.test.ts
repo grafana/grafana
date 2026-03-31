@@ -1,11 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
-import { UseFormReturn } from 'react-hook-form';
+import { type UseFormReturn } from 'react-hook-form';
 
 import { extractFormErrors, getFormErrors } from '../../utils/getFormErrors';
-import { Step } from '../Stepper';
-import { WizardFormData, WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type WizardFormData, type WizardStep } from '../types';
 
-import { useWizardSubmission, UseWizardSubmissionParams } from './useWizardSubmission';
+import { useWizardSubmission, type UseWizardSubmissionParams } from './useWizardSubmission';
 
 const mockGetFormErrors = jest.mocked(getFormErrors);
 const mockExtractFormErrors = jest.mocked(extractFormErrors);

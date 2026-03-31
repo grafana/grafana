@@ -4,13 +4,16 @@ import { generatedAPI as dashboardAPI } from '../../dashboard/v0alpha1';
 import { generatedAPI as rawAPI } from './endpoints.gen';
 
 const invalidateDashboardSearch = {
-  onQueryStarted: (
+  onQueryStarted: async (
     _arg: unknown,
     { dispatch, queryFulfilled }: { dispatch: (action: unknown) => void; queryFulfilled: Promise<unknown> }
   ) => {
-    queryFulfilled.then(() => {
-      dispatch(dashboardAPI.util.invalidateTags(['Search']));
-    });
+    try {
+      await queryFulfilled;
+    } catch (e) {
+      return;
+    }
+    dispatch(dashboardAPI.util.invalidateTags(['Search']));
   },
 };
 

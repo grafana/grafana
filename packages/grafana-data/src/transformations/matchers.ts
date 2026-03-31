@@ -1,12 +1,12 @@
 // Load the Builtin matchers
 import {
-  FieldMatcherInfo,
-  MatcherConfig,
-  FrameMatcherInfo,
-  FieldMatcher,
-  FrameMatcher,
-  ValueMatcherInfo,
-  ValueMatcher,
+  type FieldMatcherInfo,
+  type MatcherConfig,
+  type FrameMatcherInfo,
+  type FieldMatcher,
+  type FrameMatcher,
+  type ValueMatcherInfo,
+  type ValueMatcher,
 } from '../types/transformations';
 import { Registry } from '../utils/Registry';
 

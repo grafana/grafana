@@ -1,27 +1,27 @@
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction, type PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
 import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
-import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { combineLatest, identity, type Observable, of, type SubscriptionLike, type Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
+  type AbsoluteTimeRange,
+  type DataFrame,
   DataQueryErrorType,
-  DataQueryResponse,
-  DataSourceApi,
+  type DataQueryResponse,
+  type DataSourceApi,
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
   LoadingState,
   LogsVolumeType,
-  QueryFixAction,
-  ScopedVars,
-  SupplementaryQueryType,
+  type QueryFixAction,
+  type ScopedVars,
+  type SupplementaryQueryType,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   buildQueryTransaction,
@@ -40,14 +40,14 @@ import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state
 import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
-  ExploreItemState,
-  ExplorePanelData,
-  ExploreState,
-  QueryOptions,
-  QueryTransaction,
-  SupplementaryQueries,
+  type ExploreItemState,
+  type ExplorePanelData,
+  type ExploreState,
+  type QueryOptions,
+  type QueryTransaction,
+  type SupplementaryQueries,
 } from 'app/types/explore';
-import { createAsyncThunk, StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
+import { createAsyncThunk, type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';

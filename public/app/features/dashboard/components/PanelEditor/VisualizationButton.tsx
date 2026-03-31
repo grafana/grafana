@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { PanelModel } from '../../state/PanelModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { getPanelPluginWithFallback } from '../../state/selectors';
 
 import { updatePanelEditorUIState } from './state/actions';

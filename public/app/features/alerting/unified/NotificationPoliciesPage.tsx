@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSet } from 'react-use';
 
-import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Button, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
@@ -20,7 +21,7 @@ import {
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
@@ -28,6 +29,12 @@ import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarn
 import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { Spacer } from './components/Spacer';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
+import {
+  trackNotificationPoliciesFilterContactPoint,
+  trackNotificationPoliciesFilterMatchers,
+  trackNotificationPoliciesFilterPolicyTree,
+  trackNotificationPoliciesToggledAll,
+} from './components/notification-policies/notificationPolicyAnalytics';
 import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
@@ -158,6 +165,9 @@ function PolicyTreeTab() {
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
+  const prevLabelMatchersRef = useRef<ObjectMatcher[]>([]);
+  const prevContactPointRef = useRef<string | undefined>(undefined);
+
   /**
    * Expand / collapse state
    * `defaultExpanded` is the baseline; `expandedOverrides` holds route IDs (hash-based) that are
@@ -175,6 +185,13 @@ function PolicyTreeTab() {
 
   const handleChangeContactPoint = useCallback(
     (value: string | undefined) => {
+      if (prevContactPointRef.current === value) {
+        return;
+      }
+      prevContactPointRef.current = value;
+      if (value) {
+        trackNotificationPoliciesFilterContactPoint();
+      }
       setContactPointFilter(value);
       resetExpandState();
     },
@@ -183,6 +200,13 @@ function PolicyTreeTab() {
 
   const handleChangeLabelMatchers = useCallback(
     (value: ObjectMatcher[]) => {
+      if (isEqual(prevLabelMatchersRef.current, value)) {
+        return;
+      }
+      prevLabelMatchersRef.current = value;
+      if (value.length > 0) {
+        trackNotificationPoliciesFilterMatchers();
+      }
       setLabelMatchersFilter(value);
       resetExpandState();
     },
@@ -191,6 +215,9 @@ function PolicyTreeTab() {
 
   // Reset expand state when the policy-tree selector filter changes
   useEffect(() => {
+    if (selectedPolicyTreeNames.length > 0) {
+      trackNotificationPoliciesFilterPolicyTree({ selectedCount: selectedPolicyTreeNames.length });
+    }
     resetExpandState();
   }, [selectedPolicyTreeNames, resetExpandState]);
 
@@ -217,9 +244,13 @@ function PolicyTreeTab() {
     : expandedOverrides.size === visiblePolicies.length;
 
   const toggleAllExpanded = useCallback(() => {
+    trackNotificationPoliciesToggledAll({
+      action: isAllExpanded ? 'collapse' : 'expand',
+      visiblePoliciesCount: visiblePolicies.length,
+    });
     setManualDefaultExpanded(!isAllExpanded);
     clear();
-  }, [isAllExpanded, clear]);
+  }, [isAllExpanded, clear, visiblePolicies]);
 
   // Single-tree mode: show filters but no collapse/expand or create button
   if (!useMultiplePolicies) {

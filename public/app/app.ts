@@ -44,6 +44,7 @@ import {
   setLocationServiceOrgIdGetter,
 } from '@grafana/runtime';
 import {
+  getPanelPluginMetas,
   initOpenFeature,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
@@ -66,7 +67,7 @@ import { LazyFolderPicker } from './core/components/NestedFolderPicker/LazyFolde
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import {
-  GrafanaContextType,
+  type GrafanaContextType,
   useMegaMenuOpenInternal,
   useReturnToPreviousInternal,
 } from './core/context/GrafanaContext';
@@ -265,6 +266,7 @@ export class GrafanaApp {
       }
 
       getPluginExtensionRegistries();
+      await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);

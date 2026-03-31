@@ -76,6 +76,7 @@ func ProvideFolderPermissions(
 		tracing.InitializeTracerForTest(),
 		quotaService,
 		bundleregistry.ProvideService(),
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -93,6 +94,6 @@ func ProvideFolderPermissions(
 		teamSvc,
 		userSvc,
 		actionSets,
-		apiserver.WithoutRestConfig,
+		apiserver.ProvideDirectRestConfigProvider(),
 	)
 }
