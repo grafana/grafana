@@ -2576,6 +2576,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "无法显示查询预览。查询中使用的某些数据源不可用。",
       "preview-alerts": "预览警报",
@@ -3088,6 +3091,7 @@
     "rules-filter": {
       "clear-filters": "清除筛选器",
       "configured-alert-rules": "包含已配置警报规则的数据源是 Mimir 或 Loki 数据源，其中警报规则在数据源中存储和评估。",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "筛选直接路由到选定联络点的警报规则。不会显示路由到通知策略的警报规则。",
       "contact-point-tooltip-title": "联络点筛选条件帮助",
       "dashboard": "仪表板",
@@ -3112,7 +3116,11 @@
       "placeholder-data-sources": "选择数据源",
       "placeholder-group-search": "搜索组",
       "placeholder-labels": "选择标签",
+      "placeholder-policy": "",
       "plugin-rules": "插件规则",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "数据源托管",
         "grafana": "Grafana 托管"
@@ -3193,6 +3201,7 @@
       "title-group": "组",
       "title-health": "健康",
       "title-labels": "标签",
+      "title-policy": "",
       "title-rule": "规则",
       "title-state": "状态",
       "title-type": "类型"
@@ -7226,6 +7235,9 @@
           "metrics-drilldown": "指标深入分析"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14581,6 +14593,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

@@ -3,7 +3,7 @@ import { type PropsOf } from '@emotion/react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
-import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

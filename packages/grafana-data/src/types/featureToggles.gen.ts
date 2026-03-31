@@ -120,7 +120,7 @@ export interface FeatureToggles {
   disableSSEDataplane?: boolean;
   /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default false
+  * @default true
   */
   renderAuthJWT?: boolean;
   /**
@@ -408,6 +408,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enables default layout selector in dashboard settings
+  * @default false
+  */
+  dashboardDefaultLayoutSelector?: boolean;
   /**
   * Enables the assistant prompt popover on panel click in dashboard view mode
   * @default false
@@ -1197,7 +1202,7 @@ export interface FeatureToggles {
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
-  * @default false
+  * @default true
   */
   restoreDashboards?: boolean;
   /**
@@ -1396,11 +1401,6 @@ export interface FeatureToggles {
   */
   externalVizSuggestions?: boolean;
   /**
-  * Limit the number of legend items by default, with an option to show all
-  * @default false
-  */
-  vizLegendSeriesLimit?: boolean;
-  /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
   */
@@ -1415,6 +1415,11 @@ export interface FeatureToggles {
   * @default false
   */
   heatmapRowsAxisOptions?: boolean;
+  /**
+  * Enable gradient color scheme option for the pie chart panel
+  * @default false
+  */
+  pieChartGradientColorScheme?: boolean;
   /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
