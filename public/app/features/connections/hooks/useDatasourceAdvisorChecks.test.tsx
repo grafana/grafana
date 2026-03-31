@@ -1,7 +1,12 @@
 import { renderHook, act } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
-import { type Check, type CheckList, type CheckType, useGetCheckTypeQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import {
+  type Check,
+  type CheckList,
+  type CheckType,
+  useGetCheckTypeQuery,
+} from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config, usePluginFunctions } from '@grafana/runtime';
 
 import {

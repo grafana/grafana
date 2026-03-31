@@ -32,7 +32,7 @@ export function validateExtensionPoint({
 
   // Don't show extensions if the extension-point id is invalid in DEV mode
   if (
-    !isGrafanaDevMode() &&
+    isGrafanaDevMode() &&
     !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, isCoreGrafanaPlugin, log: pointLog })
   ) {
     return { result: { isLoading: false }, pointLog };
