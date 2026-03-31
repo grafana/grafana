@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana-app-sdk/resource"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +14,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 var (
@@ -31,21 +28,26 @@ var (
 	_ rest.TableConvertor       = (*PluginStorage)(nil)
 )
 
+// delegateStore is the combined interface the underlying SDK storage must satisfy.
+type delegateStore interface {
+	rest.Storage
+	rest.Getter
+	rest.Lister
+	rest.CreaterUpdater
+	rest.GracefulDeleter
+}
+
 type PluginStorage struct {
-	installManager InstallManager
-	client         *pluginsv0alpha1.PluginClient
-	clientFactory  func(context.Context) (*pluginsv0alpha1.PluginClient, error)
-	clientErr      error
-	clientOnce     sync.Once
-	logger         logging.Logger
-	gr             schema.GroupResource
-	tableConverter rest.TableConvertor
+	installManager  InstallManager
+	delegateStorage delegateStore
+	logger          logging.Logger
+	gr              schema.GroupResource
+	tableConverter  rest.TableConvertor
 }
 
 func NewPluginStorage(
 	logger logging.Logger,
 	installManager InstallManager,
-	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error),
 ) *PluginStorage {
 	gr := schema.GroupResource{
 		Group:    pluginsv0alpha1.APIGroup,
@@ -54,25 +56,29 @@ func NewPluginStorage(
 
 	return &PluginStorage{
 		installManager: installManager,
-		clientFactory:  clientFactory,
 		logger:         logger,
 		gr:             gr,
 		tableConverter: rest.NewDefaultTableConvertor(gr),
 	}
 }
 
-func (s *PluginStorage) getClient(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
-	s.clientOnce.Do(func() {
-		client, err := s.clientFactory(ctx)
-		if err != nil {
-			s.clientErr = err
-			s.client = nil
-			return
-		}
-		s.client = client
-	})
+// SetDelegateStorage wires in the underlying SDK storage after it has been
+// captured by the customStorageWrapper. List/Get and persistence operations
+// delegate directly to this storage, avoiding loopback HTTP calls.
+func (s *PluginStorage) SetDelegateStorage(delegate rest.Storage) error {
+	store, ok := delegate.(delegateStore)
+	if !ok {
+		return fmt.Errorf("delegate storage %T does not implement required interfaces (Getter, Lister, Creater, Updater, GracefulDeleter)", delegate)
+	}
+	s.delegateStorage = store
+	return nil
+}
 
-	return s.client, s.clientErr
+func (s *PluginStorage) delegate() (delegateStore, error) {
+	if s.delegateStorage == nil {
+		return nil, apierrors.NewServiceUnavailable("plugin storage not yet initialized")
+	}
+	return s.delegateStorage, nil
 }
 
 func (s *PluginStorage) New() runtime.Object {
@@ -98,44 +104,19 @@ func (s *PluginStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *PluginStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	ns, err := request.NamespaceInfoFrom(ctx, true)
+	delegate, err := s.delegate()
 	if err != nil {
 		return nil, err
 	}
-
-	client, err := s.getClient(ctx)
-	if err != nil {
-		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
-	}
-
-	ps, err := client.ListAll(ctx, ns.Value, resource.ListOptions{})
-	if err != nil {
-		return nil, apierrors.NewInternalError(fmt.Errorf("failed to list plugins: %w", err))
-	}
-
-	return ps, nil
+	return delegate.List(ctx, options)
 }
 
 func (s *PluginStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ns, err := request.NamespaceInfoFrom(ctx, true)
+	delegate, err := s.delegate()
 	if err != nil {
 		return nil, err
 	}
-
-	client, err := s.getClient(ctx)
-	if err != nil {
-		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
-	}
-
-	p, err := client.Get(ctx, resource.Identifier{
-		Namespace: ns.Value,
-		Name:      name,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return p, nil
+	return delegate.Get(ctx, name, options)
 }
 
 func (s *PluginStorage) Create(ctx context.Context,
@@ -150,30 +131,25 @@ func (s *PluginStorage) Create(ctx context.Context,
 
 	logger := s.logger.WithContext(ctx).With("pluginId", plugin.Spec.Id, "version", plugin.Spec.Version)
 
-	// Validate the object if a validation function is provided
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
 		}
 	}
 
-	// Install the plugin using the install manager
-	logger.Info("Installing plugin")
-	err := s.installManager.Install(ctx, plugin)
+	delegate, err := s.delegate()
 	if err != nil {
+		return nil, err
+	}
+
+	logger.Info("Installing plugin")
+	if err := s.installManager.Install(ctx, plugin); err != nil {
 		logger.Error("Failed to install plugin", "error", err)
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to install plugin: %w", err))
 	}
 
-	// Create the resource in storage
-	client, err := s.getClient(ctx)
+	created, err := delegate.Create(ctx, obj, nil, options)
 	if err != nil {
-		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
-	}
-
-	created, err := client.Create(ctx, plugin, resource.CreateOptions{})
-	if err != nil {
-		// If resource creation fails after successful install, we should try to cleanup
 		logger.Warn("Failed to create plugin resource after successful install, attempting cleanup", "error", err)
 		if removeErr := s.installManager.Uninstall(ctx, plugin); removeErr != nil {
 			logger.Error("Failed to cleanup plugin after resource creation failure", "cleanupError", removeErr)
@@ -193,65 +169,22 @@ func (s *PluginStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	// Get the current plugin
-	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	delegate, err := s.delegate()
 	if err != nil {
 		return nil, false, err
 	}
 
-	oldPlugin, ok := oldObj.(*pluginsv0alpha1.Plugin)
-	if !ok {
-		return nil, false, fmt.Errorf("expected Plugin object")
+	// Wrap objInfo to intercept the old/new objects for lifecycle management.
+	interceptor := &updateInterceptor{
+		inner:          objInfo,
+		installManager: s.installManager,
+		logger:         s.logger.WithContext(ctx),
 	}
 
-	// Get the updated object
-	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
-	if err != nil {
-		return nil, false, err
-	}
-
-	newPlugin, ok := newObj.(*pluginsv0alpha1.Plugin)
-	if !ok {
-		return nil, false, fmt.Errorf("expected Plugin object")
-	}
-
-	logger := s.logger.WithContext(ctx).With(
-		"pluginId", newPlugin.Spec.Id,
-		"oldVersion", oldPlugin.Spec.Version,
-		"newVersion", newPlugin.Spec.Version,
-	)
-
-	// Validate the update if a validation function is provided
-	if updateValidation != nil {
-		if err := updateValidation(ctx, newObj, oldObj); err != nil {
-			return nil, false, err
-		}
-	}
-
-	// Update the plugin using the install manager
-	err = s.installManager.Update(ctx, oldPlugin, newPlugin)
-	if err != nil {
-		logger.Error("Failed to update plugin", "error", err)
-		return nil, false, apierrors.NewInternalError(fmt.Errorf("failed to update plugin: %w", err))
-	}
-
-	// Update the resource in storage
-	pluginClient, err := s.getClient(ctx)
-	if err != nil {
-		return nil, false, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
-	}
-
-	updated, err := pluginClient.Update(ctx, newPlugin, resource.UpdateOptions{})
-	if err != nil {
-		return nil, false, err
-	}
-
-	logger.Info("Successfully updated plugin resource")
-	return updated, false, nil
+	return delegate.Update(ctx, name, interceptor, createValidation, updateValidation, forceAllowCreate, options)
 }
 
 func (s *PluginStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// Get the plugin to retrieve its spec before deletion
 	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -264,44 +197,76 @@ func (s *PluginStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 	logger := s.logger.WithContext(ctx).With("pluginId", plugin.Spec.Id, "version", plugin.Spec.Version)
 
-	// Validate the deletion if a validation function is provided
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, obj); err != nil {
 			return nil, false, err
 		}
 	}
 
-	// Uninstall the plugin FIRST before deleting the resource
-	// This ensures we don't end up in a state where the resource is deleted but the plugin is still installed
-	logger.Info("Uninstalling plugin")
-	err = s.installManager.Uninstall(ctx, plugin)
+	delegate, err := s.delegate()
 	if err != nil {
+		return nil, false, err
+	}
+
+	logger.Info("Uninstalling plugin")
+	if err := s.installManager.Uninstall(ctx, plugin); err != nil {
 		logger.Error("Failed to uninstall plugin", "error", err)
 		return nil, false, apierrors.NewInternalError(fmt.Errorf("failed to uninstall plugin: %w", err))
 	}
 
-	// Delete the resource from storage after successful uninstallation
-	ns, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, false, err
-	}
-
-	pluginClient, err := s.getClient(ctx)
-	if err != nil {
-		return nil, false, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
-	}
-
-	err = pluginClient.Delete(ctx, resource.Identifier{
-		Namespace: ns.Value,
-		Name:      name,
-	}, resource.DeleteOptions{})
+	result, deleted, err := delegate.Delete(ctx, name, nil, options)
 	if err != nil {
 		logger.Error("Failed to delete plugin resource after successful uninstall", "error", err)
-		// Plugin is already uninstalled, but resource deletion failed
-		// This is less problematic than the reverse, but still not ideal
 		return nil, false, err
 	}
 
 	logger.Info("Successfully uninstalled plugin and deleted resource")
-	return nil, true, nil
+	return result, deleted, nil
+}
+
+// updateInterceptor wraps rest.UpdatedObjectInfo to call the install manager
+// when the new object is resolved, so the delegate storage handles persistence.
+type updateInterceptor struct {
+	inner          rest.UpdatedObjectInfo
+	installManager InstallManager
+	logger         logging.Logger
+	called         bool
+}
+
+var _ rest.UpdatedObjectInfo = (*updateInterceptor)(nil)
+
+func (u *updateInterceptor) Preconditions() *metav1.Preconditions {
+	return u.inner.Preconditions()
+}
+
+func (u *updateInterceptor) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
+	newObj, err := u.inner.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.called {
+		return newObj, nil
+	}
+	u.called = true
+
+	oldPlugin, ok := oldObj.(*pluginsv0alpha1.Plugin)
+	if !ok {
+		return nil, apierrors.NewInternalError(fmt.Errorf("expected Plugin object for old object"))
+	}
+	newPlugin, ok := newObj.(*pluginsv0alpha1.Plugin)
+	if !ok {
+		return nil, apierrors.NewInternalError(fmt.Errorf("expected Plugin object for new object"))
+	}
+
+	if err = u.installManager.Update(ctx, oldPlugin, newPlugin); err != nil {
+		u.logger.Error("Failed to update plugin", "error", err,
+			"pluginId", newPlugin.Spec.Id,
+			"oldVersion", oldPlugin.Spec.Version,
+			"newVersion", newPlugin.Spec.Version,
+		)
+		return nil, apierrors.NewInternalError(fmt.Errorf("failed to update plugin: %w", err))
+	}
+
+	return newObj, nil
 }
