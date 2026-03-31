@@ -7,15 +7,27 @@ test.use({
   },
 });
 
+const DASHBOARD_UID = 'ZqZnVvFZz';
+
 test.describe(
   'Public dashboards',
   {
     tag: ['@dashboards'],
   },
   () => {
+    test.beforeEach(async ({ request }) => {
+      const response = await request.get(`/api/dashboards/uid/${DASHBOARD_UID}/public-dashboards`);
+      if (response.ok()) {
+        const publicDashboard = await response.json();
+        if (publicDashboard.uid) {
+          await request.delete(`/api/dashboards/uid/${DASHBOARD_UID}/public-dashboards/${publicDashboard.uid}`);
+        }
+      }
+    });
+
     test('Create, open and disable a public dashboard', async ({ page, gotoDashboardPage, selectors, request }) => {
       // Navigate to dashboard without template variables
-      let dashboardPage = await gotoDashboardPage({ uid: 'ZqZnVvFZz' });
+      let dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
       // Open sharing modal
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.shareButton).click();
@@ -63,10 +75,20 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.CreateButton)
       ).toBeEnabled();
 
+      // Intercept the creation API response to capture the access token
+      const createResponse = page.waitForResponse(
+        (response) =>
+          response.url().includes(`/api/dashboards/uid/${DASHBOARD_UID}/public-dashboards`) &&
+          response.request().method() === 'POST'
+      );
+
       // Create public dashboard
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.CreateButton)
         .click();
+
+      const createResult = await createResponse;
+      const publicDashboard = await createResult.json();
 
       // These elements shouldn't be rendered after creating public dashboard
       await expect(
@@ -154,21 +176,14 @@ test.describe(
       ).toBeVisible();
 
       // Make a request to public dashboards api endpoint without authentication
-      let copyUrlInput = dashboardPage.getByGrafanaSelector(
-        selectors.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput
-      );
-      let url = await copyUrlInput.inputValue();
-      let publicDashboardApiUrl = getPublicDashboardAPIUrl(url);
-
-      // Create a new context without authentication
-      let response = await request.get(publicDashboardApiUrl);
+      let response = await request.get(`/api/public/dashboards/${publicDashboard.accessToken}`);
       expect(response.status()).toBe(200);
 
       // Close the sharing modal
       await page.getByRole('button', { name: 'Close', exact: true }).click();
 
-      // Navigate to dashboard without template variables
-      dashboardPage = await gotoDashboardPage({ uid: 'ZqZnVvFZz' });
+      // Navigate to dashboard again to verify persistence across page loads
+      dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
       // Open sharing modal
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.shareButton).click();
@@ -176,11 +191,17 @@ test.describe(
       // Select public dashboards tab
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Public dashboard')).click();
 
-      // Save url before disabling public dashboard
-      copyUrlInput = dashboardPage.getByGrafanaSelector(
-        selectors.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput
+      // Config view should persist after page navigation
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput)
+      ).toBeVisible();
+
+      // Intercept the PATCH response for the pause toggle
+      const updateResponse = page.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/dashboards/uid/${DASHBOARD_UID}/public-dashboards/`) &&
+          resp.request().method() === 'PATCH'
       );
-      url = await copyUrlInput.inputValue();
 
       // Switch off enabling toggle
       await expect(
@@ -189,6 +210,9 @@ test.describe(
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.PauseSwitch)
         .click({ force: true });
+
+      // Wait for the PATCH to complete
+      await updateResponse;
 
       // Url should be disabled
       await expect(
@@ -199,14 +223,8 @@ test.describe(
       ).toBeDisabled();
 
       // Make a request to public dashboards api endpoint without authentication
-      publicDashboardApiUrl = getPublicDashboardAPIUrl(url);
-      response = await request.get(publicDashboardApiUrl);
+      response = await request.get(`/api/public/dashboards/${publicDashboard.accessToken}`);
       expect(response.status()).toBe(403);
     });
   }
 );
-
-const getPublicDashboardAPIUrl = (url: string): string => {
-  const accessToken = url.split('/').pop();
-  return `/api/public/dashboards/${accessToken}`;
-};

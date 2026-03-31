@@ -6,71 +6,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
-	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 )
 
-// mockAccessClient is a mock implementation of authlib.AccessClient for testing
-type mockAccessClient struct {
-	checkFunc      func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error)
-	compileFunc    func(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error)
-	batchCheckFunc func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
-}
-
-func (m *mockAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-	if m.checkFunc != nil {
-		return m.checkFunc(ctx, id, req, folder)
-	}
-	return authlib.CheckResponse{}, nil
-}
-
-func (m *mockAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	if m.compileFunc != nil {
-		return m.compileFunc(ctx, id, req)
-	}
-	return nil, authlib.NoopZookie{}, nil
-}
-
-func (m *mockAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	if m.batchCheckFunc != nil {
-		return m.batchCheckFunc(ctx, id, req)
-	}
-	return authlib.BatchCheckResponse{}, nil
-}
-
-func newTestAuthInfo() authlib.AuthInfo {
-	return authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  authlib.NewTypeID(authlib.TypeAccessPolicy, "test-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-1"},
-	})
-}
-
-// getCounterValue safely reads the current value of a prometheus counter
-func getCounterValue(counter prometheus.Counter) float64 {
-	var metric dto.Metric
-	if err := counter.Write(&metric); err != nil {
-		return 0
-	}
-	return metric.GetCounter().GetValue()
-}
-
-func TestShadowClient_BatchCheck(t *testing.T) {
+func TestShadowRBACClient_BatchCheck(t *testing.T) {
 	tests := []struct {
 		name            string
-		rbacResponse    authlib.BatchCheckResponse
-		rbacErr         error
 		zanzanaResponse authlib.BatchCheckResponse
 		zanzanaErr      error
-		hasZanzana      bool            // whether zanzana client is present
+		rbacResponse    authlib.BatchCheckResponse
+		rbacErr         error
+		hasRBAC         bool            // whether legacy RBAC client is present
 		expectedResult  map[string]bool // correlationID -> allowed
 		expectedErr     string
 		// metrics expectations (only checked if > 0)
@@ -78,15 +28,15 @@ func TestShadowClient_BatchCheck(t *testing.T) {
 		expectedErrorMetric   float64
 	}{
 		{
-			name: "returns RBAC result when both clients match",
-			rbacResponse: authlib.BatchCheckResponse{
+			name: "returns zanzana result when both clients match",
+			zanzanaResponse: authlib.BatchCheckResponse{
 				Results: map[string]authlib.BatchCheckResult{
 					"check1": {Allowed: true},
 					"check2": {Allowed: false},
 				},
 			},
-			hasZanzana: true,
-			zanzanaResponse: authlib.BatchCheckResponse{
+			hasRBAC: true,
+			rbacResponse: authlib.BatchCheckResponse{
 				Results: map[string]authlib.BatchCheckResult{
 					"check1": {Allowed: true},
 					"check2": {Allowed: false},
@@ -96,58 +46,58 @@ func TestShadowClient_BatchCheck(t *testing.T) {
 			expectedSuccessMetric: 2,
 		},
 		{
-			name: "returns RBAC result when zanzana client is nil",
-			rbacResponse: authlib.BatchCheckResponse{
+			name: "returns zanzana result when rbac client is nil",
+			zanzanaResponse: authlib.BatchCheckResponse{
 				Results: map[string]authlib.BatchCheckResult{
 					"check1": {Allowed: true},
 				},
 			},
-			hasZanzana:     false,
+			hasRBAC:        false,
 			expectedResult: map[string]bool{"check1": true},
 		},
 		{
-			name: "returns RBAC result even when zanzana fails",
-			rbacResponse: authlib.BatchCheckResponse{
+			name: "returns zanzana result even when rbac fails",
+			zanzanaResponse: authlib.BatchCheckResponse{
 				Results: map[string]authlib.BatchCheckResult{
 					"check1": {Allowed: true},
 				},
 			},
-			hasZanzana:     true,
-			zanzanaErr:     errors.New("zanzana error"),
+			hasRBAC:        true,
+			rbacErr:        errors.New("rbac error"),
 			expectedResult: map[string]bool{"check1": true},
 		},
 		{
-			name:        "returns error when RBAC fails",
-			rbacErr:     errors.New("rbac error"),
-			hasZanzana:  false,
-			expectedErr: "rbac error",
+			name:        "returns error when zanzana fails",
+			zanzanaErr:  errors.New("zanzana error"),
+			hasRBAC:     false,
+			expectedErr: "zanzana error",
 		},
 		{
 			name: "increments error metric when results differ",
-			rbacResponse: authlib.BatchCheckResponse{
+			zanzanaResponse: authlib.BatchCheckResponse{
 				Results: map[string]authlib.BatchCheckResult{
 					"check1": {Allowed: true},
 				},
 			},
-			hasZanzana: true,
-			zanzanaResponse: authlib.BatchCheckResponse{
+			hasRBAC: true,
+			rbacResponse: authlib.BatchCheckResponse{
 				Results: map[string]authlib.BatchCheckResult{
-					"check1": {Allowed: false}, // Different from RBAC
+					"check1": {Allowed: false}, // differs from zanzana
 				},
 			},
 			expectedResult:      map[string]bool{"check1": true},
 			expectedErrorMetric: 1,
 		},
 		{
-			name: "increments error metric when zanzana missing result",
-			rbacResponse: authlib.BatchCheckResponse{
+			name: "increments error metric when rbac missing result",
+			zanzanaResponse: authlib.BatchCheckResponse{
 				Results: map[string]authlib.BatchCheckResult{
 					"check1": {Allowed: true},
 					"check2": {Allowed: false},
 				},
 			},
-			hasZanzana: true,
-			zanzanaResponse: authlib.BatchCheckResponse{
+			hasRBAC: true,
+			rbacResponse: authlib.BatchCheckResponse{
 				Results: map[string]authlib.BatchCheckResult{
 					"check1": {Allowed: true},
 					// check2 is missing
@@ -163,29 +113,27 @@ func TestShadowClient_BatchCheck(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reg := prometheus.NewRegistry()
 
-			rbacClient := &mockAccessClient{
+			zanzanaClient := &mockAccessClient{
 				batchCheckFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-					return tt.rbacResponse, tt.rbacErr
+					return tt.zanzanaResponse, tt.zanzanaErr
 				},
 			}
 
-			// Use explicit nil interface to avoid Go's nil interface gotcha
-			var zanzanaClient authlib.AccessClient
-			if tt.hasZanzana {
-				zanzanaClient = &mockAccessClient{
+			var rbacClient authlib.AccessClient
+			if tt.hasRBAC {
+				rbacClient = &mockAccessClient{
 					batchCheckFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-						return tt.zanzanaResponse, tt.zanzanaErr
+						return tt.rbacResponse, tt.rbacErr
 					},
 				}
 			}
 
-			client, err := WithShadowClient(rbacClient, zanzanaClient, reg)
+			client, err := WithShadowRBACClient(zanzanaClient, rbacClient, reg)
 			require.NoError(t, err)
-			shadowClient := client.(*ShadowClient)
+			shadowClient := client.(*ShadowRBACClient)
 
 			res, err := client.BatchCheck(context.Background(), newTestAuthInfo(), authlib.BatchCheckRequest{Namespace: "org-1"})
 
-			// Check error expectation
 			if tt.expectedErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedErr)
@@ -193,12 +141,10 @@ func TestShadowClient_BatchCheck(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			// Check results
 			for correlationID, expectedAllowed := range tt.expectedResult {
 				assert.Equal(t, expectedAllowed, res.Results[correlationID].Allowed, "unexpected result for %s", correlationID)
 			}
 
-			// Check metrics if expected
 			if tt.expectedSuccessMetric > 0 || tt.expectedErrorMetric > 0 {
 				statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
 					"method":            "batch_check",
@@ -221,41 +167,47 @@ func TestShadowClient_BatchCheck(t *testing.T) {
 	}
 }
 
-func TestShadowClient_Check(t *testing.T) {
+func TestShadowRBACClient_Check(t *testing.T) {
 	tests := []struct {
 		name            string
-		rbacAllowed     bool
-		rbacErr         error
-		hasZanzana      bool
 		zanzanaAllowed  bool
+		zanzanaErr      error
+		hasRBAC         bool
+		rbacAllowed     bool
 		expectedAllowed bool
 		expectedErr     string
 	}{
 		{
-			name:            "returns RBAC result when both succeed",
-			rbacAllowed:     true,
-			hasZanzana:      true,
+			name:            "returns zanzana result when both succeed",
 			zanzanaAllowed:  true,
-			expectedAllowed: true,
-		},
-		{
-			name:            "returns RBAC result when zanzana is nil",
+			hasRBAC:         true,
 			rbacAllowed:     true,
-			hasZanzana:      false,
 			expectedAllowed: true,
 		},
 		{
-			name:            "returns RBAC denied result",
-			rbacAllowed:     false,
-			hasZanzana:      true,
+			name:            "returns zanzana result when rbac client is nil",
+			zanzanaAllowed:  true,
+			hasRBAC:         false,
+			expectedAllowed: true,
+		},
+		{
+			name:            "returns zanzana denied result",
 			zanzanaAllowed:  false,
+			hasRBAC:         true,
+			rbacAllowed:     false,
 			expectedAllowed: false,
 		},
 		{
-			name:        "returns error when RBAC fails",
-			rbacErr:     errors.New("rbac error"),
-			hasZanzana:  false,
-			expectedErr: "rbac error",
+			name:        "returns error when zanzana fails",
+			zanzanaErr:  errors.New("zanzana error"),
+			hasRBAC:     false,
+			expectedErr: "zanzana error",
+		},
+		{
+			name:            "returns zanzana result even when rbac fails",
+			zanzanaAllowed:  true,
+			hasRBAC:         true,
+			expectedAllowed: true,
 		},
 	}
 
@@ -263,23 +215,22 @@ func TestShadowClient_Check(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reg := prometheus.NewRegistry()
 
-			rbacClient := &mockAccessClient{
+			zanzanaClient := &mockAccessClient{
 				checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-					return authlib.CheckResponse{Allowed: tt.rbacAllowed}, tt.rbacErr
+					return authlib.CheckResponse{Allowed: tt.zanzanaAllowed}, tt.zanzanaErr
 				},
 			}
 
-			// Use explicit nil interface to avoid Go's nil interface gotcha
-			var zanzanaClient authlib.AccessClient
-			if tt.hasZanzana {
-				zanzanaClient = &mockAccessClient{
+			var rbacClient authlib.AccessClient
+			if tt.hasRBAC {
+				rbacClient = &mockAccessClient{
 					checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-						return authlib.CheckResponse{Allowed: tt.zanzanaAllowed}, nil
+						return authlib.CheckResponse{Allowed: tt.rbacAllowed}, nil
 					},
 				}
 			}
 
-			client, err := WithShadowClient(rbacClient, zanzanaClient, reg)
+			client, err := WithShadowRBACClient(zanzanaClient, rbacClient, reg)
 			require.NoError(t, err)
 
 			req := authlib.CheckRequest{
@@ -302,4 +253,40 @@ func TestShadowClient_Check(t *testing.T) {
 			assert.Equal(t, tt.expectedAllowed, res.Allowed)
 		})
 	}
+}
+
+func TestShadowRBACClient_Check_MetricsOnMismatch(t *testing.T) {
+	reg := prometheus.NewRegistry()
+
+	zanzanaClient := &mockAccessClient{
+		checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			return authlib.CheckResponse{Allowed: true}, nil
+		},
+	}
+	rbacClient := &mockAccessClient{
+		checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			return authlib.CheckResponse{Allowed: false}, nil // differs from zanzana
+		},
+	}
+
+	client, err := WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+	require.NoError(t, err)
+	shadowClient := client.(*ShadowRBACClient)
+
+	res, err := client.Check(context.Background(), newTestAuthInfo(), authlib.CheckRequest{Namespace: "org-1"}, "")
+	require.NoError(t, err)
+	assert.True(t, res.Allowed, "should return zanzana result")
+
+	statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
+		"method":            "check",
+		"resource":          "other",
+		"request_namespace": "org-1",
+	})
+	require.NoError(t, err)
+	errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		return getCounterValue(errorCounter) == 1
+	}, time.Second, 10*time.Millisecond, "error metric should be incremented on mismatch")
 }

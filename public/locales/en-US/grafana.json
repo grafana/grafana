@@ -13014,6 +13014,10 @@
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
+    "cloud-info-box": {
+      "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
+      "title": "You can also use Git Sync on Grafana Cloud"
+    },
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
     },
@@ -14693,10 +14697,46 @@
     "select-aria-label": "Sort"
   },
   "splash-screen": {
-    "body": "Splash screen content will go here.",
+    "aria-label": "What's new in Grafana",
+    "assistant": {
+      "bullet-1": "Build complex dashboards in minutes",
+      "bullet-2": "Correlate metrics, logs and traces and gain insights in minutes",
+      "bullet-3": "Onboard new team members in a week instead of a month",
+      "cta": "Show me",
+      "subtitle": "Say no to lengthy config work and troubleshooting. Use the Assistant to be faster than ever.",
+      "title": "Grafana Assistant is now available in OSS"
+    },
+    "badge": "NEW FEATURE",
     "close": "Close",
-    "get-started": "Get started",
-    "title": "Welcome to Grafana"
+    "explore": {
+      "bullet-1": "Streamlined query building across all data sources",
+      "bullet-2": "Side-by-side comparison of metrics, logs, and traces",
+      "bullet-3": "Save and share your explorations with your team",
+      "cta": "Show me",
+      "subtitle": "A redesigned Explore makes it easier to query, visualize, and understand your data.",
+      "title": "Explore your data with a new experience"
+    },
+    "git-sync": {
+      "bullet-1": "Store your dashboard configuration safely in any git repository",
+      "bullet-2": "Keep track of the changes — and who made them!",
+      "bullet-3": "Works with many deployment scenarios",
+      "cta": "Show me",
+      "subtitle": "Combine the benefit of managing dashboards as code with the simplicity of creating and editing them in Grafana UI.",
+      "title": "Connect Grafana to your preferred git repository and keep them always in sync"
+    },
+    "library": {
+      "bullet-1": "Saved queries is redesigned to make reusing queries easier",
+      "bullet-2": "Gather inspiration from templates and customize them to your needs",
+      "bullet-3": "Jump-start dashboard creation with suggestions tailored to your data",
+      "cta": "Show me",
+      "subtitle": "Now you can build faster with reusable assets",
+      "title": "Dashboard creation with saved queries and templates"
+    },
+    "nav": {
+      "go-to": "Go to slide {{number}}",
+      "next": "Next",
+      "prev": "Previous"
+    }
   },
   "sql-expressions": {
     "add-query-tooltip": "Add at least one data query to generate SQL suggestions",

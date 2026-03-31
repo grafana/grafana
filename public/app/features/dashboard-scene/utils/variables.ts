@@ -82,6 +82,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
+            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
           });
         }
         // for other variable types we are using the SnapshotVariable
