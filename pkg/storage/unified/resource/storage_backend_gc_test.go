@@ -129,7 +129,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
-		t.Cleanup(func() { _ = server.Stop(context.Background()) })
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -185,7 +189,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
-		t.Cleanup(func() { _ = server.Stop(context.Background()) })
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -252,7 +260,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
-		t.Cleanup(func() { _ = server.Stop(context.Background()) })
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -323,7 +335,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
-		t.Cleanup(func() { _ = server.Stop(context.Background()) })
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -389,7 +405,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
-		t.Cleanup(func() { _ = server.Stop(context.Background()) })
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -503,7 +523,11 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
-		t.Cleanup(func() { _ = server.Stop(context.Background()) })
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -557,7 +581,11 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
-		t.Cleanup(func() { _ = server.Stop(context.Background()) })
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -611,7 +639,11 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
-		t.Cleanup(func() { _ = server.Stop(context.Background()) })
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "dashboard1", resourcepb.WatchEvent_ADDED,
 			func(o *writeEventOptions) {

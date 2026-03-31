@@ -336,10 +336,7 @@ func (b *panicBulkBackend) ListModifiedSince(context.Context, NamespacedResource
 
 func (b *panicBulkBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	ch := make(chan *WrittenEvent)
-	go func() {
-		<-ctx.Done()
-		close(ch)
-	}()
+	context.AfterFunc(ctx, func() { close(ch) })
 	return ch, nil
 }
 

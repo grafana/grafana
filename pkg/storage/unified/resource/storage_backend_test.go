@@ -59,7 +59,11 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 	backend, err := NewKVStorageBackend(opts)
 	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
-	t.Cleanup(kvBackend.Stop)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = kvBackend.Stop(ctx)
+	})
 	return kvBackend
 }
 

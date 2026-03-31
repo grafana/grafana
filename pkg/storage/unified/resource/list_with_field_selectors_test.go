@@ -438,10 +438,7 @@ func (*fakeBackend) ListModifiedSince(context.Context, NamespacedResource, int64
 }
 func (*fakeBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	ch := make(chan *WrittenEvent)
-	go func() {
-		<-ctx.Done()
-		close(ch)
-	}()
+	context.AfterFunc(ctx, func() { close(ch) })
 	return ch, nil
 }
 func (*fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {

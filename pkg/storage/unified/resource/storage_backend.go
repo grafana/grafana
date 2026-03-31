@@ -98,7 +98,7 @@ var _ KVBackend = &kvStorageBackend{}
 type KVBackend interface {
 	StorageBackend
 	resourcepb.DiagnosticsServer //nolint:staticcheck
-	Stop()
+	ResourceServerStopper
 }
 
 type KVBackendOptions struct {
@@ -256,7 +256,7 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 }
 
 // Stop shuts down services owned by the backend.
-func (k *kvStorageBackend) Stop() {
+func (k *kvStorageBackend) Stop(_ context.Context) error {
 	if k.historyPruner != nil {
 		k.historyPruner.Stop()
 	}
@@ -267,9 +267,8 @@ func (k *kvStorageBackend) Stop() {
 		k.tenantDeleter.Stop()
 	}
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
-	if k.cancel != nil {
-		k.cancel()
-	}
+	k.cancel()
+	return nil
 }
 
 // runCleanups starts periodically cleans up old events and last import times.

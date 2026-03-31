@@ -36,9 +36,6 @@ func TestMain(m *testing.M) {
 		goleak.IgnoreTopFunction("github.com/go-sql-driver/mysql.(*mysqlConn).startWatcher.func1"), // MySQL driver connection watcher from test DB setup.
 		goleak.IgnoreTopFunction("github.com/grafana/dskit/runtimeconfig.(*Manager).loop"),         // dskit runtime config manager from test infra.
 		goleak.IgnoreTopFunction("github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1"), // expirable LRU cleanup goroutine.
-		// Known blocking waits — to be fixed separately.
-		goleak.IgnoreAnyFunction("github.com/grafana/grafana/pkg/storage/unified/resource.(*server).sleepAfterSuccessfulWriteOperation"),
-		goleak.IgnoreTopFunction("github.com/grafana/grafana/pkg/storage/unified/resource.(*pollingNotifier).Watch.func1"), // Outlives backend.Stop when caller passes a long-lived context.
 	)
 }
 
