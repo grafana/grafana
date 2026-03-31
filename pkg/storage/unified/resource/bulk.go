@@ -569,16 +569,17 @@ func stopAndDrainTimer(timer *time.Timer) {
 }
 
 type bulkRV struct {
-	max     int64
-	counter int64
+	max    int64
+	lastRV int64
 }
 
-// Used when executing a bulk import so that we can generate snowflake RVs in the past
+// Used when executing a bulk import so that we can generate snowflake RVs in the past.
+// The 30s offset ensures bulk-imported RVs don't clash with concurrent writes
+// that use the RV manager (both generate node=0 snowflakes in compatibility mode).
 func newBulkRV() *bulkRV {
-	t := snowflakeFromTime(time.Now())
+	t := snowflakeFromTime(time.Now().Add(-30 * time.Second))
 	return &bulkRV{
-		max:     t,
-		counter: 0,
+		max: t,
 	}
 }
 
@@ -596,15 +597,27 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 		ts = x.max
 	}
 
-	x.counter++
-	// Keep the sub-millisecond fraction under 1000 so that the snowflake-to-microRV
-	// roundtrip (RVFromSnowflake / SnowflakeFromRV) is lossless. When the counter
-	// exceeds 999, the overflow advances the millisecond portion of the snowflake.
+	// Use the object's timestamp as the base, but never go below the last
+	// emitted RV so that every value is unique regardless of iterator order.
+	base := ts
+	if base < x.lastRV {
+		base = x.lastRV
+	}
+
+	// Increment, keeping the sub-millisecond portion (low 22 bits) under 1000
+	// so that the snowflake ↔ microRV roundtrip (SnowflakeFromRV / RVFromSnowflake)
+	// is lossless.
 	// TODO: remove when backwards compatibility is no longer needed
 	shift := snowflake.NodeBits + snowflake.StepBits
-	msOffset := x.counter / 1000
-	subMs := x.counter % 1000
-	return ts + (msOffset << shift) + subMs
+	subMs := base & ((1 << shift) - 1)
+	if subMs >= 999 {
+		base = ((base >> shift) + 1) << shift
+	} else {
+		base++
+	}
+
+	x.lastRV = base
+	return base
 }
 
 type BulkLock struct {
