@@ -15,7 +15,9 @@ import {
   useNestedRows,
 } from './hooks';
 import { type TableRow } from './types';
-import { createTypographyContext, compileFrameToRecords } from './utils';
+import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
+
+const emptyFilterResult = applyFilter([], {}, []);
 
 describe('TableNG hooks', () => {
   function setupData() {
@@ -428,7 +430,7 @@ describe('TableNG hooks', () => {
       // filtering reduced raw (3 rows) to final (2 rows: Alice + Bob), sorted by age ASC
       expect(result.current[0].raw).toHaveLength(3);
       expect(result.current[0].final).toHaveLength(2);
-      expect(result.current[0].final.map((r: { name: string }) => r.name)).toEqual(['Bob', 'Alice']);
+      expect(result.current[0].final.map((r) => r['name'])).toEqual(['Bob', 'Alice']);
     });
   });
 
@@ -621,7 +623,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight: 40,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [null],
@@ -653,7 +655,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight: 40,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [0],
@@ -690,7 +692,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight: defaultHeight,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
@@ -727,7 +729,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight,
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
@@ -764,7 +766,7 @@ describe('TableNG hooks', () => {
               defaultNestedHeight: 'min-content',
               typographyCtx: typographyCtx,
               hasNestedFrames: true,
-              nestedRows: [{ raw: nestedRows, final: nestedRows }],
+              nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
@@ -795,6 +797,7 @@ describe('TableNG hooks', () => {
                 {
                   raw: nestedRecords,
                   final: nestedRecords,
+                  filterResult: emptyFilterResult,
                 },
               ],
               nestedFields: fields,
@@ -946,7 +949,7 @@ describe('TableNG hooks', () => {
             typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
             hasNestedFrames: true,
             visibleNestedRowCounts: [3],
-            nestedRows: [{ raw: nestedRows, final: nestedRows }],
+            nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
             nestedFields: fieldsWithWrappedText,
             nestedColWidths: [100, 100, 100],
           });
@@ -1007,7 +1010,7 @@ describe('TableNG hooks', () => {
             typographyCtx: { ...typographyCtx, measureHeight: measureHeightFn, estimateHeight: estimateHeightFn },
             hasNestedFrames: true,
             visibleNestedRowCounts: [3],
-            nestedRows: [{ raw: nestedRows, final: nestedRows }],
+            nestedRows: [{ raw: nestedRows, final: nestedRows, filterResult: emptyFilterResult }],
             nestedFields: nestedFieldsWithTime,
             nestedColWidths: [200],
           });
