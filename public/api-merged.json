@@ -22,30 +22,6 @@
   },
   "basePath": "/api",
   "paths": {
-    "/access-control/assignments/search": {
-      "post": {
-        "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
-        "tags": [
-          "enterprise"
-        ],
-        "summary": "Debug permissions.",
-        "operationId": "searchResult",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/searchResultResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
@@ -594,11 +570,6 @@
           {
             "type": "boolean",
             "name": "includeHidden",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "name": "includeMapped",
             "in": "query"
           },
           {
@@ -3387,12 +3358,13 @@
     },
     "/dashboards/db": {
       "post": {
-        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.",
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards",
         "tags": [
           "dashboards"
         ],
         "summary": "Create / Update dashboard",
         "operationId": "postDashboard",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3546,8 +3518,9 @@
         "tags": [
           "dashboards"
         ],
-        "summary": "Get all dashboards tags of an organisation.",
+        "summary": "Get all dashboards tags of an organization.",
         "operationId": "getDashboardTags",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/getDashboardsTagsResponse"
@@ -3736,12 +3709,13 @@
     },
     "/dashboards/uid/{uid}": {
       "get": {
-        "description": "Will return the dashboard given the dashboard unique identifier (uid).",
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "tags": [
           "dashboards"
         ],
         "summary": "Get dashboard by uid.",
         "operationId": "getDashboardByUID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3772,12 +3746,13 @@
         }
       },
       "delete": {
-        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "tags": [
           "dashboards"
         ],
         "summary": "Delete dashboard by uid.",
         "operationId": "deleteDashboardByUID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3807,12 +3782,14 @@
     },
     "/dashboards/uid/{uid}/permissions": {
       "get": {
+        "description": "Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
         "tags": [
           "dashboards",
           "permissions"
         ],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissionsListByUID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3847,6 +3824,7 @@
         ],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "updateDashboardPermissionsByUID",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3941,6 +3919,7 @@
         ],
         "summary": "Gets all existing versions for the dashboard using UID.",
         "operationId": "getDashboardVersionsByUID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3992,6 +3971,7 @@
         ],
         "summary": "Get a specific dashboard version using UID.",
         "operationId": "getDashboardVersionByUID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -4346,146 +4326,6 @@
           {
             "type": "string",
             "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/proxy/{id}/{datasource_proxy_route}": {
-      "get": {
-        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Data source proxy GET calls.",
-        "operationId": "datasourceProxyGETcalls",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Data source proxy POST calls.",
-        "operationId": "datasourceProxyPOSTcalls",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "DatasourceProxyParam",
-            "in": "body",
-            "required": true,
-            "schema": {}
-          },
-          {
-            "type": "string",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "(empty)"
-          },
-          "202": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Data source proxy DELETE calls.",
-        "operationId": "datasourceProxyDELETEcalls",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "id",
             "in": "path",
             "required": true
           },
@@ -5160,200 +5000,6 @@
         }
       }
     },
-    "/datasources/{id}": {
-      "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDataSourceByUID) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Get a single data source by Id.",
-        "operationId": "getDataSourceByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDataSourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "put": {
-        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDataSourceByUID) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Update an existing data source by its sequential ID.",
-        "operationId": "updateDataSourceByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateDataSourceCommand"
-            }
-          },
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDataSourceByUID) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Delete an existing data source by id.",
-        "operationId": "deleteDataSourceByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{id}/health": {
-      "get": {
-        "description": "Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead",
-        "tags": [
-          "datasources",
-          "health"
-        ],
-        "summary": "Sends a health check request to the plugin datasource identified by the ID.",
-        "operationId": "checkDatasourceHealthByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{id}/resources/{datasource_proxy_route}": {
-      "get": {
-        "description": "Please refer to [updated API](#/datasources/callDatasourceResourceWithUID) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Fetch data source resources by Id.",
-        "operationId": "callDatasourceResourceByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/ds/query": {
       "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:query`.",
@@ -5396,12 +5042,13 @@
     },
     "/folders": {
       "get": {
-        "description": "It returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
+        "description": "It returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders",
         "tags": [
           "folders"
         ],
         "summary": "Get all folders.",
         "operationId": "getFolders",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5453,12 +5100,13 @@
         }
       },
       "post": {
-        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "tags": [
           "folders"
         ],
         "summary": "Create folder.",
         "operationId": "createFolder",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -5491,50 +5139,15 @@
         }
       }
     },
-    "/folders/id/{folder_id}": {
-      "get": {
-        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
-        "tags": [
-          "folders"
-        ],
-        "summary": "Get folder by id.",
-        "operationId": "getFolderByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "folder_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/folderResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/folders/{folder_uid}": {
       "get": {
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "tags": [
           "folders"
         ],
         "summary": "Get folder by uid.",
         "operationId": "getFolderByUID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -5562,11 +5175,13 @@
         }
       },
       "put": {
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "tags": [
           "folders"
         ],
         "summary": "Update folder.",
         "operationId": "updateFolder",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -5609,12 +5224,13 @@
         }
       },
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "tags": [
           "folders"
         ],
         "summary": "Delete folder.",
         "operationId": "deleteFolder",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -5654,11 +5270,13 @@
     },
     "/folders/{folder_uid}/counts": {
       "get": {
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "tags": [
           "folders"
         ],
         "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
         "operationId": "getFolderDescendantCounts",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -5688,11 +5306,13 @@
     },
     "/folders/{folder_uid}/move": {
       "post": {
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid},\nChanging the parent folder annotation",
         "tags": [
           "folders"
         ],
         "summary": "Move folder.",
         "operationId": "moveFolder",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -5736,6 +5356,7 @@
         ],
         "summary": "Gets all existing permissions for the folder with the given `uid`.",
         "operationId": "getFolderPermissionList",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -11161,11 +10782,18 @@
         ],
         "summary": "Get all the alert rules.",
         "operationId": "RouteGetAlertRules",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "ProvisionedAlertRules",
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRules"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -11179,6 +10807,7 @@
         ],
         "summary": "Create a new alert rule.",
         "operationId": "RoutePostAlertRule",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -11204,6 +10833,12 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -11272,6 +10907,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -11285,6 +10926,7 @@
         ],
         "summary": "Get a specific alert rule by UID.",
         "operationId": "RouteGetAlertRule",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -11301,6 +10943,12 @@
               "$ref": "#/definitions/ProvisionedAlertRule"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -11315,6 +10963,7 @@
         ],
         "summary": "Update an existing alert rule.",
         "operationId": "RoutePutAlertRule",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -11348,6 +10997,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -11357,6 +11012,7 @@
         ],
         "summary": "Delete a specific alert rule by UID.",
         "operationId": "RouteDeleteAlertRule",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -11374,6 +11030,12 @@
         "responses": {
           "204": {
             "description": " The alert rule was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       }
@@ -11427,6 +11089,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -11453,6 +11121,12 @@
             "description": "ContactPoints",
             "schema": {
               "$ref": "#/definitions/ContactPoints"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -11491,6 +11165,12 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -11603,6 +11283,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -11627,6 +11313,12 @@
         "responses": {
           "202": {
             "description": " The contact point was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       }
@@ -11638,6 +11330,7 @@
         ],
         "summary": "Get a rule group.",
         "operationId": "RouteGetAlertRuleGroup",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -11659,6 +11352,12 @@
               "$ref": "#/definitions/AlertRuleGroup"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -11673,6 +11372,7 @@
         ],
         "summary": "Create or update alert rule group.",
         "operationId": "RoutePutAlertRuleGroup",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -11711,6 +11411,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -11720,6 +11426,7 @@
           "provisioning"
         ],
         "operationId": "RouteDeleteAlertRuleGroup",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -11807,6 +11514,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -11825,6 +11538,12 @@
             "description": "MuteTimings",
             "schema": {
               "$ref": "#/definitions/MuteTimings"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -11863,6 +11582,12 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -11942,6 +11667,12 @@
               "$ref": "#/definitions/MuteTimeInterval"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": " Not found."
           }
@@ -11990,6 +11721,12 @@
               "$ref": "#/definitions/ValidationError"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "409": {
             "description": "PublicError",
             "schema": {
@@ -12027,6 +11764,12 @@
         "responses": {
           "204": {
             "description": " The mute timing was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           },
           "409": {
             "description": "PublicError",
@@ -12108,6 +11851,12 @@
             "schema": {
               "$ref": "#/definitions/Route"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -12147,6 +11896,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           }
         }
       },
@@ -12164,6 +11919,12 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -12190,6 +11951,12 @@
               "$ref": "#/definitions/AlertingFileExport"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "404": {
             "description": "NotFound",
             "schema": {
@@ -12211,6 +11978,12 @@
             "description": "NotificationTemplates",
             "schema": {
               "$ref": "#/definitions/NotificationTemplates"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           }
         }
@@ -12237,6 +12010,12 @@
             "description": "NotificationTemplate",
             "schema": {
               "$ref": "#/definitions/NotificationTemplate"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
             }
           },
           "404": {
@@ -12290,6 +12069,12 @@
               "$ref": "#/definitions/PublicError"
             }
           },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
           "409": {
             "description": "PublicError",
             "schema": {
@@ -12322,6 +12107,12 @@
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
           },
           "409": {
             "description": "PublicError",
@@ -13628,9 +13419,6 @@
       "properties": {
         "dashboard": {
           "$ref": "#/definitions/AnnotationActions"
-        },
-        "organization": {
-          "$ref": "#/definitions/AnnotationActions"
         }
       }
     },
@@ -14827,10 +14615,6 @@
         },
         "uid": {
           "type": "string"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -20509,8 +20293,17 @@
           "type": "integer",
           "format": "int64"
         },
+        "pdfDashboardTitleEnabled": {
+          "type": "boolean"
+        },
+        "pdfHeaderEnabled": {
+          "type": "boolean"
+        },
         "pdfTheme": {
           "type": "string"
+        },
+        "pdfTimeRangeEnabled": {
+          "type": "boolean"
         },
         "userId": {
           "type": "integer",
@@ -21149,32 +20942,6 @@
         }
       }
     },
-    "SearchDTO": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "basicRole": {
-          "type": "string"
-        },
-        "onlyRoles": {
-          "type": "boolean"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "string"
-        }
-      }
-    },
     "SearchDeviceQueryResult": {
       "type": "object",
       "properties": {
@@ -21241,50 +21008,6 @@
           "format": "int64"
         },
         "totalCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "SearchResult": {
-      "type": "object",
-      "properties": {
-        "result": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SearchResultItem"
-          }
-        }
-      }
-    },
-    "SearchResultItem": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "basicRole": {
-          "type": "string"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "version": {
           "type": "integer",
           "format": "int64"
         }
@@ -23068,10 +22791,6 @@
           "items": {
             "$ref": "#/definitions/Permission"
           }
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -23942,6 +23661,9 @@
     "healthResponse": {
       "type": "object",
       "properties": {
+        "apiserver": {
+          "type": "string"
+        },
         "commit": {
           "type": "string"
         },
@@ -25624,12 +25346,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/HitList"
-      }
-    },
-    "searchResultResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/SearchResult"
       }
     },
     "searchTeamGroupsResponse": {

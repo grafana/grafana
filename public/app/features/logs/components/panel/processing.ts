@@ -1,27 +1,27 @@
 import ansicolor from 'ansicolor';
 import { LosslessNumber, parse, stringify } from 'lossless-json';
-import Prism, { Grammar, Token } from 'prismjs';
+import Prism, { type Grammar, type Token } from 'prismjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   dateTimeFormat,
-  Labels,
+  type Labels,
   LogLevel,
-  LogRowModel,
-  LogsSortOrder,
+  type LogRowModel,
+  type LogsSortOrder,
   systemDateFormats,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { FieldDef, getAllFields } from '../logParser';
-import { identifyOTelLanguage, getOtelAttributesField, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import { type FieldDef, getAllFields } from '../logParser';
+import { identifyOTelLanguage, getOtelAttributesField } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
-import { LogLineVirtualization } from './virtualization';
+import { type LogLineVirtualization } from './virtualization';
 
 const TRUNCATION_DEFAULT_LENGTH = 50000;
 export const NEWLINES_REGEX = /(\r\n|\n|\r)/g;

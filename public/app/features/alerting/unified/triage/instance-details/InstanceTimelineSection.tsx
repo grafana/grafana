@@ -1,13 +1,13 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useCreateNotificationqueryMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { Labels, TimeRange } from '@grafana/data';
+import { type Labels, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Box, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
+import { Alert, Box, LoadingPlaceholder, RadioButtonGroup, Stack, Text } from '@grafana/ui';
 
-import { LogRecord } from '../../components/rules/state-history/common';
+import { type LogRecord } from '../../components/rules/state-history/common';
 
-import { InstanceTimeline } from './InstanceTimeline';
+import { InstanceTimeline, type TimelineFilter } from './InstanceTimeline';
 import { labelsToMatchers } from './timelineUtils';
 
 interface InstanceTimelineSectionProps {
@@ -61,10 +61,23 @@ export function InstanceTimelineSection({
 
   const isLoading = stateHistoryFetching || notificationsLoading;
 
+  const [filter, setFilter] = useState<TimelineFilter>('all');
+  const filterOptions = [
+    { label: t('alerting.instance-details.timeline-filter-all', 'All'), value: 'all' as const },
+    { label: t('alerting.instance-details.timeline-filter-states', 'State changes'), value: 'states' as const },
+    {
+      label: t('alerting.instance-details.timeline-filter-notifications', 'Notifications'),
+      value: 'notifications' as const,
+    },
+  ];
+
   return (
     <Box ref={loadingBarRef}>
       <Stack direction="column" gap={1}>
-        <Text variant="h5">{t('alerting.instance-details.instance-timeline', 'Instance Timeline')}</Text>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Text variant="h5">{t('alerting.instance-details.instance-history-heading', 'History')}</Text>
+          <RadioButtonGroup options={filterOptions} value={filter} onChange={setFilter} size="sm" />
+        </Stack>
 
         {isLoading && (
           <LoadingPlaceholder text={t('alerting.instance-details.timeline-loading', 'Loading timeline...')} />
@@ -92,7 +105,7 @@ export function InstanceTimelineSection({
         )}
 
         {!isLoading && !stateHistoryError && (
-          <InstanceTimeline records={historyRecords} notifications={notifications} />
+          <InstanceTimeline records={historyRecords} notifications={notifications} filter={filter} />
         )}
       </Stack>
     </Box>

@@ -2,9 +2,12 @@ package dualwrite
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -17,8 +20,10 @@ import (
 
 func TestService(t *testing.T) {
 	t.Run("dynamic", func(t *testing.T) {
+		t.Skip("dashboards+folders are always static")
+
 		ctx := context.Background()
-		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader())
+		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
 		require.NoError(t, err)
 
 		// Use a managed resource so KV-based Status path is exercised.
@@ -140,6 +145,7 @@ func TestService(t *testing.T) {
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
+					prometheus.NewRegistry(),
 				)
 				require.NoError(t, err)
 
@@ -180,6 +186,7 @@ func TestService(t *testing.T) {
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
+					prometheus.NewRegistry(),
 				)
 				require.NoError(t, err)
 
@@ -217,6 +224,7 @@ func TestService(t *testing.T) {
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
+					prometheus.NewRegistry(),
 				)
 				require.NoError(t, err)
 
@@ -227,13 +235,9 @@ func TestService(t *testing.T) {
 		}
 	})
 
-	t.Run("dynamic getStorageMode caches statusReader results", func(t *testing.T) {
+	t.Run("dynamic getStorageMode delegates to statusReader", func(t *testing.T) {
 		gr := schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}
-		calls := 0
-		reader := &countingStatusReader{
-			delegate: NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeUnified),
-			calls:    &calls,
-		}
+		reader := NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeUnified)
 
 		svc, err := ProvideService(
 			featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
@@ -241,36 +245,13 @@ func TestService(t *testing.T) {
 			NewFakeConfig(),
 			NewFakeMigrator(),
 			reader,
+			prometheus.NewRegistry(),
 		)
 		require.NoError(t, err)
 
-		ctx := context.Background()
-		for i := 0; i < 10; i++ {
-			got, err := svc.ReadFromUnified(ctx, gr)
-			require.NoError(t, err)
-			require.True(t, got)
-		}
-		require.Equal(t, 1, calls, "should resolve from reader exactly once (cached)")
-	})
-
-	t.Run("static getStorageMode resolves from reader exactly once", func(t *testing.T) {
-		gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
-		calls := 0
-		reader := &countingStatusReader{
-			delegate: NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeDualWrite),
-			calls:    &calls,
-		}
-
-		svc := &staticService{
-			cfg:          NewFakeConfig(),
-			statusReader: reader,
-		}
-
-		for i := 0; i < 10; i++ {
-			mode := svc.getStorageMode(context.Background(), gr)
-			require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode)
-		}
-		require.Equal(t, 1, calls, "should resolve from reader exactly once")
+		got, err := svc.ReadFromUnified(context.Background(), gr)
+		require.NoError(t, err)
+		require.True(t, got)
 	})
 
 	t.Run("static", func(t *testing.T) {
@@ -279,67 +260,36 @@ func TestService(t *testing.T) {
 			flags featuremgmt.FeatureToggles
 			cfg   setting.Cfg
 
-			isStatic              bool
-			foldersFromUnified    bool
-			dashboardsFromUnified bool
-			error                 string
+			isStatic bool
+			error    string
 		}
 
 		for _, tc := range []testCase{{
-			name:                  "both mode5",
-			flags:                 featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-			dashboardsFromUnified: true,
-			foldersFromUnified:    true,
-			isStatic:              true,
-			cfg: setting.Cfg{
-				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: rest.Mode5,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: rest.Mode5,
-					},
-				},
-			}}, {
-			name:     "dynamic",
+			name:     "both mode5",
 			flags:    featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-			isStatic: false,
+			isStatic: true,
 			cfg: setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: rest.Mode3,
+						DualWriterMode: rest.Mode5,
 					},
-				},
-			}}, {
-			name:  "invalid folder mode4",
-			flags: featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-			error: "must use the same mode",
-			cfg: setting.Cfg{
-				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 					"folders.folder.grafana.app": {
-						DualWriterMode: rest.Mode4,
+						DualWriterMode: rest.Mode5,
 					},
 				},
 			}}, {
-			name:  "invalid dashboards mode4",
-			flags: featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-			error: "must use the same mode",
-			cfg: setting.Cfg{
-				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: rest.Mode4,
-					},
-				},
-			}},
-		} {
+			name:     "empty config",
+			flags:    featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
+			isStatic: true,
+			cfg:      setting.Cfg{},
+		}} {
 			t.Run(tc.name, func(t *testing.T) {
-				ctx := context.Background()
 				// Build a fake MigrationStatusReader that matches the config-based modes.
 				statusReader := NewFakeMigrationStatusReader(
 					"dashboards.dashboard.grafana.app", storageModeFromConfigMode(tc.cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode),
 					"folders.folder.grafana.app", storageModeFromConfigMode(tc.cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode),
 				)
-				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, NewFakeMigrator(), statusReader)
+				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, NewFakeMigrator(), statusReader, prometheus.NewRegistry())
 				if tc.error != "" {
 					require.ErrorContains(t, err, tc.error)
 					require.Nil(t, svc, "expect a nil service when an error exts")
@@ -349,34 +299,141 @@ func TestService(t *testing.T) {
 
 				_, isStatic := svc.(*staticService)
 				require.Equal(t, tc.isStatic, isStatic)
-
-				if isStatic {
-					v, err := svc.ReadFromUnified(ctx, schema.GroupResource{
-						Group:    "dashboard.grafana.app",
-						Resource: "dashboards",
-					})
-					require.NoError(t, err)
-					require.Equal(t, tc.dashboardsFromUnified, v, "XXX")
-
-					v, err = svc.ReadFromUnified(ctx, schema.GroupResource{
-						Group:    "folder.grafana.app",
-						Resource: "folders",
-					})
-					require.NoError(t, err)
-					require.Equal(t, tc.foldersFromUnified, v, "YYY")
-				}
 			})
 		}
 	})
 }
 
-// countingStatusReader wraps a MigrationStatusReader and counts calls to GetStorageMode.
-type countingStatusReader struct {
-	delegate unifiedmigrations.MigrationStatusReader
-	calls    *int
+func TestNewConfigBasedMigrationStatusReader(t *testing.T) {
+	ctx := context.Background()
+
+	cfg := &setting.Cfg{
+		UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			"globalroles.iam.grafana.app":      {DualWriterMode: rest.Mode5},
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
+			"widgets.test.grafana.app":         {DualWriterMode: rest.Mode0},
+		},
+	}
+	reader := NewConfigBasedMigrationStatusReader(cfg)
+
+	// Mode5 → Unified
+	mode, err := reader.GetStorageMode(ctx, schema.GroupResource{Group: "iam.grafana.app", Resource: "globalroles"})
+	require.NoError(t, err)
+	require.Equal(t, unifiedmigrations.StorageModeUnified, mode)
+
+	// Mode1 → DualWrite
+	mode, err = reader.GetStorageMode(ctx, schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"})
+	require.NoError(t, err)
+	require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode)
+
+	// Mode0 → Legacy
+	mode, err = reader.GetStorageMode(ctx, schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"})
+	require.NoError(t, err)
+	require.Equal(t, unifiedmigrations.StorageModeLegacy, mode)
+
+	// Unconfigured resource → Legacy (default)
+	mode, err = reader.GetStorageMode(ctx, schema.GroupResource{Group: "unknown.grafana.app", Resource: "things"})
+	require.NoError(t, err)
+	require.Equal(t, unifiedmigrations.StorageModeLegacy, mode)
+
+	// nil cfg → all Legacy
+	nilReader := NewConfigBasedMigrationStatusReader(nil)
+	mode, err = nilReader.GetStorageMode(ctx, schema.GroupResource{Group: "iam.grafana.app", Resource: "globalroles"})
+	require.NoError(t, err)
+	require.Equal(t, unifiedmigrations.StorageModeLegacy, mode)
 }
 
-func (c *countingStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
-	*c.calls++
-	return c.delegate.GetStorageMode(ctx, gr)
+func TestServiceMetrics_NullStatusReader(t *testing.T) {
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
+
+	cfg := &setting.Cfg{
+		UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			gr.String(): {DualWriterMode: rest.Mode1},
+		},
+	}
+
+	t.Run("staticService increments statusReaderNull when reader is nil", func(t *testing.T) {
+		metrics := newTestDualWriterMetrics()
+		svc := &staticService{cfg: cfg, metrics: metrics}
+		mode := svc.getStorageMode(context.Background(), gr)
+		require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode)
+		require.Equal(t, float64(1), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
+		require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderErrors.WithLabelValues(gr.String())))
+	})
+}
+
+func TestServiceMetrics_StatusReaderError(t *testing.T) {
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
+
+	cfg := &setting.Cfg{
+		UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			gr.String(): {DualWriterMode: rest.Mode4},
+		},
+	}
+
+	t.Run("service increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
+		metrics := newTestDualWriterMetrics()
+		svc := &service{
+			statusReader: &failingStatusReader{mode: unifiedmigrations.StorageModeDualWrite, err: errors.New("db down")},
+			metrics:      metrics,
+		}
+		mode := svc.getStorageMode(context.Background(), gr)
+		require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode, "should use mode returned by reader alongside error")
+		require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
+		require.Equal(t, float64(1), testutil.ToFloat64(metrics.statusReaderErrors.WithLabelValues(gr.String())))
+	})
+
+	t.Run("staticService increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
+		metrics := newTestDualWriterMetrics()
+		svc := &staticService{
+			cfg:          cfg,
+			statusReader: &failingStatusReader{mode: unifiedmigrations.StorageModeDualWrite, err: errors.New("db down")},
+			metrics:      metrics,
+		}
+		mode := svc.getStorageMode(context.Background(), gr)
+		require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode, "should use mode returned by reader alongside error")
+		require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
+		require.Equal(t, float64(1), testutil.ToFloat64(metrics.statusReaderErrors.WithLabelValues(gr.String())))
+	})
+}
+
+func TestServiceMetrics_HappyPath(t *testing.T) {
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
+	metrics := newTestDualWriterMetrics()
+
+	svc := &service{
+		statusReader: NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeUnified),
+		metrics:      metrics,
+	}
+	mode := svc.getStorageMode(context.Background(), gr)
+	require.Equal(t, unifiedmigrations.StorageModeUnified, mode)
+	require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
+	require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderErrors.WithLabelValues(gr.String())))
+}
+
+// --- test helpers ---
+
+// newTestDualWriterMetrics creates isolated metrics for test assertions.
+func newTestDualWriterMetrics() *dualWriterMetrics {
+	return &dualWriterMetrics{
+		backgroundErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "test_bg_errors",
+		}, []string{"resource", "method"}),
+		statusReaderNull: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "test_reader_null",
+		}, []string{"resource"}),
+		statusReaderErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "test_reader_errors",
+		}, []string{"resource"}),
+	}
+}
+
+// failingStatusReader always returns an error alongside the configured mode.
+type failingStatusReader struct {
+	mode unifiedmigrations.StorageMode
+	err  error
+}
+
+func (f *failingStatusReader) GetStorageMode(_ context.Context, _ schema.GroupResource) (unifiedmigrations.StorageMode, error) {
+	return f.mode, f.err
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// Run with:
+//
+// go test --tags "pro" -timeout 60s -run ^TestIntegrationTeamSearch$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationTeamSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -35,7 +39,7 @@ func TestIntegrationTeamSearch(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesTeamsApi,
 				},
 			})
 			doTeamSearchTests(t, helper)
@@ -197,4 +201,226 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, 1, len(result.Hits), "should return 1 hit")
 		require.Equal(t, int64(1), result.Offset, "should return offset 1")
 	})
+}
+
+func TestIntegrationTeamSearch_MemberCount(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"teams.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+					"teambindings.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesTeamsApi,
+					featuremgmt.FlagKubernetesTeamBindings,
+					featuremgmt.FlagKubernetesUsersApi,
+				},
+			})
+
+			t.Cleanup(func() { helper.Shutdown() })
+
+			doTeamSearchMemberCountTests(t, helper)
+		})
+	}
+}
+
+func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
+	ctx := context.Background()
+	namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+
+	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: namespace,
+		GVR:       gvrTeams,
+	})
+	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: namespace,
+		GVR:       gvrUsers,
+	})
+	tbClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: namespace,
+		GVR:       gvrTeamBindings,
+	})
+
+	// Create teamA with 3 members
+	teamA, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "mc-team-a", "MemberCount Team A", "mc-team-a@example.com"), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Create teamB with 0 members
+	teamB, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "mc-team-b", "MemberCount Team B", "mc-team-b@example.com"), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Create 3 users and bind them to teamA
+	for i := 1; i <= 3; i++ {
+		uObj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		uObj.Object["metadata"].(map[string]any)["name"] = fmt.Sprintf("mc-user-%d", i)
+		uObj.Object["spec"].(map[string]any)["login"] = fmt.Sprintf("mc-user-%d", i)
+		uObj.Object["spec"].(map[string]any)["email"] = fmt.Sprintf("mc-user-%d@example.com", i)
+
+		u, err := userClient.Resource.Create(ctx, uObj, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		tbObj := createTeamBindingObject(helper, u.GetName(), teamA.GetName())
+		_, err = tbClient.Resource.Create(ctx, tbObj, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	t.Run("should return correct member counts for teams with and without members", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=MemberCount&membercount=true", namespace)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+		require.Len(t, result.Hits, 2)
+
+		for _, hit := range result.Hits {
+			switch hit.Name {
+			case teamA.GetName():
+				require.NotNil(t, hit.MemberCount, "teamA should have member count set")
+				require.Equal(t, int64(3), *hit.MemberCount, "teamA should have 3 members")
+			case teamB.GetName():
+				require.NotNil(t, hit.MemberCount, "teamB should have member count set")
+				require.Equal(t, int64(0), *hit.MemberCount, "teamB should have 0 members")
+			default:
+				t.Errorf("unexpected team in results: %s", hit.Name)
+			}
+		}
+	})
+
+	t.Run("should not return member counts when membercount param is absent", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=MemberCount", namespace)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+		require.Len(t, result.Hits, 2)
+
+		for _, hit := range result.Hits {
+			require.Nil(t, hit.MemberCount, "member count should be nil when membercount param is absent for team %s", hit.Name)
+		}
+	})
+
+	t.Run("should not return member counts when membercount=false", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=MemberCount&membercount=false", namespace)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+		require.Len(t, result.Hits, 2)
+
+		for _, hit := range result.Hits {
+			require.Nil(t, hit.MemberCount, "member count should be nil when membercount=false for team %s", hit.Name)
+		}
+	})
+}
+
+func TestIntegrationTeamSearch_AccessControl(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"teams.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesTeamsApi,
+				},
+			})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			ctx := context.Background()
+			namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+
+			teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User:      helper.Org1.Admin,
+				Namespace: namespace,
+				GVR:       gvrTeams,
+			})
+
+			team1, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, team1)
+
+			t.Run("accesscontrol=true includes permissions on hits", func(t *testing.T) {
+				res := searchTeamsWithAccessControl(t, helper, namespace, "", true)
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.NotNil(t, hit.AccessControl, "expected AccessControl map on hit %s", hit.Name)
+					require.True(t, hit.AccessControl["teams:read"], "admin should have teams:read on %s", hit.Name)
+				}
+			})
+
+			t.Run("accesscontrol absent omits permissions from hits", func(t *testing.T) {
+				res := searchTeamsWithAccessControl(t, helper, namespace, "", false)
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.Empty(t, hit.AccessControl, "expected no AccessControl on hit %s when param absent", hit.Name)
+				}
+			})
+		})
+	}
+}
+
+func searchTeamsWithAccessControl(t *testing.T, helper *apis.K8sTestHelper, namespace string, query string, accessControl bool) *iamv0alpha1.GetSearchTeamsResponse {
+	q := url.Values{}
+	if query != "" {
+		q.Set("query", query)
+	}
+	q.Set("limit", "100")
+	if accessControl {
+		q.Set("accesscontrol", "true")
+	}
+
+	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?%s", namespace, q.Encode())
+
+	res := &iamv0alpha1.GetSearchTeamsResponse{}
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodGet,
+		Path:   path,
+	}, res)
+
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	return res
 }

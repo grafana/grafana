@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { FocusEvent, useCallback, useRef } from 'react';
+import { type FocusEvent, useCallback, useRef } from 'react';
 
-import { GrafanaTheme2, rangeUtil } from '@grafana/data';
+import { type GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClickOutsideWrapper, Stack, Switch, useStyles2 } from '@grafana/ui';
 

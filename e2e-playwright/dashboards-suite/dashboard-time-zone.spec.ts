@@ -1,13 +1,12 @@
 import { differenceInMinutes, parseISO, toDate } from 'date-fns';
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const TIMEZONE_DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

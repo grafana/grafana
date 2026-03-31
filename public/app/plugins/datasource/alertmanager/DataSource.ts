@@ -1,13 +1,13 @@
-import { lastValueFrom, Observable, of } from 'rxjs';
+import { lastValueFrom, type Observable, of } from 'rxjs';
 
-import { DataQuery, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { type DataQuery, type DataQueryResponse, DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import { type BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { discoverAlertmanagerFeaturesByUrl } from '../../../features/alerting/unified/api/buildInfo';
 import { messageFromError } from '../../../features/alerting/unified/utils/redux';
-import { AlertmanagerApiFeatures } from '../../../types/unified-alerting-dto';
+import { type AlertmanagerApiFeatures } from '../../../types/unified-alerting-dto';
 
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
 export type AlertManagerQuery = {
   query: string;

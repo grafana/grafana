@@ -1,8 +1,8 @@
 import {
   defaultDataQueryKind,
   defaultPanelSpec,
-  PanelKind,
-  PanelQueryKind,
+  type PanelKind,
+  type PanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';

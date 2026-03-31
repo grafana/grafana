@@ -1,7 +1,7 @@
-import { dateTime, TimeRange } from '@grafana/data';
+import { dateTime, type TimeRange } from '@grafana/data';
 
 import { DEFAULT_SERIES_LIMIT } from './constants';
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import { BaseResourceClient, LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
 import { PrometheusCacheLevel } from './types';
 

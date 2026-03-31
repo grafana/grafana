@@ -225,12 +225,12 @@ func TestBackend_IsHealthy(t *testing.T) {
 	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	dbp.SQLMock.ExpectPing().WillReturnError(nil)
-	res, err := b.IsHealthy(ctx, nil)
+	res, err := b.IsHealthy(ctx, nil) //nolint:staticcheck
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
 	dbp.SQLMock.ExpectPing().WillReturnError(errTest)
-	res, err = b.IsHealthy(ctx, nil)
+	res, err = b.IsHealthy(ctx, nil) //nolint:staticcheck
 	require.Nil(t, res)
 	require.Error(t, err)
 	require.ErrorIs(t, err, errTest)
@@ -952,4 +952,95 @@ func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context
 		backend:        bb,
 		TestDBProvider: dbp,
 	}, ctx
+}
+
+func TestSqlPruneHistoryRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		req     sqlPruneHistoryRequest
+		wantErr string
+	}{
+		{
+			name: "valid namespaced key",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+		},
+		{
+			name: "valid cluster-scoped key (no namespace)",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "",
+					Group:     "cluster.example.io",
+					Resource:  "clusterresources",
+					Name:      "my-cluster-resource",
+				},
+				HistoryLimit: 10,
+			},
+		},
+		{
+			name: "missing key",
+			req: sqlPruneHistoryRequest{
+				HistoryLimit: 10,
+			},
+			wantErr: "missing key",
+		},
+		{
+			name: "missing group",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing group",
+		},
+		{
+			name: "missing resource",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing resource",
+		},
+		{
+			name: "invalid history limit",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 0,
+			},
+			wantErr: "history limit must be greater than zero",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := tc.req.Validate()
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

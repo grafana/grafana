@@ -1,27 +1,31 @@
-import { ReactNode, useId, useMemo } from 'react';
+import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { SceneObject, SceneVariableSet, type SceneVariables } from '@grafana/scenes';
+import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { useLayoutCategory } from '../../scene/layouts-shared/DashboardLayoutSelector';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
 import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
-import { DashboardVariablesList } from './DashboardVariablesList';
+import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
+import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
 function useEditPaneOptions(
   this: DashboardEditableElement,
   dashboard: DashboardScene
 ): OptionsPaneCategoryDescriptor[] {
-  const { body, $variables } = dashboard.useState();
+  const { body } = dashboard.useState();
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
 
@@ -46,10 +50,11 @@ function useEditPaneOptions(
   }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
 
   const layoutCategory = useLayoutCategory(body);
-  const variablesCategory = useVariablesCategory($variables);
+  const variablesCategory = useVariablesCategory(dashboard);
   const annotationsCategory = useAnnotationsCategory(dashboardSceneGraph.getDataLayers(dashboard));
+  const linksCategory = useLinksCategory(dashboard);
 
-  return [dashboardOptions, ...layoutCategory, ...variablesCategory, ...annotationsCategory];
+  return [dashboardOptions, ...layoutCategory, ...variablesCategory, ...annotationsCategory, ...linksCategory];
 }
 
 export class DashboardEditableElement implements EditableDashboardElement {
@@ -104,30 +109,39 @@ export class DashboardEditableElement implements EditableDashboardElement {
   }
 }
 
-function useVariablesCategory(variableSet: SceneVariables | undefined): OptionsPaneCategoryDescriptor[] {
+function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
+  const { $variables } = dashboard.useState();
   const variableListId = useId();
+  const addVariableButtonId = useId();
 
   return useMemo(() => {
-    if (!(variableSet instanceof SceneVariableSet) || !variableSet?.state.variables.length) {
-      return [];
-    }
-
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard-scene.use-variables-category.category.title.variables', 'Variables'),
       id: 'dashboard-variables',
     });
 
+    if ($variables instanceof SceneVariableSet && $variables.state.variables.length) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: variableListId,
+          skipField: true,
+          render: () => <DashboardVariablesList variableSet={$variables} />,
+        })
+      );
+    }
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: variableListId,
+        id: addVariableButtonId,
         skipField: true,
-        render: () => <DashboardVariablesList set={variableSet} />,
+        render: () => <AddVariableButton dashboard={dashboard} />,
       })
     );
 
     return [category];
-  }, [variableSet, variableListId]);
+  }, [$variables, addVariableButtonId, variableListId, dashboard]);
 }
 
 function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPaneCategoryDescriptor[] {
@@ -150,4 +164,39 @@ function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPan
 
     return [category];
   }, [dataLayerSet, annotationsListId]);
+}
+
+function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
+  const { links } = dashboard.useState();
+  const linksListId = useId();
+  const addLinkButtonId = useId();
+
+  return useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard-scene.use-links-category.category.title.links', 'Links'),
+      id: 'dashboard-links',
+    });
+
+    if (links.length) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: linksListId,
+          skipField: true,
+          render: () => <DashboardLinksList dashboard={dashboard} />,
+        })
+      );
+    }
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: addLinkButtonId,
+        skipField: true,
+        render: () => <AddLinkButton dashboard={dashboard} />,
+      })
+    );
+
+    return [category];
+  }, [addLinkButtonId, dashboard, links.length, linksListId]);
 }

@@ -1,15 +1,13 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
-import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
@@ -24,7 +22,12 @@ import {
   useLoadNextChildrenPage,
 } from '../state/hooks';
 import { setAllSelection, setFolderOpenState, setItemSelectionState } from '../state/slice';
-import { BrowseDashboardsPermissions, BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
+import {
+  type BrowseDashboardsPermissions,
+  type BrowseDashboardsState,
+  type DashboardTreeSelection,
+  SelectionState,
+} from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -44,8 +47,7 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
   const provisioningEnabled = config.featureToggles.provisioning;
-  const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
-  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled || hasNoRole ? skipToken : undefined);
+  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
 

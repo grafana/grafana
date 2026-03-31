@@ -57,6 +57,8 @@ type ZanzanaReconcilerSettings struct {
 	Interval time.Duration
 	// Batch size for writing tuples to Zanzana.
 	WriteBatchSize int
+	// Page size when reading tuples from Zanzana during reconciliation.
+	ZanzanaReadPageSize int
 	// Size of the buffered work queue for namespaces.
 	QueueSize int
 
@@ -82,7 +84,21 @@ type ZanzanaReconcilerSettings struct {
 	RetryPeriod time.Duration
 }
 
+type ZanzanaStoreType string
+
+const (
+	ZanzanaStoreTypeSQL  ZanzanaStoreType = "sql"
+	ZanzanaStoreTypeGRPC ZanzanaStoreType = "grpc"
+)
+
+type ZanzanaGRPCStoreSettings struct {
+	Addr        string
+	TLSCertPath string
+	TLSKeyPath  string
+}
+
 type ZanzanaServerSettings struct {
+	StoreType ZanzanaStoreType
 	// OpenFGA http server address which allows to connect with fga cli.
 	// Can only be used in dev mode.
 	OpenFGAHttpAddr string
@@ -280,6 +296,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs := ZanzanaServerSettings{}
 	serverSec := cfg.SectionWithEnvOverrides("zanzana.server")
 
+	zs.StoreType = ZanzanaStoreType(serverSec.Key("store_type").MustString(string(ZanzanaStoreTypeSQL)))
 	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("")
 	zs.ListObjectsDeadline = serverSec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	zs.ListObjectsMaxResults = uint32(serverSec.Key("list_objects_max_results").MustUint(1000))
@@ -368,6 +385,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
+	zr.ZanzanaReadPageSize = reconcilerSec.Key("zanzana_read_page_size").MustInt(1000)
 	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
 	zr.LeaderElectionEnabled = reconcilerSec.Key("leader_election_enabled").MustBool(false)
 	zr.LeaderElectionLeaseName = reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler")
@@ -377,4 +395,12 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.RenewDeadline = reconcilerSec.Key("renew_deadline").MustDuration(10 * time.Second)
 	zr.RetryPeriod = reconcilerSec.Key("retry_period").MustDuration(2 * time.Second)
 	cfg.ZanzanaReconciler = zr
+
+	// gRPC store settings
+	grpcStoreSec := cfg.SectionWithEnvOverrides("zanzana.store.grpc")
+	cfg.ZanzanaGRPCStore = ZanzanaGRPCStoreSettings{
+		Addr:        grpcStoreSec.Key("address").MustString(""),
+		TLSCertPath: grpcStoreSec.Key("tls_cert_path").MustString(""),
+		TLSKeyPath:  grpcStoreSec.Key("tls_key_path").MustString(""),
+	}
 }

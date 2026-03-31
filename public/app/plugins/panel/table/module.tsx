@@ -2,7 +2,7 @@ import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEd
 import { t } from '@grafana/i18n';
 import {
   TableCellDisplayMode,
-  TableCellOptions,
+  type TableCellOptions,
   TableCellTooltipPlacement,
   defaultTableFieldOptions,
 } from '@grafana/schema';
@@ -12,8 +12,12 @@ import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCus
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { FieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig, type Options } from './panelcfg.gen';
 import { tableSuggestionsSupplier } from './suggestions';
+
+function getTableNoValuePlaceholder(): string {
+  return t('table.no-value-placeholder', 'No rows');
+}
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -22,6 +26,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     standardOptions: {
       [FieldConfigProperty.Actions]: {
         hideFromDefaults: false,
+      },
+      [FieldConfigProperty.NoValue]: {
+        settings: {
+          placeholder: getTableNoValuePlaceholder(),
+        },
       },
     },
     useCustomConfig: (builder) => {

@@ -1,4 +1,4 @@
-import { ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { type ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 /**
  * Checks if a connection is ready by verifying that the Ready condition exists and has status 'True'.

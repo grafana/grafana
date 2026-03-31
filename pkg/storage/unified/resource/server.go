@@ -17,6 +17,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -36,6 +38,10 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
+// errStopping is returned when a write operation is rejected because the server is shutting down.
+// Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
+var errStopping = status.Error(codes.Unavailable, "server is stopping")
+
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	SearchServer
@@ -43,7 +49,8 @@ type ResourceServer interface {
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.QuotasServer
-	resourcepb.DiagnosticsServer
+	// Deprecated: clients should use grpc.health.v1.Health with modules.StorageServer service name instead
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
 }
 
@@ -51,8 +58,10 @@ type ResourceServer interface {
 type SearchServer interface {
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
-	resourcepb.DiagnosticsServer
+	// Deprecated: clients should use grpc.health.v1.Health with modules.SearchServer service name instead
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
+	Init(ctx context.Context) error
 }
 
 type ResourceServerStopper interface {
@@ -237,11 +246,18 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
+
+	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
+	SelectableFieldsForKinds map[string][]string
 }
 
 type ResourceServerOptions struct {
 	// Real storage backend
 	Backend StorageBackend
+
+	// BulkBatchOptions overrides the default BulkProcess batching thresholds.
+	// When nil, DefaultBulkBatchOptions is used.
+	BulkBatchOptions *BulkBatchOptions
 
 	// The blob configuration
 	Blob BlobConfig
@@ -256,7 +272,7 @@ type ResourceServerOptions struct {
 	OverridesService *OverridesService
 
 	// Diagnostics
-	Diagnostics resourcepb.DiagnosticsServer
+	Diagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 
 	// Check if a user has access to write folders
 	// When this is nil, no resources can have folders configured
@@ -291,8 +307,18 @@ type ResourceServerOptions struct {
 	QuotasConfig QuotasConfig
 }
 
-// NewSearchServer creates a standalone search server.
-func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
+	if opts.BulkBatchOptions == nil {
+		return DefaultBulkBatchOptions()
+	}
+
+	return *opts.BulkBatchOptions
+}
+
+// NewUninitializedSearchServer creates a standalone search server without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing backend implementation")
 	}
@@ -313,16 +339,27 @@ func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	}
 	searchServer.backendDiagnostics = opts.Diagnostics
 
-	// Initialize the search server
-	ctx := context.Background()
-	if err := searchServer.Init(ctx); err != nil {
+	return searchServer, nil
+}
+
+// NewSearchServer creates a standalone search server and initializes it immediately.
+func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+	searchServer, err := NewUninitializedSearchServer(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := searchServer.Init(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to initialize search server: %w", err)
 	}
 
 	return searchServer, nil
 }
 
-func NewResourceServer(opts ResourceServerOptions) (*server, error) {
+// NewUninitializedResourceServer creates a resource server without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
@@ -376,6 +413,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	s := &server{
 		log:                            logger,
 		backend:                        opts.Backend,
+		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
 		diagnostics:                    opts.Diagnostics,
 		access:                         opts.AccessClient,
@@ -404,8 +442,16 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		}
 	}
 
-	err = s.Init(ctx)
+	return s, nil
+}
+
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
+	s, err := NewUninitializedResourceServer(opts)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := s.Init(s.ctx); err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}
@@ -441,11 +487,12 @@ var _ ResourceServer = &server{}
 type server struct {
 	log              log.Logger
 	backend          StorageBackend
+	bulkBatchOptions BulkBatchOptions
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
 	search           *searchServer
 	searchClient     resourcepb.ResourceIndexClient
-	diagnostics      resourcepb.DiagnosticsServer
+	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
 	now              func() int64
@@ -458,6 +505,14 @@ type server struct {
 	ctx         context.Context
 	cancel      context.CancelFunc
 	broadcaster Broadcaster[*WrittenEvent]
+
+	// Graceful shutdown: tracks in-flight write operations so Stop can wait
+	// for them to complete before tearing down the backend.
+	// stopMu serialises the transition to "stopping" with new Add(1) calls
+	// so that Add never races with Wait on a zero counter.
+	stopMu   sync.Mutex
+	inflight sync.WaitGroup
+	stopping bool
 
 	// init checking
 	once    sync.Once
@@ -500,8 +555,44 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
+// trackWrite atomically checks the stopping flag and increments the in-flight
+// counter. It returns true if the write was accepted (caller must defer
+// s.inflight.Done()), or false if the server is shutting down.
+func (s *server) trackWrite() bool {
+	s.stopMu.Lock()
+	defer s.stopMu.Unlock()
+	if s.stopping {
+		return false
+	}
+	s.inflight.Add(1)
+	return true
+}
+
 func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
+
+	// Signal that no new write operations should be accepted.
+	// The lock ensures no goroutine is between its stopping check and Add(1).
+	s.stopMu.Lock()
+	s.stopping = true
+	s.stopMu.Unlock()
+
+	// Stops streaming and unblocks artificialSuccessfulWriteDelay.
+	s.cancel()
+
+	// Wait for in-flight write operations to finish, respecting the context deadline.
+	// After the unlock above, no new Add(1) can happen, so Wait is safe.
+	done := make(chan struct{})
+	go func() {
+		s.inflight.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		s.log.Debug("all in-flight write operations completed")
+	case <-ctx.Done():
+		s.log.Warn("timed out waiting for in-flight write operations to complete")
+	}
 
 	var stopFailed bool
 
@@ -516,12 +607,12 @@ func (s *server) Stop(ctx context.Context) error {
 		}
 	}
 
-	if kvBackend, ok := s.backend.(KVBackend); ok {
-		kvBackend.Stop()
+	if stoppableBackend, ok := s.backend.(ResourceServerStopper); ok {
+		if err := stoppableBackend.Stop(ctx); err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("backend stop failed: %w", err)
+		}
 	}
-
-	// Stops the streaming
-	s.cancel()
 
 	// mark the value as done
 	if stopFailed {
@@ -723,6 +814,11 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
+	if !s.trackWrite() {
+		return nil, errStopping
+	}
+	defer s.inflight.Done()
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -767,7 +863,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Create", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Create", req.Key, res, err)
 
 	return res, err
 }
@@ -800,7 +896,7 @@ type responseWithErrorResult interface {
 // Returns boolean indicating whether the sleep was performed or not (used in testing).
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
-func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
+func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
 	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
@@ -827,13 +923,22 @@ func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resou
 		"namespace", key.Namespace,
 		"name", key.Name)
 
-	time.Sleep(s.artificialSuccessfulWriteDelay)
+	select {
+	case <-time.After(s.artificialSuccessfulWriteDelay):
+	case <-s.ctx.Done():
+	case <-ctx.Done():
+	}
 	return true
 }
 
 func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.Update")
 	defer span.End()
+
+	if !s.trackWrite() {
+		return nil, errStopping
+	}
+	defer s.inflight.Done()
 
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -862,7 +967,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Update", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Update", req.Key, res, err)
 
 	return res, err
 }
@@ -909,6 +1014,11 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Delete")
 	defer span.End()
 
+	if !s.trackWrite() {
+		return nil, errStopping
+	}
+	defer s.inflight.Done()
+
 	rsp := &resourcepb.DeleteResponse{}
 	if req.ResourceVersion < 0 {
 		return nil, apierrors.NewBadRequest("update must include the previous version")
@@ -936,7 +1046,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Delete", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Delete", req.Key, res, err)
 
 	return res, err
 }
@@ -1339,6 +1449,10 @@ func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
 	return utils.MetaAccessor(partial)
 }
 
+// producerChanSize is the buffer for the channel that feeds events into the
+// broadcaster. Controls backpressure on the event-writing (producer) side.
+const producerChanSize = 100
+
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	events, err := s.backend.WatchWriteEvents(s.ctx)
@@ -1346,7 +1460,7 @@ func (s *server) initWatcher() error {
 		return err
 	}
 
-	out := make(chan *WrittenEvent, chanBufferLen)
+	out := make(chan *WrittenEvent, producerChanSize)
 	go func() {
 		defer close(out)
 		for v := range events {
@@ -1365,7 +1479,11 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = NewBroadcaster(s.ctx, out)
+	var broadcasterMetrics *BroadcasterMetrics
+	if s.storageMetrics != nil {
+		broadcasterMetrics = s.storageMetrics.Broadcaster
+	}
+	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics)
 	return nil
 }
 
@@ -1396,7 +1514,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
 	// TODO: Think of a way to allow the client to catch up.
-	stream, err := s.broadcaster.Subscribe(ctx)
+	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace))
 	if err != nil {
 		return err
 	}
@@ -1597,7 +1715,7 @@ func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountM
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	return s.diagnostics.IsHealthy(ctx, req)
+	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
 // GetBlob implements BlobStore.
@@ -1727,8 +1845,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	})
 
 	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
+	// This is only used as a QOS queue key, not as a storage namespace.
 	if tenantID == "" {
-		tenantID = clusterScopeNamespace
+		// "cs" = cluster scoped. 2 characters on purpose as the min size of namespace is 3 characters, guaranteed not
+		// to clash
+		tenantID = "cs"
 	}
 
 	for {
@@ -1795,7 +1916,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
-		if s.quotasConfig.EnforceQuotas {
+		if s.quotasConfig.ShouldEnforce(nsr.Group, nsr.Resource) {
 			return QuotaExceededError{
 				Resource:       nsr.Resource,
 				Used:           stats[0].Count,

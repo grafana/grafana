@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Slider, { SliderProps } from '@rc-component/slider';
+import Slider, { type SliderProps } from '@rc-component/slider';
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -9,7 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 
 import HandleTooltip from './HandleTooltip';
 import { getStyles } from './styles';
-import { RangeSliderProps } from './types';
+import { type RangeSliderProps } from './types';
 
 /**
  * @public

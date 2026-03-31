@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult, DragStart } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult, type DragStart } from '@hello-pangea/dnd';
 import { useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -18,12 +18,13 @@ import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { TabItem } from './TabItem';
 import { TabItemLayoutRenderer } from './TabItemRenderer';
 import { TabItemRepeater } from './TabItemRepeater';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { type TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
   const layoutControlsStyles = useStyles2(getLayoutControlsStyles);
-  const { tabs, key } = model.useState();
+
+  const { tabs, key, placeholder, isDropTarget } = model.useState();
   const currentTab = model.getCurrentTab();
   const dashboard = getDashboardSceneFor(model);
   const orchestrator = getLayoutOrchestratorFor(model);
@@ -55,6 +56,17 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
     orchestrator?.stopTabDrag(targetIndex);
   };
 
+  let placeholderComponent: React.ReactNode | null = null;
+
+  const children: React.ReactNode[] = tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
+
+  if (isDropTarget && placeholder) {
+    placeholderComponent = (
+      <div key="placeholder" style={{ width: placeholder.width, height: placeholder.height }}></div>
+    );
+    children.splice(placeholder.index, 0, placeholderComponent);
+  }
+
   return (
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
@@ -63,9 +75,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
             <Droppable droppableId={key!} direction="horizontal">
               {(dropProvided) => (
                 <div className={styles.tabsContainer} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
-                  {tabs.map((tab) => (
-                    <TabWrapper tab={tab} manager={model} key={tab.state.key!} />
-                  ))}
+                  {children}
 
                   {dropProvided.placeholder}
                 </div>

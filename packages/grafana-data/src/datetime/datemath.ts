@@ -1,19 +1,20 @@
 import { isDate } from 'lodash';
 
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 
 import {
-  DateTime,
+  type DateTime,
   dateTime,
   dateTimeAsMoment,
   dateTimeForTimeZone,
-  DateTimeInput,
-  DurationUnit,
+  type DateTimeInput,
+  type DurationUnit,
   isDateTime,
   ISO_8601,
 } from './moment_wrapper';
 
 const units: string[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'] satisfies DurationUnit[];
+const MAX_MATH_TOKEN_DIGITS = 5;
 
 export const isDurationUnit = (value: string): value is DurationUnit => {
   return units.includes(value);
@@ -181,7 +182,8 @@ export function parseDateMath(
       const numFrom = i;
       while (!isNaN(parseInt(strippedMathString.charAt(i), 10))) {
         i++;
-        if (i > 10) {
+        // limit per token instead of entire str to avoid large parses
+        if (i - numFrom > MAX_MATH_TOKEN_DIGITS) {
           return undefined;
         }
       }

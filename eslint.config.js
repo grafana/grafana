@@ -199,6 +199,12 @@ module.exports = [
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          fixStyle: 'inline-type-imports',
+        },
+      ],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
       'no-restricted-syntax': [
@@ -453,8 +459,6 @@ module.exports = [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
       'public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}',
       'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
@@ -659,13 +663,11 @@ module.exports = [
           message:
             'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
         },
-        // FIXME: Remove once all enterprise issues are fixed (reports/dashboard/DashboardReportPage.test.tsx) -
-        // we don't have a suppressions file/approach for enterprise code yet
-        // {
-        //   selector: 'MemberExpression[object.name="config"][property.name="panels"]',
-        //   message:
-        //     'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
-        // },
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
+          message:
+            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
+        },
       ],
     },
   },

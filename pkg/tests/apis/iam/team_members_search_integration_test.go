@@ -35,9 +35,10 @@ func TestIntegrationTeamMembers(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("With dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -51,7 +52,7 @@ func TestIntegrationTeamMembers(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesTeamsApi,
 					featuremgmt.FlagKubernetesTeamBindings,
 					featuremgmt.FlagKubernetesUsersApi,
 				},

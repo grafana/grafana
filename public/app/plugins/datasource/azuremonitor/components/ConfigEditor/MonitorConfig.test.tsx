@@ -1,10 +1,10 @@
-import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
 
 import { createMockDatasourceSettings } from '../../mocks/datasourceSettings';
 
-import { MonitorConfig, Props } from './MonitorConfig';
+import { MonitorConfig, type Props } from './MonitorConfig';
 
 const defaultProps: Props = {
   options: createMockDatasourceSettings(),
@@ -89,7 +89,7 @@ describe('MonitorConfig', () => {
     render(<MonitorConfig {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Authentication')).toBeInTheDocument();
+      expect(screen.getByText('Authentication type')).toBeInTheDocument();
       expect(screen.queryByText(/Current User/i)).not.toBeInTheDocument();
     });
   });
