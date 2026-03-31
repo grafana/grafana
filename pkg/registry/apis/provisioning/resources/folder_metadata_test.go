@@ -821,6 +821,50 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 		assert.Equal(t, "branch-hash", hash)
 		rw.AssertExpectations(t)
 	})
+
+	t.Run("falls back to configured branch when ref not found", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		// First read with new-branch ref returns ErrRefNotFound
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(nil, repository.ErrRefNotFound).Once()
+		// Fallback read with empty ref (configured branch) returns existing data
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		// Update writes to the new branch (ensureBranchExists creates it)
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "new-branch", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Name == existingUID && f.Spec.Title == "New Title"
+		}), "rename folder").Return(nil)
+		// Re-read after update to get new hash
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-branch-hash"}, nil).Once()
+
+		submitted := NewFolderManifest(existingUID, "New Title")
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "rename folder", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "new-branch-hash", hash)
+		rw.AssertExpectations(t)
+	})
+
+	t.Run("returns error when both ref and configured branch fail", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		// First read with new-branch ref returns ErrRefNotFound
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
+			Return(nil, repository.ErrRefNotFound).Once()
+		// Fallback read with empty ref also fails
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound).Once()
+
+		submitted := NewFolderManifest("any-uid", "Title")
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "", submitted)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "read existing folder metadata")
+	})
 }
 
 func TestGetFolderID(t *testing.T) {
