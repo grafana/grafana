@@ -96,7 +96,15 @@ export const AnnotationsPlugin2Cluster = ({
     plotWidth: plotRef.current?.bbox.width,
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
     timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
+    onAnnotationMutate: () => {
+      if (plotRef.current) {
+        console.log('re-drawing on anno mutate');
+        plotRef.current.redraw(false, false);
+      }
+    },
   });
+
+  console.log('full annos', clusteredAnnos);
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
   }, [setNewRange]);
@@ -335,12 +343,12 @@ export const AnnotationsPlugin2Cluster = ({
  * @param i
  */
 const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
+  if (!vals.isCluster?.[i] && vals.clusterIdx?.[i] != null && vals.clusterIdx?.[i] >= 0) {
+    console.log('skip clustered anno', vals, vals.clusterIdx?.[i]);
+  }
   return (
-    // We don't currently cluster region annotations
-    !vals.isRegion?.[i] &&
     // We use the clusterIdx to define when an annotation is a cluster
-    vals.clusterIdx?.[i] != null &&
-    vals.clusterIdx?.[i] >= 0
+    !vals.isCluster?.[i] && vals.clusterIdx?.[i] != null && vals.clusterIdx?.[i] >= 0
   );
 };
 
