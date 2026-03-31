@@ -1269,7 +1269,7 @@ func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []confi
 func createWildcardPermission(actions ...string) resourcepermissions.SetResourcePermissionCommand {
 	return resourcepermissions.SetResourcePermissionCommand{
 		Actions:           actions,
-		Resource:          "routes",
+		Resource:          accesscontrol.AlertingRoutesKind,
 		ResourceAttribute: "uid",
 		ResourceID:        "*",
 	}
