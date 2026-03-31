@@ -186,7 +186,7 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 				actionSetActions := s.actionSetSvc.ResolveActionSet(action)
 				if len(actionSetActions) > 0 {
 					// Folders and routes: expand all actions unconditionally (no inherited scope filtering needed).
-					if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == accesscontrol.AlertingManagedRoutesResource {
+					if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == accesscontrol.AlertingRoutesResource {
 						expandedActions = append(expandedActions, actionSetActions...)
 						continue
 					}
@@ -375,7 +375,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 	}
 
 	// New resources with no legacy granular data go straight to action-set-only.
-	if s.options.Resource == accesscontrol.AlertingManagedRoutesResource {
+	if s.options.Resource == accesscontrol.AlertingRoutesResource {
 		return []string{s.options.GetActionSetName(permission)}, nil
 	}
 
@@ -606,7 +606,7 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
 		strings.HasPrefix(action, dashboards.ScopeFoldersRoot) ||
-		strings.HasPrefix(action, accesscontrol.AlertingManagedRoutesResource)
+		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.

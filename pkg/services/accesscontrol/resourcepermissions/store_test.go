@@ -983,8 +983,8 @@ func TestStore_ResolveActionSet(t *testing.T) {
 	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
-	actionSetService.StoreActionSet(GetActionSetName(accesscontrol.AlertingManagedRoutesResource, "view"), []string{accesscontrol.ActionAlertingManagedRoutesRead})
-	actionSetService.StoreActionSet(GetActionSetName(accesscontrol.AlertingManagedRoutesResource, "edit"), []string{accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":view", []string{accesscontrol.ActionAlertingManagedRoutesRead})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":edit", []string{accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite})
 
 	type actionSetTest struct {
 		desc               string
@@ -1017,8 +1017,8 @@ func TestStore_ResolveActionSet(t *testing.T) {
 			desc:   "should support routes",
 			action: accesscontrol.ActionAlertingManagedRoutesRead,
 			expectedActionSets: []string{
-				GetActionSetName(accesscontrol.AlertingManagedRoutesResource, "view"),
-				GetActionSetName(accesscontrol.AlertingManagedRoutesResource, "edit"),
+				accesscontrol.AlertingRoutesKind + ":view",
+				accesscontrol.AlertingRoutesKind + ":edit",
 			},
 		},
 	}
