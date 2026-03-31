@@ -29,6 +29,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchCrossAccountQuerying`      | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
 | `lokiQuerySplitting`                  | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`            | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
+| `renderAuthJWT`                       | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                          | Yes                |
 | `logsExploreTableVisualisation`       | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`       | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `provisioning`                        | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
@@ -80,7 +81,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | --------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `panelTitleSearch`                | Search for dashboards using panel title                                                                |
 | `grpcServer`                      | Run the GRPC server                                                                                    |
-| `renderAuthJWT`                   | Uses JWT-based auth for rendering instead of relying on remote cache                                   |
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
