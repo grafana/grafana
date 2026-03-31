@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { upperFirst } from 'lodash';
-import { RefObject, useRef } from 'react';
+import { type RefObject, useRef } from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryEditorColors, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
-import { AlertRule, Transformation } from '../types';
+import { type AlertRule, type Transformation } from '../types';
 import { getEditorBorderColor } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';

@@ -4,7 +4,7 @@ import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
 
 import { selectOption } from './selectOption';
-import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
+import { setDashboardTimeRange, type TimeRangeConfig } from './setDashboardTimeRange';
 
 export interface AddAnnotationConfig {
   dataSource: string;

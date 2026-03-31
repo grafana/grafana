@@ -507,6 +507,8 @@ export type DashboardMatcherConfig = {
   id: string;
   /** The matcher options. This is specific to the matcher implementation. */
   options?: object;
+  /** If set, limits this matcher to fields of that type. If not set, "series" mode is used. */
+  scope?: string;
 };
 export type DashboardDataTransformerConfig = {
   /** Disabled transformations are skipped */
@@ -871,6 +873,8 @@ export type DashboardAdhocVariableSpec = {
   baseFilters: DashboardAdHocFilterWithLabels[];
   defaultKeys: DashboardMetricFindValue[];
   description?: string;
+  /** Whether the group-by operator is enabled in the ad hoc filter combobox. */
+  enableGroupBy?: boolean;
   filters: DashboardAdHocFilterWithLabels[];
   hide: string;
   label?: string;
@@ -1299,7 +1303,6 @@ export type AnnotationActions = {
 };
 export type AnnotationPermission = {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
 };
 export type DashboardAccess = {
   annotationsPermissions: AnnotationPermission;

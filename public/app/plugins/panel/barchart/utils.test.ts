@@ -2,11 +2,11 @@ import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
   createTheme,
-  FieldConfig,
+  type FieldConfig,
   FieldType,
   MutableDataFrame,
   VizOrientation,
-  FieldConfigSource,
+  type FieldConfigSource,
 } from '@grafana/data';
 import {
   LegendDisplayMode,
@@ -18,8 +18,8 @@ import {
   defaultTimeZone,
 } from '@grafana/schema';
 
-import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
-import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
+import { type FieldConfig as PanelFieldConfig } from './panelcfg.gen';
+import { prepSeries, prepConfig, type PrepConfigOpts } from './utils';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},

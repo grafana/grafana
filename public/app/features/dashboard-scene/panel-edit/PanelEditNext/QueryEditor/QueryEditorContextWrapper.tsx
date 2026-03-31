@@ -1,20 +1,20 @@
-import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
-import { PanelDataPaneNext } from '../PanelDataPaneNext';
+import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import {
-  PendingExpression,
-  PendingSavedQuery,
-  PendingTransformation,
+  type PendingExpression,
+  type PendingSavedQuery,
+  type PendingTransformation,
   QueryEditorProvider,
-  SelectionModifiers,
+  type SelectionModifiers,
 } from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { useMultiSelection } from './hooks/useMultiSelection';
@@ -25,7 +25,7 @@ import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
 import { useTransformations } from './hooks/useTransformations';
-import { AlertRule, Transformation } from './types';
+import { type AlertRule, type Transformation } from './types';
 import { getEditorType, getTransformId } from './utils';
 
 /**
@@ -92,6 +92,8 @@ export function QueryEditorContextWrapper({
     toggleQuerySelection: toggleQuerySelectionRaw,
     toggleTransformationSelection: toggleTransformationSelectionRaw,
     clearSelection: clearSelectionRaw,
+    removeQueryFromSelection,
+    removeTransformationFromSelection,
   } = useMultiSelection({
     queries: queryRunnerState?.queries ?? [],
     transformations,
@@ -137,10 +139,22 @@ export function QueryEditorContextWrapper({
     [clearSelectionRaw]
   );
 
+  // Wraps onCardSelectionChange with a UI reset for use in finalizePendingExpression /
+  // finalizePendingTransformation — those paths bypass clearSideEffects entirely, so
+  // resetUIToggles would otherwise never be called and the datasource help panel would
+  // remain visible after the picker resolves.
+  const onFinalizeCardSelection = useCallback(
+    (queryRefId: string | null, transformationId: string | null) => {
+      onCardSelectionChange(queryRefId, transformationId);
+      resetUIToggles();
+    },
+    [onCardSelectionChange, resetUIToggles]
+  );
+
   const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
     usePendingExpression({
       addQuery: dataPane.addQuery,
-      onCardSelectionChange,
+      onCardSelectionChange: onFinalizeCardSelection,
     });
 
   const findTransformationIndex = useCallback(
@@ -165,7 +179,7 @@ export function QueryEditorContextWrapper({
   const { pendingTransformation, setPendingTransformation, finalizePendingTransformation, clearPendingTransformation } =
     usePendingTransformation({
       addTransformation: addTransformationAction,
-      onCardSelectionChange,
+      onCardSelectionChange: onFinalizeCardSelection,
     });
 
   const clearSideEffects = useCallback(() => {
@@ -341,7 +355,10 @@ export function QueryEditorContextWrapper({
         trackQueryRename(originalRefId, updatedQuery.refId);
       },
       addQuery: dataPane.addQuery,
-      deleteQuery: dataPane.deleteQuery,
+      deleteQuery: (refId: string) => {
+        dataPane.deleteQuery(refId);
+        removeQueryFromSelection(refId);
+      },
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
@@ -355,6 +372,7 @@ export function QueryEditorContextWrapper({
         if (index !== -1) {
           dataPane.deleteTransformation(index);
         }
+        removeTransformationFromSelection(transformId);
       },
       toggleTransformationDisabled: (transformId: string) => {
         const index = findTransformationIndex(transformId);
@@ -365,7 +383,15 @@ export function QueryEditorContextWrapper({
       updateTransformation: dataPane.updateTransformation,
       reorderTransformations: dataPane.reorderTransformations,
     }),
-    [onSwitchToClassic, dataPane, findTransformationIndex, addTransformationAction, trackQueryRename]
+    [
+      onSwitchToClassic,
+      dataPane,
+      findTransformationIndex,
+      addTransformationAction,
+      trackQueryRename,
+      removeQueryFromSelection,
+      removeTransformationFromSelection,
+    ]
   );
 
   return (

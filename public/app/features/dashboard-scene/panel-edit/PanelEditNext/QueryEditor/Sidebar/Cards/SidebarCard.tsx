@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { ActionItem, Actions } from '../../../Actions';
+import { type ActionItem, Actions } from '../../../Actions';
 import {
   QUERY_EDITOR_COLORS,
   QUERY_EDITOR_TYPE_CONFIG,

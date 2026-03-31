@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
+import { DashboardCursorSync, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
   EventBusPlugin,
   TooltipDisplayMode,
   TooltipPlugin2,
-  XAxisInteractionAreaPlugin,
   usePanelContext,
   useTheme2,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
@@ -19,14 +19,14 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
-import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { usePagination } from './hooks';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { containerStyles } from './styles';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
@@ -152,10 +152,10 @@ export const StateTimelinePanel = ({
                 />
               )}
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
-                <AnnotationsPlugin2
+                <AnnotationsPlugin
                   replaceVariables={replaceVariables}
-                  multiLane={options.annotations?.multiLane}
-                  annotations={data.annotations ?? []}
+                  options={options.annotations}
+                  annotations={data.annotations}
                   config={builder}
                   timeZone={timeZone}
                   newRange={newAnnotationRange}

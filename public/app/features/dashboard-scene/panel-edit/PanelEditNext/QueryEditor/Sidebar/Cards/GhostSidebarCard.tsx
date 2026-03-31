@@ -1,5 +1,5 @@
-import { ActionItem } from '../../../Actions';
-import { QueryEditorType } from '../../../constants';
+import { type ActionItem } from '../../../Actions';
+import { type QueryEditorType } from '../../../constants';
 
 import { SidebarCard } from './SidebarCard';
 

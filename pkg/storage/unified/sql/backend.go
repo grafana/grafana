@@ -12,10 +12,9 @@ import (
 	"sync"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
+	"github.com/dgraph-io/badger/v4"
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,8 +27,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -47,12 +48,13 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
-const defaultPrunerHistoryLimit = 20
+const defaultGarbageCollectionBatchWait = 1 * time.Second
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
+	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
 }
@@ -67,7 +69,7 @@ func ProvideStorageBackend(
 
 type Backend interface {
 	resource.StorageBackend
-	resourcepb.DiagnosticsServer
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
@@ -111,12 +113,15 @@ func NewStorageBackend(
 				Enabled:          cfg.EnableGarbageCollection,
 				Interval:         cfg.GarbageCollectionInterval,
 				BatchSize:        cfg.GarbageCollectionBatchSize,
+				BatchWait:        cfg.GarbageCollectionBatchWait,
 				MaxAge:           cfg.GarbageCollectionMaxAge,
 				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			DisableStorageServices:  disableStorageServices,
+			DisablePruner:           cfg.DisablePruner,
+			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		})
 	}
 
@@ -144,17 +149,21 @@ func NewStorageBackend(
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
 		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
 		GarbageCollection: resource.GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,
 			Interval:         cfg.GarbageCollectionInterval,
 			BatchSize:        cfg.GarbageCollectionBatchSize,
+			BatchWait:        cfg.GarbageCollectionBatchWait,
 			MaxAge:           cfg.GarbageCollectionMaxAge,
 			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 		},
-		EventRetentionPeriod: cfg.EventRetentionPeriod,
-		EventPruningInterval: cfg.EventPruningInterval,
-		SearchLookback:       cfg.SearchLookback,
+		EventRetentionPeriod:    cfg.EventRetentionPeriod,
+		EventPruningInterval:    cfg.EventPruningInterval,
+		SearchLookback:          cfg.SearchLookback,
+		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {
@@ -184,8 +193,9 @@ func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
 
 	kvStore := resource.NewBadgerKV(db)
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore: kvStore,
-		Log:     log.New("storage-backend"),
+		KvStore:                 kvStore,
+		Log:                     log.New("storage-backend"),
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	})
 }
 
@@ -199,6 +209,9 @@ type BackendOptions struct {
 	GarbageCollection GarbageCollectionConfig
 
 	DisableStorageServices bool
+	DisablePruner          bool
+
+	DashboardVersionsToKeep int
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	MigrationParquetBuffer bool
@@ -222,9 +235,15 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
+	garbageCollection := opts.GarbageCollection
+	if garbageCollection.BatchWait <= 0 {
+		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
+	}
 	backend := &backend{
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
+		disablePruner:           opts.DisablePruner,
+		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
@@ -237,7 +256,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		garbageCollection:       opts.GarbageCollection,
+		garbageCollection:       garbageCollection,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -287,7 +306,9 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
-	historyPruner resource.Pruner
+	disablePruner           bool
+	dashboardVersionsToKeep int
+	historyPruner           resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
 
@@ -369,6 +390,12 @@ func (b *backend) initLocked(ctx context.Context) error {
 }
 
 func (b *backend) initPruner(ctx context.Context) error {
+	if b.disablePruner {
+		b.log.Debug("pruner disabled, using noop pruner")
+		b.historyPruner = &resource.NoopPruner{}
+		return nil
+	}
+
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
@@ -380,7 +407,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
-					HistoryLimit: defaultPrunerHistoryLimit,
+					HistoryLimit: int64(resource.LookupPrunerHistoryLimit(key.Group, key.Resource, b.dashboardVersionsToKeep)),
 					Key: &resourcepb.ResourceKey{
 						Namespace: key.Namespace,
 						Group:     key.Group,
@@ -490,7 +517,7 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 				select {
 				case <-b.done:
 					return deletedByKey
-				case <-time.After(time.Second):
+				case <-time.After(b.garbageCollection.BatchWait):
 				}
 			}
 			if totalDeleted > 0 {
@@ -568,6 +595,7 @@ func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckReques
 	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
+// Stop cancels the background context to stop the pruner, GC and other goroutines
 func (b *backend) Stop(_ context.Context) error {
 	b.cancel()
 	return nil

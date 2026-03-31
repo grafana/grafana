@@ -74,7 +74,7 @@ For example:
 ## Override configuration with environment variables
 
 Don't use environment variables to _add_ new configuration settings.
-Instead, use environmental variables to _override_ existing options.
+Instead, use environment variables to _override_ existing options.
 
 To override an option:
 
@@ -100,7 +100,7 @@ client_secret = 0ldS3cretKey
 rendering_ignore_https_errors = true
 
 [feature_toggles]
-enable = newNavigation
+newNavigation = true
 ```
 
 You can override variables on Linux machines with:
@@ -110,7 +110,7 @@ export GF_DEFAULT_INSTANCE_NAME=my-instance
 export GF_SECURITY_ADMIN_USER=owner
 export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
-export GF_FEATURE_TOGGLES_ENABLE=newNavigation
+export GF_FEATURE_TOGGLES_newNavigation=true
 ```
 
 ## Variable expansion
@@ -294,8 +294,7 @@ executed with working directory set to the installation path.
 
 Set this option to `true` to enable HTTP compression, this can improve
 transfer speed and bandwidth utilization. It is recommended that most
-users set it to `true`. By default it is set to `false` for compatibility
-reasons.
+users leave it set at the default of `true`, however compression might increase CPU usage on constrained environments or cause issues with poorly-configured reverse proxies.
 
 #### `cert_file`
 
@@ -2756,6 +2755,36 @@ ha_engine_password: $__file{/your/redis/password/secret/mount}
 
 <hr>
 
+### `[provisioning]`
+
+#### `allowed_targets`
+
+Comma-separated list of targets that a repository can control. `folder` by default. Use `folder` if you want the repository to only control a folder within the Grafana instance. Use `instance` if you want the repository to control the whole Grafana instance.
+
+#### `allow_image_rendering`
+
+Whether image rendering is allowed for dashboard previews. Requires the image rendering service to be configured. Default is `true`.
+
+#### `min_sync_interval`
+
+The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
+
+#### `repository_types`
+
+List of enabled repository types, separated by `|`. When empty, defaults are applied by each subsystem.
+
+Supported types: `local`, `git`, `github`. Grafana Enterprise additionally supports `bitbucket` and `gitlab`.
+
+#### `max_repositories`
+
+Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimited repositories.
+
+#### `max_resources_per_repository`
+
+Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
+
+<hr>
+
 ### `[plugin.plugin_id]`
 
 This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
@@ -2891,15 +2920,19 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 ### `[feature_toggles]`
 
-#### `enable`
-
-Keys of features to enable, separated by space.
-
 #### `FEATURE_NAME = <value>`
 
 Use a key-value pair to set feature flag values explicitly, overriding any default values. A few different types are supported, following the OpenFeature specification. See the defaults.ini file for more details.
 
 For example, to disable an on-by-default feature toggle named `exploreMixedDatasource`, specify `exploreMixedDatasource = false`.
+
+#### `enable`
+
+{{< admonition type="note" >}}
+This option is deprecated and will be removed in a future major release. Use individual toggle entries instead.
+{{< /admonition >}}
+
+Keys of features to enable, separated by spaces.
 
 <hr>
 

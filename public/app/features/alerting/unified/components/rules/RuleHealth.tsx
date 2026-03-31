@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { Rule } from 'app/types/unified-alerting';
+import { type Rule } from 'app/types/unified-alerting';
 
 import { isErrorHealth } from '../rule-viewer/RuleViewer';
 

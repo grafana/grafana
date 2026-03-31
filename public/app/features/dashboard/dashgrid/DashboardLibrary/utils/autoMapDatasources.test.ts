@@ -1,6 +1,6 @@
-import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
-import { Input } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
-import { DashboardInput, DataSourceInput, InputType } from 'app/features/manage-dashboards/types';
+import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type Input } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
+import { type DashboardInput, type DataSourceInput, InputType } from 'app/features/manage-dashboards/types';
 
 import {
   isDataSourceInput,

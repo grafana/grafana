@@ -1,12 +1,12 @@
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { type LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { resetGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { resolveLinks, searchForTags, DashboardLinksDashboard } from './DashboardLinksDashboard';

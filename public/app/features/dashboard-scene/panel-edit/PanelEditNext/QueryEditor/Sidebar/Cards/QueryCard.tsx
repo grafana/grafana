@@ -1,9 +1,9 @@
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
-import { ActionItem } from '../../../Actions';
+import { type ActionItem } from '../../../Actions';
 import { PENDING_CARD_ID, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../../QueryEditorContext';
 import { getEditorType } from '../../utils';

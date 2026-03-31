@@ -1,9 +1,9 @@
-import { ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { DataFrameView, SelectableValue } from '@grafana/data';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { PermissionLevel } from 'app/types/acl';
+import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DataFrameView, type SelectableValue } from '@grafana/data';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { type PermissionLevel } from 'app/types/acl';
 
-import { ManagerKind } from '../../apiserver/types';
+import { type ManagerKind } from '../../apiserver/types';
 
 export interface SortOption {
   description: string;
@@ -38,10 +38,12 @@ export interface SearchQuery {
   withAllowedActions?: boolean;
   accessInfo?: boolean;
   limit?: number;
+  // Used for pagination. See also offset param.
   from?: number;
   starred?: boolean;
   permission?: PermissionLevel;
   deleted?: boolean;
+  // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
   offset?: number;
 }
 

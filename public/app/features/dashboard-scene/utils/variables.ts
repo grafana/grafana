@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, TypedVariableModel } from '@grafana/data';
+import { type AdHocVariableFilter, type TypedVariableModel } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -8,14 +8,14 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneVariable,
+  type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -82,6 +82,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
+            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -178,10 +179,13 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       useQueriesAsFilterForOptions: true,
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: 'combobox',
-      collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
       ),
+      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+        ? (variable.enableGroupBy ?? false)
+        : false,
     });
   }
   // Custom variable

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
+import { type FormEvent, useState, type KeyboardEvent, useRef, useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Input, IconButton, FieldValidationMessage, useStyles2, Stack } from '@grafana/ui';
 

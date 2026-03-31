@@ -1,7 +1,6 @@
 package jaeger
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -39,7 +38,7 @@ func TestJaegerClient_Services(t *testing.T) {
 			mockStatus:     "Internal Server Error",
 			expectedResult: []string{},
 			expectError:    true,
-			expectedError:  errors.New("Internal Server Error"),
+			expectedError:  backend.ErrorWithSource{},
 		},
 		{
 			name:           "Invalid JSON response",
@@ -48,7 +47,7 @@ func TestJaegerClient_Services(t *testing.T) {
 			mockStatus:     "OK",
 			expectedResult: []string{},
 			expectError:    true,
-			expectedError:  &json.SyntaxError{},
+			expectedError:  backend.ErrorWithSource{},
 		},
 	}
 
@@ -110,7 +109,7 @@ func TestJaegerClient_Operations(t *testing.T) {
 			mockStatus:     "Internal Server Error",
 			expectedResult: []string{},
 			expectError:    true,
-			expectedError:  errors.New("Internal Server Error"),
+			expectedError:  backend.ErrorWithSource{},
 		},
 		{
 			name:           "Invalid JSON response",
@@ -120,7 +119,7 @@ func TestJaegerClient_Operations(t *testing.T) {
 			mockStatus:     "OK",
 			expectedResult: []string{},
 			expectError:    true,
-			expectedError:  &json.SyntaxError{},
+			expectedError:  backend.ErrorWithSource{},
 		},
 		{
 			name:           "Service with special characters",
@@ -344,7 +343,7 @@ func TestJaegerClient_Trace(t *testing.T) {
 			mockStatus:     "OK",
 			expectedURL:    "/api/traces/abc123?end=2000&start=1000",
 			expectError:    true,
-			expectedError:  &json.SyntaxError{},
+			expectedError:  backend.ErrorWithSource{},
 		},
 		{
 			name:           "Empty trace ID",
@@ -358,6 +357,19 @@ func TestJaegerClient_Trace(t *testing.T) {
 			expectedURL:    "",
 			expectError:    true,
 			expectedError:  backend.DownstreamError(errors.New("traceID is empty")),
+		},
+		{
+			name:           "Empty data array (trace not found or no results)",
+			traceId:        "abc123",
+			jsonData:       `{"traceIdTimeParams": {"enabled": false}}`,
+			start:          0,
+			end:            0,
+			mockResponse:   `{"data":[],"errors":null,"limit":20,"offset":0,"total":0}`,
+			mockStatusCode: http.StatusOK,
+			mockStatus:     "OK",
+			expectedURL:    "/api/traces/abc123",
+			expectError:    false,
+			expectedError:  nil,
 		},
 	}
 
@@ -448,7 +460,7 @@ func TestJaegerClient_Dependencies(t *testing.T) {
 			mockStatus:     "OK",
 			expectedURL:    "/api/dependencies?endTs=2000&lookback=1000",
 			expectError:    true,
-			expectedError:  &json.SyntaxError{},
+			expectedError:  backend.ErrorWithSource{},
 		},
 		{
 			name:           "Empty dependencies response and no errors",

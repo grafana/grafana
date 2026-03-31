@@ -1,10 +1,10 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType, Field } from '../../types/dataFrame';
-import { DataTransformerConfig, SpecialValue } from '../../types/transformations';
+import { FieldType, type Field } from '../../types/dataFrame';
+import { type DataTransformerConfig, SpecialValue } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
-import { GroupingToMatrixTransformerOptions, groupingToMatrixTransformer } from './groupingToMatrix';
+import { type GroupingToMatrixTransformerOptions, groupingToMatrixTransformer } from './groupingToMatrix';
 import { DataTransformerID } from './ids';
 
 describe('Grouping to Matrix', () => {

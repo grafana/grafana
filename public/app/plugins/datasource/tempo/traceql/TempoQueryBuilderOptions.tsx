@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { useToggle } from 'react-use';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { AutoSizeInput, RadioButtonGroup, TextLink, useStyles2 } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
 import { SearchTableType, MetricsQueryType } from '../dataquery.gen';
 import { DEFAULT_LIMIT, DEFAULT_SPSS } from '../datasource';
-import { TempoQuery } from '../types';
+import { type TempoQuery } from '../types';
 
 interface Props {
   onChange: (value: TempoQuery) => void;

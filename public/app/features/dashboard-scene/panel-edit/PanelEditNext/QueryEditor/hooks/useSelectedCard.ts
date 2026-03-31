@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
-import { AlertRule, EMPTY_ALERT, Transformation } from '../types';
+import { type AlertRule, EMPTY_ALERT, type Transformation } from '../types';
 
 /**
  * Resolves the primary selected query, transformation, and alert from the current selection state.
@@ -75,5 +75,5 @@ export function useSelectedCard(
     return null;
   }, [alerts, selectedAlertId]);
 
-  return { selectedQuery, selectedTransformation, selectedAlert };
+  return { selectedQuery, selectedTransformation, selectedAlert, primaryQueryRefId };
 }

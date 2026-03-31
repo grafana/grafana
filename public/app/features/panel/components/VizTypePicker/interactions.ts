@@ -27,6 +27,10 @@ export const VizSuggestionsInteractions = {
     reportVizSuggestionsInteraction('suggestion_applied', properties);
   },
 
+  presetApplied: (properties: { pluginId: string; presetName: string; presetIndex: number }) => {
+    reportVizSuggestionsInteraction('preset_applied', properties);
+  },
+
   panelSaved: ({ pluginId, isNewPanel, suggestionName, suggestionIndex }: PanelSuggestionInfo) => {
     reportVizSuggestionsInteraction('panel_saved', { pluginId, isNewPanel, suggestionName, suggestionIndex });
   },

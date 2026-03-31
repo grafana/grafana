@@ -21,6 +21,10 @@ export interface UseMultiSelectionResult {
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
   toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
   clearSelection: () => void;
+  /** Removes a query from selection (e.g. when deleted). */
+  removeQueryFromSelection: (refId: string) => void;
+  /** Removes a transformation from selection (e.g. when deleted). */
+  removeTransformationFromSelection: (transformId: string) => void;
 }
 
 /**
@@ -166,6 +170,14 @@ export function useMultiSelection({
     onClearSideEffectsRef.current?.();
   }, []);
 
+  const removeQueryFromSelection = useCallback((refId: string) => {
+    setSelectedQueryRefIds((current) => current.filter((id) => id !== refId));
+  }, []);
+
+  const removeTransformationFromSelection = useCallback((transformId: string) => {
+    setSelectedTransformationIds((current) => current.filter((id) => id !== transformId));
+  }, []);
+
   return {
     selectedQueryRefIds,
     selectedTransformationIds,
@@ -174,5 +186,7 @@ export function useMultiSelection({
     toggleQuerySelection,
     toggleTransformationSelection,
     clearSelection,
+    removeQueryFromSelection,
+    removeTransformationFromSelection,
   };
 }

@@ -121,12 +121,12 @@ const { data, isLoading, error } = useGetAlertRulesQuery(params);
 
 **IMPORTANT**: When consuming an API endpoint, always prefer the auto-generated clients from `@grafana/api-clients` over creating custom RTK Query endpoints manually. Do not create new RTKQ endpoints by hand — use the generated ones instead.
 
-The auto-generated clients are available under `@grafana/api-clients/rtkq/<api-group>/<version>` (e.g., `@grafana/api-clients/rtkq/notifications.alerting/v0alpha1`).
+The auto-generated clients are available under `@grafana/api-clients/rtkq/<api-group>/<version>` (e.g., `@grafana/api-clients/rtkq/notifications.alerting/v1beta1`).
 
 **When the auto-generated client works as-is** — just import and use it directly:
 
 ```typescript
-import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 const { data } = generatedAPI.useListReceiversQuery(params);
 ```
@@ -134,7 +134,7 @@ const { data } = generatedAPI.useListReceiversQuery(params);
 **When the auto-generated client is incomplete** (e.g., missing request body types), use `enhanceEndpoints` to override the endpoint while still using the generated client as base. This avoids creating a fully manual RTKQ endpoint:
 
 ```typescript
-import { CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 // Define the missing body type
 interface TestReceiverIntegrationBody {
@@ -245,8 +245,8 @@ Located in `testSetup/datasources.ts` for data source mocking patterns
 
 For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
 
-Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v0alpha1/mocks/fakes`
-MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v0alpha1/mocks/handlers`
+Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/fakes`
+MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/handlers`
 
 And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
 
@@ -320,6 +320,21 @@ if (config.featureToggles.alertingTriage) {
 ```
 
 A common configuration setting would be `unifiedAlertingEnabled` which allows a user to configure Grafana without any alerting UI or backend enabled at all.
+
+### Date/Time Formatting
+
+Use `dateTimeFormat()` / `dateTimeFormatTimeAgo()` from `@grafana/data` instead of `dateTime().format()` — they respect the user's configured timezone.
+
+```typescript
+// Good - respects user timezone
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+dateTimeFormat(timestamp);
+dateTimeFormatTimeAgo(timestamp);
+
+// Bad - ignores user timezone setting
+import { dateTime } from '@grafana/data';
+dateTime(timestamp).format('YYYY-MM-DD HH:mm:ss');
+```
 
 ### Data Source Abstractions
 
@@ -537,6 +552,16 @@ gh pr list --search "fixes #12345"
 gh pr view 67890
 gh pr diff 67890
 ```
+
+## Learning from Corrections
+
+When the user corrects a mistake you made (wrong API, wrong pattern, wrong approach), assess whether the correction represents a recurring pattern worth documenting. If so, propose a concise addition to this AGENTS.md — but do **NOT** apply it without explicit approval.
+
+Skip proposing an update if the correction is:
+
+- A one-off or highly context-specific fix
+- Already documented in this file
+- A personal preference rather than a project convention
 
 ## Getting Help
 

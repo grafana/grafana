@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -502,6 +502,7 @@ func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext
 }
 
 func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func (m mockClientConfigProvider) IsReady() bool                                            { return true }
 
 // for now, test only the general folder
 func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {

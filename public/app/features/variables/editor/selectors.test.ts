@@ -1,11 +1,11 @@
-import { DataSourceApi } from '@grafana/data';
+import { type DataSourceApi } from '@grafana/data';
 
 import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
 import {
-  AdHocVariableEditorState,
-  DataSourceVariableEditorState,
+  type AdHocVariableEditorState,
+  type DataSourceVariableEditorState,
   initialVariableEditorState,
-  QueryVariableEditorState,
+  type QueryVariableEditorState,
 } from './reducer';
 import {
   getAdhocVariableEditorState,
