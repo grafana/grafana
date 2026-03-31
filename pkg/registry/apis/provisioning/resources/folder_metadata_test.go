@@ -842,7 +842,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 		rw.On("Read", mock.Anything, "myfolder/_folder.json", "new-branch").
 			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-branch-hash"}, nil).Once()
 
-		submitted := NewFolderManifest(existingUID, "New Title")
+		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
 		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "rename folder", submitted)
 
 		require.NoError(t, err)
@@ -859,7 +859,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
 			Return(nil, repository.ErrFileNotFound).Once()
 
-		submitted := NewFolderManifest("any-uid", "Title")
+		submitted := NewFolderManifest("any-uid", "Title", FolderKind)
 		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "", submitted)
 
 		require.Error(t, err)
