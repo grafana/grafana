@@ -13,6 +13,7 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -93,13 +94,13 @@ func (cl *connectionClientImpl) GetConnectionByUID(ctx context.Context, orgID in
 // datasource service just to get the datasource type, then forwarding the request
 // to the new APIs.
 type legacyConnectionClientImpl struct {
-	datasourceService datasources.DataSourceService
+	datasourceService datasourceservice.DataSourceRetriever
 }
 
 var _ ConnectionClient = (*legacyConnectionClientImpl)(nil)
 
 // NewLegacyConnectionClient creates a new ConnectionClient that relies on the legacy datasource service.
-func NewLegacyConnectionClient(datasourceService datasources.DataSourceService) ConnectionClient {
+func NewLegacyConnectionClient(datasourceService datasourceservice.DataSourceRetriever) ConnectionClient {
 	return &legacyConnectionClientImpl{
 		datasourceService: datasourceService,
 	}
