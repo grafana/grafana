@@ -7,12 +7,14 @@ import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
 import { FilterInput, Icon, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { COMBINED_FILTER_LABEL_KEYS } from '../../constants';
 import { countInstances } from '../SummaryStats';
 import { summaryInstanceCountQuery } from '../queries';
-import { useLabelsBreakdown } from '../useLabelsBreakdown';
+import { type LabelStats, useLabelsBreakdown } from '../useLabelsBreakdown';
 import { addOrReplaceFilter, removeFilter, useFilterValue, useQueryFilter } from '../utils';
 
 import { AllLabelsContent } from './LabelsContent';
+import { SeverityFilter } from './SeverityFilter';
 
 export const LABELS_COLUMN_WIDTH = 250;
 const COLLAPSED_WIDTH = 36;
@@ -61,6 +63,24 @@ export function LabelsColumn() {
               <StateFilter />
             </div>
             <div className={styles.divider} />
+            <div className={styles.section}>
+              <Text weight="medium" variant="bodySmall" color="secondary">
+                <Trans i18nKey="alerting.triage.severity-filter-title">Severity</Trans>
+              </Text>
+              <SeverityFilter labels={labels} />
+            </div>
+            <div className={styles.divider} />
+            {SIDEBAR_FILTERS.map(({ key, label }) => (
+              <div key={key}>
+                <div className={styles.section}>
+                  <Text weight="medium" variant="bodySmall" color="secondary">
+                    {label}
+                  </Text>
+                  <SidebarFilterGroup labels={labels} filterKey={key} />
+                </div>
+                <div className={styles.divider} />
+              </div>
+            ))}
             <div className={styles.labelsSectionHeader}>
               <Text weight="medium" variant="bodySmall" color="secondary">
                 <Trans i18nKey="alerting.triage.labels-column-title">Labels</Trans>
@@ -119,6 +139,84 @@ function StateFilter() {
       </button>
     </Stack>
   );
+}
+
+type SidebarFilterKey = 'service' | 'team' | 'namespace';
+const SIDEBAR_FILTERS: Array<{ key: SidebarFilterKey; label: string }> = [
+  { key: 'service', label: 'Service' },
+  { key: 'team', label: 'Team' },
+  { key: 'namespace', label: 'Namespace' },
+];
+const sidebarCollator = new Intl.Collator();
+const MAX_VISIBLE_VALUES = 8;
+
+function SidebarFilterGroup({ labels, filterKey }: { labels: LabelStats[]; filterKey: SidebarFilterKey }) {
+  const styles = useStyles2(getStyles);
+  const sceneContext = useSceneContext();
+  const activeValue = useFilterValue(filterKey);
+  const values = getSidebarFilterValues(labels, filterKey);
+
+  if (values.length === 0) {
+    return null;
+  }
+
+  return (
+    <Stack direction="column" gap={0.25}>
+      {values.slice(0, MAX_VISIBLE_VALUES).map((value) => {
+        const isActive = activeValue === value.value;
+        return (
+          <button
+            key={value.value}
+            className={cx(styles.stateButton, isActive && styles.stateButtonActive)}
+            onClick={() => {
+              if (isActive) {
+                removeFilter(sceneContext, filterKey);
+              } else {
+                addOrReplaceFilter(sceneContext, filterKey, '=', value.value);
+              }
+            }}
+          >
+            <span className={styles.stateLabel}>{value.value}</span>
+            <span className={styles.stateCount}>{value.firing + value.pending}</span>
+          </button>
+        );
+      })}
+    </Stack>
+  );
+}
+
+function getSidebarFilterValues(labels: LabelStats[], key: SidebarFilterKey) {
+  const keys = key === 'service' || key === 'namespace' ? COMBINED_FILTER_LABEL_KEYS[key] : ([key] as const);
+  const merged = new Map<string, { value: string; firing: number; pending: number; total: number }>();
+
+  for (const labelKey of keys) {
+    const stat = labels.find((label) => label.key === labelKey);
+    if (!stat) {
+      continue;
+    }
+    for (const value of stat.values) {
+      const existing = merged.get(value.value);
+      if (!existing) {
+        merged.set(value.value, {
+          value: value.value,
+          firing: value.firing,
+          pending: value.pending,
+          total: value.firing + value.pending,
+        });
+      } else {
+        existing.firing += value.firing;
+        existing.pending += value.pending;
+        existing.total += value.firing + value.pending;
+      }
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => {
+    if (b.total !== a.total) {
+      return b.total - a.total;
+    }
+    return sidebarCollator.compare(a.value, b.value);
+  });
 }
 
 /**

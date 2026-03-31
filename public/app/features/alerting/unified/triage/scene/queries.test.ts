@@ -53,4 +53,17 @@ describe('triage queries service combined filter', () => {
     expect(query).toContain('namespace_extracted="payments"');
     expect(query).toContain(' or ');
   });
+
+  it('expands severity key across severity-adjacent label keys', () => {
+    const query = summaryChartQuery('severity=~"(?i)critical|crit|fatal"').expr;
+
+    expect(query).toContain('severity=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('priority=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('level=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('loglevel=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('logLevel=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('lvl=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('detected_level=~"(?i)critical|crit|fatal"');
+    expect(query).toContain(' or ');
+  });
 });
