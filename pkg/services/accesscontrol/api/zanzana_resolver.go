@@ -247,19 +247,32 @@ func (r *zanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 
 	// If All is true, the user has access to all resources of this type.
 	if resp.All {
-		appendIfMatches(ac.Permission{
-			Action: action,
-			Scope:  allScopeFromAction(action),
-		})
-		// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
-		// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
 		if isDashboardRBACAction(action) {
+			// Legacy RBAC sometimes stores scope "*" for org-wide dashboard access. Only add it
+			// when there is no scope filter: with a non-empty filter, "*" would match queries where
+			// legacy rows only had dashboards:* / folders:* (see PermissionMatchesSearchOptions).
+			if scope == "" {
+				appendIfMatches(ac.Permission{
+					Action: action,
+					Scope:  "*",
+				})
+			}
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  allScopeFromAction(action),
+			})
+			// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
+			// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
 			appendIfMatches(ac.Permission{
 				Action: action,
 				Scope:  ac.Scope("folders", "*"),
 			})
+		} else {
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  allScopeFromAction(action),
+			})
 		}
-		return permissions, nil
 	}
 
 	// Convert Items to legacy scopes (e.g. dashboards:uid:<name>).
