@@ -2428,20 +2428,6 @@
     },
     {
       "metadata": {
-        "name": "pieChartGradientColorScheme",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-03-30T00:00:00Z"
-      },
-      "spec": {
-        "description": "Enable gradient color scheme option for the pie chart panel",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "improvedExternalSessionHandling",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-09-17T10:54:39Z"
@@ -3922,6 +3908,20 @@
     },
     {
       "metadata": {
+        "name": "pieChartGradientColorScheme",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2026-03-30T00:00:00Z"
+      },
+      "spec": {
+        "description": "Enable gradient color scheme option for the pie chart panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "playlistsRBAC",
         "resourceVersion": "1773926203085",
         "creationTimestamp": "2026-03-19T13:16:43Z"
@@ -5352,3 +5352,4 @@
     }
   ]
 }
+
