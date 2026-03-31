@@ -159,7 +159,6 @@ const TeamList = () => {
           }
           return value;
         },
-        sortType: 'number',
       },
       ...(displayRolePicker
         ? [
