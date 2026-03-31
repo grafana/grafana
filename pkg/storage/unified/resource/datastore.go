@@ -582,10 +582,9 @@ type batchSaveItem struct {
 	Value []byte
 }
 
-// batchSave saves multiple items to the DataSection.
-// For SqlKV it uses BulkInsertData (multi-row INSERT) for maximum throughput.
+// batchSave creates multiple new items in the DataSection.
 // The caller must ensure keys are new (e.g. by deleting the collection first).
-// For other KV implementations it falls back to the general Batch method.
+// Uses BatchOpCreate so the fast path (multi-row INSERT) is used for DataSection.
 func (d *dataStore) batchSave(ctx context.Context, items []batchSaveItem) error {
 	if len(items) == 0 {
 		return nil
@@ -598,7 +597,7 @@ func (d *dataStore) batchSave(ctx context.Context, items []batchSaveItem) error 
 			key = item.Key.StringWithGUID()
 		}
 		ops[i] = kvpkg.BatchOp{
-			Mode:  kvpkg.BatchOpPut,
+			Mode:  kvpkg.BatchOpCreate,
 			Key:   key,
 			Value: item.Value,
 		}

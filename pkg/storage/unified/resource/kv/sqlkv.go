@@ -448,8 +448,9 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		defer tx.Rollback() //nolint:errcheck
 	}
 
-	// Fast path: all-Put on DataSection uses multi-row INSERT.
-	if section == DataSection && allPut(ops) {
+	// Fast path: all-Create on DataSection uses multi-row INSERT.
+	// Keys are guaranteed unique by the caller (collection cleared, keys embed fresh RV).
+	if section == DataSection && allCreate(ops) {
 		if err := k.batchInsertDatastore(ctx, tx, qb, ops); err != nil {
 			return err
 		}
@@ -466,10 +467,10 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	return nil
 }
 
-// allPut returns true if every op is a BatchOpPut.
-func allPut(ops []BatchOp) bool {
+// allCreate returns true if every op is a BatchOpCreate.
+func allCreate(ops []BatchOp) bool {
 	for _, op := range ops {
-		if op.Mode != BatchOpPut {
+		if op.Mode != BatchOpCreate {
 			return false
 		}
 	}
