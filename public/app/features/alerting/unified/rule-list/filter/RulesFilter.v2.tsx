@@ -185,6 +185,7 @@ function SearchQueryHelp() {
           title={t('alerting.search-query-help.title-contact-point', 'Contact point')}
           expr="contactPoint:slack"
         />
+        <HelpRow title={t('alerting.search-query-help.title-policy', 'Policy')} expr="policy:team-a-policy" />
       </div>
     </div>
   );

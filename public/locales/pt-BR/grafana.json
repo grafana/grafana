@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Não é possível exibir a visualização da consulta. Algumas das fontes de dados usadas nas consultas não estão disponíveis.",
       "preview-alerts": "Pré-visualizar alertas",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Limpar filtros",
       "configured-alert-rules": "As fontes de dados que contêm regras de alerta configuradas são fontes de dados Mimir ou Loki, nas quais as regras de alerta são armazenadas e avaliadas na própria fonte de dados.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtra as regras de alerta que são encaminhadas diretamente para o ponto de contato selecionado. Não serão exibidas as regras de alerta encaminhadas para políticas de notificação.",
       "contact-point-tooltip-title": "Ajuda do filtro de ponto de contato",
       "dashboard": "Painel de controle",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Selecionar fontes de dados",
       "placeholder-group-search": "Buscar grupo",
       "placeholder-labels": "Selecionar rótulos",
+      "placeholder-policy": "",
       "plugin-rules": "Regras de plug-in",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Gerenciado por fonte de dados",
         "grafana": "Gerenciado pela Grafana"
@@ -3212,6 +3220,7 @@
       "title-group": "Grupo",
       "title-health": "Integridade",
       "title-labels": "Etiquetas",
+      "title-policy": "",
       "title-rule": "Regra",
       "title-state": "Estado",
       "title-type": "Tipo"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Detalhamento de métricas"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

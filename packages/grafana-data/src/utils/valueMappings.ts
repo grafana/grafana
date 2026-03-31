@@ -131,7 +131,6 @@ export enum LegacyMappingType {
 }
 
 /**
- * @alpha
  * Converts the old Angular value mappings to new react style
  */
 export function convertOldAngularValueMappings(panel: any, migratedThresholds?: ThresholdsConfig): ValueMapping[] {
