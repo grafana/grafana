@@ -1905,6 +1905,32 @@ describe('TableNG utils', () => {
       ]);
     });
 
+    it('filters time fields by raw value regardless of display formatting', () => {
+      const rawTimestamp = 1743379200000;
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [rawTimestamp, rawTimestamp + 1000, rawTimestamp + 2000],
+            // display function deliberately returns a non-deterministic/wrong string
+            // to prove that applyFilter uses raw value, not display string
+            display: (_v) => ({ text: 'NONDETERMINISTIC', numeric: NaN }),
+          },
+        ],
+      });
+      const frameToRecords = compileFrameToRecords(frame);
+      const records = frameToRecords(frame);
+      const filtered = applyFilter(
+        records,
+        { time: { filteredSet: new Set([String(rawTimestamp)]), displayName: 'time' } },
+        frame.fields,
+        false
+      );
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0]).toMatchObject({ time: rawTimestamp });
+    });
+
     it('does not mutate the original records', () => {
       const frame = createDataFrame({
         fields: [

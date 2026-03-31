@@ -16,8 +16,10 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
       continue;
     }
     const fieldValue = row[getDisplayName(field)];
-    const value = field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
-    set[value || t('grafana-ui.table.filter.blanks', '(Blanks)')] = value;
+    const rawStr = String(fieldValue);
+    const displayStr = field.display ? formattedValueToString(field.display(fieldValue)) : rawStr;
+    const label = displayStr || t('grafana-ui.table.filter.blanks', '(Blanks)');
+    set[label] = rawStr;
   }
 
   return set;
