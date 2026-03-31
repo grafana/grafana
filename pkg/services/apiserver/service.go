@@ -326,6 +326,10 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
+		return err
+	}
+
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
@@ -462,7 +466,7 @@ func (s *service) start(ctx context.Context) error {
 			if !isDataplaneAggregatorEnabled {
 				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
 				if err != nil {
-					s.log.Error("aggregator runner failed to run", "error", err)
+					s.log.Error("aggregator runner failed to run", "err", err)
 					return err
 				}
 			} else {

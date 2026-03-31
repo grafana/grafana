@@ -1,14 +1,14 @@
 import { useCallback, useMemo } from 'react';
 
 import {
-  RoutingTree,
-  generatedAPI as notificationsAPIv0alpha1,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+  type RoutingTree,
+  generatedAPI as notificationsAPIv1beta1,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
-import { Label } from '../../matchers/types';
+import { type Label } from '../../matchers/types';
 import { USER_DEFINED_TREE_NAME } from '../consts';
-import { Route, RouteWithID } from '../types';
-import { RouteMatchResult, TreeMatch, convertRoutingTreeToRoute, matchInstancesToRoute } from '../utils';
+import { type Route, type RouteWithID } from '../types';
+import { type RouteMatchResult, type TreeMatch, convertRoutingTreeToRoute, matchInstancesToRoute } from '../utils';
 
 export type RouteMatch = {
   route: Route;
@@ -29,7 +29,7 @@ export type InstanceMatchResult = {
 };
 
 interface UseMatchInstancesToRouteTreesReturnType
-  extends ReturnType<typeof notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery> {
+  extends ReturnType<typeof notificationsAPIv1beta1.endpoints.listRoutingTree.useQuery> {
   matchInstancesToRouteTrees: (instances: Label[][]) => InstanceMatchResult[];
 }
 
@@ -45,7 +45,7 @@ interface UseMatchInstancesToRouteTreesReturnType
  *          and returns an array of InstanceMatchResult objects, each containing the matched routes and matching details
  */
 export function useMatchInstancesToRouteTrees(): UseMatchInstancesToRouteTreesReturnType {
-  const { data, ...rest } = notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery(
+  const { data, ...rest } = notificationsAPIv1beta1.endpoints.listRoutingTree.useQuery(
     {},
     {
       refetchOnFocus: true,

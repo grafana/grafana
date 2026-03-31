@@ -1,8 +1,8 @@
 import debounce from 'debounce-promise';
 import {
   createContext,
-  FC,
-  PropsWithChildren,
+  type FC,
+  type PropsWithChildren,
   useCallback,
   useContext,
   useEffect,
@@ -11,16 +11,16 @@ import {
   useState,
 } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
 
 import { METRIC_LABEL, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from '../../../constants';
-import { PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { regexifyLabelValuesQueryString } from '../../parsingUtils';
-import { QueryBuilderLabelFilter } from '../../shared/types';
+import { type QueryBuilderLabelFilter } from '../../shared/types';
 import { formatPrometheusLabelFilters } from '../formatter';
 
 import { generateMetricData } from './helpers';
-import { MetricData, MetricsData } from './types';
+import { type MetricData, type MetricsData } from './types';
 import { fuzzySearch } from './uFuzzy';
 
 export const DEFAULT_RESULTS_PER_PAGE = 25;

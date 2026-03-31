@@ -9,7 +9,7 @@ import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { TimezonesEditor } from './TimezonesEditor';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { graphPanelChangedHandler } from './migrations';
-import { FieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig, type Options } from './panelcfg.gen';
 import { timeseriesPresetsSupplier } from './presets';
 import { timeseriesSuggestionsSupplier } from './suggestions';
 

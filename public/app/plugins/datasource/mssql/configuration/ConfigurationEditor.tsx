@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { SyntheticEvent } from 'react';
+import { type SyntheticEvent } from 'react';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
-  SelectableValue,
+  type SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
@@ -32,9 +32,9 @@ import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import {
   MSSQLAuthenticationType,
   MSSQLEncryptOptions,
-  MssqlOptions,
-  AzureAuthConfigType,
-  MssqlSecureOptions,
+  type MssqlOptions,
+  type AzureAuthConfigType,
+  type MssqlSecureOptions,
 } from '../types';
 
 import { KerberosConfig, KerberosAdvancedSettings, UsernameMessage } from './Kerberos';

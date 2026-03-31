@@ -1,4 +1,4 @@
-import { AppPluginConfig } from '@grafana/data';
+import { type AppPluginConfig } from '@grafana/data';
 import { llm } from '@grafana/llm';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 

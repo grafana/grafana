@@ -36,50 +36,46 @@ func (f *fakeAccessClient) BatchCheck(ctx context.Context, id types.AuthInfo, re
 
 // authorizerScenario captures the per-resource configuration used to drive the shared test logic.
 type authorizerScenario struct {
-	name               string
-	newAuthorizer      func(types.AccessClient) authorizer.Authorizer
-	group              string
-	resource           string
-	resourceName       string
-	specialSubresource string // subresource that triggers the custom check
-	otherSubresource   string // unrelated subresource that should delegate to ResourceAuthorizer
-	deniedReason       string // reason string returned when the custom check denies
-	checkRequestVerb   string // verb expected in the CheckRequest built for the custom check
+	name             string
+	newAuthorizer    func(types.AccessClient) authorizer.Authorizer
+	group            string
+	resource         string
+	resourceName     string
+	subResources     []string // subresources that trigger the custom check
+	deniedReason     string   // reason string returned when the custom check denies
+	checkRequestVerb string   // verb expected in the CheckRequest built for the custom check
 }
 
 var authorizerScenarios = []authorizerScenario{
 	{
-		name:               "team",
-		newAuthorizer:      newTeamAuthorizer,
-		group:              iamv0.TeamResourceInfo.GroupResource().Group,
-		resource:           iamv0.TeamResourceInfo.GroupResource().Resource,
-		resourceName:       "team-abc",
-		specialSubresource: "members",
-		otherSubresource:   "groups",
-		deniedReason:       "requires team getpermissions",
-		checkRequestVerb:   "get_permissions",
+		name:             "team",
+		newAuthorizer:    newTeamAuthorizer,
+		group:            iamv0.TeamResourceInfo.GroupResource().Group,
+		resource:         iamv0.TeamResourceInfo.GroupResource().Resource,
+		resourceName:     "team-abc",
+		subResources:     []string{"members", "groups"},
+		deniedReason:     "requires team getpermissions",
+		checkRequestVerb: "get_permissions",
 	},
 	{
-		name:               "user",
-		newAuthorizer:      newUserAuthorizer,
-		group:              iamv0.UserResourceInfo.GroupResource().Group,
-		resource:           iamv0.UserResourceInfo.GroupResource().Resource,
-		resourceName:       "user-xyz",
-		specialSubresource: "teams",
-		otherSubresource:   "status",
-		deniedReason:       "requires user get",
-		checkRequestVerb:   "get",
+		name:             "user",
+		newAuthorizer:    newUserAuthorizer,
+		group:            iamv0.UserResourceInfo.GroupResource().Group,
+		resource:         iamv0.UserResourceInfo.GroupResource().Resource,
+		resourceName:     "user-xyz",
+		subResources:     []string{"teams", "status"},
+		deniedReason:     "requires user get",
+		checkRequestVerb: "get", // shared tests use verb "get"; update verb tested separately
 	},
 	{
-		name:               "serviceaccount",
-		newAuthorizer:      newServiceAccountAuthorizer,
-		group:              iamv0.ServiceAccountResourceInfo.GroupResource().Group,
-		resource:           iamv0.ServiceAccountResourceInfo.GroupResource().Resource,
-		resourceName:       "sa-abc",
-		specialSubresource: "tokens",
-		otherSubresource:   "status",
-		deniedReason:       "requires serviceaccount get",
-		checkRequestVerb:   "get",
+		name:             "serviceaccount",
+		newAuthorizer:    newServiceAccountAuthorizer,
+		group:            iamv0.ServiceAccountResourceInfo.GroupResource().Group,
+		resource:         iamv0.ServiceAccountResourceInfo.GroupResource().Resource,
+		resourceName:     "sa-abc",
+		subResources:     []string{"tokens"},
+		deniedReason:     "requires serviceaccount get",
+		checkRequestVerb: "get",
 	},
 }
 
@@ -92,40 +88,44 @@ func newTestAuthInfo() types.AuthInfo {
 }
 
 // TestAuthorizerCheckRequest verifies that each authorizer builds the correct
-// CheckRequest when its custom subresource is accessed.
+// CheckRequest when its custom subresources are accessed.
 func TestAuthorizerCheckRequest(t *testing.T) {
 	for _, sc := range authorizerScenarios {
 		t.Run(sc.name, func(t *testing.T) {
-			var capturedReq *types.CheckRequest
-			fakeClient := &fakeAccessClient{
-				checkFunc: func(_ context.Context, _ types.AuthInfo, req types.CheckRequest, _ string) (types.CheckResponse, error) {
-					capturedReq = &req
-					return types.CheckResponse{Allowed: true}, nil
-				},
+			for _, sub := range sc.subResources {
+				t.Run(sub, func(t *testing.T) {
+					var capturedReq *types.CheckRequest
+					fakeClient := &fakeAccessClient{
+						checkFunc: func(_ context.Context, _ types.AuthInfo, req types.CheckRequest, _ string) (types.CheckResponse, error) {
+							capturedReq = &req
+							return types.CheckResponse{Allowed: true}, nil
+						},
+					}
+
+					auth := sc.newAuthorizer(fakeClient)
+					ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+					attr := authorizer.AttributesRecord{
+						ResourceRequest: true,
+						APIGroup:        sc.group,
+						Resource:        sc.resource,
+						Subresource:     sub,
+						Name:            sc.resourceName,
+						Verb:            "get",
+						Namespace:       "org-1",
+					}
+
+					_, _, err := auth.Authorize(ctx, attr)
+					require.NoError(t, err)
+					require.NotNil(t, capturedReq)
+
+					assert.Equal(t, sc.checkRequestVerb, capturedReq.Verb)
+					assert.Equal(t, sc.group, capturedReq.Group)
+					assert.Equal(t, sc.resource, capturedReq.Resource)
+					assert.Equal(t, sc.resourceName, capturedReq.Name)
+					assert.Equal(t, "org-1", capturedReq.Namespace)
+				})
 			}
-
-			auth := sc.newAuthorizer(fakeClient)
-			ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
-
-			attr := authorizer.AttributesRecord{
-				ResourceRequest: true,
-				APIGroup:        sc.group,
-				Resource:        sc.resource,
-				Subresource:     sc.specialSubresource,
-				Name:            sc.resourceName,
-				Verb:            "get",
-				Namespace:       "org-1",
-			}
-
-			_, _, err := auth.Authorize(ctx, attr)
-			require.NoError(t, err)
-			require.NotNil(t, capturedReq)
-
-			assert.Equal(t, sc.checkRequestVerb, capturedReq.Verb)
-			assert.Equal(t, sc.group, capturedReq.Group)
-			assert.Equal(t, sc.resource, capturedReq.Resource)
-			assert.Equal(t, sc.resourceName, capturedReq.Name)
-			assert.Equal(t, "org-1", capturedReq.Namespace)
 		})
 	}
 }
@@ -134,7 +134,7 @@ func TestAuthorizerCheckRequest(t *testing.T) {
 func TestAuthorizerDecisionMatrix(t *testing.T) {
 	for _, sc := range authorizerScenarios {
 		t.Run(sc.name, func(t *testing.T) {
-			tests := []struct {
+			type testCase struct {
 				name            string
 				subresource     string
 				resourceRequest bool
@@ -143,20 +143,23 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 				wantReason      string
 				wantErr         bool
 				wantCheckCalled bool
-			}{
-				{
-					name:            sc.specialSubresource + " subresource - allowed",
-					subresource:     sc.specialSubresource,
+			}
+
+			var tests []testCase
+
+			for _, sub := range sc.subResources {
+				tests = append(tests, testCase{
+					name:            sub + " subresource - allowed",
+					subresource:     sub,
 					resourceRequest: true,
 					checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
 						return types.CheckResponse{Allowed: true}, nil
 					},
 					wantDecision:    authorizer.DecisionAllow,
 					wantCheckCalled: true,
-				},
-				{
-					name:            sc.specialSubresource + " subresource - denied",
-					subresource:     sc.specialSubresource,
+				}, testCase{
+					name:            sub + " subresource - denied",
+					subresource:     sub,
 					resourceRequest: true,
 					checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
 						return types.CheckResponse{Allowed: false}, nil
@@ -164,10 +167,9 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 					wantDecision:    authorizer.DecisionDeny,
 					wantReason:      sc.deniedReason,
 					wantCheckCalled: true,
-				},
-				{
-					name:            sc.specialSubresource + " subresource - error",
-					subresource:     sc.specialSubresource,
+				}, testCase{
+					name:            sub + " subresource - error",
+					subresource:     sub,
 					resourceRequest: true,
 					checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
 						return types.CheckResponse{}, errors.New("database error")
@@ -175,33 +177,29 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 					wantDecision:    authorizer.DecisionDeny,
 					wantErr:         true,
 					wantCheckCalled: true,
-				},
-				{
-					name:            "no subresource - delegates to ResourceAuthorizer",
-					subresource:     "",
-					resourceRequest: true,
-					checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
-						return types.CheckResponse{Allowed: true}, nil
-					},
-					wantDecision:    authorizer.DecisionAllow,
-					wantCheckCalled: true,
-				},
-				{
-					name:            "other subresource (" + sc.otherSubresource + ") - delegates to ResourceAuthorizer",
-					subresource:     sc.otherSubresource,
-					resourceRequest: true,
-					checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
-						return types.CheckResponse{Allowed: true}, nil
-					},
-					wantDecision:    authorizer.DecisionAllow,
-					wantCheckCalled: true,
-				},
-				{
-					name:            "non-resource request - no opinion",
-					resourceRequest: false,
-					wantDecision:    authorizer.DecisionNoOpinion,
-				},
+				})
 			}
+
+			tests = append(tests, testCase{
+				name:            "no subresource - delegates to ResourceAuthorizer",
+				subresource:     "",
+				resourceRequest: true,
+				checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
+					return types.CheckResponse{Allowed: true}, nil
+				},
+				wantDecision:    authorizer.DecisionAllow,
+				wantCheckCalled: true,
+			}, testCase{
+				name:            "not specified subresource ( unknown ) - denied",
+				subresource:     "unknown",
+				resourceRequest: true,
+				wantDecision:    authorizer.DecisionDeny,
+				wantErr:         true,
+			}, testCase{
+				name:            "non-resource request - no opinion",
+				resourceRequest: false,
+				wantDecision:    authorizer.DecisionNoOpinion,
+			})
 
 			for _, tt := range tests {
 				t.Run(tt.name, func(t *testing.T) {
@@ -238,6 +236,53 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 					assert.Equal(t, tt.wantCheckCalled, checkCalled, "Check call mismatch")
 				})
 			}
+		})
+	}
+}
+
+// TestUserAuthorizerStatusVerbMapping verifies that the user/status subresource
+// maps request verbs to the correct RBAC check verbs (GET→get, UPDATE→update, PATCH→update).
+func TestUserAuthorizerStatusVerbMapping(t *testing.T) {
+	tests := []struct {
+		name             string
+		requestVerb      string
+		wantCheckVerb    string
+		wantDeniedReason string
+	}{
+		{name: "get maps to get", requestVerb: "get", wantCheckVerb: "get", wantDeniedReason: "requires user get"},
+		{name: "update maps to update", requestVerb: "update", wantCheckVerb: "update", wantDeniedReason: "requires user update"},
+		{name: "patch maps to update", requestVerb: "patch", wantCheckVerb: "update", wantDeniedReason: "requires user update"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedReq *types.CheckRequest
+			fakeClient := &fakeAccessClient{
+				checkFunc: func(_ context.Context, _ types.AuthInfo, req types.CheckRequest, _ string) (types.CheckResponse, error) {
+					capturedReq = &req
+					return types.CheckResponse{Allowed: false}, nil
+				},
+			}
+
+			auth := newUserAuthorizer(fakeClient)
+			ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+			attr := authorizer.AttributesRecord{
+				ResourceRequest: true,
+				APIGroup:        iamv0.UserResourceInfo.GroupResource().Group,
+				Resource:        iamv0.UserResourceInfo.GroupResource().Resource,
+				Subresource:     "status",
+				Name:            "user-xyz",
+				Verb:            tt.requestVerb,
+				Namespace:       "org-1",
+			}
+
+			decision, reason, _ := auth.Authorize(ctx, attr)
+
+			require.NotNil(t, capturedReq)
+			assert.Equal(t, tt.wantCheckVerb, capturedReq.Verb)
+			assert.Equal(t, authorizer.DecisionDeny, decision)
+			assert.Equal(t, tt.wantDeniedReason, reason)
 		})
 	}
 }

@@ -1,4 +1,4 @@
-import { TransformerRegistryItem } from '@grafana/data';
+import { type TransformerRegistryItem } from '@grafana/data';
 import { Drawer } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { FALLBACK_DOCS_LINK } from 'app/features/transformers/docs/constants';

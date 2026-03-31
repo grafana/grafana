@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
-import { PointerEvent as ReactPointerEvent } from 'react';
+import { type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { logWarning } from '@grafana/runtime';
 import {
   sceneGraph,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
+  type SceneObjectRef,
+  type SceneObjectState,
   VizPanel,
-  SceneGridItemLike,
+  type SceneGridItemLike,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
@@ -22,15 +22,15 @@ import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { RowItem } from './layout-rows/RowItem';
+import { type DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { type RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 import {
   AUTO_GRID_ITEM_DROP_TARGET_ATTR,
   DASHBOARD_DROP_TARGET_KEY_ATTR,
-  DashboardDropTarget,
+  type DashboardDropTarget,
   isDashboardDropTarget,
 } from './types/DashboardDropTarget';
 

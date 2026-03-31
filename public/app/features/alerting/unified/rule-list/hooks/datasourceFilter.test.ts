@@ -1,4 +1,4 @@
-import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, type PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromAlertingRule, mockPromRecordingRule } from '../../mocks';
 import { RuleHealth } from '../../search/rulesSearchParser';

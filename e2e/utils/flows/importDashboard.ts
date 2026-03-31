@@ -1,7 +1,7 @@
 import { e2e } from '../index';
 import { fromBaseUrl, getDashboardUid } from '../support/url';
 
-import { DeleteDashboardConfig } from '.';
+import { type DeleteDashboardConfig } from '.';
 
 type Panel = {
   title: string;

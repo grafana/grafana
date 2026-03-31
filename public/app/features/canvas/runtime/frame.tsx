@@ -1,18 +1,18 @@
 import { cloneDeep } from 'lodash';
 
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { DimensionContext } from 'app/features/dimensions/context';
-import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
+import { type DimensionContext } from 'app/features/dimensions/context';
+import { HorizontalConstraint, type Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
-import { CanvasElementItem } from '../element';
-import { CanvasFrameOptions } from '../frame';
+import { type CanvasElementItem } from '../element';
+import { type CanvasFrameOptions } from '../frame';
 import { canvasElementRegistry } from '../registry';
 
 import { ElementState } from './element';
-import { RootElement } from './root';
-import { Scene } from './scene';
+import { type RootElement } from './root';
+import { type Scene } from './scene';
 import { initMoveable } from './sceneAbleManagement';
 
 const DEFAULT_OFFSET = 10;

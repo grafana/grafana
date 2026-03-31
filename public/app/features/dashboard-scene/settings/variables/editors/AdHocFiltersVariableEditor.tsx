@@ -1,10 +1,11 @@
 import { noop } from 'lodash';
-import { FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
+import { type DataSourceInstanceSettings, type MetricFindValue, getDataSourceRef } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, AdHocFilterWithLabels, SceneVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
@@ -60,8 +61,14 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   }, [datasourceRef]);
 
   const message = datasourceSettings?.getTagKeys
-    ? 'Ad hoc filters are applied automatically to all queries that target this data source'
-    : 'This data source does not support ad hoc filters.';
+    ? t(
+        'dashboard-scene.ad-hoc-filters-variable-editor.message-supported',
+        'Filters are applied automatically to all queries that target this data source'
+      )
+    : t(
+        'dashboard-scene.ad-hoc-filters-variable-editor.message-not-supported',
+        'This data source does not support filters.'
+      );
 
   const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);

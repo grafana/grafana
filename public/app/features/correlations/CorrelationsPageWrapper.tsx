@@ -5,7 +5,7 @@ import { useDeleteCorrelationMutation } from '@grafana/api-clients/rtkq/correlat
 import { config } from '@grafana/runtime';
 
 import CorrelationsPage from './CorrelationsPage';
-import { GetCorrelationsParams, RemoveCorrelationParams } from './types';
+import { type GetCorrelationsParams, type RemoveCorrelationParams } from './types';
 import { useCorrelations } from './useCorrelations';
 import { useCorrelationsK8s } from './useCorrelationsK8s';
 

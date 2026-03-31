@@ -196,6 +196,56 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 	return folder.Name, nil
 }
 
+// WriteFolderMetadataUpdate reads the existing _folder.json at folderPath, validates that the
+// ID (metadata.name) has not changed, updates the mutable fields (title, description) from
+// the submitted folder resource, and writes the result back. Returns the updated hash.
+func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string, submitted *folders.Folder) (string, error) {
+	existing, _, err := ReadFolderMetadata(ctx, repo, folderPath, ref)
+	if err != nil {
+		// When the target branch doesn't exist yet, fall back to reading from
+		// the configured branch. ensureBranchExists (called by repo.Update)
+		// creates the new branch from the configured branch, so the content is
+		// identical at creation time.
+		if errors.Is(err, repository.ErrRefNotFound) {
+			existing, _, err = ReadFolderMetadata(ctx, repo, folderPath, "")
+		}
+		if err != nil {
+			return "", fmt.Errorf("read existing folder metadata: %w", err)
+		}
+	}
+
+	if submitted.Name != "" && submitted.Name != existing.Name {
+		return "", apierrors.NewBadRequest(
+			fmt.Sprintf("folder ID change is not allowed (current: %q, submitted: %q)", existing.Name, submitted.Name),
+		)
+	}
+
+	if submitted.Spec.Title == "" {
+		return "", apierrors.NewBadRequest("folder title must not be empty")
+	}
+
+	existing.Spec.Title = submitted.Spec.Title
+	if submitted.Spec.Description != nil {
+		existing.Spec.Description = submitted.Spec.Description
+	}
+
+	data, err := marshalFolderManifest(existing)
+	if err != nil {
+		return "", fmt.Errorf("marshal updated folder metadata: %w", err)
+	}
+	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
+	if err := repo.Update(ctx, metadataPath, ref, data, message); err != nil {
+		return "", fmt.Errorf("write updated folder metadata: %w", err)
+	}
+
+	// Re-read to get the new hash
+	info, err := repo.Read(ctx, metadataPath, ref)
+	if err != nil {
+		return "", fmt.Errorf("re-read updated folder metadata: %w", err)
+	}
+	return info.Hash, nil
+}
+
 // GetFolderID returns the folder ID for the given path.
 // When folderMetadataEnabled is true, it attempts to read the stable UID from _folder.json.
 // If metadata file doesn't exist or metadata is disabled, it falls back to the hash-based ID.
