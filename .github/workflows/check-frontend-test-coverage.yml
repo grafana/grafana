@@ -39,11 +39,22 @@ jobs:
       contents: read
     outputs:
       changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+      main-sha: ${{ steps.get-main-sha.outputs.sha }}
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: true
-          fetch-depth: 2
+          fetch-depth: 0
+
+      - name: Get main SHA
+        id: get-main-sha
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          MAIN_SHA=$(git rev-parse "origin/$BASE_REF")
+          echo "sha=$MAIN_SHA" >> "$GITHUB_OUTPUT"
+          echo "Main branch SHA: $MAIN_SHA"
 
       - name: Detect changed files
         id: changed-files
@@ -242,7 +253,7 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.base.ref }}
+          ref: ${{ needs.detect-changes.outputs.main-sha }}
           path: './main'
           persist-credentials: false
 
@@ -265,7 +276,7 @@ jobs:
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'
-          GITHUB_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_SHA: ${{ needs.detect-changes.outputs.main-sha }}
 
       - name: Save main coverage summary
         if: steps.check-affected.outputs.affected == 'true'
