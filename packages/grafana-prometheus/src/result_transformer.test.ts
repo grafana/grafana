@@ -975,6 +975,147 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[2].fields[3].values).toEqual([10, 0, 0]);
     });
 
+    it('results with heatmap format and multiple histograms should retain non-le labels in frame names', () => {
+      // Regression test: sum by (le, foo) (some_metric_bucket) should preserve the "foo" label
+      // in each heatmap frame name rather than naming frames by the lowest le bucket value.
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1', foo: 'bar' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2', foo: 'bar' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [0, 10, 10],
+                labels: { le: '1', foo: 'baz' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 40],
+                labels: { le: '2', foo: 'baz' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data).toHaveLength(2);
+      // Each merged frame should be named by its non-le label(s), not the lowest le value
+      const names = series.data.map((f) => f.name).sort();
+      expect(names).toEqual(['{foo="bar"}', '{foo="baz"}']);
+    });
+
+    it('results with heatmap format and metric name with multiple histograms should include metric name in frame name', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'my_metric',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1', foo: 'bar', __name__: 'my_metric' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'my_metric',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2', foo: 'bar', __name__: 'my_metric' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'my_metric',
+                type: FieldType.number,
+                values: [0, 10, 10],
+                labels: { le: '1', foo: 'baz', __name__: 'my_metric' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'my_metric',
+                type: FieldType.number,
+                values: [20, 10, 40],
+                labels: { le: '2', foo: 'baz', __name__: 'my_metric' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data).toHaveLength(2);
+      const names = series.data.map((f) => f.name).sort();
+      expect(names).toEqual(['my_metric{foo="bar"}', 'my_metric{foo="baz"}']);
+    });
+
     it('Retains exemplar frames when data returned is a heatmap', () => {
       const options = {
         targets: [
