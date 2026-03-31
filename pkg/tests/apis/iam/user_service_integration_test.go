@@ -73,6 +73,30 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 			require.Equal(t, 200, secondUser.Response.StatusCode, "body: %s", string(secondUser.Body))
 			require.NotEmpty(t, secondUser.Result.UID)
 
+			t.Cleanup(func() {
+				if firstUser.Result.ID != 0 {
+					apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "DELETE",
+						Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
+					}, &struct{}{})
+					apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "DELETE",
+						Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
+					}, &struct{}{})
+				} else {
+					ctx := context.Background()
+					userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+						User:      helper.Org1.Admin,
+						Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+						GVR:       gvrUsers,
+					})
+					_ = userClient.Resource.Delete(ctx, firstUser.Result.UID, metav1.DeleteOptions{})
+					_ = userClient.Resource.Delete(ctx, secondUser.Result.UID, metav1.DeleteOptions{})
+				}
+			})
+
 			// /api/users/lookup routes through UserK8sService.GetByLogin
 			t.Run("should find user by email via GetByLogin", func(t *testing.T) {
 				byEmailRsp := apis.DoRequest(helper, apis.RequestParams{
@@ -112,28 +136,6 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 
 				require.Equal(t, 404, notFoundRsp.Response.StatusCode)
 			})
-
-			if firstUser.Result.ID != 0 {
-				apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
-				}, &struct{}{})
-				apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "DELETE",
-					Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
-				}, &struct{}{})
-			} else {
-				ctx := context.Background()
-				userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-					User:      helper.Org1.Admin,
-					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-					GVR:       gvrUsers,
-				})
-				_ = userClient.Resource.Delete(ctx, firstUser.Result.UID, metav1.DeleteOptions{})
-				_ = userClient.Resource.Delete(ctx, secondUser.Result.UID, metav1.DeleteOptions{})
-			}
 		})
 	}
 }

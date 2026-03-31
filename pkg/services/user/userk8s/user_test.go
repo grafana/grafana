@@ -267,31 +267,13 @@ func TestUserK8sService_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var svc *UserK8sService
-
-			tracer := tracing.InitializeTracerForTest()
-			if tt.nilProvider {
-				svc = NewUserK8sService(log.NewNopLogger(), nil, nil, tracer)
-			} else {
-				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
-				defer ts.Close()
-
-				provider := &mockDirectRestConfigProvider{
-					restConfig: &rest.Config{Host: ts.URL},
-				}
-				svc = NewUserK8sService(log.NewNopLogger(), tt.cfg, provider, tracer)
-			}
-
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
-
-			if tt.requesterOrgID != 0 {
-				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
-			}
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				noReqContext:   tt.noReqContext,
+				requesterOrgID: tt.requesterOrgID,
+				cfg:            tt.cfg,
+				serverResponse: tt.serverResponse,
+			})
 
 			result, err := svc.Create(ctx, tt.cmd)
 
@@ -502,31 +484,13 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var svc *UserK8sService
-
-			tracer := tracing.InitializeTracerForTest()
-			if tt.nilProvider {
-				svc = NewUserK8sService(log.NewNopLogger(), nil, nil, tracer)
-			} else {
-				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
-				defer ts.Close()
-
-				provider := &mockDirectRestConfigProvider{
-					restConfig: &rest.Config{Host: ts.URL},
-				}
-				svc = NewUserK8sService(log.NewNopLogger(), nil, provider, tracer)
-			}
-
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
-
-			if !tt.noRequester && tt.requesterOrgID != 0 {
-				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
-			}
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				noReqContext:   tt.noReqContext,
+				noRequester:    tt.noRequester,
+				requesterOrgID: tt.requesterOrgID,
+				serverResponse: tt.serverResponse,
+			})
 
 			result, err := svc.GetByEmail(ctx, tt.cmd)
 
@@ -709,31 +673,13 @@ func TestUserK8sService_GetByLogin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var svc *UserK8sService
-
-			tracer := tracing.InitializeTracerForTest()
-			if tt.nilProvider {
-				svc = NewUserK8sService(log.NewNopLogger(), nil, nil, tracer)
-			} else {
-				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
-				defer ts.Close()
-
-				provider := &mockDirectRestConfigProvider{
-					restConfig: &rest.Config{Host: ts.URL},
-				}
-				svc = NewUserK8sService(log.NewNopLogger(), nil, provider, tracer)
-			}
-
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
-
-			if !tt.noRequester && tt.requesterOrgID != 0 {
-				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
-			}
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				noReqContext:   tt.noReqContext,
+				noRequester:    tt.noRequester,
+				requesterOrgID: tt.requesterOrgID,
+				serverResponse: tt.serverResponse,
+			})
 
 			result, err := svc.GetByLogin(ctx, tt.cmd)
 
@@ -768,4 +714,39 @@ func (m *mockDirectRestConfigProvider) IsReady() bool {
 func contextWithReqContext() context.Context {
 	reqCtx := &contextmodel.ReqContext{}
 	return context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+}
+
+type svcTestSetup struct {
+	nilProvider    bool
+	noReqContext   bool
+	noRequester    bool
+	requesterOrgID int64
+	cfg            *setting.Cfg
+	serverResponse func(http.ResponseWriter, *http.Request)
+}
+
+func setupServiceAndCtx(t *testing.T, s svcTestSetup) (*UserK8sService, context.Context) {
+	t.Helper()
+	tracer := tracing.InitializeTracerForTest()
+
+	var svc *UserK8sService
+	if s.nilProvider {
+		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, nil, tracer)
+	} else {
+		ts := httptest.NewServer(http.HandlerFunc(s.serverResponse))
+		t.Cleanup(ts.Close)
+		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, &mockDirectRestConfigProvider{
+			restConfig: &rest.Config{Host: ts.URL},
+		}, tracer)
+	}
+
+	ctx := contextWithReqContext()
+	if s.noReqContext {
+		ctx = context.Background()
+	}
+	if !s.noRequester && s.requesterOrgID != 0 {
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: s.requesterOrgID})
+	}
+
+	return svc, ctx
 }
