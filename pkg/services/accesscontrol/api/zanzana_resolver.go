@@ -222,8 +222,25 @@ func (r *zanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 
 	permissions := []ac.Permission{}
 
+	// Build the set of scopes that satisfy the filter: the exact scope plus
+	// every wildcard that encompasses it (mirrors legacy RBAC semantics).
+	// e.g. scope "folders:uid:abc" matches "folders:uid:abc", "folders:uid:*", "folders:*", "*".
+	var scopeSet map[string]struct{}
+	if scope != "" {
+		wildcards := ac.WildcardsFromPrefix(ac.ScopePrefix(scope))
+		scopeSet = make(map[string]struct{}, len(wildcards)+1)
+		scopeSet[scope] = struct{}{}
+		for _, w := range wildcards {
+			scopeSet[w] = struct{}{}
+		}
+	}
+
 	appendIfMatches := func(p ac.Permission) {
-		if scope == "" || strings.HasPrefix(p.Scope, scope) {
+		if scope == "" {
+			permissions = append(permissions, p)
+			return
+		}
+		if _, ok := scopeSet[p.Scope]; ok {
 			permissions = append(permissions, p)
 		}
 	}

@@ -149,3 +149,107 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 		{Action: "dashboards:read", Scope: ac.Scope("folders", "uid", "keep-me")},
 	}, perms)
 }
+
+func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
+	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
+
+	t.Run("All=true keeps wildcards that encompass the filter scope", func(t *testing.T) {
+		fake := &fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{All: true},
+		}
+		r := &zanzanaPermissionResolver{client: fake}
+
+		perms, err := r.listPermissions(
+			context.Background(),
+			"org:1",
+			"user:1",
+			group,
+			resource,
+			verb,
+			"dashboards:read",
+			ac.Scope("folders", "uid", "some-folder"),
+		)
+		require.NoError(t, err)
+
+		// folders:* is a wildcard that encompasses folders:uid:some-folder.
+		// dashboards:* belongs to a different namespace and is correctly excluded.
+		require.Equal(t, []ac.Permission{
+			{Action: "dashboards:read", Scope: ac.Scope("folders", "*")},
+		}, perms)
+	})
+
+	t.Run("All=true keeps both wildcards when scope is in dashboards namespace", func(t *testing.T) {
+		fake := &fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{All: true},
+		}
+		r := &zanzanaPermissionResolver{client: fake}
+
+		perms, err := r.listPermissions(
+			context.Background(),
+			"org:1",
+			"user:1",
+			group,
+			resource,
+			verb,
+			"dashboards:read",
+			ac.Scope("dashboards", "uid", "some-dash"),
+		)
+		require.NoError(t, err)
+
+		// dashboards:* encompasses dashboards:uid:some-dash; folders:* does not.
+		require.Equal(t, []ac.Permission{
+			{Action: "dashboards:read", Scope: ac.Scope("dashboards", "*")},
+		}, perms)
+	})
+
+	t.Run("non-matching items are excluded while wildcards are kept", func(t *testing.T) {
+		fake := &fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{
+				Items:   []string{"match-uid", "other-uid"},
+				Folders: []string{"target-folder", "other-folder"},
+			},
+		}
+		r := &zanzanaPermissionResolver{client: fake}
+
+		perms, err := r.listPermissions(
+			context.Background(),
+			"org:1",
+			"user:1",
+			group,
+			resource,
+			verb,
+			"dashboards:read",
+			ac.Scope("dashboards", "uid", "match-uid"),
+		)
+		require.NoError(t, err)
+
+		require.Equal(t, []ac.Permission{
+			{Action: "dashboards:read", Scope: ac.Scope("dashboards", "uid", "match-uid")},
+		}, perms)
+	})
+
+	t.Run("prefix-similar scopes are not false-positives", func(t *testing.T) {
+		fake := &fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{
+				Items: []string{"abc", "abcdef"},
+			},
+		}
+		r := &zanzanaPermissionResolver{client: fake}
+
+		perms, err := r.listPermissions(
+			context.Background(),
+			"org:1",
+			"user:1",
+			group,
+			resource,
+			verb,
+			"dashboards:read",
+			ac.Scope("dashboards", "uid", "abc"),
+		)
+		require.NoError(t, err)
+
+		require.Equal(t, []ac.Permission{
+			{Action: "dashboards:read", Scope: ac.Scope("dashboards", "uid", "abc")},
+		}, perms, "abcdef must not match a filter for abc")
+	})
+}
