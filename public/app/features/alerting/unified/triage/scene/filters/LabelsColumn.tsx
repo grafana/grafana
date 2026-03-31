@@ -66,7 +66,7 @@ export function LabelsColumn() {
                 <Trans i18nKey="alerting.triage.labels-column-title">Labels</Trans>
               </Text>
               <FilterInput
-                placeholder={t('alerting.triage.filter-labels-placeholder', 'Filter')}
+                placeholder={t('alerting.triage.filter-labels-placeholder', 'Search labels')}
                 value={labelFilter}
                 onChange={setLabelFilter}
                 aria-label={t('alerting.triage.filter-labels', 'Filter labels')}

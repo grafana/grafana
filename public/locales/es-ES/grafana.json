@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "No se puede mostrar la vista previa de la consulta. Algunas de las fuentes de datos utilizadas en las consultas no están disponibles.",
       "preview-alerts": "Vista previa de las alertas",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Borrar filtros",
       "configured-alert-rules": "Las fuentes de datos que contienen reglas de alerta configuradas son fuentes de datos Mimir o Loki donde las reglas de alerta se almacenan y evalúan en la propia fuente de datos.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtra las reglas de alerta que se enrutan directamente al punto de contacto seleccionado. No se mostrarán las reglas de alerta enrutadas a políticas de notificación.",
       "contact-point-tooltip-title": "Ayuda del filtro de punto de contacto",
       "dashboard": "Panel de control",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Seleccionar fuentes de datos",
       "placeholder-group-search": "Buscar grupo",
       "placeholder-labels": "Seleccionar etiquetas",
+      "placeholder-policy": "",
       "plugin-rules": "Reglas del plugin",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Fuente de datos gestionada",
         "grafana": "Gestionadas por Grafana"
@@ -3212,6 +3220,7 @@
       "title-group": "Grupo",
       "title-health": "Salud",
       "title-labels": "Etiquetas",
+      "title-policy": "",
       "title-rule": "Regla",
       "title-state": "Estado",
       "title-type": "Tipo"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Desglose de la métrica"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

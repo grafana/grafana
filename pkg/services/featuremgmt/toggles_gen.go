@@ -674,10 +674,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagAlertingImportAlertmanagerUI
-	// Enables the UI to see imported Alertmanager configuration
-	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
-
 	// FlagAlertingDisableDMAinUI
 	// Disables the DMA feature in the UI
 	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
