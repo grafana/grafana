@@ -19,9 +19,12 @@ test.describe(
   () => {
     (
       [
-        // DISABLED: The RSS panel on the home-page currently shows links that violate the a11y rules.
-        //   We need to get this fixed before re-enabling.
-        // { url: '/?orgId=1' },
+        {
+          url: '/?orgId=1',
+          // DISABLED: The RSS panel on the home-page currently shows links that violate the a11y rules.
+          //   We need to get this fixed before re-enabling.
+          ignoredRules: ['link-name'],
+        },
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge' },
 
         // Dashboard settings
