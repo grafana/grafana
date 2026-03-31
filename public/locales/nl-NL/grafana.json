@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Kan het queryvoorbeeld niet weergeven. Sommige gegevensbronnen die in de query's worden gebruikt, zijn niet beschikbaar.",
       "preview-alerts": "Voorbeeldwaarschuwingen",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Filters wissen",
       "configured-alert-rules": "Gegevensbronnen met geconfigureerde waarschuwingsregels zijn Mimir- of Loki-gegevensbronnen waar waarschuwingsregels worden opgeslagen en geëvalueerd in de gegevensbron zelf.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtert waarschuwingregels die direct naar het geselecteerde contactpunt worden gestuurd. Regels die via notificatiebeleid lopen, worden niet weergegeven.",
       "contact-point-tooltip-title": "Hulp bij filteren van contactpunten",
       "dashboard": "Dashboard",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Gegevensbronnen selecteren",
       "placeholder-group-search": "Groep zoeken",
       "placeholder-labels": "Labels selecteren",
+      "placeholder-policy": "",
       "plugin-rules": "Plug-inregels",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Databron beheerd",
         "grafana": "Grafana beheerd"
@@ -3212,6 +3220,7 @@
       "title-group": "Groep",
       "title-health": "Gezondheid",
       "title-labels": "Labels",
+      "title-policy": "",
       "title-rule": "Regel",
       "title-state": "Status",
       "title-type": "Type"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Drilldown van metriek"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

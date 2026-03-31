@@ -73,6 +73,14 @@ export interface VisualizationSuggestion<TOptions = {}, TFieldConfig extends {} 
      * mutate the suggestion object which is passed in as the first argument.
      */
     previewModifier?: (suggestion: VisualizationSuggestion<TOptions, TFieldConfig>) => void;
+    /**
+     * Limits the number of data frames passed to the panel when rendering the preview card.
+     */
+    maxSeries?: number;
+    /**
+     * Limits the number of rows per data frame passed to the panel when rendering the preview card.
+     */
+    maxRows?: number;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */
     icon?: string;
     /** @deprecated this will no longer be supported in the new Suggestions UI. */

@@ -126,7 +126,7 @@ For example, to get a dashboard defined as:
 ```
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "metadata": {
     "name": "production-overview", // This value IS used in the URL path
     "namespace": "default",
@@ -141,7 +141,7 @@ For example, to get a dashboard defined as:
 
 You would use the following API call:
 
-`GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/production-overview`
+`GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/production-overview`
 
 ### Metadata
 

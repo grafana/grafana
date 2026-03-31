@@ -2035,15 +2035,18 @@
     {
       "metadata": {
         "name": "externalVizSuggestions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-01T23:22:22Z"
+        "resourceVersion": "1774877899502",
+        "creationTimestamp": "2025-12-01T23:22:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 13:38:19.502534 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2403,6 +2406,20 @@
       },
       "spec": {
         "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pieChartGradientColorScheme",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2026-03-30T00:00:00Z"
+      },
+      "spec": {
+        "description": "Enable gradient color scheme option for the pie chart panel",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
@@ -3709,15 +3726,18 @@
     {
       "metadata": {
         "name": "newVizSuggestions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-12T19:26:29Z"
+        "resourceVersion": "1774878275721",
+        "creationTimestamp": "2025-11-12T19:26:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 13:44:35.72192 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable new visualization suggestions",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4261,6 +4281,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryServiceQueryCaching",
+        "resourceVersion": "1774711941702",
+        "creationTimestamp": "2026-03-28T15:32:21Z"
+      },
+      "spec": {
+        "description": "Enables the query service to do query caching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
       }
     },
@@ -5229,12 +5262,16 @@
     {
       "metadata": {
         "name": "vizLegendSeriesLimit",
-        "resourceVersion": "1772507615654",
-        "creationTimestamp": "2026-03-03T03:13:35Z"
+        "resourceVersion": "1774902435260",
+        "creationTimestamp": "2026-03-03T03:13:35Z",
+        "deletionTimestamp": "2026-03-30T20:28:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 20:27:15.260821 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Limit the number of legend items by default, with an option to show all",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
