@@ -733,6 +733,76 @@ describe('DashboardScene', () => {
           expect(stored.styles).toBeDefined();
         });
 
+        it('Should copy fieldConfig and options styles from a pie chart panel', () => {
+          const pieChartPanel = new VizPanel({
+            title: 'Pie Chart Panel',
+            key: `panel-piechart-${Math.random()}`,
+            pluginId: 'piechart',
+            options: {
+              pieType: 'pie',
+              sort: 'desc',
+              displayLabels: ['percent', 'name'],
+              tooltip: { mode: 'single' },
+              legend: { showLegend: true, placement: 'right', values: ['percent'] },
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'palette-classic' },
+                custom: { hideFrom: { tooltip: false, viz: false, legend: false } }, // should NOT be captured
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(pieChartPanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('piechart');
+
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'palette-classic' });
+          expect(stored.styles.fieldConfig.defaults.custom?.hideFrom).toBeUndefined();
+
+          expect(stored.styles.options.pieType).toBe('pie');
+          expect(stored.styles.options.sort).toBe('desc');
+          expect(stored.styles.options.displayLabels).toEqual(['percent', 'name']);
+          expect(stored.styles.options.tooltip).toEqual({ mode: 'single' });
+          expect(stored.styles.options.legend).toEqual({ showLegend: true, placement: 'right', values: ['percent'] });
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+        });
+
+        it('Should paste fieldConfig and options styles into a pie chart panel', () => {
+          const pieChartPanel = new VizPanel({
+            title: 'Pie Chart Panel',
+            key: `panel-piechart-${Math.random()}`,
+            pluginId: 'piechart',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          pieChartPanel.onFieldConfigChange = mockOnFieldConfigChange;
+          pieChartPanel.onOptionsChange = mockOnOptionsChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'piechart',
+              styles: {
+                fieldConfig: { defaults: { color: { mode: 'fixed' } } },
+                options: { pieType: 'donut', displayLabels: ['value'], legend: { showLegend: false } },
+              },
+            })
+          );
+
+          scene.pastePanelStyles(pieChartPanel);
+
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({ pieType: 'donut', displayLabels: ['value'], legend: { showLegend: false } })
+          );
+        });
+
         it('Should paste styles from a trend panel into another trend panel', () => {
           const trendPanel = new VizPanel({
             title: 'Trend Panel',

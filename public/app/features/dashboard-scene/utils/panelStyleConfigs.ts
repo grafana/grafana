@@ -67,10 +67,34 @@ const graphPanelStyleConfig: PanelStyleConfig = {
   },
 };
 
+/**
+ * Style config for the pie chart panel.
+ *
+ * fieldConfig.defaults:
+ *   color – color scheme (thresholds is disabled for this panel type)
+ *
+ * options:
+ *   pieType       – pie or donut
+ *   sort          – slice sort order (descending, ascending, none)
+ *   displayLabels – labels shown on slices (percent, name, value)
+ *   tooltip       – tooltip options
+ *   legend        – legend options including legend.values (percent, value)
+ */
+const pieChartPanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color'],
+    defaults: [],
+  },
+  options: {
+    props: ['pieType', 'sort', 'displayLabels', 'tooltip', 'legend'],
+  },
+};
+
 const PANEL_STYLE_CONFIGS: Record<string, PanelStyleConfig> = {
   timeseries: graphPanelStyleConfig,
   trend: graphPanelStyleConfig,
   candlestick: graphPanelStyleConfig,
+  piechart: pieChartPanelStyleConfig,
 };
 
 /**
