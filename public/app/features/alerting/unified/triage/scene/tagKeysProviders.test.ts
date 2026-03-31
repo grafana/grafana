@@ -107,9 +107,9 @@ describe('tagKeysProviders', () => {
       expect(result.replace).toBe(true);
       expect(result.values).toEqual(
         expect.arrayContaining([
-          { value: 'alertstate', text: 'State', group: 'Common' },
           { value: 'alertname', text: 'Rule name', group: 'Common' },
           { value: 'grafana_folder', text: 'Folder', group: 'Common' },
+          { text: 'alertstate', value: 'alertstate', group: 'All' },
           { text: 'environment', value: 'environment', group: 'All' },
           { text: 'severity', value: 'severity', group: 'All' },
           { text: 'team', value: 'team', group: 'All' },
