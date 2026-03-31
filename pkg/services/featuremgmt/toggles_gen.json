@@ -3725,6 +3725,20 @@
     },
     {
       "metadata": {
+        "name": "newUnconfiguredPanel",
+        "resourceVersion": "1774990297637",
+        "creationTimestamp": "2026-03-31T20:51:37Z"
+      },
+      "spec": {
+        "description": "Enables the new unconfigured panel experience",
+        "stage": "GA",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newVizSuggestions",
         "resourceVersion": "1774878275721",
         "creationTimestamp": "2025-11-12T19:26:29Z",
