@@ -70,6 +70,7 @@ func ProvideDataSourceMigrator(
 	}
 }
 
+// This is useful for the cloud controller, where we populate values from cloudconfig
 func NewDataSourceMigrator(
 	getter func(ctx context.Context, namespace string) ([]DataSourceData, error),
 	secretStore secret.InlineSecureValueSupport,
