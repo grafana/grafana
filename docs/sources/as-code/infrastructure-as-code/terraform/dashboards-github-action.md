@@ -5,25 +5,25 @@ keywords:
   - Grafana Cloud
   - Terraform
   - GitHub Actions
-title: Creating and managing dashboards using Terraform and GitHub Actions
+title: Create and manage dashboards using Terraform and GitHub Actions
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/dashboards-github-action/
 ---
 
-# Creating and managing dashboards using Terraform and GitHub Actions
+# Create and manage dashboards using Terraform and GitHub Actions
 
-Learn how to create and manage multiple dashboards represented as JSON source code for Grafana using [Terraform](https://www.terraform.io/) and [GitHub Actions](https://github.com/features/actions).
+Learn how to create and manage multiple dashboards represented as JSON source code for Grafana using Terraform and GitHub Actions.
 
 ## Prerequisites
 
-Before you begin, you should have the following available:
+Before you begin, ensure you have the following:
 
 - A Grafana Cloud account, as shown in [Get started](/docs/grafana-cloud/get-started/)
 - A [GitHub](https://github.com/) repository
 
 ## Add Dashboards to a GitHub repository
 
-For this guide, we are adding dashboards for ElasticSearch, InfluxDB, and AWS EC2. You can use different dashboards according to your configured data sources.
+This guide shows you how to add dashboards for ElasticSearch, InfluxDB, and AWS EC2. You can use different dashboards according to your configured data sources.
 
 1. In your GitHub repository, create a folder named `dashboards` in the root directory.
 
@@ -216,11 +216,11 @@ If you are not using a [Terraform backend](https://www.terraform.io/language/set
     file_pattern: terraform.tfstate
 ```
 
-When you run `terraform apply`,Terraform automatically manages and updates the `terraform.tfstate` file to store state about your infrastructure and configuration.
-This step uses the [stefanzweifel/git-auto-commit-action@v4](https://github.com/stefanzweifel/git-auto-commit-action) action to auto-commit the `terraform.tfstate` file for changes made by the running the `terraform apply` step.
+When you run `terraform apply`, Terraform automatically manages and updates the `terraform.tfstate` file to store state about your infrastructure and configuration.
+This step uses the [stefanzweifel/git-auto-commit-action@v4](https://github.com/stefanzweifel/git-auto-commit-action) action to auto-commit the `terraform.tfstate` file for changes made by running the `terraform apply` step.
 
 {{< admonition type="note" >}}
-The Terraform state file (terraform.tfstate) should not be stored in Git to avoid leakage of sensitive data. Instead, store Terraform state file using a remote backend like AWS S3 with proper RBAC. For more information, see [Terraform state](https://www.terraform.io/language/state).
+The Terraform state file (terraform.tfstate) shouldn't be stored in Git to avoid leakage of sensitive data. Instead, store Terraform state files using a remote backend like AWS S3 with proper RBAC. For more information, refer to [Terraform state](https://www.terraform.io/language/state).
 {{< /admonition >}}
 
 ## Validation
@@ -243,8 +243,8 @@ Once the GitHub workflow run is successful, you should be able to verify the fol
 
   ![AWS EC2 Folder](/media/docs/grafana-cloud/screenshots-aws-folder-github-action-tf.png)
 
-## Conclusion
+## Summary
 
-In this guide, you created a GitHub workflow using Terraform to manage dashboard source code. Using this workflow, the dashboards in the Grafana instance will always be synchronized with the JSON source code files for dashboards in GitHub.
+In this guide, you created a GitHub workflow using Terraform to manage dashboard source code. Using this workflow, the dashboards in the Grafana instance are synchronized with the JSON source code files for dashboards in GitHub.
 
-To learn more about managing Grafana Cloud using Terraform, see [Grafana provider's documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+To learn more about managing Grafana Cloud using Terraform, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).

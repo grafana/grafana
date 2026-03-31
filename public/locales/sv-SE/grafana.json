@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Det går inte att visa förhandsgranskningen av frågan. Vissa av de datakällor som används i frågorna är inte tillgängliga.",
       "preview-alerts": "Förhandsgranska varningar",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Rensa filter",
       "configured-alert-rules": "Datakällor som innehåller konfigurerade larmregler är Mimir- eller Loki-datakällor där larmregler lagras och utvärderas i själva datakällan.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtrerar larmregler som dirigerar direkt till den valda kontaktpunkten. Larmregler som dirigeras till aviseringspolicyer kommer inte att visas.",
       "contact-point-tooltip-title": "Hjälp för kontaktpunktsfilter",
       "dashboard": "Instrumentpanel",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Välj datakällor",
       "placeholder-group-search": "Sök grupp",
       "placeholder-labels": "Välj etiketter",
+      "placeholder-policy": "",
       "plugin-rules": "Tilläggsregler",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Datakälla hanterad",
         "grafana": "Grafana-hanterad"
@@ -3212,6 +3220,7 @@
       "title-group": "Grupp",
       "title-health": "Hälsa",
       "title-labels": "Etiketter",
+      "title-policy": "",
       "title-rule": "Regel",
       "title-state": "Tillstånd",
       "title-type": "Typ"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Detaljering av mätvärden"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },

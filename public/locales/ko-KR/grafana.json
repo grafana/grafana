@@ -2576,6 +2576,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "쿼리 미리보기를 표시할 수 없습니다. 쿼리에 사용된 데이터 소스 중 일부를 사용할 수 없습니다.",
       "preview-alerts": "경고 미리 보기",
@@ -3088,6 +3091,7 @@
     "rules-filter": {
       "clear-filters": "필터 초기화",
       "configured-alert-rules": "구성된 경고 규칙을 포함하는 데이터 소스는 경고 규칙이 데이터 소스 자체에 저장되고 평가되는 Mimir 또는 Loki 데이터 소스입니다.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "선택한 연락처로 직접 전송되는 경보 규칙을 필터링합니다. 알림 정책으로 전송된 경보 규칙은 표시되지 않습니다.",
       "contact-point-tooltip-title": "연락처 필터 도움말",
       "dashboard": "대시보드",
@@ -3112,7 +3116,11 @@
       "placeholder-data-sources": "데이터 소스 선택",
       "placeholder-group-search": "그룹 검색",
       "placeholder-labels": "레이블 선택",
+      "placeholder-policy": "",
       "plugin-rules": "플러그인 규칙",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "데이터 소스 관리형",
         "grafana": "Grafana 관리형"
@@ -3193,6 +3201,7 @@
       "title-group": "그룹",
       "title-health": "상태",
       "title-labels": "라벨",
+      "title-policy": "",
       "title-rule": "규칙",
       "title-state": "상태",
       "title-type": "유형"
@@ -7226,6 +7235,9 @@
           "metrics-drilldown": "메트릭 드릴다운"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14581,6 +14593,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },
