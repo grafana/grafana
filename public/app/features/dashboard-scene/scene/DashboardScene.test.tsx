@@ -3,6 +3,7 @@ import {
   type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
+  ThresholdsMode,
   getDefaultTimeRange,
   locationUtil,
   store,
@@ -777,6 +778,100 @@ describe('DashboardScene', () => {
           scene.pastePanelStyles(candlestickPanel);
 
           expect(mockOnFieldConfigChange).toHaveBeenCalled();
+        });
+
+        it('Should copy fieldConfig and options styles from a gauge panel', () => {
+          const gaugePanel = new VizPanel({
+            title: 'Gauge Panel',
+            key: `panel-gauge-${Math.random()}`,
+            pluginId: 'gauge',
+            options: {
+              shape: 'circle',
+              orientation: 'horizontal',
+              barWidthFactor: 0.8,
+              segmentCount: 3,
+              segmentSpacing: 0.2,
+              barShape: 'rounded',
+              endpointMarker: 'glow',
+              textMode: 'value',
+              showThresholdMarkers: false,
+              showThresholdLabels: true,
+              effects: { barGlow: true, centerGlow: false, gradient: true },
+              sparkline: false,
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'thresholds' },
+                thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: 0 }, { color: 'red', value: 80 }] },
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(gaugePanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('gauge');
+
+          // fieldConfig style props
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
+          expect(stored.styles.fieldConfig.defaults.thresholds).toBeDefined();
+          expect(stored.styles.fieldConfig.defaults.custom).toBeUndefined();
+
+          // options style props
+          expect(stored.styles.options.shape).toBe('circle');
+          expect(stored.styles.options.orientation).toBe('horizontal');
+          expect(stored.styles.options.barWidthFactor).toBe(0.8);
+          expect(stored.styles.options.segmentCount).toBe(3);
+          expect(stored.styles.options.barShape).toBe('rounded');
+          expect(stored.styles.options.endpointMarker).toBe('glow');
+          expect(stored.styles.options.showThresholdMarkers).toBe(false);
+          expect(stored.styles.options.effects).toEqual({ barGlow: true, centerGlow: false, gradient: true });
+
+          // non-style options must NOT be captured
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+        });
+
+        it('Should paste fieldConfig and options styles into a gauge panel', () => {
+          const gaugePanel = new VizPanel({
+            title: 'Gauge Panel',
+            key: `panel-gauge-${Math.random()}`,
+            pluginId: 'gauge',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          gaugePanel.onFieldConfigChange = mockOnFieldConfigChange;
+          gaugePanel.onOptionsChange = mockOnOptionsChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'gauge',
+              styles: {
+                fieldConfig: {
+                  defaults: {
+                    color: { mode: 'thresholds' },
+                    thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: 0 }] },
+                  },
+                },
+                options: {
+                  shape: 'circle',
+                  barWidthFactor: 0.8,
+                  showThresholdMarkers: false,
+                },
+              },
+            })
+          );
+
+          scene.pastePanelStyles(gaugePanel);
+
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({ shape: 'circle', barWidthFactor: 0.8, showThresholdMarkers: false })
+          );
         });
 
         it('Should not paste styles from a trend panel into a timeseries panel', () => {

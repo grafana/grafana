@@ -67,10 +67,67 @@ const graphPanelStyleConfig: PanelStyleConfig = {
   },
 };
 
+/**
+ * Style config for the gauge panel. No custom field config type — all style comes
+ * from top-level FieldConfig properties and panel-level options.
+ *
+ * fieldConfig:
+ *   color      – color scheme
+ *   thresholds – threshold config that drives gauge color bands
+ *   mappings   – value-to-display mappings
+ *
+ * options:
+ *   shape               – circle vs arc style
+ *   orientation         – panel orientation (auto, horizontal, vertical)
+ *   sizing              – auto vs manual gauge size
+ *   minVizWidth         – minimum width for manual sizing
+ *   minVizHeight        – minimum height for manual sizing
+ *   barWidthFactor      – width of the gauge bar relative to available space
+ *   segmentCount        – number of arc segments
+ *   segmentSpacing      – spacing between segments
+ *   barShape            – flat vs rounded bar ends
+ *   endpointMarker      – point, glow, or none at the bar tip
+ *   textMode            – text displayed inside the gauge
+ *   showThresholdMarkers – tick marks at threshold boundaries
+ *   showThresholdLabels  – labels at threshold and neutral values
+ *   effects             – visual effects: barGlow, centerGlow, gradient
+ *   sparkline           – show sparkline in background
+ *   neutral             – neutral value dividing positive/negative coloring
+ *   text                – text sizes: { titleSize, valueSize }
+ */
+const gaugePanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color', 'thresholds', 'mappings'],
+    defaults: [],
+  },
+  options: {
+    props: [
+      'shape',
+      'orientation',
+      'sizing',
+      'minVizWidth',
+      'minVizHeight',
+      'barWidthFactor',
+      'segmentCount',
+      'segmentSpacing',
+      'barShape',
+      'endpointMarker',
+      'textMode',
+      'showThresholdMarkers',
+      'showThresholdLabels',
+      'effects',
+      'sparkline',
+      'neutral',
+      'text',
+    ],
+  },
+};
+
 const PANEL_STYLE_CONFIGS: Record<string, PanelStyleConfig> = {
   timeseries: graphPanelStyleConfig,
   trend: graphPanelStyleConfig,
   candlestick: graphPanelStyleConfig,
+  gauge: gaugePanelStyleConfig,
 };
 
 /**
