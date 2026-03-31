@@ -97,7 +97,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		if !plugins[ds.Config.Type] {
 			if err = m.secretStore.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
 				APIGroup:   ds.Config.Type + ".datasource.grafana.app",
-				APIVersion: "v0alpha1",
+				APIVersion: datasourceV0.VERSION,
 				Namespace:  opts.Namespace,
 				Kind:       "DataSource",
 				Name:       "*",
@@ -133,7 +133,6 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 			return fmt.Errorf("invalid apiVersion: %w", err)
 		}
 
-		// TODO: this assumes we've cleaned up all secrets from previous migrations.
 		if len(info.Secure) > 0 {
 			objRef := common.ObjectReference{
 				APIGroup:   gv.Group,
@@ -148,12 +147,6 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 				return fmt.Errorf("error create secrets for datasource %s (type=%s): %w, %#v", ds.UID, ds.Type, err, obj)
 			}
 			obj.Secure = secure
-		}
-
-		// Set TypeMeta with the per-plugin group
-		obj.TypeMeta = metav1.TypeMeta{
-			APIVersion: group + "/" + datasourceV0.VERSION,
-			Kind:       "DataSource",
 		}
 
 		body, err := json.Marshal(obj)
