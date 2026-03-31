@@ -1033,7 +1033,7 @@ func bulkImportLargeCounterCRUD(t *testing.T, importBackend, sqlBackend, kvBacke
 	for label, server := range map[string]resource.ResourceServer{"sql": sqlServer, "kv": kvServer} {
 		t.Run(label+" list after import", func(t *testing.T) {
 			list, err := server.List(ctx, &resourcepb.ListRequest{
-				Limit: totalItems + 1,
+				Limit:   totalItems + 1,
 				Options: &resourcepb.ListOptions{Key: listKey},
 			})
 			require.NoError(t, err)
@@ -1086,7 +1086,7 @@ func bulkImportLargeCounterCRUD(t *testing.T, importBackend, sqlBackend, kvBacke
 	for label, server := range map[string]resource.ResourceServer{"sql": sqlServer, "kv": kvServer} {
 		t.Run(label+" list after mutations", func(t *testing.T) {
 			list, err := server.List(ctx, &resourcepb.ListRequest{
-				Limit: totalItems + 1,
+				Limit:   totalItems + 1,
 				Options: &resourcepb.ListOptions{Key: listKey},
 			})
 			require.NoError(t, err)
