@@ -63,8 +63,11 @@ export function joinPath(directory: string, filename: string): string {
  * folder paths from file paths; without it, folder paths fail validation
  * with "unsupported file extension".
  */
-export function ensureFolderPathTrailingSlash(path: string): string {
-  if (!path || path.endsWith('/')) {
+export function ensureFolderPathTrailingSlash(path: string) {
+  if (!path) {
+    return '';
+  }
+  if (path.endsWith('/')) {
     return path;
   }
   return `${path}/`;

@@ -54,7 +54,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
   const [, updateUrlParams] = useUrlParams();
 
   const onBranchSuccess = (
-    { ref: branchRef, urls }: { ref: string; path: string; urls?: Record<string, string> },
+    { urls }: { ref: string; path: string; urls?: Record<string, string> },
     info: ProvisionedOperationInfo
   ) => {
     const prUrl = urls?.newPullRequestURL;

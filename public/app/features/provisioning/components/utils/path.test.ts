@@ -153,3 +153,8 @@ describe('ensureFolderPathTrailingSlash', () => {
     expect(ensureFolderPathTrailingSlash('a/b/c/d')).toBe('a/b/c/d/');
   });
 });
+
+it('should return empty string for undefined input', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect(ensureFolderPathTrailingSlash(undefined as any)).toBe('');
+});
