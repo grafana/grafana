@@ -25,6 +25,7 @@ interface HeaderCellProps {
   selectFirstCell: () => void;
   disableKeyboardEvents?: boolean;
   parentIndex?: number;
+  crossFilterRows: Record<string, TableRow[]>;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -38,6 +39,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   setFilter,
   showTypeIcons,
   parentIndex,
+  crossFilterRows,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -113,6 +115,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           field={field}
           iconClassName={styles.headerCellIcon}
           parentIndex={parentIndex}
+          crossFilterRows={crossFilterRows}
         />
       )}
     </Stack>

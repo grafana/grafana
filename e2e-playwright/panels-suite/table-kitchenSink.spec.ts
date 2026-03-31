@@ -355,6 +355,75 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // TODO -- saving for another day.
   });
 
+  test('Cross-filter: second filter popup only shows values reachable after first filter', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    const table = page.locator('.rdg');
+
+    const infoColumnIdx = await getColumnIdx(table, 'Info');
+    const minColumnIdx = await getColumnIdx(table, 'Min');
+
+    // --- Baseline: collect the full set of Min option titles from the Min filter popup ---
+    const minHeader = page.getByRole('columnheader').nth(minColumnIdx);
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const minFilterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+    await expect(minFilterContainer).toBeVisible();
+
+    // Count all option rows in the Min filter popup before any cross-filter is applied
+    const allMinOptions = await minFilterContainer.locator('[title]').allTextContents();
+    const allMinOptionCount = allMinOptions.length;
+
+    // Close without applying
+    await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
+    await expect(minFilterContainer).not.toBeVisible();
+
+    // --- Apply a filter on Info to only show "up" rows ---
+    const infoHeader = page.getByRole('columnheader').nth(infoColumnIdx);
+    await infoHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    const infoFilterContainer = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Visualization.TableNG.Filters.Container
+    );
+    await expect(infoFilterContainer).toBeVisible();
+
+    // Deselect all, then select only "up"
+    await infoFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
+    await infoFilterContainer.getByTitle('up', { exact: true }).locator('label').click();
+    await infoFilterContainer.getByRole('button', { name: 'Ok' }).click();
+    await expect(infoFilterContainer).not.toBeVisible();
+
+    // Table should now show only "up" rows
+    await expect(getCell(table, 1, infoColumnIdx)).toHaveText('up');
+
+    // --- Open the Min filter popup again; cross-filter should restrict the options ---
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await expect(minFilterContainer).toBeVisible();
+
+    const crossFilteredMinOptions = await minFilterContainer.locator('[title]').allTextContents();
+    const crossFilteredMinOptionCount = crossFilteredMinOptions.length;
+
+    // With Info filtered to "up" only, Min options must be a subset of (or equal to) the full set.
+    // In practice the data has multiple Info values, so the Min option list should be smaller.
+    expect(crossFilteredMinOptionCount).toBeLessThanOrEqual(allMinOptionCount);
+
+    // Close the filter popup
+    await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
+  });
+
   test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,

@@ -91,6 +91,7 @@ import {
   calculateFooterHeight,
   canFieldBeColorized,
   compileFrameToRecords,
+  computeCrossFilterRows,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -553,6 +554,11 @@ export function TableNG(props: TableNGProps) {
         cellRootRenderers: {},
       };
 
+      // Compute cross-filter rows scoped to the nesting level of this table instance.
+      // For top-level tables parentIndex is undefined; for nested tables it matches the parent row index.
+      const parentIndex = visibleRows[0]?.__parentIndex;
+      const { crossFilterRows } = computeCrossFilterRows(rawRows, filter, f, parentIndex);
+
       let lastRowIdx = -1;
       // shared when whole row will be styled by a single cell's color
       let rowCellStyle: Partial<CSSProperties> = {
@@ -824,7 +830,8 @@ export function TableNG(props: TableNGProps) {
               disableKeyboardEvents={disableKeyboardEvents}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
-              parentIndex={visibleRows[0]?.__parentIndex}
+              parentIndex={parentIndex}
+              crossFilterRows={crossFilterRows}
               selectFirstCell={() => {
                 gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
               }}

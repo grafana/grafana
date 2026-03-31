@@ -23,6 +23,7 @@ import { type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
   applySort,
+  computeCrossFilterRows,
   buildCellHeightMeasurers,
   buildHeaderHeightMeasurers,
   buildInspectValue,
@@ -1900,6 +1901,108 @@ describe('TableNG utils', () => {
         { time: 1, value: 10 },
         { time: 1, value: 20 },
       ]);
+    });
+  });
+
+  describe('computeCrossFilterRows', () => {
+    const makeField = (name: string, values: unknown[]) => ({
+      name,
+      type: FieldType.string,
+      values,
+      config: {},
+      display: (v: unknown) => ({ text: String(v), numeric: NaN }),
+    });
+
+    const makeRows = (values: Array<{ category: string; status: string }>): TableRow[] =>
+      values.map((v, i) => ({ __depth: 0, __index: i, category: v.category, status: v.status }));
+
+    const rows = makeRows([
+      { category: 'A', status: 'up' },
+      { category: 'A', status: 'down' },
+      { category: 'B', status: 'up' },
+      { category: 'B', status: 'down' },
+      { category: 'C', status: 'up' },
+    ]);
+
+    const fields = [
+      makeField('category', ['A', 'A', 'B', 'B', 'C']),
+      makeField('status', ['up', 'down', 'up', 'down', 'up']),
+    ];
+
+    it('returns empty crossFilterOrder and full rows as tail when no filters active', () => {
+      const { crossFilterOrder, crossFilterRows } = computeCrossFilterRows(rows, {}, fields);
+      expect(crossFilterOrder).toEqual([]);
+      expect(crossFilterRows['__tail']).toHaveLength(rows.length);
+    });
+
+    it('stores all rows before the first filter and the filtered subset as tail', () => {
+      const filter = {
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+      };
+      const { crossFilterOrder, crossFilterRows } = computeCrossFilterRows(rows, filter, fields);
+      expect(crossFilterOrder).toEqual(['category']);
+      // before the first filter: all rows
+      expect(crossFilterRows['category']).toHaveLength(5);
+      // tail: only rows with category A
+      expect(crossFilterRows['__tail']).toHaveLength(2);
+      expect(crossFilterRows['__tail'].every((r) => r['category'] === 'A')).toBe(true);
+    });
+
+    it('builds a cascading chain for multiple filters', () => {
+      const filter = {
+        category: { filteredSet: new Set(['A', 'B']), displayName: 'category' },
+        status: { filteredSet: new Set(['up']), displayName: 'status' },
+      };
+      const { crossFilterOrder, crossFilterRows } = computeCrossFilterRows(rows, filter, fields);
+      expect(crossFilterOrder).toEqual(['category', 'status']);
+      // before category filter: all 5 rows
+      expect(crossFilterRows['category']).toHaveLength(5);
+      // before status filter: rows passing category (A or B) = 4 rows
+      expect(crossFilterRows['status']).toHaveLength(4);
+      // tail: rows passing both = A-up and B-up
+      expect(crossFilterRows['__tail']).toHaveLength(2);
+    });
+
+    it('scopes top-level cross-filter to depth-0 rows only', () => {
+      const mixedRows: TableRow[] = [
+        ...rows,
+        // simulate a depth-1 nested container row that should be ignored
+        { __depth: 1, __index: 0 },
+      ];
+      const filter = {
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+      };
+      const { crossFilterRows } = computeCrossFilterRows(mixedRows, filter, fields);
+      // depth-1 row must not be counted
+      expect(crossFilterRows['category']).toHaveLength(5);
+    });
+
+    it('scopes nested cross-filter to matching parentIndex only', () => {
+      const nestedRows: TableRow[] = [
+        { __depth: 0, __index: 0, __parentIndex: 7, category: 'A', status: 'up' },
+        { __depth: 0, __index: 1, __parentIndex: 7, category: 'B', status: 'down' },
+        { __depth: 0, __index: 2, __parentIndex: 7, category: 'A', status: 'down' },
+      ];
+      const filter = {
+        'category-7': { filteredSet: new Set(['A']), displayName: 'category', parentIndex: 7 },
+      };
+      const { crossFilterOrder, crossFilterRows } = computeCrossFilterRows(nestedRows, filter, fields, 7);
+      expect(crossFilterOrder).toEqual(['category-7']);
+      // before the filter: all 3 nested rows
+      expect(crossFilterRows['category-7']).toHaveLength(3);
+      // tail: only the 2 rows with category A
+      expect(crossFilterRows['__tail']).toHaveLength(2);
+    });
+
+    it('ignores filters from a different nesting scope', () => {
+      const filter = {
+        // top-level filter — should be ignored when parentIndex=7 is requested
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+        'status-7': { filteredSet: new Set(['up']), displayName: 'status', parentIndex: 7 },
+      };
+      const { crossFilterOrder } = computeCrossFilterRows(rows, filter, fields, 7);
+      // only the nested filter for parentIndex 7 should appear
+      expect(crossFilterOrder).toEqual(['status-7']);
     });
   });
 

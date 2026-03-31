@@ -743,6 +743,58 @@ export function applyFilter(
     : rows.filter(filterRows);
 }
 
+/**
+ * Computes cross-filter metadata for use in filter popups, scoped to a nesting level.
+ *
+ * For each active filter key in the given scope, `crossFilterRows[key]` holds the rows
+ * available *before* that filter was applied (i.e. the rows that passed all preceding
+ * filters in the same scope).  `crossFilterRows['__tail']` holds the rows that survive
+ * *all* active filters in the scope, which is used for brand-new filters not yet in the
+ * order.
+ *
+ * Scope is determined by `parentIndex`:
+ *   - `undefined`  → top-level rows (depth === 0)
+ *   - a number     → nested rows belonging to that parent (already pre-scoped by the caller)
+ */
+export function computeCrossFilterRows(
+  rows: TableRow[],
+  filter: FilterType,
+  fields: Field[],
+  parentIndex?: number
+): { crossFilterOrder: string[]; crossFilterRows: Record<string, TableRow[]> } {
+  // Scope rows to the relevant nesting level
+  const scopedRows = parentIndex === undefined ? rows.filter((r) => r.__depth === 0) : rows;
+
+  // Collect filter keys that belong to this scope (preserving JS insertion order)
+  const crossFilterOrder = Object.keys(filter).filter((key) => {
+    const entry = filter[key];
+    return parentIndex === undefined ? entry.parentIndex == null : entry.parentIndex === parentIndex;
+  });
+
+  const crossFilterRows: Record<string, TableRow[]> = {};
+  let chainRows = scopedRows;
+
+  for (const filterKey of crossFilterOrder) {
+    const filterEntry = filter[filterKey];
+    // Store rows available *before* this filter is applied
+    crossFilterRows[filterKey] = chainRows;
+    // Advance the chain by applying this filter
+    chainRows = chainRows.filter((row) => {
+      const field = fields.find((f) => getDisplayName(f) === filterEntry.displayName);
+      if (!field || !field.display) {
+        return true;
+      }
+      const displayedValue = formattedValueToString(field.display(row[filterEntry.displayName]));
+      return filterEntry.filteredSet.has(displayedValue);
+    });
+  }
+
+  // Rows surviving all current filters — used as options for brand-new filter popups
+  crossFilterRows['__tail'] = chainRows;
+
+  return { crossFilterOrder, crossFilterRows };
+}
+
 /* ----------------------------- Data grid mapping ---------------------------- */
 /**
  * @internal
