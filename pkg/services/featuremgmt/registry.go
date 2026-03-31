@@ -1775,7 +1775,7 @@ var (
 			Name:        "tempoAlerting",
 			Description: "Enables creating alerts from Tempo data source",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOSSBigTent,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{

@@ -4,8 +4,8 @@ go 1.25.8
 
 // Direct requirements -- every entry needs an owner
 require (
-	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1 // @grafana/oss-big-tent
-	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 // @grafana/oss-big-tent
+	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1 // @grafana/data-sources-plugins
+	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 // @grafana/data-sources-plugins
 	cloud.google.com/go/kms v1.25.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.56.0 // @grafana/grafana-backend-group
 	connectrpc.com/connect v1.19.1 // @grafana/observability-traces-and-profiling
@@ -110,10 +110,10 @@ require (
 	github.com/grafana/nanogit v0.13.0 // indirect; @grafana/grafana-git-ui-sync-team
 	github.com/grafana/nanogit/gittest v0.10.2 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
-	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/oss-big-tent
-	github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686 // @grafana/oss-big-tent
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
+	github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686 // @grafana/data-sources-plugins
 	github.com/grafana/schemads v0.0.6 // @grafana/data-sources
-	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/oss-big-tent
+	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // @grafana/grafana-backend-group
