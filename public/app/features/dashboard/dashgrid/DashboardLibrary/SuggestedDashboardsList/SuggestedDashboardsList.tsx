@@ -290,7 +290,7 @@ export const SuggestedDashboardsList = ({
         contentKinds.push(CONTENT_KINDS.COMMUNITY_DASHBOARD);
       }
 
-      void SuggestedDashboardInteractions.loaded({
+     SuggestedDashboardInteractions.loaded({
         numberOfItems: provisionedDashboards.length + communityDashboards.length,
         contentKinds,
         datasourceTypes: [datasourceType],
@@ -310,7 +310,7 @@ export const SuggestedDashboardsList = ({
 
   // Provisioned dashboard click handler
   const onClickProvisionedDashboard = (dashboard: PluginDashboard, customizeWithAssistant?: boolean) => {
-    void SuggestedDashboardInteractions.itemClicked({
+    SuggestedDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
@@ -345,7 +345,7 @@ export const SuggestedDashboardsList = ({
   // Community dashboard click handler
   const [{ error: isPreviewDashboardError }, onClickCommunityDashboard] = useAsyncFn(
     async (dashboard: GnetDashboard, customizeWithAssistant?: boolean) => {
-      await SuggestedDashboardInteractions.itemClicked({
+      SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [datasourceType],
         libraryItemId: String(dashboard.id),
