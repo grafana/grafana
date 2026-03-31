@@ -67,10 +67,54 @@ const graphPanelStyleConfig: PanelStyleConfig = {
   },
 };
 
+/**
+ * Style config for the bar gauge panel. No custom field config type.
+ *
+ * fieldConfig:
+ *   color      – color scheme
+ *   thresholds – threshold config driving bar colors
+ *   mappings   – value-to-display mappings
+ *
+ * options:
+ *   displayMode  – gradient, retro LCD, or basic fill
+ *   valueMode    – value color, text color, or hidden
+ *   namePlacement – auto, top, left, or hidden
+ *   showUnfilled – render the unfilled region as gray
+ *   orientation  – panel orientation (auto, horizontal, vertical)
+ *   sizing       – auto vs manual bar size
+ *   minVizWidth  – minimum bar width for manual sizing
+ *   minVizHeight – minimum bar height for manual sizing
+ *   maxVizHeight – maximum bar height for manual sizing
+ *   text         – text sizes: { titleSize, valueSize }
+ *   legend       – legend visibility and placement
+ */
+const barGaugePanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color', 'thresholds', 'mappings'],
+    defaults: [],
+  },
+  options: {
+    props: [
+      'displayMode',
+      'valueMode',
+      'namePlacement',
+      'showUnfilled',
+      'orientation',
+      'sizing',
+      'minVizWidth',
+      'minVizHeight',
+      'maxVizHeight',
+      'text',
+      'legend',
+    ],
+  },
+};
+
 const PANEL_STYLE_CONFIGS: Record<string, PanelStyleConfig> = {
   timeseries: graphPanelStyleConfig,
   trend: graphPanelStyleConfig,
   candlestick: graphPanelStyleConfig,
+  bargauge: barGaugePanelStyleConfig,
 };
 
 /**

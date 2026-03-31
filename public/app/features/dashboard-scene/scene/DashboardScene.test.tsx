@@ -3,6 +3,7 @@ import {
   type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
+  ThresholdsMode,
   getDefaultTimeRange,
   locationUtil,
   store,
@@ -731,6 +732,107 @@ describe('DashboardScene', () => {
           const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
           expect(stored.panelType).toBe('candlestick');
           expect(stored.styles).toBeDefined();
+        });
+
+        it('Should copy fieldConfig and options styles from a bar gauge panel', () => {
+          const barGaugePanel = new VizPanel({
+            title: 'Bar Gauge Panel',
+            key: `panel-bargauge-${Math.random()}`,
+            pluginId: 'bargauge',
+            options: {
+              displayMode: 'gradient',
+              valueMode: 'color',
+              namePlacement: 'auto',
+              showUnfilled: true,
+              orientation: 'horizontal',
+              sizing: 'auto',
+              minVizWidth: 8,
+              minVizHeight: 16,
+              maxVizHeight: 300,
+              text: { titleSize: 14, valueSize: 20 },
+              legend: { showLegend: true, placement: 'bottom' },
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'thresholds' },
+                thresholds: {
+                  mode: ThresholdsMode.Absolute,
+                  steps: [
+                    { color: 'green', value: 0 },
+                    { color: 'red', value: 80 },
+                  ],
+                },
+                mappings: [],
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(barGaugePanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('bargauge');
+
+          // fieldConfig style props
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
+          expect(stored.styles.fieldConfig.defaults.thresholds).toBeDefined();
+          expect(stored.styles.fieldConfig.defaults.mappings).toEqual([]);
+          expect(stored.styles.fieldConfig.defaults.custom).toBeUndefined();
+
+          // options style props
+          expect(stored.styles.options.displayMode).toBe('gradient');
+          expect(stored.styles.options.valueMode).toBe('color');
+          expect(stored.styles.options.namePlacement).toBe('auto');
+          expect(stored.styles.options.showUnfilled).toBe(true);
+          expect(stored.styles.options.orientation).toBe('horizontal');
+          expect(stored.styles.options.sizing).toBe('auto');
+          expect(stored.styles.options.text).toEqual({ titleSize: 14, valueSize: 20 });
+          expect(stored.styles.options.legend).toEqual({ showLegend: true, placement: 'bottom' });
+
+          // non-style options must NOT be captured
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+        });
+
+        it('Should paste fieldConfig and options styles into a bar gauge panel', () => {
+          const barGaugePanel = new VizPanel({
+            title: 'Bar Gauge Panel',
+            key: `panel-bargauge-${Math.random()}`,
+            pluginId: 'bargauge',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          barGaugePanel.onFieldConfigChange = mockOnFieldConfigChange;
+          barGaugePanel.onOptionsChange = mockOnOptionsChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'bargauge',
+              styles: {
+                fieldConfig: {
+                  defaults: {
+                    color: { mode: 'thresholds' },
+                    thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: 0 }] },
+                  },
+                },
+                options: {
+                  displayMode: 'gradient',
+                  showUnfilled: false,
+                  text: { titleSize: 16, valueSize: 24 },
+                },
+              },
+            })
+          );
+
+          scene.pastePanelStyles(barGaugePanel);
+
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({ displayMode: 'gradient', showUnfilled: false, text: { titleSize: 16, valueSize: 24 } })
+          );
         });
 
         it('Should paste styles from a trend panel into another trend panel', () => {
