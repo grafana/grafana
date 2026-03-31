@@ -44,6 +44,9 @@ Set the following options to provide basic information about a panel and define 
 
 <!-- prettier-ignore-end -->
 
+You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/), which is currently in public preview.
+To enable this, refer to [Set up generative AI features for dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+
 ### Description field formatting
 
 Grafana renders the **Description** field as [GitHub Flavored Markdown](https://github.github.com/gfm/) (GFM). You can use common Markdown and GFM features, including:
@@ -56,9 +59,6 @@ Grafana renders the **Description** field as [GitHub Flavored Markdown](https://
 
 The description appears in a tooltip, so short copy and basic formatting work best.
 To break text into separate paragraphs, use an empty line between them, or use a list.
-
-You can use generative AI to populate the **Description** field with the [Grafana LLM plugin](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/), which is currently in public preview.
-To enable this, refer to [Set up generative AI features for dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 
 Grafana sanitizes the rendered HTML to reduce security risk and strips out or restricts arbitrary HTML, scripts, and many embedded elements, similar to Markdown in the [Text](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/) visualization.
 
