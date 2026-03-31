@@ -12,6 +12,21 @@ const (
 	ZanzanaModeEmbedded ZanzanaMode = "embedded"
 )
 
+// ZanzanaPrimaryEngine controls which engine is on the hot path when the shadow
+// client is active (i.e. the Zanzana feature flag is enabled but
+// ZanzanaNoLegacyClient is not). The other engine runs in the background for
+// comparison only.
+type ZanzanaPrimaryEngine string
+
+const (
+	// ZanzanaPrimaryEngineRBAC uses legacy RBAC as the primary engine and runs
+	// Zanzana checks in the background (default – preserves existing behaviour).
+	ZanzanaPrimaryEngineRBAC ZanzanaPrimaryEngine = "rbac"
+	// ZanzanaPrimaryEngineZanzana uses Zanzana as the primary engine and runs
+	// legacy RBAC checks in the background.
+	ZanzanaPrimaryEngineZanzana ZanzanaPrimaryEngine = "zanzana"
+)
+
 type ZanzanaClientSettings struct {
 	// Mode can either be embedded or client.
 	Mode ZanzanaMode
@@ -29,6 +44,9 @@ type ZanzanaClientSettings struct {
 	TokenExchangeURL string
 	// Namespace to use for the token.
 	TokenNamespace string
+	// PrimaryEngine selects which engine is on the hot path when the shadow
+	// client is active. Accepted values: "rbac" (default) and "zanzana".
+	PrimaryEngine ZanzanaPrimaryEngine
 }
 
 type ZanzanaReconcilerMode string
@@ -289,6 +307,13 @@ func (cfg *Cfg) readZanzanaSettings() {
 	}
 	if tokenExchangeURL != "" {
 		zc.TokenExchangeURL = tokenExchangeURL
+	}
+
+	zc.PrimaryEngine = ZanzanaPrimaryEngine(clientSec.Key("primary_engine").MustString(string(ZanzanaPrimaryEngineRBAC)))
+	validEngines := []ZanzanaPrimaryEngine{ZanzanaPrimaryEngineRBAC, ZanzanaPrimaryEngineZanzana}
+	if !slices.Contains(validEngines, zc.PrimaryEngine) {
+		cfg.Logger.Warn("Invalid zanzana primary_engine", "expected", validEngines, "got", zc.PrimaryEngine)
+		zc.PrimaryEngine = ZanzanaPrimaryEngineRBAC
 	}
 
 	cfg.ZanzanaClient = zc

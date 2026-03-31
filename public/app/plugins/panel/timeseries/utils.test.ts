@@ -371,4 +371,29 @@ describe('lttbPreviewData', () => {
     expect(result.series[0].length).toBe(30);
     expect(result.series[0].fields[0].values).toEqual(range(30));
   });
+
+  it('clears interval on the time field to prevent gaps', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: range(500), config: { interval: 10000 } },
+        { name: 'value', type: FieldType.number, values: range(500) },
+      ],
+    });
+    const result = lttbPreviewData({ series: [frame] } as PanelData);
+
+    const timeField = result.series[0].fields[0];
+    expect(timeField.config.interval).toBeUndefined();
+  });
+
+  it('does not modify config on frames below the threshold', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: range(3), config: { interval: 10000 } },
+        { name: 'value', type: FieldType.number, values: range(3) },
+      ],
+    });
+    const result = lttbPreviewData({ series: [frame] } as PanelData);
+
+    expect(result.series[0].fields[0].config.interval).toBe(10000);
+  });
 });

@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'classnames';
 import { Resizable } from 're-resizable';
 import { type PropsWithChildren, useEffect } from 'react';
@@ -38,6 +39,7 @@ export function AppChrome({ children }: Props) {
   } = useExtensionSidebarContext();
   const state = chrome.useState();
   const scopes = useScopes();
+  const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
@@ -162,7 +164,7 @@ export function AppChrome({ children }: Props) {
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
-      {!state.chromeless && <SplashScreenModal />}
+      {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
