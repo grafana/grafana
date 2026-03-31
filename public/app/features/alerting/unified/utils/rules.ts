@@ -1,5 +1,6 @@
 import { capitalize } from 'lodash';
 
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { AlertState } from '@grafana/data';
 import {
   type Alert,
@@ -25,9 +26,11 @@ import {
   GrafanaAlertState,
   type GrafanaAlertStateWithReason,
   type GrafanaAlertingRuleDefinition,
+  type GrafanaNotificationSettings,
   type GrafanaPromAlertingRuleDTO,
   type GrafanaPromRecordingRuleDTO,
   type GrafanaRecordingRuleDefinition,
+  type Labels,
   type PostableRuleDTO,
   PromAlertingRuleState,
   type PromRuleDTO,
@@ -46,7 +49,7 @@ import { type State } from '../components/StateTag';
 import { RuleHealth, RuleSource } from '../search/rulesSearchParser';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 
-import { RULER_NOT_SUPPORTED_MSG } from './constants';
+import { GRAFANA_FOLDER_LABEL, MATCHER_ALERT_RULE_UID, RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { type AsyncRequestState } from './redux';
@@ -64,6 +67,16 @@ function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO
 
 function isGrafanaRecordingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO<GrafanaRecordingRuleDefinition> {
   return isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert;
+}
+
+export function ruleUsesDefaultPolicy(notificationSettings?: GrafanaNotificationSettings): boolean {
+  if (notificationSettings?.receiver) {
+    return false;
+  }
+  if (notificationSettings?.policy && notificationSettings.policy !== USER_DEFINED_TREE_NAME) {
+    return false;
+  }
+  return true;
 }
 
 export function isPausedRule(rule: RulerGrafanaRuleDTO) {
@@ -552,3 +565,35 @@ export function getRuleUID(rule?: RulerRuleDTO | Rule) {
 
 export const NO_GROUP_PREFIX = 'no_group_for_rule_';
 export const isUngroupedRuleGroup = (group: string): boolean => group.startsWith(NO_GROUP_PREFIX);
+
+/**
+ * Returns the full effective label set for a Grafana-managed alert rule, merging
+ * user-defined labels with the system labels Grafana attaches to every fired
+ * alert instance at evaluation time (alertname, grafana_folder, __alert_rule_uid__).
+ *
+ * User-defined labels take precedence over system labels if they conflict,
+ * matching Go backend behavior (GetRuleExtraLabels).
+ *
+ * For non-Grafana rules sources, only the user-defined labels are returned since
+ * system labels are not predictable from the rule definition alone.
+ *
+ * Note: labels derived from metric query results (e.g. `instance`, `job`) are
+ * unknowable at rule-definition time and cannot be included.
+ */
+export function getEffectiveRuleLabels(rule: CombinedRule): Labels {
+  if (!isGrafanaRulesSource(rule.namespace.rulesSource)) {
+    return rule.labels;
+  }
+
+  const systemLabels: Labels = {
+    alertname: rule.name,
+    [GRAFANA_FOLDER_LABEL]: rule.namespace.name,
+  };
+
+  if (rule.uid) {
+    systemLabels[MATCHER_ALERT_RULE_UID] = rule.uid;
+  }
+
+  // System labels are the base; user-defined labels override them, matching Go backend behavior.
+  return { ...systemLabels, ...rule.labels };
+}

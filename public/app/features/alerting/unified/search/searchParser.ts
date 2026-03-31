@@ -17,6 +17,7 @@ const filterTokenToTypeMap: Record<number, string> = {
   [terms.PluginsToken]: 'plugins',
   [terms.ContactPointToken]: 'contactPoint',
   [terms.RuleSourceToken]: 'source',
+  [terms.PolicyToken]: 'policy',
 };
 
 // This enum allows to configure parser behavior
@@ -35,6 +36,7 @@ export enum FilterSupportedTerm {
   plugins = 'pluginsFilter',
   contactPoint = 'contactPointFilter',
   source = 'sourceFilter',
+  policy = 'policyFilter',
 }
 
 export type QueryFilterMapper = Record<number, (filter: string) => void>;

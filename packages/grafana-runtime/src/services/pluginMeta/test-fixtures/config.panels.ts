@@ -481,6 +481,43 @@ export const panels: PanelPluginMetas = structuredClone({
     loadingStrategy: PluginLoadingStrategy.script,
     type: PluginType.panel,
   },
+  debug: {
+    id: 'debug',
+    name: 'Debug',
+    aliasIDs: ['debugX'],
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Debug Panel for Grafana',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/debug/img/icn-debug.svg',
+        large: 'public/plugins/debug/img/icn-debug.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    state: PluginState.alpha,
+    baseUrl: 'public/plugins/debug',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/debug',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
   flamegraph: {
     id: 'flamegraph',
     name: 'Flame Graph',
