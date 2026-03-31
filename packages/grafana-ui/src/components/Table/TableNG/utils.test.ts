@@ -1822,6 +1822,44 @@ describe('TableNG utils', () => {
       ]);
     });
 
+    it('ignores scoped filter entries when parentIndex is not passed (regression: useNestedRows must pass parentIndex)', () => {
+      // This is the bug: calling applyFilter without parentIndex when all filter entries have
+      // parentIndex set causes them to be treated as top-level and silently skipped, leaving
+      // the nested table unfiltered. The fix is to always pass parentRow.__index.
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const records = frameToRecords(frame, 5);
+
+      // Bug: no parentIndex arg — scoped filter is ignored, all rows returned
+      const { filteredRows: buggy } = applyFilter(
+        records,
+        { value: { filteredSet: new Set(['10']), displayName: 'value', parentIndex: 5 } },
+        frame.fields,
+        false
+      );
+      expect(buggy).toHaveLength(3); // filter had no effect
+
+      // Fix: pass parentIndex — scoped filter is applied correctly
+      const { filteredRows: fixed } = applyFilter(
+        records,
+        { value: { filteredSet: new Set(['10']), displayName: 'value', parentIndex: 5 } },
+        frame.fields,
+        false,
+        5
+      );
+      expect(fixed).toHaveLength(1);
+      expect(fixed).toMatchObject([{ value: 10 }]);
+    });
+
     it('filters the records by the filter columns with a nested frame and a parent index', () => {
       const frame = createDataFrame({
         fields: [

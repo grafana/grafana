@@ -412,17 +412,23 @@ describe('TableNG hooks', () => {
 
       const frameToRecords = compileFrameToRecords(frame, 'nested');
 
+      // parentIndex must be set on the filter entry — this is how the UI always scopes filters
+      // for nested tables. Without it the filter is silently skipped (regression test).
       const { result } = renderHook(() =>
         useNestedRows(
           frameToRecords(frame),
           frame.fields[1].values[0],
           true,
           'nested',
-          { name: { filteredSet: new Set(['Alice', 'Bob']), displayName: 'name' } },
+          { 'name-0': { filteredSet: new Set(['Alice', 'Bob']), displayName: 'name', parentIndex: 0 } },
           [{ columnKey: 'age', direction: 'ASC' }]
         )
       );
-      expect(result.current).toMatchSnapshot();
+
+      // filtering reduced raw (3 rows) to final (2 rows: Alice + Bob), sorted by age ASC
+      expect(result.current[0].raw).toHaveLength(3);
+      expect(result.current[0].final).toHaveLength(2);
+      expect(result.current[0].final.map((r: { name: string }) => r.name)).toEqual(['Bob', 'Alice']);
     });
   });
 
