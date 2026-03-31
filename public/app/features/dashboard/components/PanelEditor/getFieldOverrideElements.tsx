@@ -3,20 +3,20 @@ import { cloneDeep } from 'lodash';
 import * as React from 'react';
 
 import {
-  FieldConfigOptionsRegistry,
-  SelectableValue,
+  type FieldConfigOptionsRegistry,
+  type SelectableValue,
   isSystemOverride as isSystemOverrideGuard,
-  VariableSuggestionsScope,
-  DynamicConfigValue,
-  ConfigOverrideRule,
-  GrafanaTheme2,
+  type VariableSuggestionsScope,
+  type DynamicConfigValue,
+  type ConfigOverrideRule,
+  type GrafanaTheme2,
   fieldMatchers,
-  FieldConfigSource,
-  DataFrame,
+  type FieldConfigSource,
+  type DataFrame,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { MatcherScope } from '@grafana/schema';
+import { type MatcherScope } from '@grafana/schema';
 import {
   fieldMatchersUI,
   getUniqueMatcherScopes,

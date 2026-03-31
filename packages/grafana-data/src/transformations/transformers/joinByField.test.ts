@@ -1,11 +1,11 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { JoinMode, JoinByFieldOptions, joinByFieldTransformer } from './joinByField';
+import { JoinMode, type JoinByFieldOptions, joinByFieldTransformer } from './joinByField';
 
 describe('JOIN Transformer', () => {
   beforeAll(() => {

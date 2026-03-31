@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
-import { ComponentSize } from '../../types/size';
-import { Button, ButtonFill, ButtonVariant } from '../Button/Button';
+import { type IconName } from '../../types/icon';
+import { type ComponentSize } from '../../types/size';
+import { Button, type ButtonFill, type ButtonVariant } from '../Button/Button';
 import { Select } from '../Select/Select';
 
 export interface ValuePickerProps<T> {

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
 
-import { InstanceCounts } from '../types';
+import { type InstanceCounts } from '../types';
 
 interface RowActionsProps {
   counts: InstanceCounts;

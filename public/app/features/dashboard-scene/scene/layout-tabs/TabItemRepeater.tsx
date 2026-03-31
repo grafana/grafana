@@ -4,11 +4,11 @@ import { useEffect } from 'react';
 
 import { t } from '@grafana/i18n';
 import {
-  MultiValueVariable,
+  type MultiValueVariable,
   NewSceneObjectAddedEvent,
   SceneVariableSet,
   sceneGraph,
-  VariableValueSingle,
+  type VariableValueSingle,
 } from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -18,8 +18,8 @@ import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableV
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
-import { TabItem } from './TabItem';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { type TabItem } from './TabItem';
+import { type TabsLayoutManager } from './TabsLayoutManager';
 
 export interface Props {
   tab: TabItem;

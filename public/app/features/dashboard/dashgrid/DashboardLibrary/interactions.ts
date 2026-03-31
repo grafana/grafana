@@ -1,6 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
 
-import { ContentKind, DiscoveryMethod, EventLocation, SourceEntryPoint } from './constants';
+import { type ContentKind, type DiscoveryMethod, type EventLocation, type SourceEntryPoint } from './constants';
 import { isTemplateDashboardAssistantEnabled } from './utils/assistantHelpers';
 
 const SCHEMA_VERSION = 1;

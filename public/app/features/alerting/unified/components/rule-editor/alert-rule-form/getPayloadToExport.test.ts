@@ -1,8 +1,8 @@
-import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { mockRulerGrafanaRecordingRule, mockRulerGrafanaRule } from '../../../mocks';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { Annotation } from '../../../utils/constants';
 
 import { getPayloadToExport } from './ModifyExportRuleForm';

@@ -1,4 +1,4 @@
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { type PromAlertingRuleState, type PromRuleType } from 'app/types/unified-alerting-dto';
 
 import type { RuleHealth, RuleSource } from '../../search/rulesSearchParser';
 

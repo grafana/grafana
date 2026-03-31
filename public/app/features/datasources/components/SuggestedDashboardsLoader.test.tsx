@@ -13,7 +13,7 @@ import {
 
 import {
   SuggestedDashboardsLoader,
-  SuggestedDashboardsLoaderChildProps,
+  type SuggestedDashboardsLoaderChildProps,
   clearDashboardCache,
 } from './SuggestedDashboardsLoader';
 

@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { ButtonHTMLAttributes, useContext } from 'react';
+import React, { type ButtonHTMLAttributes, useContext } from 'react';
 
-import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { ButtonVariant } from '../Button/Button';
+import { type ButtonVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 

@@ -2,11 +2,11 @@ import { css, cx } from '@emotion/css';
 import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
+import { type DataFrameView, type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
 import { TextLink, useStyles2 } from '@grafana/ui';
-import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
+import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 
-import { NewsItem } from '../types';
+import { type NewsItem } from '../types';
 
 interface NewsItemProps {
   width: number;

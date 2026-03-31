@@ -1,7 +1,7 @@
 import { testWithFeatureToggles } from 'test/test-utils';
 
 import { setAppPluginMetas } from '@grafana/runtime/internal';
-import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, type PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromRecordingRule } from '../../mocks';
 import { RuleHealth } from '../../search/rulesSearchParser';

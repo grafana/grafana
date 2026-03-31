@@ -3,7 +3,13 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  MappingType,
+  SpecialValueMatch,
+  type SelectableValue,
+  type ValueMappingResult,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
 

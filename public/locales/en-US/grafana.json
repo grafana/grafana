@@ -7265,6 +7265,9 @@
         }
       }
     },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": "Filter is not applicable"
+    },
     "panel-styles": {
       "threshold-badge-tooltip": "This preset will modify thresholds",
       "title": "Panel styles"

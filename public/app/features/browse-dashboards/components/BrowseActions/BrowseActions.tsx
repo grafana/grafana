@@ -10,7 +10,7 @@ import { BulkMoveProvisionedResource } from 'app/features/provisioning/component
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import {
@@ -20,7 +20,7 @@ import {
 import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../api/browseDashboardsAPI';
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
-import { DashboardTreeSelection } from '../../types';
+import { type DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';

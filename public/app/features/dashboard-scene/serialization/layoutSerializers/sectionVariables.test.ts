@@ -1,5 +1,9 @@
 import { ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
-import { ConstantVariableKind, CustomVariableKind, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type ConstantVariableKind,
+  type CustomVariableKind,
+  type VariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';

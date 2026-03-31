@@ -1760,6 +1760,19 @@
     },
     {
       "metadata": {
+        "name": "datasourcesQuerierRawOutput",
+        "resourceVersion": "1774855676428",
+        "creationTimestamp": "2026-03-30T07:27:56Z"
+      },
+      "spec": {
+        "description": "use raw output mode for the data source querier",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesRerouteLegacyCRUDAPIs",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -2269,14 +2282,17 @@
     {
       "metadata": {
         "name": "grafanaAdvisor",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-01-20T10:08:00Z"
+        "resourceVersion": "1774448820925",
+        "creationTimestamp": "2025-01-20T10:08:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-25 14:27:00.925614 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Advisor app",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4245,6 +4261,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryServiceQueryCaching",
+        "resourceVersion": "1774711941702",
+        "creationTimestamp": "2026-03-28T15:32:21Z"
+      },
+      "spec": {
+        "description": "Enables the query service to do query caching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
       }
     },

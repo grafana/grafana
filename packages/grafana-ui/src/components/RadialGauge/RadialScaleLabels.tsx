@@ -1,11 +1,11 @@
 import { memo, useId } from 'react';
 
-import { FieldDisplay, GrafanaTheme2, Threshold, ThresholdsMode } from '@grafana/data';
+import { type FieldDisplay, type GrafanaTheme2, type Threshold, ThresholdsMode } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { measureText } from '../../utils/measureText';
 
-import { RadialGaugeDimensions } from './types';
+import { type RadialGaugeDimensions } from './types';
 import { getFieldConfigMinMax, drawRadialArcPath } from './utils';
 
 interface RadialScaleLabelsProps {
