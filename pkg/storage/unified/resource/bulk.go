@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
@@ -596,7 +597,14 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 	}
 
 	x.counter++
-	return ts + x.counter
+	// Keep the sub-millisecond fraction under 1000 so that the snowflake-to-microRV
+	// roundtrip (RVFromSnowflake / SnowflakeFromRV) is lossless. When the counter
+	// exceeds 999, the overflow advances the millisecond portion of the snowflake.
+	// TODO: remove when backwards compatibility is no longer needed
+	shift := snowflake.NodeBits + snowflake.StepBits
+	msOffset := x.counter / 1000
+	subMs := x.counter % 1000
+	return ts + (msOffset << shift) + subMs
 }
 
 type BulkLock struct {
