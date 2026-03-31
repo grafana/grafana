@@ -122,10 +122,10 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 			if zanzanaItemChecker != nil {
 				zanzanaRes := zanzanaItemChecker(name, folder)
 				if zanzanaRes != rbacRes {
-					c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+					c.metrics.evaluationStatusTotal.WithLabelValues("error", "compile", "other", req.Namespace).Inc()
 					c.logger.Warn("Zanzana compile result does not match", "expected", rbacRes, "actual", zanzanaRes, "name", name, "folder", folder)
 				} else {
-					c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+					c.metrics.evaluationStatusTotal.WithLabelValues("success", "compile", "other", req.Namespace).Inc()
 				}
 			}
 		}()
