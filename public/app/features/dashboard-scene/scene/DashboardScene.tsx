@@ -138,7 +138,7 @@ function copyFieldConfigPropIfDefined<K extends keyof FieldConfig>(
   }
 }
 
-function extractOptionProps(source: object, props: readonly string[]): Record<string, unknown> {
+function extractOptionProps(source: Record<string, unknown>, props: readonly string[]): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(source)) {
     if (props.includes(key) && value !== undefined) {
