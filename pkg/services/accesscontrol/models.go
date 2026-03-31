@@ -495,13 +495,14 @@ const (
 
 	AlertingNotificationsApiGroup = "notifications.alerting.grafana.app"
 	AlertingRoutesResource        = "routingtrees"
+	AlertingRoutesKind            = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource
 	// Alerting managed routes actions (new, scoped per-resource)
-	ActionAlertingManagedRoutesRead      = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":get"
-	ActionAlertingManagedRoutesWrite     = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":update"
-	ActionAlertingManagedRoutesCreate    = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":create"
-	ActionAlertingManagedRoutesDelete    = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":delete"
-	ActionAlertingRoutesPermissionsRead  = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":set_permissions"
-	ActionAlertingRoutesPermissionsWrite = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource + ":get_permissions"
+	ActionAlertingManagedRoutesRead      = AlertingRoutesKind + ":get"
+	ActionAlertingManagedRoutesWrite     = AlertingRoutesKind + ":update"
+	ActionAlertingManagedRoutesCreate    = AlertingRoutesKind + ":create"
+	ActionAlertingManagedRoutesDelete    = AlertingRoutesKind + ":delete"
+	ActionAlertingRoutesPermissionsRead  = AlertingRoutesKind + ":set_permissions"
+	ActionAlertingRoutesPermissionsWrite = AlertingRoutesKind + ":get_permissions"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
