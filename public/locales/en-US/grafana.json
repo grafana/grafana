@@ -3571,7 +3571,7 @@
       "expand-all": "Expand all",
       "expand-sidebar": "Expand sidebar",
       "filter-labels": "Filter labels",
-      "filter-labels-placeholder": "Filter",
+      "filter-labels-placeholder": "Search labels",
       "group-row": {
         "no-label": "No {{label}}"
       },
