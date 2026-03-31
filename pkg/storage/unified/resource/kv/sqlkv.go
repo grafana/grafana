@@ -23,6 +23,7 @@ const (
 )
 
 var _ KV = &SqlKV{}
+var _ HistoryImporter = &SqlKV{}
 
 var batchSavepointCounter uint64
 
@@ -453,6 +454,25 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 	return nil
 }
 
+// ImportHistory appends authoritative DataSection history rows for migrator-driven
+// bulk imports. It bypasses generic KV.Batch semantics and only performs raw
+// datastore inserts inside one transaction/savepoint scope, preserving the
+// caller's row order.
+func (k *SqlKV) ImportHistory(ctx context.Context, rows []HistoryImportRow) error {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	qb, err := k.getQueryBuilder(DataSection)
+	if err != nil {
+		return err
+	}
+
+	return k.withBatchTx(ctx, func(batchCtx context.Context, tx *sql.Tx) error {
+		return k.batchInsertDatastoreRows(batchCtx, tx, qb, rows)
+	})
+}
+
 func (k *SqlKV) keyExists(ctx context.Context, section string, key string) (bool, error) {
 	qb, err := k.getQueryBuilder(section)
 	if err != nil {
@@ -570,24 +590,35 @@ func (k *SqlKV) batchWrite(ctx context.Context, section string, op BatchOp) erro
 }
 
 func (k *SqlKV) batchInsertDatastore(ctx context.Context, tx *sql.Tx, qb *queryBuilder, ops []BatchOp) error {
-	maxRows := BatchInsertMaxRows(k.dialect, 9) // 9 params per row
-	for start := 0; start < len(ops); start += maxRows {
-		end := start + maxRows
-		if end > len(ops) {
-			end = len(ops)
+	rows := make([]HistoryImportRow, len(ops))
+	for i, op := range ops {
+		rows[i] = HistoryImportRow{
+			Key:   op.Key,
+			Value: op.Value,
 		}
-		chunk := ops[start:end]
+	}
+	return k.batchInsertDatastoreRows(ctx, tx, qb, rows)
+}
 
-		rows := make([]batchInsertRow, len(chunk))
-		for i, op := range chunk {
-			rows[i] = batchInsertRow{
+func (k *SqlKV) batchInsertDatastoreRows(ctx context.Context, tx *sql.Tx, qb *queryBuilder, rows []HistoryImportRow) error {
+	maxRows := BatchInsertMaxRows(k.dialect, 9) // 9 params per row
+	for start := 0; start < len(rows); start += maxRows {
+		end := start + maxRows
+		if end > len(rows) {
+			end = len(rows)
+		}
+		chunk := rows[start:end]
+
+		insertRows := make([]batchInsertRow, len(chunk))
+		for i, row := range chunk {
+			insertRows[i] = batchInsertRow{
 				GUID:    uuid.New().String(),
-				KeyPath: getKeyPath(DataSection, op.Key),
-				Value:   op.Value,
+				KeyPath: getKeyPath(DataSection, row.Key),
+				Value:   row.Value,
 			}
 		}
 
-		query, args := qb.buildBatchInsertDatastoreQuery(rows)
+		query, args := qb.buildBatchInsertDatastoreQuery(insertRows)
 		if _, err := tx.ExecContext(ctx, query, args...); err != nil {
 			return fmt.Errorf("batch insert failed at rows %d-%d: %w", start, end-1, err)
 		}

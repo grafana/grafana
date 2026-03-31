@@ -1786,6 +1786,16 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 	}
 }
 
+// ProcessBulk imports authoritative legacy history for one or more collections.
+// This path is only used by unified-storage migrators after they have selected a
+// namespace/group/resource collection and produced an ordered stream of
+// ADDED/MODIFIED/DELETED history records. ProcessBulk wipes the destination
+// collection first, then appends validated history rows in chunks. Rejections on
+// this path are limited to malformed requests (invalid action, invalid JSON,
+// invalid DataKey). It does not emulate generic "current resource existence"
+// semantics; migration validators are responsible for checking that the imported
+// history matches the legacy source of truth.
+//
 //nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	// rvManagerDB is the database handle for rvManager and legacy compat operations.
@@ -1879,6 +1889,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Resource:      key.Resource,
 			PreviousCount: previousCount,
 		}
+		rsp.Summary = append(rsp.Summary, summaries[NSGR(key)])
 	}
 
 	saved := make([]DataKey, 0)
@@ -1896,13 +1907,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
 	lastMicroRV := make(map[string]int64)
 
-	// Track ADDED resources accepted in the pending buffer to catch duplicates before flush.
-	seenCreates := make(map[string]bool)
-	// Track unflushed DELETEs so that a subsequent ADDED skips the storage check
-	// (the delete hasn't been persisted yet, so storage still shows the resource).
-	pendingDeletes := make(map[string]bool)
-
-	// Accumulate validated items for batch save instead of saving one at a time.
+	// Accumulate validated migrator history rows before importing them in chunks.
 	type pendingItem struct {
 		dataKey DataKey
 		value   []byte
@@ -1911,18 +1916,19 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 	pending := make([]pendingItem, 0, kv.MaxBatchOps)
 
-	// flushPending batch-saves all accumulated items and runs post-save work (legacy updates).
+	// flushPending imports the accumulated history rows and runs post-import
+	// compatibility updates that keep the legacy SQL tables in sync.
 	flushPending := func() error {
 		if len(pending) == 0 {
 			return nil
 		}
 
-		items := make([]batchSaveItem, len(pending))
+		items := make([]historyImportItem, len(pending))
 		for i, p := range pending {
-			items[i] = batchSaveItem{Key: p.dataKey, Value: p.value}
+			items[i] = historyImportItem{Key: p.dataKey, Value: p.value}
 		}
 
-		if err := b.dataStore.batchSave(ctx, items); err != nil {
+		if err := b.dataStore.importHistoryBatch(ctx, items); err != nil {
 			return err
 		}
 
@@ -1956,7 +1962,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		pending = pending[:0]
-		clear(pendingDeletes)
 		return nil
 	}
 
@@ -1979,42 +1984,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		switch resourcepb.WatchEvent_Type(req.Action) {
 		case resourcepb.WatchEvent_ADDED:
 			action = DataActionCreated
-			createID := req.Key.Group + "/" + req.Key.Resource + "/" + req.Key.Namespace + "/" + req.Key.Name
-			// Check pending buffer for duplicate creates not yet flushed
-			if seenCreates[createID] {
-				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-					Key:    req.Key,
-					Action: req.Action,
-					Error:  "resource already exists",
-				})
-				continue
-			}
-			// Check if resource already exists in storage, but skip if a pending
-			// delete for this resource hasn't been flushed yet.
-			if !pendingDeletes[createID] {
-				_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-					Group:     req.Key.Group,
-					Resource:  req.Key.Resource,
-					Namespace: req.Key.Namespace,
-					Name:      req.Key.Name,
-				})
-				if err == nil {
-					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-						Key:    req.Key,
-						Action: req.Action,
-						Error:  "resource already exists",
-					})
-					continue
-				}
-				if !errors.Is(err, ErrNotFound) {
-					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-						Key:    req.Key,
-						Action: req.Action,
-						Error:  fmt.Sprintf("failed to check if resource exists: %s", err),
-					})
-					continue
-				}
-			}
 		case resourcepb.WatchEvent_MODIFIED:
 			action = DataActionUpdated
 		case resourcepb.WatchEvent_DELETED:
@@ -2056,20 +2025,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				Error:  fmt.Sprintf("invalid data key: %s", err),
 			})
 			continue
-		}
-
-		// Update seenCreates only after all validation passes, so a rejected
-		// item doesn't corrupt the duplicate-detection state.
-		createID := req.Key.Group + "/" + req.Key.Resource + "/" + req.Key.Namespace + "/" + req.Key.Name
-		switch action {
-		case DataActionCreated:
-			seenCreates[createID] = true
-			delete(pendingDeletes, createID)
-		case DataActionDeleted:
-			delete(seenCreates, createID)
-			pendingDeletes[createID] = true
-		case DataActionUpdated:
-			// no-op for duplicate tracking
 		}
 
 		pending = append(pending, pendingItem{dataKey: dataKey, value: req.Value, obj: obj, action: action})

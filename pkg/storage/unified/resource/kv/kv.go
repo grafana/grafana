@@ -58,6 +58,16 @@ type BatchOp struct {
 	Value []byte // For Put/Create/Update operations, nil for Delete
 }
 
+// HistoryImportRow is a migration-only DataSection row.
+// The key is relative to DataSection and already includes the full history suffix
+// (resource version, action, folder, and optional GUID when applicable).
+// Callers provide rows in final write order after deciding collection scope and
+// any pre-import cleanup.
+type HistoryImportRow struct {
+	Key   string
+	Value []byte
+}
+
 // Maximum limit for batch operations
 const MaxBatchOps = 1000
 
@@ -119,7 +129,16 @@ type KV interface {
 	Batch(ctx context.Context, section string, ops []BatchOp) error
 }
 
+// HistoryImporter is an optional fast path used only by ProcessBulk-style
+// migration imports. Unlike KV.Batch, it appends already-validated authoritative
+// history rows to DataSection and does not implement generic
+// Put/Create/Update/Delete semantics.
+type HistoryImporter interface {
+	ImportHistory(ctx context.Context, rows []HistoryImportRow) error
+}
+
 var _ KV = &badgerKV{}
+var _ HistoryImporter = &badgerKV{}
 
 // Reference implementation of the KV interface using BadgerDB
 // This is only used for testing purposes, and will not work HA
@@ -487,6 +506,29 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 
 		default:
 			return &BatchError{Err: fmt.Errorf("unknown operation mode: %d", op.Mode), Index: i, Op: op}
+		}
+	}
+
+	return txn.Commit()
+}
+
+func (k *badgerKV) ImportHistory(ctx context.Context, rows []HistoryImportRow) error {
+	if k.db.IsClosed() {
+		return fmt.Errorf("database is closed")
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+
+	txn := k.db.NewTransaction(true)
+	defer txn.Discard()
+
+	for _, row := range rows {
+		if len(row.Value) == 0 {
+			return ErrEmptyValue
+		}
+		if err := txn.Set([]byte(DataSection+"/"+row.Key), row.Value); err != nil {
+			return err
 		}
 	}
 
