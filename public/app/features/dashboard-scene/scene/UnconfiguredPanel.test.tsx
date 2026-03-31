@@ -5,6 +5,7 @@ import { CoreApp, getDefaultTimeRange, PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -125,12 +126,18 @@ beforeEach(() => {
   mockSceneGraphGetTimeRange.mockReturnValue({ state: { value: getDefaultTimeRange() } });
 
   config.featureToggles.newVizSuggestions = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (config.featureToggles as any).newUnconfiguredPanel = true;
+  contextSrv.isSignedIn = true;
   (window as Window & { __grafanaSceneContext?: unknown }).__grafanaSceneContext = null;
 });
 
 afterEach(() => {
   delete (window as Window & { __grafanaSceneContext?: unknown }).__grafanaSceneContext;
   config.featureToggles.newVizSuggestions = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (config.featureToggles as any).newUnconfiguredPanel = false;
+  contextSrv.isSignedIn = false;
 });
 
 // ─── tests ────────────────────────────────────────────────────────────────────
@@ -383,6 +390,27 @@ describe('UnconfiguredPanelComp', () => {
           });
 
           expect(mockApplyQueryToPanel).not.toHaveBeenCalled();
+        });
+
+        it('does not call applyQueryToPanel and swallows the error when getVizSuggestionForQuery throws', async () => {
+          mockGetVizSuggestionForQuery.mockRejectedValue(new Error('datasource timeout'));
+
+          const onSelectQuery = await getOnSelectQuery();
+          await act(async () => {
+            await expect(onSelectQuery(mockQuery)).resolves.toBeUndefined();
+          });
+
+          expect(mockApplyQueryToPanel).not.toHaveBeenCalled();
+        });
+
+        it('swallows the error when applyQueryToPanel throws', async () => {
+          mockGetVizSuggestionForQuery.mockResolvedValue(mockSuggestion);
+          mockApplyQueryToPanel.mockRejectedValue(new Error('apply failed'));
+
+          const onSelectQuery = await getOnSelectQuery();
+          await act(async () => {
+            await expect(onSelectQuery(mockQuery)).resolves.toBeUndefined();
+          });
         });
 
         it('returns early when the panel is not found in the scene', async () => {
