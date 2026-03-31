@@ -228,8 +228,6 @@ signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
 
 [feature_toggles]
-kubernetesDashboards = true
-kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageHistoryPruner = true
 unifiedStorageSearchPermissionFiltering = false
@@ -1352,15 +1350,6 @@ Built-in validators ensure data integrity after migration:
 
 - **CountValidator**: Verifies resource counts match between legacy and unified storage
 - **FolderTreeValidator**: Validates folder parent-child relationships are preserved
-
-### Configuration
-
-Enable migrations in `grafana.ini`:
-
-```ini
-[unified_storage]
-disable_data_migrations = false
-```
 
 ### Documentation
 

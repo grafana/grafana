@@ -2,13 +2,13 @@ import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
 import { relativeToTimeRange } from '../datetime/rangeutil';
 import { createTheme } from '../themes/createTheme';
 import { FieldMatcherID } from '../transformations/matchers/ids';
-import { ScopedVars } from '../types/ScopedVars';
-import { GrafanaConfig } from '../types/config';
+import { type ScopedVars } from '../types/ScopedVars';
+import { type GrafanaConfig } from '../types/config';
 import { NullValueMode } from '../types/data';
-import { FieldType, DataFrame, Field, FieldConfig } from '../types/dataFrame';
+import { FieldType, type DataFrame, type Field, type FieldConfig } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
-import { FieldConfigPropertyItem, FieldConfigSource } from '../types/fieldOverrides';
-import { InterpolateFunction } from '../types/panel';
+import { type FieldConfigPropertyItem, type FieldConfigSource } from '../types/fieldOverrides';
+import { type InterpolateFunction } from '../types/panel';
 import { ThresholdsMode } from '../types/thresholds';
 import { MappingType } from '../types/valueMapping';
 import { Registry } from '../utils/Registry';
@@ -20,7 +20,7 @@ import { getDisplayProcessor } from './displayProcessor';
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
-  FieldOverrideEnv,
+  type FieldOverrideEnv,
   findNumericFieldMinMax,
   getLinksSupplier,
   setDynamicConfigValue,

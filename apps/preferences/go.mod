@@ -3,9 +3,9 @@ module github.com/grafana/grafana/apps/preferences
 go 1.25.8
 
 require (
-	github.com/grafana/grafana-app-sdk v0.51.4
+	github.com/grafana/grafana-app-sdk v0.52.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
-	k8s.io/apimachinery v0.35.1
+	k8s.io/apimachinery v0.35.3
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
 )
 
@@ -56,8 +56,8 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/woodsbury/decimal128 v1.4.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.opentelemetry.io/otel v1.40.0 // indirect
-	go.opentelemetry.io/otel/trace v1.40.0 // indirect
+	go.opentelemetry.io/otel v1.42.0 // indirect
+	go.opentelemetry.io/otel/trace v1.42.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/net v0.51.0 // indirect
@@ -69,7 +69,7 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/client-go v0.35.1 // indirect
+	k8s.io/client-go v0.35.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect

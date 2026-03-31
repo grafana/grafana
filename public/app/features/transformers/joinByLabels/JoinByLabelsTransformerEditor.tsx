@@ -3,9 +3,9 @@ import * as React from 'react';
 
 import {
   PluginState,
-  SelectableValue,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type SelectableValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -16,7 +16,7 @@ import darkImage from '../images/dark/joinByLabels.svg';
 import lightImage from '../images/light/joinByLabels.svg';
 import { getDistinctLabels } from '../utils';
 
-import { getJoinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
+import { getJoinByLabelsTransformer, type JoinByLabelsTransformOptions } from './joinByLabels';
 
 export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> {}
 

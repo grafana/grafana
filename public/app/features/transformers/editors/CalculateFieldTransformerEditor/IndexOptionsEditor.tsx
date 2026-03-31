@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { CalculateFieldTransformerOptions } from '@grafana/data/internal';
+import { type CalculateFieldTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineSwitch } from '@grafana/ui';
 

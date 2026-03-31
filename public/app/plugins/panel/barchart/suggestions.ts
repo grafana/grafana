@@ -1,10 +1,15 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier, VizOrientation } from '@grafana/data';
+import {
+  FieldType,
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplier,
+  VizOrientation,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
 
-import { FieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig, type Options } from './panelcfg.gen';
 
 const withDefaults = (suggestion: VisualizationSuggestion<Options, FieldConfig>) =>
   defaultsDeep(suggestion, {

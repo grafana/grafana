@@ -1,4 +1,4 @@
-import { RoleDto } from 'app/api/clients/legacy';
+import { type RoleDto } from 'app/api/clients/legacy';
 
 /**
  * UserPermission is a map storing permissions in a form of

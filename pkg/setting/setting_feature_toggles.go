@@ -2,8 +2,11 @@ package setting
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
+	"os"
 	"strconv"
+	"strings"
 
 	"gopkg.in/ini.v1"
 
@@ -15,11 +18,78 @@ import (
 // DefaultVariantName a placeholder name for config-based Feature Flags
 const DefaultVariantName = "default"
 
+// applyFeatureToggleEnvOverrides sets feature toggle values from GF_FEATURE_TOGGLES_<flagName>
+// env vars. GF_FEATURE_TOGGLES_ENABLE is handled specially for temporary
+// (deprecated) backwards compatibility.
+func (cfg *Cfg) applyFeatureToggleEnvOverrides() {
+	envPrefix := EnvSectionPrefix("feature_toggles")
+	section := cfg.Raw.Section("feature_toggles")
+
+	// Collect prefixes for feature_toggles.* subsections (e.g.
+	// feature_toggles.openfeature) so we can skip env vars that belong to
+	// them — those are handled by the generic second pass instead.
+	var subsectionPrefixes []string
+	for _, s := range cfg.Raw.Sections() {
+		name := s.Name()
+		if strings.HasPrefix(name, "feature_toggles.") {
+			subsectionPrefixes = append(subsectionPrefixes, EnvSectionPrefix(name))
+		}
+	}
+
+	for _, env := range os.Environ() {
+		if !strings.HasPrefix(env, envPrefix) {
+			continue
+		}
+
+		key, value, ok := strings.Cut(env, "=")
+		if !ok {
+			continue
+		}
+
+		if value == "" {
+			continue
+		}
+
+		// Skip env vars that belong to a feature_toggles.* subsection.
+		belongsToSubsection := false
+		for _, sp := range subsectionPrefixes {
+			if strings.HasPrefix(key, sp) {
+				belongsToSubsection = true
+				break
+			}
+		}
+		if belongsToSubsection {
+			continue
+		}
+
+		keyName := key[len(envPrefix):]
+		if keyName == "" {
+			continue
+		}
+
+		// The deprecated "enable" key (comma-separated list) uses an
+		// all-uppercase env var name (GF_FEATURE_TOGGLES_ENABLE). Lowercase
+		// it so it maps to the "enable" ini key expected by readFeatureToggles.
+		if strings.EqualFold(keyName, "enable") {
+			keyName = "enable"
+		}
+
+		section.Key(keyName).SetValue(value)
+		cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
+			fmt.Sprintf("%s=%s", key, RedactedValue(key, value)))
+	}
+}
+
 // Deprecated: should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
+	cfg.applyFeatureToggleEnvOverrides()
 	section := iniFile.Section("feature_toggles")
 	if section.Key("enable").String() != "" {
-		cfg.Logger.Warn("[Deprecated] The feature_toggles.enable configuration setting is deprecated. Use individual feature toggle entries (e.g. featureName = true) instead.")
+		if os.Getenv(EnvKey("feature_toggles", "enable")) != "" {
+			cfg.Logger.Warn("[Deprecated] The GF_FEATURE_TOGGLES_ENABLE environment variable is deprecated. Use individual GF_FEATURE_TOGGLES_<name>=<value> variables instead.")
+		} else {
+			cfg.Logger.Warn("[Deprecated] The feature_toggles.enable configuration setting is deprecated. Use individual feature toggle entries (e.g. featureName = <value>) instead.")
+		}
 	}
 	toggles, err := ReadFeatureTogglesFromInitFile(section)
 	if err != nil {

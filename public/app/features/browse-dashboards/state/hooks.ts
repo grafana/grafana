@@ -2,16 +2,16 @@ import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { config } from '@grafana/runtime';
-import { DashboardViewItem } from 'app/features/search/types';
-import { StoreState, useDispatch, useSelector } from 'app/types/store';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
 import {
-  BrowseDashboardsState,
-  DashboardsTreeItem,
-  DashboardTreeSelection,
-  DashboardViewItemWithUIItems,
-  UIDashboardViewItem,
+  type BrowseDashboardsState,
+  type DashboardsTreeItem,
+  type DashboardTreeSelection,
+  type DashboardViewItemWithUIItems,
+  type UIDashboardViewItem,
 } from '../types';
 import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 

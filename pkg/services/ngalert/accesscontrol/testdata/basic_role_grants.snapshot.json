@@ -103,6 +103,9 @@
         "action": "alert.notifications.routes:write"
       },
       {
+        "action": "alert.notifications.system-status:read"
+      },
+      {
         "action": "alert.notifications.templates.test:write"
       },
       {

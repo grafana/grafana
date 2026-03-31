@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash';
 import { of } from 'rxjs';
 
 import { config } from '../config';
-import { BackendSrvRequest, FetchError, FetchResponse, BackendSrv } from '../services';
+import { type BackendSrvRequest, type FetchError, type FetchResponse, type BackendSrv } from '../services';
 
 import { usePluginUserStorage, _clearStorageCache } from './userStorage';
 

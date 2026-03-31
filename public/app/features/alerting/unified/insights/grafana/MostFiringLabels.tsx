@@ -1,6 +1,11 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, TestDataSourceResponse } from '@grafana/data';
+import {
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataQueryResponseData,
+  type TestDataSourceResponse,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import {
@@ -8,10 +13,10 @@ import {
   RuntimeDataSource,
   SceneFlexItem,
   SceneQueryRunner,
-  SceneTimeRange,
+  type SceneTimeRange,
   sceneUtils,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { PANEL_STYLES } from '../../home/Insights';

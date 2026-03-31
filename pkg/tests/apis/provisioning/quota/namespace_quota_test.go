@@ -7,10 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"encoding/json"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -221,38 +224,37 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 
 	// --- Step 4: manufacture a near-expiry token state on repo1 ---------------
 	// Simulate the scenario where the repo is still blocked but its token is
-	// about to expire
+	// about to expire.
 	//
 	// The controller reconciler runs concurrently and may update the repo's
-	// status between our Get and UpdateStatus, bumping resourceVersion and
-	// causing a conflict error. Retry with a fresh Get on each conflict.
+	// status between our Get and UpdateStatus, causing optimistic-locking
+	// conflicts. On fast backends (SQLite) the reconciler outpaces even
+	// tight retry loops. A merge patch on the status subresource avoids
+	// this entirely — it doesn't require a specific resourceVersion, so it
+	// can never conflict.
 	now := time.Now()
-	var staledHealthChecked, staledTokenLastUpdated int64
+	staledHealthChecked := now.Add(-2 * time.Minute).UnixMilli()
+	staledTokenLastUpdated := now.Add(-1 * time.Hour).UnixMilli()
 
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		repoUnstr, err := helper.Repositories.Resource.Get(ctx, repoName1, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get repo1 before status manipulation") {
-			return
-		}
-		repo1 := common.UnstructuredToRepository(t, repoUnstr)
-
-		// Token lastUpdated far in the past (not "recently created") and expiration
-		// soon (within the 2*resyncInterval+10s refresh buffer).
-		repo1.Status.Token = provisioning.TokenStatus{
-			LastUpdated: now.Add(-1 * time.Hour).UnixMilli(),
-			Expiration:  now.Add(30 * time.Second).UnixMilli(),
-		}
-		// Age the health.checked beyond recentUnhealthyDuration (1 min) so the
-		// health checker considers it stale. This also ensures health.checked will
-		// visibly advance after the next reconciliation.
-		repo1.Status.Health.Checked = now.Add(-2 * time.Minute).UnixMilli()
-		staledHealthChecked = repo1.Status.Health.Checked
-		staledTokenLastUpdated = repo1.Status.Token.LastUpdated
-
-		updatedUnstr := common.RepositoryToUnstructured(t, repo1)
-		_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedUnstr, metav1.UpdateOptions{})
-		assert.NoError(c, err, "failed to update repo1 status with near-expiry token")
-	}, common.WaitTimeoutDefault, 200*time.Millisecond, "should update repo1 status with near-expiry token")
+	// Token lastUpdated far in the past (not "recently created") and expiration
+	// soon (within the 2*resyncInterval+10s refresh buffer).
+	// Age the health.checked beyond recentUnhealthyDuration (1 min) so the
+	// health checker considers it stale.
+	statusPatch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"token": map[string]any{
+				"lastUpdated": staledTokenLastUpdated,
+				"expiration":  now.Add(30 * time.Second).UnixMilli(),
+			},
+			"health": map[string]any{
+				"checked": staledHealthChecked,
+			},
+		},
+	})
+	require.NoError(t, err)
+	_, err = helper.Repositories.Resource.Patch(ctx, repoName1,
+		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+	require.NoError(t, err, "failed to patch repo1 status with near-expiry token")
 
 	// --- Step 5: verify health check AND token refresh happened, repo still blocked
 	require.EventuallyWithT(t, func(c *assert.CollectT) {

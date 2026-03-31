@@ -1,16 +1,16 @@
-import { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import { type ReactElement, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as React from 'react';
 import uPlot from 'uplot';
 
 import {
-  ActionModel,
-  Field,
+  type ActionModel,
+  type Field,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
-  InterpolateFunction,
-  LinkModel,
-  PanelData,
+  type InterpolateFunction,
+  type LinkModel,
+  type PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
@@ -19,7 +19,7 @@ import {
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  VizTooltipItem,
+  type VizTooltipItem,
   ColorIndicator,
   ColorPlacement,
 } from '@grafana/ui/internal';
@@ -32,7 +32,7 @@ import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarT
 import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
 
-import { HeatmapData } from './fields';
+import { type HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
 import {
   formatMilliseconds,

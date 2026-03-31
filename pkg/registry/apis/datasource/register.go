@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -256,12 +255,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 	}
 
-	// FIXME: temporarily register both "datasources" and "connections" query paths
-	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
-	// while we transition requests to the new path
-	storage["connections"] = &noopREST{}                            // hidden from openapi
-	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
-
 	if b.cfg.UseDualWriter {
 		legacyStore := &legacyStorage{
 			datasources:                     b.datasources,
@@ -315,9 +308,7 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
-		defs := datasourceV0.GetOpenAPIDefinitions(ref) // required when running standalone
-		maps.Copy(defs, datasourceV0.GetOpenAPIDefinitions(ref))
-		return defs
+		return datasourceV0.GetOpenAPIDefinitions(ref)
 	}
 }
 
