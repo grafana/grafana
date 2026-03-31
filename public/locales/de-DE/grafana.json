@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Die Abfragevorschau kann nicht angezeigt werden. Einige der in den Abfragen verwendeten Datenquellen sind nicht verfügbar.",
       "preview-alerts": "Vorschau der Warnungen ansehen",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Filter zurücksetzen",
       "configured-alert-rules": "Datenquellen mit konfigurierten Warnregeln sind Mimir- oder Loki-Datenquellen, wobei die Warnregeln in der Datenquelle selbst gespeichert und bewertet werden.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtert Alertregeln, die direkt an den ausgewählten Kontaktpunkt geleitet werden. Alertregeln, die zu Benachrichtigungsrichtlinien geleitet werden, werden nicht angezeigt.",
       "contact-point-tooltip-title": "Hilfe zum Kontaktpunktfilter",
       "dashboard": "Dashboard",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Datenquellen auswählen",
       "placeholder-group-search": "Gruppe suchen",
       "placeholder-labels": "Labels auswählen",
+      "placeholder-policy": "",
       "plugin-rules": "Plugin-Regeln",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Datenquelle verwaltet",
         "grafana": "Von Grafana verwaltet"
@@ -3212,6 +3220,7 @@
       "title-group": "Gruppe",
       "title-health": "Zustand",
       "title-labels": "Labels",
+      "title-policy": "",
       "title-rule": "Regel",
       "title-state": "Status",
       "title-type": "Typ"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Metrik-Drilldown"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },
