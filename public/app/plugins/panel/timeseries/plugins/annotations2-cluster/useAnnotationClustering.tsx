@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import uPlot from 'uplot';
 
 import { DataFrame, FieldType } from '@grafana/data';
@@ -12,7 +12,6 @@ interface Props {
   clusteringMode: ClusteringMode | null;
   timeRange: TimeRange2;
   plotWidth: number | undefined;
-  onChange: () => void;
 }
 
 export enum ClusteringMode {
@@ -20,13 +19,17 @@ export enum ClusteringMode {
   Render = 'render',
 }
 
-export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange, onChange }: Props) => {
-  const { outAnnos, shouldRedraw } = useMemo(() => {
+export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange }: Props) => {
+  const { outAnnos } = useMemo(() => {
     const clusteredAnnotations: DataFrame[] = [];
-    let hasClusters = false;
 
-    // per-frame clustering
+    // don't return annotations until the plot is ready
+    if (!plotWidth) {
+      return { outAnnos: [] };
+    }
+
     if (clusteringMode === ClusteringMode.Render) {
+      // per-frame clustering
       for (let frameIdx = 0; frameIdx < annotations.length; frameIdx++) {
         const frame = annotations[frameIdx];
 
@@ -34,11 +37,8 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
         const timeEndVals: Array<number | null> = frame.fields.find((f) => f.name === 'timeEnd')?.values ?? [];
         const colorVals: string[] = frame.fields.find((f) => f.name === 'color')?.values ?? [];
 
-        if (timeVals.length > 1 && plotWidth) {
+        if (timeVals.length > 1) {
           const { clusterIdx, clusters } = buildAnnotationClusters(frame, timeVals, timeEndVals, plotWidth, timeRange);
-          if (clusters.length) {
-            hasClusters = true;
-          }
 
           // Shallow copy fields and values and append the clusterIdx field
           const clusteredFields = frame.fields.map((field) => ({
@@ -123,11 +123,8 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
       console.warn('Hover mode not implemented');
     }
 
-    const shouldRedraw = clusteredAnnotations.length > 0 && hasClusters;
-
     // Sort clustered frames
     return {
-      shouldRedraw: shouldRedraw,
       outAnnos:
         clusteredAnnotations.length > 0
           ? clusteredAnnotations.map((frame) =>
@@ -139,13 +136,6 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
           : annotations,
     };
   }, [annotations, clusteringMode, plotWidth, timeRange]);
-
-  // Redraw after clustering mutates frames so uPlot canvas hooks see clustered data (must not run inside useMemo).
-  useEffect(() => {
-    if (shouldRedraw) {
-      onChange();
-    }
-  }, [shouldRedraw, onChange, outAnnos]);
 
   return outAnnos;
 };
