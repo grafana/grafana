@@ -48,6 +48,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     isReadOnlyRepo,
     status: repoViewStatus,
     orphanedRepoName,
+    repository,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
@@ -123,6 +124,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
+  const isRepoRootFolder = isProvisionedFolder && folderUID === repository?.name;
   const [showRenameDrawer, setShowRenameDrawer] = useState(false);
   const showEditTitle = canEditFolders && !!folderUID;
   const permissions = {
@@ -155,7 +157,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     return (
       <Stack alignItems={'center'} gap={2}>
         <Text element={'h1'}>{title}</Text>
-        {showEditTitle && isProvisionedFolder && !isReadOnlyRepo && (
+        {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && (
           <IconButton
             name="pen"
             size="lg"
