@@ -69,7 +69,7 @@ export function FilterSidebar({
   remotePluginsAvailable,
 }: FilterSidebarProps) {
   const styles = useStyles2(getStyles);
-  const sortOptions = SORT_OPTIONS(t);
+  const sortOptions = SORT_OPTIONS();
 
   return (
     <div className={styles.filterSection}>

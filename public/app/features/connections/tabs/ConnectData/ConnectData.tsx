@@ -192,7 +192,7 @@ export function AddNewConnection() {
               </div>
               <div className={styles.groupByControl}>
                 <Field label={t('connections.add-new-connection.group-by', 'Group by')} noMargin>
-                  <RadioButtonGroup value={groupBy} onChange={handlers.onGroupByChange} options={GROUP_BY_OPTIONS(t)} />
+                  <RadioButtonGroup value={groupBy} onChange={handlers.onGroupByChange} options={GROUP_BY_OPTIONS()} />
                 </Field>
               </div>
             </Stack>
@@ -200,7 +200,7 @@ export function AddNewConnection() {
 
           <div className={styles.contentWrap}>
             {isLoading && <LoadingPlaceholder text={t('common.loading', 'Loading...')} />}
-            {error && <EmptyState variant="call-to-action" message={String(error)} />}
+            {error && <EmptyState variant="not-found" message={String(error)} />}
             {!isLoading && !error && (
               <PluginContentView
                 groupBy={groupBy}
@@ -256,8 +256,8 @@ export function AddNewConnection() {
                   onSortByChange: handlers.onSortByChange,
                 }}
                 categoryFilterOptions={categoryFilterOptions}
-                typeFilterOptions={TYPE_FILTER_OPTIONS(t)}
-                filterByOptions={FILTER_BY_OPTIONS(t)}
+                typeFilterOptions={TYPE_FILTER_OPTIONS()}
+                filterByOptions={FILTER_BY_OPTIONS()}
                 remotePluginsAvailable={remotePluginsAvailable}
               />
             </Sidebar.OpenPane>

@@ -10,7 +10,7 @@ import { CardGridItem } from '../CardGrid/CardGrid';
 const CATEGORY_ORDER = ['tsdb', 'logging', 'tracing', 'profiling', 'sql', 'cloud', 'enterprise', 'iot', 'other'];
 const collator = new Intl.Collator();
 
-function usePredefinedCategoryLabels(): Record<string, string> {
+function getPredefinedCategoryLabels(): Record<string, string> {
   return {
     tsdb: t('datasources.build-categories.categories.title.time-series-databases', 'Time series databases'),
     logging: t(
@@ -28,7 +28,7 @@ function usePredefinedCategoryLabels(): Record<string, string> {
 }
 
 export function useCategoryFilterOptions(plugins: CatalogPlugin[]): SelectableValue[] {
-  const predefinedCategories = usePredefinedCategoryLabels();
+  const predefinedCategories = getPredefinedCategoryLabels();
   return useMemo(() => {
     const uniqueCategories = new Set<string>();
     plugins.forEach((p) => uniqueCategories.add(p.category || 'other'));
@@ -111,7 +111,7 @@ export function usePluginsByCategory(
   plugins: CatalogPlugin[],
   typeFilter: string
 ): Array<{ label: string; items: CardGridItem[] }> {
-  const categoryLabels = usePredefinedCategoryLabels();
+  const categoryLabels = getPredefinedCategoryLabels();
   return useMemo(() => {
     const allPlugins = typeFilter === 'all' ? plugins : plugins.filter((p) => p.type === typeFilter);
 
