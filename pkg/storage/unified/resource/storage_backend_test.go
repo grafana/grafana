@@ -59,6 +59,11 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 	backend, err := NewKVStorageBackend(opts)
 	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = kvBackend.Stop(ctx)
+	})
 	return kvBackend
 }
 
@@ -2378,7 +2383,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 }
 
 func testClusterScopedResources(t *testing.T, backend *kvStorageBackend) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Start watching for events before creating resources
 	stream, err := backend.WatchWriteEvents(ctx)
