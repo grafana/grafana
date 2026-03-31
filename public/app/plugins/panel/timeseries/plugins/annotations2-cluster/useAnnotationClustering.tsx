@@ -198,6 +198,7 @@ const buildAnnotationClusters = (
       clusterStartTime = Infinity;
     };
 
+    const startTimeWithinThreshold = prevStartTime && startTime - prevStartTime <= mergeThreshold;
     const startTimeWithinClusterThreshold = startTime - clusterStartTime <= mergeThreshold;
     const endTimeWithinClusterThreshold = startTime - clusterEndTime <= mergeThreshold;
     const regionsOverlap = clusterEndTime > startTime - mergeThreshold;
@@ -206,7 +207,7 @@ const buildAnnotationClusters = (
     if (prevIdx != null) {
       // Point annotation clusters
       if (!isRegionVals[j]) {
-        if (startTimeWithinClusterThreshold || endTimeWithinClusterThreshold) {
+        if (startTimeWithinClusterThreshold || endTimeWithinClusterThreshold || startTimeWithinThreshold) {
           pushCluster(prevIdx);
         } else if (cluster.length > 0) {
           closeCluster();
@@ -214,7 +215,12 @@ const buildAnnotationClusters = (
       }
       // region annotation clusters
       else {
-        if (regionsOverlap || startTimeWithinClusterThreshold || endTimeWithinClusterThreshold) {
+        if (
+          regionsOverlap ||
+          startTimeWithinClusterThreshold ||
+          endTimeWithinClusterThreshold ||
+          startTimeWithinThreshold
+        ) {
           pushCluster(prevIdx);
         } else if (cluster.length > 0) {
           closeCluster();
