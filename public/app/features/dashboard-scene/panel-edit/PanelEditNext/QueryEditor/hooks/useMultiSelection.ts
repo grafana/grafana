@@ -1,10 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 
-import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { type DataQuery } from '@grafana/schema';
+import { type ExpressionQuery } from 'app/features/expressions/types';
 
-import { SelectionModifiers } from '../QueryEditorContext';
-import { Transformation } from '../types';
+import { type SelectionModifiers } from '../QueryEditorContext';
+import { type Transformation } from '../types';
 
 export interface UseMultiSelectionOptions {
   queries: DataQuery[];
@@ -31,8 +31,9 @@ export interface UseMultiSelectionResult {
  * Returns the new ordered selection after a Shift+Click (range-select).
  *
  * Unions the existing selection with the range between anchor and clicked item.
- * The clicked item becomes the last element (primary). Returns `null` if either
- * the anchor or the clicked ID cannot be found in the list.
+ * The range is always returned in DOM order, so the item with the higher index
+ * becomes the last element (primary). Returns `null` if either the anchor or
+ * the clicked ID cannot be found in the list.
  */
 function computeRangeSelection(
   orderedIds: string[],
@@ -73,9 +74,16 @@ export function useMultiSelection({
   const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>([]);
   const [selectedTransformationIds, setSelectedTransformationIds] = useState<string[]>([]);
 
-  // Store in a ref so toggle callbacks stay stable without listing onClearSideEffects as a dep.
+  // Store in refs so toggle callbacks stay stable without listing these as deps.
+  // This prevents callback recreation on every selection change, avoiding re-render cascades.
   const onClearSideEffectsRef = useRef(onClearSideEffects);
   onClearSideEffectsRef.current = onClearSideEffects;
+
+  const selectedQueryRefIdsRef = useRef(selectedQueryRefIds);
+  selectedQueryRefIdsRef.current = selectedQueryRefIds;
+
+  const selectedTransformationIdsRef = useRef(selectedTransformationIds);
+  selectedTransformationIdsRef.current = selectedTransformationIds;
 
   /**
    * Used by usePendingExpression / usePendingTransformation to programmatically
@@ -99,11 +107,12 @@ export function useMultiSelection({
         // Shift+Click: range-select from the anchor to this query (inclusive).
         // When nothing has been explicitly clicked yet, anchor defaults to queries[0]
         // so Shift+Click works immediately on page load.
-        const anchorRefId = selectedQueryRefIds.at(-1) ?? queries[0]?.refId ?? null;
+        const currentSelection = selectedQueryRefIdsRef.current;
+        const anchorRefId = currentSelection.at(-1) ?? queries[0]?.refId ?? null;
         if (anchorRefId) {
           const rangeSelection = computeRangeSelection(
             queries.map((q) => q.refId),
-            selectedQueryRefIds,
+            currentSelection,
             anchorRefId,
             query.refId
           );
@@ -126,7 +135,7 @@ export function useMultiSelection({
         onClearSideEffectsRef.current?.();
       }
     },
-    [queries, selectedQueryRefIds]
+    [queries]
   );
 
   const toggleTransformationSelection = useCallback(
@@ -134,12 +143,13 @@ export function useMultiSelection({
       // Transformation selection always clears queries (cross-type exclusivity).
       setSelectedQueryRefIds([]);
 
-      if (modifiers?.range && selectedTransformationIds.length > 0) {
+      const currentSelection = selectedTransformationIdsRef.current;
+      if (modifiers?.range && currentSelection.length > 0) {
         // Shift+Click: range-select from the last selected transformation to this one.
-        const anchorId = selectedTransformationIds.at(-1)!;
+        const anchorId = currentSelection.at(-1)!;
         const rangeSelection = computeRangeSelection(
           transformations.map((t) => t.transformId),
-          selectedTransformationIds,
+          currentSelection,
           anchorId,
           transformation.transformId
         );
@@ -161,7 +171,7 @@ export function useMultiSelection({
         onClearSideEffectsRef.current?.();
       }
     },
-    [transformations, selectedTransformationIds]
+    [transformations]
   );
 
   const clearSelection = useCallback(() => {
