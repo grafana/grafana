@@ -14,6 +14,10 @@ type Settings struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec SettingsSpec `json:"spec,omitempty"`
+
+	// Secure values allows setting values that are never shown to users.
+	// The returned properties are only the names of the configured values.
+	Secure common.InlineSecureValues `json:"secure,omitzero,omitempty"`
 }
 
 func (Settings) OpenAPIModelName() string {
@@ -36,9 +40,6 @@ type SettingsSpec struct {
 	Enabled  bool                `json:"enabled"`
 	Pinned   bool                `json:"pinned"`
 	JsonData common.Unstructured `json:"jsonData"`
-	// Secure values allows setting values that are never shown to users
-	// The returned properties are only the names of the configured values
-	Secure common.InlineSecureValues `json:"secure,omitzero,omitempty"`
 }
 
 func (SettingsSpec) OpenAPIModelName() string {

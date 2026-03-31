@@ -18,6 +18,13 @@ func (in *Settings) DeepCopyInto(out *Settings) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	in.Spec.DeepCopyInto(&out.Spec)
+	if in.Secure != nil {
+		in, out := &in.Secure, &out.Secure
+		*out = make(map[string]commonv0alpha1.InlineSecureValue, len(*in))
+		for key, val := range *in {
+			(*out)[key] = *val.DeepCopy()
+		}
+	}
 	return
 }
 
@@ -76,13 +83,6 @@ func (in *SettingsList) DeepCopyObject() runtime.Object {
 func (in *SettingsSpec) DeepCopyInto(out *SettingsSpec) {
 	*out = *in
 	in.JsonData.DeepCopyInto(&out.JsonData)
-	if in.Secure != nil {
-		in, out := &in.Secure, &out.Secure
-		*out = make(map[string]commonv0alpha1.InlineSecureValue, len(*in))
-		for key, val := range *in {
-			(*out)[key] = *val.DeepCopy()
-		}
-	}
 	return
 }
 

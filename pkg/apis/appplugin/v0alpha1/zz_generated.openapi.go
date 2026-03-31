@@ -53,11 +53,26 @@ func schema_pkg_apis_appplugin_v0alpha1_Settings(ref common.ReferenceCallback) c
 							Ref:     ref(SettingsSpec{}.OpenAPIModelName()),
 						},
 					},
+					"secure": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Secure values allows setting values that are never shown to users. The returned properties are only the names of the configured values.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			SettingsSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), SettingsSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -134,26 +149,11 @@ func schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref common.ReferenceCallbac
 							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
-					"secure": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Secure values allows setting values that are never shown to users The returned properties are only the names of the configured values",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
 				},
 				Required: []string{"enabled", "pinned", "jsonData"},
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), commonv0alpha1.Unstructured{}.OpenAPIModelName()},
+			commonv0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }
