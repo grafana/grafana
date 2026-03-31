@@ -15,7 +15,7 @@
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 
-import ListView, { TListViewProps } from './index';
+import ListView, { type TListViewProps } from './index';
 
 const DATA_LENGTH = 10;
 

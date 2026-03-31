@@ -1,6 +1,6 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
-import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { FlameGraphDataContainer, type LevelItem } from './dataTransform';
 import { walkTree } from './rendering';
 import { textToDataContainer } from './testHelpers';
 

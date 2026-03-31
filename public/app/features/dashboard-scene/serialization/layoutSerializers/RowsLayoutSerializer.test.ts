@@ -1,5 +1,5 @@
 import { CustomVariable, SceneGridLayout, SceneVariableSet } from '@grafana/scenes';
-import { Spec as DashboardV2Spec, RowsLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec, type RowsLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';

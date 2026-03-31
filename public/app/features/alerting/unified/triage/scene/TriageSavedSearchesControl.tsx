@@ -2,15 +2,15 @@ import { useCallback, useMemo } from 'react';
 
 import {
   AdHocFiltersVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   sceneGraph,
 } from '@grafana/scenes';
 import { useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { SavedSearches } from '../../components/saved-searches/SavedSearches';
-import { SavedSearch, validateSearchName } from '../../components/saved-searches/savedSearchesSchema';
+import { type SavedSearch, validateSearchName } from '../../components/saved-searches/savedSearchesSchema';
 import { shouldUseTriageSavedSearches } from '../../featureToggles';
 import { VARIABLES } from '../constants';
 import { useTriagePredefinedOverrides } from '../hooks/useTriagePredefinedOverrides';

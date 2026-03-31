@@ -3,9 +3,9 @@ import { take } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneQueryRunner } from '@grafana/scenes';
+import { type SceneQueryRunner } from '@grafana/scenes';
 import {
   Box,
   Button,
@@ -30,7 +30,7 @@ import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
-import { Domain, Filter, WorkbenchRow } from './types';
+import { type Domain, type Filter, type WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
@@ -268,7 +268,7 @@ export function Workbench({
                   <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
                     {isRefreshing && (
                       <div className={styles.loadingBarContainer}>
-                        <LoadingBar width={leftColumnWidth} />
+                        <LoadingBar width={leftColumnWidth + rightColumnWidth} />
                       </div>
                     )}
                     {isInitialLoading && (

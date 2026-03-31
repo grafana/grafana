@@ -3,20 +3,20 @@ import { cloneDeep, identity, isNumber, omit, pickBy } from 'lodash';
 import {
   convertOldAngularValueMappings,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   fieldReducers,
-  PanelModel,
-  ReduceDataOptions,
+  type PanelModel,
+  type ReduceDataOptions,
   ReducerID,
   sortThresholds,
-  Threshold,
-  ThresholdsConfig,
+  type Threshold,
+  type ThresholdsConfig,
   ThresholdsMode,
   validateFieldConfig,
-  ValueMapping,
+  type ValueMapping,
   VizOrientation,
 } from '@grafana/data';
-import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting } from '@grafana/schema';
+import { LegendDisplayMode, type OptionsWithLegend, type OptionsWithTextFormatting } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;

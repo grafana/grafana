@@ -212,8 +212,19 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         uses: actions/checkout@v5
         with:
-          ref: ${{ matrix.branch == 'main' && github.event.pull_request.base.sha || github.event.pull_request.head.sha }}
+          ref: ${{ matrix.branch == 'main' && github.event.pull_request.base.ref || github.event.pull_request.head.sha }}
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Merge main into PR branch
+        if: steps.check-affected.outputs.affected == 'true' && matrix.branch == 'pr'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin "${BASE_REF}"
+          git merge "origin/${BASE_REF}" --no-edit
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
 
       - name: Setup Node.js
         if: steps.check-affected.outputs.affected == 'true'

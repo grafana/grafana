@@ -1,5 +1,5 @@
-import { defaultSpec, TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { TransformationKind as V2Beta1TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
+import { defaultSpec, type TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type TransformationKind as V2Beta1TransformationKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
 import { normalizeTransformation, toWireTransformation, convertSpecToWireFormat } from './transformationCompat';
 

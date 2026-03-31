@@ -10,16 +10,16 @@ import {
 import {
   EVENT_LOCATIONS,
   PAGE_SIZE,
-  SourceEntryPoint,
+  type SourceEntryPoint,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
-import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
+import { type GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import {
   DEFAULT_SORT_ORDER,
   DEFAULT_SORT_DIRECTION,
   INCLUDE_LOGO,
   INCLUDE_SCREENSHOTS,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
 type FetchStatus = 'idle' | 'loading' | 'done' | 'error';
 

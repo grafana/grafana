@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	authtypes "github.com/grafana/authlib/types"
 	"google.golang.org/grpc"
@@ -32,6 +34,7 @@ import (
 	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +48,10 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	k8sAdapter *k8sRESTAdapter
+	k8sAdapter    *k8sRESTAdapter
+	cleanupCancel context.CancelFunc
+	cleanupWg     sync.WaitGroup
+	logger        log.Logger
 }
 
 // RegisterAppInstaller is the wire entry point for the ST server.
@@ -68,7 +74,9 @@ func NewAppInstaller(
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
-	installer := &AppInstaller{}
+	installer := &AppInstaller{
+		logger: log.New("annotation.app"),
+	}
 
 	var store Store
 	var err error
@@ -80,17 +88,28 @@ func NewAppInstaller(
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gRPC store: %w", err)
 		}
-	case "sql":
-		// sql is the default, but we allow explicitly specifying it for clarity
+	case "postgres":
+		store, err = newPostgresStore(context.Background(), cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Postgres store: %w", err)
+		}
+	case "legacy-sql":
+		// legacy-sql is the default, but we allow explicitly specifying it for clarity
 		fallthrough
 	default:
 		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
 		store = NewSQLAdapter(service, cleaner, cfg.CleanupSettings)
 	}
 
+	// Start background cleanup if the store supports lifecycle management
+	if lifecycleMgr, ok := store.(LifecycleManager); ok {
+		installer.startCleanup(context.Background(), lifecycleMgr, cfg.RetentionTTL)
+	}
+
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:        store,
 		accessClient: accessClient,
+		installer:    installer,
 	}
 
 	// Create the tags handler
@@ -168,6 +187,68 @@ func loadTLSConfig(cfg Config) (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
+func newPostgresStore(ctx context.Context, cfg Config) (Store, error) {
+	if cfg.PostgresConnectionString == "" {
+		return nil, fmt.Errorf("postgres connection string is required")
+	}
+
+	pgCfg := PostgreSQLStoreConfig{
+		ConnectionString: cfg.PostgresConnectionString,
+		MaxConnections:   cfg.PostgresMaxConnections,
+		MaxIdleConns:     cfg.PostgresMaxIdleConns,
+		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
+		RetentionTTL:     cfg.RetentionTTL,
+		TagCacheTTL:      cfg.PostgresTagCacheTTL,
+		TagCacheSize:     cfg.PostgresTagCacheSize,
+	}
+
+	return NewPostgreSQLStore(ctx, pgCfg)
+}
+
+// startCleanup starts a background goroutine that periodically runs cleanup on the store
+func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr LifecycleManager, retentionTTL time.Duration) {
+	ctx, cancel := context.WithCancel(parentCtx)
+	a.cleanupCancel = cancel
+
+	a.cleanupWg.Add(1)
+	go func() {
+		defer a.cleanupWg.Done()
+
+		ticker := time.NewTicker(cleanupInterval)
+		defer ticker.Stop()
+
+		a.logger.Info("Starting annotation cleanup loop", "interval", cleanupInterval, "retention", retentionTTL)
+
+		// Run immediately on startup
+		a.runCleanup(ctx, lifecycleMgr)
+
+		for {
+			select {
+			case <-ticker.C:
+				a.runCleanup(ctx, lifecycleMgr)
+			case <-ctx.Done():
+				a.logger.Info("Stopping annotation cleanup loop")
+				return
+			}
+		}
+	}()
+}
+
+// runCleanup executes the cleanup operation with a timeout
+func (a *AppInstaller) runCleanup(ctx context.Context, lifecycleMgr LifecycleManager) {
+	// Set a 5-minute timeout for the cleanup
+	cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
+	start := time.Now()
+	deleted, err := lifecycleMgr.Cleanup(cleanupCtx)
+	if err != nil {
+		a.logger.Error("Annotation cleanup failed", "error", err, "duration", time.Since(start))
+	} else if deleted > 0 {
+		a.logger.Info("Annotation cleanup completed", "rows_deleted", deleted, "duration", time.Since(start))
+	}
+}
+
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(
 		ctx context.Context, attr authorizer.Attributes,
@@ -234,13 +315,26 @@ type k8sRESTAdapter struct {
 	store          Store
 	tableConverter rest.TableConvertor
 	accessClient   authtypes.AccessClient
+	installer      *AppInstaller
 }
 
 func (s *k8sRESTAdapter) New() runtime.Object {
 	return annotationV0.AnnotationKind().ZeroValue()
 }
 
-func (s *k8sRESTAdapter) Destroy() {}
+func (s *k8sRESTAdapter) Destroy() {
+	// Stop background cleanup goroutines
+	if s.installer != nil && s.installer.cleanupCancel != nil {
+		s.installer.cleanupCancel()
+		s.installer.cleanupWg.Wait()
+	}
+
+	// Call Close() on the PostgreSQL store to cleanup connection pool
+	// TODO: add Close() to the Store interface so we can do proper cleanup for other store types
+	if pg, ok := s.store.(*PostgreSQLStore); ok {
+		pg.Close()
+	}
+}
 
 func (s *k8sRESTAdapter) NamespaceScoped() bool {
 	return true // namespace == org

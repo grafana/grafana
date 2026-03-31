@@ -1,14 +1,14 @@
 import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Dashboard, VariableOption } from '@grafana/schema';
+import { type Dashboard, type VariableOption } from '@grafana/schema';
 import {
-  AdHocFilterWithLabels,
-  Spec as DashboardV2Spec,
-  VariableKind,
+  type AdHocFilterWithLabels,
+  type Spec as DashboardV2Spec,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
 import { jsonDiff } from '../settings/version-history/utils';

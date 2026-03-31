@@ -1,4 +1,4 @@
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { generateNewBranchName } from './utils/newBranchName';
 

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, FilterInput, Icon, Label, Stack, useStyles2 } from '@grafana/ui';
 
@@ -10,12 +10,12 @@ import { trackAlertRuleFilterEvent, trackRulesSearchInputCleared } from '../../A
 import { PopupCard } from '../../components/HoverCard';
 import { RulesViewModeSelector } from '../../components/rules/Filter/RulesViewModeSelector';
 import { SavedSearches } from '../../components/saved-searches/SavedSearches';
-import { SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
+import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { shouldUseSavedSearches } from '../../featureToggles';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
-import type { RulesFilterProps } from './RulesFilter';
+import { type RulesFilterProps } from './RulesFilter';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 
 type SearchQueryForm = {
@@ -185,6 +185,7 @@ function SearchQueryHelp() {
           title={t('alerting.search-query-help.title-contact-point', 'Contact point')}
           expr="contactPoint:slack"
         />
+        <HelpRow title={t('alerting.search-query-help.title-policy', 'Policy')} expr="policy:team-a-policy" />
       </div>
     </div>
   );

@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 
-import { DataFrame } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph, sceneUtils } from '@grafana/scenes';
+import { type DataFrame } from '@grafana/data';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectState,
+  sceneGraph,
+  sceneUtils,
+} from '@grafana/scenes';
 import { useQueryRunner, useTimeRange, useVariableValues } from '@grafana/scenes-react';
 
 import { Workbench } from '../Workbench';
@@ -70,7 +76,7 @@ export function WorkbenchRenderer({ model }: SceneComponentProps<WorkbenchSceneO
   const { data } = runner.useState();
 
   const [rows, setRows] = useState<ReturnType<typeof convertToWorkbenchRows>>([]);
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const hasFiltersApplied = queryFilter.length > 0;
 
   const triageModeRef = useRef(triageMode);
@@ -125,8 +131,8 @@ export function WorkbenchRenderer({ model }: SceneComponentProps<WorkbenchSceneO
     return () => subscription.unsubscribe();
   }, [runner]);
 
-  const isDataLoading = data?.state === 'Loading';
-  const isInitialLoading = isDataLoading && rows.length === 0;
+  const isDataLoading = data?.state === 'Loading' || data?.state === 'NotStarted' || data === undefined;
+  const isInitialLoading = (isDataLoading || isPending) && rows.length === 0;
   const isRefreshing = isDataLoading && rows.length > 0;
 
   return (
