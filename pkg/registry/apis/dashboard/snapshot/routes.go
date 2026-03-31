@@ -66,7 +66,7 @@ func createExternalSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapshotComma
 	if err != nil {
 		return nil, dashboardsnapshots.ErrExternalSnapshotFailed.Errorf("failed to contact external snapshot server: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		return nil, dashboardsnapshots.ErrExternalSnapshotAuthFailed.Errorf("external snapshot server returned %d", resp.StatusCode)
