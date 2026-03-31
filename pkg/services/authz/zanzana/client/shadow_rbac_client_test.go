@@ -146,8 +146,16 @@ func TestShadowRBACClient_BatchCheck(t *testing.T) {
 			}
 
 			if tt.expectedSuccessMetric > 0 || tt.expectedErrorMetric > 0 {
-				successCounter, _ := shadowClient.metrics.evaluationStatusTotal.GetMetricWithLabelValues("success")
-				errorCounter, _ := shadowClient.metrics.evaluationStatusTotal.GetMetricWithLabelValues("error")
+				statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
+					"method":            "batch_check",
+					"resource":          "other",
+					"request_namespace": "org-1",
+				})
+				require.NoError(t, err)
+				successCounter, err := statusMetric.GetMetricWithLabelValues("success")
+				require.NoError(t, err)
+				errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
+				require.NoError(t, err)
 
 				require.Eventually(t, func() bool {
 					successMatch := tt.expectedSuccessMetric == 0 || getCounterValue(successCounter) == tt.expectedSuccessMetric
@@ -269,7 +277,15 @@ func TestShadowRBACClient_Check_MetricsOnMismatch(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, res.Allowed, "should return zanzana result")
 
-	errorCounter, _ := shadowClient.metrics.evaluationStatusTotal.GetMetricWithLabelValues("error")
+	statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
+		"method":            "check",
+		"resource":          "other",
+		"request_namespace": "org-1",
+	})
+	require.NoError(t, err)
+	errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
+	require.NoError(t, err)
+
 	require.Eventually(t, func() bool {
 		return getCounterValue(errorCounter) == 1
 	}, time.Second, 10*time.Millisecond, "error metric should be incremented on mismatch")

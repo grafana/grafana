@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+
 var _ authlib.AccessClient = (*ShadowRBACClient)(nil)
 
 type ShadowRBACClient struct {
@@ -57,10 +58,10 @@ func (c *ShadowRBACClient) Check(ctx context.Context, id authlib.AuthInfo, req a
 
 		if zanzanaErr == nil {
 			if res.Allowed != zanzanaRes.Allowed {
-				c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+				c.metrics.evaluationStatusTotal.WithLabelValues("error", "check", formatCheck(req), req.Namespace).Inc()
 				c.logger.Warn("RBAC check result does not match zanzana", "expected", zanzanaRes.Allowed, "actual", res.Allowed, "user", id.GetUID(), "request", req)
 			} else {
-				c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+				c.metrics.evaluationStatusTotal.WithLabelValues("success", "check", formatCheck(req), req.Namespace).Inc()
 			}
 		}
 	}()
@@ -119,10 +120,10 @@ func (c *ShadowRBACClient) Compile(ctx context.Context, id authlib.AuthInfo, req
 			if rbacItemChecker != nil {
 				rbacRes := rbacItemChecker(name, folder)
 				if rbacRes != zanzanaRes {
-					c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
+					c.metrics.evaluationStatusTotal.WithLabelValues("error", "compile", "other", req.Namespace).Inc()
 					c.logger.Warn("RBAC compile result does not match zanzana", "expected", zanzanaRes, "actual", rbacRes, "name", name, "folder", folder)
 				} else {
-					c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+					c.metrics.evaluationStatusTotal.WithLabelValues("success", "compile", "other", req.Namespace).Inc()
 				}
 			}
 		}()
@@ -173,19 +174,26 @@ func (c *ShadowRBACClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, 
 // compareRBACBatchCheckResults compares the results from zanzana and RBAC batch checks
 // and logs any discrepancies.
 func (c *ShadowRBACClient) compareRBACBatchCheckResults(zanzanaRes, rbacRes authlib.BatchCheckResponse, id authlib.AuthInfo, req authlib.BatchCheckRequest) {
-	for key, zanzanaResult := range zanzanaRes.Results {
-		rbacResult, ok := rbacRes.Results[key]
+	checkItems := make(map[string]authlib.BatchCheckItem, len(req.Checks))
+	for _, checkItem := range req.Checks {
+		checkItems[checkItem.CorrelationID] = checkItem
+	}
+
+	for correlationID, zanzanaResult := range zanzanaRes.Results {
+		rbacResult, ok := rbacRes.Results[correlationID]
+		checkItem := checkItems[correlationID]
+
 		if !ok {
-			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-			c.logger.Warn("RBAC batch check missing result", "key", key, "user", id.GetUID())
+			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
+			c.logger.Warn("RBAC batch check missing result", "item", checkItem, "user", id.GetUID())
 			continue
 		}
 
 		if zanzanaResult.Allowed != rbacResult.Allowed {
-			c.metrics.evaluationStatusTotal.WithLabelValues("error").Inc()
-			c.logger.Warn("RBAC batch check result does not match zanzana", "key", key, "expected", zanzanaResult.Allowed, "actual", rbacResult.Allowed, "user", id.GetUID())
+			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
+			c.logger.Warn("RBAC batch check result does not match zanzana", "expected", zanzanaResult.Allowed, "actual", rbacResult.Allowed, "item", checkItem, "user", id.GetUID())
 		} else {
-			c.metrics.evaluationStatusTotal.WithLabelValues("success").Inc()
+			c.metrics.evaluationStatusTotal.WithLabelValues("success", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
 		}
 	}
 }
