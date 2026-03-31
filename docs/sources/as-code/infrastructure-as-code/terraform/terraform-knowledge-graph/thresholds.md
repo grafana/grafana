@@ -298,6 +298,8 @@ resource "grafana_asserts_thresholds" "example" {
 
 ## Best practices
 
+Consider the following best practices when configuring thresholds with Terraform.
+
 ### Threshold configuration management
 
 - Set appropriate threshold values based on your service level objectives (SLOs)
