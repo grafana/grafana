@@ -1,15 +1,11 @@
 import { renderHook, act } from '@testing-library/react';
+import { type ReactNode } from 'react';
+
+import { type Check, type CheckList, type CheckType, useGetCheckTypeQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import { config, usePluginFunctions } from '@grafana/runtime';
 
 import {
-  type Check,
-  type CheckType,
-  useGetCheckTypeQuery,
-  useListCheckQuery,
-  useUpdateCheckMutation,
-} from '@grafana/api-clients/rtkq/advisor/v0alpha1';
-import { config } from '@grafana/runtime';
-
-import {
+  AdvisorCheckProvider,
   useDatasourceFailureByUID,
   useLatestDatasourceCheck,
   useRetryDatasourceAdvisorCheck,
@@ -17,14 +13,16 @@ import {
 
 jest.mock('@grafana/api-clients/rtkq/advisor/v0alpha1', () => ({
   ...jest.requireActual('@grafana/api-clients/rtkq/advisor/v0alpha1'),
-  useListCheckQuery: jest.fn(),
-  useUpdateCheckMutation: jest.fn(),
   useGetCheckTypeQuery: jest.fn(),
 }));
 
-const useListCheckMock = useListCheckQuery as jest.Mock;
-const useUpdateCheckMutationMock = useUpdateCheckMutation as jest.Mock;
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  usePluginFunctions: jest.fn(),
+}));
+
 const useGetCheckTypeMock = useGetCheckTypeQuery as jest.Mock;
+const usePluginFunctionsMock = usePluginFunctions as jest.Mock;
 
 const emptyReport: Check['status'] = {
   report: {
@@ -81,6 +79,49 @@ function makeCheckType(
   };
 }
 
+function mockPluginFunctions(options: {
+  completedCheck?: Check;
+  completedChecksLoading?: boolean;
+  retryCheckFn?: jest.Mock;
+  pluginLoading?: boolean;
+}) {
+  const { completedCheck, completedChecksLoading = false, retryCheckFn, pluginLoading = false } = options;
+
+  // Pre-create stable return objects to avoid infinite re-render loops.
+  // In production, RTK Query hooks return referentially stable values;
+  // the mock must do the same for useLayoutEffect deps to stabilize.
+  const stableRetryCheck = retryCheckFn ?? jest.fn();
+  const completedData: CheckList | undefined = completedCheck
+    ? { apiVersion: 'advisor.grafana.app/v0alpha1', kind: 'CheckList', items: [completedCheck], metadata: {} }
+    : undefined;
+  const completedResult = {
+    isCompleted: !completedChecksLoading,
+    isLoading: completedChecksLoading,
+    data: completedData,
+  };
+  const retryResult = { retryCheck: stableRetryCheck };
+
+  usePluginFunctionsMock.mockImplementation(({ extensionPointId }: { extensionPointId: string }) => {
+    if (extensionPointId === 'grafana-advisor-app/completed-checks/v1') {
+      return {
+        isLoading: pluginLoading,
+        functions: pluginLoading ? [] : [{ fn: () => completedResult }],
+      };
+    }
+    if (extensionPointId === 'grafana-advisor-app/retry-check/v1') {
+      return {
+        isLoading: pluginLoading,
+        functions: pluginLoading ? [] : [{ fn: () => retryResult }],
+      };
+    }
+    return { isLoading: false, functions: [] };
+  });
+}
+
+function wrapper({ children }: { children: ReactNode }) {
+  return <AdvisorCheckProvider>{children}</AdvisorCheckProvider>;
+}
+
 describe('useLatestDatasourceCheck', () => {
   const originalFeatureToggles = config.featureToggles;
 
@@ -91,7 +132,6 @@ describe('useLatestDatasourceCheck', () => {
       grafanaAdvisor: true,
       advisorDatasourceIntegration: true,
     };
-    useUpdateCheckMutationMock.mockReturnValue([jest.fn(), {}]);
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
 
@@ -99,87 +139,49 @@ describe('useLatestDatasourceCheck', () => {
     config.featureToggles = originalFeatureToggles;
   });
 
-  it('skips the query when grafanaAdvisor feature toggle is off', () => {
+  it('returns isLoading false when grafanaAdvisor feature toggle is off', () => {
     config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
-    useListCheckMock.mockReturnValue({ data: undefined, isLoading: false });
+    mockPluginFunctions({});
 
-    const { result } = renderHook(() => useLatestDatasourceCheck());
+    const { result } = renderHook(() => useLatestDatasourceCheck(), { wrapper });
 
-    expect(useListCheckMock).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ skip: true }));
     expect(result.current.check).toBeUndefined();
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('returns undefined when there are no items', () => {
-    useListCheckMock.mockReturnValue({ data: { items: [] }, isLoading: false });
+  it('returns undefined when there is no check', () => {
+    mockPluginFunctions({});
 
-    const { result } = renderHook(() => useLatestDatasourceCheck());
+    const { result } = renderHook(() => useLatestDatasourceCheck(), { wrapper });
 
     expect(result.current.check).toBeUndefined();
   });
 
-  it('returns the latest check by creationTimestamp', () => {
-    const older = makeCheck({ name: 'older', creationTimestamp: '2026-01-01T00:00:00Z', failures: emptyReport });
-    const newer = makeCheck({ name: 'newer', creationTimestamp: '2026-03-11T13:00:00Z', failures: emptyReport });
+  it('returns the check from the plugin function', () => {
+    const check = makeCheck({ name: 'latest', creationTimestamp: '2026-03-11T13:00:00Z', failures: emptyReport });
 
-    useListCheckMock.mockReturnValue({ data: { items: [newer, older] }, isLoading: false });
+    mockPluginFunctions({ completedCheck: check });
 
-    const { result } = renderHook(() => useLatestDatasourceCheck());
+    const { result } = renderHook(() => useLatestDatasourceCheck(), { wrapper });
 
-    expect(result.current.check?.metadata.name).toBe('newer');
+    expect(result.current.check?.metadata.name).toBe('latest');
   });
 
-  it('passes the correct labelSelector and limit', () => {
-    useListCheckMock.mockReturnValue({ data: undefined, isLoading: false });
+  it('returns isLoading true while plugin function is loading', () => {
+    mockPluginFunctions({ pluginLoading: true });
 
-    renderHook(() => useLatestDatasourceCheck());
+    const { result } = renderHook(() => useLatestDatasourceCheck(), { wrapper });
 
-    expect(useListCheckMock).toHaveBeenCalledWith(
-      { labelSelector: 'advisor.grafana.app/type=datasource', limit: 1000 },
-      expect.objectContaining({ skip: false })
-    );
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.check).toBeUndefined();
   });
 
-  it('refetches on interval while latest check has retry annotation', () => {
-    jest.useFakeTimers();
-    const refetch = jest.fn();
-    const pendingCheck = makeCheck({
-      name: 'pending',
-      creationTimestamp: '2026-03-11T13:00:00Z',
-      annotations: { 'advisor.grafana.app/retry': 'uid-1' },
-      failures: emptyReport,
-    });
-    useListCheckMock.mockReturnValue({ data: { items: [pendingCheck] }, isLoading: false, refetch });
+  it('returns isLoading true while completed checks data is loading', () => {
+    mockPluginFunctions({ completedChecksLoading: true });
 
-    renderHook(() => useLatestDatasourceCheck());
+    const { result } = renderHook(() => useLatestDatasourceCheck(), { wrapper });
 
-    act(() => {
-      jest.advanceTimersByTime(4000);
-    });
-
-    expect(refetch).toHaveBeenCalledTimes(2);
-    jest.useRealTimers();
-  });
-
-  it('does not refetch on interval when retry annotation is empty', () => {
-    jest.useFakeTimers();
-    const refetch = jest.fn();
-    const completedCheck = makeCheck({
-      name: 'completed',
-      creationTimestamp: '2026-03-11T13:00:00Z',
-      annotations: { 'advisor.grafana.app/retry': '' },
-      failures: emptyReport,
-    });
-    useListCheckMock.mockReturnValue({ data: { items: [completedCheck] }, isLoading: false, refetch });
-
-    renderHook(() => useLatestDatasourceCheck());
-
-    act(() => {
-      jest.advanceTimersByTime(4000);
-    });
-
-    expect(refetch).not.toHaveBeenCalled();
-    jest.useRealTimers();
+    expect(result.current.isLoading).toBe(true);
   });
 });
 
@@ -193,7 +195,6 @@ describe('useDatasourceFailureByUID', () => {
       grafanaAdvisor: true,
       advisorDatasourceIntegration: true,
     };
-    useUpdateCheckMutationMock.mockReturnValue([jest.fn(), {}]);
     useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
 
@@ -201,10 +202,10 @@ describe('useDatasourceFailureByUID', () => {
     config.featureToggles = originalFeatureToggles;
   });
 
-  it('returns empty map when there are no checks', () => {
-    useListCheckMock.mockReturnValue({ data: { items: [] }, isLoading: false });
+  it('returns empty map when there is no check', () => {
+    mockPluginFunctions({});
 
-    const { result } = renderHook(() => useDatasourceFailureByUID());
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
@@ -224,9 +225,9 @@ describe('useDatasourceFailureByUID', () => {
       },
     });
 
-    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+    mockPluginFunctions({ completedCheck: check });
 
-    const { result } = renderHook(() => useDatasourceFailureByUID());
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.datasourceFailureByUID.get('uid-1')?.severity).toBe('high');
     expect(result.current.datasourceFailureByUID.get('uid-2')?.severity).toBe('high');
@@ -248,9 +249,9 @@ describe('useDatasourceFailureByUID', () => {
       },
     });
 
-    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+    mockPluginFunctions({ completedCheck: check });
 
-    const { result } = renderHook(() => useDatasourceFailureByUID());
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.datasourceFailureByUID.get('uid-1')?.severity).toBe('high');
     expect(result.current.datasourceFailureByUID.size).toBe(1);
@@ -266,43 +267,33 @@ describe('useDatasourceFailureByUID', () => {
       },
     });
 
-    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+    mockPluginFunctions({ completedCheck: check });
 
-    const { result } = renderHook(() => useDatasourceFailureByUID());
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
 
   it('returns empty map when advisor is disabled', () => {
     config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
-    useListCheckMock.mockReturnValue({ data: undefined, isLoading: false });
+    mockPluginFunctions({});
 
-    const { result } = renderHook(() => useDatasourceFailureByUID());
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('returns latest check even when newest has no report yet', () => {
+  it('returns empty map when latest check has no report', () => {
     const latestWithoutReport = makeCheck({ name: 'newest', creationTimestamp: '2026-04-01T00:00:00Z' });
-    const latestWithReport = makeCheck({
-      name: 'latest-with-report',
-      creationTimestamp: '2026-03-31T00:00:00Z',
-      failures: {
-        report: {
-          count: 1,
-          failures: [{ item: 'prometheus', itemID: 'uid-1', stepID: 'health-check', severity: 'high', links: [] }],
-        },
-      },
-    });
 
-    useListCheckMock.mockReturnValue({ data: { items: [latestWithoutReport, latestWithReport] }, isLoading: false });
+    mockPluginFunctions({ completedCheck: latestWithoutReport });
     useGetCheckTypeMock.mockReturnValue({
       data: makeCheckType(),
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useDatasourceFailureByUID());
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
@@ -317,7 +308,7 @@ describe('useDatasourceFailureByUID', () => {
       },
     });
 
-    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+    mockPluginFunctions({ completedCheck: check });
     useGetCheckTypeMock.mockReturnValue({
       data: makeCheckType({
         steps: [
@@ -332,7 +323,7 @@ describe('useDatasourceFailureByUID', () => {
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useDatasourceFailureByUID());
+    const { result } = renderHook(() => useDatasourceFailureByUID(), { wrapper });
 
     expect(result.current.datasourceFailureByUID.get('uid-1')?.message).toBe(
       'Health check failed: Go to datasource settings and fix the reported issue.'
@@ -357,61 +348,46 @@ describe('useRetryDatasourceAdvisorCheck', () => {
     config.featureToggles = originalFeatureToggles;
   });
 
-  it('sends a patch with the correct check name, path and datasource UID', async () => {
+  it('calls retryCheck with the correct check name and datasource UID', async () => {
+    const retryCheckFn = jest.fn();
     const check = makeCheck({ name: 'check-sk5fn', failures: emptyReport });
-    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+    mockPluginFunctions({ completedCheck: check, retryCheckFn });
 
-    const updateCheckFn = jest.fn().mockReturnValue({ unwrap: () => Promise.resolve() });
-    useUpdateCheckMutationMock.mockReturnValue([updateCheckFn, {}]);
-
-    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck());
+    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck(), { wrapper });
 
     await act(async () => {
       await result.current('P7DC3E4760CFAC4AF');
     });
 
-    expect(updateCheckFn).toHaveBeenCalledWith({
-      name: 'check-sk5fn',
-      patch: [
-        {
-          op: 'add',
-          path: '/metadata/annotations/advisor.grafana.app~1retry',
-          value: 'P7DC3E4760CFAC4AF',
-        },
-      ],
-    });
+    expect(retryCheckFn).toHaveBeenCalledWith('check-sk5fn', 'P7DC3E4760CFAC4AF');
   });
 
-  it('does not send a patch when advisor is disabled', async () => {
+  it('does not call retryCheck when advisor is disabled', async () => {
     config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
 
+    const retryCheckFn = jest.fn();
     const check = makeCheck({ name: 'check-sk5fn', failures: emptyReport });
-    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+    mockPluginFunctions({ completedCheck: check, retryCheckFn });
 
-    const updateCheckFn = jest.fn().mockReturnValue({ unwrap: () => Promise.resolve() });
-    useUpdateCheckMutationMock.mockReturnValue([updateCheckFn, {}]);
-
-    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck());
+    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck(), { wrapper });
 
     await act(async () => {
       await result.current('some-uid');
     });
 
-    expect(updateCheckFn).not.toHaveBeenCalled();
+    expect(retryCheckFn).not.toHaveBeenCalled();
   });
 
-  it('does not send a patch when no latest check exists', async () => {
-    useListCheckMock.mockReturnValue({ data: { items: [] }, isLoading: false });
+  it('does not call retryCheck when no latest check exists', async () => {
+    const retryCheckFn = jest.fn();
+    mockPluginFunctions({ retryCheckFn });
 
-    const updateCheckFn = jest.fn().mockReturnValue({ unwrap: () => Promise.resolve() });
-    useUpdateCheckMutationMock.mockReturnValue([updateCheckFn, {}]);
-
-    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck());
+    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck(), { wrapper });
 
     await act(async () => {
       await result.current('some-uid');
     });
 
-    expect(updateCheckFn).not.toHaveBeenCalled();
+    expect(retryCheckFn).not.toHaveBeenCalled();
   });
 });
