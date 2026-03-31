@@ -90,7 +90,7 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   };
 
   return (
-    <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
+    <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column" width="100%">
       <Box padding={4}>
         <Box marginBottom={2} paddingX={4} display="flex" justifyContent="center">
           <Icon name="apps" size="xxl" className={styles.appsIcon} />
@@ -279,6 +279,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing.gridSize * 4,
       paddingTop: theme.spacing(2),
+      width: '100%',
 
       [theme.breakpoints.up('sm')]: {
         paddingTop: theme.spacing(12),
