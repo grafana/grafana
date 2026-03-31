@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Impossible d'afficher l'aperçu de la requête. Certaines des sources de données utilisées dans les requêtes ne sont pas disponibles.",
       "preview-alerts": "Aperçu des alertes",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Supprimer les filtres",
       "configured-alert-rules": "Les sources de données contenant des règles d’alerte configurées sont des sources de données Mimir ou Loki où les règles d’alerte sont stockées et évaluées dans la source de données elle-même.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtre les règles d’alerte dirigées directement vers le point de contact sélectionné. Les règles d’alerte acheminées via des politiques de notification ne seront pas affichées.",
       "contact-point-tooltip-title": "Aide sur le filtre de points de contact",
       "dashboard": "Tableau de bord",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Sélectionner des sources de données",
       "placeholder-group-search": "Rechercher un groupe",
       "placeholder-labels": "Sélectionner des étiquettes",
+      "placeholder-policy": "",
       "plugin-rules": "Règles de plugin",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Géré par la source de données",
         "grafana": "Géré par Grafana"
@@ -3212,6 +3220,7 @@
       "title-group": "Groupe",
       "title-health": "Santé",
       "title-labels": "Étiquettes",
+      "title-policy": "",
       "title-rule": "Règle",
       "title-state": "État",
       "title-type": "Type"
@@ -7264,6 +7273,9 @@
           "metrics-drilldown": "Exploration des métriques"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14668,6 +14680,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },
