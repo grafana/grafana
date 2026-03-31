@@ -2428,6 +2428,20 @@
     },
     {
       "metadata": {
+        "name": "pieChartGradientColorScheme",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2026-03-30T00:00:00Z"
+      },
+      "spec": {
+        "description": "Enable gradient color scheme option for the pie chart panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "improvedExternalSessionHandling",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-09-17T10:54:39Z"
@@ -3902,20 +3916,6 @@
         "description": "Enables viewing non-applicable drilldowns on a panel level",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "pieChartGradientColorScheme",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-03-30T00:00:00Z"
-      },
-      "spec": {
-        "description": "Enable gradient color scheme option for the pie chart panel",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
       }
