@@ -148,8 +148,8 @@ func TestIntegrationApi_getDescription_K8sFormat(t *testing.T) {
 					BuiltInRoles: true,
 				},
 				PermissionsToActions: map[string][]string{
-					"View": {"testresources:read"},
-					"Edit": {"testresources:read", "testresources:write"},
+					"View": {"test.grafana.app/testresources:get"},
+					"Edit": {"test.grafana.app/testresources:get", "test.grafana.app/testresources:update"},
 				},
 			},
 			permissions: []accesscontrol.Permission{

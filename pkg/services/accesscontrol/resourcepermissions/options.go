@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -71,7 +72,7 @@ type Options struct {
 // Legacy: "{Resource}.permissions:read" or "{Resource}.permissions:write"
 func (o *Options) GetAction(verb string) string {
 	if o.K8sActionFormat {
-		k8sVerb := map[string]string{"read": "get_permissions", "write": "set_permissions"}[verb]
+		k8sVerb := map[string]string{"read": utils.VerbGetPermissions, "write": utils.VerbSetPermissions}[verb]
 		return fmt.Sprintf("%s/%s:%s", o.APIGroup, o.Resource, k8sVerb)
 	}
 	return fmt.Sprintf("%s.permissions:%s", o.Resource, verb)
