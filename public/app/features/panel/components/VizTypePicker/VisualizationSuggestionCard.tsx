@@ -5,6 +5,7 @@ import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import { type GrafanaTheme2, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, useStyles2 } from '@grafana/ui';
+import { LTTB_THRESHOLD, lttbPreviewData } from 'app/plugins/panel/timeseries/utils';
 
 import { PanelRenderer } from '../PanelRenderer';
 
@@ -44,13 +45,37 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
       suggestion.cardOptions.previewModifier(preview);
     }
 
+    const maxSeries = cardOptions.maxSeries;
+    const maxRows = cardOptions.maxRows;
+    let previewData = maxSeries ? { ...data, series: data.series.slice(0, maxSeries) } : data;
+
+    const lttbTarget = maxRows ?? LTTB_THRESHOLD;
+    if (previewData.series.some((frame) => frame.length > lttbTarget)) {
+      previewData = lttbPreviewData(previewData, lttbTarget);
+    }
+
+    if (maxRows && previewData.series.some((frame) => frame.length > maxRows)) {
+      previewData = {
+        ...previewData,
+        series: previewData.series.map((frame) =>
+          frame.length > maxRows
+            ? {
+                ...frame,
+                length: maxRows,
+                fields: frame.fields.map((field) => ({ ...field, values: field.values.slice(0, maxRows) })),
+              }
+            : frame
+        ),
+      };
+    }
+
     content = (
       <div {...commonButtonProps}>
         {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
         <div style={innerStyles} className={styles.renderContainer} {...{ inert: '' }}>
           <PanelRenderer
             title=""
-            data={data}
+            data={previewData}
             pluginId={suggestion.pluginId}
             width={renderWidth}
             height={renderHeight}

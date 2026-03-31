@@ -553,6 +553,39 @@ describe('VisualizationSuggestions', () => {
     expect(screen.queryByTestId('suggestion-card-gauge-hash')).not.toBeInTheDocument();
   });
 
+  it('should show empty search result when no suggestions match the search query', async () => {
+    mockGetAllSuggestions.mockResolvedValue({
+      suggestions: [
+        { pluginId: 'timeseries', name: 'Time series', hash: 'ts-hash', options: {} },
+        { pluginId: 'table', name: 'Table', hash: 'table-hash', options: {} },
+      ],
+      hasErrors: false,
+    });
+
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(<VisualizationSuggestions onChange={jest.fn()} data={data} panel={undefined} searchQuery="fakeplugin" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not find anything matching your query')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId('suggestion-card-ts-hash')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('suggestion-card-table-hash')).not.toBeInTheDocument();
+  });
+
   it('should filter suggestions by description when name and pluginId do not match', async () => {
     mockGetAllSuggestions.mockResolvedValue({
       suggestions: [

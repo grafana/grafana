@@ -2576,6 +2576,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "クエリプレビューを表示できません。クエリで使用されているデータソースの一部が利用できません。",
       "preview-alerts": "アラートをプレビュー",
@@ -3088,6 +3091,7 @@
     "rules-filter": {
       "clear-filters": "フィルタをクリア",
       "configured-alert-rules": "アラートルールが設定されているデータソースは、MimirまたはLokiデータソースで、アラートルールはデータソース自体に保存され評価されます。",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "選択したコンタクトポイントに直接ルーティングするアラートルールを絞り込みます。通知ポリシーにルーティングされたアラートルールは表示されません。",
       "contact-point-tooltip-title": "コンタクトポイントフィルターのヘルプ",
       "dashboard": "ダッシュボード",
@@ -3112,7 +3116,11 @@
       "placeholder-data-sources": "データソースを選択してください",
       "placeholder-group-search": "グループを検索",
       "placeholder-labels": "ラベルを選択してください",
+      "placeholder-policy": "",
       "plugin-rules": "プラグインルール",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "データソース管理",
         "grafana": "Grafana管理"
@@ -3193,6 +3201,7 @@
       "title-group": "グループ",
       "title-health": "健康",
       "title-labels": "ラベル",
+      "title-policy": "",
       "title-rule": "ルール",
       "title-state": "ステート",
       "title-type": "タイプ"
@@ -7226,6 +7235,9 @@
           "metrics-drilldown": "メトリックのドリルダウン"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -14581,6 +14593,7 @@
   },
   "splash-screen": {
     "body": "",
+    "close": "",
     "get-started": "",
     "title": ""
   },
