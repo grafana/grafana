@@ -152,18 +152,6 @@ func (qb *queryBuilder) buildBatchDeleteQuery(keyPaths []string) (string, []inte
 	return query, args
 }
 
-// buildInsertQuery generates a plain INSERT for non-DataSection tables (key_path + value only, no conflict handling).
-// Used by BatchOpCreate to ensure concurrent creates fail with a constraint violation rather than silently upserting.
-func (qb *queryBuilder) buildInsertQuery(keyPath string, value []byte) (string, []interface{}) {
-	query := fmt.Sprintf(
-		"INSERT INTO %s (%s, %s) VALUES (%s, %s)",
-		qb.dialect.QuoteIdent(qb.tableName),
-		qb.dialect.QuoteIdent("key_path"), qb.dialect.QuoteIdent("value"),
-		qb.dialect.Placeholder(1), qb.dialect.Placeholder(2),
-	)
-	return query, []interface{}{keyPath, value}
-}
-
 // buildInsertDatastoreQuery generates INSERT for datastore section for use in non-backwards compatible mode (without rvmanager)
 // Includes all required fields with empty string defaults for group, resource, namespace, name, folder, and 0 for action
 func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, guid string) (string, []interface{}) {
