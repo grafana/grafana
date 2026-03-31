@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-
 var _ authlib.AccessClient = (*ShadowRBACClient)(nil)
 
 type ShadowRBACClient struct {
