@@ -117,6 +117,8 @@ import {
 const EXPANDED_COLUMN_KEY = 'expanded';
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
+console.log('hello world');
+
 export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
