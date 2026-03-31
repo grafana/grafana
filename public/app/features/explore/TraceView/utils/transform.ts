@@ -29,7 +29,7 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
     if (!processes[span.spanID]) {
       processes[span.spanID] = {
         serviceName: span.serviceName,
-        tags: span.serviceTags,
+        tags: Array.isArray(span.serviceTags) ? span.serviceTags : [],
       };
     }
   }
