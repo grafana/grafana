@@ -119,6 +119,7 @@ export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
 type PanelStyles = {
   fieldConfig?: { defaults: Partial<FieldConfig> };
+  options?: Record<string, unknown>;
 };
 
 type CopiedPanelStyles = {
@@ -135,6 +136,16 @@ function copyFieldConfigPropIfDefined<K extends keyof FieldConfig>(
   if (value !== undefined) {
     target[key] = value;
   }
+}
+
+function extractOptionProps(source: object, props: readonly string[]): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (props.includes(key) && value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
 }
 
 export interface DashboardSceneState extends SceneObjectState {
@@ -717,6 +728,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       defaults.custom = customDefaults;
     }
 
+    // panel-level options (colorMode, graphMode, textMode, etc.)
+    if (styleConfig.options?.props && panel.state.options) {
+      const extracted = extractOptionProps(panel.state.options, styleConfig.options.props);
+      if (Object.keys(extracted).length > 0) {
+        styles.options = extracted;
+      }
+    }
+
     return styles;
   }
 
@@ -781,27 +800,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         return;
       }
 
-      if (!stylesCopy.styles.fieldConfig?.defaults) {
-        return;
-      }
-
-      const newDefaults = {
-        ...vizPanel.state.fieldConfig?.defaults,
-        ...stylesCopy.styles.fieldConfig.defaults,
-      };
-
-      if (stylesCopy.styles.fieldConfig.defaults.custom) {
-        newDefaults.custom = {
-          ...vizPanel.state.fieldConfig?.defaults?.custom,
-          ...stylesCopy.styles.fieldConfig.defaults.custom,
+      if (stylesCopy.styles.fieldConfig?.defaults) {
+        const newDefaults = {
+          ...vizPanel.state.fieldConfig?.defaults,
+          ...stylesCopy.styles.fieldConfig.defaults,
         };
+
+        if (stylesCopy.styles.fieldConfig.defaults.custom) {
+          newDefaults.custom = {
+            ...vizPanel.state.fieldConfig?.defaults?.custom,
+            ...stylesCopy.styles.fieldConfig.defaults.custom,
+          };
+        }
+
+        vizPanel.onFieldConfigChange({
+          ...vizPanel.state.fieldConfig,
+          defaults: newDefaults,
+        });
       }
 
-      const newFieldConfig = {
-        ...vizPanel.state.fieldConfig,
-        defaults: newDefaults,
-      };
-      vizPanel.onFieldConfigChange(newFieldConfig);
+      if (stylesCopy.styles.options) {
+        vizPanel.onOptionsChange({
+          ...vizPanel.state.options,
+          ...stylesCopy.styles.options,
+        });
+      }
 
       appEvents.emit('alert-success', ['Panel styles applied.']);
     } catch (e) {

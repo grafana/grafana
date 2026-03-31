@@ -13,6 +13,10 @@ export interface PanelStyleConfig {
     /** Keys within fieldConfig.defaults.custom to include in style copy */
     defaults: readonly string[];
   };
+  /** Top-level panel options keys to include in style copy */
+  options?: {
+    props: readonly string[];
+  };
 }
 
 /**
