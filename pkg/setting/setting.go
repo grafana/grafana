@@ -95,6 +95,7 @@ type Cfg struct {
 	configFiles                  []string
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
+	commandLineProps             map[string]string
 
 	// HTTP Server Settings
 	CertFile          string
@@ -1069,12 +1070,12 @@ func EnvKey(sectionName string, keyName string) string {
 	return "GF_" + envNameFromIniName(sectionName) + "_" + envNameFromIniName(keyName)
 }
 
-func (cfg *Cfg) applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
+func (cfg *Cfg) applyCommandLineDefaultProperties(file *ini.File) {
 	cfg.appliedCommandLineProperties = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			keyString := fmt.Sprintf("default.%s.%s", section.Name(), key.Name())
-			value, exists := props[keyString]
+			value, exists := cfg.commandLineProps[keyString]
 			if exists {
 				key.SetValue(value)
 				cfg.appliedCommandLineProperties = append(cfg.appliedCommandLineProperties,
@@ -1084,7 +1085,7 @@ func (cfg *Cfg) applyCommandLineDefaultProperties(props map[string]string, file 
 	}
 }
 
-func (cfg *Cfg) applyCommandLineProperties(props map[string]string, file *ini.File) {
+func (cfg *Cfg) applyCommandLineProperties(file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DefaultSection {
@@ -1092,7 +1093,7 @@ func (cfg *Cfg) applyCommandLineProperties(props map[string]string, file *ini.Fi
 		}
 		for _, key := range section.Keys() {
 			keyString := sectionName + key.Name()
-			value, exists := props[keyString]
+			value, exists := cfg.commandLineProps[keyString]
 			if exists {
 				cfg.appliedCommandLineProperties = append(cfg.appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 				key.SetValue(value)
@@ -1189,9 +1190,9 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	}
 
 	// command line props
-	commandLineProps := cfg.getCommandLineProperties(args.Args)
+	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
 	// load default overrides
-	cfg.applyCommandLineDefaultProperties(commandLineProps, parsedFile)
+	cfg.applyCommandLineDefaultProperties(parsedFile)
 
 	// load specified config file
 	err = cfg.loadSpecifiedConfigFile(args.Config, parsedFile)
@@ -1211,7 +1212,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	}
 
 	// apply command line overrides
-	cfg.applyCommandLineProperties(commandLineProps, parsedFile)
+	cfg.applyCommandLineProperties(parsedFile)
 
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)
