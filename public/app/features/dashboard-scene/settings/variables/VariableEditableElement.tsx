@@ -27,7 +27,12 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { VariableTypeSelect } from '../../settings/variables/components/VariableTypeSelect';
-import { type EditableVariableType, getEditableVariableDefinition, isEditableVariableType, validateVariableName } from '../../settings/variables/utils';
+import {
+  type EditableVariableType,
+  getEditableVariableDefinition,
+  isEditableVariableType,
+  validateVariableName,
+} from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
@@ -92,7 +97,16 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
           render: () => <VariableDisplayInput variable={variable} />,
         })
       );
-  }, [variableOptionsCategoryId, variableNameId, labelId, descriptionId, variableDisplayId, variable, isNewElement, variableTypeId]);
+  }, [
+    variableOptionsCategoryId,
+    variableNameId,
+    labelId,
+    descriptionId,
+    variableDisplayId,
+    variable,
+    isNewElement,
+    variableTypeId,
+  ]);
 
   const categories = [basicOptions];
   const typeCategory = useVariableTypeCategory(variable);
