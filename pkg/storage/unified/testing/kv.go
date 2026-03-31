@@ -1194,6 +1194,36 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 	})
 
+	t.Run("batch respects earlier operations on the same key", func(t *testing.T) {
+		saveKVHelper(t, kv, ctx, section, "replace-in-batch", strings.NewReader("old"))
+
+		ops := []resource.BatchOp{
+			{Mode: kvpkg.BatchOpCreate, Key: "create-then-update", Value: []byte("created")},
+			{Mode: kvpkg.BatchOpUpdate, Key: "create-then-update", Value: []byte("updated")},
+			{Mode: kvpkg.BatchOpDelete, Key: "replace-in-batch"},
+			{Mode: kvpkg.BatchOpCreate, Key: "replace-in-batch", Value: []byte("recreated")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		reader, err := kv.Get(ctx, section, "create-then-update")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.Equal(t, "updated", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+
+		reader, err = kv.Get(ctx, section, "replace-in-batch")
+		require.NoError(t, err)
+		value, err = io.ReadAll(reader)
+		require.NoError(t, err)
+		require.Equal(t, "recreated", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
 	t.Run("batch too many operations", func(t *testing.T) {
 		ops := make([]kvpkg.BatchOp, kvpkg.MaxBatchOps+1)
 		for i := range ops {

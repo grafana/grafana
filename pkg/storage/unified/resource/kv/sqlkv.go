@@ -9,6 +9,7 @@ import (
 	"io"
 	"iter"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +23,8 @@ const (
 )
 
 var _ KV = &SqlKV{}
+
+var batchSavepointCounter uint64
 
 type SqlKV struct {
 	db         *sql.DB
@@ -112,6 +115,49 @@ func (k *SqlKV) borrowOrBeginTx(ctx context.Context) (tx *sql.Tx, owned bool, er
 		return nil, false, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	return sqlTx, true, nil
+}
+
+func nextBatchSavepoint() string {
+	return fmt.Sprintf("sqlkv_batch_%d", atomic.AddUint64(&batchSavepointCounter, 1))
+}
+
+// withBatchTx runs fn inside a transaction and guarantees rollback on error.
+// When the context already carries an external *sql.Tx, a savepoint is used so
+// Batch remains atomic without owning the outer transaction.
+func (k *SqlKV) withBatchTx(ctx context.Context, fn func(context.Context, *sql.Tx) error) error {
+	tx, owned, err := k.borrowOrBeginTx(ctx)
+	if err != nil {
+		return err
+	}
+
+	batchCtx := ContextWithDBTX(ctx, tx)
+	if owned {
+		defer tx.Rollback() //nolint:errcheck
+		if err := fn(batchCtx, tx); err != nil {
+			return err
+		}
+		return tx.Commit()
+	}
+
+	savepoint := nextBatchSavepoint()
+	if _, err := tx.ExecContext(ctx, "SAVEPOINT "+savepoint); err != nil {
+		return fmt.Errorf("failed to create savepoint: %w", err)
+	}
+
+	if err := fn(batchCtx, tx); err != nil {
+		if _, rollbackErr := tx.ExecContext(ctx, "ROLLBACK TO SAVEPOINT "+savepoint); rollbackErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to rollback savepoint: %w", rollbackErr))
+		}
+		if _, releaseErr := tx.ExecContext(ctx, "RELEASE SAVEPOINT "+savepoint); releaseErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to release savepoint: %w", releaseErr))
+		}
+		return err
+	}
+
+	if _, err := tx.ExecContext(ctx, "RELEASE SAVEPOINT "+savepoint); err != nil {
+		return fmt.Errorf("failed to release savepoint: %w", err)
+	}
+	return nil
 }
 
 func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
@@ -407,6 +453,24 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 	return nil
 }
 
+func (k *SqlKV) keyExists(ctx context.Context, section string, key string) (bool, error) {
+	qb, err := k.getQueryBuilder(section)
+	if err != nil {
+		return false, err
+	}
+
+	query, args := qb.buildExistsQuery(getKeyPath(section, key))
+	var exists int
+	if err := k.conn(ctx).QueryRowContext(ctx, query, args...).Scan(&exists); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check key existence: %w", err)
+	}
+
+	return true, nil
+}
+
 // Batch executes a batch of operations. All-Create on DataSection uses multi-row
 // INSERT for maximum throughput. Everything else falls back to per-item Save/Delete.
 func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
@@ -439,54 +503,49 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		if err != nil {
 			return err
 		}
-		tx, owned, err := k.borrowOrBeginTx(ctx)
-		if err != nil {
-			return err
-		}
-		if owned {
-			defer tx.Rollback() //nolint:errcheck
-		}
-		if err := k.batchInsertDatastore(ctx, tx, qb, ops); err != nil {
-			return err
-		}
-		if owned {
-			return tx.Commit()
-		}
-		return nil
+		return k.withBatchTx(ctx, func(batchCtx context.Context, tx *sql.Tx) error {
+			return k.batchInsertDatastore(batchCtx, tx, qb, ops)
+		})
 	}
 
-	// Fallback: per-item execution using existing Save/Delete methods.
-	for i, op := range ops {
-		switch op.Mode {
-		case BatchOpPut, BatchOpCreate:
-			w, err := k.Save(ctx, section, op.Key)
-			if err != nil {
-				return &BatchError{Err: err, Index: i, Op: op}
-			}
-			if _, err := w.Write(op.Value); err != nil {
-				return &BatchError{Err: err, Index: i, Op: op}
-			}
-			if err := w.Close(); err != nil {
-				return &BatchError{Err: err, Index: i, Op: op}
-			}
-		case BatchOpUpdate:
-			w, err := k.Save(ctx, section, op.Key)
-			if err != nil {
-				return &BatchError{Err: err, Index: i, Op: op}
-			}
-			if _, err := w.Write(op.Value); err != nil {
-				return &BatchError{Err: err, Index: i, Op: op}
-			}
-			if err := w.Close(); err != nil {
-				return &BatchError{Err: err, Index: i, Op: op}
-			}
-		case BatchOpDelete:
-			if err := k.Delete(ctx, section, op.Key); err != nil {
-				return &BatchError{Err: err, Index: i, Op: op}
+	return k.withBatchTx(ctx, func(batchCtx context.Context, _ *sql.Tx) error {
+		// Fallback: execute per-item semantics via Save/Delete inside one tx.
+		for i, op := range ops {
+			switch op.Mode {
+			case BatchOpCreate:
+				exists, err := k.keyExists(batchCtx, section, op.Key)
+				if err != nil {
+					return &BatchError{Err: err, Index: i, Op: op}
+				}
+				if exists {
+					return &BatchError{Err: ErrKeyAlreadyExists, Index: i, Op: op}
+				}
+				if err := k.batchWrite(batchCtx, section, op); err != nil {
+					return &BatchError{Err: err, Index: i, Op: op}
+				}
+			case BatchOpUpdate:
+				exists, err := k.keyExists(batchCtx, section, op.Key)
+				if err != nil {
+					return &BatchError{Err: err, Index: i, Op: op}
+				}
+				if !exists {
+					return &BatchError{Err: ErrNotFound, Index: i, Op: op}
+				}
+				if err := k.batchWrite(batchCtx, section, op); err != nil {
+					return &BatchError{Err: err, Index: i, Op: op}
+				}
+			case BatchOpPut:
+				if err := k.batchWrite(batchCtx, section, op); err != nil {
+					return &BatchError{Err: err, Index: i, Op: op}
+				}
+			case BatchOpDelete:
+				if err := k.Delete(batchCtx, section, op.Key); err != nil {
+					return &BatchError{Err: err, Index: i, Op: op}
+				}
 			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 // allCreate returns true if every op is a BatchOpCreate.
@@ -497,6 +556,17 @@ func allCreate(ops []BatchOp) bool {
 		}
 	}
 	return true
+}
+
+func (k *SqlKV) batchWrite(ctx context.Context, section string, op BatchOp) error {
+	w, err := k.Save(ctx, section, op.Key)
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write(op.Value); err != nil {
+		return err
+	}
+	return w.Close()
 }
 
 func (k *SqlKV) batchInsertDatastore(ctx context.Context, tx *sql.Tx, qb *queryBuilder, ops []BatchOp) error {
