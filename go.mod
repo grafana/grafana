@@ -8,7 +8,7 @@ require (
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 // @grafana/data-sources-plugins
 	cloud.google.com/go/kms v1.25.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.56.0 // @grafana/grafana-backend-group
-	connectrpc.com/connect v1.19.1 // @grafana/observability-traces-and-profiling
+	connectrpc.com/connect v1.19.1 // @grafana/data-sources-plugins
 	cuelang.org/go v0.11.1 // indirect; @grafana/grafana-as-code
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
 	filippo.io/age v1.2.1 // @grafana/identity-access-team
