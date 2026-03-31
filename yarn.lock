@@ -3696,7 +3696,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:3.4.10":
+"@grafana/plugin-e2e@npm:^3.4.10":
   version: 3.4.10
   resolution: "@grafana/plugin-e2e@npm:3.4.10"
   dependencies:
@@ -20100,7 +20100,7 @@ __metadata:
     "@grafana/llm": "npm:1.0.3"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:3.4.10"
+    "@grafana/plugin-e2e": "npm:^3.4.10"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
