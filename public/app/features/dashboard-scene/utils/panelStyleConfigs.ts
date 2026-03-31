@@ -67,10 +67,51 @@ const graphPanelStyleConfig: PanelStyleConfig = {
   },
 };
 
+/**
+ * Style config for the stat panel. All style comes from top-level FieldConfig
+ * properties and panel-level options — the stat panel has no custom field config type.
+ *
+ * fieldConfig:
+ *   color      – color scheme driving value/background coloring
+ *   thresholds – threshold config that determines color bands
+ *   mappings   – value-to-display mappings (text, color, icon)
+ *
+ * options:
+ *   colorMode            – how color is applied (value, background gradient/solid, none)
+ *   graphMode            – sparkline display (none, area)
+ *   justifyMode          – text alignment (auto, center)
+ *   textMode             – what text to show (auto, value, value and name, name, none)
+ *   wideLayout           – wide layout toggle for value-and-name mode
+ *   showPercentChange    – show percent change below the value
+ *   percentChangeColorMode – coloring of the percent change indicator
+ *   text                 – text sizes: { titleSize, valueSize, percentChangeSize }
+ *   orientation          – panel orientation (auto, horizontal, vertical)
+ */
+const statPanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color', 'thresholds', 'mappings'],
+    defaults: [],
+  },
+  options: {
+    props: [
+      'colorMode',
+      'graphMode',
+      'justifyMode',
+      'textMode',
+      'wideLayout',
+      'showPercentChange',
+      'percentChangeColorMode',
+      'text',
+      'orientation',
+    ],
+  },
+};
+
 const PANEL_STYLE_CONFIGS: Record<string, PanelStyleConfig> = {
   timeseries: graphPanelStyleConfig,
   trend: graphPanelStyleConfig,
   candlestick: graphPanelStyleConfig,
+  stat: statPanelStyleConfig,
 };
 
 /**

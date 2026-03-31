@@ -779,6 +779,86 @@ describe('DashboardScene', () => {
           expect(mockOnFieldConfigChange).toHaveBeenCalled();
         });
 
+        it('Should copy panel styles for stat panels, capturing color, thresholds, and mappings', () => {
+          const statPanel = new VizPanel({
+            title: 'Stat Panel',
+            key: `panel-stat-${Math.random()}`,
+            pluginId: 'stat',
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'thresholds' },
+                thresholds: {
+                  mode: 'absolute',
+                  steps: [
+                    { color: 'green', value: 0 },
+                    { color: 'red', value: 80 },
+                  ],
+                },
+                mappings: [{ type: 'value', options: { '1': { text: 'On', color: 'green', index: 0 } } }],
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(statPanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('stat');
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
+          expect(stored.styles.fieldConfig.defaults.thresholds).toBeDefined();
+          expect(stored.styles.fieldConfig.defaults.mappings).toBeDefined();
+          expect(stored.styles.fieldConfig.defaults.custom).toBeUndefined();
+        });
+
+        it('Should paste styles into a stat panel', () => {
+          const statPanel = new VizPanel({
+            title: 'Stat Panel',
+            key: `panel-stat-${Math.random()}`,
+            pluginId: 'stat',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          statPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'stat',
+              styles: {
+                fieldConfig: {
+                  defaults: {
+                    color: { mode: 'fixed', fixedColor: 'blue' },
+                    thresholds: { mode: 'absolute', steps: [{ color: 'green', value: 0 }] },
+                  },
+                },
+              },
+            })
+          );
+
+          scene.pastePanelStyles(statPanel);
+
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+        });
+
+        it('Should not paste stat styles into a timeseries panel', () => {
+          const timeseriesPanel = createTimeseriesPanel();
+          const mockOnFieldConfigChange = jest.fn();
+          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'stat',
+              styles: { fieldConfig: { defaults: { color: { mode: 'fixed' } } } },
+            })
+          );
+
+          scene.pastePanelStyles(timeseriesPanel);
+
+          expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
+        });
+
         it('Should not paste styles from a trend panel into a timeseries panel', () => {
           const timeseriesPanel = createTimeseriesPanel();
           const mockOnFieldConfigChange = jest.fn();
