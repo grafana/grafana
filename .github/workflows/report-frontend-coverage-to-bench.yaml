@@ -43,10 +43,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install dependencies
-        run: yarn install --immutable
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
+        uses: ./.github/actions/yarn-install
 
       - name: Get Grafana version
         id: version
