@@ -201,7 +201,6 @@ describe('VariablesEditView', () => {
       expect(variable.state.name).toEqual(previousVariable.state.name);
       expect(variable.state.label).toEqual(previousVariable.state.label);
       expect(variable.state.description).toEqual(previousVariable.state.description);
-      expect(variable.state.hide).toEqual(previousVariable.state.hide);
     });
 
     it('should change the variable type even when edit pane is not activated', () => {

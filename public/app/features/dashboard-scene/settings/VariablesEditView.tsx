@@ -190,7 +190,6 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
     newVariable.setState({
       description: variable.state.description,
-      hide: variable.state.hide,
     });
 
     this.replaceEditVariable(newVariable);

@@ -285,7 +285,6 @@ export const dashboardEditActions = {
 
     newVariable.setState({
       description: source.state.description,
-      hide: source.state.hide,
     });
 
     dashboardEditActions.replaceVariable({
