@@ -29,11 +29,12 @@ AlertRuleSpec: #RuleSpec & {
 
 // TODO(@moustafab): this should be imported from the notifications package
 #NotificationSettings: {
-	receiver: string
+	receiver?: string
 	groupBy?: [...string]
 	groupWait?:      #PromDuration
 	groupInterval?:  #PromDuration
 	repeatInterval?: #PromDuration
 	muteTimeIntervals?: [...#TimeIntervalRef]
 	activeTimeIntervals?: [...#TimeIntervalRef]
+	policy?: string
 }

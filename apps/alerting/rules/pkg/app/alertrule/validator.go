@@ -67,13 +67,13 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			}
 
 			// 4) Validate notification settings receiver if provided
-			if r.Spec.NotificationSettings != nil && r.Spec.NotificationSettings.Receiver != "" && cfg.NotificationSettingsValidator != nil {
-				ok, nerr := cfg.NotificationSettingsValidator(ctx, r.Spec.NotificationSettings.Receiver)
+			if r.Spec.NotificationSettings != nil && cfg.NotificationSettingsValidator != nil {
+				ok, nerr := cfg.NotificationSettingsValidator(ctx, r.Spec.NotificationSettings.Receiver, r.Spec.NotificationSettings.Policy)
 				if nerr != nil {
 					return fmt.Errorf("failed to validate notification settings: %w", nerr)
 				}
 				if !ok {
-					return fmt.Errorf("invalid notification receiver: %s", r.Spec.NotificationSettings.Receiver)
+					return fmt.Errorf("invalid notification settings")
 				}
 			}
 

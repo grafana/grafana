@@ -77,8 +77,28 @@ var (
 					if cast.Spec.NotificationSettings == nil {
 						return "", nil
 					}
+					if cast.Spec.NotificationSettings.Receiver == nil {
+						return "", nil
+					}
 
-					return cast.Spec.NotificationSettings.Receiver, nil
+					return *cast.Spec.NotificationSettings.Receiver, nil
+				},
+			},
+			{
+				FieldSelector: "spec.notificationSettings.policy",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*AlertRule)
+					if !ok {
+						return "", errors.New("provided object must be of type *AlertRule")
+					}
+					if cast.Spec.NotificationSettings == nil {
+						return "", nil
+					}
+					if cast.Spec.NotificationSettings.Policy == nil {
+						return "", nil
+					}
+
+					return *cast.Spec.NotificationSettings.Policy, nil
 				},
 			},
 		}))

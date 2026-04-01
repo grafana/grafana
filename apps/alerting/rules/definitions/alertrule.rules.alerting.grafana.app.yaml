@@ -93,12 +93,12 @@ spec:
                         ref'
                       type: string
                     type: array
+                  policy:
+                    type: string
                   receiver:
                     type: string
                   repeatInterval:
                     type: string
-                required:
-                - receiver
                 type: object
               panelRef:
                 properties:
@@ -179,6 +179,7 @@ spec:
     - jsonPath: .spec.panelRef.dashboardUID
     - jsonPath: .spec.panelRef.panelID
     - jsonPath: .spec.notificationSettings.receiver
+    - jsonPath: .spec.notificationSettings.policy
     served: true
     storage: true
     subresources:

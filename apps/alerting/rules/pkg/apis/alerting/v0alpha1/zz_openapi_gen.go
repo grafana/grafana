@@ -391,9 +391,8 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecNotificationSettings
 				Properties: map[string]spec.Schema{
 					"receiver": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"groupBy": {
@@ -456,8 +455,13 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecNotificationSettings
 							},
 						},
 					},
+					"policy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
-				Required: []string{"receiver"},
 			},
 		},
 	}

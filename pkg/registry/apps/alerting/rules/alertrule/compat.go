@@ -96,33 +96,41 @@ func convertToK8sResource(
 		k8sRule.Spec.Expressions[query.RefID] = convertToK8sExpression(query, rule)
 	}
 
-	if setting := rule.ContactPointRouting(); setting != nil {
-		nfSetting := model.AlertRuleV0alpha1SpecNotificationSettings{
-			Receiver: setting.Receiver,
-			GroupBy:  setting.GroupBy,
-		}
-		if setting.GroupWait != nil {
-			nfSetting.GroupWait = util.Pointer(model.AlertRulePromDuration(setting.GroupWait.String()))
-		}
-		if setting.GroupInterval != nil {
-			nfSetting.GroupInterval = util.Pointer(model.AlertRulePromDuration(setting.GroupInterval.String()))
-		}
-		if setting.RepeatInterval != nil {
-			nfSetting.RepeatInterval = util.Pointer(model.AlertRulePromDuration(setting.RepeatInterval.String()))
-		}
-		if setting.MuteTimeIntervals != nil {
-			nfSetting.MuteTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.MuteTimeIntervals))
-			for _, m := range setting.MuteTimeIntervals {
-				nfSetting.MuteTimeIntervals = append(nfSetting.MuteTimeIntervals, model.AlertRuleTimeIntervalRef(m))
+	if rule.NotificationSettings != nil {
+		ns := model.AlertRuleV0alpha1SpecNotificationSettings{}
+
+		if setting := rule.ContactPointRouting(); setting != nil {
+			ns.Receiver = &setting.Receiver
+			ns.GroupBy = setting.GroupBy
+
+			if setting.GroupWait != nil {
+				ns.GroupWait = util.Pointer(model.AlertRulePromDuration(setting.GroupWait.String()))
+			}
+			if setting.GroupInterval != nil {
+				ns.GroupInterval = util.Pointer(model.AlertRulePromDuration(setting.GroupInterval.String()))
+			}
+			if setting.RepeatInterval != nil {
+				ns.RepeatInterval = util.Pointer(model.AlertRulePromDuration(setting.RepeatInterval.String()))
+			}
+			if setting.MuteTimeIntervals != nil {
+				ns.MuteTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.MuteTimeIntervals))
+				for _, m := range setting.MuteTimeIntervals {
+					ns.MuteTimeIntervals = append(ns.MuteTimeIntervals, model.AlertRuleTimeIntervalRef(m))
+				}
+			}
+			if setting.ActiveTimeIntervals != nil {
+				ns.ActiveTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.ActiveTimeIntervals))
+				for _, a := range setting.ActiveTimeIntervals {
+					ns.ActiveTimeIntervals = append(ns.ActiveTimeIntervals, model.AlertRuleTimeIntervalRef(a))
+				}
 			}
 		}
-		if setting.ActiveTimeIntervals != nil {
-			nfSetting.ActiveTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.ActiveTimeIntervals))
-			for _, a := range setting.ActiveTimeIntervals {
-				nfSetting.ActiveTimeIntervals = append(nfSetting.ActiveTimeIntervals, model.AlertRuleTimeIntervalRef(a))
-			}
+
+		if setting := rule.PolicyRouting(); setting != nil {
+			ns.Policy = &setting.Policy
 		}
-		k8sRule.Spec.NotificationSettings = &nfSetting
+
+		k8sRule.Spec.NotificationSettings = &ns
 	}
 
 	meta, err := utils.MetaAccessor(k8sRule)
@@ -315,48 +323,61 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 }
 
 func convertNotificationSettings(sourceSettings *model.AlertRuleV0alpha1SpecNotificationSettings) (ngmodels.NotificationSettings, error) {
-	settings := ngmodels.ContactPointRouting{
-		Receiver: sourceSettings.Receiver,
-		GroupBy:  sourceSettings.GroupBy,
-	}
-	if sourceSettings.GroupWait != nil {
-		groupWait, err := prom_model.ParseDuration(string(*sourceSettings.GroupWait))
-		if err != nil {
-			return ngmodels.NotificationSettings{}, fmt.Errorf("failed to parse duration: %w", err)
+	res := ngmodels.NotificationSettings{}
+
+	if sourceSettings.Receiver != nil {
+		contactPointRouting := ngmodels.ContactPointRouting{
+			Receiver: *sourceSettings.Receiver,
+			GroupBy:  sourceSettings.GroupBy,
 		}
-		settings.GroupWait = &groupWait
-	}
-	if sourceSettings.GroupInterval != nil {
-		groupInterval, err := prom_model.ParseDuration(string(*sourceSettings.GroupInterval))
-		if err != nil {
-			return ngmodels.NotificationSettings{}, fmt.Errorf("failed to parse duration: %w", err)
+
+		if sourceSettings.GroupWait != nil {
+			groupWait, err := prom_model.ParseDuration(string(*sourceSettings.GroupWait))
+			if err != nil {
+				return ngmodels.NotificationSettings{}, fmt.Errorf("failed to parse duration: %w", err)
+			}
+			contactPointRouting.GroupWait = &groupWait
 		}
-		settings.GroupInterval = &groupInterval
-	}
-	if sourceSettings.RepeatInterval != nil {
-		repeatInterval, err := prom_model.ParseDuration(string(*sourceSettings.RepeatInterval))
-		if err != nil {
-			return ngmodels.NotificationSettings{}, fmt.Errorf("failed to parse duration: %w", err)
+		if sourceSettings.GroupInterval != nil {
+			groupInterval, err := prom_model.ParseDuration(string(*sourceSettings.GroupInterval))
+			if err != nil {
+				return ngmodels.NotificationSettings{}, fmt.Errorf("failed to parse duration: %w", err)
+			}
+			contactPointRouting.GroupInterval = &groupInterval
 		}
-		settings.RepeatInterval = &repeatInterval
+		if sourceSettings.RepeatInterval != nil {
+			repeatInterval, err := prom_model.ParseDuration(string(*sourceSettings.RepeatInterval))
+			if err != nil {
+				return ngmodels.NotificationSettings{}, fmt.Errorf("failed to parse duration: %w", err)
+			}
+			contactPointRouting.RepeatInterval = &repeatInterval
+		}
+		if sourceSettings.MuteTimeIntervals != nil {
+			contactPointRouting.MuteTimeIntervals = make([]string, 0, len(sourceSettings.MuteTimeIntervals))
+			for _, m := range sourceSettings.MuteTimeIntervals {
+				muteInterval := string(m)
+				contactPointRouting.MuteTimeIntervals = append(contactPointRouting.MuteTimeIntervals, muteInterval)
+			}
+		}
+		if sourceSettings.ActiveTimeIntervals != nil {
+			contactPointRouting.ActiveTimeIntervals = make([]string, 0, len(sourceSettings.ActiveTimeIntervals))
+			for _, a := range sourceSettings.ActiveTimeIntervals {
+				activeTimeInterval := string(a)
+				contactPointRouting.ActiveTimeIntervals = append(contactPointRouting.ActiveTimeIntervals, activeTimeInterval)
+			}
+		}
+
+		res.ContactPointRouting = &contactPointRouting
+		return res, nil
 	}
-	if sourceSettings.MuteTimeIntervals != nil {
-		settings.MuteTimeIntervals = make([]string, 0, len(sourceSettings.MuteTimeIntervals))
-		for _, m := range sourceSettings.MuteTimeIntervals {
-			muteInterval := string(m)
-			settings.MuteTimeIntervals = append(settings.MuteTimeIntervals, muteInterval)
+
+	if sourceSettings.Policy != nil {
+		res.PolicyRouting = &ngmodels.PolicyRouting{
+			Policy: *sourceSettings.Policy,
 		}
 	}
-	if sourceSettings.ActiveTimeIntervals != nil {
-		settings.ActiveTimeIntervals = make([]string, 0, len(sourceSettings.ActiveTimeIntervals))
-		for _, a := range sourceSettings.ActiveTimeIntervals {
-			activeTimeInterval := string(a)
-			settings.ActiveTimeIntervals = append(settings.ActiveTimeIntervals, activeTimeInterval)
-		}
-	}
-	return ngmodels.NotificationSettings{
-		ContactPointRouting: &settings,
-	}, nil
+
+	return res, nil
 }
 
 func convertToDomainQuery(expression model.AlertRuleExpression, refID string) (ngmodels.AlertQuery, error) {

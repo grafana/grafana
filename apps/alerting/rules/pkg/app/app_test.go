@@ -14,14 +14,26 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func makeDefaultRuntimeConfig() config.RuntimeConfig {
 	return config.RuntimeConfig{
-		FolderValidator:               func(ctx context.Context, folderUID string) (bool, error) { return folderUID == "f1", nil },
-		BaseEvaluationInterval:        60 * time.Second, // seconds
-		ReservedLabelKeys:             map[string]struct{}{"__reserved__": {}, "grafana_folder": {}},
-		NotificationSettingsValidator: func(ctx context.Context, receiver string) (bool, error) { return receiver == "notif-ok", nil },
+		FolderValidator:        func(ctx context.Context, folderUID string) (bool, error) { return folderUID == "f1", nil },
+		BaseEvaluationInterval: 60 * time.Second, // seconds
+		ReservedLabelKeys:      map[string]struct{}{"__reserved__": {}, "grafana_folder": {}},
+		NotificationSettingsValidator: func(ctx context.Context, receiver *string, policy *string) (bool, error) {
+			if receiver == nil && policy == nil {
+				return false, nil
+			}
+			if receiver != nil && policy != nil {
+				return false, nil
+			}
+			if policy != nil {
+				return *policy == "policy-ok", nil
+			}
+			return *receiver == "notif-ok", nil
+		},
 	}
 }
 
@@ -38,7 +50,7 @@ func TestAlertRuleValidation_Success(t *testing.T) {
 		Expressions:          v1.AlertRuleExpressionMap{"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)}},
 		NoDataState:          v1.DefaultNoDataState,
 		ExecErrState:         v1.DefaultExecErrState,
-		NotificationSettings: &v1.AlertRuleV0alpha1SpecNotificationSettings{Receiver: "notif-ok"},
+		NotificationSettings: &v1.AlertRuleV0alpha1SpecNotificationSettings{Receiver: util.Pointer("notif-ok")},
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
@@ -140,7 +152,7 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Annotations[v1.FolderAnnotationKey] = "bad" }), "want folder not exist error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.Trigger.Interval = v1.AlertRulePromDuration("30s") }), "want base interval multiple error")
 	assert.Error(t, mk(func(r *v1.AlertRule) {
-		r.Spec.NotificationSettings = &v1.AlertRuleV0alpha1SpecNotificationSettings{Receiver: "bad"}
+		r.Spec.NotificationSettings = &v1.AlertRuleV0alpha1SpecNotificationSettings{Receiver: util.Pointer("bad")}
 	}), "want invalid receiver error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Labels[v1.GroupLabelKey] = "grp" }), "want group set on create error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.For = strPtr("-10s") }), "want for>=0 error")
@@ -170,6 +182,27 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true), DatasourceUID: &dsUID},
 		}
 	}), "want query expression requires relative time range error")
+	assert.Error(t, mk(func(r *v1.AlertRule) {
+		r.Spec.NotificationSettings = &v1.AlertRuleV0alpha1SpecNotificationSettings{
+			Receiver: util.Pointer("notif-ok"),
+			Policy:   util.Pointer("policy-ok"),
+		}
+	}), "want both receiver and policy error")
+	assert.Error(t, mk(func(r *v1.AlertRule) {
+		r.Spec.NotificationSettings = &v1.AlertRuleV0alpha1SpecNotificationSettings{}
+	}), "want neither receiver nor policy error")
+	assert.Error(t, mk(func(r *v1.AlertRule) {
+		r.Spec.NotificationSettings = &v1.AlertRuleV0alpha1SpecNotificationSettings{Policy: util.Pointer("bad")}
+	}), "want invalid policy error")
+}
+
+func TestAlertRuleValidation_SuccessWithPolicyRouting(t *testing.T) {
+	r := baseAlertRule()
+	r.Spec.NotificationSettings = &v1.AlertRuleV0alpha1SpecNotificationSettings{Policy: util.Pointer("policy-ok")}
+
+	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
+	validator := alertrule.NewValidator(makeDefaultRuntimeConfig())
+	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
 func baseAlertRule() *v1.AlertRule {

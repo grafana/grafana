@@ -31,6 +31,7 @@ alertRulev0alpha1: alertRuleKind & {
 		"spec.panelRef.dashboardUID",
 		"spec.panelRef.panelID",
 		"spec.notificationSettings.receiver",
+		"spec.notificationSettings.policy",
 		// TODO: add status fields for filtering
 	]
 

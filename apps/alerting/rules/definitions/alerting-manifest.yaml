@@ -164,12 +164,12 @@ spec:
                   items:
                     $ref: '#/components/schemas/TimeIntervalRef'
                   type: array
+                policy:
+                  type: string
                 receiver:
                   type: string
                 repeatInterval:
                   $ref: '#/components/schemas/PromDuration'
-              required:
-              - receiver
               type: object
             panelRef:
               additionalProperties: false
@@ -220,6 +220,7 @@ spec:
       - spec.panelRef.dashboardUID
       - spec.panelRef.panelID
       - spec.notificationSettings.receiver
+      - spec.notificationSettings.policy
     - admission:
         mutation:
           operations:

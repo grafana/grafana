@@ -117,13 +117,14 @@ func (AlertRuleSpec) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type AlertRuleV0alpha1SpecNotificationSettings struct {
-	Receiver            string                     `json:"receiver"`
+	Receiver            *string                    `json:"receiver,omitempty"`
 	GroupBy             []string                   `json:"groupBy,omitempty"`
 	GroupWait           *AlertRulePromDuration     `json:"groupWait,omitempty"`
 	GroupInterval       *AlertRulePromDuration     `json:"groupInterval,omitempty"`
 	RepeatInterval      *AlertRulePromDuration     `json:"repeatInterval,omitempty"`
 	MuteTimeIntervals   []AlertRuleTimeIntervalRef `json:"muteTimeIntervals,omitempty"`
 	ActiveTimeIntervals []AlertRuleTimeIntervalRef `json:"activeTimeIntervals,omitempty"`
+	Policy              *string                    `json:"policy,omitempty"`
 }
 
 // NewAlertRuleV0alpha1SpecNotificationSettings creates a new AlertRuleV0alpha1SpecNotificationSettings object.

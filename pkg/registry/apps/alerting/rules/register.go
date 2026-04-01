@@ -79,10 +79,16 @@ func RegisterAppInstaller(
 		BaseEvaluationInterval: ng.Cfg.UnifiedAlerting.BaseInterval,
 		ReservedLabelKeys:      ngmodels.LabelsUserCannotSpecify,
 		// Validate that the configured notification receiver exists in the Alertmanager config
-		NotificationSettingsValidator: func(ctx context.Context, receiver string) (bool, error) {
-			if receiver == "" {
+		NotificationSettingsValidator: func(ctx context.Context, receiver *string, policy *string) (bool, error) {
+			if receiver == nil && policy == nil {
 				return false, nil
 			}
+
+			// Only one of receiver or policy can be defined
+			if receiver != nil && policy != nil {
+				return false, nil
+			}
+
 			orgID, err := reqns.OrgIDForList(ctx)
 			if err != nil || orgID < 1 {
 				if user, _ := identity.GetRequester(ctx); user != nil {
@@ -100,8 +106,16 @@ func RegisterAppInstaller(
 				// If we cannot build a validator, don't block admission
 				return true, nil
 			}
+
+			if policy != nil {
+				if err := vd.Validate(ngmodels.NotificationSettingsFromPolicy(*policy)); err != nil {
+					return false, nil
+				}
+				return true, nil
+			}
+
 			// Only validate receiver presence; construct minimal settings
-			if err := vd.Validate(ngmodels.NotificationSettingsFromContact(ngmodels.ContactPointRouting{Receiver: receiver})); err != nil {
+			if err := vd.Validate(ngmodels.NotificationSettingsFromContact(ngmodels.ContactPointRouting{Receiver: *receiver})); err != nil {
 				return false, nil
 			}
 			return true, nil

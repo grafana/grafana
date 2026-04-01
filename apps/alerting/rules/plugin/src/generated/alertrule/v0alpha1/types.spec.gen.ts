@@ -75,13 +75,14 @@ export interface Spec {
 	noDataState: string;
 	execErrState: string;
 	notificationSettings?: {
-		receiver: string;
+		receiver?: string;
 		groupBy?: string[];
 		groupWait?: PromDuration;
 		groupInterval?: PromDuration;
 		repeatInterval?: PromDuration;
 		muteTimeIntervals?: TimeIntervalRef[];
 		activeTimeIntervals?: TimeIntervalRef[];
+		policy?: string;
 	};
 	expressions: ExpressionMap;
 	panelRef?: {
