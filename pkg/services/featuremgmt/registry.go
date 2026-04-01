@@ -1025,6 +1025,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newUnconfiguredPanel",
+			Description:  "Enables the new unconfigured panel experience",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardLibrary",
 			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
