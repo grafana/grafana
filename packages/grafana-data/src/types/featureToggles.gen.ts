@@ -560,7 +560,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default true
+  * @default false
   */
   sqlExpressions?: boolean;
   /**
