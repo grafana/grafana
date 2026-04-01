@@ -102,9 +102,6 @@ export const AnnotationsPlugin2Cluster = ({
     timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
   });
 
-  console.log('bbox.width', plotRef.current?.bbox.width);
-  console.log('rect.width', plotRef.current?.rect.width);
-
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
   }, [setNewRange]);

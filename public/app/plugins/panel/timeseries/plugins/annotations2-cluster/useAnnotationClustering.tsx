@@ -20,7 +20,6 @@ export enum ClusteringMode {
 }
 
 export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange }: Props) => {
-  console.log('plotWidth', plotWidth);
   const { outAnnos } = useMemo(() => {
     const clusteredAnnotations: DataFrame[] = [];
 
