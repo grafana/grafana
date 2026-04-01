@@ -39,4 +39,4 @@ It provides the following benefits:
 - **Observability as code:** `gcx` can scaffold Go projects, import existing dashboards, lint with Rego rules, or live-reload development servers.
 - **Multi-environment:** Use named contexts to switch between development, staging, and production environments.
 
-For more information refer to the [`clx` repository](https://github.com/grafana/gcx) in GitHub.
+For more information on how to install and use the CLI, refer to the [`clx` repository](https://github.com/grafana/gcx) in GitHub.

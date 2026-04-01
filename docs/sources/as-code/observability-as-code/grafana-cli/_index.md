@@ -16,25 +16,25 @@ labels:
     - oss
 cards:
   items:
-    - description: Learn how to install Grafana CLI
+    - description: Learn how to install the Grafana CLI `grafanactl`
       height: 24
       href: ./install-grafana-cli/
-      title: Install Grafana CLI
-    - description: Set up Grafana CLI
+      title: Install `grafanactl`
+    - description: Set up `grafanactl`
       height: 24
       href: ./set-up-grafana-cli/
       title: Set up your Grafana CLI
-    - description: Learn how to manage resources with Grafana CLI
+    - description: Learn how to manage resources with `grafanactl`
       height: 24
       href: ./grafanacli-workflows
       title: Manage resources with Grafana CLI
-    - description: Overview of the Grafana Cloud CLI
+    - description: Overview of the Grafana Cloud CLI `gcx`, compatible with AI agents
       height: 24
       href: ./grafanagcx
       title: Grafana Cloud CLI
   title_class: pt-0 lh-1
 hero:
-  description: Grafana CLI (`grafanactl`) is a command-line tool designed to simplify interaction with Grafana instances. It enables users to authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. Whether you're automating workflows in CI/CD pipelines or switching between staging and production environments, Grafana CLI provides a flexible and scriptable way to manage your Grafana setup efficiently. `grafanactl` works across all environments for Grafana OSS, Enterprise, and Cloud.
+  description: The `grafanactl` and `gcx` command-line tools are designed to simplify interaction with Grafana instances. You can authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. Whether you're automating workflows in CI/CD pipelines or switching between staging and production environments, the Grafana CLIs provide a flexible and scriptable way to manage your Grafana setup efficiently. Both `grafanactl` and `gcx` work across all environments for Grafana OSS, Enterprise, and Cloud.
   height: 110
   level: 1
   title: Grafana CLI
