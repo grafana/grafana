@@ -311,8 +311,8 @@ export class GraphiteDatasource
         options.scopedVars
       );
 
-      targetClone.target = targetValue;
-      targetClone.targetFull = targetFullValue;
+      targetClone.target = targetValue.trim();
+      targetClone.targetFull = targetFullValue.trim();
       if (this.isMetricTank) {
         targetClone.isMetricTank = true;
       }
