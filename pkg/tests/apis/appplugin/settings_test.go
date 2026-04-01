@@ -48,7 +48,10 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				GVR:  gvrSettings,
 			})
 
-			t.Run("update persists jsonData and returns secure key references", func(t *testing.T) {
+			// writeSettings writes a known settings state with a fresh secret and returns
+			// the resulting object. Each subtest calls this to establish its own baseline.
+			writeSettings := func(t *testing.T) *unstructured.Unstructured {
+				t.Helper()
 				_, err := client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
 						"apiVersion": testAppID + ".grafana.app/v0alpha1",
@@ -65,9 +68,14 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 					},
 				}, metav1.UpdateOptions{})
 				require.NoError(t, err)
-
 				obj, err := client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
 				require.NoError(t, err)
+				return obj
+			}
+
+			t.Run("update persists jsonData and returns secure key references", func(t *testing.T) {
+				obj := writeSettings(t)
+
 				require.Equal(t, testAppID, obj.GetName())
 
 				spec, ok := obj.Object["spec"].(map[string]any)
@@ -90,6 +98,8 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			})
 
 			t.Run("list returns the settings resource after write", func(t *testing.T) {
+				writeSettings(t)
+
 				list, err := client.Resource.List(ctx, metav1.ListOptions{})
 				require.NoError(t, err)
 				require.Len(t, list.Items, 1)
@@ -97,15 +107,17 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			})
 
 			t.Run("update with name-only entry keeps existing value", func(t *testing.T) {
-				// Get the current name for apiKey.
-				obj, err := client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
-				require.NoError(t, err)
-				secure := obj.Object["secure"].(map[string]any)
-				apiKeyVal := secure["apiKey"].(map[string]any)
-				existingName := apiKeyVal["name"].(string)
+				// Establish a known state with a fresh secret, then capture the name reference.
+				obj := writeSettings(t)
+				secure, ok := obj.Object["secure"].(map[string]any)
+				require.True(t, ok, "expected top-level secure field")
+				apiKeyVal, ok := secure["apiKey"].(map[string]any)
+				require.True(t, ok, "expected apiKey entry in secure")
+				existingName, ok := apiKeyVal["name"].(string)
+				require.True(t, ok, "expected name string in apiKey")
 
 				// Update sending back the name reference — should be a no-op for the secure value.
-				_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
+				_, err := client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
 						"apiVersion": testAppID + ".grafana.app/v0alpha1",
 						"kind":       "Settings",
@@ -124,7 +136,8 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 
 				obj, err = client.Resource.Get(ctx, testAppID, metav1.GetOptions{})
 				require.NoError(t, err)
-				secure = obj.Object["secure"].(map[string]any)
+				secure, ok = obj.Object["secure"].(map[string]any)
+				require.True(t, ok, "expected top-level secure field")
 				_, hasAPIKey := secure["apiKey"]
 				require.True(t, hasAPIKey, "apiKey should still be present after name-only update")
 			})
@@ -139,6 +152,8 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 			// ActionAppAccess is granted to RoleViewer (and therefore all org roles),
 			// so editors and viewers can read and write plugin settings just like admins.
 			t.Run("editor and viewer can get settings", func(t *testing.T) {
+				writeSettings(t)
+
 				for _, user := range []apis.User{helper.Org1.Editor, helper.Org1.Viewer} {
 					t.Run(string(user.Identity.GetOrgRole()), func(t *testing.T) {
 						c := helper.GetResourceClient(apis.ResourceClientArgs{
