@@ -26,7 +26,7 @@ export interface Column<TableData extends object> {
    * */
   sortType?: DefaultSortTypes | SortByFn<TableData>;
   /**
-   * If `true` prevents the column from growing more than its content.
+   * If `true` prevents the column from growing more than its content. Ignored when `width` is set.
    */
   disableGrow?: boolean;
   /**

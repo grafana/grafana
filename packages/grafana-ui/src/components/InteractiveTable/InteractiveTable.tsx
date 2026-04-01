@@ -25,6 +25,21 @@ import { type PopoverContent } from '../Tooltip/types';
 import { type Column } from './types';
 import { EXPANDER_CELL_ID, getColumns } from './utils';
 
+/** Build an Emotion className for explicit column width/minWidth/maxWidth values. */
+function getColumnSizeClass(col: { width?: number; minWidth?: number; maxWidth?: number }): string | undefined {
+  const styles: Record<string, number> = {};
+  if (typeof col.width === 'number' && col.width > 0) {
+    styles.width = col.width;
+  }
+  if (typeof col.minWidth === 'number' && col.minWidth > 0) {
+    styles.minWidth = col.minWidth;
+  }
+  if (typeof col.maxWidth === 'number' && col.maxWidth > 0) {
+    styles.maxWidth = col.maxWidth;
+  }
+  return Object.keys(styles).length > 0 ? css(styles) : undefined;
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
@@ -276,29 +291,14 @@ export function InteractiveTable<TableData extends object>({
 
                   const headerTooltip = headerTooltips?.[column.id];
 
-                  const columnStyle: React.CSSProperties = {};
-
-                  if (typeof column.width === 'number' && column.width > 0) {
-                    columnStyle.width = column.width;
-                  }
-
-                  if (typeof column.minWidth === 'number') {
-                    columnStyle.minWidth = column.minWidth;
-                  }
-
-                  if (typeof column.maxWidth === 'number') {
-                    columnStyle.maxWidth = column.maxWidth;
-                  }
-
                   return (
                     <th
                       key={key}
-                      className={cx(styles.header, {
+                      {...headerCellProps}
+                      className={cx(styles.header, getColumnSizeClass(column), {
                         [styles.disableGrow]: column.width === 0,
                         [styles.sortableHeader]: column.canSort,
                       })}
-                      style={Object.keys(columnStyle).length > 0 ? columnStyle : undefined}
-                      {...headerCellProps}
                       {...(column.isSorted && { 'aria-sort': column.isSortedDesc ? 'descending' : 'ascending' })}
                     >
                       <ColumnHeader column={column} headerTooltip={headerTooltip} />
@@ -324,26 +324,12 @@ export function InteractiveTable<TableData extends object>({
                 <tr {...otherRowProps} className={cx(styles.row, isExpanded && styles.expandedRow)}>
                   {row.cells.map((cell) => {
                     const { key, ...otherCellProps } = cell.getCellProps();
-                    const cellStyle: React.CSSProperties = {};
-
-                    if (typeof cell.column.width === 'number' && cell.column.width > 0) {
-                      cellStyle.width = cell.column.width;
-                    }
-
-                    if (typeof cell.column.minWidth === 'number') {
-                      cellStyle.minWidth = cell.column.minWidth;
-                    }
-
-                    if (typeof cell.column.maxWidth === 'number') {
-                      cellStyle.maxWidth = cell.column.maxWidth;
-                    }
 
                     return (
                       <td
-                        className={styles.cell}
                         key={key}
-                        style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
                         {...otherCellProps}
+                        className={cx(styles.cell, getColumnSizeClass(cell.column))}
                       >
                         {cell.render('Cell', { __rowID: rowId })}
                       </td>
