@@ -56,11 +56,8 @@ func buildBatchURL(batch Batch) string {
 		// Batch API uses "filter" without the "$" prefix used by the ARM API.
 		params.Set("filter", strings.TrimPrefix(batch.Key.DimFilter, "$"))
 	}
-	// top is not part of the group key but is forwarded from the first query if set.
-	if len(batch.Queries) > 0 {
-		if top := batch.Queries[0].Params.Get("top"); top != "" {
-			params.Set("top", top)
-		}
+	if batch.Key.Top != "" {
+		params.Set("top", batch.Key.Top)
 	}
 
 	return fmt.Sprintf("https://%s/subscriptions/%s/metrics:getBatch?%s",

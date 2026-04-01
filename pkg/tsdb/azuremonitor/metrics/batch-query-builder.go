@@ -20,6 +20,7 @@ type batchGroupKey struct {
 	Interval     string
 	Aggregation  string
 	DimFilter    string
+	Top          string
 }
 
 // BatchQueryGroup is a set of queries sharing common parameters that can be executed
@@ -46,6 +47,7 @@ func groupQueriesForBatch(queries []*types.AzureMonitorQuery) []BatchQueryGroup 
 			Interval:     query.Params.Get("interval"),
 			Aggregation:  query.Params.Get("aggregation"),
 			DimFilter:    dimensionFilterKey(query),
+			Top:          query.Params.Get("top"),
 		}
 
 		if _, exists := groups[key]; !exists {

@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -110,12 +109,10 @@ func TestBuildBatchURL(t *testing.T) {
 		assert.Equal(t, "VMName eq 'vm1'", parsed.Query().Get("filter"))
 	})
 
-	t.Run("forwards top from first query when set", func(t *testing.T) {
-		params := url.Values{}
-		params.Set("top", "10")
-		q := &types.AzureMonitorQuery{Params: params, TimeRange: backend.TimeRange{From: from, To: to}}
+	t.Run("forwards top from group key when set", func(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
-			"PT1M", "Average", "", from, to, nil, []*types.AzureMonitorQuery{q})
+			"PT1M", "Average", "", from, to, nil, nil)
+		batch.Key.Top = "10"
 		parsed, err := url.Parse(buildBatchURL(batch))
 		require.NoError(t, err)
 		assert.Equal(t, "10", parsed.Query().Get("top"))
