@@ -114,9 +114,10 @@ For general information about querying in Grafana, and common options and user i
 
 ## Build a dashboard from the data source
 
-After you've configured a data source, you can start creating a dashboard directly from it, by clicking the **Build a dashboard** button.
+After you've configured a data source, you can start creating a dashboard directly from it.
+To do, click the **Build a dashboard** drop-down list and select **From suggestions**.
 
-For more information, refer to [Begin dashboard creation from data source configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#begin-dashboard-creation-from-connections).
+For more information, refer to [Create dashboards from suggestions](hhttps://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/#create-dashboards-from-suggestions).
 
 ## Special data sources
 
