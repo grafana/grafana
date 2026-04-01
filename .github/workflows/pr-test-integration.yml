@@ -66,6 +66,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
           CGO_ENABLED: 0
+          SQLITE_INMEMORY: true
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
@@ -121,7 +122,7 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -166,7 +167,7 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -209,6 +210,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
           CGO_ENABLED: 0
+          SQLITE_INMEMORY: true
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
@@ -271,7 +273,7 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -323,7 +325,7 @@ jobs:
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -tags=enterprise -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
