@@ -111,12 +111,12 @@ To use this option, hover the cursor over the template or suggestion that you wa
 
 When you choose this option, a preconfigured prompt is entered into the Assistant chat to start the process:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from template" caption="A dashboard template being customized by Grafana Assistant" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a template" caption="A dashboard template being customized by Grafana Assistant" >}}
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from template" caption="A suggested dashboard being customized by Grafana Assistant" >}}
+{{< figure src="screenshot-suggested-dash-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a suggestion" caption="A suggested dashboard being customized by Grafana Assistant" >}}
 
 Grafana Assistant analyses the template or suggested dashboard, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
-This lets create a working, relevant dashboard from a template without the need to manually map metrics and panels.
+This lets you create a working, relevant dashboard from a template or suggestion without the need to manually map metrics and panels.
 
 Grafana Assistant can query a subset of data sources, so customizing with Assistant for other data sources might generate poor results.
 For an up-to-date list of supported data sources, refer to the [Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/guides/querying/).
