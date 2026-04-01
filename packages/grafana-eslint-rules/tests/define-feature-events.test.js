@@ -1,15 +1,12 @@
 import { RuleTester } from 'eslint';
-import { createRequire } from 'module';
 
 import defineFeatureEventsRule from '../rules/define-feature-events.cjs';
-
-const localRequire = createRequire(import.meta.url);
 
 RuleTester.setDefaultConfig({
   languageOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    parser: localRequire('@typescript-eslint/parser'),
+    parser: require('@typescript-eslint/parser'),
   },
 });
 
