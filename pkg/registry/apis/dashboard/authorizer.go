@@ -109,10 +109,11 @@ func authorizeDashboard(ctx context.Context, ac accesscontrol.AccessControl, use
 			return authorizer.DecisionDeny, "can not create any dashboards", err
 		}
 	case "get":
-		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
-		if !ok || err != nil {
-			return authorizer.DecisionDeny, "can not view dashboard", err
-		}
+		// Per-resource authorization (including proper 404 for non-existent
+		// dashboards and 403 for unauthorized access) is handled downstream
+		// in the unified storage layer's read() method.
+		// This is all removed in 12.3.x on-wards.
+		return authorizer.DecisionAllow, "", nil
 	case "update", "patch":
 		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
 		if !ok || err != nil {
