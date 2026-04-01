@@ -148,6 +148,29 @@ func TestKVStorageBackendProcessBulkImportBatching(t *testing.T) {
 	}
 }
 
+func TestKVStorageBackendProcessBulkPreservesImportedHistory(t *testing.T) {
+	backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+
+	const namespace = "sqlkv-history"
+	resp := backend.ProcessBulk(context.Background(), BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{
+			Namespace: namespace,
+			Group:     testBulkImportGroup,
+			Resource:  testBulkImportResource,
+		}},
+	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+		newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_ADDED),
+		newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_ADDED),
+		newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_DELETED),
+	}))
+
+	require.Nil(t, resp.Error)
+	require.Empty(t, resp.Rejected)
+	require.Equal(t, int64(3), resp.Processed)
+	require.Equal(t, []string{"item-1", "item-1", "item-1"}, collectBulkImportNames(t, backend, namespace))
+	require.Empty(t, collectLatestBulkImportNames(t, backend, namespace))
+}
+
 func TestKVStorageBackendProcessBulkRollsBackOnImportBatchError(t *testing.T) {
 	sqlKV := setupSqlKV(t)
 	writer, ok := sqlKV.(importBatchWriter)
@@ -204,6 +227,23 @@ func collectBulkImportNames(t *testing.T, backend *kvStorageBackend, namespace s
 		Group:     testBulkImportGroup,
 		Resource:  testBulkImportResource,
 	}, SortOrderAsc) {
+		require.NoError(t, err)
+		names = append(names, key.Name)
+	}
+
+	slices.Sort(names)
+	return names
+}
+
+func collectLatestBulkImportNames(t *testing.T, backend *kvStorageBackend, namespace string) []string {
+	t.Helper()
+
+	names := make([]string, 0, 2)
+	for key, err := range backend.dataStore.ListLatestResourceKeys(context.Background(), ListRequestKey{
+		Namespace: namespace,
+		Group:     testBulkImportGroup,
+		Resource:  testBulkImportResource,
+	}) {
 		require.NoError(t, err)
 		names = append(names, key.Name)
 	}

@@ -1997,28 +1997,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			switch resourcepb.WatchEvent_Type(req.Action) {
 			case resourcepb.WatchEvent_ADDED:
 				action = DataActionCreated
-				_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-					Group:     req.Key.Group,
-					Resource:  req.Key.Resource,
-					Namespace: req.Key.Namespace,
-					Name:      req.Key.Name,
-				})
-				if err == nil {
-					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-						Key:    req.Key,
-						Action: req.Action,
-						Error:  "resource already exists",
-					})
-					continue
-				}
-				if !errors.Is(err, ErrNotFound) {
-					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-						Key:    req.Key,
-						Action: req.Action,
-						Error:  fmt.Sprintf("failed to check if resource exists: %s", err),
-					})
-					continue
-				}
 			case resourcepb.WatchEvent_MODIFIED:
 				action = DataActionUpdated
 			case resourcepb.WatchEvent_DELETED:
