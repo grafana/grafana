@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -25,13 +26,14 @@ func saveEvent(ctx context.Context, sql db.DB, cmd SaveEventCmd) error {
 }
 
 func TestIntegrationEntityEventsService(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 
 	setup := func() *entityEventService {
 		return &entityEventService{
-			sql: db.InitTestDB(t),
+			sql: sqlstore.NewTestStore(t),
 			log: log.New("entity-event-test"),
 		}
 	}

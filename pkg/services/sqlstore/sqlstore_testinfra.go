@@ -104,6 +104,12 @@ func WithTracer(tracer tracing.Tracer, bus bus.Bus) TestOption {
 	}
 }
 
+func WithDefaultOrgAndUser() TestOption {
+	return func(o *testOptions) {
+		o.NoDefaultUserOrg = false
+	}
+}
+
 func WithoutDefaultOrgAndUser() TestOption {
 	return func(o *testOptions) {
 		o.NoDefaultUserOrg = true
@@ -196,6 +202,11 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 			panic("unreachable")
 		}
 		store.engine.ResetSequenceGenerator()
+	}
+
+	if err := store.Reset(); err != nil {
+		tb.Fatalf("failed to reset store: %v", err)
+		panic("unreachable")
 	}
 
 	return store

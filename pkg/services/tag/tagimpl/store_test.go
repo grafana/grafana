@@ -7,20 +7,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type getStore func(db.DB) store
 
 func testIntegrationSavingTags(t *testing.T, fn getStore) {
 	t.Helper()
 
-	ss := db.InitTestDB(t)
+	ss := sqlstore.NewTestStore(t)
 	store := fn(ss)
 	tagPairs := []*tag.Tag{
 		{Key: "outage"},

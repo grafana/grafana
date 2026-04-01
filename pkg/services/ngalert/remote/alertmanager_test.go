@@ -34,7 +34,6 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,8 +48,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -76,10 +75,6 @@ const (
 	testNflog1   = "OgoqCgZncm91cDESEgoJcmVjZWl2ZXIxEgV0ZXN0MyoMCIzm1bAGEPqx5uEBEgwInILWsAYQ+rHm4QE="
 	testNflog2   = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func TestNewAlertmanager(t *testing.T) {
 	tests := []struct {
@@ -149,9 +144,10 @@ func TestNewAlertmanager(t *testing.T) {
 }
 
 func TestGetRemoteState(t *testing.T) {
+	t.Parallel()
 	const tenantID = "test"
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 
 	// getOkHandler allows us to specify a full state the test server is going to respond with.
 	getOkHandler := func(state string) http.HandlerFunc {
@@ -256,6 +252,7 @@ func TestGetRemoteState(t *testing.T) {
 
 func TestIntegrationApplyConfig(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	// errorHandler returns an error response for the readiness check and state sync.
 
@@ -293,7 +290,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// Encrypt receivers to save secrets in the database.
 	var c apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 	encryptedReceivers, err := encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	c.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
@@ -429,8 +426,9 @@ func TestIntegrationApplyConfig(t *testing.T) {
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
+	t.Parallel()
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 
 	var got string
 	var gotCnt int
@@ -780,8 +778,9 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 }
 
 func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
+	t.Parallel()
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 
 	var got apimodels.TestReceiversConfigBodyParams
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -826,6 +825,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 }
 
 func Test_isDefaultConfiguration(t *testing.T) {
+	t.Parallel()
 	mustLoad := func(raw string) *apimodels.PostableUserConfig {
 		parsed, err := notifier.Load([]byte(raw))
 		require.NoError(t, err)
@@ -1001,7 +1001,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 			c := AlertmanagerConfig{
 				OrgID:         1,
 				TenantID:      tenantID,
@@ -1036,6 +1036,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 }
 
 func TestApplyConfigWithExtraConfigs(t *testing.T) {
+	t.Parallel()
 	const tenantID = "test"
 
 	var configSent client.UserGrafanaConfig
@@ -1077,7 +1078,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 
 	c := AlertmanagerConfig{
 		OrgID:         1,
@@ -1117,6 +1118,7 @@ receivers:
 }
 
 func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
+	t.Parallel()
 	const tenantID = "test"
 
 	var configSent client.UserGrafanaConfig
@@ -1185,7 +1187,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 	ctx := context.Background()
 
@@ -1227,6 +1229,7 @@ receivers:
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	amURL, ok := os.LookupEnv("AM_URL")
 	if !ok {
@@ -1247,7 +1250,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	var testConfigCreatedAt int64
 
 	store := ngfakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 
 	moa, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 	am.state = notifier.NewFileStore(1, store)

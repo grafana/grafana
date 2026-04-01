@@ -29,13 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type testEnv struct {
 	sql       *sqlstore.SQLStore
@@ -51,10 +46,11 @@ type testEnv struct {
 func setupTestEnv(t *testing.T) *testEnv {
 	t.Helper()
 
-	sql, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
+	sql := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 
 	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
@@ -252,6 +248,7 @@ func (m *mockZanzanaClient) Query(ctx context.Context, req *authzextv1.QueryRequ
 
 func TestIntegrationTeamMembershipCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("should collect team members with member permission", func(t *testing.T) {
 		env := setupTestEnv(t)
@@ -358,6 +355,7 @@ func TestIntegrationTeamMembershipCollector(t *testing.T) {
 
 func TestIntegrationFolderTreeCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("should collect folder parent relationships", func(t *testing.T) {
 		env := setupTestEnv(t)
@@ -463,6 +461,7 @@ func TestIntegrationFolderTreeCollector(t *testing.T) {
 
 func TestIntegrationBasicRoleBindingsCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("should collect basic role bindings for regular users", func(t *testing.T) {
 		env := setupTestEnv(t)
@@ -558,6 +557,7 @@ func TestIntegrationBasicRoleBindingsCollector(t *testing.T) {
 
 func TestIntegrationManagedPermissionsCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("should collect managed permissions for users", func(t *testing.T) {
 		env := setupTestEnv(t)
@@ -680,6 +680,7 @@ func TestIntegrationManagedPermissionsCollector(t *testing.T) {
 
 func TestIntegrationRoleBindingsCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("should collect user role bindings", func(t *testing.T) {
 		env := setupTestEnv(t)
@@ -813,6 +814,7 @@ func TestIntegrationRoleBindingsCollector(t *testing.T) {
 
 func TestIntegrationRolePermissionsCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("should collect role permissions", func(t *testing.T) {
 		env := setupTestEnv(t)
@@ -883,6 +885,7 @@ func TestIntegrationRolePermissionsCollector(t *testing.T) {
 
 func TestIntegrationAnonymousRoleBindingsCollector(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("should return object with empty tuples when org doesn't match", func(t *testing.T) {
 		env := setupTestEnv(t)

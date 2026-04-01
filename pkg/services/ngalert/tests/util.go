@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -35,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -75,7 +75,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	*cfg.UnifiedAlerting.Enabled = true
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
-	sqlStore := db.InitTestDB(tb)
+	sqlStore := sqlstore.NewTestStore(tb)
 	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
 
 	ac := acmock.New()

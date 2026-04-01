@@ -8,16 +8,19 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationDashboardProvisioningTest(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 

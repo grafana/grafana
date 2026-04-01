@@ -12,18 +12,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_UpdateFolderFullpathsForFolders(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: 1,
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	fakeFolderService := foldertest.NewFakeService()
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, fakeFolderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)

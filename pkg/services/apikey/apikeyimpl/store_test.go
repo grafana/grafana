@@ -12,13 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type getStore func(db.DB) store
 
@@ -62,7 +58,7 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 	defer resetTimeNow()
 
 	t.Run("Testing API Key data access", func(t *testing.T) {
-		db := db.InitTestDB(t)
+		db := sqlstore.NewTestStore(t)
 		ss := fn(db)
 
 		t.Run("Given saved api key", func(t *testing.T) {
@@ -167,7 +163,7 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 	})
 
 	t.Run("Testing API Key errors", func(t *testing.T) {
-		db := db.InitTestDB(t)
+		db := sqlstore.NewTestStore(t)
 		ss := fn(db)
 
 		t.Run("Testing API Duplicate Key Errors", func(t *testing.T) {
@@ -206,7 +202,7 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 
 		for _, tt := range tests {
 			t.Run(tt.desc, func(t *testing.T) {
-				db := db.InitTestDB(t, db.InitTestDBOpt{})
+				db := sqlstore.NewTestStore(t, sqlstore.WithDefaultOrgAndUser())
 				store := fn(db)
 				seedApiKeys(t, store, 10)
 

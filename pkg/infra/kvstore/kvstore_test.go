@@ -8,20 +8,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func createTestableKVStore(t *testing.T) KVStore {
 	t.Helper()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 
 	kv := &kvStoreSQL{
 		sqlStore: sqlStore,
@@ -43,6 +38,7 @@ func (t *TestCase) Value() string {
 }
 
 func TestIntegrationKVStore(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	kv := createTestableKVStore(t)
@@ -249,6 +245,7 @@ func TestIntegrationKVStore(t *testing.T) {
 }
 
 func TestIntegrationGetItems(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	kv := createTestableKVStore(t)

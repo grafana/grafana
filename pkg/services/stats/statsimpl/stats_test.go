@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,19 +31,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationStatsDataAccess(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := db.InitTestDBWithCfg(t)
-	orgSvc := populateDB(t, db, cfg)
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+	orgSvc := populateDB(t, store, cfg)
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(1)).Return(int64(2), nil)
 	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(2)).Return(int64(1), nil)
@@ -68,7 +66,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 
 	statsService := &sqlStatsService{
 		cfg:            cfg,
-		db:             db,
+		db:             store,
 		dashSvc:        dashSvc,
 		orgSvc:         orgSvc,
 		folderSvc:      folderService,
@@ -95,7 +93,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(15), result.Playlists)    // 5 per org from mock × 3 orgs
 		assert.Equal(t, int64(15), result.Repositories) // 5 per org from mock × 3 orgs
 		assert.NotNil(t, result.DatabaseCreatedTime)
-		assert.Equal(t, db.GetDialect().DriverName(), result.DatabaseDriver)
+		assert.Equal(t, store.GetDialect().DriverName(), result.DatabaseDriver)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {

@@ -23,18 +23,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const EXPIRED_ID_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImF1ZCI6InlvdXItY2xpZW50LWlkIiwiZXhwIjoxNjAwMDAwMDAwLCJpYXQiOjE2MDAwMDAwMDAsIm5hbWUiOiJKb2huIERvZSIsImVtYWlsIjoiam9obkBleGFtcGxlLmNvbSJ9.c2lnbmF0dXJl" // #nosec G101 not a hardcoded credential
 
 const UNEXPIRED_ID_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tIiwic3ViIjoiMTIzNDU2Nzg5MCIsImF1ZCI6InlvdXItY2xpZW50LWlkIiwiZXhwIjo0ODg1NjA4MDAwLCJpYXQiOjE2ODU2MDgwMDAsIm5hbWUiOiJKb2huIERvZSIsImVtYWlsIjoiam9obkBleGFtcGxlLmNvbSJ9.c2lnbmF0dXJl" // #nosec G101 not a hardcoded credential
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 var (
 	unexpiredTokenWithoutRefresh = &oauth2.Token{
@@ -79,6 +75,7 @@ type environment struct {
 
 func TestIntegration_TryTokenRefresh(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type testCase struct {
 		desc            string
@@ -326,7 +323,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
 
-			store := db.InitTestDB(t)
+			store := sqlstore.NewTestStore(t)
 
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
@@ -382,6 +379,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 
 func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	userIdentity := &authn.Identity{
 		AuthenticatedBy: login.GenericOAuthModule,
@@ -626,7 +624,7 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
 
-			store := db.InitTestDB(t)
+			store := sqlstore.NewTestStore(t)
 
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
@@ -748,6 +746,7 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 
 func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type testCase struct {
 		desc          string
@@ -1074,7 +1073,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
-			store := db.InitTestDB(t)
+			store := sqlstore.NewTestStore(t)
 			features := featuremgmt.WithFeatures()
 
 			env := environment{
@@ -1126,6 +1125,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 
 func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type testCase struct {
 		desc          string
@@ -1374,7 +1374,7 @@ func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
-			store := db.InitTestDB(t)
+			store := sqlstore.NewTestStore(t)
 			features := featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling)
 
 			env := environment{

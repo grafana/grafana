@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,6 +24,7 @@ import (
 var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Testing DB", func(t *testing.T) {
@@ -34,7 +36,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		var folderStore *folderimpl.FolderStoreImpl
 
 		setup := func() {
-			sqlStore, cfg = db.InitTestDBWithCfg(t)
+			cfg = setting.NewCfg()
+			sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 			var err error
 			dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
@@ -133,7 +136,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var currentUser *user.SignedInUser
 
 			setup2 := func() {
-				sqlStore, cfg = db.InitTestDBWithCfg(t)
+				cfg = setting.NewCfg()
+				sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 				var err error
 				require.NoError(t, err)
 				folder1 = insertTestDashFolder(t, dashboardStore, folderStore, "1 test dash folder", 1, 0, "", "prod")

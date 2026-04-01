@@ -13,7 +13,7 @@ import (
 
 	shorturlv1beta1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -25,7 +25,7 @@ const shortURLBenchmarkRows = 26000
 func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 	b.Setenv("SQLITE_TEST_DB", filepath.Join(b.TempDir(), "shorturl-benchmark.db"))
 
-	store := infraDB.InitTestDB(b)
+	store := sqlstore.NewTestStore(b)
 	cfg := setting.NewCfg()
 	resourceDB, err := dbimpl.ProvideResourceDB(store, cfg, nil)
 	require.NoError(b, err)

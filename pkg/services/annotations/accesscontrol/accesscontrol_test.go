@@ -4,26 +4,23 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 func TestDashboardsWithVisibleAnnotations(t *testing.T) {
-	store := db.InitTestDB(t)
+	t.Parallel()
+	store := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
 
 	user := &user.SignedInUser{

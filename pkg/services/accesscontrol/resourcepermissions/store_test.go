@@ -18,11 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -37,12 +37,9 @@ type setUserResourcePermissionTest struct {
 	seeds             []SetResourcePermissionCommand
 }
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []setUserResourcePermissionTest{
 		{
@@ -127,6 +124,7 @@ type setTeamResourcePermissionTest struct {
 
 func TestIntegrationStore_SetTeamResourcePermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []setTeamResourcePermissionTest{
 		{
@@ -214,6 +212,7 @@ type setBuiltInResourcePermissionTest struct {
 
 func TestIntegrationStore_SetBuiltInResourcePermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []setBuiltInResourcePermissionTest{
 		{
@@ -297,6 +296,7 @@ type setResourcePermissionsTest struct {
 
 func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []setResourcePermissionsTest{
 		{
@@ -369,6 +369,7 @@ type getResourcePermissionsTest struct {
 
 func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []getResourcePermissionsTest{
 		{
@@ -558,7 +559,8 @@ func seedResourcePermissions(
 }
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
-	sql, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sql := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
 }
 
@@ -625,6 +627,7 @@ type orgPermission struct {
 
 func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type deleteResourcePermissionsTest struct {
 		desc              string
@@ -738,6 +741,7 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 
 func TestIntegrationStore_setResourcePermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type setResourcePermissionTest struct {
 		desc                string

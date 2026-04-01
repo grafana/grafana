@@ -46,13 +46,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func TestDashboardServiceValidation(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
@@ -2319,6 +2314,7 @@ func TestCleanUpDashboard(t *testing.T) {
 }
 
 func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	tests := []struct {
@@ -2479,7 +2475,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup test database and utilities
-			sqlStore, _ := sqlstore.InitTestDB(t)
+			sqlStore := sqlstore.NewTestStore(t)
 			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
 
@@ -2517,7 +2513,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 
 	t.Run("Should start and stop background job correctly", func(t *testing.T) {
 		// Setup test database and utilities
-		sqlStore, _ := sqlstore.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
 
 		cfg := setting.NewCfg()

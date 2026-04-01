@@ -27,15 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegration_DashboardPermissionFilter(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	type testCase struct {
@@ -204,6 +200,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 }
 
 func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	type testCase struct {
@@ -375,6 +372,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 }
 
 func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
@@ -469,6 +467,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermissions(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
@@ -570,6 +569,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
@@ -683,7 +683,8 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) db.DB {
 	t.Helper()
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	fStore := folderimpl.ProvideStore(db, cfg)
@@ -796,7 +797,8 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol.Permission, orgID int64, features featuremgmt.FeatureToggles) db.DB {
 	t.Helper()
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 
 	// dashboard store commands that should be called.
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))

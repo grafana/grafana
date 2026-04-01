@@ -33,10 +33,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -44,11 +45,8 @@ import (
 const userInDbName = "user_in_db"
 const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
@@ -97,6 +95,7 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 }
 
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
@@ -332,8 +331,8 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	features := featuremgmt.WithFeatures()
 	tracer := tracing.InitializeTracerForTest()
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	t.Cleanup(db.CleanupTestDB)
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	quotaService := quotatest.New(false, nil)
 	ac := acimpl.ProvideAccessControl(features)
 	folderPermissions := acmock.NewMockedPermissionsService()

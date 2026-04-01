@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -30,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -40,6 +40,7 @@ import (
 
 func TestIntegrationAlertRuleService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
@@ -2605,7 +2606,7 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 
 func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRuleService {
 	t.Helper()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	store := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{

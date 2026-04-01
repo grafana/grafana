@@ -12,9 +12,10 @@ import (
 // admin user: getOrCreateOrg was unable to find the existing org.
 // https://github.com/grafana/grafana/issues/71781
 func TestIntegrationGetOrCreateOrg(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, _ := InitTestDB(t)
+	ss := NewTestStore(t)
 
 	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		// Create the org only:

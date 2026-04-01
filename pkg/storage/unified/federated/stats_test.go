@@ -12,7 +12,6 @@ import (
 	rest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -20,28 +19,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationDirectSQLStats(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	dbstore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	ctx := context.Background()
 
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+	dashStore, err := database.ProvideDashboardStore(dbstore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(dbstore))
 	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db, cfg)
+	fStore := folderimpl.ProvideStore(dbstore, cfg)
 	tempUser := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}}
 
 	folder1UID := "test1"
@@ -79,7 +76,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 	_, err = fStore.Create(ctx, folder.CreateFolderCommand{Title: "test2", UID: folder2UID, OrgID: 1, ParentUID: folder1UID, SignedInUser: tempUser})
 	require.NoError(t, err)
 
-	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
+	ruleStore := ngalertstore.SetupStoreForTesting(t, dbstore)
 	dashboardUID := "test"
 	_, err = ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.InsertRule{{
 		AlertRule: ngmodels.AlertRule{
@@ -115,7 +112,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 	require.NoError(t, err)
 
 	store := &LegacyStatsGetter{
-		SQL: legacysql.NewDatabaseProvider(db),
+		SQL: legacysql.NewDatabaseProvider(dbstore),
 	}
 
 	// Helper to create a cfg with specific dual-writer modes
@@ -167,7 +164,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 		ctx = request.WithNamespace(ctx, "default")
 
 		store := &LegacyStatsGetter{
-			SQL: legacysql.NewDatabaseProvider(db),
+			SQL: legacysql.NewDatabaseProvider(dbstore),
 			Cfg: cfgWithModes(5, 0), // dashboards Mode5, folders Mode0
 		}
 
@@ -196,7 +193,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 		ctx = request.WithNamespace(ctx, "default")
 
 		store := &LegacyStatsGetter{
-			SQL: legacysql.NewDatabaseProvider(db),
+			SQL: legacysql.NewDatabaseProvider(dbstore),
 			Cfg: cfgWithModes(0, 5), // dashboards Mode0, folders Mode5
 		}
 
@@ -225,7 +222,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 		ctx = request.WithNamespace(ctx, "default")
 
 		store := &LegacyStatsGetter{
-			SQL: legacysql.NewDatabaseProvider(db),
+			SQL: legacysql.NewDatabaseProvider(dbstore),
 			Cfg: cfgWithModes(5, 5), // both Mode5
 		}
 
@@ -298,7 +295,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 
 		cfg := cfgWithModes(0, 0) // start with Mode0 for both
 		store := &LegacyStatsGetter{
-			SQL: legacysql.NewDatabaseProvider(db),
+			SQL: legacysql.NewDatabaseProvider(dbstore),
 			Cfg: cfg,
 		}
 

@@ -50,18 +50,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := &setting.Cfg{}
@@ -651,7 +648,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying data source proxy should handle authentication", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
@@ -1011,7 +1008,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, cfg
 	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()

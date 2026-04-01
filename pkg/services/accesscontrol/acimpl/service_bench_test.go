@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +30,7 @@ import (
 // - each managed role will have 3 permissions {"resources:action2", "resources:id:x"} where x belongs to [1, 3]
 func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.Service, *user.SignedInUser) {
 	now := time.Now()
-	sqlStore := db.InitTestDB(b)
+	sqlStore := sqlstore.NewTestStore(b)
 	store := database.ProvideService(sqlStore)
 	acService := &Service{
 		cfg:            setting.NewCfg(),
@@ -285,7 +286,7 @@ func BenchmarkSearchUserWithAction_1K_1k(b *testing.B) { benchSearchUserWithActi
 func setupBenchManyTeams(b *testing.B, teamCount int) (*Service, *user.SignedInUser) {
 	b.Helper()
 	now := time.Now()
-	sqlStore := db.InitTestDB(b)
+	sqlStore := sqlstore.NewTestStore(b)
 	store := database.ProvideService(sqlStore)
 	cfg := setting.NewCfg()
 	cfg.RBAC.PermissionCache = true

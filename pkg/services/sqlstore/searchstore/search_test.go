@@ -15,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -29,11 +29,8 @@ const (
 	page  int64 = 1
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	user := &user.SignedInUser{
@@ -80,6 +77,7 @@ func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
 }
 
 func TestIntegrationBuilder_Pagination(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	user := &user.SignedInUser{
@@ -129,6 +127,7 @@ func TestIntegrationBuilder_Pagination(t *testing.T) {
 }
 
 func TestIntegrationBuilder_RBAC(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testsCases := []struct {
@@ -283,7 +282,7 @@ func TestIntegrationBuilder_RBAC(t *testing.T) {
 
 func setupTestEnvironment(t *testing.T) db.DB {
 	t.Helper()
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 	return store
 }
 

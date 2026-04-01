@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,7 +20,7 @@ func NewFakeStore(t *testing.T) *RemoteCache {
 		ConnStr: "",
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 
 	dc, err := ProvideService(&setting.Cfg{
 		RemoteCacheOptions: opts,

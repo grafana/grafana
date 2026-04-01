@@ -67,7 +67,8 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 }
 
 func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.FeatureToggles, numUsers, numDashboards, numFolders, nestingLevel int) (db.DB, *setting.Cfg) {
-	store, cfg := db.InitTestDBWithCfg(b)
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(b, sqlstore.WithCfg(cfg))
 
 	if nestingLevel > cfg.MaxNestedFolderDepth {
 		nestingLevel = cfg.MaxNestedFolderDepth

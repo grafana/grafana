@@ -15,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -34,6 +33,7 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -43,6 +43,7 @@ import (
 )
 
 func TestIntegrationCallResource(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	staticRootPath, err := filepath.Abs("../../public/")
@@ -58,7 +59,7 @@ func TestIntegrationCallResource(t *testing.T) {
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(), testCtx.PluginStore, &datasources.FakeCacheService{},
-		&datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
+		&datasources.FakeDataSourceService{}, pluginSettings.ProvideService(sqlstore.NewTestStore(t), fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -30,13 +31,13 @@ func (m *tableLockerMock) LockMigrationTables(_ context.Context, _ *xorm.Session
 }
 
 func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 	if db.IsTestDbSQLite() {
 		t.Skip("SQLite uses no-op locker")
 	}
 
-	dbstore := db.InitTestDB(t)
-	t.Cleanup(db.CleanupTestDB)
+	dbstore := sqlstore.NewTestStore(t)
 
 	gr := schema.GroupResource{Group: "group", Resource: "resource"}
 	unlockCalled := false
@@ -76,10 +77,10 @@ func createTestTable(t *testing.T, dbstore db.DB) string {
 }
 
 func TestIntegrationTableLocker(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dbstore := db.InitTestDB(t)
-	t.Cleanup(db.CleanupTestDB)
+	dbstore := sqlstore.NewTestStore(t)
 	engine := dbstore.GetEngine()
 	ctx := context.Background()
 	type lockerTestSetup struct {

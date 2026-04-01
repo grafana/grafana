@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -46,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
@@ -57,7 +57,6 @@ import (
 
 func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service, passets *pluginassets.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
-	db.InitTestDB(t)
 	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
@@ -102,7 +101,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererPluginManager{},
 		},
-		SQLStore:              db.InitTestDB(t),
+		SQLStore:              sqlstore.NewTestStore(t),
 		SettingsProvider:      setting.ProvideProvider(cfg),
 		pluginStore:           pluginStore,
 		grafanaUpdateChecker:  &updatemanager.GrafanaService{},
@@ -129,6 +128,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	type buildInfo struct {

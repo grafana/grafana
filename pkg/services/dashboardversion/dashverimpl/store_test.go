@@ -13,20 +13,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type getStore func(db.DB) store
 
 func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	t.Helper()
 
-	ss := db.InitTestDB(t)
+	ss := sqlstore.NewTestStore(t)
 	dashVerStore := fn(ss)
 
 	t.Run("Get a Dashboard ID and version ID", func(t *testing.T) {

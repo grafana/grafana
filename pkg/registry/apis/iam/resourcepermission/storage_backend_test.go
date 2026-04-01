@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -20,6 +20,7 @@ import (
 )
 
 func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -115,7 +116,8 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 }
 
 func TestWriteEvent_Add(t *testing.T) {
-	store := db.InitTestDB(t)
+	t.Parallel()
+	store := sqlstore.NewTestStore(t)
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
@@ -266,6 +268,7 @@ func TestWriteEvent_Add(t *testing.T) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// No result => list resource version should be current time
@@ -559,6 +562,7 @@ func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
 }
 
 func TestIntegration_WriteEvent_Delete(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -654,7 +658,8 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 }
 
 func TestWriteEvent_Modify(t *testing.T) {
-	store := db.InitTestDB(t)
+	t.Parallel()
+	store := sqlstore.NewTestStore(t)
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)

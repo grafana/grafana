@@ -19,9 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -96,12 +96,8 @@ var (
 	}
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func setupBackend(t *testing.T) *ResourcePermSqlBackend {
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 
 	sqlHelper := &legacysql.LegacyDatabaseHelper{
 		DB:    store,
@@ -209,6 +205,7 @@ func setupFineGrainedPermissions(t *testing.T, store db.DB) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -269,6 +266,7 @@ func TestIntegration_ResourcePermSqlBackend_newRoleIterator(t *testing.T) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -338,6 +336,7 @@ func TestIntegration_ResourcePermSqlBackend_getResourcePermission(t *testing.T) 
 }
 
 func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -401,9 +400,10 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 }
 
 func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
@@ -516,6 +516,7 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 }
 
 func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -681,6 +682,7 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 }
 
 func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -761,6 +763,7 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 }
 
 func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -845,6 +848,7 @@ func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 //  2. When reading it back, it returns with ApiGroup as "unknown.datasource.grafana.app"
 //     because the mapper uses a wildcard key and ParseScope cannot determine the original concrete group
 func TestIntegration_Datasource_WriteAndReadBackUnknown(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)

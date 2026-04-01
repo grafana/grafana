@@ -24,14 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-// run tests with cleanup
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type getUserPermissionsTestCase struct {
 	desc               string
@@ -47,6 +42,7 @@ type getUserPermissionsTestCase struct {
 
 func TestIntegrationAccessControlStore_GetUserPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []getUserPermissionsTestCase{
 		{
@@ -163,6 +159,7 @@ type getTeamsPermissionsTestCase struct {
 
 func TestIntegrationAccessControlStore_GetTeamsPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []getTeamsPermissionsTestCase{
 		{
@@ -237,6 +234,7 @@ func TestIntegrationAccessControlStore_GetTeamsPermissions(t *testing.T) {
 
 func TestIntegrationAccessControlStore_ExcludeRedundantManagedPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("GetUserPermissions excludes stale dashboard/folder actions from managed roles", func(t *testing.T) {
 		store, permissionStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
@@ -374,6 +372,7 @@ func TestIntegrationAccessControlStore_ExcludeRedundantManagedPermissions(t *tes
 
 func TestIntegrationAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
@@ -458,6 +457,7 @@ func TestIntegrationAccessControlStore_DeleteUserPermissions(t *testing.T) {
 
 func TestIntegrationAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("expect permissions related to team to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
@@ -615,10 +615,11 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 }
 
 func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Service, team.Service, org.Service, *sqlstore.SQLStore) {
-	sql, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
+	sql := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	acstore := database.ProvideService(sql)
 	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
 	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest(), nil)
@@ -640,6 +641,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 
 func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ctx := context.Background()
 	readTeamPerm := func(teamID string) rs.SetResourcePermissionCommand {
@@ -917,6 +919,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 
 func TestIntegrationAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ctx := context.Background()
 	tests := []struct {

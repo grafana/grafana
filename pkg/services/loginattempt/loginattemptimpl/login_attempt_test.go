@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -135,6 +135,7 @@ func TestService_Validate(t *testing.T) {
 }
 
 func TestIntegrationUserLoginAttempts(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
@@ -142,7 +143,7 @@ func TestIntegrationUserLoginAttempts(t *testing.T) {
 	cfg.DisableBruteForceLoginProtection = false
 	cfg.DisableUsernameLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 5
-	db := db.InitTestDB(t)
+	db := sqlstore.NewTestStore(t)
 	service := ProvideService(db, cfg, nil)
 
 	// add multiple login attempts with different uppercases, they all should be counted as the same user
@@ -282,6 +283,7 @@ func TestService_ValidateIPAddress(t *testing.T) {
 }
 
 func TestIntegrationIPLoginAttempts(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
@@ -289,7 +291,7 @@ func TestIntegrationIPLoginAttempts(t *testing.T) {
 	cfg.DisableBruteForceLoginProtection = false
 	cfg.DisableIPAddressLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 3
-	db := db.InitTestDB(t)
+	db := sqlstore.NewTestStore(t)
 	service := ProvideService(db, cfg, nil)
 
 	_ = service.Add(ctx, "user1", "192.168.1.1")
@@ -311,6 +313,7 @@ func TestIntegrationIPLoginAttempts(t *testing.T) {
 // TestIPv6AddressSupport verifies that various IPv6 address formats can be stored properly with the new column length, testing various IPv6 address formats that could be encountered.
 // This test validates that the ip_address column length is sufficient for IPv6 addresses
 func TestIntegrationIPv6AddressSupport(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
@@ -322,7 +325,7 @@ func TestIntegrationIPv6AddressSupport(t *testing.T) {
 	// Use controlled time like other tests to avoid timestamp conversion issues
 	testTime := time.Date(2023, 10, 22, 8, 0, 0, 0, time.UTC)
 	store := &xormStore{
-		db:  db.InitTestDB(t),
+		db:  sqlstore.NewTestStore(t),
 		now: func() time.Time { return testTime },
 	}
 	service := &Service{

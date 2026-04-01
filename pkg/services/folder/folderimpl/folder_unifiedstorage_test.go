@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -79,6 +80,7 @@ func compareFoldersNormalizeTime(t *testing.T, expected, actual *folder.Folder) 
 }
 
 func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	m := map[string]folderv1.Folder{}
@@ -205,7 +207,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	folderApiServerMock := httptest.NewServer(mux)
 	defer folderApiServerMock.Close()
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	cfg.AppURL = folderApiServerMock.URL
 
 	restCfgProvider := rcp{
@@ -957,6 +960,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 }
 
 func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeK8sClient := new(client.MockK8sHandler)
@@ -980,7 +984,8 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 
 	alertingStore := ngstore.DBstore{
 		SQLStore:      db,

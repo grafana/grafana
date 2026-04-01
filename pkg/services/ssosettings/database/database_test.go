@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -19,18 +19,15 @@ const (
 	withinDuration = 5 * time.Minute
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationGetSSOSettings(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = sqlstore.NewTestStore(t)
 		ssoSettingsStore = ProvideStore(sqlStore)
 
 		template := models.SSOSettings{
@@ -85,13 +82,14 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationUpsertSSOSettings(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = sqlstore.NewTestStore(t)
 		ssoSettingsStore = ProvideStore(sqlStore)
 	}
 
@@ -262,13 +260,14 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationListSSOSettings(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = sqlstore.NewTestStore(t)
 		ssoSettingsStore = ProvideStore(sqlStore)
 	}
 
@@ -326,13 +325,14 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationDeleteSSOSettings(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = sqlstore.NewTestStore(t)
 		ssoSettingsStore = ProvideStore(sqlStore)
 	}
 

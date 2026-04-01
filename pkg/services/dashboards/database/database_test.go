@@ -20,21 +20,17 @@ import (
 	libmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// run tests with cleanup
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationDashboardDataAccess(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -43,7 +39,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		var err error
 		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
@@ -637,9 +634,10 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 }
 
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	pluginId := "test-app"
@@ -660,9 +658,10 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 }
 
 func TestIntegrationDashboard_SortingOptions(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
@@ -709,9 +708,10 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 }
 
 func TestIntegrationDashboard_Filter(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
@@ -807,9 +807,10 @@ func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, sqlStore db
 }
 
 func TestIntegrationFindDashboardsByTitle(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
@@ -923,9 +924,11 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 }
 
 func TestIntegrationFindDashboardsByFolder(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	features := featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
@@ -1052,9 +1055,11 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 }
 
 func TestIntegrationGetDashboardsByLibraryPanelUID(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 

@@ -4,15 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationGetExternalSession(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("returns existing external session", func(t *testing.T) {
@@ -40,6 +41,7 @@ func TestIntegrationGetExternalSession(t *testing.T) {
 }
 
 func TestIntegrationListExternalSessions(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("returns external sessions by ID", func(t *testing.T) {
@@ -104,6 +106,7 @@ func TestIntegrationListExternalSessions(t *testing.T) {
 }
 
 func TestIntegrationDeleteExternalSessionsByUserID(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes all external sessions for a given user ID", func(t *testing.T) {
@@ -143,6 +146,7 @@ func TestIntegrationDeleteExternalSessionsByUserID(t *testing.T) {
 }
 
 func TestIntegrationDeleteExternalSession(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes an existing external session", func(t *testing.T) {
@@ -171,6 +175,7 @@ func TestIntegrationDeleteExternalSession(t *testing.T) {
 }
 
 func TestIntegrationBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes all external sessions for given user IDs", func(t *testing.T) {
@@ -210,7 +215,7 @@ func TestIntegrationBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
 }
 
 func setupTest(t *testing.T) *store {
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	secretService := fakes.NewFakeSecretsService()
 	tracer := tracing.InitializeTracerForTest()
 	externalSessionStore := provideExternalSessionStore(sqlStore, secretService, tracer).(*store)

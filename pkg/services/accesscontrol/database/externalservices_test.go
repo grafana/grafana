@@ -9,12 +9,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type run struct {
 		cmd     accesscontrol.SaveExternalServiceRoleCommand
@@ -117,7 +119,7 @@ func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := &AccessControlStore{
-				sql: db.InitTestDB(t),
+				sql: sqlstore.NewTestStore(t),
 			}
 
 			for i := range tt.runs {
@@ -157,6 +159,7 @@ func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 
 func TestIntegrationAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	extID := "app1"
 	tests := []struct {
@@ -192,7 +195,7 @@ func TestIntegrationAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := &AccessControlStore{
-				sql: db.InitTestDB(t),
+				sql: sqlstore.NewTestStore(t),
 			}
 			if tt.init != nil {
 				tt.init(t, ctx, s)

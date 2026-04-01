@@ -19,7 +19,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -36,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -43,8 +43,9 @@ import (
 
 func TestIntegrationContactPointService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -447,8 +448,9 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -507,8 +509,9 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 
 func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 
 	// User with basic read/write permissions but without protected field update permission
 	basicUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -705,8 +708,9 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 
 func TestIntegrationAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 	sutWithAuthz := func() (*ContactPointService, *acfakes.FakeReceiverAccessService[*models.Receiver]) {
-		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlstore.NewTestStore(t)))
 		sut := createContactPointServiceSut(t, secretsService)
 		authz := &acfakes.FakeReceiverAccessService[*models.Receiver]{}
 		sut.authz = authz

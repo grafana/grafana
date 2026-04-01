@@ -14,14 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationAnnotationCleanUp(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	fakeSQL := db.InitTestDB(t)
+	fakeSQL := sqlstore.NewTestStore(t)
 
 	tests := []struct {
 		name                    string
@@ -130,9 +132,10 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 }
 
 func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	fakeSQL := db.InitTestDB(t)
+	fakeSQL := sqlstore.NewTestStore(t)
 
 	t.Cleanup(func() {
 		err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {

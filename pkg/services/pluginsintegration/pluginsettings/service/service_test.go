@@ -12,13 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func TestService_DecryptedValuesCache(t *testing.T) {
 	t.Run("When plugin settings hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
@@ -100,9 +96,10 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 }
 
 func TestIntegrationPluginSettings(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	psService := ProvideService(store, secretsService)
 

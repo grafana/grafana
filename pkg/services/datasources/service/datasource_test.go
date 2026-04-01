@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -41,14 +40,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type dataSourceMockRetriever struct {
 	res []*datasources.DataSource
@@ -80,6 +75,7 @@ func (d *dataSourceMockRetriever) GetDataSourceInNamespace(ctx context.Context, 
 }
 
 func TestIntegrationService_AddDataSource(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should not fail if the plugin is not installed", func(t *testing.T) {
@@ -373,6 +369,7 @@ func TestService_getAvailableName(t *testing.T) {
 }
 
 func TestIntegrationService_UpdateDataSource(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should return not found error if datasource not found", func(t *testing.T) {
@@ -825,10 +822,11 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 }
 
 func TestIntegrationService_DeleteDataSource(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should not return an error if data source doesn't exist", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -850,7 +848,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 	})
 
 	t.Run("should successfully delete a data source that exists", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1107,6 +1105,7 @@ func TestService_awsServiceNamespace(t *testing.T) {
 
 //nolint:goconst
 func TestIntegrationService_GetHttpTransport(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := &setting.Cfg{}
@@ -1125,7 +1124,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			Type: "Kubernetes",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1164,7 +1163,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsAuthWithCACert", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1217,7 +1216,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsAuth", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1267,7 +1266,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson.Set("tlsAuthWithCACert", true)
 		sjson.Set("serverName", "server-name")
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1325,7 +1324,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsSkipVerify", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1362,7 +1361,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Authorization",
 		})
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1433,7 +1432,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Host",
 		})
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1514,7 +1513,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1537,9 +1536,10 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 }
 
 func TestIntegrationService_getConnections(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1704,9 +1704,10 @@ func TestIntegrationService_getConnections(t *testing.T) {
 }
 
 func TestIntegrationService_getProxySettings(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1786,6 +1787,7 @@ func TestIntegrationService_getProxySettings(t *testing.T) {
 }
 
 func TestIntegrationService_getTimeout(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := &setting.Cfg{}
@@ -1806,7 +1808,7 @@ func TestIntegrationService_getTimeout(t *testing.T) {
 		{jsonData: simplejson.NewFromAny(map[string]any{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1824,6 +1826,7 @@ func TestIntegrationService_getTimeout(t *testing.T) {
 }
 
 func TestIntegrationService_GetDecryptedValues(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should migrate and retrieve values from secure json data", func(t *testing.T) {
@@ -1833,7 +1836,7 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 			Type: "prometheus",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1863,7 +1866,7 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 			Type: "prometheus",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1889,9 +1892,10 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 }
 
 func TestIntegrationDataSource_CustomHeaders(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1980,7 +1984,7 @@ func TestIntegrationDataSource_CustomHeaders(t *testing.T) {
 
 func initDSService(t *testing.T) *Service {
 	cfg := &setting.Cfg{}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)

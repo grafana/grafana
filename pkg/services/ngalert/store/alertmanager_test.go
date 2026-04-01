@@ -10,21 +10,17 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationAlertmanagerStore(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
@@ -144,8 +140,9 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 
 func TestIntegrationAlertmanagerHash(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
@@ -190,8 +187,9 @@ func TestIntegrationAlertmanagerHash(t *testing.T) {
 
 func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
@@ -282,8 +280,9 @@ func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 
 func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
@@ -336,8 +335,9 @@ func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
 
 func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
@@ -426,8 +426,9 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 
 func TestIntegrationGetHistoricalConfiguration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),

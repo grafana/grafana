@@ -8,20 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationSigningKeyStore(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ctx, store := context.Background(), NewSigningKeyStore(db.InitTestDB(t))
+	ctx, store := context.Background(), NewSigningKeyStore(sqlstore.NewTestStore(t))
 
 	t.Run("Should successfully add new singing key", func(_ *testing.T) {
 		key, err := store.Add(ctx, &signingkeys.SigningKey{KeyID: "1", AddedAt: time.Now().UTC(), PrivateKey: ""}, false)

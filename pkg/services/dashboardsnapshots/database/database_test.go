@@ -16,22 +16,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
-	dashStore := ProvideStore(sqlstore, cfg)
+	dashStore := ProvideStore(testDB, cfg)
 
 	origSecret := cfg.SecretKey
 	cfg.SecretKey = "dashboard_snapshot_testing"
@@ -160,10 +157,11 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 }
 
 func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
-	dashStore := NewStore(sqlstore)
+	testDB := sqlstore.NewTestStore(t)
+	dashStore := NewStore(testDB)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {
 		nonExpiredSnapshot := createTestSnapshot(t, dashStore, "key1", 48000)

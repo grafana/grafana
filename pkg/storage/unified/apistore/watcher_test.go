@@ -33,13 +33,13 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -88,10 +88,6 @@ func withStorageType(storageType StorageType) setupOption {
 
 var _ setupOption = withDefaults
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Interface, factory.DestroyFunc, error) {
 	setupOpts := setupOptions{}
 	opts = append([]setupOption{withDefaults}, opts...)
@@ -134,7 +130,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 	case StorageTypeUnified:
 		testutil.SkipIntegrationTestInShortMode(t)
-		dbstore := infraDB.InitTestDB(t)
+		dbstore := sqlstore.NewTestStore(t)
 		cfg := setting.NewCfg()
 
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)

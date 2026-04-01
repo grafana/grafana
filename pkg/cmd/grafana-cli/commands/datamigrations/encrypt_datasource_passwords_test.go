@@ -11,21 +11,18 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationPasswordMigrationCommand(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// setup datasources with password, basic_auth and none
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		passwordMigration(t, sess, store)
 		return nil

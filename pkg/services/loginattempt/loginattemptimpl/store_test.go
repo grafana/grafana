@@ -7,16 +7,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationLoginAttemptsQuery(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	user := "user"
@@ -54,7 +50,7 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 	} {
 		mockTime := beginningOfTime
 		s := &xormStore{
-			db:  db.InitTestDB(t),
+			db:  sqlstore.NewTestStore(t),
 			now: func() time.Time { return mockTime },
 		}
 
@@ -85,6 +81,7 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 }
 
 func TestIntegrationLoginAttemptsDelete(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	user := "user"
@@ -118,7 +115,7 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 	} {
 		mockTime := beginningOfTime
 		s := &xormStore{
-			db:  db.InitTestDB(t),
+			db:  sqlstore.NewTestStore(t),
 			now: func() time.Time { return mockTime },
 		}
 

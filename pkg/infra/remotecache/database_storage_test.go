@@ -7,18 +7,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationDatabaseStorageGarbageCollection(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 
 	db := &databaseCache{
-		SQLStore: sqlstore,
+		SQLStore: store,
 		log:      log.New("remotecache.database"),
 	}
 
@@ -62,13 +63,14 @@ func TestIntegrationDatabaseStorageGarbageCollection(t *testing.T) {
 }
 
 func TestIntegrationSecondSet(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var err error
-	sqlstore := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 
 	db := &databaseCache{
-		SQLStore: sqlstore,
+		SQLStore: store,
 		log:      log.New("remotecache.database"),
 	}
 

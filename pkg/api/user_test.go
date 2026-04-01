@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -59,10 +58,11 @@ import (
 const newEmail = "newemail@localhost"
 
 func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings), sqlstore.WithDefaultOrgAndUser())
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
@@ -447,10 +447,11 @@ func Test_GetUserByID(t *testing.T) {
 }
 
 func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 
 	hs := &HTTPServer{
 		Cfg:           settings,
@@ -486,7 +487,7 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
 	t.Helper()
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 
 	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
@@ -523,6 +524,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 }
 
 func TestIntegrationUser_UpdateEmail(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cases := []struct {
@@ -717,7 +719,7 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		}
 
 		nsMock := notifications.MockNotificationService()
-		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings), sqlstore.WithDefaultOrgAndUser())
 
 		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
@@ -1200,10 +1202,11 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 }
 
 func TestIntegrationHTTPServer_UpdateSignedInUser(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 
 	hs := &HTTPServer{
 		Cfg:           settings,

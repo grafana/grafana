@@ -13,12 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestManagedPermissionsActionSetsFilter(t *testing.T) {
+	t.Parallel()
 	filter := accesscontrol.ManagedPermissionsActionSetsFilter()
 
 	// The filter should exclude individual dashboard/folder actions from managed roles
@@ -46,11 +47,8 @@ type filterDatasourcesTestCase struct {
 	expectErr           bool
 }
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationFilter_Datasources(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	tests := []filterDatasourcesTestCase{
@@ -191,7 +189,7 @@ func TestIntegrationFilter_Datasources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := db.InitTestDB(t)
+			store := sqlstore.NewTestStore(t)
 
 			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 				// seed 10 data sources

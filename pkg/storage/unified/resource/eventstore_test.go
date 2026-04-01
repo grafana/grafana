@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"testing"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -22,12 +20,7 @@ func setupTestEventStore(t *testing.T) *eventStore {
 
 // TestMain verifies that all background goroutines are properly shut down after tests.
 func TestMain(m *testing.M) {
-	db.SetupTestDB()
 	goleak.VerifyTestMain(m,
-		goleak.Cleanup(func(exitCode int) {
-			db.CleanupTestDB()
-			os.Exit(exitCode)
-		}),
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/patrickmn/go-cache.(*janitor).Run"),                          // go-cache janitor stops via GC finalizer, not an explicit close.
 		goleak.IgnoreTopFunction("go.opentelemetry.io/otel/sdk/trace.(*batchSpanProcessor).processQueue"), // OTel span processor from test infra.

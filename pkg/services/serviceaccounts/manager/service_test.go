@@ -6,13 +6,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -114,12 +113,9 @@ func (f *SecretsCheckerFake) CheckTokens(ctx context.Context) error {
 	return f.ExpectedError
 }
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	storeMock := newServiceAccountStoreFake()
 	acSvc := actest.FakeService{}
@@ -128,7 +124,7 @@ func TestIntegrationProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 		acService:         acSvc,
 		permissions:       pSvc,
 		store:             storeMock,
-		db:                db.InitTestDB(t),
+		db:                sqlstore.NewTestStore(t),
 		log:               log.NewNopLogger(),
 		secretScanEnabled: false,
 	}

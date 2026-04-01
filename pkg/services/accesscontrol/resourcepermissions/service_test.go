@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -34,6 +35,7 @@ type setUserPermissionTest struct {
 
 func TestIntegrationService_SetUserPermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []setUserPermissionTest{
 		{
@@ -80,6 +82,7 @@ type setTeamPermissionTest struct {
 
 func TestIntegrationService_SetTeamPermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []setTeamPermissionTest{
 		{
@@ -131,6 +134,7 @@ type setBuiltInRolePermissionTest struct {
 
 func TestIntegrationService_SetBuiltInRolePermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []setBuiltInRolePermissionTest{
 		{
@@ -175,6 +179,7 @@ type setPermissionsTest struct {
 
 func TestIntegrationService_SetPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []setPermissionsTest{
 		{
@@ -246,6 +251,7 @@ func TestIntegrationService_SetPermissions(t *testing.T) {
 
 func TestIntegrationService_RegisterActionSets(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type registerActionSetsTest struct {
 		desc               string
@@ -298,7 +304,7 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			actionSets := NewActionSetService()
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
-				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
+				ac, &actest.FakeService{}, sqlstore.NewTestStore(t), nil, nil, actionSets,
 			)
 			require.NoError(t, err)
 
@@ -504,6 +510,7 @@ func TestStore_RegisterActionSet(t *testing.T) {
 }
 
 func TestService_K8sActionFormat(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name                  string
 		opts                  Options
@@ -552,7 +559,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sql := db.InitTestDB(t)
+			sql := sqlstore.NewTestStore(t)
 			cfg := setting.NewCfg()
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
@@ -650,7 +657,7 @@ func TestGetActionSetName(t *testing.T) {
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
 
-	sql := db.InitTestDB(t)
+	sql := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 

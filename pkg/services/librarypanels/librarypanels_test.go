@@ -24,22 +24,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const userInDbName = "user_in_db"
 const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
-// run tests with cleanup
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
@@ -360,6 +357,7 @@ func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
 }
 
 func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testScenario(t, "When an admin tries to import a dashboard with a library panel that does not exist, it should import the library panel",
@@ -791,7 +789,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		cfg := setting.NewCfg()
+		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}

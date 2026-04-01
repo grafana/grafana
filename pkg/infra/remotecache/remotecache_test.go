@@ -14,13 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore db.DB) CacheStorage {
 	t.Helper()
@@ -35,15 +30,17 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore 
 }
 
 func TestIntegrationCachedBasedOnConfig(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",
 	})
 	require.Nil(t, err, "Failed to load config")
 
-	client := createTestClient(t, cfg.RemoteCacheOptions, db)
+	client := createTestClient(t, cfg.RemoteCacheOptions, store)
 	runTestsForClient(t, client)
 }
 

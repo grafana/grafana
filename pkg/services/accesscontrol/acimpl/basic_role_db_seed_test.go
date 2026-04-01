@@ -16,15 +16,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRoles(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ctx := context.Background()
-	sql := db.InitTestDB(t)
+	sql := sqlstore.NewTestStore(t)
 	store := database.ProvideService(sql)
 
 	svc := ProvideOSSService(

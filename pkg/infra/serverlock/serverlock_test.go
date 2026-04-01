@@ -11,18 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func createTestableServerLock(t *testing.T) *ServerLockService {
 	t.Helper()
 
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 
 	return &ServerLockService{
 		SQLStore: store,
@@ -32,6 +28,7 @@ func createTestableServerLock(t *testing.T) *ServerLockService {
 }
 
 func TestIntegrationServerLock(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sl := createTestableServerLock(t)
@@ -70,6 +67,7 @@ func TestIntegrationServerLock(t *testing.T) {
 }
 
 func TestIntegrationLockAndRelease(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	operationUID := "test-operation-release"

@@ -7,17 +7,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var store *xormStore
@@ -31,8 +28,9 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 		Status: tempuser.TmpUserInvitePending,
 	}
 	setup := func(t *testing.T) {
-		db, cfg := db.InitTestDBWithCfg(t)
-		store = &xormStore{db: db, cfg: cfg}
+		cfg := setting.NewCfg()
+		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+		store = &xormStore{db: sqlStore, cfg: cfg}
 		tempUser, err = store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)
 	}
@@ -112,8 +110,9 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			Status:          tempuser.TmpUserEmailUpdateStarted,
 			InvitedByUserID: userID,
 		}
-		db, cfg := db.InitTestDBWithCfg(t)
-		store = &xormStore{db: db, cfg: cfg}
+		cfg := setting.NewCfg()
+		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+		store = &xormStore{db: sqlStore, cfg: cfg}
 
 		for i := 0; i < verifications; i++ {
 			tempUser, err = store.CreateTempUser(context.Background(), &cmd)
@@ -152,8 +151,9 @@ func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 			Status:          tempuser.TmpUserEmailUpdateStarted,
 			InvitedByUserID: 99,
 		}
-		db, cfg := db.InitTestDBWithCfg(t)
-		store = &xormStore{db: db, cfg: cfg}
+		cfg := setting.NewCfg()
+		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+		store = &xormStore{db: sqlStore, cfg: cfg}
 
 		tempUser, err = store.CreateTempUser(context.Background(), &cmd)
 		require.Nil(t, err)

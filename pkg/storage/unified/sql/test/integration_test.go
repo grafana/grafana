@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -61,7 +61,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	cfg.DisablePruner = db.IsTestDbSQLite()
 	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
-	dbstore := db.InitTestDB(t)
+	dbstore := sqlstore.NewTestStore(t)
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
 		dbSection.Key("high_availability").SetValue("true")
@@ -81,13 +81,9 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	return backend
 }
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationStorageServer(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
-	t.Cleanup(db.CleanupTestDB)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
 		return newTestBackend(t, true, 0, 0)
@@ -96,8 +92,8 @@ func TestIntegrationStorageServer(t *testing.T) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
-	t.Cleanup(db.CleanupTestDB)
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
@@ -113,8 +109,8 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
-	t.Cleanup(db.CleanupTestDB)
 
 	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
 		return unitest.NewTestSqlKvBackend(t, ctx, true)
@@ -172,6 +168,7 @@ func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBacke
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
@@ -194,12 +191,13 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 }
 
 func TestClientServer(t *testing.T) {
+	t.Parallel()
 	if db.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	dbstore := sqlstore.NewTestStore(t)
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
@@ -296,10 +294,11 @@ func resourceKey(name string) *resourcepb.ResourceKey {
 }
 
 func TestIntegrationSearchClientServer(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	dbstore := sqlstore.NewTestStore(t)
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address

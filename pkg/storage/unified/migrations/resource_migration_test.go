@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -36,8 +37,7 @@ type testEnv struct {
 func newTestEnv(t *testing.T) testEnv {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
-	dbstore := db.InitTestDB(t)
-	t.Cleanup(db.CleanupTestDB)
+	dbstore := sqlstore.NewTestStore(t)
 	ensureOrg(t, dbstore.GetEngine())
 	return testEnv{engine: dbstore.GetEngine(), store: dbstore}
 }
@@ -124,6 +124,7 @@ func noopLocker() *tableLockerMock {
 }
 
 func TestIntegrationRun_Postgres_LocksOnSession(t *testing.T) {
+	t.Parallel()
 	env := newTestEnv(t)
 	if !db.IsTestDbPostgres() {
 		t.Skip("Postgres-only")
@@ -136,6 +137,7 @@ func TestIntegrationRun_Postgres_LocksOnSession(t *testing.T) {
 }
 
 func TestIntegrationRun_MySQL_UsesTableLocker(t *testing.T) {
+	t.Parallel()
 	env := newTestEnv(t)
 	if !db.IsTestDbMySQL() {
 		t.Skip("MySQL-only")
@@ -152,6 +154,7 @@ func TestIntegrationRun_MySQL_UsesTableLocker(t *testing.T) {
 }
 
 func TestIntegrationRun_Rename(t *testing.T) {
+	t.Parallel()
 	env := newTestEnv(t)
 
 	type renameCase struct {
@@ -236,6 +239,7 @@ func TestIntegrationRun_Rename(t *testing.T) {
 }
 
 func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
+	t.Parallel()
 	env := newTestEnv(t)
 	if !db.IsTestDbMySQL() {
 		t.Skip("MySQL-only")
@@ -401,6 +405,7 @@ func lockAndQueueRename(t *testing.T, engine *xorm.Engine, tables []string) (unl
 }
 
 func TestIntegrationRunMySQL_CrashRecovery(t *testing.T) {
+	t.Parallel()
 	env := newTestEnv(t)
 	if !db.IsTestDbMySQL() {
 		t.Skip("MySQL-only")
@@ -423,6 +428,7 @@ func TestIntegrationRunMySQL_CrashRecovery(t *testing.T) {
 }
 
 func TestIntegrationRecoverRenamedTables(t *testing.T) {
+	t.Parallel()
 	env := newTestEnv(t)
 	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
 
@@ -507,6 +513,7 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 // SQLite retry path (parquet buffer fallback) works correctly when the first
 // migration attempt fails. It runs for both SQL and KV backends.
 func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 	if !db.IsTestDbSQLite() {
 		t.Skip("SQLite-only")
@@ -654,6 +661,7 @@ func (m *retryAwareMigrator) RebuildIndexes(ctx context.Context, opts RebuildInd
 }
 
 func TestIntegrationBuildRenamePairs(t *testing.T) {
+	t.Parallel()
 	env := newTestEnv(t)
 
 	mg := migrator.NewMigrator(env.engine, setting.NewCfg())

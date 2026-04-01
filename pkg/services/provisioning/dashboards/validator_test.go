@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -21,8 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -33,6 +34,7 @@ const (
 )
 
 func TestIntegrationDuplicatesValidator(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeService := &dashboards.FakeDashboardProvisioning{}
@@ -47,7 +49,8 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 	}
 	logger := log.New("test.logger")
 
-	sql, cfgT := db.InitTestDBWithCfg(t)
+	cfgT := setting.NewCfg()
+	sql := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfgT))
 	features := featuremgmt.WithFeatures()
 	fStore := folderimpl.ProvideStore(sql, cfgT)
 	tagService := tagimpl.ProvideService(sql)

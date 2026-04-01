@@ -21,7 +21,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -41,10 +40,6 @@ type scenarioFunc func(*testing.T, scenarioContext)
 type cachingScenarioFunc func(*testing.T, cachingScenarioContext)
 
 const subject = "foo-subj"
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func TestIntegrationVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)

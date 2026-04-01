@@ -7,20 +7,21 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationFetchOrgIds(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ctx := context.Background()
 
 	t.Run("returns empty result when no orgs exist", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		store := &DBstore{SQLStore: sqlStore}
 		orgIDs, err := store.FetchOrgIds(ctx)
 		require.NoError(t, err)
@@ -28,7 +29,7 @@ func TestIntegrationFetchOrgIds(t *testing.T) {
 	})
 
 	t.Run("returns all org IDs", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		store := &DBstore{SQLStore: sqlStore}
 		orgService, err := testutil.SetupOrgService(t, sqlStore, setting.NewCfg())
 		require.NoError(t, err)

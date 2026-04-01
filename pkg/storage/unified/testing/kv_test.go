@@ -7,12 +7,11 @@ import (
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestBadgerKV(t *testing.T) {
@@ -32,13 +31,10 @@ func TestBadgerKV(t *testing.T) {
 	})
 }
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestSQLKV(t *testing.T) {
+	t.Parallel()
 	RunKVTest(t, func(ctx context.Context) resource.KV {
-		dbstore := db.InitTestDB(t)
+		dbstore := sqlstore.NewTestStore(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 		require.NoError(t, err)
 		dbConn, err := eDB.Init(ctx)

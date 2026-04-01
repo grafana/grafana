@@ -17,25 +17,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		cfg := setting.NewCfg()
+		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
@@ -168,7 +166,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = sqlstore.NewTestStore(t)
 				setup()
 				userId := userIds[1]
 
@@ -219,7 +217,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = sqlstore.NewTestStore(t)
 				setup()
 				userID := userIds[0]
 
@@ -354,7 +352,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = sqlstore.NewTestStore(t)
 				setup()
 				groupId := team2.ID
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -415,7 +413,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				t.Run("A user should be able to remove the admin permission if there are other admins", func(t *testing.T) {
-					sqlStore = db.InitTestDB(t)
+					sqlStore = sqlstore.NewTestStore(t)
 					setup()
 
 					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -434,7 +432,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = sqlstore.NewTestStore(t)
 				setup()
 				signedInUser := &user.SignedInUser{
 					Login: "loginuser0",
@@ -475,7 +473,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = sqlstore.NewTestStore(t)
 				cfgProvider, err := configprovider.ProvideService(cfg)
 				require.NoError(t, err)
 				quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
@@ -523,6 +521,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 }
 
 func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	type searchTeamsTestCase struct {
@@ -571,7 +570,8 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
@@ -606,6 +606,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 // TestSQLStore_GetTeamMembers_ACFilter tests the accesscontrol filtering of
 // team members based on the signed in user permissions
 func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testOrgID := int64(2)
@@ -672,7 +673,8 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMembers)
 	}
 
-	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 	setup(store, cfg)
 	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)

@@ -9,15 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type getStore func(db.DB) store
 
@@ -25,7 +21,7 @@ func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 	t.Helper()
 
 	t.Run("Testing User Stars Data Access", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := sqlstore.NewTestStore(t)
 		starStore := fn(ss)
 
 		t.Run("Given saved star by dashboard UID", func(t *testing.T) {
@@ -107,9 +103,10 @@ func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 }
 
 func TestIntegration_StarMigrations(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t)
 
 	d := dashboards.Dashboard{
 		UID:     "test",

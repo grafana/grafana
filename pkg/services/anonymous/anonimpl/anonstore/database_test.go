@@ -8,19 +8,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 	anonDBStore := ProvideAnonDBStore(store, 0)
 	const keepFor = time.Hour * 24 * 61
 
@@ -58,8 +54,9 @@ func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
 
 func TestIntegrationBeyondDeviceLimit(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 	anonDBStore := ProvideAnonDBStore(store, 1)
 
 	anonDevice := &Device{
@@ -81,8 +78,9 @@ func TestIntegrationBeyondDeviceLimit(t *testing.T) {
 
 func TestIntegrationAnonStore_DeleteDevice(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	store := db.InitTestDB(t)
+	store := sqlstore.NewTestStore(t)
 	anonDBStore := ProvideAnonDBStore(store, 0)
 	const keepFor = time.Hour * 24 * 61
 

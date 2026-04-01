@@ -87,6 +87,32 @@ func TestIntegrationUniqueConstraintViolation(t *testing.T) {
 	}
 }
 
+func TestIntegrationWithDefaultOrgAndUser(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store := sqlstore.NewTestStore(t, sqlstore.WithDefaultOrgAndUser())
+
+	var orgs []*org.Org
+	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		return sess.Find(&orgs)
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, orgs, "should have created default org")
+}
+
+func TestIntegrationWithoutDefaultOrgAndUser(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store := sqlstore.NewTestStore(t)
+
+	var orgs []*org.Org
+	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		return sess.Find(&orgs)
+	})
+	require.NoError(t, err)
+	require.Empty(t, orgs, "should not have created default org")
+}
+
 func TestIntegrationTruncateDatabase(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

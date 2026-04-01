@@ -69,12 +69,13 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 }
 
 func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings), sqlstore.WithDefaultOrgAndUser())
 	hs.SQLStore = sqlStore
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}

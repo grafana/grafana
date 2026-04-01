@@ -11,9 +11,10 @@ import (
 )
 
 func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, _ := InitTestDB(t)
+	ss := NewTestStore(t)
 
 	t.Run("top level transaction", func(t *testing.T) {
 		var outerSession *DBSession
@@ -69,9 +70,10 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 }
 
 func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, _ := InitTestDB(t)
+	ss := NewTestStore(t)
 	ctx := context.Background()
 
 	// On X success

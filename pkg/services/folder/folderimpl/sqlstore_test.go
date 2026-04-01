@@ -39,9 +39,11 @@ var folderDsc string = "folder desc"
 var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
 
 func TestIntegrationCreate(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -169,9 +171,11 @@ func TestIntegrationCreate(t *testing.T) {
 }
 
 func TestIntegrationDelete(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -214,9 +218,11 @@ func TestIntegrationDelete(t *testing.T) {
 }
 
 func TestIntegrationUpdate(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -387,9 +393,11 @@ func TestIntegrationUpdate(t *testing.T) {
 }
 
 func TestIntegrationGet(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -520,9 +528,11 @@ func TestIntegrationGet(t *testing.T) {
 }
 
 func TestIntegrationGetParents(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -586,9 +596,11 @@ func TestIntegrationGetParents(t *testing.T) {
 }
 
 func TestIntegrationGetChildren(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -819,9 +831,11 @@ func TestIntegrationGetChildren(t *testing.T) {
 }
 
 func TestIntegrationGetHeight(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)
@@ -849,10 +863,12 @@ func TestIntegrationGetHeight(t *testing.T) {
 }
 
 func TestIntegrationGetFolders(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	foldersNum := 10
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 
 	orgID := CreateOrg(t, db, cfg)

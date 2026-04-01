@@ -139,7 +139,9 @@ func TestMigrationStatusReader_GetStorageMode_ConfigResolution(t *testing.T) {
 }
 
 func TestMigrationStatusReader_GetStorageMode_MigrationLogOverridesConfig(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	t.Parallel()
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	registry := newPlaylistRegistry()
 
@@ -160,7 +162,9 @@ func TestMigrationStatusReader_GetStorageMode_MigrationLogOverridesConfig(t *tes
 }
 
 func TestMigrationStatusReader_GetStorageMode_IgnoresFailedMigrationLogRows(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	t.Parallel()
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	registry := newPlaylistRegistry()
 
@@ -181,7 +185,9 @@ func TestMigrationStatusReader_GetStorageMode_IgnoresFailedMigrationLogRows(t *t
 }
 
 func TestMigrationStatusReader_GetStorageMode_ConfigFallbackWhenLogMissing(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	t.Parallel()
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
 	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
@@ -197,7 +203,9 @@ func TestMigrationStatusReader_GetStorageMode_ConfigFallbackWhenLogMissing(t *te
 }
 
 func TestMigrationStatusReader_OnlyCfgRecoveryWhenTableAppears(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	t.Parallel()
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
 	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
@@ -223,7 +231,9 @@ func TestMigrationStatusReader_OnlyCfgRecoveryWhenTableAppears(t *testing.T) {
 }
 
 func TestMigrationStatusReader_OnlyCfgPersistsWhenTableMissing(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	t.Parallel()
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
 	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
@@ -249,7 +259,9 @@ func TestMigrationStatusReader_OnlyCfgPersistsWhenTableMissing(t *testing.T) {
 }
 
 func TestMigrationStatusReader_GetStorageMode_DBErrorFallsBackToConfig(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	t.Parallel()
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	registry := newPlaylistRegistry()
 
@@ -279,7 +291,9 @@ func TestMigrationStatusReader_GetStorageMode_DBErrorFallsBackToConfig(t *testin
 }
 
 func TestMigrationStatusReader_GetStorageMode_NoErrorWhenBootstrapSucceeds(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	t.Parallel()
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
 	require.NoError(t, EnsureMigrationLogTable(context.Background(), sqlStore, cfg))
@@ -329,7 +343,8 @@ func newPlaylistRegistry() *MigrationRegistry {
 func newTestStatusReader(t *testing.T, cfg *setting.Cfg, registry *MigrationRegistry) *migrationStatusReader {
 	t.Helper()
 
-	sqlStore, testCfg := infraDB.InitTestDBWithCfg(t)
+	testCfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(testCfg))
 	testCfg.UnifiedStorage = cfg.UnifiedStorage
 	testCfg.StorageModeCacheTTL = cfg.StorageModeCacheTTL
 	reader, err := ProvideMigrationStatusReader(sqlStore, testCfg, registry, prometheus.NewRegistry())

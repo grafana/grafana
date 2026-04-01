@@ -14,9 +14,10 @@ import (
 )
 
 func TestIntegration_RetryingDisabled(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, _ := InitTestDB(t)
+	store := NewTestStore(t)
 	retryErrors := getRetryErrors(t, store)
 
 	require.Equal(t, 0, store.dbCfg.QueryRetries)
@@ -64,9 +65,10 @@ func TestIntegration_RetryingDisabled(t *testing.T) {
 }
 
 func TestIntegration_RetryingOnFailures(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, _ := InitTestDB(t)
+	store := NewTestStore(t)
 	retryErrors := getRetryErrors(t, store)
 	store.dbCfg.QueryRetries = 5
 

@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -48,9 +47,9 @@ import (
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -59,12 +58,9 @@ import (
 //go:embed test-data/receiver-exports/*
 var receiverExportResponses embed.FS
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationProvisioningApi(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("policies", func(t *testing.T) {
 		t.Run("successful GET returns 200", func(t *testing.T) {
@@ -1681,6 +1677,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 
 func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
 		env := createTestEnv(t, testConfig)
@@ -1959,6 +1956,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 }
 
 func TestApiContactPointExportSnapshot(t *testing.T) {
+	t.Parallel()
 	// This test should fail whenever the export of a contact point changes. If the change is expected, update
 	// the corresponding test response file(s) in test-data/receiver-exports/*
 	type testcase struct {
@@ -2074,6 +2072,7 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 }
 
 func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
+	t.Parallel()
 	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies.
 	env := createTestEnv(t, testConfig) // testConfig should be unused here, we're overriding the policy service.
 	env.features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
@@ -2173,7 +2172,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	sqlStore, _ := db.InitTestDBWithCfg(t)
+	sqlStore := sqlstore.NewTestStore(t)
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()

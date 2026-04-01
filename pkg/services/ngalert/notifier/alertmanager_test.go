@@ -15,7 +15,6 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -26,15 +25,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func setupAMTest(t *testing.T) *alertmanager {
 	dir := t.TempDir()
@@ -46,7 +41,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	l := log.New("alertmanager-test")
 
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry(), l)
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval:                  10 * time.Second,
@@ -72,6 +67,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 
 func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	am := setupAMTest(t)
 	require.False(t, am.Ready())

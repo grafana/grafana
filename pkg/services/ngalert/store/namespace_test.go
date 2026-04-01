@@ -8,12 +8,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -22,8 +22,9 @@ import (
 
 func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
 	folderService := foldertest.NewFakeService()
 	b := &fakeBus{}
@@ -62,6 +63,7 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 }
 
 func TestGetNamespaceByTitle(t *testing.T) {
+	t.Parallel()
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedError = dashboards.ErrFolderNotFound
 	store := DBstore{
@@ -75,6 +77,7 @@ func TestGetNamespaceByTitle(t *testing.T) {
 }
 
 func TestGetOrCreateNamespaceByTitle(t *testing.T) {
+	t.Parallel()
 	store := DBstore{}
 	_, created, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, nil, folder.RootFolderUID)
 	require.False(t, created)
@@ -85,6 +88,7 @@ func TestGetOrCreateNamespaceByTitle(t *testing.T) {
 }
 
 func TestGenerateAlertingFolderUID(t *testing.T) {
+	t.Parallel()
 	const orgID int64 = 1
 
 	t.Run("should generate deterministic UIDs for same inputs", func(t *testing.T) {

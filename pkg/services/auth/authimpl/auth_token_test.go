@@ -22,17 +22,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationUserAuthToken(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := createTestContext(t)
@@ -703,7 +700,7 @@ func createTestContext(t *testing.T) *testContext {
 	t.Helper()
 	maxInactiveDurationVal, _ := time.ParseDuration("168h")
 	maxLifetimeDurationVal, _ := time.ParseDuration("720h")
-	sqlstore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	tracer := tracing.InitializeTracerForTest()
 
 	cfg := &setting.Cfg{
@@ -712,10 +709,10 @@ func createTestContext(t *testing.T) *testContext {
 		TokenRotationIntervalMinutes: 10,
 	}
 
-	extSessionStore := provideExternalSessionStore(sqlstore, &fakes.FakeSecretsService{}, tracer)
+	extSessionStore := provideExternalSessionStore(sqlStore, &fakes.FakeSecretsService{}, tracer)
 
 	tokenService := &UserAuthTokenService{
-		sqlStore:             sqlstore,
+		sqlStore:             sqlStore,
 		cfg:                  cfg,
 		log:                  log.New("test-logger"),
 		singleflight:         new(singleflight.Group),
@@ -724,7 +721,7 @@ func createTestContext(t *testing.T) *testContext {
 	}
 
 	return &testContext{
-		sqlstore:        sqlstore,
+		sqlstore:        sqlStore,
 		tokenService:    tokenService,
 		extSessionStore: &extSessionStore,
 	}
@@ -788,6 +785,7 @@ func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
 }
 
 func TestIntegrationTokenCount(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := createTestContext(t)
@@ -827,6 +825,7 @@ func TestIntegrationTokenCount(t *testing.T) {
 }
 
 func TestIntegrationRevokeAllUserTokens(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should not fail if the external sessions could not be removed", func(t *testing.T) {
@@ -862,6 +861,7 @@ func TestIntegrationRevokeAllUserTokens(t *testing.T) {
 }
 
 func TestIntegrationRevokeToken(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should not fail if the external sessions could not be removed", func(t *testing.T) {
@@ -895,6 +895,7 @@ func TestIntegrationRevokeToken(t *testing.T) {
 }
 
 func TestIntegrationBatchRevokeAllUserTokens(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should not fail if the external sessions could not be removed", func(t *testing.T) {

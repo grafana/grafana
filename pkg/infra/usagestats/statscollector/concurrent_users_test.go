@@ -17,24 +17,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// run tests with cleanup
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	unifiedStorage := new(resource.MockResourceClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
@@ -56,9 +53,11 @@ func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
 }
 
 func TestIntegrationConcurrentUsersStats(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	unifiedStorage := new(resource.MockResourceClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},

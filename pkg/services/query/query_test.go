@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -40,18 +39,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationParseMetricRequest(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
@@ -511,6 +507,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 }
 
 func TestIntegrationQueryDataMultipleSources(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("can query multiple datasources", func(t *testing.T) {
@@ -696,6 +693,7 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 }
 
 func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("can run a simple datasource query with a mt ds client", func(t *testing.T) {
@@ -837,7 +835,8 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 	dc := &fakeDataSourceCache{cache: dss}
 	rv := &fakeDataSourceRequestValidator{}
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 

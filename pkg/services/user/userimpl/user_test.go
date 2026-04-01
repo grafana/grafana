@@ -9,12 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,6 +22,7 @@ import (
 )
 
 func TestUserService(t *testing.T) {
+	t.Parallel()
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
 	userService := LegacyService{
@@ -30,7 +31,7 @@ func TestUserService(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
-		db:           db.InitTestDB(t),
+		db:           sqlstore.NewTestStore(t),
 	}
 	userService.cfg = setting.NewCfg()
 
@@ -271,10 +272,11 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestIntegrationCreateUser(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := setting.NewCfg()
-	ss := db.InitTestDB(t)
+	ss := sqlstore.NewTestStore(t)
 	userStore := &sqlStore{
 		db:      ss,
 		dialect: ss.GetDialect(),

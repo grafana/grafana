@@ -62,9 +62,10 @@ func TestBatching(t *testing.T) {
 }
 
 func TestIntegrationBulkOps(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, _ := InitTestDB(t)
+	db := NewTestStore(t)
 	err := db.engine.Sync(new(bulkTestItem))
 	require.NoError(t, err)
 

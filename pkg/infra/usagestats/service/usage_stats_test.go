@@ -24,15 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 // This is to ensure that the interface contract is held by the implementation
 func Test_InterfaceContractValidity(t *testing.T) {
@@ -157,6 +153,7 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestIntegrationGetUsageReport_IncludesMetrics(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := dbtest.NewFakeDB()
@@ -241,7 +238,7 @@ type httpResp struct {
 func createService(t *testing.T, sqlStore db.DB, withDB bool) *UsageStats {
 	t.Helper()
 	if withDB {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = sqlstore.NewTestStore(t)
 	}
 
 	cfg := setting.NewCfg()

@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	storesrv "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -78,9 +79,11 @@ func TestQuotaService(t *testing.T) {
 }
 
 func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	cfg.Quota = setting.QuotaSettings{
 		Enabled: true,
 

@@ -19,15 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 // fakeRepo implements annotations.Repository for testing.
 type fakeRepo struct {
@@ -188,7 +184,8 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 }
 
 func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
-	sqlDB := db.InitTestDB(t)
+	t.Parallel()
+	sqlDB := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 2
 

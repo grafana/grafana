@@ -24,18 +24,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationOrgDataAccess(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss := db.InitTestDB(t)
+	ss := sqlstore.NewTestStore(t)
 	orgStore := sqlStore{
 		db:      ss,
 		dialect: ss.GetDialect(),
@@ -157,7 +153,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
-		ss = db.InitTestDB(t)
+		ss = sqlstore.NewTestStore(t)
 		for i := 1; i < 4; i++ {
 			cmd := &org.CreateOrgCommand{Name: fmt.Sprint("Orga #", i)}
 			_, err := orgStore.CreateWithMember(context.Background(), cmd)
@@ -206,7 +202,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing Account DB Access", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := sqlstore.NewTestStore(t)
 		orgStore = sqlStore{
 			db:      ss,
 			dialect: ss.GetDialect(),
@@ -255,9 +251,10 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 }
 
 func TestIntegrationOrgUserDataAccess(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss := db.InitTestDB(t)
+	ss := sqlstore.NewTestStore(t)
 	orgUserStore := sqlStore{
 		db:      ss,
 		dialect: ss.GetDialect(),
@@ -334,7 +331,8 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 	t.Run("GetOrgUsers and UpdateOrgUsers", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		cfg := setting.NewCfg()
+		ss := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
@@ -488,7 +486,8 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given single org and 2 users inserted", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		cfg := setting.NewCfg()
+		ss := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		cfg.AutoAssignOrg = true
 		cfg.AutoAssignOrgId = 1
 		cfg.AutoAssignOrgRole = "Viewer"
@@ -544,9 +543,11 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 // This test will be refactore after the CRUD store  refactor
 func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	defer func() {
 		cfg.AutoAssignOrg, cfg.AutoAssignOrgId, cfg.AutoAssignOrgRole = false, 0, ""
 	}()
@@ -614,9 +615,11 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 }
 
 func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
@@ -727,6 +730,7 @@ func hasWildcardScope(user identity.Requester, action string) bool {
 }
 
 func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// The millisecond part is not stored in the DB
@@ -734,7 +738,8 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	userimpl.MockTimeNow(constNow)
 	defer userimpl.ResetTimeNow()
 
-	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{})
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
@@ -792,9 +797,11 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 }
 
 func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{})
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
@@ -971,9 +978,11 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 }
 
 func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),

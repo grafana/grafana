@@ -10,23 +10,22 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	if db.IsTestDbSQLite() {
 		t.Skip("sqlite is not supported by the storage server target")
 	}
 
-	_, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	cfg.HTTPPort = "3001"
 	cfg.GRPCServer.Network = "tcp"
 	cfg.GRPCServer.Address = "localhost:10000"

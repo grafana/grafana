@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -21,15 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	t.Helper()
@@ -42,7 +37,7 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 		log:            log.New("accesscontrol"),
 		registrations:  accesscontrol.RegistrationList{},
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          database.ProvideService(db.InitTestDB(t)),
+		store:          database.ProvideService(sqlstore.NewTestStore(t)),
 		permRegistry:   permreg.ProvidePermissionRegistry(),
 		actionResolver: resourcepermissions.NewActionSetService(),
 	}
@@ -56,6 +51,7 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 
 func TestIntegrationUsageMetrics(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []struct {
 		name          string
@@ -73,7 +69,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 
 			s := ProvideOSSService(
 				cfg,
-				database.ProvideService(db.InitTestDB(t)),
+				database.ProvideService(sqlstore.NewTestStore(t)),
 				&resourcepermissions.FakeActionSetSvc{},
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
@@ -89,6 +85,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 
 func TestIntegrationService_DeclareFixedRoles(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []struct {
 		name          string
@@ -176,6 +173,7 @@ func TestIntegrationService_DeclareFixedRoles(t *testing.T) {
 
 func TestIntegrationService_DeclarePluginRoles(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []struct {
 		name          string
@@ -291,6 +289,7 @@ func TestIntegrationService_DeclarePluginRoles(t *testing.T) {
 
 func TestIntegrationService_RegisterFixedRoles(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []struct {
 		name          string
@@ -395,6 +394,7 @@ func TestIntegrationService_RegisterFixedRoles(t *testing.T) {
 
 func TestIntegrationService_DeclarePluginRoles_DynamicRegistration(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []struct {
 		name             string
@@ -530,6 +530,7 @@ func TestIntegrationService_DeclarePluginRoles_DynamicRegistration(t *testing.T)
 
 func TestIntegrationService_DeclarePluginRoles_UserPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("dynamic registration should be reflected in user permissions", func(t *testing.T) {
 		ac := setupTestEnv(t, true)
@@ -582,6 +583,7 @@ func TestIntegrationService_DeclarePluginRoles_UserPermissions(t *testing.T) {
 
 func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	searchOption := accesscontrol.SearchOptions{ActionPrefix: "teams"}
 	ctx := context.Background()
@@ -890,6 +892,7 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 // the SearchUsersPermissions method delegates to SearchUserPermissions (single-user cached path)
 func TestIntegrationService_SearchUsersPermissions_SingleUserPath(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ctx := context.Background()
 	ac := setupTestEnv(t, true)
@@ -934,6 +937,7 @@ func TestIntegrationService_SearchUsersPermissions_SingleUserPath(t *testing.T) 
 // TestIntegrationService_SearchUsersPermissions_ActionSets verifies action set expansion works
 func TestIntegrationService_SearchUsersPermissions_ActionSets(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ctx := context.Background()
 	ac := setupTestEnv(t, true)
@@ -981,6 +985,7 @@ func TestIntegrationService_SearchUsersPermissions_ActionSets(t *testing.T) {
 
 func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ctx := context.Background()
 	tests := []struct {
@@ -1217,6 +1222,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 
 func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type run struct {
 		cmd     accesscontrol.SaveExternalServiceRoleCommand
@@ -1312,6 +1318,7 @@ func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
 
 func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	tests := []struct {
 		name              string
@@ -1368,6 +1375,7 @@ func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
 
 func TestIntegrationService_GetRoleByName(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Parallel()
 

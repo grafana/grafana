@@ -26,18 +26,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationAnnotations(t *testing.T) {
+	t.Parallel()
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sql := db.InitTestDB(t)
+	sql := sqlstore.NewTestStore(t)
 
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
@@ -642,9 +638,10 @@ func TestIntegrationAnnotations(t *testing.T) {
 }
 
 func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
+	t.Parallel()
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sql := db.InitTestDB(t)
+	sql := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 
@@ -788,7 +785,7 @@ func BenchmarkFindTags_100k(b *testing.B) {
 }
 
 func benchmarkFindTags(b *testing.B, numAnnotations int) {
-	sql := db.InitTestDB(b)
+	sql := sqlstore.NewTestStore(b)
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 	store := xormRepositoryImpl{db: sql, cfg: cfg, log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}

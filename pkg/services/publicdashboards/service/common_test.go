@@ -33,7 +33,8 @@ func newPublicDashboardServiceImpl(
 	t.Helper()
 
 	if store == nil {
-		store, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		store = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	}
 	tagService := tagimpl.ProvideService(store)
 	if annotationsRepo == nil {

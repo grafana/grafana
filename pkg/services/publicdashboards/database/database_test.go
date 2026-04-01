@@ -19,10 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -33,16 +33,12 @@ var DefaultTimeSettings = &TimeSettings{}
 // Default time to pass in with seconds rounded
 var DefaultTime = time.Now().UTC().Round(time.Second)
 
-// run tests with cleanup
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.store")
 }
 
 func TestIntegrationListPublicDashboard(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -61,7 +57,8 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	var publicdashboardStore *PublicDashboardStoreImpl
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -115,6 +112,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -124,7 +122,8 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
@@ -186,6 +185,7 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 }
 
 func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -195,7 +195,8 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
@@ -271,6 +272,7 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 }
 
 func TestIntegrationFindByDashboardUid(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -280,7 +282,8 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
@@ -337,6 +340,7 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 }
 
 func TestIntegrationFindByOrgAndUid(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -348,7 +352,8 @@ func TestIntegrationFindByOrgAndUid(t *testing.T) {
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -372,6 +377,7 @@ func TestIntegrationFindByOrgAndUid(t *testing.T) {
 }
 
 func TestIntegrationFindByAccessToken(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -382,7 +388,8 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -439,6 +446,7 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 }
 
 func TestIntegrationCreatePublicDashboard(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -449,7 +457,8 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 	var savedDashboard2 *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
@@ -516,6 +525,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationUpdatePublicDashboard(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -527,7 +537,8 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -668,6 +679,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -678,7 +690,8 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -738,6 +751,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 }
 
 func TestIntegrationDelete(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -749,7 +763,8 @@ func TestIntegrationDelete(t *testing.T) {
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -792,6 +807,7 @@ func TestIntegrationDelete(t *testing.T) {
 }
 
 func TestIntegrationDeleteByDashboardUIDs(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -803,7 +819,8 @@ func TestIntegrationDeleteByDashboardUIDs(t *testing.T) {
 	var err error
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -844,6 +861,7 @@ func TestIntegrationDeleteByDashboardUIDs(t *testing.T) {
 }
 
 func TestIntegrationGetMetrics(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -856,7 +874,8 @@ func TestIntegrationGetMetrics(t *testing.T) {
 	var savedDashboard4 *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store

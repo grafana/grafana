@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -26,7 +26,7 @@ import (
 )
 
 func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) (resource.KVBackend, sqldb.DB) {
-	dbstore := db.InitTestDB(t)
+	dbstore := sqlstore.NewTestStore(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(ctx)

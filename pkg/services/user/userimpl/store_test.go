@@ -25,18 +25,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationUserDataAccess(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	ss := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), ss, cfgProvider)
@@ -126,7 +123,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := sqlstore.NewTestStore(t)
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 		cmd := user.CreateUserCommand{
@@ -372,7 +369,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("get signed in user", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := sqlstore.NewTestStore(t)
 		orgService, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -405,7 +402,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := sqlstore.NewTestStore(t)
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		usr, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Email:   "admin@test.com",
@@ -480,7 +477,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
-		ss = db.InitTestDB(t)
+		ss = sqlstore.NewTestStore(t)
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		userStore := ProvideStore(ss, cfg)
 
@@ -514,7 +511,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.True(t, third)
 
 		// Re-init DB
-		ss := db.InitTestDB(t)
+		ss := sqlstore.NewTestStore(t)
 		orgService, usrSvc = createOrgAndUserSvc(t, ss, cfg)
 
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -538,7 +535,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
-		ss = db.InitTestDB(t)
+		ss = sqlstore.NewTestStore(t)
 		orgService, usrSvc = createOrgAndUserSvc(t, ss, cfg)
 		users = createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -580,7 +577,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := sqlstore.NewTestStore(t)
 		orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := ProvideService(
@@ -607,7 +604,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		assert.Len(t, queryResult.Users, 2)
 	})
 
-	ss = db.InitTestDB(t)
+	ss = sqlstore.NewTestStore(t)
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -636,7 +633,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Can search users", func(t *testing.T) {
-		ss = db.InitTestDB(t)
+		ss = sqlstore.NewTestStore(t)
 		userStore.cfg.AutoAssignOrg = false
 
 		ac1cmd := user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
@@ -663,7 +660,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Equal(t, queryResult.Users[1].Email, "ac2@test.com")
 	})
 
-	ss = db.InitTestDB(t)
+	ss = sqlstore.NewTestStore(t)
 
 	t.Run("Testing DB - disable only specific users", func(t *testing.T) {
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -709,7 +706,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		}
 	})
 
-	ss = db.InitTestDB(t)
+	ss = sqlstore.NewTestStore(t)
 
 	t.Run("Testing DB - search users", func(t *testing.T) {
 		// Since previous tests were destructive
@@ -784,7 +781,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
-		ss = db.InitTestDB(t)
+		ss = sqlstore.NewTestStore(t)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -997,9 +994,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 }
 
 func TestIntegrationUserUpdate(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	ss := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	userStore := ProvideStore(ss, cfg)
 	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
@@ -1064,9 +1063,11 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 func TestIntegrationMetricsUsage(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	ss := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	userStore := ProvideStore(ss, setting.NewCfg())
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)

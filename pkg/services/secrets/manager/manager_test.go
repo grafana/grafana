@@ -21,19 +21,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t)
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 	ctx := context.Background()
@@ -93,9 +89,10 @@ func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
 }
 
 func TestIntegrationSecretsService_DataKeys(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t)
 	store := database.ProvideSecretsStore(testDB)
 	ctx := context.Background()
 
@@ -173,10 +170,11 @@ func TestIntegrationSecretsService_DataKeys(t *testing.T) {
 }
 
 func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
-		testDB := db.InitTestDB(t)
+		testDB := sqlstore.NewTestStore(t)
 		svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
 		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
@@ -204,7 +202,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, cfg, features))
-		testDB := db.InitTestDB(t)
+		testDB := sqlstore.NewTestStore(t)
 		secretStore := database.ProvideSecretsStore(testDB)
 
 		secretsService, err := ProvideSecretsService(
@@ -280,10 +278,11 @@ func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 }
 
 func TestIntegrationSecretsService_Run(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t)
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 
@@ -332,10 +331,11 @@ func TestIntegrationSecretsService_Run(t *testing.T) {
 }
 
 func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t)
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 
@@ -381,10 +381,11 @@ func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
 }
 
 func TestIntegrationSecretsService_Decrypt(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t)
 	store := database.ProvideSecretsStore(testDB)
 
 	t.Run("empty payload should fail", func(t *testing.T) {
@@ -407,6 +408,7 @@ func TestIntegrationSecretsService_Decrypt(t *testing.T) {
 }
 
 func TestIntegration_SecretsService(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
@@ -500,7 +502,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
-			testDB := db.InitTestDB(t)
+			testDB := sqlstore.NewTestStore(t)
 			svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
 
 			// Here's what actually matters and varies on each test: look at the test case name.

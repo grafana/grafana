@@ -30,14 +30,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 	cases := []testcases.ResourceMigratorTestCase{

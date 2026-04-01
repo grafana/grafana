@@ -12,17 +12,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
 	pngImageBase64 = "iVBORw0KGgoNAANSUhEUgAAAC4AAAAmCAYAAAC76qlaAAAABHNCSVQICAgIfAhkiAAAABl0RVh0U29mdHdhcmUAZ25vbWUtc2NyZWVuc2hvdO8Dvz4AAABFSURBVFiF7c5BDQAhEACx4/x7XjzwGELSKuiamfke9N8OnBKvidfEa+I18Zp4TbwmXhOvidfEa+I18Zp4TbwmXhOvidc2lcsESD1LGnUAAAAASUVORK5CYII="
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type fsTestCase struct {
 	name  string
@@ -81,13 +77,13 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	setupSqlFS := func() {
 		commonSetup()
-		sqlStore = db.InitTestDB(t)
+		sqlStore = sqlstore.NewTestStore(t)
 		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
 	}
 
 	setupSqlFSNestedPath := func() {
 		commonSetup()
-		sqlStore = db.InitTestDB(t)
+		sqlStore = sqlstore.NewTestStore(t)
 		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/5/dashboards/")
 	}
 
@@ -176,6 +172,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 }
 
 func TestIntegrationFsStorage(t *testing.T) {
+	t.Parallel()
 	if true {
 		t.Skip("flakey tests - skipping")
 	}

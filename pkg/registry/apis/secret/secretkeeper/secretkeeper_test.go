@@ -18,12 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func Test_OSSKeeperService(t *testing.T) {
 	cfg := &setting.Cfg{

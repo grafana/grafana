@@ -17,16 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// run tests with cleanup
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationDashboardFolderStore(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	var sqlStore db.DB
@@ -34,7 +29,8 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg = setting.NewCfg()
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		var err error
 		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
@@ -43,7 +39,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	t.Run("GetFolderByUID", func(t *testing.T) {
 		setup()
 		var orgId int64 = 1
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		folderStore := newDashboardFolderStore(sqlStore, cfg.MaxNestedFolderDepth)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
@@ -68,7 +64,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	t.Run("GetFolderByID", func(t *testing.T) {
 		setup()
 		var orgId int64 = 1
-		sqlStore := db.InitTestDB(t)
+		sqlStore := sqlstore.NewTestStore(t)
 		folderStore := newDashboardFolderStore(sqlStore, cfg.MaxNestedFolderDepth)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, folder.UID, "prod")
@@ -116,9 +112,11 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 }
 
 func TestIntegrationGetDashFolderStore(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	folderStore := ProvideStore(db, cfg)
 	dashboardStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)

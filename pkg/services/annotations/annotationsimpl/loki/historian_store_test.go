@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/alerting/http/instrument/instrumenttest"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
@@ -35,18 +34,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
+	t.Parallel()
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sql, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	sql := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,

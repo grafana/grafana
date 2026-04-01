@@ -13,13 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 // batchInsertTestPermissions inserts test permissions for migration testing
 func batchInsertTestPermissions(cnt int, sqlStore db.DB, actionPrefix string) error {
@@ -48,9 +44,10 @@ func batchInsertTestPermissions(cnt int, sqlStore db.DB, actionPrefix string) er
 
 // TestIntegrationMigrateRemoveDeprecatedPermissions tests the deprecated permissions removal migration
 func TestIntegrationMigrateRemoveDeprecatedPermissions(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Test 1: Basic functionality - remove deprecated permissions
@@ -89,9 +86,10 @@ func TestIntegrationMigrateRemoveDeprecatedPermissions(t *testing.T) {
 
 // TestIntegrationMigrateRemoveDeprecatedPermissionsEmptyDB tests migration with empty database
 func TestIntegrationMigrateRemoveDeprecatedPermissionsEmptyDB(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Run migration on empty database
@@ -108,9 +106,10 @@ func TestIntegrationMigrateRemoveDeprecatedPermissionsEmptyDB(t *testing.T) {
 
 // TestIntegrationMigrateRemoveDeprecatedPermissionsBatchProcessing tests batch processing with large dataset
 func TestIntegrationMigrateRemoveDeprecatedPermissionsBatchProcessing(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Set small batch size for testing
@@ -152,9 +151,10 @@ func TestIntegrationMigrateRemoveDeprecatedPermissionsBatchProcessing(t *testing
 
 // TestIntegrationMigrateRemoveDeprecatedPermissionsNoDeprecated tests when no deprecated permissions exist
 func TestIntegrationMigrateRemoveDeprecatedPermissionsNoDeprecated(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Insert only non-deprecated permissions
@@ -188,9 +188,10 @@ func TestIntegrationMigrateRemoveDeprecatedPermissionsNoDeprecated(t *testing.T)
 
 // TestIntegrationMigrateRemoveDeprecatedPermissionsMixedPatterns tests mixed deprecated and non-deprecated patterns
 func TestIntegrationMigrateRemoveDeprecatedPermissionsMixedPatterns(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Insert deprecated permissions

@@ -22,11 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -36,10 +36,6 @@ var (
 	testDsUID1 = "NCzh67i"
 	testDsUID2 = "ABch1a1"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 type scenarioContext struct {
 	ctx           *web.Context
@@ -58,7 +54,8 @@ func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplore
 			Form:   url.Values{},
 		}}
 		ctx.Req.Header.Add("Content-Type", "application/json")
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		cfg := setting.NewCfg()
+		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		service := QueryHistoryService{
 			Cfg:           setting.NewCfg(),
 			store:         sqlStore,

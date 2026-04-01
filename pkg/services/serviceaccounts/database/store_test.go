@@ -17,20 +17,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 // Service Account should not create an org on its own
 func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	_, store := setupTestDatabase(t)
 	serviceAccountName := "new Service Account"
@@ -51,6 +49,7 @@ func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 
 func TestIntegration_Store_CreateServiceAccount(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
@@ -172,6 +171,7 @@ func TestIntegration_Store_CreateServiceAccount(t *testing.T) {
 
 func TestIntegrationStore_CreateServiceAccountRoleNone(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	_, store := setupTestDatabase(t)
 	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
@@ -209,6 +209,7 @@ func TestIntegrationStore_CreateServiceAccountRoleNone(t *testing.T) {
 
 func TestIntegrationStore_DeleteServiceAccount(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	cases := []struct {
 		desc        string
@@ -243,7 +244,8 @@ func TestIntegrationStore_DeleteServiceAccount(t *testing.T) {
 
 func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	t.Helper()
-	db, cfg := db.InitTestDBWithCfg(t)
+	cfg := setting.NewCfg()
+	db := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
@@ -260,6 +262,7 @@ func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 
 func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	cases := []struct {
 		desc          string
@@ -318,6 +321,7 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 
 func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	cases := []struct {
 		desc                    string
@@ -437,6 +441,7 @@ func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
 }
 func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	db, store := setupTestDatabase(t)
 
@@ -630,6 +635,7 @@ func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing
 
 func TestIntegrationServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	ctx := context.Background()
 

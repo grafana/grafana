@@ -9,7 +9,6 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -18,18 +17,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	secretsfake "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
-
 func TestIntegrationSocialService_ProvideService(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
@@ -61,7 +57,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 
 	secrets := secretsfake.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	sqlStore := db.InitTestDB(t)
+	sqlStore := sqlstore.NewTestStore(t)
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
 		cfg,
@@ -128,6 +124,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 }
 
 func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
+	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCases := []struct {
@@ -231,7 +228,7 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 
 			secrets := secretsfake.NewMockService(t)
 			accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			sqlStore := db.InitTestDB(t)
+			sqlStore := sqlstore.NewTestStore(t)
 
 			ssoSettingsSvc := ssosettingsimpl.ProvideService(
 				cfg,
