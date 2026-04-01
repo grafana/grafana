@@ -11,7 +11,6 @@ import { type LimitTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineFieldRow } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/limit.svg';
 import lightImage from '../images/light/limit.svg';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
@@ -57,7 +56,6 @@ export const getLimitTransformRegistryItem: () => TransformerRegistryItem<LimitT
     'Limit the number of items displayed.'
   ),
   categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.limit).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

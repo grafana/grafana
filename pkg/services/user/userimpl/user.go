@@ -5,6 +5,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -78,10 +79,27 @@ func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64)
 }
 
 func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		// UserK8sService.GetByLogin resolves the k8s namespace from the requester's org ID.
+		// During password authentication the requester has not been established yet, so we
+		// fall back to the legacy service for that call. All other callers carry a requester
+		// and are correctly routed to the k8s service.
+		if _, err := identity.GetRequester(ctx); err == nil {
+			return s.k8sService.GetByLogin(ctx, cmd)
+		}
+	}
+
 	return s.legacyService.GetByLogin(ctx, cmd)
 }
 
 func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery) (*user.User, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		// Same as GetByLogin: fall back to legacy when there is no requester in the context.
+		if _, err := identity.GetRequester(ctx); err == nil {
+			return s.k8sService.GetByEmail(ctx, cmd)
+		}
+	}
+
 	return s.legacyService.GetByEmail(ctx, cmd)
 }
 
