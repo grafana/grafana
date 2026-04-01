@@ -13,6 +13,21 @@ export interface EmbeddedDashboardProps {
    * preserve some of the state when moving to other embedded dashboards.
    */
   onStateChange?: (state: string) => void;
+  /**
+   * When true, hides the dashboard controls bar (time picker, refresh picker,
+   * variable selectors, links, and sidebar toggle). Useful when the host
+   * application already provides its own controls.
+   * @alpha
+   */
+  hideControls?: boolean;
+  /**
+   * Reactive external time range. When provided, the embedded dashboard's
+   * time range is kept in sync with these values. Changes to `from` or `to`
+   * update the dashboard immediately. Use together with `hideControls` to
+   * let the host application own the time picker.
+   * @alpha
+   */
+  timeRange?: { from: string; to: string };
 }
 
 /**
