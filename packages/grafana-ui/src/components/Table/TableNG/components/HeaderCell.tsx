@@ -119,29 +119,26 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   );
 };
 
-const getStyles = memoize(
-  (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
-    headerCellLabel: css({
-      all: 'unset',
-      cursor: 'pointer',
-      fontWeight: theme.typography.fontWeightMedium,
+const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
+  headerCellLabel: css({
+    all: 'unset',
+    cursor: 'pointer',
+    fontWeight: theme.typography.fontWeightMedium,
+    color: theme.colors.text.secondary,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
+    borderRadius: theme.spacing(0.25),
+    lineHeight: '20px',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+    '&::selection': {
+      backgroundColor: 'var(--rdg-background-color)',
       color: theme.colors.text.secondary,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
-      borderRadius: theme.spacing(0.25),
-      lineHeight: '20px',
-      '&:hover': {
-        textDecoration: 'underline',
-      },
-      '&::selection': {
-        backgroundColor: 'var(--rdg-background-color)',
-        color: theme.colors.text.secondary,
-      },
-    }),
-    headerCellIcon: css({
-      color: theme.colors.text.secondary,
-    }),
+    },
   }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
-);
+  headerCellIcon: css({
+    color: theme.colors.text.secondary,
+  }),
+}));
