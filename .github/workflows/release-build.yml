@@ -92,7 +92,7 @@ jobs:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
-            let workflow = 'release-build.yml';
+            let workflow = 'release-build-enterprise.yml';
 
             if (REF == 'main' && SOURCE_EVENT == 'push') {
               workflow = 'release-build-pro.yml';
@@ -188,11 +188,12 @@ jobs:
       - name: Build Go
         env:
           CGO_ENABLED: '0'
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
           # Env OS/ARCH are overridden by Makefile unless GOOS/GOARCH are set.
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
           GOARM: ${{ matrix.arm }}
-        run: make build-go
+        run: make build-go BUILD_VERSION="${BUILD_VERSION}"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-backend-${{ matrix.name }}
@@ -290,7 +291,7 @@ jobs:
           mkdir -p "upload/artifacts-list-targz-${{ matrix.name }}"
           cp "artifacts-list-targz-${{ matrix.name }}.txt" "upload/artifacts-list-targz-${{ matrix.name }}/"
           mkdir -p "upload/artifacts-targz-${{ matrix.name }}"
-          cp -R dist "upload/artifacts-targz-${{ matrix.name }}/"
+          cp -R dist/. "upload/artifacts-targz-${{ matrix.name }}/"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-targz-${{ matrix.name }}
@@ -357,14 +358,6 @@ jobs:
         with:
           name: artifacts-targz-${{ matrix.name }}
           path: dist
-      - name: Normalize prebuilt targz paths for Dagger host-dist lookup
-        run: |
-          set -euo pipefail
-          # Uploaded artifacts may unpack under nested directories (single-artifact download layout).
-          # Dagger host-dist lookup expects files directly under dist/.
-          while IFS= read -r -d '' f; do
-            cp -f "$f" dist/
-          done < <(find dist -type f \( -name '*.tar.gz' -o -name '*.tar.gz.sha256' \) -print0)
       - name: Set up QEMU
         uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
         with:
@@ -387,7 +380,7 @@ jobs:
           mkdir -p "upload/artifacts-list-${{ matrix.name }}"
           cp "${{ steps.build.outputs.file }}" "upload/artifacts-list-${{ matrix.name }}/"
           mkdir -p "upload/artifacts-${{ matrix.name }}"
-          cp -R "${{ steps.build.outputs.dist-dir }}" "upload/artifacts-${{ matrix.name }}/"
+          cp -R "${{ steps.build.outputs.dist-dir }}/." "upload/artifacts-${{ matrix.name }}/"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-${{ matrix.name }}
