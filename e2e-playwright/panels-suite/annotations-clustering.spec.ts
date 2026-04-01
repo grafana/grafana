@@ -16,14 +16,30 @@ const MANY_ANNOTATIONS_COUNTS = {
     count: 223,
     widths: {
       '1000': 1,
+      '2600': 6,
+    },
+  },
+  frame2: {
+    count: 235,
+    widths: {
+      '1000': 2,
+      '2600': 15,
+    },
+  },
+};
+const REGION_ANNOTATIONS_COUNTS = {
+  frame1: {
+    count: 223,
+    widths: {
+      '1000': 1,
       '2600': 5,
     },
   },
   frame2: {
     count: 235,
     widths: {
-      '1000': 1,
-      '2600': 15,
+      '1000': 2,
+      '2600': 13,
     },
   },
 };
@@ -37,11 +53,11 @@ const ALERT_ANNOTATIONS_COUNTS = {
   },
 };
 
-test.use({ viewport: { width: 1000, height: 1440 }, featureToggles: { annotationsClustering: true } });
+test.use({ viewport: { width: 1000, height: 1840 }, featureToggles: { annotationsClustering: true } });
 
-test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
+test.describe.only('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
   test.describe('width: 1000', () => {
-    test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
+    test.only('Clustering status', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams(),
@@ -84,6 +100,21 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         selectors,
         'Alert annos clustering',
         ALERT_ANNOTATIONS_COUNTS.frame1.widths['1000']
+      );
+
+      // Regions
+      await assertAnnotationCount(
+        dashboardPage,
+        selectors,
+        'Region clustering (off)',
+        REGION_ANNOTATIONS_COUNTS.frame1.count + REGION_ANNOTATIONS_COUNTS.frame2.count
+      );
+
+      await assertAnnotationCount(
+        dashboardPage,
+        selectors,
+        'Region clustering (on)',
+        REGION_ANNOTATIONS_COUNTS.frame1.widths['1000'] + REGION_ANNOTATIONS_COUNTS.frame2.widths['1000']
       );
     });
   });
@@ -132,6 +163,21 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         selectors,
         'Alert annos clustering',
         ALERT_ANNOTATIONS_COUNTS.frame1.widths['2600']
+      );
+
+      // Regions
+      await assertAnnotationCount(
+        dashboardPage,
+        selectors,
+        'Region clustering (off)',
+        REGION_ANNOTATIONS_COUNTS.frame1.count + REGION_ANNOTATIONS_COUNTS.frame2.count
+      );
+
+      await assertAnnotationCount(
+        dashboardPage,
+        selectors,
+        'Region clustering (on)',
+        REGION_ANNOTATIONS_COUNTS.frame1.widths['2600'] + REGION_ANNOTATIONS_COUNTS.frame2.widths['2600']
       );
     });
   });
