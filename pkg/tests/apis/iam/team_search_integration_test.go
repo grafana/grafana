@@ -256,7 +256,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, 0, len(result.Hits), "should return 0 hits for partial title")
 	})
 
-	t.Run("should combine title filter with query parameter", func(t *testing.T) {
+	t.Run("should return error when both title and query are provided", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?title=%s&query=Test", namespace, url.QueryEscape("Test Team 1"))
 		var result iamv0alpha1.GetSearchTeamsResponse
 
@@ -267,11 +267,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}, &result)
 
 		require.NotNil(t, response)
-		require.Equal(t, http.StatusOK, response.Response.StatusCode)
-		require.NotNil(t, response.Result)
-		require.Equal(t, int64(1), result.TotalHits, "should find exactly 1 team when title and query both match")
-		require.Equal(t, 1, len(result.Hits))
-		require.Equal(t, "Test Team 1", result.Hits[0].Title)
+		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
 	})
 }
 

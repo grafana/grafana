@@ -105,7 +105,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 									ParameterProps: spec3.ParameterProps{
 										Name:        "query",
 										In:          "query",
-										Description: "team name query string",
+										Description: "team name query string (fuzzy/partial match). Mutually exclusive with title.",
 										Required:    false,
 										Schema:      spec.StringProperty(),
 									},
@@ -114,7 +114,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 									ParameterProps: spec3.ParameterProps{
 										Name:        "title",
 										In:          "query",
-										Description: "exact match on team name",
+										Description: "exact match on team name. Mutually exclusive with query.",
 										Required:    false,
 										Schema:      spec.StringProperty(),
 									},
@@ -312,14 +312,18 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	if queryParams.Has("title") {
+	if title := queryParams.Get("title"); title != "" {
+		if searchRequest.Query != "" {
+			http.Error(w, "query and title parameters are mutually exclusive", http.StatusBadRequest)
+			return
+		}
 		if searchRequest.Options.Fields == nil {
 			searchRequest.Options.Fields = make([]*resourcepb.Requirement, 0, 1)
 		}
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_TITLE,
 			Operator: string(selection.Equals),
-			Values:   []string{queryParams.Get("title")},
+			Values:   []string{title},
 		})
 	}
 

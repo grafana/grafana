@@ -912,9 +912,9 @@ export type SearchExternalGroupMappingsApiArg = {
 };
 export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
 export type GetSearchTeamsApiArg = {
-  /** team name query string */
+  /** team name query string (fuzzy/partial match). Mutually exclusive with title. */
   query?: string;
-  /** exact match on team name */
+  /** exact match on team name. Mutually exclusive with query. */
   title?: string;
   /** limit the number of results */
   limit?: number;

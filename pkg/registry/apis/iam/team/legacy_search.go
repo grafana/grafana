@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -166,7 +167,7 @@ func titleFromRequirements(opts *resourcepb.ListOptions) string {
 		return ""
 	}
 	for _, r := range opts.Fields {
-		if r != nil && r.Key == res.SEARCH_FIELD_TITLE && len(r.Values) > 0 {
+		if r != nil && r.Key == res.SEARCH_FIELD_TITLE && r.Operator == string(selection.Equals) && len(r.Values) > 0 {
 			return r.Values[0]
 		}
 	}
