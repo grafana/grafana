@@ -149,7 +149,7 @@ const organizeFields = async (
 
       // We are mutating fields. Would it be possible to avoid it?
       if (configAfterLevel.custom?.cellOptions?.cellComponent) {
-        configAfterLevel.custom.cellOptions.cellComponent = undefined;
+        configAfterLevel.custom.cellOptions = undefined;
       }
 
       field.config = {
