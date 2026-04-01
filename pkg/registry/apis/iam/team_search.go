@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 	common "k8s.io/kube-openapi/pkg/common"
@@ -104,7 +105,16 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 									ParameterProps: spec3.ParameterProps{
 										Name:        "query",
 										In:          "query",
-										Description: "team name query string",
+										Description: "team name query string (fuzzy/partial match). Mutually exclusive with title.",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "title",
+										In:          "query",
+										Description: "exact match on team name. Mutually exclusive with query.",
 										Required:    false,
 										Schema:      spec.StringProperty(),
 									},
@@ -300,6 +310,21 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, s)
 		}
+	}
+
+	if title := queryParams.Get("title"); title != "" {
+		if searchRequest.Query != "" {
+			http.Error(w, "query and title parameters are mutually exclusive", http.StatusBadRequest)
+			return
+		}
+		if searchRequest.Options.Fields == nil {
+			searchRequest.Options.Fields = make([]*resourcepb.Requirement, 0, 1)
+		}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_TITLE,
+			Operator: string(selection.Equals),
+			Values:   []string{title},
+		})
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
