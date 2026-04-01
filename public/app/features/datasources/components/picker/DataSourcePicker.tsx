@@ -385,6 +385,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       overflow: 'hidden',
+      maxWidth: 700,
       minWidth: '97vw',
       [theme.breakpoints.up('md')]: {
         minWidth: '80vw',
