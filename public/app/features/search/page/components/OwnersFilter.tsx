@@ -93,7 +93,7 @@ export function OwnersFilter({ values, onChange }: OwnersFilterProps) {
         options={options}
         value={value}
         onChange={(selectedOptions) => {
-          const values = selectedOptions.map((option) => option.value!);
+          const values = selectedOptions.map((option) => option.value).filter((value) => value !== undefined);
           // We don't send ALL_TEAMS_VALUE upstream, so we map it to actual list of all the teams.
           onChange(!hasMoreTeamsThanLimit && values.includes(ALL_TEAMS_VALUE) ? allTeamReferences : values);
         }}

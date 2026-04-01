@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render, screen } from 'test/test-utils';
 
@@ -67,9 +68,11 @@ describe('OwnersFilter', () => {
 
     await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
 
-    expect(screen.queryByText('All teams')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('All teams')).not.toBeInTheDocument();
+    });
     expect(await screen.findByText('Team A')).toBeInTheDocument();
-    expect(await screen.findByText('Test Team')).toBeInTheDocument();
+    expect(screen.getByText('Test Team')).toBeInTheDocument();
 
     await user.hover(await screen.findByLabelText('Owner filter limit warning'));
 
