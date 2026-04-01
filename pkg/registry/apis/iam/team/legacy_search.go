@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
@@ -28,8 +27,8 @@ const (
 )
 
 var teamSortFieldMapping = map[string]string{
-	res.SEARCH_FIELD_TITLE: "name",
-	fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
+	resource.SEARCH_FIELD_TITLE: "name",
+	fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
 }
 
 // LegacyTeamSearchClient is a client for searching for teams in the legacy search engine.
@@ -75,7 +74,7 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, err
 	}
 
-	uids := valuesFromRequirements(req.Options, res.SEARCH_FIELD_NAME)
+	uids := valuesFromRequirements(req.Options, resource.SEARCH_FIELD_NAME)
 	teamIds, err := legacyIDsFromRequirements(req.Options)
 	if err != nil {
 		return nil, err
@@ -135,7 +134,7 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	columns := getDefaultColumns()
 
 	for _, field := range fields {
-		fieldName := strings.TrimPrefix(field, res.SEARCH_FIELD_PREFIX)
+		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
 		if col, ok := builders.TeamSearchTableColumnDefinitions[fieldName]; ok {
 			columns = append(columns, col)
 		}
@@ -145,17 +144,17 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 }
 
 func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
-	searchFields := res.StandardSearchFields()
+	searchFields := resource.StandardSearchFields()
 	return []*resourcepb.ResourceTableColumnDefinition{
-		searchFields.Field(res.SEARCH_FIELD_NAME),
-		searchFields.Field(res.SEARCH_FIELD_TITLE),
+		searchFields.Field(resource.SEARCH_FIELD_NAME),
+		searchFields.Field(resource.SEARCH_FIELD_TITLE),
 	}
 }
 
 func createCells(t *team.TeamDTO, fields []string) [][]byte {
 	cells := createDefaultCells(t)
 	for _, field := range fields {
-		fieldName := strings.TrimPrefix(field, res.SEARCH_FIELD_PREFIX)
+		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
 		switch fieldName {
 		case builders.TEAM_SEARCH_EMAIL:
 			cells = append(cells, []byte(t.Email))
@@ -180,7 +179,7 @@ func titleFromRequirements(opts *resourcepb.ListOptions) (string, error) {
 		return "", nil
 	}
 	for _, r := range opts.Fields {
-		if r != nil && r.Key == res.SEARCH_FIELD_TITLE {
+		if r != nil && r.Key == resource.SEARCH_FIELD_TITLE {
 			if len(r.Values) != 1 {
 				return "", fmt.Errorf("title filter requires exactly one value, got %d", len(r.Values))
 			}

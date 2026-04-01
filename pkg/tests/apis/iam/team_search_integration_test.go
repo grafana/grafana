@@ -416,6 +416,20 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.NotNil(t, response)
 		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
 	})
+
+	t.Run("should return error when teamId is not a valid integer", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?teamId=notanumber", namespace)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
+	})
 }
 
 func TestIntegrationTeamSearch_MemberCount(t *testing.T) {

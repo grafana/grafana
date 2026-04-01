@@ -360,6 +360,12 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		http.Error(w, fmt.Sprintf("teamId parameter exceeds maximum of %d values", maxIDFilterValues), http.StatusBadRequest)
 		return
 	}
+	for _, id := range teamIds {
+		if _, err := strconv.ParseInt(id, 10, 64); err != nil {
+			http.Error(w, fmt.Sprintf("invalid teamId value %q: must be an integer", id), http.StatusBadRequest)
+			return
+		}
+	}
 
 	// Team UIDs in the legacy store maps to the name field in the unified store.
 	if len(uids) > 0 {
