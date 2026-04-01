@@ -1,5 +1,6 @@
 import { chain } from 'lodash';
 
+import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
 import type { ContactPoint } from '../../../api/notifications/v1beta1/types';
@@ -9,23 +10,13 @@ import { getContactPointDescription, isUsableContactPoint } from '../../utils';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
-export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint> & {
-  /**
-   * Whether to include contact points that are not usable (e.g., imported from external sources).
-   * Unusable contact points have the `grafana.com/canUse` annotation set to `false`.
-   * @default false
-   */
-  includeUnusable?: boolean;
-};
+export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint>;
 
 /**
  * Contact Point Combobox which lists all available contact points.
- * By default, only shows contact points that can be used (have `grafana.com/canUse: true`).
- * Set `includeUnusable` to `true` to show all contact points including imported ones.
+ * Imported contact points (with `grafana.com/canUse: false`) are shown as disabled.
  */
 function ContactPointSelector(props: ContactPointSelectorProps) {
-  const { includeUnusable = false, ...comboboxProps } = props;
-
   const { currentData: contactPoints, isLoading } = useListContactPoints(
     {},
     { refetchOnFocus: true, refetchOnMountOrArgChange: true }
@@ -34,23 +25,38 @@ function ContactPointSelector(props: ContactPointSelectorProps) {
   // Create a mapping of options with their corresponding contact points
   const contactPointOptions = chain(contactPoints?.items)
     .toArray()
-    .filter((contactPoint) => includeUnusable || isUsableContactPoint(contactPoint))
-    .map((contactPoint) => ({
-      option: {
-        label: contactPoint.spec.title,
-        value: contactPoint.metadata.uid ?? contactPoint.spec.title,
-        description: getContactPointDescription(contactPoint),
-      } satisfies ComboboxOption<string>,
-      contactPoint,
-    }))
+    .map((contactPoint) => {
+      const usable = isUsableContactPoint(contactPoint);
+      return {
+        option: {
+          label: contactPoint.spec.title,
+          value: contactPoint.metadata.uid ?? contactPoint.spec.title,
+          description: usable
+            ? getContactPointDescription(contactPoint)
+            : t(
+                'alerting.contact-point-selector.imported-description',
+                'Imported contact points cannot be used in routes'
+              ),
+          group: usable ? undefined : t('alerting.contact-point-selector.imported-group', 'Imported'),
+          infoOption: !usable,
+        } satisfies ComboboxOption<string>,
+        contactPoint,
+      };
+    })
     .value()
-    .sort((a, b) => collator.compare(a.option.label, b.option.label));
+    .sort((a, b) => {
+      // Usable contact points first, then imported ones
+      if (a.option.infoOption !== b.option.infoOption) {
+        return a.option.infoOption ? 1 : -1;
+      }
+      return collator.compare(a.option.label ?? '', b.option.label ?? '');
+    });
 
   const options = contactPointOptions.map<ComboboxOption>((item) => item.option);
 
   const handleChange = (selectedOption: ComboboxOption<string> | null) => {
-    if (selectedOption == null && comboboxProps.isClearable) {
-      comboboxProps.onChange(null);
+    if (selectedOption == null && props.isClearable) {
+      props.onChange(null);
       return;
     }
 
@@ -60,11 +66,11 @@ function ContactPointSelector(props: ContactPointSelectorProps) {
         return;
       }
 
-      comboboxProps.onChange(matchedOption.contactPoint);
+      props.onChange(matchedOption.contactPoint);
     }
   };
 
-  return <Combobox {...comboboxProps} loading={isLoading} options={options} onChange={handleChange} />;
+  return <Combobox {...props} loading={isLoading} options={options} onChange={handleChange} />;
 }
 
 export { ContactPointSelector };

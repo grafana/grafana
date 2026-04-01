@@ -36,8 +36,7 @@ describe('listing contact points', () => {
   it('should show a sorted list of contact points', async () => {
     const onChangeHandler = jest.fn();
 
-    // render the contact point selector with includeUnusable=true to show all
-    const { user } = render(<ContactPointSelector onChange={onChangeHandler} includeUnusable />);
+    const { user } = render(<ContactPointSelector onChange={onChangeHandler} />);
     await user.click(screen.getByRole('combobox'));
 
     // make sure all options are rendered
@@ -58,46 +57,57 @@ describe('listing contact points', () => {
   });
 });
 
-describe('filtering out unusable contact points', () => {
+describe('imported contact points', () => {
   beforeEach(() => {
     server.use(...contactPointsListWithUnusableItemsScenario);
   });
 
-  it('should filter out unusable contact points by default', async () => {
+  it('should show imported contact points as disabled', async () => {
     const onChangeHandler = jest.fn();
 
-    // Default behavior: filter out unusable contact points
     const { user } = render(<ContactPointSelector onChange={onChangeHandler} />);
     await user.click(screen.getByRole('combobox'));
 
-    // Only usable contact points should be shown (2 out of 3)
+    // All contact points should be shown (2 usable + 1 imported)
     const options = await screen.findAllByRole('option');
-    expect(options).toHaveLength(2);
+    expect(options).toHaveLength(contactPointsListWithUnusableItems.items.length);
 
-    // The non-usable contact point should NOT be in the list
-    const nonUsableContactPoint = contactPointsListWithUnusableItems.items.find(
+    // The imported contact point should be present but disabled
+    const importedContactPoint = contactPointsListWithUnusableItems.items.find(
       (cp) => cp.metadata?.annotations?.['grafana.com/canUse'] === 'false'
     );
-    expect(
-      screen.queryByRole('option', { name: new RegExp(nonUsableContactPoint!.spec.title) })
-    ).not.toBeInTheDocument();
+    const importedOption = screen.getByRole('option', { name: new RegExp(importedContactPoint!.spec.title) });
+    expect(importedOption).toBeInTheDocument();
+    expect(importedOption).toHaveAttribute('aria-disabled', 'true');
+    expect(within(importedOption).getByText('Imported contact points cannot be used in routes')).toBeInTheDocument();
 
-    // The usable contact points should be in the list
+    // The usable contact points should be present and enabled
     const usableContactPoints = contactPointsListWithUnusableItems.items.filter(
       (cp) => cp.metadata?.annotations?.['grafana.com/canUse'] === 'true'
     );
     for (const item of usableContactPoints) {
-      expect(await screen.findByRole('option', { name: new RegExp(item.spec.title) })).toBeInTheDocument();
+      const option = await screen.findByRole('option', { name: new RegExp(item.spec.title) });
+      expect(option).toBeInTheDocument();
+      expect(option).toHaveAttribute('aria-disabled', 'false');
     }
   });
 
-  it('should show all contact points when includeUnusable is true', async () => {
+  it('should show usable contact points before imported ones', async () => {
     const onChangeHandler = jest.fn();
 
-    const { user } = render(<ContactPointSelector onChange={onChangeHandler} includeUnusable />);
+    const { user } = render(<ContactPointSelector onChange={onChangeHandler} />);
     await user.click(screen.getByRole('combobox'));
 
-    // All contact points should be shown
-    expect(await screen.findAllByRole('option')).toHaveLength(contactPointsListWithUnusableItems.items.length);
+    const options = await screen.findAllByRole('option');
+
+    const importedContactPoint = contactPointsListWithUnusableItems.items.find(
+      (cp) => cp.metadata?.annotations?.['grafana.com/canUse'] === 'false'
+    );
+
+    const importedIndex = options.findIndex((opt) => opt.textContent?.includes(importedContactPoint!.spec.title));
+    const usableIndices = options.map((opt, i) => i).filter((i) => i !== importedIndex);
+
+    // All usable options should appear before the imported one
+    expect(usableIndices.every((i) => i < importedIndex)).toBe(true);
   });
 });
