@@ -908,6 +908,13 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 	}
 }
 
+// WithFolderAPIVersion sets the provisioning folder API version (e.g. "v1" or "v1beta1").
+func WithFolderAPIVersion(version string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningFolderAPIVersion = version
+	}
+}
+
 // WithoutExportFeatureFlag disables the provisioningExport feature flag.
 func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 	// Remove provisioningExport from the enabled feature toggles
