@@ -361,6 +361,7 @@ export function getTitleStyles(props: Props): { wrapper: CSSProperties; title: C
         titleStyles.width = `${titleDim.width}px`;
         titleStyles.textAlign = 'right';
         titleStyles.paddingRight = '10px';
+        titleStyles.boxSizing = 'border-box';
       }
     }
   }
@@ -702,6 +703,7 @@ function getValueStyles(
     alignItems: 'center',
     textWrap: 'nowrap',
     lineHeight: VALUE_LINE_HEIGHT,
+    boxSizing: 'border-box',
   };
 
   // how many pixels in wide can the text be?

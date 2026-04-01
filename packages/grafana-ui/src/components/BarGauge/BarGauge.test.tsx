@@ -313,6 +313,28 @@ describe('BarGauge', () => {
       const styles = getBasicAndGradientStyles(props);
       expect(styles.emptyBar.height).toBe('150px');
     });
+
+    it('should use border-box on value so padding does not inflate width beyond allocated space', () => {
+      const props = getProps({
+        height: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.value.boxSizing).toBe('border-box');
+    });
+
+    it('bar should fill full available width when value equals max', () => {
+      const props = getProps({
+        width: 500,
+        height: 150,
+        value: getValue(100),
+        orientation: VizOrientation.Horizontal,
+      });
+      const { maxBarWidth } = calculateBarAndValueDimensions(props);
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.bar.width).toBe(`${maxBarWidth}px`);
+    });
   });
 
   describe('Gradient', () => {
