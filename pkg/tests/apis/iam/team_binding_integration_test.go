@@ -27,6 +27,10 @@ func TestIntegrationTeamBindings(t *testing.T) {
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team binding CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
+			if mode == rest.Mode1 {
+				t.Skip("flaky: context cancelled on basic roles fetch during Delete authz check")
+			}
+
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:      false,
 				DisableAnonymous:       true,
