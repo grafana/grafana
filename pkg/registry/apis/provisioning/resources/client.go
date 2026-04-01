@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -34,6 +34,24 @@ var (
 	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
 )
 
+// folderGVR builds the GVR for the folder API at the given version.
+func folderGVR(folderAPIVersion string) schema.GroupVersionResource {
+	return schema.GroupVersionResource{
+		Group:    FolderResource.Group,
+		Version:  folderAPIVersion,
+		Resource: FolderResource.Resource,
+	}
+}
+
+// FolderGVKForVersion returns a GVK for the folder API at the given version.
+func FolderGVKForVersion(version string) schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   FolderKind.Group,
+		Version: version,
+		Kind:    FolderKind.Kind,
+	}
+}
+
 // ClientFactory is a factory for creating clients for a given namespace
 //
 //go:generate mockery --name ClientFactory --structname MockClientFactory --inpackage --filename client_factory_mock.go --with-expecter
@@ -52,7 +70,8 @@ type clientFactory struct {
 type ResourceClients interface {
 	ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
 	ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
-	Folder(ctx context.Context) (dynamic.ResourceInterface, error)
+	// Folder returns a dynamic client for the folder API at the given version.
+	Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
 	User(ctx context.Context) (dynamic.ResourceInterface, error)
 }
 
@@ -289,9 +308,8 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	return info.client, info.gvk, nil
 }
 
-func (c *resourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
-	client, _, err := c.ForResource(ctx, FolderResource)
-	return client, err
+func (c *resourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	return c.ForResource(ctx, folderGVR(folderAPIVersion))
 }
 
 func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
@@ -335,9 +353,8 @@ func (c *multiResourceClients) ForResource(ctx context.Context, gvr schema.Group
 	return resourceClients.ForResource(ctx, gvr)
 }
 
-func (c *multiResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
-	client, _, err := c.ForResource(ctx, FolderResource)
-	return client, err
+func (c *multiResourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	return c.ForResource(ctx, folderGVR(folderAPIVersion))
 }
 
 func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {

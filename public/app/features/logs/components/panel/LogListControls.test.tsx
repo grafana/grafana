@@ -2,12 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { downloadLogs } from '../../utils';
 import { createLogLine, createLogRow } from '../mocks/logRow';
 
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
@@ -62,6 +61,19 @@ jest.mock('@grafana/assistant', () => {
   };
 });
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 const fontSize: LogListFontSize = 'default';
 const contextProps = {
   app: CoreApp.Unknown,
@@ -90,6 +102,10 @@ const assertExpandedOptionsCopyVisible = () => {
   expect(screen.getByText(SCROLL_TOP_LABEL_COPY)).toBeVisible();
 };
 describe('LogListControls', () => {
+  beforeEach(() => {
+    setBooleanFlags({ newLogsPanel: false });
+  });
+
   test('Renders without errors', () => {
     render(
       <LogListContextProvider {...contextProps}>
@@ -315,8 +331,7 @@ describe('LogListControls', () => {
   });
 
   test('Controls line wrapping and prettify JSON', async () => {
-    const originalFlagState = config.featureToggles.newLogsPanel;
-    config.featureToggles.newLogsPanel = true;
+    setBooleanFlags({ newLogsPanel: true });
 
     const onLogOptionsChange = jest.fn();
     render(
@@ -350,13 +365,10 @@ describe('LogListControls', () => {
     expect(onLogOptionsChange).toHaveBeenCalledWith('prettifyLogMessage', false);
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(6);
-
-    config.featureToggles.newLogsPanel = originalFlagState;
   });
 
   test('Enables column controls with unwrapped logs', async () => {
-    const originalFlagState = config.featureToggles.newLogsPanel;
-    config.featureToggles.newLogsPanel = true;
+    setBooleanFlags({ newLogsPanel: true });
 
     const { rerender } = render(
       <LogListContextProvider {...contextProps} wrapLogMessage={false} unwrappedColumns>
@@ -379,13 +391,10 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText(ENABLE_UNWRAPPED_COLUMNS_COPY)).toBeEnabled();
     expect(screen.getByText(COLUMNS_DISABLED_COPY)).toBeInTheDocument();
     expect(screen.queryByText(COLUMNS_ENABLED_COPY)).not.toBeInTheDocument();
-
-    config.featureToggles.newLogsPanel = originalFlagState;
   });
 
   test('Disables column controls for wrapped logs', async () => {
-    const originalFlagState = config.featureToggles.newLogsPanel;
-    config.featureToggles.newLogsPanel = true;
+    setBooleanFlags({ newLogsPanel: true });
 
     render(
       <LogListContextProvider {...contextProps} wrapLogMessage unwrappedColumns>
@@ -395,13 +404,10 @@ describe('LogListControls', () => {
 
     expect(screen.getByLabelText(COLUMNS_DISABLED_TOOLTIP_COPY)).toBeDisabled();
     expect(screen.getByText(COLUMNS_NOT_SUPPORTED_COPY)).toBeInTheDocument();
-
-    config.featureToggles.newLogsPanel = originalFlagState;
   });
 
   test('Controls timestamp resolution', async () => {
-    const originalFlagState = config.featureToggles.newLogsPanel;
-    config.featureToggles.newLogsPanel = true;
+    setBooleanFlags({ newLogsPanel: true });
 
     const onLogOptionsChange = jest.fn();
     render(
@@ -426,8 +432,6 @@ describe('LogListControls', () => {
 
     expect(onLogOptionsChange).toHaveBeenCalledTimes(3);
     expect(onLogOptionsChange).toHaveBeenCalledWith('showTime', false);
-
-    config.featureToggles.newLogsPanel = originalFlagState;
   });
 
   test('Controls syntax highlighting', async () => {
@@ -473,8 +477,7 @@ describe('LogListControls', () => {
   });
 
   test('Controls font size', async () => {
-    const originalValue = config.featureToggles.newLogsPanel;
-    config.featureToggles.newLogsPanel = true;
+    setBooleanFlags({ newLogsPanel: true });
 
     render(
       <LogListContextProvider {...contextProps}>
@@ -486,8 +489,6 @@ describe('LogListControls', () => {
 
     await userEvent.click(screen.getByLabelText(FONT_SIZE_SMALL_LABEL_COPY));
     await screen.findByLabelText(FONT_SIZE_SMALL_TOOLTIP_COPY);
-
-    config.featureToggles.newLogsPanel = originalValue;
   });
 
   test.each([

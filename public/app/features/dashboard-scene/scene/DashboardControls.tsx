@@ -1,33 +1,35 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
-  SceneObjectState,
+  type SceneObjectState,
   SceneObjectBase,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneTimePicker,
   SceneRefreshPicker,
   SceneDebugger,
   VariableDependencyConfig,
   sceneGraph,
   SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  CancelActivationHandler,
+  type SceneObjectUrlValues,
+  type CancelActivationHandler,
   sceneUtils,
 } from '@grafana/scenes';
-import { Box, Button, useStyles2 } from '@grafana/ui';
+import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
+import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 import { DrilldownControls } from './DrilldownControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
@@ -46,6 +48,7 @@ export interface DashboardControlsState extends SceneObjectState {
   hideLinksControls?: boolean;
   // Hides the dashboard-controls dropdown menu
   hideDashboardControls?: boolean;
+  hidePlaylistNav?: boolean;
 }
 
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
@@ -56,7 +59,13 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   });
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, {
-    keys: ['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks', '_dash.hideDashboardControls'],
+    keys: [
+      '_dash.hideTimePicker',
+      '_dash.hideVariables',
+      '_dash.hideLinks',
+      '_dash.hideDashboardControls',
+      '_dash.hidePlaylistNav',
+    ],
   });
 
   /**
@@ -68,11 +77,9 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    const { hideTimeControls, hideVariableControls, hideLinksControls, hideDashboardControls } = this.state;
+    const { hideTimeControls, hideVariableControls, hideLinksControls, hideDashboardControls, hidePlaylistNav } =
+      this.state;
     const isEnabledViaUrl = (key: string) => values[key] === 'true' || values[key] === '';
-
-    // Only allow hiding, never "unhiding" from url
-    // Because this should really only change on first init it's fine to do multiple setState here
 
     if (!hideTimeControls && isEnabledViaUrl('_dash.hideTimePicker')) {
       this.setState({ hideTimeControls: true });
@@ -88,6 +95,10 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
     if (!hideDashboardControls && isEnabledViaUrl('_dash.hideDashboardControls')) {
       this.setState({ hideDashboardControls: true });
+    }
+
+    if (!hidePlaylistNav && isEnabledViaUrl('_dash.hidePlaylistNav')) {
+      this.setState({ hidePlaylistNav: true });
     }
   }
 
@@ -156,7 +167,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hideVariableControls,
     hideLinksControls,
     hideDashboardControls,
+    hidePlaylistNav,
   } = model.useState();
+
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel, isEditing } = dashboard.useState();
   const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
@@ -181,7 +194,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             <div className={styles.rightControls}>
               <div className={styles.fixedControls}>
-                <DashboardControlActions dashboard={dashboard} />
+                <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
             </div>
           </div>
@@ -219,7 +232,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             )}
             {config.featureToggles.dashboardNewLayouts && (
               <div className={styles.fixedControlsNewLayout}>
-                <DashboardControlActions dashboard={dashboard} />
+                <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
             )}
             {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
@@ -258,7 +271,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         )}
         {config.featureToggles.dashboardNewLayouts && (
           <div className={styles.fixedControls}>
-            <DashboardControlActions dashboard={dashboard} />
+            <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
         {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
@@ -284,11 +297,23 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   );
 }
 
-function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
+function DashboardControlActions({
+  dashboard,
+  hidePlaylistNav,
+}: {
+  dashboard: DashboardScene;
+  hidePlaylistNav?: boolean;
+}) {
   const { isEditing, editPanel, uid, meta, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
 
   if (editPanel) {
+    return null;
+  }
+
+  if (kioskMode === KioskMode.Full) {
     return null;
   }
 
@@ -308,13 +333,33 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
         <MakeDashboardEditableButton dashboard={dashboard} />
       )}
       {isPlaying && (
-        <Button
-          variant="secondary"
-          onClick={() => playlistSrv.stop()}
-          data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
-        >
-          <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
-        </Button>
+        <ButtonGroup>
+          {!hidePlaylistNav && (
+            <Button
+              variant="secondary"
+              data-testid={selectors.pages.Dashboard.DashNav.playlistControls.prev}
+              tooltip={t('dashboard.toolbar.new.playlist-previous', 'Go to previous dashboard')}
+              icon="backward"
+              onClick={() => playlistSrv.prev()}
+            />
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => playlistSrv.stop()}
+            data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
+          >
+            <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
+          </Button>
+          {!hidePlaylistNav && (
+            <Button
+              variant="secondary"
+              data-testid={selectors.pages.Dashboard.DashNav.playlistControls.next}
+              tooltip={t('dashboard.toolbar.new.playlist-next', 'Go to next dashboard')}
+              icon="forward"
+              onClick={() => playlistSrv.next()}
+            />
+          )}
+        </ButtonGroup>
       )}
     </>
   );

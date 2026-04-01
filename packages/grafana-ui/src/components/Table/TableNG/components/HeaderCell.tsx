@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import React, { useEffect, useRef } from 'react';
-import { Column, SortDirection } from 'react-data-grid';
+import { type Column, type SortDirection } from 'react-data-grid';
 
-import { Field, GrafanaTheme2 } from '@grafana/data';
+import { type Field, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
@@ -11,7 +11,7 @@ import { Icon } from '../../../Icon/Icon';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
 import { isTableCellStylesKeyEqual } from '../styles';
-import { FilterType, TableRow, TableSummaryRow } from '../types';
+import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
 
 interface HeaderCellProps {
@@ -25,6 +25,8 @@ interface HeaderCellProps {
   selectFirstCell: () => void;
   disableKeyboardEvents?: boolean;
   parentIndex?: number;
+  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterTailRows: TableRow[];
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -38,6 +40,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   setFilter,
   showTypeIcons,
   parentIndex,
+  crossFilterRows,
+  crossFilterTailRows,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -113,6 +117,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           field={field}
           iconClassName={styles.headerCellIcon}
           parentIndex={parentIndex}
+          crossFilterRows={crossFilterRows}
+          crossFilterTailRows={crossFilterTailRows}
         />
       )}
     </Stack>

@@ -74,6 +74,12 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 			noAuthInfo:    true,
 			expectedValid: true,
 		},
+		{
+			name:          "empty body - always valid",
+			authNamespace: "stacks-1",
+			requestBody:   ``,
+			expectedValid: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -92,10 +98,13 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 				req = req.WithContext(context.Background())
 			}
 
-			valid := b.validateNamespaceIfPresent(req)
+			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
+			require.NoError(t, err)
+
+			_, valid := b.validateNamespaceIfPresent(req, evalCtx)
 			assert.Equal(t, tt.expectedValid, valid)
 
-			// Body must still be readable after validation
+			// Body must still be readable after readEvalContext
 			body, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			assert.Equal(t, tt.requestBody, string(body))

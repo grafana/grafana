@@ -99,11 +99,6 @@ export interface FeatureToggles {
   */
   starsFromAPIServer?: boolean;
   /**
-  * Routes stars requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesStars?: boolean;
-  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   * @default false
   */
@@ -125,7 +120,7 @@ export interface FeatureToggles {
   disableSSEDataplane?: boolean;
   /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default false
+  * @default true
   */
   renderAuthJWT?: boolean;
   /**
@@ -143,11 +138,6 @@ export interface FeatureToggles {
   * @default false
   */
   faroSessionReplay?: boolean;
-  /**
-  * A table visualisation for logs in Explore
-  * @default true
-  */
-  logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
@@ -169,8 +159,8 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Next generation provisioning... and git
-  * @default false
+  * Enables Git Sync and as-code provisioning for Grafana resources
+  * @default true
   */
   provisioning?: boolean;
   /**
@@ -194,11 +184,6 @@ export interface FeatureToggles {
   */
   awsAsyncQueryCaching?: boolean;
   /**
-  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
-  * @default false
-  */
-  queryCacheRequestDeduplication?: boolean;
-  /**
   * Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
   * @default false
   */
@@ -219,10 +204,20 @@ export interface FeatureToggles {
   */
   reportingCsvEncodingOptions?: boolean;
   /**
+  * Enables configuration of PDF report settings
+  * @default false
+  */
+  reportingHeaderSettings?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   * @default false
   */
   sseGroupByDatasource?: boolean;
+  /**
+  * Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
+  * @default false
+  */
+  sseExpressionErrorIsolation?: boolean;
   /**
   * Enables running Loki queries in parallel
   * @default false
@@ -243,11 +238,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesLibraryPanels?: boolean;
-  /**
-  * Use the kubernetes API in the frontend for dashboards
-  * @default true
-  */
-  kubernetesDashboards?: boolean;
   /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
@@ -349,10 +339,15 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
-  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
-  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
+  /**
+  * use raw output mode for the data source querier
+  * @default false
+  */
+  datasourcesQuerierRawOutput?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -414,6 +409,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables default layout selector in dashboard settings
+  * @default false
+  */
+  dashboardDefaultLayoutSelector?: boolean;
+  /**
   * Enables the assistant prompt popover on panel click in dashboard view mode
   * @default false
   */
@@ -458,6 +458,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardFiltersOverview?: boolean;
+  /**
+  * Enables the feedback button in the dashboard edit sidebar
+  * @default true
+  */
+  feedbackButton?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
@@ -555,7 +560,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default false
+  * @default true
   */
   sqlExpressions?: boolean;
   /**
@@ -648,6 +653,11 @@ export interface FeatureToggles {
   * @default false
   */
   newSavedQueriesExperience?: boolean;
+  /**
+  * Enables the new unconfigured panel experience
+  * @default false
+  */
+  newUnconfiguredPanel?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -870,11 +880,6 @@ export interface FeatureToggles {
   */
   playlistsReconciler?: boolean;
   /**
-  * Enable passwordless login via magic link authentication
-  * @default false
-  */
-  passwordlessMagicLinkAuthentication?: boolean;
-  /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
   */
@@ -960,11 +965,6 @@ export interface FeatureToggles {
   */
   lokiLabelNamesQueryApi?: boolean;
   /**
-  * Enable folder's api server counts
-  * @default false
-  */
-  k8SFolderCounts?: boolean;
-  /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
   * @default true
   */
@@ -986,7 +986,7 @@ export interface FeatureToggles {
   teamLBACApiReadFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
-  * @default false
+  * @default true
   */
   grafanaAdvisor?: boolean;
   /**
@@ -1207,7 +1207,7 @@ export interface FeatureToggles {
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
-  * @default false
+  * @default true
   */
   restoreDashboards?: boolean;
   /**
@@ -1250,11 +1250,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
-  /**
-  * Enables the UI to see imported Alertmanager configuration
-  * @default false
-  */
-  alertingImportAlertmanagerUI?: boolean;
   /**
   * Disables the DMA feature in the UI
   * @default false
@@ -1392,7 +1387,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new visualization suggestions
-  * @default false
+  * @default true
   */
   newVizSuggestions?: boolean;
   /**
@@ -1407,14 +1402,9 @@ export interface FeatureToggles {
   vizPresets?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default false
+  * @default true
   */
   externalVizSuggestions?: boolean;
-  /**
-  * Limit the number of legend items by default, with an option to show all
-  * @default false
-  */
-  vizLegendSeriesLimit?: boolean;
   /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
@@ -1430,6 +1420,11 @@ export interface FeatureToggles {
   * @default false
   */
   heatmapRowsAxisOptions?: boolean;
+  /**
+  * Enable gradient color scheme option for the pie chart panel
+  * @default false
+  */
+  pieChartGradientColorScheme?: boolean;
   /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
@@ -1522,7 +1517,7 @@ export interface FeatureToggles {
   useMTPlugins?: boolean;
   /**
   * Enables support for variables whose values can have multiple properties
-  * @default false
+  * @default true
   */
   multiPropsVariables?: boolean;
   /**
@@ -1726,13 +1721,48 @@ export interface FeatureToggles {
   */
   yAxisTickControl?: boolean;
   /**
-  * Enables the IAM client integration for fetching remote IAM global roles
-  * @default false
-  */
-  rbacIAMClient?: boolean;
-  /**
   * Enables the logs tableNG panel to replace existing tableRT
   * @default false
   */
   logsTablePanelNG?: boolean;
+  /**
+  * Enables plugins setting from new apis
+  * @default false
+  */
+  useMTPluginSettings?: boolean;
+  /**
+  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+  * @default false
+  */
+  frontendServiceSSOAutoLogin?: boolean;
+  /**
+  * Enables the splash screen modal for introducing new Grafana features on first session
+  * @default false
+  */
+  splashScreen?: boolean;
+  /**
+  * Enables forwarding team headers from tempo for streaming requests with LBAC rules
+  * @default false
+  */
+  streamingForwardTeamHeadersTempo?: boolean;
+  /**
+  * Aligns query splitting chunks with UTC midnight
+  * @default false
+  */
+  lokiAlignedQuerySplitting?: boolean;
+  /**
+  * Enables the query service to fetch the configuration from the settings service
+  * @default false
+  */
+  queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables the query service to do query caching
+  * @default false
+  */
+  queryServiceQueryCaching?: boolean;
+  /**
+  * Enables the time seeker in traces drilldown
+  * @default false
+  */
+  tracesDrilldownTimeSeeker?: boolean;
 }

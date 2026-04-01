@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { useCallback } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { Button, Select, Stack, useStyles2 } from '@grafana/ui';
 
-import { QueryEditorExpressionType, QueryEditorFunctionExpression } from '../../expressions';
-import { DB, QueryFormat, SQLExpression, SQLQuery } from '../../types';
+import { QueryEditorExpressionType, type QueryEditorFunctionExpression } from '../../expressions';
+import { type DB, QueryFormat, type SQLExpression, type SQLQuery } from '../../types';
 import { createFunctionField } from '../../utils/sql.utils';
 import { useSqlChange } from '../../utils/useSqlChange';
 

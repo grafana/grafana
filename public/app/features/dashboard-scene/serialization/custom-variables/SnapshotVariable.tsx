@@ -1,15 +1,15 @@
-import { Observable, map, of } from 'rxjs';
+import { type Observable, map, of } from 'rxjs';
 
 import {
   MultiValueVariable,
-  MultiValueVariableState,
-  SceneComponentProps,
-  ValidateAndUpdateResult,
+  type MultiValueVariableState,
+  type SceneComponentProps,
+  type ValidateAndUpdateResult,
   VariableDependencyConfig,
-  VariableValueOption,
+  type VariableValueOption,
   MultiOrSingleValueSelect,
   sceneGraph,
-  VariableGetOptionsArgs,
+  type VariableGetOptionsArgs,
 } from '@grafana/scenes';
 
 export interface SnapshotVariableState extends MultiValueVariableState {

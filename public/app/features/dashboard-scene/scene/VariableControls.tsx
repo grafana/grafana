@@ -1,23 +1,27 @@
 import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
 
-import { VariableHide, GrafanaTheme2 } from '@grafana/data';
+import { VariableHide, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   sceneGraph,
   useSceneObjectState,
-  SceneVariable,
-  SceneVariableState,
+  type SceneVariable,
+  type SceneVariables,
+  type SceneVariableState,
   ControlsLabel,
-  ControlsLayout,
+  type ControlsLayout,
   sceneUtils,
   SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from './DashboardScene';
+import { filterSectionRepeatLocalVariables } from '../variables/utils';
+
+import { type DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
+import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
@@ -53,8 +57,6 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
 
   return (
     <>
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
-
       {variablesToRender.length > 0 &&
         variablesToRender.map((variable) => (
           <VariableValueSelectWrapper
@@ -63,6 +65,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
+      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
@@ -186,6 +189,14 @@ function VariableLabel({
   }
 
   const labelOrName = state.label || state.name;
+  const controlsLayout = layout ?? 'horizontal';
+  const descriptionSuffix =
+    state.description != null && state.description !== '' ? (
+      <VariableDescriptionTooltip
+        description={state.description}
+        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
+      />
+    ) : undefined;
 
   return (
     <ControlsLabel
@@ -194,12 +205,44 @@ function VariableLabel({
       onCancel={() => variable.onCancel?.()}
       label={labelOrName}
       error={state.error}
-      layout={layout ?? 'horizontal'}
-      description={state.description ?? undefined}
+      layout={controlsLayout}
+      description={undefined}
+      suffix={descriptionSuffix}
       className={className}
     />
   );
 }
+
+export function SectionVariableControls({ variableSet }: { variableSet: SceneVariables }) {
+  const { variables } = variableSet.useState();
+  const styles = useStyles2(getSectionVariableStyles);
+
+  const visibleVariables = filterSectionRepeatLocalVariables(variables, variableSet).filter(
+    (v) => v.state.hide !== VariableHide.hideVariable
+  );
+
+  if (visibleVariables.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.sectionVariables}>
+      {visibleVariables.map((variable) => (
+        <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+      ))}
+    </div>
+  );
+}
+
+const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+  sectionVariables: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  }),
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({

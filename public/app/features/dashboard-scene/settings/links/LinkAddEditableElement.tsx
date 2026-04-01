@@ -1,13 +1,16 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 import type { DashboardLink } from '@grafana/schema';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { type DashboardScene } from '../../scene/DashboardScene';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 
 import {
   LinkBooleanSwitch,
@@ -203,6 +206,18 @@ export class LinkEditEditableElement implements EditableDashboardElement {
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.linkEdit);
+
+  public onDuplicate() {
+    const dashboard = this.linkEdit.state.dashboardRef.resolve();
+    const { links } = dashboard.state;
+
+    const link = { ...links[this.linkEdit.state.linkIndex] };
+    link.title = `${link.title} - Copy`;
+    const linkEdit = createLinkEdit(dashboard, this.linkEdit.state.linkIndex);
+
+    linkEditActions.addLink({ dashboard, link, addedObject: linkEdit });
+    openLinkEditPane(dashboard, links.length);
+  }
 
   public onDelete(): void {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();

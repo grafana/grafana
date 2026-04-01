@@ -1,6 +1,6 @@
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { calculatePanRange, setupXAxisPan } from './XAxisInteractionAreaPlugin';
 

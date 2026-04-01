@@ -853,6 +853,12 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 				create, _, _ := unstructured.NestedString(sv, "create")
 				if create != "" {
 					inline.Create = common.NewSecretValue(create)
+
+					if rawDesc, _, _ := unstructured.NestedFieldNoCopy(sv, "description"); rawDesc != nil {
+						if desc, ok := rawDesc.(*string); ok && desc != nil && *desc != "" {
+							inline.Description = desc
+						}
+					}
 				}
 			}
 			vals[k] = inline

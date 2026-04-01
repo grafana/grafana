@@ -3203,9 +3203,6 @@
         "properties": {
           "dashboard": {
             "$ref": "#/components/schemas/AnnotationActions"
-          },
-          "organization": {
-            "$ref": "#/components/schemas/AnnotationActions"
           }
         },
         "type": "object"
@@ -4402,10 +4399,6 @@
           },
           "uid": {
             "type": "string"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -5419,6 +5412,45 @@
             "type": "array"
           }
         },
+        "type": "object"
+      },
+      "ExternalAlertmanagerConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "ExternalAlertmanagerStatus": {
+        "properties": {
+          "cluster": {
+            "$ref": "#/components/schemas/clusterStatus"
+          },
+          "config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "uptime": {
+            "description": "uptime",
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionInfo": {
+            "$ref": "#/components/schemas/versionInfo"
+          }
+        },
+        "required": [
+          "cluster",
+          "config",
+          "uptime",
+          "versionInfo"
+        ],
         "type": "object"
       },
       "ExtraConfiguration": {
@@ -10084,8 +10116,17 @@
             "format": "int64",
             "type": "integer"
           },
+          "pdfDashboardTitleEnabled": {
+            "type": "boolean"
+          },
+          "pdfHeaderEnabled": {
+            "type": "boolean"
+          },
           "pdfTheme": {
             "type": "string"
+          },
+          "pdfTimeRangeEnabled": {
+            "type": "boolean"
           },
           "userId": {
             "format": "int64",
@@ -12567,10 +12608,6 @@
               "$ref": "#/components/schemas/Permission"
             },
             "type": "array"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "required": [
@@ -17554,7 +17591,8 @@
     },
     "/dashboards/db": {
       "post": {
-        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.",
+        "deprecated": true,
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards",
         "operationId": "postDashboard",
         "requestBody": {
           "content": {
@@ -17712,6 +17750,7 @@
     },
     "/dashboards/tags": {
       "get": {
+        "deprecated": true,
         "operationId": "getDashboardTags",
         "responses": {
           "200": {
@@ -17724,7 +17763,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get all dashboards tags of an organisation.",
+        "summary": "Get all dashboards tags of an organization.",
         "tags": [
           "dashboards"
         ]
@@ -17917,7 +17956,8 @@
     },
     "/dashboards/uid/{uid}": {
       "delete": {
-        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "deprecated": true,
+        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "operationId": "deleteDashboardByUID",
         "parameters": [
           {
@@ -17952,7 +17992,8 @@
         ]
       },
       "get": {
-        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).",
+        "deprecated": true,
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "operationId": "getDashboardByUID",
         "parameters": [
           {
@@ -17992,6 +18033,8 @@
     },
     "/dashboards/uid/{uid}/permissions": {
       "get": {
+        "deprecated": true,
+        "description": "Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
         "operationId": "getDashboardPermissionsListByUID",
         "parameters": [
           {
@@ -18027,6 +18070,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "description": "This operation will remove existing permissions if they’re not included in the request.",
         "operationId": "updateDashboardPermissionsByUID",
         "parameters": [
@@ -18132,6 +18176,7 @@
     },
     "/dashboards/uid/{uid}/versions": {
       "get": {
+        "deprecated": true,
         "operationId": "getDashboardVersionsByUID",
         "parameters": [
           {
@@ -18189,6 +18234,7 @@
     },
     "/dashboards/uid/{uid}/versions/{DashboardVersionID}": {
       "get": {
+        "deprecated": true,
         "operationId": "getDashboardVersionByUID",
         "parameters": [
           {
@@ -19382,7 +19428,8 @@
     },
     "/folders": {
       "get": {
-        "description": "It returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
+        "deprecated": true,
+        "description": "It returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -19447,7 +19494,8 @@
         ]
       },
       "post": {
-        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
+        "deprecated": true,
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "createFolder",
         "requestBody": {
           "content": {
@@ -19486,48 +19534,10 @@
         ]
       }
     },
-    "/folders/id/{folder_id}": {
-      "get": {
-        "deprecated": true,
-        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
-        "operationId": "getFolderByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "folder_id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/folderResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get folder by id.",
-        "tags": [
-          "folders"
-        ]
-      }
-    },
     "/folders/{folder_uid}": {
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
+        "deprecated": true,
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.\n\nUse: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "deleteFolder",
         "parameters": [
           {
@@ -19574,6 +19584,8 @@
         ]
       },
       "get": {
+        "deprecated": true,
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "getFolderByUID",
         "parameters": [
           {
@@ -19608,6 +19620,8 @@
         ]
       },
       "put": {
+        "deprecated": true,
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "updateFolder",
         "parameters": [
           {
@@ -19662,6 +19676,8 @@
     },
     "/folders/{folder_uid}/counts": {
       "get": {
+        "deprecated": true,
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid}",
         "operationId": "getFolderDescendantCounts",
         "parameters": [
           {
@@ -19698,6 +19714,8 @@
     },
     "/folders/{folder_uid}/move": {
       "post": {
+        "deprecated": true,
+        "description": "Use: /apis/folder.grafana.app/v1/namespaces/{ns}/folders/{folder_uid},\nChanging the parent folder annotation",
         "operationId": "moveFolder",
         "parameters": [
           {
@@ -19745,6 +19763,7 @@
     },
     "/folders/{folder_uid}/permissions": {
       "get": {
+        "deprecated": true,
         "operationId": "getFolderPermissionList",
         "parameters": [
           {

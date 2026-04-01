@@ -1,13 +1,13 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { screen } from '@testing-library/react';
-import { UserEvent } from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import type { JSX } from 'react';
 import { act, render, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { createJob, createRepository } from '../mocks/factories';

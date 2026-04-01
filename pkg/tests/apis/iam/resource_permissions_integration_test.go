@@ -109,10 +109,17 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			// Turn off authorization cache so permission changes apply right away in tests
 			t.Setenv("GF_AUTHORIZATION_CACHE_TTL", "0s")
 
+			// Provisioning requires dashboards/folders in unified storage (Mode4+).
+			var disableFlags []string
+			if mode < rest.Mode5 {
+				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
+			}
+
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     false,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableFlags,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"resourcepermissions.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -126,8 +133,6 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-					// Prevents nested folders from having default permissions
-					featuremgmt.FlagKubernetesDashboards,
 				},
 			})
 

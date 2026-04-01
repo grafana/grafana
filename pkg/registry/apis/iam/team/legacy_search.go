@@ -13,7 +13,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
+	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -23,6 +25,11 @@ const (
 	TeamResource      = "teams"
 	TeamResourceGroup = "iam.grafana.com"
 )
+
+var teamSortFieldMapping = map[string]string{
+	res.SEARCH_FIELD_TITLE: "name",
+	fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
+}
 
 // LegacyTeamSearchClient is a client for searching for teams in the legacy search engine.
 type LegacyTeamSearchClient struct {
@@ -62,12 +69,19 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, fmt.Errorf("invalid page number: %d", req.Page)
 	}
 
+	title, err := titleFromRequirements(req.Options)
+	if err != nil {
+		return nil, err
+	}
+
 	query := &team.SearchTeamsQuery{
 		SignedInUser: signedInUser,
 		Limit:        int(req.Limit),
 		Page:         int(req.Page),
 		Query:        req.Query,
+		Name:         title,
 		OrgID:        signedInUser.GetOrgID(),
+		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, teamSortFieldMapping, teamsortopts.SortOptionsByQueryParam),
 	}
 
 	res, err := c.teamService.SearchTeams(ctx, query)
@@ -150,4 +164,19 @@ func createDefaultCells(t *team.TeamDTO) [][]byte {
 		[]byte(t.UID),
 		[]byte(t.Name),
 	}
+}
+
+func titleFromRequirements(opts *resourcepb.ListOptions) (string, error) {
+	if opts == nil {
+		return "", nil
+	}
+	for _, r := range opts.Fields {
+		if r != nil && r.Key == res.SEARCH_FIELD_TITLE {
+			if len(r.Values) != 1 {
+				return "", fmt.Errorf("title filter requires exactly one value, got %d", len(r.Values))
+			}
+			return r.Values[0], nil
+		}
+	}
+	return "", nil
 }

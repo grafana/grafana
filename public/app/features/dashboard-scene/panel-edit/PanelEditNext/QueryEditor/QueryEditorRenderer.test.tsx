@@ -1,9 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
-import { DataQueryError, DataSourceApi, DataSourceJsonData, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import {
+  type DataQueryError,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../constants';
 
@@ -121,6 +127,8 @@ describe('QueryEditorRenderer', () => {
             pendingSavedQuery: null,
             setPendingSavedQuery: jest.fn(),
             showVersionBanner: false,
+            selectedQueryRefIds: [],
+            selectedTransformationIds: [],
           }}
           actions={mockActions}
         >

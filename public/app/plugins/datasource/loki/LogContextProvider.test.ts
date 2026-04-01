@@ -1,23 +1,23 @@
 import { of } from 'rxjs';
 
 import {
-  DataQueryResponse,
+  type DataQueryResponse,
   FieldType,
   LogRowContextQueryDirection,
-  LogRowModel,
+  type LogRowModel,
   createDataFrame,
   dateTime,
 } from '@grafana/data';
-import { setTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
-import LokiLanguageProvider from './LanguageProvider';
+import type LokiLanguageProvider from './LanguageProvider';
 import {
   LogContextProvider,
   LOKI_LOG_CONTEXT_PRESERVED_LABELS,
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from './LogContextProvider';
 import { createLokiDatasource } from './mocks/datasource';
-import { LokiQuery } from './types';
+import { type LokiQuery } from './types';
 
 const defaultLanguageProviderMock = {
   start: jest.fn(),
