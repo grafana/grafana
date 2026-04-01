@@ -2394,6 +2394,15 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "datasourcePluginMetaLookup",
+			Description:  "Enables datasource plugin importer to resolve plugin metadata internally instead of receiving it from callers",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
 			Name:         "multiPropsVariables",
 			Description:  "Enables support for variables whose values can have multiple properties",
 			Stage:        FeatureStageGeneralAvailability,

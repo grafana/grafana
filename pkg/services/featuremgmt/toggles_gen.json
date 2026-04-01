@@ -1648,6 +1648,21 @@
     },
     {
       "metadata": {
+        "name": "datasourcePluginMetaLookup",
+        "resourceVersion": "1775035586663",
+        "creationTimestamp": "2026-04-01T09:26:26Z"
+      },
+      "spec": {
+        "description": "Enables datasource plugin importer to resolve plugin metadata internally instead of receiving it from callers",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceQueryTypes",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-05-23T16:46:28Z"

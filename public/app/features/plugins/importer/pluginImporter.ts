@@ -169,8 +169,24 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
   return getPromiseFromCache(meta);
 };
 
+function findDatasourceMetaFromConfig(pluginId: string): DataSourcePluginMeta | null {
+  for (const ds of Object.values(config.datasources)) {
+    if (ds.type === pluginId) {
+      return ds.meta;
+    }
+  }
+  return null;
+}
+
 async function importDataSource(pluginId: string): Promise<GenericDataSourcePlugin> {
-  const meta = await getDatasourcePluginMeta(pluginId);
+  let meta: DataSourcePluginMeta | null;
+
+  if (config.featureToggles.datasourcePluginMetaLookup) {
+    meta = await getDatasourcePluginMeta(pluginId);
+  } else {
+    meta = findDatasourceMetaFromConfig(pluginId);
+  }
+
   if (!meta) {
     throw new Error(`Could not find datasource plugin metadata for '${pluginId}'`);
   }

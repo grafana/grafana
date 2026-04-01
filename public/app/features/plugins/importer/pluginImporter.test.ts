@@ -9,6 +9,7 @@ import {
   type PluginMeta,
   PluginType,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
@@ -149,103 +150,163 @@ describe('pluginImporter', () => {
   });
 
   describe('importDataSource', () => {
-    it('should import a data source plugin successfully with fallbackLoadingStrategy', async () => {
-      const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
-        .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
-
-      const result = await pluginImporter.importDataSource('test-plugin');
-
-      expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-plugin');
-      expect(spy).toHaveBeenCalledWith({
-        path: 'public/plugins/test-plugin/module.js',
-        version: '1.0.0',
-        loadingStrategy: 'fetch',
-        pluginId: 'test-plugin',
-        moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
-        translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+    describe('with datasourcePluginMetaLookup enabled', () => {
+      beforeEach(() => {
+        config.featureToggles.datasourcePluginMetaLookup = true;
       });
 
-      expect(result).toEqual({ ...dataSourcePlugin, meta: { ...dataSourcePlugin } });
+      afterEach(() => {
+        config.featureToggles.datasourcePluginMetaLookup = false;
+      });
+
+      it('should import a data source plugin successfully with fallbackLoadingStrategy', async () => {
+        const spy = jest
+          .spyOn(importPluginModule, 'importPluginModule')
+          .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
+
+        const result = await pluginImporter.importDataSource('test-plugin');
+
+        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-plugin');
+        expect(spy).toHaveBeenCalledWith({
+          path: 'public/plugins/test-plugin/module.js',
+          version: '1.0.0',
+          loadingStrategy: 'fetch',
+          pluginId: 'test-plugin',
+          moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
+          translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+        });
+
+        expect(result).toEqual({ ...dataSourcePlugin, meta: { ...dataSourcePlugin } });
+      });
+
+      it('should import a data source plugin with Datasource prop', async () => {
+        const spy = jest
+          .spyOn(importPluginModule, 'importPluginModule')
+          .mockResolvedValue({ Datasource: { ...dataSourcePlugin } });
+
+        const result = await pluginImporter.importDataSource('test-plugin');
+
+        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-plugin');
+        expect(spy).toHaveBeenCalledWith({
+          path: 'public/plugins/test-plugin/module.js',
+          version: '1.0.0',
+          loadingStrategy: 'fetch',
+          pluginId: 'test-plugin',
+          moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
+          translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+        });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const DataSourceClass: any = { ...dataSourcePlugin };
+        const expected = new DataSourcePlugin(DataSourceClass);
+        expect(result).toEqual({
+          ...expected,
+          components: {
+            AnnotationsQueryCtrl: undefined,
+            ExploreQueryField: undefined,
+            QueryCtrl: undefined,
+            QueryEditor: undefined,
+            QueryEditorHelp: undefined,
+            VariableQueryEditor: undefined,
+          },
+          meta: { ...dataSourcePlugin },
+        });
+      });
+
+      it('should set correct loading strategy', async () => {
+        const spy = jest
+          .spyOn(importPluginModule, 'importPluginModule')
+          .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
+        getDatasourcePluginMeta.mockResolvedValue({
+          ...dataSourcePlugin,
+          loadingStrategy: PluginLoadingStrategy.script,
+        });
+
+        const result = await pluginImporter.importDataSource('test-plugin');
+
+        expect(spy).toHaveBeenCalledWith({
+          path: 'public/plugins/test-plugin/module.js',
+          version: '1.0.0',
+          loadingStrategy: 'script',
+          pluginId: 'test-plugin',
+          moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
+          translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+        });
+
+        expect(result).toEqual({ ...dataSourcePlugin, meta: { ...dataSourcePlugin, loadingStrategy: 'script' } });
+      });
+
+      it('should throw error if module is missing exported plugin', async () => {
+        const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
+
+        await expect(pluginImporter.importDataSource('test-plugin')).rejects.toThrow(
+          new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export')
+        );
+
+        expect(spy).toHaveBeenCalledWith({
+          path: 'public/plugins/test-plugin/module.js',
+          version: '1.0.0',
+          loadingStrategy: 'fetch',
+          pluginId: 'test-plugin',
+          moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
+          translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+        });
+      });
+
+      it('should throw error if plugin metadata is not found', async () => {
+        getDatasourcePluginMeta.mockResolvedValue(null);
+
+        await expect(pluginImporter.importDataSource('unknown-plugin')).rejects.toThrow(
+          "Could not find datasource plugin metadata for 'unknown-plugin'"
+        );
+      });
     });
 
-    it('should import a data source plugin with Datasource prop', async () => {
-      const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
-        .mockResolvedValue({ Datasource: { ...dataSourcePlugin } });
+    describe('with datasourcePluginMetaLookup disabled (legacy)', () => {
+      let originalDatasources: typeof config.datasources;
 
-      const result = await pluginImporter.importDataSource('test-plugin');
-
-      expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-plugin');
-      expect(spy).toHaveBeenCalledWith({
-        path: 'public/plugins/test-plugin/module.js',
-        version: '1.0.0',
-        loadingStrategy: 'fetch',
-        pluginId: 'test-plugin',
-        moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
-        translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+      beforeEach(() => {
+        config.featureToggles.datasourcePluginMetaLookup = false;
+        originalDatasources = config.datasources;
+        config.datasources = {
+          'test-ds': {
+            type: 'test-plugin',
+            meta: { ...dataSourcePlugin },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
+        };
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const DataSourceClass: any = { ...dataSourcePlugin };
-      const expected = new DataSourcePlugin(DataSourceClass);
-      expect(result).toEqual({
-        ...expected,
-        components: {
-          AnnotationsQueryCtrl: undefined,
-          ExploreQueryField: undefined,
-          QueryCtrl: undefined,
-          QueryEditor: undefined,
-          QueryEditorHelp: undefined,
-          VariableQueryEditor: undefined,
-        },
-        meta: { ...dataSourcePlugin },
-      });
-    });
-
-    it('should set correct loading strategy', async () => {
-      const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
-        .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
-      getDatasourcePluginMeta.mockResolvedValue({ ...dataSourcePlugin, loadingStrategy: PluginLoadingStrategy.script });
-
-      const result = await pluginImporter.importDataSource('test-plugin');
-
-      expect(spy).toHaveBeenCalledWith({
-        path: 'public/plugins/test-plugin/module.js',
-        version: '1.0.0',
-        loadingStrategy: 'script',
-        pluginId: 'test-plugin',
-        moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
-        translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+      afterEach(() => {
+        config.datasources = originalDatasources;
       });
 
-      expect(result).toEqual({ ...dataSourcePlugin, meta: { ...dataSourcePlugin, loadingStrategy: 'script' } });
-    });
+      it('should resolve meta from config.datasources', async () => {
+        const spy = jest
+          .spyOn(importPluginModule, 'importPluginModule')
+          .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
 
-    it('should throw error if module is missing exported plugin', async () => {
-      const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
+        const result = await pluginImporter.importDataSource('test-plugin');
 
-      await expect(pluginImporter.importDataSource('test-plugin')).rejects.toThrow(
-        new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export')
-      );
+        expect(getDatasourcePluginMeta).not.toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith({
+          path: 'public/plugins/test-plugin/module.js',
+          version: '1.0.0',
+          loadingStrategy: 'fetch',
+          pluginId: 'test-plugin',
+          moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
+          translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+        });
 
-      expect(spy).toHaveBeenCalledWith({
-        path: 'public/plugins/test-plugin/module.js',
-        version: '1.0.0',
-        loadingStrategy: 'fetch',
-        pluginId: 'test-plugin',
-        moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
-        translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
+        expect(result).toEqual({ ...dataSourcePlugin, meta: { ...dataSourcePlugin } });
       });
-    });
 
-    it('should throw error if plugin metadata is not found', async () => {
-      getDatasourcePluginMeta.mockResolvedValue(null);
-
-      await expect(pluginImporter.importDataSource('unknown-plugin')).rejects.toThrow(
-        "Could not find datasource plugin metadata for 'unknown-plugin'"
-      );
+      it('should throw error if plugin not found in config.datasources', async () => {
+        await expect(pluginImporter.importDataSource('unknown-plugin')).rejects.toThrow(
+          "Could not find datasource plugin metadata for 'unknown-plugin'"
+        );
+        expect(getDatasourcePluginMeta).not.toHaveBeenCalled();
+      });
     });
   });
 
