@@ -159,9 +159,9 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 	t.Helper()
 
 	baseOpts := testinfra.GrafanaOpts{
-		DisableAnonymous:                  true,
-		OpenFeatureAPIEnabled:             true,
-		SecretsManagerEnableDBMigrations:  true,
+		DisableAnonymous:                 true,
+		OpenFeatureAPIEnabled:            true,
+		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagAppPluginAPIServer,
 		},
@@ -176,7 +176,8 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 	// so RegisterAPIService discovers it and registers the test-app.grafana.app API group.
 	dir, cfgPath := testinfra.CreateGrafDir(t, baseOpts)
 
-	_, thisFile, _, _ := runtime.Caller(0)
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok)
 	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "..")
 	testAppSrc := filepath.Join(repoRoot, "pkg", "plugins", "manager", "testdata", "test-app")
 	testAppDst := filepath.Join(dir, "plugins", "test-app")
