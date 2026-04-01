@@ -1780,6 +1780,13 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "azureMonitorBatchAPI",
+			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "localeFormatPreference",
 			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
 			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
