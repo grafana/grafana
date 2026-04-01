@@ -13,9 +13,10 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
-import { VariableTypeChange } from './VariableTypeSelectionPane';
 
 import { shouldHideControlsMenuOption, VariableEditableElement } from './VariableEditableElement';
+import { VariableTypeChange } from './VariableTypeSelectionPane';
+
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
