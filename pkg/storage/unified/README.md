@@ -75,12 +75,6 @@ storage_type = unified
 With this configuration, you can run everything in-process. Run the Grafana backend with:
 
 ```sh
-bra run
-```
-
-or
-
-```sh
 make run
 ```
 
