@@ -1765,4 +1765,9 @@ export interface FeatureToggles {
   * @default false
   */
   tracesDrilldownTimeSeeker?: boolean;
+  /**
+  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
+  * @default false
+  */
+  clearPreviousFieldValues?: boolean;
 }
