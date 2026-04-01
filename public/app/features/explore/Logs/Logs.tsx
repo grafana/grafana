@@ -1093,7 +1093,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             </div>
           )}
 
-          {enableNewLogsTable && visualisationType === 'table' && (
+          {enableNewLogsTable && visualisationType === 'table' && hasData && (
             <ExploreLogsTable
               eventBus={eventBus}
               data={panelData}
@@ -1306,27 +1306,27 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               )}
             </div>
           )}
-          {!loading && !hasData && !scanning && (
-            <div className={styles.noDataWrapper}>
-              <div className={styles.noData}>
-                <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
-                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
-                  <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
-                </Button>
-              </div>
-            </div>
-          )}
-          {scanning && (
-            <div className={styles.noDataWrapper}>
-              <div className={styles.noData}>
-                <span>{scanText}</span>
-                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickStopScan}>
-                  <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
+        {!loading && !hasData && !scanning && (
+          <div className={styles.noDataWrapper}>
+            <div className={styles.noData}>
+              <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
+              <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
+                <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
+              </Button>
+            </div>
+          </div>
+        )}
+        {scanning && (
+          <div className={styles.noDataWrapper}>
+            <div className={styles.noData}>
+              <span>{scanText}</span>
+              <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickStopScan}>
+                <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
+              </Button>
+            </div>
+          </div>
+        )}
       </PanelChrome>
     </>
   );
