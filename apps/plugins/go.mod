@@ -257,3 +257,6 @@ require (
 
 // Use our fork of the upstream Alertmanager.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
+
+// Pin kin-openapi to avoid maps.Copy incompatibility with openapi3.StringMap (used by cog)
+replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.133.0
