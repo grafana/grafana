@@ -104,12 +104,12 @@ describe('VizPanelEditableElement', () => {
       });
 
       activateFullSceneTree(scene);
-      await new Promise((r) => setTimeout(r, 1));
 
-      const repeatedPanels = gridItem.state.repeatedPanels!;
-      expect(repeatedPanels.length).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(gridItem.state.repeatedPanels?.length).toBeGreaterThan(0);
+      });
 
-      const element = new VizPanelEditableElement(repeatedPanels[0]);
+      const element = new VizPanelEditableElement(gridItem.state.repeatedPanels![0]);
       expect(element.getEditableElementInfo().isHidden).toBe(false);
     });
 
