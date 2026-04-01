@@ -292,7 +292,7 @@ export function getDefaultVizPanel(): VizPanel {
       $behaviors: [panelMenuBehavior],
     }),
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction: !config.featureToggles.perPanelFiltering,
     }),
     $data: datasourceSettings
       ? new SceneDataTransformer({
