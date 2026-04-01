@@ -89,10 +89,14 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public constructor(public panel: VizPanel) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
+    const parent = this.panel.parent;
+    const isHidden = parent instanceof AutoGridItem ? !parent.state.conditionalRendering?.state.result : undefined;
+
     return {
       typeName: t('dashboard.edit-pane.elements.panel', 'Panel'),
       icon: 'chart-line',
       instanceName: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
+      isHidden,
     };
   }
 
