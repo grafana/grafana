@@ -70,13 +70,9 @@ func (i *sliceBulkIterator) RollbackRequested() bool {
 	return false
 }
 
-type importBatchWriter interface {
-	InsertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) error
-}
-
 type failAfterImportKV struct {
 	KV
-	writer    importBatchWriter
+	writer    dataImportBatchWriter
 	failAfter int
 	calls     int
 	err       error
@@ -148,6 +144,28 @@ func TestKVStorageBackendProcessBulkImportBatching(t *testing.T) {
 	}
 }
 
+func TestKVStorageBackendProcessBulkUsesSaveFallbackWhenBatchWriterUnavailable(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+
+	const namespace = "badger-save-fallback"
+	resp := backend.ProcessBulk(context.Background(), BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{
+			Namespace: namespace,
+			Group:     testBulkImportGroup,
+			Resource:  testBulkImportResource,
+		}},
+	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+		newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_ADDED),
+		newBulkImportRequest(namespace, "item-2", resourcepb.BulkRequest_ADDED),
+	}))
+
+	require.Nil(t, resp.Error)
+	require.Empty(t, resp.Rejected)
+	require.Equal(t, int64(2), resp.Processed)
+	require.Equal(t, []string{"item-1", "item-2"}, collectBulkImportNames(t, backend, namespace))
+	require.Equal(t, []string{"item-1", "item-2"}, collectLatestBulkImportNames(t, backend, namespace))
+}
+
 func TestKVStorageBackendProcessBulkPreservesImportedHistory(t *testing.T) {
 	backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
 
@@ -169,6 +187,24 @@ func TestKVStorageBackendProcessBulkPreservesImportedHistory(t *testing.T) {
 	require.Equal(t, int64(3), resp.Processed)
 	require.Equal(t, []string{"item-1", "item-1", "item-1"}, collectBulkImportNames(t, backend, namespace))
 	require.Empty(t, collectLatestBulkImportNames(t, backend, namespace))
+}
+
+func TestKVStorageBackendProcessBulkRejectsEmptyBatch(t *testing.T) {
+	backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+
+	const namespace = "sqlkv-empty-batch"
+	resp := backend.ProcessBulk(context.Background(), BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{
+			Namespace: namespace,
+			Group:     testBulkImportGroup,
+			Resource:  testBulkImportResource,
+		}},
+	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{}))
+
+	require.NotNil(t, resp.Error)
+	require.Contains(t, resp.Error.Message, "missing request batch")
+	require.Equal(t, int64(0), resp.Processed)
+	require.Empty(t, collectBulkImportNames(t, backend, namespace))
 }
 
 func TestKVStorageBackendProcessBulkRejectsInvalidDataKeysBeforeBatchInsert(t *testing.T) {
@@ -196,7 +232,7 @@ func TestKVStorageBackendProcessBulkRejectsInvalidDataKeysBeforeBatchInsert(t *t
 
 func TestKVStorageBackendProcessBulkRollsBackOnImportBatchError(t *testing.T) {
 	sqlKV := setupSqlKV(t)
-	writer, ok := sqlKV.(importBatchWriter)
+	writer, ok := sqlKV.(dataImportBatchWriter)
 	require.True(t, ok)
 
 	backend := setupTestStorageBackend(t, withKV(&failAfterImportKV{

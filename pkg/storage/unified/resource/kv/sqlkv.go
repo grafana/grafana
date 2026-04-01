@@ -37,6 +37,7 @@ type SqlKV struct {
 }
 
 const (
+	// Match the existing SQL backend sqlite cap so both bulk import paths chunk the same way.
 	dataImportBatchSQLiteMaxRows  = 8
 	dataImportBatchDefaultMaxRows = 1000
 )

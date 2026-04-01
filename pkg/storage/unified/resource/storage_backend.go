@@ -1971,7 +1971,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		if len(batch) == 0 {
 			rollback()
 			rsp.Error = AsErrorResult(fmt.Errorf("missing request batch"))
-			break
+			return rsp
 		}
 
 		batchItems := make([]kvBulkImportItem, 0, len(batch))
