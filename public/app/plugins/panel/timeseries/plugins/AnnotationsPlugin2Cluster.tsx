@@ -231,7 +231,7 @@ export const AnnotationsPlugin2Cluster = ({
     annotations?.length,
   ]);
 
-  // ensure xAnnos are re-drawn whenever they change
+  // ensure clusteredAnnos are re-drawn whenever they change
   useEffect(() => {
     if (plotRef.current) {
       plotRef.current.redraw(false, true);
