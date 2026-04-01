@@ -190,7 +190,7 @@ async function buildScene(options?: BuildSceneOptions) {
 
   const panel = new VizPanel(panelState);
 
-  let variables;
+  let variables: Array<GroupByVariable | AdHocFiltersVariable>;
   if (options?.withoutGroupBy) {
     variables = [];
   } else if (options?.useUnifiedGroupBy && adhocVariable) {
