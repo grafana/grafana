@@ -2094,7 +2094,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
   describe('Provisioned dashboard', () => {
     it('should load a provisioned v1 dashboard', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       fetchMock.mockImplementation(() => of(createFetchResponse(v1ProvisionedDashboardResource)));
 
       const loader = new UnifiedDashboardScenePageStateManager({});
@@ -2105,11 +2104,9 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         ...v1ProvisionedDashboardResource.resource.dryRun.spec,
         version: v1ProvisionedDashboardResource.resource.dryRun.metadata.generation || 0,
       });
-      warnSpy.mockRestore();
     });
 
     it('should load a provisioned v2 dashboard', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       fetchMock.mockImplementation(() => of(createFetchResponse(v2ProvisionedDashboardResource)));
 
       const loader = new UnifiedDashboardScenePageStateManager({});
@@ -2119,7 +2116,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(loader.state.dashboard!.serializer.initialSaveModel).toEqual(
         v2ProvisionedDashboardResource.resource.dryRun.spec
       );
-      warnSpy.mockRestore();
     });
   });
 
