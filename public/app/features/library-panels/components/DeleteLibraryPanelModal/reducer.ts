@@ -1,8 +1,8 @@
 import { createAction } from '@reduxjs/toolkit';
-import { AnyAction } from 'redux';
+import { type AnyAction } from 'redux';
 
 import { LoadingState } from '@grafana/data';
-import { DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 
 export interface DeleteLibraryPanelModalState {
   loadingState: LoadingState;

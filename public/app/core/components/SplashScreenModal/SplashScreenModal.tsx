@@ -1,0 +1,107 @@
+import { css } from '@emotion/css';
+import { useCallback, useState } from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { IconButton, LinkButton, useStyles2 } from '@grafana/ui';
+import { ModalBase } from '@grafana/ui/internal';
+
+import { SplashScreenNav } from './SplashScreenNav';
+import { SplashScreenSlide } from './SplashScreenSlide';
+import { getSplashScreenConfig } from './splashContent';
+
+export function SplashScreenModal() {
+  const [isOpen, setIsOpen] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const styles = useStyles2(getStyles);
+  const config = getSplashScreenConfig();
+
+  const handleDismiss = useCallback(() => setIsOpen(false), []);
+
+  const total = config.features.length;
+  const goToPrev = useCallback(() => setActiveIndex((i) => (i - 1 + total) % total), [total]);
+  const goToNext = useCallback(() => setActiveIndex((i) => (i + 1) % total), [total]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        goToPrev();
+      } else if (e.key === 'ArrowRight') {
+        goToNext();
+      }
+    },
+    [goToPrev, goToNext]
+  );
+
+  if (!isOpen) {
+    return null;
+  }
+
+  const activeFeature = config.features[activeIndex];
+
+  const footer = (
+    <>
+      <SplashScreenNav
+        activeIndex={activeIndex}
+        total={total}
+        onPrev={goToPrev}
+        onNext={goToNext}
+        onGoTo={setActiveIndex}
+      />
+      <LinkButton
+        href={activeFeature.ctaUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        icon="external-link-alt"
+        variant="secondary"
+        fill="outline"
+        size="md"
+      >
+        {activeFeature.ctaText}
+      </LinkButton>
+    </>
+  );
+
+  return (
+    <ModalBase
+      isOpen
+      onDismiss={handleDismiss}
+      aria-label={t('splash-screen.aria-label', "What's new in Grafana")}
+      className={styles.modal}
+    >
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div className={styles.container} onKeyDown={handleKeyDown}>
+        <IconButton
+          name="times"
+          size="lg"
+          onClick={handleDismiss}
+          aria-label={t('splash-screen.close', 'Close')}
+          className={styles.closeButton}
+        />
+        <SplashScreenSlide feature={activeFeature} footer={footer} />
+      </div>
+    </ModalBase>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  modal: css({
+    width: '860px',
+    maxWidth: '95vw',
+    height: '520px',
+    maxHeight: '85vh',
+    padding: 0,
+    overflow: 'hidden',
+  }),
+  container: css({
+    position: 'relative',
+    height: '100%',
+  }),
+  closeButton: css({
+    position: 'absolute',
+    top: theme.spacing(1),
+    right: theme.spacing(1),
+    zIndex: 1,
+    color: theme.colors.text.secondary,
+  }),
+});

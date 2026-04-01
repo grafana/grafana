@@ -1,7 +1,7 @@
-import { LogRowModel } from '@grafana/data';
+import { type LogRowModel } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
-import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
+import { type LogListModel, NEWLINES_REGEX } from '../panel/processing';
 
 /**
  * The presence of this field along log fields determines OTel origin.

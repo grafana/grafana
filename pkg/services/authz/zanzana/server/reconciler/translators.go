@@ -37,8 +37,8 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 		return nil, nil
 	}
 
-	// Create parent relationship tuple: folder:parent -> parent -> folder:child
-	tuple := common.NewFolderParentTuple(parentFolder, folder.Name)
+	// Create parent relationship tuple: folder:child has parent folder:parent
+	tuple := common.NewFolderParentTuple(folder.Name, parentFolder)
 	return []*openfgav1.TupleKey{tuple}, nil
 }
 

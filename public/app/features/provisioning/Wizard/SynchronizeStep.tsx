@@ -1,10 +1,11 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 
@@ -12,7 +13,7 @@ import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData, WizardStep } from './types';
+import { type WizardFormData, type WizardStep } from './types';
 import { getSyncStepStatus } from './utils/getSteps';
 
 export interface SynchronizeStepProps {
@@ -54,6 +55,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();
+  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   useEffect(() => {
     // This useEffect is used to update the step status info based on the repository status and the form errors
@@ -160,7 +162,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
                   Alerts and library panels are not supported in provisioned folders.
                 </Trans>
               </li>
-              {!config.featureToggles.provisioningFolderMetadata && (
+              {!provisioningFolderMetadataEnabled && (
                 <li>
                   <Trans i18nKey="provisioning.wizard.alert-point-permissions">
                     Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer

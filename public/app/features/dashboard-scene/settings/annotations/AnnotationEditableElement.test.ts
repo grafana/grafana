@@ -3,7 +3,7 @@ import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { AnnotationEditableElement, AnnotationLayer } from './AnnotationEditableElement';
+import { AnnotationEditableElement, type AnnotationLayer } from './AnnotationEditableElement';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

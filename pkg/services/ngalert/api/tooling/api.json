@@ -1145,6 +1145,45 @@
    },
    "type": "object"
   },
+  "ExternalAlertmanagerConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/Config"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "ExternalAlertmanagerStatus": {
+   "properties": {
+    "cluster": {
+     "$ref": "#/definitions/clusterStatus"
+    },
+    "config": {
+     "$ref": "#/definitions/Config"
+    },
+    "uptime": {
+     "description": "uptime",
+     "format": "date-time",
+     "type": "string"
+    },
+    "versionInfo": {
+     "$ref": "#/definitions/versionInfo"
+    }
+   },
+   "required": [
+    "cluster",
+    "config",
+    "uptime",
+    "versionInfo"
+   ],
+   "type": "object"
+  },
   "ExtraConfiguration": {
    "properties": {
     "alertmanager_config": {

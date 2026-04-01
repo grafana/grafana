@@ -1,6 +1,10 @@
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from '../serialization/DashboardSceneSerializer';
+import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
+import {
+  type DashboardTrackingInfo,
+  type DynamicDashboardsTrackingInformation,
+} from '../serialization/DashboardSceneSerializer';
 
 let isScenesContextSet = false;
 
@@ -107,6 +111,12 @@ export const DashboardInteractions = {
     reportDashboardInteraction(`${action}_variable_button_clicked`, properties);
   },
 
+  // dashboards_new_section_variable_type_selected
+  // when a user selects a variable type when creating a new section (row/tab) variable
+  newSectionVariableTypeSelected: (properties: { type: string }) => {
+    reportDashboardInteraction('new_section_variable_type_selected', properties);
+  },
+
   // dashboards_variables_reordered
   // when a user drags and drops a variable in the content outline
   variablesReordered: (properties: { source: 'edit_pane' }) => {
@@ -174,6 +184,15 @@ export const DashboardInteractions = {
   },
   panelCancelQueryClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_cancelquery_clicked', properties);
+  },
+
+  //Conditional rendering
+  // track when user clicks on Add and Remove rules button in conditional rendering
+  clickAddConditionalRuleButton: (properties: { ruleId: GroupConditionConditionType }) => {
+    reportDashboardInteraction('click_add_conditional_rule_button', properties);
+  },
+  clickRemoveConditionalRuleButton: (properties: { ruleId: GroupConditionConditionType }) => {
+    reportDashboardInteraction('click_remove_conditional_rule_button', properties);
   },
 
   // Dashboard interactions from toolbar

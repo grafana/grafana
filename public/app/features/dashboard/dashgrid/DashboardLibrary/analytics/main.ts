@@ -1,16 +1,14 @@
 import { defineFeatureEvents } from '@grafana/runtime/internal';
 
-import { FEATURE_VARIANTS } from '../constants';
-
 import {
-  CompatibilityCheckCompletedProperties,
-  CompatibilityCheckTriggeredProperties,
-  EntryPointClickedProperties,
-  ItemClickedProperties,
-  LoadedProperties,
-  MappingFormCompletedProperties,
-  MappingFormShownProperties,
-  SearchPerformedProperties,
+  type CompatibilityCheckCompletedProperties,
+  type CompatibilityCheckTriggeredProperties,
+  type EntryPointClickedProperties,
+  type ItemClickedProperties,
+  type LoadedProperties,
+  type MappingFormCompletedProperties,
+  type MappingFormShownProperties,
+  type SearchPerformedProperties,
 } from './types';
 
 const SCHEMA_VERSION = 1;
@@ -38,32 +36,4 @@ export const NewTemplateDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
   itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked'),
   loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
-};
-
-export const NewSuggestedDashboardInteractions = {
-  ...NewDashboardLibraryInteractions,
-  itemClicked: (props: ItemClickedProperties) =>
-    newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
-    }),
-  loaded: (props: LoadedProperties) =>
-    newDashboardLibraryInteraction<LoadedProperties>('loaded')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
-    }),
-};
-
-export const NewBasicProvisionedDashboardInteractions = {
-  ...NewDashboardLibraryInteractions,
-  itemClicked: (props: ItemClickedProperties) =>
-    newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    }),
-  loaded: (props: LoadedProperties) =>
-    newDashboardLibraryInteraction<LoadedProperties>('loaded')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    }),
 };

@@ -32,54 +32,6 @@
         }
       }
     },
-    "/connections/{name}/query": {
-      "post": {
-        "tags": ["Connections (deprecated)"],
-        "description": "connect POST requests to query of QueryDataResponse",
-        "operationId": "createQueryDataResponseQuery",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueryDataResponse"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true,
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "QueryDataResponse",
-          "version": "v0alpha1"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the QueryDataResponse",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/datasources": {
       "get": {
         "tags": ["DataSource"],
@@ -879,7 +831,7 @@
       "post": {
         "tags": ["DataSource"],
         "description": "Query the TestData datasources",
-        "operationId": "createDataSourceQuery",
+        "operationId": "queryDataSource",
         "requestBody": {
           "content": {
             "application/json": {
@@ -912,7 +864,7 @@
         {
           "name": "name",
           "in": "path",
-          "description": "name of the QueryDataResponse",
+          "description": "DataSource identifier",
           "required": true,
           "schema": {
             "type": "string",

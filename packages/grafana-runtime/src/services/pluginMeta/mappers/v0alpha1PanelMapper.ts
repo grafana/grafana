@@ -146,6 +146,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;
+  const aliasIDs = spec.aliasIds;
 
   return {
     id,
@@ -164,6 +165,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
     type,
     translations,
     moduleHash,
+    aliasIDs,
   };
 }
 

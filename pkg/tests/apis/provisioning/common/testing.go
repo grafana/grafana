@@ -1,9 +1,11 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -35,7 +37,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -284,96 +286,114 @@ func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 func (h *ProvisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 	t.Helper()
 
-	// First, we wait for all current jobs for the repository to disappear (i.e. complete/fail).
-	j, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
-	require.NoError(t, err, "failed to list active jobs")
-
-	waitUntilComplete := map[string]bool{}
-	for _, item := range j.Items {
-		annotations := item.GetLabels()
-		if annotations[jobs.LabelRepository] == repoName {
-			waitUntilComplete[item.GetName()] = false
+	// Retry the full wait-and-check cycle to handle transient failures (e.g. network timeouts
+	// when syncing from external Git repositories like GitHub).
+	const maxRetries = 2
+	for attempt := range maxRetries + 1 {
+		if attempt > 0 {
+			t.Logf("AwaitJobs: sync for %s completed with errors, retrying (attempt %d/%d)", repoName, attempt+1, maxRetries+1)
 		}
-	}
 
-	// if no active jobs for this repo, queue a pull job as a failsafe to try to ensure we are up to date as much as possible
-	if len(waitUntilComplete) == 0 {
-		body := AsJSON(&provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
-		})
-
-		h.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repoName).
-			SubResource("jobs").
-			Body(body).
-			SetHeader("Content-Type", "application/json").
-			Do(context.Background())
-
-		j, err = h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+		// Wait for all current jobs for the repository to disappear (i.e. complete/fail).
+		j, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err, "failed to list active jobs")
 
+		waitUntilComplete := map[string]bool{}
 		for _, item := range j.Items {
 			annotations := item.GetLabels()
 			if annotations[jobs.LabelRepository] == repoName {
 				waitUntilComplete[item.GetName()] = false
 			}
 		}
-	}
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		for elem := range waitUntilComplete {
-			_, err := h.Jobs.Resource.Get(context.Background(), elem, metav1.GetOptions{})
-			switch {
-			case err == nil:
-				collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
-				return
-			case apierrors.IsNotFound(err):
-				// yay
-				waitUntilComplete[elem] = true
-			default:
-				collect.Errorf("get(%s) for repo %s: %v", elem, repoName, err)
-				return
+		// if no active jobs for this repo, queue a pull job as a failsafe to try to ensure we are up to date as much as possible
+		if len(waitUntilComplete) == 0 {
+			body := AsJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionPull,
+				Pull:   &provisioning.SyncJobOptions{},
+			})
+
+			h.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repoName).
+				SubResource("jobs").
+				Body(body).
+				SetHeader("Content-Type", "application/json").
+				Do(context.Background())
+
+			j, err = h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+			require.NoError(t, err, "failed to list active jobs")
+
+			for _, item := range j.Items {
+				annotations := item.GetLabels()
+				if annotations[jobs.LabelRepository] == repoName {
+					waitUntilComplete[item.GetName()] = false
+				}
 			}
 		}
-		for elem, isComplete := range waitUntilComplete {
-			if !isComplete {
-				collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			for elem := range waitUntilComplete {
+				_, err := h.Jobs.Resource.Get(context.Background(), elem, metav1.GetOptions{})
+				switch {
+				case err == nil:
+					collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
+					return
+				case apierrors.IsNotFound(err):
+					waitUntilComplete[elem] = true
+				default:
+					collect.Errorf("get(%s) for repo %s: %v", elem, repoName, err)
+					return
+				}
+			}
+			for elem, isComplete := range waitUntilComplete {
+				if !isComplete {
+					collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
+					return
+				}
+			}
+		}, WaitTimeoutDefault, WaitIntervalDefault, "jobs for %s should finish. status: %v", repoName, waitUntilComplete)
+
+		// Then wait for them to be listed as historic jobs
+		var list *unstructured.UnstructuredList
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
+			if !assert.NoError(collect, err, "failed to list historic jobs") {
 				return
 			}
-		}
-	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs for %s should finish. status: %v", repoName, waitUntilComplete)
+			list, err = result.ToList()
+			if !assert.NoError(collect, err, "results should be a list") {
+				return
+			}
+			if !assert.NotEmpty(collect, list.Items, "expect at least one job") {
+				return
+			}
+		}, WaitTimeoutDefault, WaitIntervalDefault, "failed to list historic jobs")
 
-	// Then wait for them to be listed as historic jobs
-	var list *unstructured.UnstructuredList
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
-		if !assert.NoError(collect, err, "failed to list historic jobs") {
+		// Check that all the jobs are successful
+		successCount := 0
+		for _, elem := range list.Items {
+			require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
+
+			// historic jobs will have a suffix of -<hash>, trim that to see if the job is one we were waiting on
+			if _, ok := waitUntilComplete[getNameBeforeLastDash(elem.GetName())]; ok && (MustNestedString(elem.Object, "status", "state") != string(provisioning.JobStateError)) {
+				successCount++
+			}
+		}
+
+		// can be greater if a pull job was queued by a background task
+		if successCount >= len(waitUntilComplete) {
 			return
 		}
-		list, err = result.ToList()
-		if !assert.NoError(collect, err, "results should be a list") {
-			return
-		}
-		if !assert.NotEmpty(collect, list.Items, "expect at least one job") {
-			return
-		}
-	}, WaitTimeoutDefault, WaitIntervalDefault, "failed to list historic jobs")
 
-	// finally check that all the jobs are successful
-	successCount := 0
-	for _, elem := range list.Items {
-		require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
-
-		// historic jobs will have a suffix of -<hash>, trim that to see if the job is one we were waiting on
-		if _, ok := waitUntilComplete[getNameBeforeLastDash(elem.GetName())]; ok && (MustNestedString(elem.Object, "status", "state") != string(provisioning.JobStateError)) {
-			successCount++
+		// On the final attempt, fail the test with a descriptive message
+		if attempt == maxRetries {
+			require.GreaterOrEqual(t, successCount, len(waitUntilComplete),
+				"should have all original jobs we were waiting on successful after %d attempt(s). got: %v. expected: %v",
+				maxRetries+1, list.Items, waitUntilComplete)
 		}
 	}
-	// can be greater if a pull job was queued by a background task
-	require.GreaterOrEqual(t, successCount, len(waitUntilComplete), "should have all original jobs we were waiting on successful. got: %v. expected: %v", list.Items, waitUntilComplete)
 }
 
 func getNameBeforeLastDash(name string) string {
@@ -1304,6 +1324,143 @@ func (h *ProvisioningTestHelper) PostFilesRequest(t *testing.T, repo string, opt
 	require.NoError(t, err)
 
 	return resp
+}
+
+// FilesClient provides convenience methods for interacting with the provisioning
+// files subresource (/repositories/{repo}/files/{path}) via direct HTTP.
+// It avoids the Kubernetes REST client limitation with '/' in subresource names.
+type FilesClient struct {
+	helper *ProvisioningTestHelper
+	repo   string
+	user   string // basic-auth credentials, e.g. "admin:admin"
+}
+
+// NewFilesClient returns a FilesClient for the given repo using admin credentials.
+func (h *ProvisioningTestHelper) NewFilesClient(repo string) *FilesClient {
+	return &FilesClient{helper: h, repo: repo, user: "admin:admin"}
+}
+
+// WithUser returns a copy of the client that authenticates as user (e.g. "editor:editor").
+func (c *FilesClient) WithUser(user string) *FilesClient {
+	return &FilesClient{helper: c.helper, repo: c.repo, user: user}
+}
+
+// URL returns the full HTTP URL for the given file or directory path.
+func (c *FilesClient) URL(filePath string) string {
+	addr := c.helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	return fmt.Sprintf("http://%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
+		c.user, addr, c.repo, filePath)
+}
+
+// FilesResponse holds the status code and body from a files endpoint request.
+type FilesResponse struct {
+	StatusCode int
+	Body       []byte
+}
+
+// BodyString returns the response body as a string.
+func (r *FilesResponse) BodyString() string { return string(r.Body) }
+
+// Do executes an HTTP request to the files endpoint and returns the response.
+// The response body is read and closed before returning.
+func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *FilesResponse {
+	t.Helper()
+	var bodyReader io.Reader
+	if body != nil {
+		bodyReader = bytes.NewReader(body)
+	}
+	req, err := http.NewRequest(method, c.URL(filePath), bodyReader)
+	require.NoError(t, err)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return &FilesResponse{StatusCode: resp.StatusCode, Body: respBody}
+}
+
+// Post sends a POST request to the given path with no body.
+func (c *FilesClient) Post(t *testing.T, filePath string) *FilesResponse {
+	t.Helper()
+	return c.Do(t, http.MethodPost, filePath, nil)
+}
+
+// Put sends a PUT request to the given path with a JSON body.
+func (c *FilesClient) Put(t *testing.T, filePath string, body []byte) *FilesResponse {
+	t.Helper()
+	return c.Do(t, http.MethodPut, filePath, body)
+}
+
+// Delete sends a DELETE request to the given path.
+func (c *FilesClient) Delete(t *testing.T, filePath string) *FilesResponse {
+	t.Helper()
+	return c.Do(t, http.MethodDelete, filePath, nil)
+}
+
+// FolderBody builds a JSON-encoded Folder resource for PUT requests.
+// uid is optional — pass an empty string to omit metadata.name.
+// title is required for most mutations but may be empty to test validation.
+func FolderBody(t *testing.T, uid, title string) []byte {
+	t.Helper()
+	f := folder.Folder{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: folder.GroupVersion.String(),
+			Kind:       "Folder",
+		},
+		Spec: folder.FolderSpec{Title: title},
+	}
+	if uid != "" {
+		f.Name = uid
+	}
+	data, err := json.Marshal(f)
+	require.NoError(t, err)
+	return data
+}
+
+// ReadFolderUID reads the folder UID (metadata.name) from the _folder.json at the given path.
+func (c *FilesClient) ReadFolderUID(t *testing.T, ctx context.Context, metadataPath string) string {
+	t.Helper()
+	return c.readFolderField(t, ctx, metadataPath, "metadata", "name")
+}
+
+// ReadFolderTitle reads the folder title (spec.title) from the _folder.json at the given path.
+func (c *FilesClient) ReadFolderTitle(t *testing.T, ctx context.Context, metadataPath string) string {
+	t.Helper()
+	return c.readFolderField(t, ctx, metadataPath, "spec", "title")
+}
+
+func (c *FilesClient) readFolderField(t *testing.T, ctx context.Context, metadataPath string, fields ...string) string {
+	t.Helper()
+	wrapObj, err := c.helper.Repositories.Resource.Get(ctx, c.repo, metav1.GetOptions{}, "files", metadataPath)
+	require.NoError(t, err, "%s: should be readable via the files endpoint", metadataPath)
+	keyPath := append([]string{"resource", "file"}, fields...)
+	val, _, _ := unstructured.NestedString(wrapObj.Object, keyPath...)
+	return val
+}
+
+// RequireValidFolderMetadata reads the _folder.json at folderPath/_folder.json,
+// asserts it has a valid apiVersion, kind, non-empty UID and title, and returns (uid, title).
+func (c *FilesClient) RequireValidFolderMetadata(t *testing.T, ctx context.Context, folderMetadataPath string) (uid, title string) {
+	t.Helper()
+	wrapObj, err := c.helper.Repositories.Resource.Get(ctx, c.repo, metav1.GetOptions{}, "files", folderMetadataPath)
+	require.NoError(t, err, "%s: _folder.json should be readable via the files endpoint", folderMetadataPath)
+
+	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
+	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion, "%s: unexpected apiVersion", folderMetadataPath)
+	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
+	require.Equal(t, "Folder", kind, "%s: unexpected kind", folderMetadataPath)
+
+	uid, _, _ = unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
+	require.NotEmpty(t, uid, "%s: should have a non-empty UID", folderMetadataPath)
+	title, _, _ = unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
+	require.NotEmpty(t, title, "%s: should have a non-empty title", folderMetadataPath)
+
+	return uid, title
 }
 
 // PrintFileTree prints the directory structure as a tree for debugging purposes
