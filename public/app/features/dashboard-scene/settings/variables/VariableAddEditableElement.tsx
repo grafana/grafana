@@ -29,7 +29,7 @@ import { type EditableVariableType, getNextAvailableId, getVariableScene, getVar
 
 export function openAddVariablePane(dashboard: DashboardScene) {
   const element = new VariableAdd({ dashboardRef: dashboard.getRef() });
-  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
+  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false, canGoBack: true });
 }
 
 export function openAddSectionVariablePane(dashboard: DashboardScene, sectionOwner: SceneObject) {
@@ -37,7 +37,8 @@ export function openAddSectionVariablePane(dashboard: DashboardScene, sectionOwn
     dashboardRef: dashboard.getRef(),
     sectionOwnerRef: sectionOwner.getRef(),
   });
-  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
+
+  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false, canGoBack: true });
 }
 
 export interface VariableAddState extends SceneObjectState {

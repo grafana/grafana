@@ -34,8 +34,10 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
     DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
   };
 
+  const onGoBack = editPane.state.previousState ? () => editPane.goBackToPrevious() : undefined;
+
   return (
-    <Sidebar.PaneHeader title={elementInfo.typeName}>
+    <Sidebar.PaneHeader title={elementInfo.typeName} onGoBack={onGoBack}>
       <Stack direction="row" gap={1}>
         {element.renderActions && element.renderActions()}
         {(onCopy || onDuplicate) && (

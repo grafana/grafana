@@ -32,6 +32,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
   redoStack: DashboardEditActionEventPayload[];
   openPane?: DashboardSidebarPaneName;
   isDocked?: boolean;
+  previousState?: DashboardEditPaneState;
 }
 
 export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'code';
@@ -249,14 +250,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       }
     }
 
-    this.selectObject(obj, obj.state.key!, options);
+    this.selectObject(obj, obj.state.key!, { ...options, canGoBack: true });
   }
 
   public getSelection(): SceneObject | SceneObject[] | undefined {
     return this.state.selection?.getSelection();
   }
 
-  public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+  public selectObject(obj: SceneObject, id: string, { multi, force, canGoBack }: ElementSelectionOnSelectOptions = {}) {
     if (!force) {
       if (multi) {
         if (this.state.selection?.hasValue(id)) {
@@ -274,7 +275,22 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
     const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
-    this.updateSelection(new ElementSelection(selection), selected);
+    this.updateSelection(new ElementSelection(selection), selected, canGoBack);
+  }
+
+  public goBackToPrevious() {
+    const prevState = this.state.previousState;
+
+    if (!prevState) {
+      return;
+    }
+
+    this.setState({
+      selection: prevState.selection,
+      selectionContext: prevState.selectionContext,
+      previousState: prevState.previousState,
+      openPane: prevState.openPane,
+    });
   }
 
   private removeMultiSelectedObject(id: string) {
@@ -292,7 +308,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.updateSelection(new ElementSelection([...entries]), selected);
   }
 
-  private updateSelection(selection: ElementSelection | undefined, selected: ElementSelectionContextItem[]) {
+  public updateSelection(
+    selection: ElementSelection | undefined,
+    selected: ElementSelectionContextItem[],
+    canGoBack = false
+  ) {
     // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
     // This make sure they fire before unmounting
     if (document.activeElement instanceof HTMLElement) {
@@ -303,6 +323,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       selection,
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selection ? 'element' : undefined,
+      previousState: canGoBack ? this.state : undefined,
     });
   }
 

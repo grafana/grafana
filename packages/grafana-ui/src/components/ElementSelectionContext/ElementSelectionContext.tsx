@@ -6,6 +6,11 @@ export interface ElementSelectionOnSelectOptions {
 
   /** If true, this will make sure the element is selected */
   force?: boolean;
+
+  /**
+   * Enable go back action
+   */
+  canGoBack?: boolean;
 }
 
 /** @alpha */

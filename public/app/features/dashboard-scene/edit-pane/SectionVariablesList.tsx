@@ -88,6 +88,7 @@ export function SectionVariablesList({ sectionOwner }: SectionVariablesListProps
           onClick={() =>
             dashboard.state.editPane.selectObject(variable, variable.state.key ?? variable.state.name, {
               force: true,
+              canGoBack: true,
             })
           }
         >

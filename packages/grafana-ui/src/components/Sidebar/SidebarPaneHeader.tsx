@@ -14,9 +14,10 @@ import { SidebarContext } from './useSidebar';
 export interface Props {
   children?: ReactNode;
   title: string;
+  onGoBack?: () => void;
 }
 
-export function SidebarPaneHeader({ children, title }: Props) {
+export function SidebarPaneHeader({ children, title, onGoBack }: Props) {
   const styles = useStyles2(getStyles);
   const context = useContext(SidebarContext);
 
@@ -26,7 +27,17 @@ export function SidebarPaneHeader({ children, title }: Props) {
 
   return (
     <div className={styles.wrapper}>
-      {context.onClosePane && (
+      {onGoBack && (
+        <IconButton
+          variant="secondary"
+          size="lg"
+          name="arrow-left"
+          onClick={onGoBack}
+          aria-label={t('grafana-ui.sidebar.go-back', 'Go back')}
+          tooltip={t('grafana-ui.sidebar.go-back', 'Go back')}
+        />
+      )}
+      {!onGoBack && context.onClosePane && (
         <IconButton
           variant="secondary"
           size="lg"
