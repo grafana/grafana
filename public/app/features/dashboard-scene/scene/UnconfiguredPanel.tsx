@@ -55,6 +55,9 @@ function hasSavedQueryReadPermissions(): boolean {
     : contextSrv.isSignedIn;
 }
 
+// Delegates to NewUnconfiguredPanelComp (animated hover-reveal buttons) when the
+// newUnconfiguredPanel feature toggle is on, otherwise falls back to LegacyUnconfiguredPanelComp
+// (ButtonGroup + dropdown). Two separate components avoid React hooks-in-conditionals violations.
 export function UnconfiguredPanelComp(props: PanelProps) {
   if (config.featureToggles.newUnconfiguredPanel) {
     return <NewUnconfiguredPanelComp {...props} />;

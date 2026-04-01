@@ -56,6 +56,8 @@ export async function getVizSuggestionForQuery(
   return suggestions[0];
 }
 
+// Inlined here (rather than imported from utils/utils.ts) to avoid a circular dependency:
+// getVizSuggestionForQuery → utils → DashboardScene → UnconfiguredPanel → getVizSuggestionForQuery
 function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
   if (!sceneObject) {
     return undefined;
@@ -72,7 +74,8 @@ function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunn
 
 /**
  * Applies a saved query and its top viz suggestion to an unconfigured panel:
- * changes the plugin type, sets the datasource and query on the runner, and triggers execution.
+ * changes the plugin type, optionally updates the panel title, sets the datasource
+ * and query on the runner, and triggers execution.
  */
 export async function applyQueryToPanel(
   panel: VizPanel,
