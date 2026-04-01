@@ -3,7 +3,7 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import { CoreApp, getDefaultTimeRange, type PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';

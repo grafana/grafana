@@ -3,20 +3,20 @@ import { filter } from 'rxjs/operators';
 
 import {
   CoreApp,
-  DataFrame,
+  type DataFrame,
   getDefaultTimeRange,
   LoadingState,
-  PanelPluginVisualizationSuggestion,
-  TimeRange,
+  type PanelPluginVisualizationSuggestion,
+  type TimeRange,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 import { getQueryRunnerFor } from './utils';
 
