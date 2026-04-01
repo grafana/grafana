@@ -375,12 +375,15 @@ jobs:
           build-id: ${{ github.run_id }}
           cache-builders: true
       - name: Stage package artifacts for upload
+        env:
+          BUILD_FILE: ${{ steps.build.outputs.file }}
+          BUILD_DIST_DIR: ${{ steps.build.outputs.dist-dir }}
         run: |
           set -euo pipefail
           mkdir -p "upload/artifacts-list-${{ matrix.name }}"
-          cp "${{ steps.build.outputs.file }}" "upload/artifacts-list-${{ matrix.name }}/"
+          cp "$BUILD_FILE" "upload/artifacts-list-${{ matrix.name }}/"
           mkdir -p "upload/artifacts-${{ matrix.name }}"
-          cp -R "${{ steps.build.outputs.dist-dir }}/." "upload/artifacts-${{ matrix.name }}/"
+          cp -R "$BUILD_DIST_DIR/." "upload/artifacts-${{ matrix.name }}/"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-${{ matrix.name }}
