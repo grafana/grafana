@@ -4,6 +4,10 @@ import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { isResourceReconciled } from '../../utils/repositoryStatus';
 
+// Fallback polling interval in case the Grafana Live watch stream
+// fails to deliver status updates (e.g. WebSocket blocked by proxy).
+const RECONCILIATION_POLL_MS = 5000;
+
 export function useRepositoryStatus(repoName?: string) {
   const query = useListRepositoryQuery(
     repoName
@@ -11,7 +15,8 @@ export function useRepositoryStatus(repoName?: string) {
           fieldSelector: `metadata.name=${repoName}`,
           watch: true,
         }
-      : skipToken
+      : skipToken,
+    { pollingInterval: RECONCILIATION_POLL_MS }
   );
 
   const repository = query.data?.items?.[0];
