@@ -57,6 +57,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
+// Pin kin-openapi to avoid maps.Copy incompatibility with openapi3.StringMap
+replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.133.0
+
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
 
 replace github.com/protocolbuffers/txtpbfmt => github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b
