@@ -10,22 +10,12 @@ on:
         required: true
         description: The version being released (NO v prefix)
         type: string
-      latest:
-        required: false
-        default: false
-        description: Whether this is the latest release
-        type: boolean
   workflow_dispatch:
     inputs:
       version:
         required: true
         description: The version being released (NO v prefix)
         type: string
-      latest:
-        required: false
-        default: false
-        description: Whether this is the latest release
-        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -89,15 +79,10 @@ jobs:
         id: create-deploy-name
         run: |
           if [[ -n "${{ inputs.version }}" ]]; then
-            if ${{ inputs.latest }}; then
-              echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            echo "This is a release but not the latest release; skipping storybook deploy"
-            exit 1
+            echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
           fi
-
-          echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GCS
         id: login-to-gcs
