@@ -114,7 +114,10 @@ export class AnnotationEditableElement implements EditableDashboardElement {
 
     annotationEditActions.addAnnotation({
       source: dataLayerSet,
-      addedObject: this.layer.clone({ key: undefined }),
+      addedObject: this.layer.clone({
+        key: undefined,
+        name: `${this.layer.state.name} - Copy`,
+      }),
     });
   }
 

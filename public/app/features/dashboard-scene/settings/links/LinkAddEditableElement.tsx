@@ -211,7 +211,8 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();
     const { links } = dashboard.state;
 
-    const link = links[this.linkEdit.state.linkIndex];
+    const link = { ...links[this.linkEdit.state.linkIndex] };
+    link.title = `${link.title} - Copy`;
     const linkEdit = createLinkEdit(dashboard, this.linkEdit.state.linkIndex);
 
     linkEditActions.addLink({ dashboard, link, addedObject: linkEdit });

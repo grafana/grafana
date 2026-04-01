@@ -65,7 +65,7 @@ describe('AnnotationEditableElement', () => {
         expect(cloned).not.toBe(annotations[0]);
         expect(cloned.state.key).not.toBe(annotations[0].state.key);
 
-        expect(cloned.state.name).toBe(annotations[0].state.name);
+        expect(cloned.state.name).toBe(`${annotations[0].state.name} - Copy`);
         expect(cloned.state.query).toEqual(annotations[0].state.query);
       });
     });

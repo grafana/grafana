@@ -105,7 +105,7 @@ export const DashboardInteractions = {
     reportDashboardInteraction('new_variable_type_selected', properties);
   },
 
-  // variableActionButtonClicked
+  // duplicate_variable_button_clicked & delete_variable_button_clicked
   // when a user performs an action on a variable
   variableActionButtonClicked: (action: 'duplicate' | 'delete', properties: { type: string }) => {
     reportDashboardInteraction(`${action}_variable_button_clicked`, properties);

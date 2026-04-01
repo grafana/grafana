@@ -51,7 +51,7 @@ describe('VariableEditableElement', () => {
         expect(cloned).not.toBe(var1);
         expect(cloned.state.key).not.toBe(var1.state.key);
 
-        expect(cloned.state.name).toBe(var1.state.name);
+        expect(cloned.state.name).toBe(`${var1.state.name}_copy2`);
         expect(cloned.state.query).toBe(var1.state.query);
 
         expect(variableActionButtonClickedMock).toHaveBeenCalledWith('duplicate', { type: 'custom' });

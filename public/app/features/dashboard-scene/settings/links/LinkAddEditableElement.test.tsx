@@ -167,7 +167,7 @@ describe('LinkAddEditableElement', () => {
         element.onDuplicate();
 
         expect(dashboard.state.links).toHaveLength(4);
-        expect(dashboard.state.links.map((l) => l.title)).toEqual(['First', 'Second', 'Third', 'Second']);
+        expect(dashboard.state.links.map((l) => l.title)).toEqual(['First', 'Second', 'Third', 'Second - Copy']);
       });
     });
 
