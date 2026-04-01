@@ -1,5 +1,5 @@
 import { css, cx, type keyframes } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { AppEvents, CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
@@ -65,14 +65,32 @@ export function UnconfiguredPanelComp(props: PanelProps) {
   return <LegacyUnconfiguredPanelComp {...props} />;
 }
 
+// PanelPlugin components receive PanelProps and have no SceneObject parent reference,
+// so window.__grafanaSceneContext is the only available mechanism to reach the DashboardScene.
+// We subscribe to state changes via subscribeToState so isEditing triggers re-renders.
+function useUnconfiguredPanelDashboard(): { dashboard: DashboardScene | null; isEditing: boolean } {
+  const ctx = window.__grafanaSceneContext;
+  const dashboard = ctx instanceof DashboardScene ? ctx : null;
+  const [isEditing, setIsEditing] = useState(() => dashboard?.state.isEditing ?? false);
+
+  useEffect(() => {
+    if (!dashboard) {
+      return;
+    }
+    const sub = dashboard.subscribeToState((state) => setIsEditing(state.isEditing));
+    return () => sub.unsubscribe();
+  }, [dashboard]);
+
+  return { dashboard, isEditing };
+}
+
 function NewUnconfiguredPanelComp(props: PanelProps) {
   const panelContext = usePanelContext();
   const styles = useStyles2(getStyles);
   const { openDrawer, queryLibraryEnabled = false } = useQueryLibraryContext();
 
-  const dashboard = window.__grafanaSceneContext;
+  const { dashboard, isEditing } = useUnconfiguredPanelDashboard();
   const panelKey = getVizPanelKeyForPanelId(props.id);
-  const isEditing = dashboard instanceof DashboardScene ? dashboard.state.isEditing : false;
 
   const [measureRef, { width, height }] = useMeasure<HTMLDivElement>();
   const isCompact = width < 175 && height < 150;
@@ -296,12 +314,11 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
     DashboardInteractions.panelActionClicked('configure', props.id, 'panel');
   };
 
-  const dashboard = window.__grafanaSceneContext;
-  const panel =
-    dashboard instanceof DashboardScene ? findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(props.id)) : null;
+  const { dashboard, isEditing } = useUnconfiguredPanelDashboard();
+  const panel = dashboard ? findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(props.id)) : null;
 
   const onUseLibraryPanel = () => {
-    if (!dashboard || !(dashboard instanceof DashboardScene)) {
+    if (!dashboard) {
       throw new Error('DashboardScene not found');
     }
 
@@ -345,8 +362,6 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
       </div>
     );
   }
-
-  const { isEditing } = dashboard instanceof DashboardScene ? dashboard.state : { isEditing: false };
 
   return (
     <Stack direction={'row'} alignItems={'center'} height={'100%'} justifyContent={'center'}>
