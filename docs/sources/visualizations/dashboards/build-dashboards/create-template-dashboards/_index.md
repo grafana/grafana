@@ -90,7 +90,6 @@ To build a dashboard from suggestions, follow these steps:
    In Grafana Cloud, you also have the option to [customize the suggested dashboard using Grafana Assistant](#customize-templates-and-suggested-dashboards-with-grafana-assistant).
 
 1. (Optional) Do one or more of the following:
-
    - If there are more than six suggested dashboards, use the page numbers or arrow buttons at the bottom of the dialog box to navigate between pages of suggestions.
    - To find a specific dashboard, enter the name of the dashboard in the search bar.
    - If, after viewing the suggested dashboard, you find it doesn't meet your needs, go back and choose a different suggestion or start a new dashboard by clicking one of the options in the banner:
