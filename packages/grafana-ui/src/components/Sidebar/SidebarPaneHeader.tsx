@@ -14,9 +14,11 @@ import { SidebarContext } from './useSidebar';
 export interface Props {
   children?: ReactNode;
   title: string;
+  /** Renders immediately after the title, before the flex-grow spacer (stays left-aligned). */
+  titleSuffix?: ReactNode;
 }
 
-export function SidebarPaneHeader({ children, title }: Props) {
+export function SidebarPaneHeader({ children, title, titleSuffix }: Props) {
   const styles = useStyles2(getStyles);
   const context = useContext(SidebarContext);
 
@@ -40,6 +42,7 @@ export function SidebarPaneHeader({ children, title }: Props) {
       <Text weight="medium" variant="h6" truncate data-testid="sidebar-pane-header-title">
         {title}
       </Text>
+      {titleSuffix}
       <div className={styles.flexGrow} />
       {children}
     </div>
