@@ -240,6 +240,7 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
       isObjectSupported={true}
       model={model}
       title={t('dashboard.conditional-rendering.conditions.time-range-size.label', 'Time range less than')}
+      ruleId="timeRangeSize"
     >
       <Field
         invalid={!isValid}

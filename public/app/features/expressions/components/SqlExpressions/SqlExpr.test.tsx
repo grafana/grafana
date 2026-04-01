@@ -132,6 +132,7 @@ describe('Schema Inspector feature toggle', () => {
     testWithFeatureToggles({ enable: ['queryService', 'grafanaAPIServerWithExperimentalAPIs'] });
 
     afterEach(() => {
+      localStorage.removeItem('grafana.sql-expression.schema-inspector-open');
       mockBackendSrv.post.mockResolvedValue({
         kind: 'SQLSchemaResponse',
         apiVersion: 'query.grafana.app/v0alpha1',

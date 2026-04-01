@@ -4,6 +4,7 @@ import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ValuePicker } from '@grafana/ui';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import { type ObjectsWithConditionalRendering } from '../object';
 
 import { type GroupConditionConditionType } from './types';
@@ -36,6 +37,11 @@ export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }
     return allOptions;
   }, [objectType, hasVariables]);
 
+  const onAddRuleClick = (option: SelectableValue<GroupConditionConditionType>) => {
+    DashboardInteractions.clickAddConditionalRuleButton({ ruleId: option.value! });
+    onAdd(option);
+  };
+
   return (
     <ValuePicker
       isFullWidth
@@ -44,7 +50,7 @@ export const ConditionalRenderingGroupAdd = ({ objectType, hasVariables, onAdd }
       variant="secondary"
       label={t('dashboard.conditional-rendering.conditions.group.add.button', 'Add rule')}
       options={options}
-      onChange={(option) => onAdd(option)}
+      onChange={(option) => onAddRuleClick(option)}
     />
   );
 };

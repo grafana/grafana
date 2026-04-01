@@ -40,7 +40,6 @@ export function TransformationActionButtons() {
     return null;
   }
 
-  const hasHelp = selectedTransformation.registryItem?.help;
   const config = selectedTransformation.transformConfig;
 
   // Show filter button as active if filter property exists on the transformation config
@@ -65,20 +64,18 @@ export function TransformationActionButtons() {
 
   return (
     <Stack gap={1}>
-      {hasHelp && (
-        <Button
-          size="sm"
-          fill="text"
-          icon="question-circle"
-          variant={transformToggles.showHelp ? 'primary' : 'secondary'}
-          onClick={() => {
-            trackTransformationToolAction('toggle_help');
-            transformToggles.toggleHelp();
-          }}
-          tooltip={helpLabel}
-          aria-label={helpLabel}
-        />
-      )}
+      <Button
+        size="sm"
+        fill="text"
+        icon="question-circle"
+        variant={transformToggles.showHelp ? 'primary' : 'secondary'}
+        onClick={() => {
+          trackTransformationToolAction('toggle_help');
+          transformToggles.toggleHelp();
+        }}
+        tooltip={helpLabel}
+        aria-label={helpLabel}
+      />
 
       {showFilterButton && (
         <Button
