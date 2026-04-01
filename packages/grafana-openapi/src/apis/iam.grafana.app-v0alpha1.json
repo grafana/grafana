@@ -897,6 +897,30 @@
             }
           },
           {
+            "name": "uid",
+            "in": "query",
+            "description": "filter by team UIDs. Mutually exclusive with teamId.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "description": "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
+            "deprecated": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "description": "limit the number of results",
