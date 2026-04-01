@@ -5662,10 +5662,16 @@
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "auto-grid": "",
+      "auto-grid-description": "",
+      "custom-grid": "",
+      "custom-grid-description": "",
       "description": "Añade un panel para visualizar tus datos",
       "import-a-dashboard-body": "Importa dashboards desde archivos o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control",
+      "layout-default-hint": "",
+      "select-layout-header": "",
       "title": "Nuevo dashboard"
     },
     "errors": {
@@ -6989,6 +6995,12 @@
       "sql-transformation-description": "Manipula tus datos utilizando una sintaxis similar a MySQL"
     },
     "general-settings-edit-view": {
+      "default_grid_options": {
+        "label": {
+          "auto": "",
+          "custom": ""
+        }
+      },
       "editable_options": {
         "label": {
           "editable": "Editable",
@@ -7740,6 +7752,8 @@
     "general": {
       "auto-refresh-description": "Define los intervalos de actualización automática que deben estar disponibles en la lista de actualización automática. Utiliza el formato «5 s» para los segundos, «1 m» para los minutos, «1 h» para las horas y «1 d» para los días (por ejemplo: «5 s, 10 s, 30 s, 1 m, 5 m, 15 m, 30 m, 1 h, 2 h, 1 d»).",
       "auto-refresh-label": "Actualización automática",
+      "default-grid-description": "",
+      "default-grid-label": "",
       "description-label": "Descripción",
       "editable-description": "Establecer como de solo lectura para desactivar toda la edición. Recargar el tablero para que los cambios surtan efecto",
       "editable-label": "Editable",
@@ -13000,6 +13014,10 @@
       "folders-count_one": "{{count}} carpeta",
       "folders-count_other": "{{count}} carpetas"
     },
+    "cloud-info-box": {
+      "body": "",
+      "title": ""
+    },
     "code-block": {
       "aria-label-copy": "Copiar código al portapapeles"
     },
@@ -14679,10 +14697,46 @@
     "select-aria-label": "Ordenar"
   },
   "splash-screen": {
-    "body": "",
+    "aria-label": "",
+    "assistant": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "badge": "",
     "close": "",
-    "get-started": "",
-    "title": ""
+    "explore": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "git-sync": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "library": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "nav": {
+      "go-to": "",
+      "next": "",
+      "prev": ""
+    }
   },
   "sql-expressions": {
     "add-query-tooltip": "Añade al menos una consulta de datos para generar sugerencias de SQL",

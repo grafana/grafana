@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Delivered to <2>{{name}}</2>",
-      "no-grouping": "No grouping"
+      "delivered-to-disabled": "Delivered to {{name}}",
+      "no-grouping": "No grouping",
+      "view-contact-point-no-permission": "You do not have permission to view contact points"
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
+      "content-you-do-not-have-permission-to-access-incident": "You do not have permission to access Incident",
       "label-declare-incident": "Declare incident"
     },
     "delete-rule-modal": {
@@ -2250,7 +2253,9 @@
       "menu-analyze": "Analyze alert notification",
       "menu-copy-link": "Copy link",
       "menu-silence": "Silence notifications",
+      "menu-silence-no-permission": "You do not have permission to create silences",
       "menu-view-contact-point": "View contact point",
+      "menu-view-contact-point-no-permission": "You do not have permission to view contact points",
       "menu-view-rule": "View alert rule",
       "menu-view-rule-n": "View alert rule ({{n}})",
       "more-details-heading": "More details",
@@ -3577,8 +3582,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "Declare incident",
+        "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
-        "silence-button": "Silence"
+        "silence-button": "Silence",
+        "silence-no-permission": "You do not have permission to create silences"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -4265,6 +4272,7 @@
       "new-folder-as-team-folder-label": "Team",
       "new-folder-name-required-phrase": "Folder name is required.",
       "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
+      "rename-provisioned-folder": "Rename provisioned folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -4428,6 +4436,20 @@
       "error": "Recently viewed dashboards couldn’t be loaded.",
       "retry": "Retry",
       "title": "Recently viewed"
+    },
+    "rename-folder": {
+      "read-only-message": "To rename this folder, please update the folder in your repository directly."
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "Cancel",
+      "button-rename": "Rename",
+      "button-renaming": "Renaming...",
+      "commit": "Rename folder",
+      "error-saving": "Failed to rename folder",
+      "label-folder-name": "Folder name",
+      "missing-info": "Missing required fields",
+      "success-message": "Folder renamed successfully",
+      "title-required": "Folder name is required"
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
@@ -6949,8 +6971,8 @@
     },
     "default-value-editor": {
       "aria-label": "Default value",
-      "description": "Values that are pre-selected by default.",
-      "label": "Default value",
+      "description": "Group by dimensions that are pre-selected by default.",
+      "label": "Default group by",
       "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
@@ -10326,6 +10348,8 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "hide": "Hide",
+      "show": "Show",
       "undock": "Undock"
     },
     "slider": {
@@ -12962,12 +12986,14 @@
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "update-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
       "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-deleted-resource-in-branch": "A resource has been deleted in a branch in {{repoType}}.",
-    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you",
+    "title-updated-resource-in-branch": "A resource has been updated in a branch in {{repoType}}."
   },
   "provisioning": {
     "bitbucket": {

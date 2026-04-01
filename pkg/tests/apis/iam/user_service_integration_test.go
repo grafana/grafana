@@ -16,6 +16,130 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceGet$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
+func TestIntegrationUserServiceGet(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type createUserResponse struct {
+		ID  int64  `json:"id"`
+		UID string `json:"uid"`
+	}
+
+	type lookupResponse struct {
+		UID   string `json:"uid"`
+		Name  string `json:"name"`
+		Email string `json:"email"`
+		Login string `json:"login"`
+	}
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
+		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				APIServerStorageType:   "unified",
+				RBACSingleOrganization: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesUsersApi,
+					featuremgmt.FlagKubernetesUsersRedirect,
+				},
+			})
+
+			firstUser := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "First User", "email": "first@example.com", "login": "first-user", "password": "password123"}`),
+			}, &createUserResponse{})
+
+			require.NotNil(t, firstUser)
+			require.Equal(t, 200, firstUser.Response.StatusCode, "body: %s", string(firstUser.Body))
+			require.NotEmpty(t, firstUser.Result.UID)
+
+			secondUser := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "Second User", "email": "second@example.com", "login": "second-user", "password": "password123"}`),
+			}, &createUserResponse{})
+
+			require.NotNil(t, secondUser)
+			require.Equal(t, 200, secondUser.Response.StatusCode, "body: %s", string(secondUser.Body))
+			require.NotEmpty(t, secondUser.Result.UID)
+
+			t.Cleanup(func() {
+				if firstUser.Result.ID != 0 {
+					apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "DELETE",
+						Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
+					}, &struct{}{})
+					apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: "DELETE",
+						Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
+					}, &struct{}{})
+				} else {
+					ctx := context.Background()
+					userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+						User:      helper.Org1.Admin,
+						Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+						GVR:       gvrUsers,
+					})
+					_ = userClient.Resource.Delete(ctx, firstUser.Result.UID, metav1.DeleteOptions{})
+					_ = userClient.Resource.Delete(ctx, secondUser.Result.UID, metav1.DeleteOptions{})
+				}
+			})
+
+			// /api/users/lookup routes through UserK8sService.GetByLogin
+			t.Run("should find user by email via GetByLogin", func(t *testing.T) {
+				byEmailRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/lookup?loginOrEmail=first@example.com",
+				}, &lookupResponse{})
+
+				require.Equal(t, 200, byEmailRsp.Response.StatusCode, "body: %s", string(byEmailRsp.Body))
+				require.Equal(t, firstUser.Result.UID, byEmailRsp.Result.UID)
+				require.Equal(t, "First User", byEmailRsp.Result.Name)
+				require.Equal(t, "first@example.com", byEmailRsp.Result.Email)
+				require.Equal(t, "first-user", byEmailRsp.Result.Login)
+			})
+
+			// /api/users/lookup routes through UserK8sService.GetByLogin
+			t.Run("should find user by login via GetByLogin", func(t *testing.T) {
+				byLoginRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/lookup?loginOrEmail=second-user",
+				}, &lookupResponse{})
+
+				require.Equal(t, 200, byLoginRsp.Response.StatusCode, "body: %s", string(byLoginRsp.Body))
+				require.Equal(t, secondUser.Result.UID, byLoginRsp.Result.UID)
+				require.Equal(t, "Second User", byLoginRsp.Result.Name)
+				require.Equal(t, "second@example.com", byLoginRsp.Result.Email)
+				require.Equal(t, "second-user", byLoginRsp.Result.Login)
+			})
+
+			t.Run("should return 404 for unknown login", func(t *testing.T) {
+				notFoundRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/lookup?loginOrEmail=nobody",
+				}, &lookupResponse{})
+
+				require.Equal(t, 404, notFoundRsp.Response.StatusCode)
+			})
+		})
+	}
+}
+
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserService$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)

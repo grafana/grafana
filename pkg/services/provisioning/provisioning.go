@@ -337,6 +337,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		validation.ValidateProvenanceRelaxed,
 		ps.tracer,
+		alertingauthz.NewRouteAccess[*legacy_storage.ManagedRoute](ps.ac, ps.routesPermissions, true),
 	)
 	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
 	receiverSvc := notifier.NewReceiverService(

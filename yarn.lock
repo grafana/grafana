@@ -3696,11 +3696,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:3.4.7":
-  version: 3.4.7
-  resolution: "@grafana/plugin-e2e@npm:3.4.7"
+"@grafana/plugin-e2e@npm:^3.4.10":
+  version: 3.4.10
+  resolution: "@grafana/plugin-e2e@npm:3.4.10"
   dependencies:
-    "@grafana/e2e-selectors": "npm:13.0.0-22967232448"
+    "@grafana/e2e-selectors": "npm:13.0.0-23624974663"
     semver: "npm:^7.5.4"
     uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
@@ -3710,7 +3710,7 @@ __metadata:
   peerDependenciesMeta:
     "@axe-core/playwright":
       optional: true
-  checksum: 10/da5aa668882d7d827c94f837a21c4764c1417830b1759f8e17a75664e1df341b22167586ed52c8a715ea0365de1267e1f60d335bd3f469532566ad5515036f64
+  checksum: 10/9f2af03447eebcbcd99a0c2388d0df64dd7763db7d3df520ec7d3c8923b33fb2091109007bc9fab250725e12ac53470709dbef9d2069815687f0c6679322f66d
   languageName: node
   linkType: hard
 
@@ -3862,13 +3862,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.1.8":
-  version: 7.1.8
-  resolution: "@grafana/scenes-react@npm:7.1.8"
+"@grafana/scenes-react@npm:7.3.0":
+  version: 7.3.0
+  resolution: "@grafana/scenes-react@npm:7.3.0"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.1.8"
+    "@grafana/scenes": "npm:7.3.0"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3882,7 +3882,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/b39ce1ef8a28b467ccd32971837d452a528f69f2fbd7395ceef7eb4bb0c2dafa08cf282db3eca4f474a767b9f0e21c628b4d022fc7b90ed645e80e3c51d5cd3f
+  checksum: 10/212d3f039f80d3dc8c469433cf2dd60f34e36a30497bb2f909f75e0c5404c0419ef3b8ae677ea39fdd6993bc0113fe12772b45f3cd37d81602d37c6258c33a99
   languageName: node
   linkType: hard
 
@@ -3917,9 +3917,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.1.8":
-  version: 7.1.8
-  resolution: "@grafana/scenes@npm:7.1.8"
+"@grafana/scenes@npm:7.3.0":
+  version: 7.3.0
+  resolution: "@grafana/scenes@npm:7.3.0"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -3944,7 +3944,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/c170de43aa5fd47e4d037e556f5b81184eede6b7cd1aae991fb485af6b0f826db6dd669a02dc83d020145323fcaa5559f7d06ae4343629a20f3fbfd2e17f9b3c
+  checksum: 10/3ae4c7aeba14c7447228acd48668b088cbe87ca796fa16fa5ffc107c3f91326cae69975b637b712aa061b929b266671744b49e4278a4b6857e1bdc3646426dd9
   languageName: node
   linkType: hard
 
@@ -20100,12 +20100,12 @@ __metadata:
     "@grafana/llm": "npm:1.0.3"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:3.4.7"
+    "@grafana/plugin-e2e": "npm:^3.4.10"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.1.8"
-    "@grafana/scenes-react": "npm:7.1.8"
+    "@grafana/scenes": "npm:7.3.0"
+    "@grafana/scenes-react": "npm:7.3.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
