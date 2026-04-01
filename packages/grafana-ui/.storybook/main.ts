@@ -84,7 +84,7 @@ const mainConfig: StorybookConfig = {
     },
   },
   logLevel: 'debug',
-  staticDirs: ['static', 'images'],
+  staticDirs: ['static', { from: 'images', to: 'images' }],
   typescript: {
     check: true,
     reactDocgen: 'react-docgen-typescript',
