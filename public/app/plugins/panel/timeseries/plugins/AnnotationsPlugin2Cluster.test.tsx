@@ -555,6 +555,43 @@ describe('AnnotationsPlugin2', () => {
       });
     });
     describe('clustering', () => {
+      it.each([24, -1])('plot draws when annotations change with clustering: %s', (clustering) => {
+        uplotMockInstance.redraw.mockClear();
+        const { rerender } = setUp({
+          annotations: [],
+          options: { clustering },
+        });
+
+        act(() => {
+          //@ts-expect-error
+          hooks.ready(new uPlot());
+        });
+
+        // No annos? No draw!
+        expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
+        uplotMockInstance.redraw.mockClear();
+
+        act(() => {
+          rerender(
+            <div>
+              <AnnotationsPlugin2Cluster
+                options={{ clustering }}
+                config={config}
+                timeZone={'browser'}
+                newRange={null}
+                setNewRange={function (_newRange: TimeRange2 | null): void {}}
+                replaceVariables={(value) => value}
+                annotations={[mockAlertingFrame, mockIRMAnnotationRegion]}
+              />
+              <div id="grafana-portal-container"></div>
+            </div>
+          );
+        });
+
+        // You got the annos? We got the draw!
+        expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
+        expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
+      });
       it('should not cluster', async () => {
         // should cluster all points within 48px
         setUp({
@@ -566,7 +603,6 @@ describe('AnnotationsPlugin2', () => {
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
         expect(markers.length).toEqual(4);
       });
-
       it('should cluster points', async () => {
         // should cluster all points within 48px
         setUp({
