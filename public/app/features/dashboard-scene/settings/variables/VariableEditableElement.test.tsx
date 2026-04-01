@@ -17,7 +17,6 @@ import { activateFullSceneTree } from '../../utils/test-utils';
 import { shouldHideControlsMenuOption, VariableEditableElement } from './VariableEditableElement';
 import { VariableTypeChange } from './VariableTypeSelectionPane';
 
-
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     variableActionButtonClicked: jest.fn(),
