@@ -150,6 +150,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		var foundSourceUID string
 		var foundCorrelation Correlation
 
+		// for app platform handling where we don't have a source datasource UID, skipped if from legacy API
 		if cmd.SourceUID == "" {
 			uidOnlyCorr, err := s.GetCorrelation(ctx, GetCorrelationQuery{UID: cmd.UID, OrgId: cmd.OrgId})
 
@@ -171,6 +172,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrSourceDataSourceDoesNotExists
 		}
 
+		// used by both legacy and app platform API
 		query := &datasources.GetDataSourceQuery{
 			OrgID: cmd.OrgId,
 			UID:   foundSourceUID,
@@ -180,6 +182,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return ErrSourceDataSourceDoesNotExists
 		}
 
+		// for legacy API handling, skipped if from app platform API
 		if foundCorrelation.UID == "" {
 			foundCorrelation, err := session.Omit("source_type", "target_type").Get(&correlation)
 			if err != nil {
