@@ -403,7 +403,8 @@
       "silence": "Silence"
     },
     "alert-group": {
-      "delivered-to": "Delivered to <2></2>",
+      "delivered-to": "Delivered to <2>{{name}}</2>",
+      "delivered-to-disabled": "Delivered to {{name}}",
       "no-grouping": "No grouping",
       "view-contact-point-no-permission": "You do not have permission to view contact points"
     },

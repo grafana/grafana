@@ -65,9 +65,9 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
                       )}
                     >
                       <span>
-                        <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
-                          Delivered to <span className={styles.disabledContactPointName}>{'{{name}}'}</span>
-                        </Trans>
+                        {t('alerting.alert-group.delivered-to-disabled', 'Delivered to {{name}}', {
+                          name: contactPoint,
+                        })}
                       </span>
                     </Tooltip>
                   )}
