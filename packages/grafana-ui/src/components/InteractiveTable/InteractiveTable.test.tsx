@@ -500,6 +500,9 @@ describe('InteractiveTable', () => {
 
       const header = screen.getByRole('columnheader', { name: 'ID' });
       expect(header).toHaveStyle({ minWidth: '100px', maxWidth: '300px' });
+
+      const idCell = screen.getAllByRole('cell').find((cell) => cell.textContent === '1');
+      expect(idCell).toHaveStyle({ minWidth: '100px', maxWidth: '300px' });
     });
 
     it('should not apply width styles when no width props are set', () => {
@@ -512,6 +515,9 @@ describe('InteractiveTable', () => {
 
       const header = screen.getByRole('columnheader', { name: 'ID' });
       expect(header).not.toHaveStyle({ width: '0px' });
+
+      const idCell = screen.getAllByRole('cell').find((cell) => cell.textContent === '1');
+      expect(idCell).not.toHaveStyle({ width: '0px' });
     });
 
     it('should still apply disableGrow when width is not set', () => {
@@ -524,6 +530,21 @@ describe('InteractiveTable', () => {
 
       const header = screen.getByRole('columnheader', { name: 'ID' });
       expect(header).toHaveStyle({ width: '0px' });
+    });
+
+    it('should use width over disableGrow when both are set', () => {
+      const columns: Array<Column<TableData>> = [
+        { id: 'id', header: 'ID', width: 120, disableGrow: true },
+        { id: 'country', header: 'Country' },
+      ];
+      const data: TableData[] = [{ id: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const header = screen.getByRole('columnheader', { name: 'ID' });
+      expect(header).toHaveStyle({ width: '120px' });
+
+      const idCell = screen.getAllByRole('cell').find((cell) => cell.textContent === '1');
+      expect(idCell).toHaveStyle({ width: '120px' });
     });
   });
 });
