@@ -172,6 +172,65 @@ describe('ScopesService', () => {
       expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('node1', expect.anything());
     });
 
+    it('should catch and log errors when scope_node preload fails', async () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      selectorService.resolvePathToRoot = jest.fn().mockRejectedValue(new Error('fetch failed'));
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1&scope_node=node1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      await Promise.resolve();
+
+      expect(consoleError).toHaveBeenCalledWith('Failed to pre-load node path', expect.any(Error));
+      consoleError.mockRestore();
+    });
+
+    it('should catch and log errors when defaultPath preload fails', async () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      let changeScopesResolve: () => void;
+      const changeScopesPromise = new Promise<void>((resolve) => {
+        changeScopesResolve = resolve;
+      });
+
+      let rejectPathToRoot: (err: Error) => void;
+      selectorService.changeScopes = jest.fn().mockImplementation(() => {
+        selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
+        selectorService.state.scopes = {
+          scope1: {
+            metadata: { name: 'scope1' },
+            spec: { title: 'Scope 1', defaultPath: ['', 'parent', 'node1'], filters: [] },
+          },
+        };
+        changeScopesResolve();
+        return changeScopesPromise;
+      });
+      selectorService.resolvePathToRoot = jest
+        .fn()
+        .mockImplementation(() => new Promise<void>((_, reject) => (rejectPathToRoot = reject)));
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      // Wait for changeScopes to complete and resolvePathToRoot to be called
+      await changeScopesPromise;
+
+      // Trigger the rejection now that .catch() is attached, then drain it
+      rejectPathToRoot(new Error('fetch failed'));
+      await Promise.resolve();
+
+      expect(consoleError).toHaveBeenCalledWith('Failed to pre-load node path from defaultPath', expect.any(Error));
+      consoleError.mockRestore();
+    });
+
     // TODO: remove when parentNodeId is removed
     it('should not preload when only scope_parent is in URL', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
