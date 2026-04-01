@@ -175,9 +175,7 @@ const defineFeatureEventsRule = createRule({
 
         const extendsEventProperty =
           node.extends?.some(
-            (e) =>
-              e.expression.type === AST_NODE_TYPES.Identifier &&
-              e.expression.name === 'EventProperty'
+            (e) => e.expression.type === AST_NODE_TYPES.Identifier && e.expression.name === 'EventProperty'
           ) ?? false;
 
         if (!extendsEventProperty) {
@@ -203,10 +201,9 @@ const defineFeatureEventsRule = createRule({
     messages: {
       literalArgsRequired:
         'The `repo` and `feature` arguments to `defineFeatureEvents` must be string literals, not variables.',
-      missingOwnerTag: 'Exported events object must have a JSDoc block comment with an `@owner` tag.',
+      missingOwnerTag: 'Exported events must have a JSDoc block comment with an `@owner` tag.',
       missingEventComment: 'Each event must have a JSDoc comment describing when it fires or its purpose.',
-      interfaceMustExtend:
-        'Event property interfaces must extend `EventProperty` from `@grafana/runtime/internal`.',
+      interfaceMustExtend: 'Event property interfaces must extend `EventProperty` from `@grafana/runtime/internal`.',
       missingPropertyComment: 'Each interface property must have a JSDoc comment describing what it captures.',
     },
     schema: [],

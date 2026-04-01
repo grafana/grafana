@@ -8,7 +8,6 @@ const noPluginExternalImportPaths = require('./rules/no-plugin-external-import-p
 const noInvalidCssProperties = require('./rules/no-invalid-css-properties.cjs');
 const defineFeatureEvents = require('./rules/define-feature-events.cjs');
 
-
 module.exports = {
   rules: {
     'no-unreduced-motion': noUnreducedMotion,
