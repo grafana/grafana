@@ -109,7 +109,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
           return (
             <>
               <div className={styles.content}>
-                {/* eslint-disable-next-line no-restricted-syntax */}
+                {/* eslint-disable-next-line @grafana/require-no-margin-on-field */}
                 <Field
                   htmlFor={'annotation-description-textarea'}
                   autoFocus={true}
@@ -126,7 +126,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
                     })}
                   />
                 </Field>
-                {/* eslint-disable-next-line no-restricted-syntax */}
+                {/* eslint-disable-next-line @grafana/require-no-margin-on-field */}
                 <Field htmlFor={'annotation-tags-input'} label={t('timeseries.annotation-editor2.label-tags', 'Tags')}>
                   <Controller
                     control={control}
