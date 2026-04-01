@@ -167,11 +167,11 @@ function DashboardCardComponent({
               icon="ai-sparkle"
               aria-label={t(
                 'dashboard-library.card.customize-with-assistant-button-label',
-                'Customize with assistant: {{title}}',
+                'Customize with Assistant: {{title}}',
                 { title }
               )}
             >
-              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with assistant</Trans>
+              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
             </Button>
           )}
         </div>
