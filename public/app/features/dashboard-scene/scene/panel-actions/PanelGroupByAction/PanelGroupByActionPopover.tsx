@@ -53,9 +53,40 @@ export function PanelGroupByActionPopover({
     if (groupByVariable instanceof GroupByVariable) {
       groupByVariable.changeValueTo(values, values.map(String), true);
     } else {
+      const selectedKeys = new Set(values.map(String));
+      const originFilters = groupByVariable.state.originFilters ?? [];
+      const originGroupByKeys = new Set<string>();
+
+      const updatedOriginFilters = originFilters.map((f) => {
+        if (f.operator !== 'groupBy') {
+          return f;
+        }
+        originGroupByKeys.add(f.key);
+        const shouldBeActive = selectedKeys.has(f.key);
+        return { ...f, dismissedGroupBy: !shouldBeActive };
+      });
+
       const nonGroupByFilters = groupByVariable.state.filters.filter((f) => f.operator !== 'groupBy');
-      const groupByFilters = values.map((v) => ({ key: String(v), operator: 'groupBy', value: '' }));
-      groupByVariable.setState({ filters: [...nonGroupByFilters, ...groupByFilters] });
+      const newUserGroupBys = values
+        .filter((v) => !originGroupByKeys.has(String(v)))
+        .map((v) => ({ key: String(v), operator: 'groupBy', value: '' }));
+
+      const allOriginsRestored = updatedOriginFilters
+        .filter((f) => f.operator === 'groupBy' && f.origin)
+        .every((f) => !f.dismissedGroupBy);
+      const isBackToDefaults = allOriginsRestored && newUserGroupBys.length === 0;
+
+      const finalOriginFilters = updatedOriginFilters.map((f) => {
+        if (f.operator !== 'groupBy' || !f.origin) {
+          return f;
+        }
+        return { ...f, restorable: !isBackToDefaults };
+      });
+
+      groupByVariable.setState({
+        originFilters: finalOriginFilters,
+        filters: [...nonGroupByFilters, ...newUserGroupBys],
+      });
     }
     onCancel();
   }, [groupByVariable, onCancel, values]);
@@ -65,7 +96,8 @@ export function PanelGroupByActionPopover({
       ? Array.isArray(groupByVariable.state.value)
         ? groupByVariable.state.value.length > 0
         : Boolean(groupByVariable.state.value)
-      : groupByVariable.state.filters.some((f) => f.operator === 'groupBy');
+      : groupByVariable.state.filters.some((f) => f.operator === 'groupBy') ||
+        (groupByVariable.state.originFilters ?? []).some((f) => f.operator === 'groupBy' && !f.dismissedGroupBy);
 
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>

@@ -156,7 +156,10 @@ function getGroupByValue(variable: GroupByVariable | AdHocFiltersVariable): Vari
         : [];
   }
 
-  // For AdHocFiltersVariable in unified mode, extract groupBy filter keys
-  const groupByFilters = variable.state.filters.filter((f) => f.operator === 'groupBy');
-  return groupByFilters.map((f) => f.key);
+  const userGroupBys = variable.state.filters.filter((f) => f.operator === 'groupBy').map((f) => f.key);
+  const originGroupBys = (variable.state.originFilters ?? [])
+    .filter((f) => f.operator === 'groupBy' && !f.dismissedGroupBy)
+    .map((f) => f.key);
+
+  return [...originGroupBys, ...userGroupBys];
 }

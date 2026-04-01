@@ -62,11 +62,18 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
 
     const hasGroupByVar = Boolean(this._groupByVar || this._adhocGroupByVar?.state.enableGroupBy);
 
-    const isGroupByActionSupported = Boolean(
-      hasGroupByVar &&
-        groupByDsUid &&
-        queries.some((q) => sceneGraph.interpolate(this, q.datasource?.uid) === groupByDsUid)
-    );
+    let queryDsMatchesGroupBy = false;
+    if (groupByDsUid) {
+      if (queryRunner?.state.datasource?.uid) {
+        queryDsMatchesGroupBy = sceneGraph.interpolate(this, queryRunner.state.datasource.uid) === groupByDsUid;
+      } else {
+        queryDsMatchesGroupBy = queries.some(
+          (q) => q.datasource?.uid && sceneGraph.interpolate(this, q.datasource.uid) === groupByDsUid
+        );
+      }
+    }
+
+    const isGroupByActionSupported = Boolean(hasGroupByVar && groupByDsUid && queryDsMatchesGroupBy);
 
     if (isGroupByActionSupported !== this.state.isGroupByActionSupported) {
       this.setState({ isGroupByActionSupported });
