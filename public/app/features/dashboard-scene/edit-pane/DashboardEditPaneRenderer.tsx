@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useMedia } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, type SceneObject, type SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar } from '@grafana/ui';
+import { Sidebar, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -54,6 +55,17 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
   const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
+
+  const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+  const sidebarContext = useSidebarContext();
+  const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      sidebarContext?.onToggleIsHidden();
+      e.currentTarget.blur();
+    },
+    [sidebarContext]
+  );
 
   return (
     <>
@@ -189,6 +201,17 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             icon="link"
             onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
           />
+        )}
+        {isMobile && !isEditing && (
+          <>
+            <Sidebar.Divider />
+            <Sidebar.Button
+              icon={'arrow-to-right'}
+              onClick={onClickHideSidebar}
+              title={t('grafana-ui.sidebar.hide', 'Hide')}
+              data-testid={selectors.components.Sidebar.showHideToggle}
+            />
+          </>
         )}
       </Sidebar.Toolbar>
     </>
