@@ -13,10 +13,12 @@ export interface RequestOptions extends BackendSrvRequest {
 export type CreateBaseQueryOptions = { baseURL: string } | { getBaseURL: () => Promise<string> };
 
 export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<RequestOptions> {
+  // Get the correct resolver once for all API calls
+  const resolveBaseURL = 'getBaseURL' in options ? options.getBaseURL : () => Promise.resolve(options.baseURL);
+
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
-      const baseURL = 'getBaseURL' in options ? await options.getBaseURL() : options.baseURL;
-
+      const baseURL = await resolveBaseURL();
       const headers: Record<string, string> = {
         ...requestOptions.headers,
       };

@@ -47,14 +47,6 @@ class FolderAPIVersionResolver {
     return this.resolving;
   }
 
-  get isResolved(): boolean {
-    return this.resolved !== null;
-  }
-
-  getVersion(): FolderAPIVersion {
-    return this.resolved ?? FALLBACK_VERSION;
-  }
-
   private async discover(): Promise<FolderAPIVersion> {
     const group = await getBackendSrv().get<K8sAPIGroup>(`/apis/${FOLDER_API_GROUP}/`, undefined, undefined, {
       showErrorAlert: false,
