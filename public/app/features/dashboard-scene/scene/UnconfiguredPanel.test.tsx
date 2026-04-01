@@ -164,11 +164,11 @@ describe('UnconfiguredPanelComp', () => {
   });
 
   describe('view mode (not editing)', () => {
-    it('renders the "Missing panel configuration" empty state', () => {
+    it('renders the "No visualization configured" quiet state', () => {
       buildDashboard({ isEditing: false });
       renderPanel();
 
-      expect(screen.getByText('Missing panel configuration')).toBeInTheDocument();
+      expect(screen.getByText('No visualization configured')).toBeInTheDocument();
     });
 
     it('does not render action buttons', () => {

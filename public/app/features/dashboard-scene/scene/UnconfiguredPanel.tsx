@@ -284,11 +284,14 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
           </div>
         </>
       ) : (
-        <EmptyState
-          variant="call-to-action"
-          message={t('dashboard.new-panel.missing-config', 'Missing panel configuration')}
-          hideImage
-        />
+        <div className={styles.quietState}>
+          <div className={styles.gearIconWrapper}>
+            <Icon name="cog" size="md" />
+          </div>
+          <Text color="secondary">
+            <Trans i18nKey="dashboard.new-panel.no-visualization">No visualization configured</Trans>
+          </Text>
+        </div>
       )}
     </div>
   );
