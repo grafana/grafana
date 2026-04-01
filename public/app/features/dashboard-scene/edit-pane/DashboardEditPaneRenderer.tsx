@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, type SceneObject, type SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar } from '@grafana/ui';
+import { Sidebar, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -33,6 +35,7 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
+  const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = selection?.getFirstObject();
@@ -102,7 +105,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       )}
       <Sidebar.Toolbar>
         {isEditing && (
-          <>
+          <div className={styles.editGroup}>
             <Sidebar.Button
               icon="plus"
               variant="primary"
@@ -156,40 +159,41 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
                 <Sidebar.Divider />
                 <UndoButton dashboard={dashboard} />
                 <RedoButton dashboard={dashboard} />
-                <Sidebar.Divider />
               </>
             )}
-          </>
+          </div>
         )}
-        {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
-        <Sidebar.Button
-          icon="list-ui-alt"
-          onClick={() => editPane.openPane('outline')}
-          title={t('dashboard.sidebar.outline.title', 'Outline')}
-          tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
-          data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
-          active={openPane === 'outline'}
-        ></Sidebar.Button>
-        {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardFiltersOverview && adHocVar && (
+        <div className={styles.viewGroup}>
+          {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
           <Sidebar.Button
-            icon="filter"
-            onClick={() => editPane.openPane('filters')}
-            title={t('dashboards.filters-overview.filters', 'Filters')}
-            tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
-            active={openPane === 'filters'}
-          />
-        )}
-        {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
-        {renderEnterpriseItems()}
-        {Boolean(meta.isSnapshot) && (
-          <Sidebar.Button
-            data-testid="button-snapshot"
-            tooltip={t('dashboard.sidebar.snapshot.tooltip', 'Open original dashboard')}
-            title={t('dashboard.toolbar.snapshot.title', 'Source')}
-            icon="link"
-            onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
-          />
-        )}
+            icon="list-ui-alt"
+            onClick={() => editPane.openPane('outline')}
+            title={t('dashboard.sidebar.outline.title', 'Outline')}
+            tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
+            data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
+            active={openPane === 'outline'}
+          ></Sidebar.Button>
+          {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardFiltersOverview && adHocVar && (
+            <Sidebar.Button
+              icon="filter"
+              onClick={() => editPane.openPane('filters')}
+              title={t('dashboards.filters-overview.filters', 'Filters')}
+              tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
+              active={openPane === 'filters'}
+            />
+          )}
+          {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
+          {renderEnterpriseItems()}
+          {Boolean(meta.isSnapshot) && (
+            <Sidebar.Button
+              data-testid="button-snapshot"
+              tooltip={t('dashboard.sidebar.snapshot.tooltip', 'Open original dashboard')}
+              title={t('dashboard.toolbar.snapshot.title', 'Source')}
+              icon="link"
+              onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
+            />
+          )}
+        </div>
       </Sidebar.Toolbar>
     </>
   );
@@ -242,4 +246,30 @@ function RedoButton({ dashboard }: ToolbarActionProps) {
       onClick={() => editPane.redoAction()}
     />
   );
+}
+
+function getStyles(theme: GrafanaTheme2, isEditing: boolean | undefined) {
+  return {
+    editGroup: css({
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(2),
+      background: theme.colors.action.selected,
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      borderTopLeftRadius: theme.shape.radius.default,
+      borderTopRightRadius: theme.shape.radius.default,
+    }),
+    viewGroup: css({
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      paddingTop: isEditing ? 0 : theme.spacing(1),
+    }),
+  };
 }
