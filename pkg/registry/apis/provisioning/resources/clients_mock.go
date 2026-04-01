@@ -24,34 +24,41 @@ func (_m *MockResourceClients) EXPECT() *MockResourceClients_Expecter {
 	return &MockResourceClients_Expecter{mock: &_m.Mock}
 }
 
-// Folder provides a mock function with given fields: ctx
-func (_m *MockResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
-	ret := _m.Called(ctx)
+// Folder provides a mock function with given fields: ctx, folderAPIVersion
+func (_m *MockResourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	ret := _m.Called(ctx, folderAPIVersion)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Folder")
 	}
 
 	var r0 dynamic.ResourceInterface
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (dynamic.ResourceInterface, error)); ok {
-		return rf(ctx)
+	var r1 schema.GroupVersionKind
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (dynamic.ResourceInterface, schema.GroupVersionKind, error)); ok {
+		return rf(ctx, folderAPIVersion)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) dynamic.ResourceInterface); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, string) dynamic.ResourceInterface); ok {
+		r0 = rf(ctx, folderAPIVersion)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(dynamic.ResourceInterface)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, string) schema.GroupVersionKind); ok {
+		r1 = rf(ctx, folderAPIVersion)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(schema.GroupVersionKind)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, folderAPIVersion)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // MockResourceClients_Folder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Folder'
@@ -61,23 +68,24 @@ type MockResourceClients_Folder_Call struct {
 
 // Folder is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockResourceClients_Expecter) Folder(ctx interface{}) *MockResourceClients_Folder_Call {
-	return &MockResourceClients_Folder_Call{Call: _e.mock.On("Folder", ctx)}
+//   - folderAPIVersion string
+func (_e *MockResourceClients_Expecter) Folder(ctx interface{}, folderAPIVersion interface{}) *MockResourceClients_Folder_Call {
+	return &MockResourceClients_Folder_Call{Call: _e.mock.On("Folder", ctx, folderAPIVersion)}
 }
 
-func (_c *MockResourceClients_Folder_Call) Run(run func(ctx context.Context)) *MockResourceClients_Folder_Call {
+func (_c *MockResourceClients_Folder_Call) Run(run func(ctx context.Context, folderAPIVersion string)) *MockResourceClients_Folder_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *MockResourceClients_Folder_Call) Return(_a0 dynamic.ResourceInterface, _a1 error) *MockResourceClients_Folder_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockResourceClients_Folder_Call) Return(_a0 dynamic.ResourceInterface, _a1 schema.GroupVersionKind, _a2 error) *MockResourceClients_Folder_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockResourceClients_Folder_Call) RunAndReturn(run func(context.Context) (dynamic.ResourceInterface, error)) *MockResourceClients_Folder_Call {
+func (_c *MockResourceClients_Folder_Call) RunAndReturn(run func(context.Context, string) (dynamic.ResourceInterface, schema.GroupVersionKind, error)) *MockResourceClients_Folder_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -21,14 +21,16 @@ import { AnnotationEditableElement } from '../settings/annotations/AnnotationEdi
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
 import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
+import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
+import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import {
   SectionVariableAdd,
   SectionVariableAddEditableElement,
   VariableAdd,
   VariableAddEditableElement,
-} from '../settings/variables/VariableAddEditableElement';
-import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
-import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
+  VariableTypeChange,
+  VariableTypeChangeEditableElement,
+} from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
 
 import { VizPanelEditableElement } from './VizPanelEditableElement';
@@ -78,6 +80,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (sceneObj instanceof SectionVariableAdd) {
     return new SectionVariableAddEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof VariableTypeChange) {
+    return new VariableTypeChangeEditableElement(sceneObj);
   }
 
   if (sceneObj instanceof LinkEdit) {
@@ -138,6 +144,12 @@ export interface AddVariableActionHelperProps {
 
 export interface RemoveVariableActionHelperProps {
   removedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
+export interface ChangeVariableTypeActionHelperProps {
+  oldVariable: SceneVariable;
+  newVariable: SceneVariable;
   source: SceneVariableSet;
 }
 
@@ -242,6 +254,30 @@ export const dashboardEditActions = {
       },
       undo() {
         source.setState({ variables: varsBeforeRemoval });
+      },
+    });
+  },
+  changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
+    const varsBeforeChange = [...source.state.variables];
+    const variableIndex = varsBeforeChange.indexOf(oldVariable);
+
+    if (variableIndex === -1) {
+      throw new Error('Variable not found in source set');
+    }
+
+    const varsAfterChange = [...varsBeforeChange];
+    varsAfterChange[variableIndex] = newVariable;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.variable.type.action', 'Change variable type'),
+      source,
+      selectedObjectOnPerform: newVariable,
+      selectedObjectOnUndo: oldVariable,
+      perform() {
+        source.setState({ variables: varsAfterChange });
+      },
+      undo() {
+        source.setState({ variables: varsBeforeChange });
       },
     });
   },

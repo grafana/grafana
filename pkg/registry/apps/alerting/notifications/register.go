@@ -131,7 +131,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		}
 		return templategroup.NewStorage(srv, namespacer)
 	case routingtree.ResourceInfo.GroupResource().Resource:
-		return routingtree.NewStorage(api.RouteService, namespacer)
+		return routingtree.NewStorage(api.RouteService, namespacer, api.RouteService)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }

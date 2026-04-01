@@ -49,7 +49,6 @@ import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisi
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
@@ -88,6 +87,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -119,12 +119,34 @@ export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
 type PanelStyles = {
   fieldConfig?: { defaults: Partial<FieldConfig> };
+  options?: Record<string, unknown>;
 };
 
 type CopiedPanelStyles = {
   panelType: string;
   styles: PanelStyles;
 };
+
+function copyFieldConfigPropIfDefined<K extends keyof FieldConfig>(
+  source: FieldConfig,
+  target: Partial<FieldConfig>,
+  key: K
+): void {
+  const value = source[key];
+  if (value !== undefined) {
+    target[key] = value;
+  }
+}
+
+function extractOptionProps(source: Record<string, unknown>, props: readonly string[]): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (props.includes(key) && value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
 
 export interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
@@ -682,11 +704,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     store.delete(LS_PANEL_COPY_KEY);
   }
 
-  /**
-   * Hardcoded to Timeseries for this PoC
-   * @internal
-   */
-  private static extractPanelStyles(panel: VizPanel): PanelStyles {
+  /** @internal */
+  private static extractPanelStyles(panel: VizPanel, styleConfig: PanelStyleConfig): PanelStyles {
     const styles: PanelStyles = {};
 
     if (!panel.state.fieldConfig?.defaults) {
@@ -699,21 +718,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const panelDefaults = panel.state.fieldConfig.defaults;
 
     // default props (color)
-    if (defaultGraphStyleConfig.fieldConfig?.defaultsProps) {
-      for (const key of defaultGraphStyleConfig.fieldConfig.defaultsProps) {
-        const value = panelDefaults[key];
-        if (value !== undefined) {
-          defaults[key] = value;
-        }
-      }
+    for (const key of styleConfig.fieldConfig.defaultsProps) {
+      copyFieldConfigPropIfDefined(panelDefaults, defaults, key);
     }
 
     // custom props (lineWidth, fillOpacity, etc.)
-    if (panel.state.fieldConfig.defaults.custom && defaultGraphStyleConfig.fieldConfig?.defaults) {
+    if (panel.state.fieldConfig.defaults.custom) {
       const customDefaults: Record<string, unknown> = {};
       const panelCustom: Record<string, unknown> = panel.state.fieldConfig.defaults.custom;
 
-      for (const key of defaultGraphStyleConfig.fieldConfig.defaults) {
+      for (const key of styleConfig.fieldConfig.customProps) {
         const value = panelCustom[key];
         if (value !== undefined) {
           customDefaults[key] = value;
@@ -721,6 +735,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
 
       defaults.custom = customDefaults;
+    }
+
+    // panel-level options (colorMode, graphMode, textMode, etc.)
+    if (styleConfig.options?.props && panel.state.options) {
+      const extracted = extractOptionProps(panel.state.options, styleConfig.options.props);
+      if (Object.keys(extracted).length > 0) {
+        styles.options = extracted;
+      }
     }
 
     return styles;
@@ -733,14 +755,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     const panelType = vizPanel.state.pluginId;
+    const styleConfig = getPanelStyleConfig(panelType);
 
-    if (panelType !== 'timeseries') {
+    if (!styleConfig) {
       return;
     }
 
     const stylesToCopy: CopiedPanelStyles = {
       panelType,
-      styles: DashboardScene.extractPanelStyles(vizPanel),
+      styles: DashboardScene.extractPanelStyles(vizPanel, styleConfig),
     };
 
     store.set(LS_STYLES_COPY_KEY, JSON.stringify(stylesToCopy));
@@ -786,27 +809,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         return;
       }
 
-      if (!stylesCopy.styles.fieldConfig?.defaults) {
-        return;
-      }
-
-      const newDefaults = {
-        ...vizPanel.state.fieldConfig?.defaults,
-        ...stylesCopy.styles.fieldConfig.defaults,
-      };
-
-      if (stylesCopy.styles.fieldConfig.defaults.custom) {
-        newDefaults.custom = {
-          ...vizPanel.state.fieldConfig?.defaults?.custom,
-          ...stylesCopy.styles.fieldConfig.defaults.custom,
+      if (stylesCopy.styles.fieldConfig?.defaults) {
+        const newDefaults = {
+          ...vizPanel.state.fieldConfig?.defaults,
+          ...stylesCopy.styles.fieldConfig.defaults,
         };
+
+        if (stylesCopy.styles.fieldConfig.defaults.custom) {
+          newDefaults.custom = {
+            ...vizPanel.state.fieldConfig?.defaults?.custom,
+            ...stylesCopy.styles.fieldConfig.defaults.custom,
+          };
+        }
+
+        vizPanel.onFieldConfigChange({
+          ...vizPanel.state.fieldConfig,
+          defaults: newDefaults,
+        });
       }
 
-      const newFieldConfig = {
-        ...vizPanel.state.fieldConfig,
-        defaults: newDefaults,
-      };
-      vizPanel.onFieldConfigChange(newFieldConfig);
+      if (stylesCopy.styles.options) {
+        vizPanel.onOptionsChange({
+          ...vizPanel.state.options,
+          ...stylesCopy.styles.options,
+        });
+      }
 
       appEvents.emit('alert-success', ['Panel styles applied.']);
     } catch (e) {

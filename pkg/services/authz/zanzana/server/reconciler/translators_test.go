@@ -333,9 +333,9 @@ func TestTranslateFolderToTuples(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, tuples, 1)
 
-		assert.Equal(t, "folder:child-folder", tuples[0].GetUser())
+		assert.Equal(t, "folder:parent-folder", tuples[0].GetUser())
 		assert.Equal(t, common.RelationParent, tuples[0].GetRelation())
-		assert.Equal(t, "folder:parent-folder", tuples[0].GetObject())
+		assert.Equal(t, "folder:child-folder", tuples[0].GetObject())
 	})
 
 	t.Run("root folder without parent", func(t *testing.T) {
@@ -347,6 +347,31 @@ func TestTranslateFolderToTuples(t *testing.T) {
 		tuples, err := TranslateFolderToTuples(toUnstructured(t, folder))
 		require.NoError(t, err)
 		assert.Nil(t, tuples)
+	})
+
+	t.Run("reconciler tuples match mutation path convention", func(t *testing.T) {
+		// Verify the reconciler produces the same tuple as the mutation path
+		// (common.NewFolderParentTuple(child, parent)) to prevent argument swap regression.
+		folder := &folderv1.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "grandchild",
+				Annotations: map[string]string{
+					"grafana.app/folder": "child",
+				},
+			},
+			Spec: folderv1.FolderSpec{Title: "Grandchild"},
+		}
+
+		tuples, err := TranslateFolderToTuples(toUnstructured(t, folder))
+		require.NoError(t, err)
+		require.Len(t, tuples, 1)
+
+		// The mutation path creates: NewFolderParentTuple(folderUID, parentUID)
+		// where folderUID is the child and parentUID is the parent.
+		expected := common.NewFolderParentTuple("grandchild", "child")
+		assert.Equal(t, expected.GetObject(), tuples[0].GetObject(), "Object should be the child folder")
+		assert.Equal(t, expected.GetRelation(), tuples[0].GetRelation())
+		assert.Equal(t, expected.GetUser(), tuples[0].GetUser(), "User should be the parent folder")
 	})
 }
 

@@ -29,6 +29,7 @@ import { VariableDisplaySelect } from '../../settings/variables/components/Varia
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
+import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
 // TODO fix conditional hook usage here...
@@ -123,26 +124,38 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
-  public scrollIntoView() {
-    let current: SceneObject | undefined = this.variable.parent;
-    while (current) {
-      if (isEditableDashboardElement(current) && current.scrollIntoView) {
-        current.scrollIntoView();
-        return;
-      }
-      current = current.parent;
+  public renderActions() {
+    return <ChangeVariableTypeButton variable={this.variable} />;
+  }
+
+  public onDuplicate() {
+    const set = this.variable.parent!;
+    if (!(set instanceof SceneVariableSet)) {
+      return;
     }
+
+    dashboardEditActions.addVariable({
+      source: set,
+      addedObject: this.variable.clone({
+        key: undefined,
+        name: `${this.variable.state.name}_copy${set.state.variables.length}`,
+      }),
+    });
+    DashboardInteractions.variableActionButtonClicked('duplicate', { type: this.variable.state.type });
   }
 
   public onDelete() {
     const set = this.variable.parent!;
-    if (set instanceof SceneVariableSet) {
-      dashboardEditActions.removeVariable({
-        source: set,
-        removedObject: this.variable,
-      });
-      DashboardInteractions.deleteVariableButtonClicked({ type: this.variable.state.type });
+    if (!(set instanceof SceneVariableSet)) {
+      return;
     }
+
+    DashboardInteractions.variableActionButtonClicked('delete', { type: this.variable.state.type });
+
+    dashboardEditActions.removeVariable({
+      source: set,
+      removedObject: this.variable,
+    });
   }
 
   public onChangeName(name: string) {
@@ -155,11 +168,40 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
     return;
   }
+
+  public scrollIntoView() {
+    let current: SceneObject | undefined = this.variable.parent;
+    while (current) {
+      if (isEditableDashboardElement(current) && current.scrollIntoView) {
+        current.scrollIntoView();
+        return;
+      }
+      current = current.parent;
+    }
+  }
 }
 
 interface VariableInputProps {
   variable: SceneVariable;
   id?: string;
+}
+
+function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
+  if (!(variable.parent instanceof SceneVariableSet)) {
+    return null;
+  }
+
+  return (
+    <Button
+      size="sm"
+      fill="text"
+      onClick={() => openChangeVariableTypePane(variable)}
+      data-testid={selectors.components.PanelEditor.ElementEditPane.changeVariableType}
+      aria-label={t('dashboard.edit-pane.variable.change-type-aria-label', 'Change variable type')}
+    >
+      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change</Trans>
+    </Button>
+  );
 }
 
 function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; autoFocus: boolean }) {

@@ -19,8 +19,10 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
+import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -233,11 +235,13 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
             )}
-            {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
-              <div className={styles.fixedControls}>
-                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
-              </div>
-            )}
+            {(config.featureToggles.dashboardFiltersOverview ||
+              config.featureToggles.dashboardUnifiedDrilldownControls) &&
+              !config.featureToggles.dashboardNewLayouts && (
+                <div className={styles.fixedControls}>
+                  <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+                </div>
+              )}
           </div>
         </div>
         {!hideVariableControls && (
@@ -272,11 +276,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
-        {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
-            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
-          </div>
-        )}
+        {(config.featureToggles.dashboardFiltersOverview || config.featureToggles.dashboardUnifiedDrilldownControls) &&
+          !config.featureToggles.dashboardNewLayouts && (
+            <div className={styles.fixedControls}>
+              <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+            </div>
+          )}
       </div>
       {config.featureToggles.scopeFilters && !editPanel && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
@@ -304,8 +309,14 @@ function DashboardControlActions({
 }) {
   const { isEditing, editPanel, uid, meta, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
 
   if (editPanel) {
+    return null;
+  }
+
+  if (kioskMode === KioskMode.Full) {
     return null;
   }
 
