@@ -100,12 +100,16 @@ This guide covers issues related to connecting Grafana to Tempo and using the da
 
 Where troubleshooting steps differ between these setups, the guide calls it out. Sections labeled _Grafana Cloud only_ or _self-managed Tempo_ apply only to those environments.
 
-For issues with Tempo itself (not the Grafana data source), refer to the Tempo product documentation:
+### Resources for troubleshooting Tempo
+
+For issues with Tempo itself (not the data source), refer to the Tempo product documentation:
 
 - [Troubleshoot Tempo](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/) - General Tempo troubleshooting, including ingestion failures and server-side errors.
 - [Unable to find traces](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/unable-to-see-trace/) - Traces missing due to ingestion, sampling, or retention issues.
 - [Too many requests error](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/too-many-requests-error/) - Query capacity limits and 429 errors.
 - [Query issues](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/) - Server-side query failures, bad blocks, and performance tuning.
+
+### Resources for troubleshooting tracings in Grafana Cloud
 
 Additional resources for Grafana Cloud:
 
@@ -227,7 +231,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 **Solution:**
 
 1. Verify the trace ID is correct and complete.
-1. Check your sampling configuration in Alloy or OpenTelemetry Collector. If head or tail sampling is enabled, the trace may have been intentionally dropped. Refer to [Sampling strategies](https://grafana.com/docs/tempo/<TEMPO_VERSION>/getting-started/best-practices/#sampling) for guidance.
+1. Check your sampling configuration in Alloy or OpenTelemetry Collector. If head or tail sampling is enabled, the trace may have been intentionally dropped. Refer to [Sampling strategies](https://grafana.com/docs/tempo/<TEMPO_VERSION>/set-up-for-tracing/instrument-send/set-up-collector/tail-sampling/) for guidance.
 1. Check that the trace is within the configured retention period for Tempo.
 1. If using time range restrictions, expand the time range in the [**TraceID query** settings](ref:traceid-query).
 1. Enable **Use time range in query** in the [TraceID query settings](ref:traceid-query) and adjust the time shift values to search a broader range.
