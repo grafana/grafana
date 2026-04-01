@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	legacystars "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
@@ -251,6 +252,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardmigrator.ProvideFoldersDashboardsMigrator,
 	playlistmigrator.ProvidePlaylistMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
+	legacystars.ProvideStarsMigrator,
 	dsmigrator.ProvideDataSourceMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
@@ -598,11 +600,13 @@ func provideMigrationRegistry(
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
 	dataSourceMigrator dsmigrator.DataSourceMigrator,
+	starsMigrator legacystars.StarsMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
+	r.Register(legacystars.StarsMigrationDefinition(starsMigrator))
 	return r
 }

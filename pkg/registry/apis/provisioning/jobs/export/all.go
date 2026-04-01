@@ -11,21 +11,20 @@ import (
 // ExportAll exports all resources preserving their original metadata.name.
 // Used by the migrate worker so the takeover allowlist can correlate
 // exported resources back to the originals during the sync phase.
-func ExportAll(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	return exportAll(ctx, repoName, options, clients, repositoryResources, progress, false)
+func ExportAll(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderAPIVersion string) error {
+	return exportAll(ctx, repoName, options, clients, repositoryResources, progress, false, folderAPIVersion)
 }
 
 // ExportAllWithNewUIDs exports all resources with newly generated metadata.name values.
 // Used by the standalone export worker so exported files don't reference
 // existing resource identifiers, avoiding conflicts on subsequent sync.
-func ExportAllWithNewUIDs(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
-	return exportAll(ctx, repoName, options, clients, repositoryResources, progress, true)
+func ExportAllWithNewUIDs(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderAPIVersion string) error {
+	return exportAll(ctx, repoName, options, clients, repositoryResources, progress, true, folderAPIVersion)
 }
 
-func exportAll(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
+func exportAll(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool, folderAPIVersion string) error {
 	// FIXME: should we sign with grafana user?
-
-	folderClient, err := clients.Folder(ctx)
+	folderClient, _, err := clients.Folder(ctx, folderAPIVersion)
 	if err != nil {
 		return err
 	}

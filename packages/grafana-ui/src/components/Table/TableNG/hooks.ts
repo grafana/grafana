@@ -45,11 +45,11 @@ export interface FilteredRowsOptions {
 
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
   const [filter, setFilter] = useState<FilterType>({});
-  const filteredRows = useMemo(
+  const filterResult = useMemo(
     () => applyFilter(rows, filter, fields, hasNestedFrames),
     [rows, filter, fields, hasNestedFrames]
   );
-  return { rows: filteredRows, filter, setFilter };
+  return { rows: filterResult.filteredRows, filter, setFilter, filterResult };
 }
 
 export interface SortedRowsOptions {
@@ -299,9 +299,14 @@ export const useNestedRows = (
       }
 
       const rawRows = frameToRecords(nestedFrame, parentRow.__index);
-      const filteredRows = applyFilter(rawRows, filter, nestedFrame.fields);
-      const sortedRows = applySort(filteredRows, nestedFrame.fields, sortColumns, getColumnTypes(nestedFrame.fields));
-      result[parentRow.__index] = { raw: rawRows, final: sortedRows };
+      const filterResult = applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
+      const sortedRows = applySort(
+        filterResult.filteredRows,
+        nestedFrame.fields,
+        sortColumns,
+        getColumnTypes(nestedFrame.fields)
+      );
+      result[parentRow.__index] = { raw: rawRows, final: sortedRows, filterResult };
     }
 
     return result;

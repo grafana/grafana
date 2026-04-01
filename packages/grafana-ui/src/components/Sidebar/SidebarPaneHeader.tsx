@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useContext } from 'react';
+import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,29 +9,31 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
-import { SidebarContext } from './useSidebar';
+import { useSidebarContext } from './useSidebar';
 
 export interface Props {
   children?: ReactNode;
   title: string;
+  /** Renders immediately after the title, before the flex-grow spacer (stays left-aligned). */
+  titleSuffix?: ReactNode;
 }
 
-export function SidebarPaneHeader({ children, title }: Props) {
+export function SidebarPaneHeader({ children, title, titleSuffix }: Props) {
   const styles = useStyles2(getStyles);
-  const context = useContext(SidebarContext);
+  const sidebarContext = useSidebarContext();
 
-  if (!context) {
+  if (!sidebarContext) {
     throw new Error('SidebarPaneHeader must be used within a Sidebar');
   }
 
   return (
     <div className={styles.wrapper}>
-      {context.onClosePane && (
+      {sidebarContext.onClosePane && (
         <IconButton
           variant="secondary"
           size="lg"
           name="times"
-          onClick={context.onClosePane}
+          onClick={sidebarContext.onClosePane}
           aria-label={t('grafana-ui.sidebar.close', 'Close')}
           tooltip={t('grafana-ui.sidebar.close', 'Close')}
           data-testid={selectors.components.Sidebar.closePane}
@@ -40,6 +42,7 @@ export function SidebarPaneHeader({ children, title }: Props) {
       <Text weight="medium" variant="h6" truncate data-testid="sidebar-pane-header-title">
         {title}
       </Text>
+      {titleSuffix}
       <div className={styles.flexGrow} />
       {children}
     </div>
