@@ -56,7 +56,7 @@ func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 		uid := web.Params(c.Req)[":uid"]
 
 		// fetch the datasource type so we know which api group to call
-		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, uid) // nolint:staticcheck
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c.Req.Context(), c.OrgID, uid) // nolint:staticcheck
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				return response.Error(http.StatusNotFound, "Data source not found", nil)
@@ -158,7 +158,7 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 		// This uses the deprecated api on purpose because we need to get the connection details for the redirect.
 		// /api/ we only have the UID so we cannot use the new api until the client updates to /apis/ which will not use this
 		// redirect.
-		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID) //nolint:staticcheck
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c.Req.Context(), c.OrgID, dsUID) //nolint:staticcheck
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				c.JsonApiErr(http.StatusNotFound, "Data source not found", nil)

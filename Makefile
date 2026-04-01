@@ -406,6 +406,7 @@ build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Bu
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
 	OS="$(OS)" \
 	ARCH="$(ARCH)" \
+	$(if $(ARM),GOARM="$(ARM)") \
 	GO="$(GO)" \
 	bash scripts/build-targz.sh
 

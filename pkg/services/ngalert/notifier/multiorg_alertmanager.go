@@ -122,6 +122,7 @@ type MultiOrgAlertmanager struct {
 	ns      notifications.Service
 
 	receiverResourcePermissions ac.ReceiverPermissionsService
+	routesResourcePermissions   ac.RoutePermissionsService
 }
 
 type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
@@ -144,6 +145,7 @@ func NewMultiOrgAlertmanager(
 	m *metrics.MultiOrgAlertmanager,
 	ns notifications.Service,
 	receiverResourcePermissions ac.ReceiverPermissionsService,
+	routesResourcePermissions ac.RoutePermissionsService,
 	l log.Logger,
 	s secrets.Service,
 	featureManager featuremgmt.FeatureToggles,
@@ -163,6 +165,7 @@ func NewMultiOrgAlertmanager(
 		kvStore:                     kvStore,
 		decryptFn:                   decryptFn,
 		receiverResourcePermissions: receiverResourcePermissions,
+		routesResourcePermissions:   routesResourcePermissions,
 		metrics:                     m,
 		ns:                          ns,
 		peer:                        &NilPeer{},
@@ -401,6 +404,12 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 				moa.logger.Error("Failed to apply the default Alertmanager configuration", "org", orgID)
 				continue
 			}
+			// init the permissions for the basic role
+			moa.logger.Debug("Setting default permissions for the basic roles")
+			if err := moa.routesResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, models.DefaultRoutingTreeName); err != nil {
+				moa.logger.Error("Failed to set default permissions for the basic roles", "org", orgID, "error", err)
+			}
+			// TODO here we need to do the same for the default receiver.
 			moa.alertmanagers[orgID] = alertmanager
 			continue
 		}

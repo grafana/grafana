@@ -1,11 +1,12 @@
 import { useCallback, useId, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import { type SelectableValue } from '@grafana/data';
+import { QueryWithAssistantButton } from '@grafana/assistant';
+import { CoreApp, type DataSourceInstanceSettings, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, config } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip, Space } from '@grafana/ui';
 
 import { type QueryWithDefaults } from '../defaults';
@@ -34,6 +35,8 @@ export interface QueryHeaderProps {
   queryRowFilter: QueryRowFilter;
   hideFormatSelector?: boolean;
   hideRunButton?: boolean;
+  dataSourceInstanceSettings?: DataSourceInstanceSettings;
+  app?: CoreApp;
 }
 
 export function QueryHeader({
@@ -48,6 +51,8 @@ export function QueryHeader({
   queryRowFilter,
   hideFormatSelector,
   hideRunButton,
+  dataSourceInstanceSettings,
+  app,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -55,6 +60,12 @@ export function QueryHeader({
   const toRawSql = db.toRawSql;
 
   const htmlId = useId();
+
+  const showAssistant =
+    config.featureToggles.queryWithAssistant &&
+    (dataSourceInstanceSettings?.type === 'mysql' ||
+      dataSourceInstanceSettings?.type === 'grafana-postgresql-datasource') &&
+    (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
 
   const editorModes = [
     {
@@ -134,6 +145,16 @@ export function QueryHeader({
   return (
     <>
       <EditorHeader>
+        {showAssistant && (
+          <QueryWithAssistantButton
+            currentQuery={query}
+            queries={[query]}
+            dataSourceInstanceSettings={dataSourceInstanceSettings!}
+            datasourceApi={null}
+            app={app}
+          />
+        )}
+
         {!hideFormatSelector && (
           <InlineSelect
             label={t('grafana-sql.components.query-header.label-format', 'Format')}
