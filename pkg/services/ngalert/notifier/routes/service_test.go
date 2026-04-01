@@ -57,7 +57,9 @@ func createServiceSut(
 		provenanceStore: provStore,
 		xact:            &nopTransactionManager{},
 		log:             log.NewNopLogger(),
-		settings:        setting.UnifiedAlertingSettings{},
+		settings: setting.UnifiedAlertingSettings{
+			DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
+		},
 		validator: func(from, to models.Provenance) error {
 			return nil
 		},
@@ -101,6 +103,7 @@ func configRevisionWithManagedRoutes() *legacy_storage.ConfigRevision {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{Receiver: definitions.Receiver{Name: "grafana-default"}},
+					{Receiver: definitions.Receiver{Name: "empty"}},
 				},
 			},
 			ManagedRoutes: definitions.ManagedRoutes{
@@ -443,5 +446,22 @@ func TestDeleteManagedRoute(t *testing.T) {
 		err := sut.DeleteManagedRoute(context.Background(), orgID, "route-a", models.ProvenanceNone, "", user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeDeleteByUID", "DeleteAllPermissions"}, authz.Calls.Methods())
+	})
+
+	t.Run("does not delete permissions when reset the default route", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
+				return rev, nil
+			},
+		}
+		provStore := fakes.NewFakeProvisioningStore()
+		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
+		authz := &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{}
+		sut := createServiceSut(configStore, provStore, features, authz)
+
+		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, models.ProvenanceNone, "", user)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
 	})
 }
