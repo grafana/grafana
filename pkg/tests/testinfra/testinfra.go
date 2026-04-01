@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -109,9 +110,22 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
 	require.NoError(t, err)
 
-	// Use proper database type based on the environment variable GRAFANA_TEST_DB in tests
-	testDB, err := sqlutil.GetTestDB(sqlutil.GetTestDBType())
+	// Create an isolated temporary database for this test to allow parallel execution across packages.
+	testDBCfg, err := sqlstore.CreateTemporaryTestDB(t)
 	require.NoError(t, err)
+
+	// Also get the sqlutil.TestDB for the Cleanup/Path compatibility
+	testDB := &sqlutil.TestDB{
+		DriverName: testDBCfg.Driver,
+		ConnStr:    testDBCfg.ConnStr,
+		Path:       testDBCfg.Path,
+		Host:       testDBCfg.Host,
+		Port:       testDBCfg.Port,
+		User:       testDBCfg.User,
+		Password:   testDBCfg.Password,
+		Database:   testDBCfg.Database,
+		Cleanup:    func() {}, // cleanup handled by CreateTemporaryTestDB via t.Cleanup
+	}
 
 	dbCfg := cfg.Raw.Section("database")
 	dbCfg.Key("type").SetValue(testDB.DriverName)
@@ -122,6 +136,9 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	dbCfg.Key("name").SetValue(testDB.Database)
 	if testDB.Path != "" {
 		dbCfg.Key("path").SetValue(testDB.Path)
+	}
+	if testDB.ConnStr != "" {
+		dbCfg.Key("connection_string").SetValue(testDB.ConnStr)
 	}
 
 	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
