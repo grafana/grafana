@@ -460,8 +460,10 @@ func expandedSubresourcePermissionRelations(relation string) []string {
 	}
 }
 
-// runDirectResourcePhase checks direct access to specific resources.
-// This is the most granular check - access granted directly on the resource itself.
+// runDirectResourcePhase resolves unresolved items via ListObjects instead of
+// per-item Check calls. Most users have direct access to a small number of
+// resources, so listing them all and doing set-membership lookups is cheaper
+// than issuing one Check per batch item (where denials are expensive).
 func (s *Server) runDirectResourcePhase(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
@@ -469,65 +471,29 @@ func (s *Server) runDirectResourcePhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) (int, error) {
-	var checks []*openfgav1.BatchCheckItem
-	checkIDToCorrelation := make(map[string]string)
-
+	// Collect unresolved items, grouped by type.
+	var genericItems, typedItems []*batchCheckItem
 	for _, item := range items {
 		if item.resolved {
 			continue
 		}
-
 		if item.resource.IsGeneric() {
-			// Generic resource direct access
-			resourceIdent := item.resource.ResourceIdent()
-			if resourceIdent == "" || !item.resource.IsValidRelation(item.relation) {
-				continue
-			}
-
-			checkID := fmt.Sprintf("%s_gd", item.correlationID)
-			checkIDToCorrelation[checkID] = item.correlationID
-			checks = append(checks, &openfgav1.BatchCheckItem{
-				TupleKey: &openfgav1.CheckRequestTupleKey{
-					User:     subject,
-					Relation: item.relation,
-					Object:   resourceIdent,
-				},
-				ContextualTuples: contextuals,
-				Context:          item.resource.Context(),
-				CorrelationId:    checkID,
-			})
+			genericItems = append(genericItems, item)
 		} else {
-			// Typed resource checks (subresource and direct)
-			checks = s.addTypedResourceDirectChecks(checks, subject, item, contextuals, checkIDToCorrelation)
+			typedItems = append(typedItems, item)
 		}
 	}
 
-	if len(checks) == 0 {
+	itemsChecked := len(genericItems) + len(typedItems)
+	if itemsChecked == 0 {
 		return 0, nil
 	}
 
-	results, err := s.doBatchCheck(ctx, store, checks)
-	if err != nil {
-		return len(checks), err
+	if err := s.resolveGenericItems(ctx, store, subject, genericItems, contextuals); err != nil {
+		return itemsChecked, err
 	}
-
-	// Process results - for typed resources, we need to check both subresource and direct
-	for checkID, result := range results {
-		correlationID := checkIDToCorrelation[checkID]
-		item := items[correlationID]
-
-		// Skip if already resolved by another check in this phase
-		if item.resolved {
-			continue
-		}
-
-		if err := result.GetError(); err != nil {
-			item.err = err.GetMessage()
-			item.resolved = true
-		} else if result.GetAllowed() {
-			item.allowed = true
-			item.resolved = true
-		}
+	if err := s.resolveTypedItems(ctx, store, subject, typedItems, contextuals); err != nil {
+		return itemsChecked, err
 	}
 
 	// Mark all remaining unresolved items as resolved (denied)
@@ -537,58 +503,133 @@ func (s *Server) runDirectResourcePhase(
 		}
 	}
 
-	return len(checks), nil
+	return itemsChecked, nil
 }
 
-// addTypedResourceDirectChecks adds OpenFGA checks for typed resources (folder, team, user, etc.)
-func (s *Server) addTypedResourceDirectChecks(
-	checks []*openfgav1.BatchCheckItem,
+// resolveGenericItems enumerates generic resources the user has direct access
+// to, then resolves items by set membership.
+// Folder-based access is already resolved by earlier phases.
+func (s *Server) resolveGenericItems(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
 	subject string,
-	item *batchCheckItem,
+	items []*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
-	checkIDToCorrelation map[string]string,
-) []*openfgav1.BatchCheckItem {
-	resourceIdent := item.resource.ResourceIdent()
-	resourceCtx := item.resource.Context()
-
-	// Check subresource access if applicable
-	subresourceRelation := common.SubresourceRelation(item.relation)
-	if item.resource.HasSubresource() && item.resource.IsValidRelation(subresourceRelation) {
-		checkID := fmt.Sprintf("%s_ts", item.correlationID)
-		checkIDToCorrelation[checkID] = item.correlationID
-		checks = append(checks, &openfgav1.BatchCheckItem{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     subject,
-				Relation: common.SubresourcePermissionRelation(subresourceRelation),
-				Object:   resourceIdent,
-			},
-			ContextualTuples: contextuals,
-			Context:          resourceCtx,
-			CorrelationId:    checkID,
-		})
+) error {
+	type listKey struct {
+		relation      string
+		groupResource string
+	}
+	groups := make(map[listKey][]*batchCheckItem)
+	for _, item := range items {
+		key := listKey{relation: item.relation, groupResource: item.resource.GroupResource()}
+		groups[key] = append(groups[key], item)
 	}
 
-	// Check direct access to typed resource
-	if resourceIdent != "" && item.resource.IsValidRelation(item.relation) {
-		checkRelation := item.relation
-		if item.resource.Type() == common.TypeFolder {
-			checkRelation = common.FolderPermissionRelation(item.relation)
+	for key, groupItems := range groups {
+		sample := groupItems[0]
+		allowed := make(map[string]bool)
+
+		if sample.resource.IsValidRelation(key.relation) {
+			if err := s.collectAllowedObjects(ctx, allowed, &openfgav1.ListObjectsRequest{
+				StoreId:              store.ID,
+				AuthorizationModelId: store.ModelID,
+				Type:                 common.TypeResource,
+				Relation:             key.relation,
+				User:                 subject,
+				Context:              sample.resource.Context(),
+				ContextualTuples:     contextuals,
+			}); err != nil {
+				return err
+			}
 		}
 
-		checkID := fmt.Sprintf("%s_td", item.correlationID)
-		checkIDToCorrelation[checkID] = item.correlationID
-		checks = append(checks, &openfgav1.BatchCheckItem{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     subject,
-				Relation: checkRelation,
-				Object:   resourceIdent,
-			},
-			ContextualTuples: contextuals,
-			CorrelationId:    checkID,
-		})
+		resolveByMembership(groupItems, allowed)
 	}
 
-	return checks
+	return nil
+}
+
+// resolveTypedItems enumerates typed resources (folders, teams, users, etc.)
+// the user has access to, then resolves by set membership.
+func (s *Server) resolveTypedItems(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	subject string,
+	items []*batchCheckItem,
+	contextuals *openfgav1.ContextualTupleKeys,
+) error {
+	type listKey struct {
+		relation string
+		typ      string
+	}
+	groups := make(map[listKey][]*batchCheckItem)
+	for _, item := range items {
+		key := listKey{relation: item.relation, typ: item.resource.Type()}
+		groups[key] = append(groups[key], item)
+	}
+
+	for key, groupItems := range groups {
+		sample := groupItems[0]
+		allowed := make(map[string]bool)
+
+		subresourceRelation := common.SubresourceRelation(key.relation)
+		if sample.resource.HasSubresource() && sample.resource.IsValidRelation(subresourceRelation) {
+			if err := s.collectAllowedObjects(ctx, allowed, &openfgav1.ListObjectsRequest{
+				StoreId:              store.ID,
+				AuthorizationModelId: store.ModelID,
+				Type:                 key.typ,
+				Relation:             common.SubresourcePermissionRelation(subresourceRelation),
+				User:                 subject,
+				Context:              sample.resource.Context(),
+				ContextualTuples:     contextuals,
+			}); err != nil {
+				return err
+			}
+		}
+
+		if sample.resource.IsValidRelation(key.relation) {
+			listRelation := key.relation
+			if key.typ == common.TypeFolder {
+				listRelation = common.FolderPermissionRelation(key.relation)
+			}
+			if err := s.collectAllowedObjects(ctx, allowed, &openfgav1.ListObjectsRequest{
+				StoreId:              store.ID,
+				AuthorizationModelId: store.ModelID,
+				Type:                 key.typ,
+				Relation:             listRelation,
+				User:                 subject,
+				ContextualTuples:     contextuals,
+			}); err != nil {
+				return err
+			}
+		}
+
+		resolveByMembership(groupItems, allowed)
+	}
+
+	return nil
+}
+
+// collectAllowedObjects calls ListObjects and adds the results to the allowed set.
+func (s *Server) collectAllowedObjects(ctx context.Context, allowed map[string]bool, req *openfgav1.ListObjectsRequest) error {
+	res, err := s.listObjects(ctx, req)
+	if err != nil {
+		return err
+	}
+	for _, obj := range res.GetObjects() {
+		allowed[obj] = true
+	}
+	return nil
+}
+
+func resolveByMembership(items []*batchCheckItem, allowed map[string]bool) {
+	for _, item := range items {
+		if ident := item.resource.ResourceIdent(); ident != "" && allowed[ident] {
+			item.allowed = true
+			item.resolved = true
+		}
+	}
 }
 
 // doBatchCheck executes a batch check against OpenFGA, splitting into

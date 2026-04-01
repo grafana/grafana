@@ -107,7 +107,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260312173859-6fc4227d9c4c // indirect
+	github.com/grafana/alerting v0.0.0-20260330164719-5946ccd00861 // indirect
 	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
@@ -187,6 +187,7 @@ require (
 	github.com/prometheus/exporter-toolkit v0.15.1 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
+	github.com/puzpuzpuz/xsync/v4 v4.4.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect

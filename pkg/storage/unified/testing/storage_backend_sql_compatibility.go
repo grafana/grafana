@@ -82,6 +82,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBacken
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
 		{"optimistic locking database integrity", runTestOptimisticLockingDatabaseIntegrity},
 		{"bulk import compatibility", runTestBulkImportCompatibility},
+		{"bulk import large counter CRUD", runTestBulkImportLargeCounterCRUD},
 		{"last import time cross backend", runTestLastImportTimeCrossBackend},
 		{"cluster scoped resources compatibility", runTestClusterScopedResources},
 	}
@@ -957,6 +958,165 @@ func runTestBulkImportCompatibility(t *testing.T, sqlBackend, kvBackend resource
 		require.GreaterOrEqual(t, len(records), 1, "Expected at least 1 resource_version record")
 		require.Greater(t, records[0].ResourceVersion, int64(0), "resource_version should be positive")
 	})
+}
+
+// runTestBulkImportLargeCounterCRUD bulk-imports >1000 items via one backend
+// (pushing the bulkRV counter past 999) and then performs CRUD+List through
+// ResourceServers wrapping BOTH backends to verify cross-backend consistency.
+func runTestBulkImportLargeCounterCRUD(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, _ sqldb.DB) {
+	t.Run("import via kv", func(t *testing.T) {
+		bulkImportLargeCounterCRUD(t, kvBackend, sqlBackend, kvBackend, nsPrefix+"-lc-kv")
+	})
+	t.Run("import via sql", func(t *testing.T) {
+		bulkImportLargeCounterCRUD(t, sqlBackend, sqlBackend, kvBackend, nsPrefix+"-lc-sql")
+	})
+}
+
+// bulkImportLargeCounterCRUD bulk-imports 1010 items through importBackend,
+// then verifies that both SQL and KV servers can List and Read the data, mutates
+// through the import server, and confirms both servers see the final state.
+func bulkImportLargeCounterCRUD(t *testing.T, importBackend, sqlBackend, kvBackend resource.StorageBackend, ns string) {
+	ctx := newIntegrationTestContext(t)
+
+	group := "playlist.grafana.app"
+	resourceType := "playlists"
+	listKey := &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType}
+
+	const totalItems = 1010
+
+	// Build 1010 ADDED requests so the bulkRV counter exceeds 999.
+	bulkRequests := make([]*resourcepb.BulkRequest, 0, totalItems)
+	for i := 1; i <= totalItems; i++ {
+		name := fmt.Sprintf("pl-%04d", i)
+		bulkRequests = append(bulkRequests, &resourcepb.BulkRequest{
+			Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: name},
+			Action: resourcepb.BulkRequest_ADDED,
+			Value: createPlaylistJSON(PlaylistResourceOptions{
+				Name: name, Namespace: ns, UID: fmt.Sprintf("uid-%04d", i),
+				Generation: 1, Title: fmt.Sprintf("Playlist %d", i),
+			}),
+		})
+	}
+
+	bulk, ok := importBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok)
+	resp := bulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{listKey},
+	}, toBulkIterator(bulkRequests))
+	require.Nil(t, resp.Error)
+	require.Empty(t, resp.Rejected)
+
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+	importServer := createStorageServer(t, importBackend)
+
+	// Pick 20 items around the spill boundary (counters 990-1009) for targeted CRUD.
+	const spillStart = 990
+	const spillCount = 20
+	spillNames := make([]string, spillCount)
+	for i := range spillNames {
+		spillNames[i] = fmt.Sprintf("pl-%04d", spillStart+i)
+	}
+
+	// Split into update and delete sets, alternating so each straddles the boundary.
+	// Even indices → update, odd indices → delete.
+	var updateNames, deleteNames []string
+	for i, name := range spillNames {
+		if i%2 == 0 {
+			updateNames = append(updateNames, name)
+		} else {
+			deleteNames = append(deleteNames, name)
+		}
+	}
+
+	// --- Phase 1: both backends can List and Read the imported data ---
+	for label, server := range map[string]resource.ResourceServer{"sql": sqlServer, "kv": kvServer} {
+		t.Run(label+" list after import", func(t *testing.T) {
+			list, err := server.List(ctx, &resourcepb.ListRequest{
+				Limit:   totalItems + 1,
+				Options: &resourcepb.ListOptions{Key: listKey},
+			})
+			require.NoError(t, err)
+			require.Nil(t, list.Error)
+			require.Equal(t, totalItems, len(list.Items))
+		})
+
+		t.Run(label+" read spill-boundary items", func(t *testing.T) {
+			for _, name := range spillNames {
+				key := createPlaylistKey(ns, name)
+				readResp, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+				require.NoError(t, err, "read failed for %s", name)
+				require.Nil(t, readResp.Error, "read error for %s: %v", name, readResp.Error)
+				require.Greater(t, readResp.ResourceVersion, int64(0))
+				require.Equal(t, name, extractResourceNameFromJSON(t, readResp.Value))
+			}
+		})
+	}
+
+	// --- Phase 2: mutate through the import server ---
+	// Read current RVs from the import server
+	rvByName := make(map[string]int64)
+	for _, name := range spillNames {
+		key := createPlaylistKey(ns, name)
+		readResp, err := importServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.Nil(t, readResp.Error)
+		rvByName[name] = readResp.ResourceVersion
+	}
+
+	t.Run("update spill-boundary items", func(t *testing.T) {
+		for _, name := range updateNames {
+			updated := updatePlaylistResource(t, importServer, ctx, PlaylistResourceOptions{
+				Name: name, Namespace: ns, UID: "uid-" + name[3:],
+				Generation: 2, Title: name + " Updated",
+			}, rvByName[name])
+			rvByName[name] = updated.ResourceVersion
+		}
+	})
+
+	t.Run("delete spill-boundary items", func(t *testing.T) {
+		for _, name := range deleteNames {
+			deletePlaylistResource(t, importServer, ctx, ns, name, rvByName[name])
+		}
+	})
+
+	numDeleted := len(deleteNames)
+
+	// --- Phase 3: both backends see the mutations ---
+	for label, server := range map[string]resource.ResourceServer{"sql": sqlServer, "kv": kvServer} {
+		t.Run(label+" list after mutations", func(t *testing.T) {
+			list, err := server.List(ctx, &resourcepb.ListRequest{
+				Limit:   totalItems + 1,
+				Options: &resourcepb.ListOptions{Key: listKey},
+			})
+			require.NoError(t, err)
+			require.Nil(t, list.Error)
+			require.Equal(t, totalItems-numDeleted, len(list.Items),
+				"%d items were deleted, rest should remain", numDeleted)
+		})
+
+		t.Run(label+" verify updated content", func(t *testing.T) {
+			for _, name := range updateNames {
+				key := createPlaylistKey(ns, name)
+				readResp, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+				require.NoError(t, err, "read-after-update failed for %s", name)
+				require.Nil(t, readResp.Error)
+				require.Contains(t, string(readResp.Value), name+" Updated",
+					"updated title should be present for %s", name)
+			}
+		})
+
+		t.Run(label+" verify deleted items gone", func(t *testing.T) {
+			for _, name := range deleteNames {
+				key := createPlaylistKey(ns, name)
+				readResp, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+				require.NoError(t, err)
+				require.NotNil(t, readResp.Error, "deleted item %s should return an error", name)
+				require.Equal(t, int32(http.StatusNotFound), readResp.Error.Code,
+					"deleted item %s should be 404", name)
+			}
+		})
+	}
 }
 
 // runTestLastImportTimeCrossBackend verifies that last import times written by one backend

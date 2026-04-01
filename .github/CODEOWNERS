@@ -67,7 +67,6 @@
 /.citools @grafana/grafana-developer-enablement-squad
 /pkg/README.md @grafana/grafana-backend-group
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
-/.bra.toml @grafana/grafana-backend-group
 /.golangci.yml @grafana/grafana-backend-group
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
@@ -321,7 +320,7 @@
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
 /devenv/docker/blocks/slow_proxy/ @bergquist
 /devenv/docker/blocks/smtp/ @bergquist
-/devenv/docker/blocks/tempo/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/devenv/docker/blocks/tempo/ @grafana/data-sources-plugins
 /devenv/docker/blocks/traefik/ @mckn
 /devenv/docker/blocks/zipkin/ @grafana/oss-big-tent
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
@@ -484,7 +483,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/templating-dashboard-links-and-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/textbox-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
-/e2e-playwright/fixtures/exemplars-query-response.json @grafana/observability-traces-and-profiling
+/e2e-playwright/fixtures/exemplars-query-response.json @grafana/data-sources-plugins
 /e2e-playwright/fixtures/long-trace-response.json @grafana/observability-traces-and-profiling
 /e2e-playwright/fixtures/tempo-response.json @grafana/oss-big-tent
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
@@ -506,7 +505,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/advisor.spec.ts @grafana/plugins-platform-frontend
 /e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/bookmarks.spec.ts @grafana/grafana-frontend-navigation
-/e2e-playwright/various-suite/exemplars.spec.ts @grafana/observability-traces-and-profiling
+/e2e-playwright/various-suite/exemplars.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/explore.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/filter-annotations.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/grafana-frontend-platform
@@ -624,13 +623,13 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/o11y-ds-frontend
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs
-/packages/grafana-o11y-ds-frontend/src/IntervalInput/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/NodeGraph/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/IntervalInput/ @grafana/data-sources-plugins
+/packages/grafana-o11y-ds-frontend/src/NodeGraph/ @grafana/data-sources-plugins
+/packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/data-sources-plugins
+/packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/data-sources-plugins
+/packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/data-sources-plugins
+/packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/data-sources-plugins
+/packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/data-sources-plugins
 
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
@@ -718,7 +717,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad
 /packages/grafana-schema/src/**/table @grafana/dataviz-squad
-/packages/grafana-schema/src/**/tempo @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/packages/grafana-schema/src/**/tempo @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/text @grafana/dataviz-squad
 /packages/grafana-schema/src/**/timeseries @grafana/dataviz-squad
 /packages/grafana-schema/src/**/trend @grafana/dataviz-squad
@@ -1271,7 +1270,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/community-release.yml @grafana/grafana-developer-enablement-squad
-/.github/workflows/compare-linux-arm64-targz-builds.yml @grafana/grafana-backend-services-squad
 /.github/workflows/detect-breaking-changes-* @grafana/grafana-frontend-platform
 /.github/workflows/detect-plugin-extension-changes.yml @grafana/grafana-frontend-platform
 /.github/workflows/documentation-ci.yml @grafana/docs-tooling
@@ -1331,10 +1329,13 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/shellcheck.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-build.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/release-verify.yml @grafana/grafana-backend-services-squad
+/.github/workflows/release-verify-packages.yml @grafana/grafana-backend-services-squad
 /.github/workflows/cleanup-branches.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-artifact.yml @grafana/grafana-developer-enablement-squad
 /.github/actions/changelog @zserge
 /.github/workflows/check-frontend-test-coverage.yml @grafana/dataviz-squad
+/.github/workflows/report-frontend-coverage-to-bench.yaml @grafana/dataviz-squad
 /.github/workflows/swagger-gen.yml @grafana/grafana-backend-group
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform

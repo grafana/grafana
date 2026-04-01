@@ -1607,8 +1607,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20260312173859-6fc4227d9c4c h1:1/UaVaO0ysv+OlqoLnmWsl5KIP7rQzNqqYLIZBXT1iY=
-github.com/grafana/alerting v0.0.0-20260312173859-6fc4227d9c4c/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
+github.com/grafana/alerting v0.0.0-20260330164719-5946ccd00861 h1:UKFPX7RQP4F5EZWuTJ5i7jT6r8+mBG/pBPLegE3WY+c=
+github.com/grafana/alerting v0.0.0-20260330164719-5946ccd00861/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 h1:btygKpNOzbaiG4NchGWSsLlHH/G3ubNQzbAgp2i8Bb8=
 github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039/go.mod h1:83u3gnUElNU3PZeBRWdsKC711MzBlqAcAMeHuiskx1g=
 github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039 h1:n7JMVXux64qBMIr2Xl2ee3lmGC1Mt2DauorPJxu8fLQ=
@@ -2332,8 +2332,8 @@ github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b h1:fPVI9E
 github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b/go.mod h1:JSbkp0BviKovYYt9XunS95M3mLPibE9bGg+Y95DsEEY=
 github.com/puzpuzpuz/xsync/v2 v2.5.1 h1:mVGYAvzDSu52+zaGyNjC+24Xw2bQi3kTr4QJ6N9pIIU=
 github.com/puzpuzpuz/xsync/v2 v2.5.1/go.mod h1:gD2H2krq/w52MfPLE+Uy64TzJDVY7lP2znR9qmR35kU=
-github.com/puzpuzpuz/xsync/v4 v4.2.0 h1:dlxm77dZj2c3rxq0/XNvvUKISAmovoXF4a4qM6Wvkr0=
-github.com/puzpuzpuz/xsync/v4 v4.2.0/go.mod h1:VJDmTCJMBt8igNxnkQd86r+8KUeN1quSfNKu5bLYFQo=
+github.com/puzpuzpuz/xsync/v4 v4.4.0 h1:vlSN6/CkEY0pY8KaB0yqo/pCLZvp9nhdbBdjipT4gWo=
+github.com/puzpuzpuz/xsync/v4 v4.4.0/go.mod h1:VJDmTCJMBt8igNxnkQd86r+8KUeN1quSfNKu5bLYFQo=
 github.com/quagmt/udecimal v1.9.0 h1:TLuZiFeg0HhS6X8VDa78Y6XTaitZZfh+z5q4SXMzpDQ=
 github.com/quagmt/udecimal v1.9.0/go.mod h1:ScmJ/xTGZcEoYiyMMzgDLn79PEJHcMBiJ4NNRT3FirA=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
