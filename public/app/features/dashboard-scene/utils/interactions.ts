@@ -116,10 +116,10 @@ export const DashboardInteractions = {
     reportDashboardInteraction('new_section_variable_type_selected', properties);
   },
 
-  // dashboards_delete_variable_button_clicked
-  // when a user deletes a variable
-  deleteVariableButtonClicked: (properties: { type: string }) => {
-    reportDashboardInteraction('delete_variable_button_clicked', properties);
+  // duplicate_variable_button_clicked & delete_variable_button_clicked
+  // when a user performs an action on a variable
+  variableActionButtonClicked: (action: 'duplicate' | 'delete', properties: { type: string }) => {
+    reportDashboardInteraction(`${action}_variable_button_clicked`, properties);
   },
 
   // dashboards_variables_reordered

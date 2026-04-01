@@ -3725,6 +3725,23 @@
     },
     {
       "metadata": {
+        "name": "newUnconfiguredPanel",
+        "resourceVersion": "1775046318180",
+        "creationTimestamp": "2026-03-31T20:51:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 12:25:18.180841 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the new unconfigured panel experience",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newVizSuggestions",
         "resourceVersion": "1774878275721",
         "creationTimestamp": "2025-11-12T19:26:29Z",
@@ -4971,13 +4988,16 @@
     {
       "metadata": {
         "name": "tempoAlerting",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-15T13:36:36Z"
+        "resourceVersion": "1774957674648",
+        "creationTimestamp": "2025-07-15T13:36:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-31 11:47:54.648231 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables creating alerts from Tempo data source",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-traces-and-profiling",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },

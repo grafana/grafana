@@ -621,7 +621,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(legacyDatabaseProvider, service14, inlineSecureValueSupport, cfg)
+	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(service14, inlineSecureValueSupport)
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, dataSourceMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
@@ -1312,7 +1312,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(legacyDatabaseProvider, service14, inlineSecureValueSupport, cfg)
+	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(service14, inlineSecureValueSupport)
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, dataSourceMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)

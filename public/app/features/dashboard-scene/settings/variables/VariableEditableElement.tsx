@@ -128,26 +128,34 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     return <ChangeVariableTypeButton variable={this.variable} />;
   }
 
-  public scrollIntoView() {
-    let current: SceneObject | undefined = this.variable.parent;
-    while (current) {
-      if (isEditableDashboardElement(current) && current.scrollIntoView) {
-        current.scrollIntoView();
-        return;
-      }
-      current = current.parent;
+  public onDuplicate() {
+    const set = this.variable.parent!;
+    if (!(set instanceof SceneVariableSet)) {
+      return;
     }
+
+    dashboardEditActions.addVariable({
+      source: set,
+      addedObject: this.variable.clone({
+        key: undefined,
+        name: `${this.variable.state.name}_copy${set.state.variables.length}`,
+      }),
+    });
+    DashboardInteractions.variableActionButtonClicked('duplicate', { type: this.variable.state.type });
   }
 
   public onDelete() {
     const set = this.variable.parent!;
-    if (set instanceof SceneVariableSet) {
-      dashboardEditActions.removeVariable({
-        source: set,
-        removedObject: this.variable,
-      });
-      DashboardInteractions.deleteVariableButtonClicked({ type: this.variable.state.type });
+    if (!(set instanceof SceneVariableSet)) {
+      return;
     }
+
+    DashboardInteractions.variableActionButtonClicked('delete', { type: this.variable.state.type });
+
+    dashboardEditActions.removeVariable({
+      source: set,
+      removedObject: this.variable,
+    });
   }
 
   public onChangeName(name: string) {
@@ -159,6 +167,17 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     }
 
     return;
+  }
+
+  public scrollIntoView() {
+    let current: SceneObject | undefined = this.variable.parent;
+    while (current) {
+      if (isEditableDashboardElement(current) && current.scrollIntoView) {
+        current.scrollIntoView();
+        return;
+      }
+      current = current.parent;
+    }
   }
 }
 

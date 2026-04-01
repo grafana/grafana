@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Delivered to <2>{{name}}</2>",
-      "no-grouping": "No grouping"
+      "delivered-to-disabled": "Delivered to {{name}}",
+      "no-grouping": "No grouping",
+      "view-contact-point-no-permission": "You do not have permission to view contact points"
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
+      "content-you-do-not-have-permission-to-access-incident": "You do not have permission to access Incident",
       "label-declare-incident": "Declare incident"
     },
     "delete-rule-modal": {
@@ -2250,7 +2253,9 @@
       "menu-analyze": "Analyze alert notification",
       "menu-copy-link": "Copy link",
       "menu-silence": "Silence notifications",
+      "menu-silence-no-permission": "You do not have permission to create silences",
       "menu-view-contact-point": "View contact point",
+      "menu-view-contact-point-no-permission": "You do not have permission to view contact points",
       "menu-view-rule": "View alert rule",
       "menu-view-rule-n": "View alert rule ({{n}})",
       "more-details-heading": "More details",
@@ -3577,8 +3582,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "Declare incident",
+        "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
-        "silence-button": "Silence"
+        "silence-button": "Silence",
+        "silence-no-permission": "You do not have permission to create silences"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -10346,6 +10353,8 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "hide": "Hide",
+      "show": "Show",
       "undock": "Undock"
     },
     "slider": {
