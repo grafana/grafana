@@ -622,7 +622,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(legacyDatabaseProvider, service14, inlineSecureValueSupport, cfg)
+	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(service14, inlineSecureValueSupport)
 	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, dataSourceMigrator, starsMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
@@ -1314,7 +1314,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(legacyDatabaseProvider, service14, inlineSecureValueSupport, cfg)
+	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(service14, inlineSecureValueSupport)
 	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, dataSourceMigrator, starsMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
