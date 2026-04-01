@@ -116,7 +116,8 @@ describe('AnnotationsPlugin2', () => {
   const setUp = (
     props?: Partial<React.ComponentProps<typeof AnnotationsPlugin2Cluster>>,
     configOverride?: UPlotConfigBuilder,
-    uPlotProps?: Partial<uPlot.Options>
+    uPlotProps?: Partial<uPlot.Options>,
+    callReady = true
   ) => {
     function applyReady() {
       act(() => {
@@ -158,7 +159,9 @@ describe('AnnotationsPlugin2', () => {
       </div>
     );
 
-    applyReady();
+    if (callReady) {
+      applyReady();
+    }
     return result;
   };
 
@@ -555,36 +558,82 @@ describe('AnnotationsPlugin2', () => {
       });
     });
     describe('clustering', () => {
-      it.each([24, -1])('plot draws when annotations change with clustering: %s', (clustering) => {
-        uplotMockInstance.redraw.mockClear();
-        const { rerender } = setUp({
-          annotations: [],
-          options: { clustering },
+      // These tests are a bit brittle and linked to the implementation, but will hopefully catch unintentional regression.
+      describe('plot.ready', () => {
+        it.each([24, -1])('plot draws when ready before annos: %s', (clustering) => {
+          uplotMockInstance.redraw.mockClear();
+          const { rerender } = setUp({
+            annotations: [],
+            options: { clustering },
+          });
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
+          uplotMockInstance.redraw.mockClear();
+
+          act(() => {
+            rerender(
+              <div>
+                <AnnotationsPlugin2Cluster
+                  options={{ clustering }}
+                  config={config}
+                  timeZone={'browser'}
+                  newRange={null}
+                  setNewRange={function (_newRange: TimeRange2 | null): void {}}
+                  replaceVariables={(value) => value}
+                  annotations={[mockAlertingFrame, mockIRMAnnotationRegion]}
+                />
+                <div id="grafana-portal-container"></div>
+              </div>
+            );
+          });
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
+          expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
         });
-
-        expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
-        uplotMockInstance.redraw.mockClear();
-
-        act(() => {
-          rerender(
-            <div>
-              <AnnotationsPlugin2Cluster
-                options={{ clustering }}
-                config={config}
-                timeZone={'browser'}
-                newRange={null}
-                setNewRange={function (_newRange: TimeRange2 | null): void {}}
-                replaceVariables={(value) => value}
-                annotations={[mockAlertingFrame, mockIRMAnnotationRegion]}
-              />
-              <div id="grafana-portal-container"></div>
-            </div>
+        it.each([24, -1])('plot draws when ready after annos: %s', (clustering) => {
+          uplotMockInstance.redraw.mockClear();
+          const { rerender } = setUp(
+            {
+              annotations: [mockClusterRegions],
+              options: { clustering },
+            },
+            undefined,
+            undefined,
+            false
           );
-        });
 
-        expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
-        expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
+          uplotMockInstance.redraw.mockClear();
+
+          act(() => {
+            rerender(
+              <div>
+                <AnnotationsPlugin2Cluster
+                  options={{ clustering }}
+                  config={config}
+                  timeZone={'browser'}
+                  newRange={null}
+                  setNewRange={function (_newRange: TimeRange2 | null): void {}}
+                  replaceVariables={(value) => value}
+                  annotations={[mockClusterRegions]}
+                />
+                <div id="grafana-portal-container"></div>
+              </div>
+            );
+          });
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
+
+          act(() => {
+            //@ts-expect-error
+            hooks.ready(new uPlot());
+          });
+
+          expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
+          expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
+        });
       });
+
       it('should not cluster', async () => {
         // should cluster all points within 48px
         setUp({
