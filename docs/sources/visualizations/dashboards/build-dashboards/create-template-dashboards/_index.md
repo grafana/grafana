@@ -41,8 +41,10 @@ To create a dashboard from a template, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-sample-data-dashboard-v13.0.png" max-width="750px" alt="Dashboard with sample data" >}}
 
-1. Click **Save** in the top-right corner
-1. Enter an optional description, and click **Save**.
+1. Click **Save** in the top-right corner.
+1. (Optional) Enter a new title for the dashboard.
+1. (Optional) Select a folder for the dashboard.
+1. Click **Save**.
 1. Update the data source for each panel to add your own data and configure the queries you need.
 
    In Grafana Cloud, you also have the option to [customize the template using Grafana Assistant](#customize-templates-and-suggested-dashboards-with-grafana-assistant).
@@ -53,21 +55,20 @@ To create a dashboard from a template, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-remove-banner-v13.0.png" max-width="750px" alt="Removing the sample data banner panel" >}}
 
 1. Click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
+1. Enter an optional description of your updates, and click **Save**.
 
 ## Suggested dashboards
 
 {{< docs/public-preview product="Suggested dashboards" >}}
 
 Suggested dashboards can be helpful when you have a data source configured, but you're not sure how to most effectively visualize your data.
-The process of creating a dashboard from a suggestion starts from **Data sources**, so the suggestions are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch).
+The process of creating a dashboard from a suggestion starts from the **Data sources** feature, so the suggestions are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch).
 
-The dashboards suggested can either have the data source provided or come from the Grafana Community, and they are labeled to indicate this.
+The dashboards suggested can either have the data source provided or come from the Grafana Community, and they are labeled to indicate this:
 
 {{< figure src="screenshot-suggested-dashboards-v13.0.png" max-width="750px" alt="Suggested dashboards dialog box" >}}
 
-You access the suggested dashboards for a data source by clicking the **Build a dashboard** drop-down list and selecting **From suggestions**:
+Access the suggested dashboards for a data source by clicking the **Build a dashboard** drop-down list and selecting **From suggestions**:
 
 {{< figure src="screenshot-build-dashboard-dropdown-v13.0.png" max-width="750px" alt="Build a dashboard drop-down list with From suggestions selected" >}}
 
@@ -79,26 +80,27 @@ If there are no suggestions available, Grafana displays a warning, and you won't
 To build a dashboard from suggestions, follow these steps:
 
 1. Navigate to **Connections > Data sources**.
-1. Go to the row of the data source for which you want to build a dashboard.
+1. Go to the row of the data source for which you want to create a dashboard.
 1. Click the **Build a dashboard** drop-down list and select **From suggestions**.
 
    A dialog box with suggested dashboards opens.
 
-1. Hover the cursor over the dashboard you want to use and click **View dashboard**.
+1. Hover the cursor over the suggestion you want to use and click **View dashboard**.
 
    In Grafana Cloud, you also have the option to [customize the suggested dashboard using Grafana Assistant](#customize-templates-and-suggested-dashboards-with-grafana-assistant).
 
 1. (Optional) Do one or more of the following:
 
-   - If there are more than six suggested dashboard, use the page numbers or arrow buttons at the bottom of the dialog box to navigate between pages of suggestions.
+   - If there are more than six suggested dashboards, use the page numbers or arrow buttons at the bottom of the dialog box to navigate between pages of suggestions.
    - To find a specific dashboard, enter the name of the dashboard in the search bar.
-   - If after viewing the suggested dashboard, you find it doesn't meet your needs, go back and choose a different suggestion or start a new dashboard by clicking one of the options in the banner:
+   - If, after viewing the suggested dashboard, you find it doesn't meet your needs, go back and choose a different suggestion or start a new dashboard by clicking one of the options in the banner:
 
    {{< figure src="screenshot-suggested-dashboards-banner-v13.0.png" alt="Suggested dashboards banner" >}}
 
 1. Complete the rest of the dashboard configuration.
 1. Click **Save**.
-1. (Optional) Enter a description of the changes you've made.
+1. (Optional) Enter a new title for the dashboard.
+1. (Optional) Select a folder for the dashboard.
 1. Click **Save**.
 
 ## Customize templates and suggested dashboards with Grafana Assistant
