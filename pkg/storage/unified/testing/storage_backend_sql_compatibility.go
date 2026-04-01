@@ -2308,17 +2308,21 @@ func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.
 		require.Nil(t, kvList.Error, "KV List error: %v", kvList.Error)
 		require.Equal(t, len(sqlList.Items), len(kvList.Items), "list count mismatch between backends")
 
-		// Verify items match
+		// Build a composite key (namespace + "/" + name) to handle shared databases where
+		// multiple tests may create resources with the same name in different namespaces.
 		sqlItems := make(map[string][]byte)
 		for _, item := range sqlList.Items {
 			name := extractResourceNameFromJSON(t, item.Value)
-			sqlItems[name] = item.Value
+			ns := extractResourceNamespaceFromJSON(t, item.Value)
+			sqlItems[ns+"/"+name] = item.Value
 		}
 		for _, item := range kvList.Items {
 			name := extractResourceNameFromJSON(t, item.Value)
-			sqlVal, exists := sqlItems[name]
-			require.True(t, exists, "item %s from KV not found in SQL list", name)
-			require.JSONEq(t, string(sqlVal), string(item.Value), "payload mismatch for %s", name)
+			ns := extractResourceNamespaceFromJSON(t, item.Value)
+			compositeKey := ns + "/" + name
+			sqlVal, exists := sqlItems[compositeKey]
+			require.True(t, exists, "item %s from KV not found in SQL list", compositeKey)
+			require.JSONEq(t, string(sqlVal), string(item.Value), "payload mismatch for %s", compositeKey)
 		}
 	})
 
