@@ -4,6 +4,19 @@ import { type ComponentProps } from 'react';
 
 import LogsNavigation from './LogsNavigation';
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 // we have to mock out reportInteraction, otherwise it crashes the test.
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -26,6 +39,10 @@ const setup = (propOverrides?: Partial<LogsNavigationProps>) => {
 };
 
 describe('LogsNavigation', () => {
+  beforeEach(() => {
+    setBooleanFlags({ newLogsPanel: false });
+  });
+
   it('should render scroll to top with default logs order', async () => {
     setup();
 
