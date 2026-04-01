@@ -23,11 +23,23 @@ const (
 
 var _ KV = &SqlKV{}
 
+// DataImportRow represents a single append-only resource_history row written during bulk import.
+type DataImportRow struct {
+	GUID    string
+	KeyPath string
+	Value   []byte
+}
+
 type SqlKV struct {
 	db         *sql.DB
 	dialect    Dialect
 	DriverName string // TODO: remove when backwards compatibility is no longer needed.
 }
+
+const (
+	dataImportBatchSQLiteMaxRows  = 8
+	dataImportBatchDefaultMaxRows = 1000
+)
 
 func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
 	if db == nil {
@@ -88,6 +100,14 @@ func (k *SqlKV) Ping(ctx context.Context) error {
 	return k.db.PingContext(ctx)
 }
 
+func dataImportBatchRowLimit(dialectName string) int {
+	if dialectName == "sqlite" {
+		return dataImportBatchSQLiteMaxRows
+	}
+
+	return dataImportBatchDefaultMaxRows
+}
+
 // conn returns the dbtx from the context (set during bulk import on SQLite)
 // or falls back to the default *sql.DB connection pool.
 func (k *SqlKV) conn(ctx context.Context) dbtx {
@@ -95,6 +115,54 @@ func (k *SqlKV) conn(ctx context.Context) dbtx {
 		return db
 	}
 	return k.db
+}
+
+// InsertDataImportBatch writes a batch of append-only resource_history rows for the bulk import path.
+func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow) (err error) {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	qb, err := k.getQueryBuilder(DataSection)
+	if err != nil {
+		return err
+	}
+
+	conn := k.conn(ctx)
+	var tx *sql.Tx
+	if _, ok := dbtxFromCtx(ctx); !ok {
+		tx, err = k.db.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to begin data import transaction: %w", err)
+		}
+		conn = tx
+		defer func() {
+			if err != nil {
+				err = errors.Join(err, tx.Rollback())
+			}
+		}()
+	}
+
+	maxRows := dataImportBatchRowLimit(k.dialect.Name())
+	for start := 0; start < len(rows); start += maxRows {
+		end := start + maxRows
+		if end > len(rows) {
+			end = len(rows)
+		}
+
+		query, args := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		if _, err = conn.ExecContext(ctx, query, args...); err != nil {
+			return fmt.Errorf("failed to insert data import batch: %w", err)
+		}
+	}
+
+	if tx != nil {
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit data import batch: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
