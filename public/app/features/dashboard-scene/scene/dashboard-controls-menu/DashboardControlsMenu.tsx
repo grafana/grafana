@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type SceneDataLayerProvider, type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
-import { Box, Menu, useStyles2 } from '@grafana/ui';
+import { Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
 import { DashboardLinkRenderer } from '../DashboardLinkRenderer';
@@ -34,20 +34,22 @@ export function DashboardControlsMenu({
   const styles = useStyles2(getStyles);
 
   return (
-    <Box
+    <ScrollContainer
       minWidth={32}
       borderColor={'weak'}
       borderStyle={'solid'}
       boxShadow={'z3'}
       borderRadius={'default'}
       backgroundColor={'primary'}
+      maxHeight={'calc(100vh - 80px)'}
+      overflowX={'hidden'}
       onClick={(e) => {
         // Normally, clicking the overlay closes the dropdown.
         // We stop event propagation here to keep it open while users interact with variable controls.
         e.stopPropagation();
       }}
     >
-      <div className={styles.scrollable}>
+      <div className={styles.items}>
         {/* Variables */}
         {sortDefaultVarsFirst(variables).map((variable) => (
           <div key={variable.state.key}>
@@ -80,7 +82,7 @@ export function DashboardControlsMenu({
           </>
         )}
       </div>
-    </Box>
+    </ScrollContainer>
   );
 }
 
@@ -95,14 +97,11 @@ function MenuDivider() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  scrollable: css({
+  items: css({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.5),
     padding: theme.spacing(1),
-    maxHeight: 'calc(100vh - 80px)',
-    overflowY: 'auto',
-    scrollbarWidth: 'thin',
   }),
   divider: css({
     marginTop: theme.spacing(1),
