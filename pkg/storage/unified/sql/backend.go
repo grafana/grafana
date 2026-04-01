@@ -8,7 +8,6 @@ import (
 	"iter"
 	"math"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -74,6 +73,15 @@ type Backend interface {
 	resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
+// tmpDir returns a writable temp directory under dataPath for Parquet bulk
+// migration files. Returns "" (OS default) when dataPath is empty.
+func tmpDir(dataPath string) string {
+	if dataPath == "" {
+		return ""
+	}
+	return filepath.Join(dataPath, "tmp")
+}
+
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
@@ -121,7 +129,7 @@ func NewStorageBackend(
 			},
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
-			TmpDir:                  filepath.Join(cfg.DataPath, "tmp"), // only used by the SQL backend path
+			TmpDir:                  tmpDir(cfg.DataPath),
 			DisableStorageServices:  disableStorageServices,
 			DisablePruner:           cfg.DisablePruner,
 		})
@@ -260,11 +268,6 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		tmpDir:                  opts.TmpDir,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
-	}
-	if opts.TmpDir != "" {
-		if err := os.MkdirAll(opts.TmpDir, 0750); err != nil {
-			return nil, fmt.Errorf("create tmp dir: %w", err)
-		}
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err

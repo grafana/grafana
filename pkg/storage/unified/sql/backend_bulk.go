@@ -168,13 +168,26 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 		useParquet = resource.ParquetBufferFromContext(clientCtx)
 	}
 	if useParquet && b.dialect.DialectName() == "sqlite" {
+		if b.tmpDir != "" {
+			if err := os.MkdirAll(b.tmpDir, 0750); err != nil {
+				return &resourcepb.BulkResponse{
+					Error: resource.AsErrorResult(fmt.Errorf("create tmp dir: %w", err)),
+				}
+			}
+		}
 		file, err := os.CreateTemp(b.tmpDir, "grafana-bulk-export-*.parquet")
 		if err != nil {
 			return &resourcepb.BulkResponse{
 				Error: resource.AsErrorResult(err),
 			}
 		}
-		defer os.Remove(file.Name())
+		defer func() {
+			// Close is best-effort; the parquet writer may have already closed the file.
+			_ = file.Close()
+			if err := os.Remove(file.Name()); err != nil && !os.IsNotExist(err) {
+				b.log.Warn("failed to remove parquet tmp file", "path", file.Name(), "err", err)
+			}
+		}()
 
 		writer, err := parquet.NewParquetWriter(file)
 		if err != nil {
@@ -183,17 +196,10 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 			}
 		}
 
-		// write bulk to parquet
+		// write bulk to parquet (ProcessBulk closes the file via writer.Close)
 		rsp := writer.ProcessBulk(ctx, setting, iter)
 		if rsp.Error != nil {
 			return rsp
-		}
-
-		// Ensure the parquet file is flushed before the reader opens it
-		if err := file.Close(); err != nil {
-			return &resourcepb.BulkResponse{
-				Error: resource.AsErrorResult(err),
-			}
 		}
 
 		b.log.Info("using parquet buffer", "path", file.Name(), "processed", rsp.Processed)
