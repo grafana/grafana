@@ -185,6 +185,78 @@ describe('ScopesService', () => {
       expect(selectorService.resolvePathToRoot).not.toHaveBeenCalled();
     });
 
+    it('should derive scope_node from defaultPath when scope_node is absent from URL', async () => {
+      let changeScopesResolve: () => void;
+      const changeScopesPromise = new Promise<void>((resolve) => {
+        changeScopesResolve = resolve;
+      });
+
+      selectorService.changeScopes = jest.fn().mockImplementation(() => {
+        selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
+        selectorService.state.scopes = {
+          scope1: {
+            metadata: { name: 'scope1' },
+            spec: {
+              title: 'Scope 1',
+              defaultPath: ['', 'automon-team', 'washington', 'washington-nav-test'],
+              filters: [],
+            },
+          },
+        };
+        changeScopesResolve();
+        return changeScopesPromise;
+      });
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      // Await the actual promise that the constructor chains .then() on
+      await changeScopesPromise;
+
+      expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith(
+        'washington-nav-test',
+        expect.anything(),
+        'scope1'
+      );
+    });
+
+    it('should not call resolvePathToRoot when scope_node is absent and no defaultPath exists', async () => {
+      let changeScopesResolve: () => void;
+      const changeScopesPromise = new Promise<void>((resolve) => {
+        changeScopesResolve = resolve;
+      });
+
+      selectorService.changeScopes = jest.fn().mockImplementation(() => {
+        selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
+        selectorService.state.scopes = {
+          scope1: {
+            metadata: { name: 'scope1' },
+            spec: {
+              title: 'Scope 1',
+              filters: [],
+            },
+          },
+        };
+        changeScopesResolve();
+        return changeScopesPromise;
+      });
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/test',
+        search: '?scopes=scope1',
+      });
+
+      service = new ScopesService(selectorService, dashboardsService, locationService);
+
+      await changeScopesPromise;
+
+      expect(selectorService.resolvePathToRoot).not.toHaveBeenCalled();
+    });
+
     it('should handle multiple scopes from URL', () => {
       locationService.getLocation = jest.fn().mockReturnValue({
         pathname: '/test',
