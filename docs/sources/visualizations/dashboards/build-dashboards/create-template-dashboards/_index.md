@@ -11,15 +11,15 @@ labels:
     - oss
 menuTitle: Create template and suggested dashboards
 title: Create dashboards from templates and suggestions
-description: Learn how to create dashboards from templates and suggestions
+description: Learn how to create dashboards from templates and suggestions.
 weight: 3
 ---
 
 # Create dashboards from templates and suggestions
 
-Grafana provides alternative ways to start building a dashboard.
+Grafana provides alternative ways to start building a dashboard with templates and suggested dashboards.
 
-## Create dashboards from templates
+## Dashboard templates
 
 {{< docs/public-preview product="Dashboard templates" >}}
 
@@ -28,6 +28,8 @@ Grafana provides a variety of pre-built dashboard templates that you can use to 
 The templates provide standardized dashboard layouts designed to help you answer engineering or business questions consistently. For instance, the DORA template allows all teams within an organization to measure delivery performance using a widely adopted industry framework.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-templates-2-v13.0.png" max-width="750px" alt="Selection of dashboard templates" >}}
+
+### Create dashboards from templates
 
 To create a dashboard from a template, follow these steps:
 
@@ -43,7 +45,7 @@ To create a dashboard from a template, follow these steps:
 1. Enter an optional description, and click **Save**.
 1. Update the data source for each panel to add your own data and configure the queries you need.
 
-   In Grafana Cloud, you also have the option to [customize the template using Grafana Assistant](#customize-templates-with-grafana-assistant).
+   In Grafana Cloud, you also have the option to [customize the template using Grafana Assistant](#customize-templates-and-suggested-dashboards-with-grafana-assistant).
 
 1. Make any other edits to the dashboard to most effectively display your data.
 1. When you've made all of your changes, remove the banner panel.
@@ -52,40 +54,65 @@ To create a dashboard from a template, follow these steps:
 
 1. Click **Save dashboard**.
 
-### Customize templates with Grafana Assistant
+## Suggested dashboards
 
-In Grafana Cloud, you can customize a dashboard template using Grafana Assistant.
+{{< docs/public-preview product="Suggested dashboards" >}}
 
-To use this option, hover the cursor over the template you want to use and click **Customize with Assistant**:
+Suggested dashboards can be helpful when you have a data source configured, but you're not sure how to most effectively visualize your data.
+The dashboards...
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-template-asst-button-v13.0.png" max-width="350px" alt="Grafana Assistant helping create a dashboard from template" >}}
+{{< figure src="screenshot-suggested-dashboards-v13.0.png" max-width="750px" alt="Suggested dashboards dialog box" >}}
+
+The dashboards suggested can either have the data source provided or come from the Grafana Community, and they are labeled to indicate this.
+
+The process of creating a dashboard from a suggestion begins starts from **Data sources**, so the suggestions are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch).
+You access the suggestions for a data source by clicking the **Build a dashboard** drop-down list and selecting **From suggestions**.
+
+{{< figure src="screenshot-build-dashboard-dropdown-v13.0.png" max-width="750px" alt="Build a dashboard drop-down list with From suggestions selected" >}}
+
+The **From suggestions** option is only enabled if suggested dashboards are available for the data source.
+If there aren't any dashboard suggestions available for that data source, Grafana displays a warning, and you won't be able to select the option.
+
+### Create dashboards from suggestions
+
+To build a dashboard from suggestions, follow these steps:
+
+1. Navigate to **Connections > Data sources**.
+1. Go to the row of the data source for which you want to build a dashboard.
+1. Click the **Build a dashboard** drop-down list and select **From suggestions**.
+
+   A dialog box with suggested dashboards opens.
+
+1. Hover the cursor over the dashboard you want to use and click **View dashboard**.
+
+   In Grafana Cloud, you also have the option to [customize the suggested dashboard using Grafana Assistant](#customize-templates-and-suggested-dashboards-with-grafana-assistant).
+
+1. (Optional) Do one or more of the following:
+
+   - If there are more than six dashboard suggestions, use the page numbers or arrow buttons at the bottom of the dialog box to navigate between pages of options.
+   - To find a specific dashboard, enter the name of the dashboard in the search bar.
+   - If after viewing the suggested dashboard, you don't find it meets your needs, go back and choose a different suggestion or start a new dashboard by clicking one of the options in the banner.
+
+   {{< figure src="screenshot-suggested-dashboards-banner-v13.0.png" alt="Suggested dashboards banner" >}}
+
+1. Complete the rest of the dashboard configuration. For more detailed steps, refer to [Create a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/), beginning at step five.
+
+## Customize templates and suggested dashboards with Grafana Assistant
+
+In Grafana Cloud, you can customize a dashboard template or suggested dashboard using Grafana Assistant.
+
+To use this option, hover the cursor over the template suggestion that you want to use and click **Customize with Assistant**:
+
+{{< figure src="screenshot-customize-w-asst-buttons-v13.0.png" alt="Grafana Assistant helping create a dashboard from template or suggestion" >}}
 
 When you choose this option, a preconfigured prompt is entered into the Assistant chat to start the process:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from template" >}}
 
-Grafana Assistant analyses the template, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
+<!-- maybe a second screenshot here? -->
+
+Grafana Assistant analyses the template or suggested dashboard, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
 This lets create a working, relevant dashboard from a template without the need to manually map metrics and panels.
 
 Grafana Assistant can query a subset of data sources, so customizing with Assistant for other data sources might generate poor results.
 For an up-to-date list of supported data sources, refer to the [Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/guides/querying/).
-
-## Create dashboards from suggestions
-
-{{< docs/public-preview product="Suggested dashboards" >}}
-
-You can start the process of creating a dashboard directly from a data source rather than from the **Dashboards** page, which gives you access to suggestions based on the data source.
-
-To begin building a dashboard directly from a data source, follow these steps:
-
-1. Navigate to **Connections > Data sources**.
-1. On the row of the data source for which you want to build a dashboard, click **Build a dashboard**.
-
-   The empty dashboard page opens.
-
-1. Select one of the suggested dashboards by clicking its **Use dashboard** button. This can be helpful when you're not sure how to most effectively visualize your data.
-   The suggested dashboards are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch). If there are more than three dashboard suggestions, you can click **View all** to see the rest of them.
-
-   ![Empty dashboard with add visualization and suggested dashboard options](/media/docs/grafana/dashboards/screenshot-suggested-dashboards-v12.3.png)
-
-1. Complete the rest of the dashboard configuration. For more detailed steps, refer to [Create a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/), beginning at step five.
