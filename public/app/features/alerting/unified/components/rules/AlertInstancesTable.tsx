@@ -18,6 +18,7 @@ interface Props {
   instances: Alert[];
   pagination?: PaginationProps;
   footerRow?: React.ReactNode;
+  showPreviewRouting?: boolean;
 }
 
 interface RuleAndAlert {
@@ -28,7 +29,7 @@ interface RuleAndAlert {
 type AlertTableColumnProps = DynamicTableColumnProps<RuleAndAlert>;
 type AlertTableItemProps = DynamicTableItemProps<RuleAndAlert>;
 
-export const AlertInstancesTable = ({ rule, instances, pagination, footerRow }: Props) => {
+export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, showPreviewRouting }: Props) => {
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -79,6 +80,7 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow }: 
           rule={rule}
           instance={alert}
           extensionPointId={PluginExtensionPoints.AlertInstanceAction}
+          showPreviewRouting={showPreviewRouting}
           key="alert-instance-extension-point"
         />
       ),

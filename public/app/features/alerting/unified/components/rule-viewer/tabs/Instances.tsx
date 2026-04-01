@@ -1,18 +1,27 @@
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { type CombinedRule } from 'app/types/unified-alerting';
 
+import { rulerRuleType } from '../../../utils/rules';
 import { RuleDetailsMatchingInstances } from '../../rules/RuleDetailsMatchingInstances';
 
 interface Props {
   rule: CombinedRule;
 }
 
-const InstancesList = ({ rule }: Props) => (
-  <RuleDetailsMatchingInstances
-    rule={rule}
-    pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
-    enableFiltering
-  />
-);
+const InstancesList = ({ rule }: Props) => {
+  const rulerRule = rule.rulerRule;
+  const isSimplifiedRouting =
+    rulerRuleType.grafana.alertingRule(rulerRule) &&
+    Boolean(rulerRule.grafana_alert.notification_settings?.receiver);
+
+  return (
+    <RuleDetailsMatchingInstances
+      rule={rule}
+      pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
+      enableFiltering
+      showPreviewRouting={!isSimplifiedRouting}
+    />
+  );
+};
 
 export { InstancesList };
