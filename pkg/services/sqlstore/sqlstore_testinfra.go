@@ -340,6 +340,40 @@ func extractPostgresDatabase(connStr string) string {
 	return ""
 }
 
+// GrantTemporaryTestDB grants the given user all privileges on the temporary
+// database. This is needed when the database was created by an admin user (e.g. root)
+// but the Grafana server connects as a different user (e.g. grafana).
+func GrantTemporaryTestDB(tb TestingTB, dbCfg *TestDBConfig, grantee string) {
+	tb.Helper()
+	var driver, connString string
+	switch dbCfg.Driver {
+	case "mysql":
+		driver, connString = newMySQLConnString(env("MYSQL_DB", "grafana_tests"))
+	case "postgres":
+		driver, connString = newPostgresConnString(env("POSTGRES_DB", "grafanatest"))
+	default:
+		return
+	}
+
+	engine, err := xorm.NewEngine(driver, connString)
+	if err != nil {
+		tb.Logf("warning: failed to connect for GRANT on %s: %v", dbCfg.Database, err)
+		return
+	}
+	defer func() { _ = engine.Close() }()
+
+	switch dbCfg.Driver {
+	case "mysql":
+		_, _ = engine.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%'", dbCfg.Database, grantee))
+	case "postgres":
+		// Postgres: the creator is already the owner and can grant.
+		// GRANT CONNECT + ALL on the database, plus default privileges on future tables.
+		_, _ = engine.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", dbCfg.Database, grantee))
+		// Also grant schema usage (required for Postgres 15+)
+		_, _ = engine.Exec(fmt.Sprintf("ALTER DATABASE %s OWNER TO %s", dbCfg.Database, grantee))
+	}
+}
+
 // createTemporaryDatabase returns a connection string to a temporary database.
 // The database is created by us, and destroyed by the TestingTB cleanup function.
 // This means every database is entirely empty and isolated. Migrations are not run here.

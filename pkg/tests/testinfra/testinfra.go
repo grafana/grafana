@@ -110,38 +110,57 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
 	require.NoError(t, err)
 
-	// Create an isolated temporary database for this test to allow parallel execution across packages.
+	// Create an isolated temporary database for this test to allow parallel execution
+	// across packages. For SQLite this creates a unique temp file. For MySQL/Postgres
+	// this creates a unique database on the configured server.
+	// Cleanup (file removal / DROP DATABASE) is registered via t.Cleanup automatically.
 	testDBCfg, err := sqlstore.CreateTemporaryTestDB(t)
 	require.NoError(t, err)
 
-	// Also get the sqlutil.TestDB for the Cleanup/Path compatibility
 	testDB := &sqlutil.TestDB{
 		DriverName: testDBCfg.Driver,
-		ConnStr:    testDBCfg.ConnStr,
 		Path:       testDBCfg.Path,
-		Host:       testDBCfg.Host,
-		Port:       testDBCfg.Port,
-		User:       testDBCfg.User,
-		Password:   testDBCfg.Password,
-		Database:   testDBCfg.Database,
 		Cleanup:    func() {}, // cleanup handled by CreateTemporaryTestDB via t.Cleanup
 	}
 
+	// Configure the [database] section with individual keys.
+	// Do NOT set connection_string — let the Grafana server build it via
+	// buildConnectionString so all server-side logic (charset, collation, etc.) is applied.
 	dbCfg := cfg.Raw.Section("database")
-	dbCfg.Key("type").SetValue(testDB.DriverName)
-	dbCfg.Key("host").SetValue(testDB.Host)
-	dbCfg.Key("port").SetValue(testDB.Port)
-	dbCfg.Key("user").SetValue(testDB.User)
-	dbCfg.Key("password").SetValue(testDB.Password)
-	dbCfg.Key("name").SetValue(testDB.Database)
-	if testDB.Path != "" {
-		dbCfg.Key("path").SetValue(testDB.Path)
-	}
-	if testDB.ConnStr != "" {
-		dbCfg.Key("connection_string").SetValue(testDB.ConnStr)
+	dbCfg.Key("type").SetValue(testDBCfg.Driver)
+	switch testDBCfg.Driver {
+	case "sqlite3":
+		// For SQLite, only set the path — the server constructs the connection string
+		if testDBCfg.Path != "" {
+			dbCfg.Key("path").SetValue(testDBCfg.Path)
+		}
+	default:
+		// For MySQL/Postgres, set individual keys using the SAME credentials the
+		// original sqlutil.GetTestDB returned. Only the database name changes to
+		// the newly created isolated database.
+		origDB, origErr := sqlutil.GetTestDB(testDBCfg.Driver)
+		if origErr == nil {
+			dbCfg.Key("host").SetValue(origDB.Host)
+			dbCfg.Key("port").SetValue(origDB.Port)
+			dbCfg.Key("user").SetValue(origDB.User)
+			dbCfg.Key("password").SetValue(origDB.Password)
+			testDB.Host = origDB.Host
+			testDB.Port = origDB.Port
+			testDB.User = origDB.User
+			testDB.Password = origDB.Password
+
+			// The temporary database was created by the admin user (from sqlstore
+			// env defaults, typically root). If the server user differs, grant it
+			// access to the new database.
+			if origDB.User != testDBCfg.User {
+				sqlstore.GrantTemporaryTestDB(t, testDBCfg, origDB.User)
+			}
+		}
+		dbCfg.Key("name").SetValue(testDBCfg.Database)
+		testDB.Database = testDBCfg.Database
 	}
 
-	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
+	t.Log("Using test database", "type", testDBCfg.Driver, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
 	env, err := server.InitializeForTest(ctx, t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
