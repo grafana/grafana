@@ -144,6 +144,22 @@ describe('getOtelAttributesField', () => {
 
     expect(getOtelAttributesField(log, true)).toEqual('custom_attr=keep');
   });
+
+  test('Excludes dot-notation OTel log record fields the same as underscore keys', () => {
+    const log = createLogLine({
+      labels: {
+        'observed.timestamp': 'nope',
+        'severity.number': 'nope',
+        'severity.text': 'nope',
+        'span.id': 'nope',
+        'trace.id': 'nope',
+        user_dimension: 'keep',
+      },
+      entry: 'msg',
+    });
+
+    expect(getOtelAttributesField(log, true)).toEqual('user_dimension=keep');
+  });
 });
 
 describe('identifyOTelLanguage', () => {
