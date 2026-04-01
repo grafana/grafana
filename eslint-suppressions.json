@@ -359,7 +359,7 @@
   },
   "packages/grafana-prometheus/src/components/PromQueryField.tsx": {
     "no-restricted-syntax": {
-      "count": 3
+      "count": 2
     }
   },
   "packages/grafana-prometheus/src/components/metrics-browser/useMetricsLabelsValues.ts": {
@@ -559,7 +559,7 @@
   },
   "packages/grafana-sql/src/components/visual-query-builder/Preview.tsx": {
     "no-restricted-syntax": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/grafana-sql/src/datasource/SqlDatasource.ts": {
@@ -1137,7 +1137,7 @@
   },
   "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
     "no-restricted-syntax": {
-      "count": 10
+      "count": 6
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1337,7 +1337,7 @@
   },
   "public/app/features/admin/ldap/LdapSettingsPage.tsx": {
     "no-restricted-syntax": {
-      "count": 9
+      "count": 5
     }
   },
   "public/app/features/alerting/routes.tsx": {
@@ -1709,7 +1709,7 @@
   },
   "public/app/features/auth-config/ProviderConfigForm.tsx": {
     "no-restricted-syntax": {
-      "count": 5
+      "count": 1
     }
   },
   "public/app/features/auth-config/components/ServerDiscoveryModal.tsx": {
@@ -1787,7 +1787,7 @@
       "count": 1
     },
     "no-restricted-syntax": {
-      "count": 5
+      "count": 4
     },
     "react/no-unescaped-entities": {
       "count": 2
@@ -1828,7 +1828,7 @@
   },
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
     "no-restricted-syntax": {
-      "count": 4
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/assistant/ViewModePanelPromptCard.tsx": {
@@ -3276,7 +3276,7 @@
   },
   "public/app/features/playlist/ShareModal.tsx": {
     "no-restricted-syntax": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/playlist/StartModal.tsx": {
@@ -3513,7 +3513,7 @@
       "count": 3
     },
     "no-restricted-syntax": {
-      "count": 4
+      "count": 1
     },
     "react-hooks/rules-of-hooks": {
       "count": 1
@@ -4049,7 +4049,7 @@
   },
   "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/AzureCheatSheet.tsx": {
     "no-restricted-syntax": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx": {
@@ -4468,7 +4468,7 @@
   },
   "public/app/plugins/datasource/loki/components/LokiContextUi.tsx": {
     "no-restricted-syntax": {
-      "count": 16
+      "count": 7
     }
   },
   "public/app/plugins/datasource/loki/components/LokiLabelBrowser.tsx": {
@@ -4486,7 +4486,7 @@
   },
   "public/app/plugins/datasource/loki/components/LokiQueryEditor.tsx": {
     "no-restricted-syntax": {
-      "count": 5
+      "count": 2
     }
   },
   "public/app/plugins/datasource/loki/components/LokiQueryField.tsx": {
