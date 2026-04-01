@@ -46,6 +46,19 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/additional-settings/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/additional-settings/
+  traceid-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#traceid-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/#traceid-query
+  traces-drilldown:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/traces/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/simplified-exploration/traces/
+  construct-traceql-queries:
+    - pattern: /docs/
+      destination: /docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/
   trace-to-logs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/
@@ -94,12 +107,13 @@ For issues with Tempo itself (not the Grafana data source), refer to the Tempo p
 - [Too many requests error](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/too-many-requests-error/) - Query capacity limits and 429 errors.
 - [Query issues](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/) - Server-side query failures, bad blocks, and performance tuning.
 
-Additional resources for Grafana Cloud: 
+Additional resources for Grafana Cloud:
 
-- [Troubleshoot Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/), which covers quick checks, ingestion issues, traceQL and search,  service graph, exemplars, and rate limiting and retry.
-- [Investigate traces with Grafana Assistant](https://grafana.com/docs/grafana-cloud/send-data/traces/investigate-traces-with-assistant/) - Use Grafana Assistant to help troubleshoot any issues. 
+- [Troubleshoot Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/), which covers quick checks, ingestion issues, traceQL and search, service graph, exemplars, and rate limiting and retry.
+- [Investigate traces with Grafana Assistant](https://grafana.com/docs/grafana-cloud/send-data/traces/investigate-traces-with-assistant/) - Use Grafana Assistant to help troubleshoot any issues.
 - [Troubleshoot traces collection with Alloy](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/traces-with-alloy/#troubleshoot)
 - [Troubleshoot errors with metrics-generator in Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/configure/metrics-generator/#troubleshoot-errors)
+
 ## Connection errors
 
 These errors occur when Grafana cannot establish or maintain a connection to the Tempo instance.
@@ -215,9 +229,16 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 1. Verify the trace ID is correct and complete.
 1. Check your sampling configuration in Alloy or OpenTelemetry Collector. If head or tail sampling is enabled, the trace may have been intentionally dropped. Refer to [Sampling strategies](https://grafana.com/docs/tempo/<TEMPO_VERSION>/getting-started/best-practices/#sampling) for guidance.
 1. Check that the trace is within the configured retention period for Tempo.
-1. If using time range restrictions, expand the time range in the **TraceID query** settings.
-1. Enable **Use time range in query** in the [data source settings](ref:additional-settings) and adjust the time shift values to search a broader range.
-1. Verify the trace was successfully ingested by Tempo.
+1. If using time range restrictions, expand the time range in the [**TraceID query** settings](ref:traceid-query).
+1. Enable **Use time range in query** in the [TraceID query settings](ref:traceid-query) and adjust the time shift values to search a broader range.
+1. Verify the trace was successfully ingested by Tempo. You can run a broad query to check for recent traces:
+
+   ```traceql
+   { } | count() > 0
+   ```
+
+   If this returns results, traces are being ingested but your specific trace ID may have been dropped by sampling or aged out. For more query examples, refer to the [TraceQL cookbook](https://grafana.com/docs/grafana-cloud/send-data/traces/traces-query-editor/traceql-cookbook/).
+
 1. For Grafana Cloud users, refer to [Troubleshoot TraceQL and search](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/#traceql-and-search) for TraceQL queries that can help investigate missing traces.
 
 ### TraceQL syntax errors
@@ -228,7 +249,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 
 **Solution:**
 
-1. Verify the query follows [TraceQL syntax](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql).
+1. Verify the query follows [TraceQL syntax](ref:construct-traceql-queries).
 1. Check that all braces, parentheses, and quotes are balanced.
 1. Ensure attribute names are correctly formatted with the correct scope. Use dot notation for span or resource attributes, for example, `span.http.status_code` or `resource.service.name`.
 1. Use the **Search** query builder to generate valid TraceQL queries if you're unfamiliar with the syntax.
@@ -245,6 +266,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 1. Check that the attribute names match exactly, as they're case-sensitive.
 1. Use the **Search** query builder to explore available attributes and values.
 1. Start with a broader query and progressively add filters to narrow results.
+1. Try [Grafana Traces Drilldown](ref:traces-drilldown), a queryless app that lets you explore tracing data using RED metrics without writing TraceQL.
 1. Note that Tempo search is non-deterministic—identical queries can return different results because Tempo scans in parallel and returns the first matching traces. Refer to [Understand search behavior](ref:tempo-query-editor) for details.
 1. Verify traces are being ingested into Tempo by querying for a known trace ID.
 
