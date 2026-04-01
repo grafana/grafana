@@ -16,18 +16,14 @@ labels:
     - oss
 cards:
   items:
-    - description: Learn how to install the Grafana CLI `grafanactl`
+    - description: Learn how to install and set up the Grafana CLI `grafanactl`
       height: 24
       href: ./install-grafana-cli/
-      title: Install `grafanactl`
-    - description: Set up `grafanactl`
-      height: 24
-      href: ./set-up-grafana-cli/
-      title: Set up your Grafana CLI
+      title: Install and set up grafanactl
     - description: Learn how to manage resources with `grafanactl`
       height: 24
       href: ./grafanacli-workflows
-      title: Manage resources with Grafana CLI
+      title: Manage resources with grafanactl
     - description: Overview of the Grafana Cloud CLI `gcx`, compatible with AI agents
       height: 24
       href: ./grafanagcx
@@ -39,7 +35,7 @@ hero:
   level: 1
   title: Grafana CLI
   width: 110
-title: Introduction to Grafana CLI
+title: Introduction to the Grafana CLIs
 menuTitle: Grafana CLI
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/
