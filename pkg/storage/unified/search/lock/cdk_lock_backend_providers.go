@@ -159,7 +159,7 @@ func gcsConditionalDelete(client *gcsstorage.Client, target bucketTarget) Condit
 				}
 			}
 			if s, ok := status.FromError(err); ok {
-				switch s.Code() {
+				switch s.Code() { //nolint:exhaustive
 				case codes.FailedPrecondition:
 					return fmt.Errorf("%w: %w", ErrPreconditionFailed, err)
 				case codes.NotFound:
