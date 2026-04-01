@@ -897,6 +897,14 @@
             }
           },
           {
+            "name": "title",
+            "in": "query",
+            "description": "exact match on team name. Mutually exclusive with query.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "uid",
             "in": "query",
             "description": "filter by team UIDs. Mutually exclusive with teamId.",

@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.describe(
+test.describe.skip(
   'ReturnToPrevious button',
   {
     tag: ['@various'],

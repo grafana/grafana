@@ -121,6 +121,15 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "title",
+										In:          "query",
+										Description: "exact match on team name. Mutually exclusive with query.",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "uid",
 										In:          "query",
 										Description: "filter by team UIDs. Mutually exclusive with teamId.",

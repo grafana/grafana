@@ -174,4 +174,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleFolderFullpath(mg)
 
 	ualert.AddRuleAlertRoutingColumns(mg)
+
+	accesscontrol.AddManagedRoutesPermissions(mg)
 }
