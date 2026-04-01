@@ -37,16 +37,39 @@ function escapeLokiRegexp(value: string): string {
   return value.replace(RE2_METACHARACTERS, '\\$&');
 }
 
-// based on the openmetrics-documentation, the 3 symbols we have to handle are:
+// based on the openmetrics-documentation, the primary symbols we have to handle are:
 // - \n ... the newline character
 // - \  ... the backslash character
 // - "  ... the double-quote character
+// Additionally, for LogQL compatibility with Windows logs, we also handle:
+// - \r ... the carriage return character
+// - \t ... the tab character
 export function escapeLabelValueInExactSelector(labelValue: string): string {
-  return labelValue.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/"/g, '\\"');
+  return labelValue
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t')
+    .replace(/"/g, '\\"');
 }
 
 export function unescapeLabelValue(labelValue: string): string {
-  return labelValue.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+  return labelValue.replace(/\\(n|r|t|\\|")/g, (_, c) => {
+    switch (c) {
+      case 'n':
+        return '\n';
+      case 'r':
+        return '\r';
+      case 't':
+        return '\t';
+      case '\\':
+        return '\\';
+      case '"':
+        return '"';
+      default:
+        return _;
+    }
+  });
 }
 
 export function escapeLabelValueInRegexSelector(labelValue: string): string {
