@@ -19,10 +19,12 @@ func (hs *HTTPServer) GetAlertNotifiers(cfg *setting.Cfg) func(*contextmodel.Req
 		slices.SortFunc(v2, func(a, b schema.IntegrationTypeSchema) int {
 			return strings.Compare(string(a.Type), string(b.Type))
 		})
-		v2 = slices.DeleteFunc(v2, func(s schema.IntegrationTypeSchema) bool {
-			_, disabled := cfg.UnifiedAlerting.DisabledNotifiers[s.Type]
-			return disabled
-		})
+		if cfg.UnifiedAlerting.AllowedNotifiers != nil {
+			v2 = slices.DeleteFunc(v2, func(s schema.IntegrationTypeSchema) bool {
+				_, allowed := cfg.UnifiedAlerting.AllowedNotifiers[s.Type]
+				return !allowed
+			})
+		}
 		if r.Query("version") == "2" {
 			return response.JSON(http.StatusOK, v2)
 		}
