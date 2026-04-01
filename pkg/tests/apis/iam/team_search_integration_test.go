@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -283,7 +284,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.NotNil(t, response)
 		require.Equal(t, http.StatusOK, response.Response.StatusCode)
 		require.NotNil(t, response.Result)
-		require.Equal(t, 1, len(result.Hits), "should return exactly 1 hit by UID")
+		require.Len(t, result.Hits, 1, "should return exactly 1 hit by UID")
 		require.Equal(t, team1.GetName(), result.Hits[0].Name)
 	})
 
@@ -300,7 +301,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.NotNil(t, response)
 		require.Equal(t, http.StatusOK, response.Response.StatusCode)
 		require.NotNil(t, response.Result)
-		require.Equal(t, 2, len(result.Hits), "should return both teams by UIDs")
+		require.Len(t, result.Hits, 2, "should return both teams by UIDs")
 	})
 
 	t.Run("should filter teams by legacy team ID", func(t *testing.T) {
@@ -322,7 +323,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.NotNil(t, response)
 		require.Equal(t, http.StatusOK, response.Response.StatusCode)
 		require.NotNil(t, response.Result)
-		require.Equal(t, 1, len(result.Hits), "should return exactly 1 hit by legacy ID")
+		require.Len(t, result.Hits, 1, "should return exactly 1 hit by legacy ID")
 		require.Equal(t, team1.GetName(), result.Hits[0].Name)
 	})
 
@@ -347,7 +348,7 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.NotNil(t, response)
 		require.Equal(t, http.StatusOK, response.Response.StatusCode)
 		require.NotNil(t, response.Result)
-		require.Equal(t, 2, len(result.Hits), "should return both teams by legacy IDs")
+		require.Len(t, result.Hits, 2, "should return both teams by legacy IDs")
 	})
 
 	t.Run("should return no results for non-existent UID", func(t *testing.T) {
@@ -363,11 +364,47 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.NotNil(t, response)
 		require.Equal(t, http.StatusOK, response.Response.StatusCode)
 		require.NotNil(t, response.Result)
-		require.Equal(t, 0, len(result.Hits), "should return 0 hits for non-existent UID")
+		require.Len(t, result.Hits, 0, "should return 0 hits for non-existent UID")
 	})
 
 	t.Run("should return error when both uid and teamId are provided", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?uid=%s&teamId=1", namespace, team1.GetName())
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
+	})
+
+	t.Run("should return error when uid count exceeds maximum", func(t *testing.T) {
+		params := make([]string, 101)
+		for i := range params {
+			params[i] = fmt.Sprintf("uid=uid-%d", i)
+		}
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?%s", namespace, strings.Join(params, "&"))
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
+	})
+
+	t.Run("should return error when teamId count exceeds maximum", func(t *testing.T) {
+		params := make([]string, 101)
+		for i := range params {
+			params[i] = fmt.Sprintf("teamId=%d", i+1)
+		}
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?%s", namespace, strings.Join(params, "&"))
 		var result iamv0alpha1.GetSearchTeamsResponse
 
 		response := apis.DoRequest(helper, apis.RequestParams{

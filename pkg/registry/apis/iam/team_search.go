@@ -37,6 +37,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
+const maxIDFilterValues = 100
+
 // accessControlCheck maps a legacy RBAC action name to a K8s-style check.
 // The RBAC authz server translates Group/Resource/Verb through the mapper
 // to resolve the underlying RBAC action.
@@ -251,6 +253,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 	}
 }
 
+// nolint:gocyclo
 func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "team.search")
 	defer span.End()
@@ -336,9 +339,6 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 			http.Error(w, "query and title parameters are mutually exclusive", http.StatusBadRequest)
 			return
 		}
-		if searchRequest.Options.Fields == nil {
-			searchRequest.Options.Fields = make([]*resourcepb.Requirement, 0, 1)
-		}
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_TITLE,
 			Operator: string(selection.Equals),
@@ -352,11 +352,17 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "uid and teamId parameters are mutually exclusive", http.StatusBadRequest)
 		return
 	}
+	if len(uids) > maxIDFilterValues {
+		http.Error(w, fmt.Sprintf("uid parameter exceeds maximum of %d values", maxIDFilterValues), http.StatusBadRequest)
+		return
+	}
+	if len(teamIds) > maxIDFilterValues {
+		http.Error(w, fmt.Sprintf("teamId parameter exceeds maximum of %d values", maxIDFilterValues), http.StatusBadRequest)
+		return
+	}
 
+	// Team UIDs in the legacy store maps to the name field in the unified store.
 	if len(uids) > 0 {
-		if searchRequest.Options.Fields == nil {
-			searchRequest.Options.Fields = make([]*resourcepb.Requirement, 0, 1)
-		}
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: string(selection.In),

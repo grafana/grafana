@@ -12,11 +12,11 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
 	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -215,7 +215,7 @@ func valuesFromLabels(opts *resourcepb.ListOptions, key string) []string {
 }
 
 func legacyIDsFromRequirements(opts *resourcepb.ListOptions) ([]int64, error) {
-	values := valuesFromLabels(opts, utils.LabelKeyDeprecatedInternalID)
+	values := valuesFromLabels(opts, resource.SEARCH_FIELD_LEGACY_ID)
 	if len(values) == 0 {
 		return nil, nil
 	}
