@@ -3,13 +3,13 @@ import { createRequire } from 'module';
 
 import defineFeatureEventsRule from '../rules/define-feature-events.cjs';
 
-const require = createRequire(import.meta.url);
+const localRequire = createRequire(import.meta.url);
 
 RuleTester.setDefaultConfig({
   languageOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    parser: require('@typescript-eslint/parser'),
+    parser: localRequire('@typescript-eslint/parser'),
   },
 });
 
