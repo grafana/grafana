@@ -29,6 +29,7 @@ import { VariableDisplaySelect } from '../../settings/variables/components/Varia
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
+import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
 // TODO fix conditional hook usage here...
@@ -123,6 +124,10 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
+  public renderActions() {
+    return <ChangeVariableTypeButton variable={this.variable} />;
+  }
+
   public scrollIntoView() {
     let current: SceneObject | undefined = this.variable.parent;
     while (current) {
@@ -160,6 +165,24 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 interface VariableInputProps {
   variable: SceneVariable;
   id?: string;
+}
+
+function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
+  if (!(variable.parent instanceof SceneVariableSet)) {
+    return null;
+  }
+
+  return (
+    <Button
+      size="sm"
+      fill="text"
+      onClick={() => openChangeVariableTypePane(variable)}
+      data-testid={selectors.components.PanelEditor.ElementEditPane.changeVariableType}
+      aria-label={t('dashboard.edit-pane.variable.change-type-aria-label', 'Change variable type')}
+    >
+      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change</Trans>
+    </Button>
+  );
 }
 
 function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; autoFocus: boolean }) {

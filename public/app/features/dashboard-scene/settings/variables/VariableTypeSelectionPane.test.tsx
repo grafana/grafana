@@ -9,7 +9,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { collectDescendantVariables, VariableAdd, VariableTypeSelection } from './VariableAddEditableElement';
+import { collectDescendantVariables, VariableAdd, VariableTypeSelection } from './VariableTypeSelectionPane';
 
 const defaultDsSettings = {
   name: 'TestDataSource',

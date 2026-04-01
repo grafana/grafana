@@ -700,6 +700,9 @@ export const versionedComponents = {
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
       },
+      changeVariableType: {
+        '12.7.0': 'data-testid change variable type',
+      },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },
