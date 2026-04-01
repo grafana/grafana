@@ -31,8 +31,8 @@ DataSourceRef: {
 
 // there was a deprecated field here called type, we will need to move that for conversion and provisioning
 ConfigSpec: {
-	field:  string
-	target: TargetSpec
+	field:      string
+	target:     TargetSpec
 	timeRange?: TimeRangeSpec
 	transformations?: [...TransformationSpec]
 }
@@ -43,9 +43,9 @@ TargetSpec: {
 
 TimeRangeSpec: {
 	field?: string
-	range?:  {
+	range?: {
 		from: int
-		to: int
+		to:   int
 	}
 }
 
