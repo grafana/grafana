@@ -1,15 +1,14 @@
 import { keyframes } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
+import useMountedState from 'react-use/lib/useMountedState';
 
-export const VIEW_PHASE = {
-  QuietInitial: 'quiet-initial',
-  Quiet: 'quiet',
-  TransitioningToActive: 'transitioning-to-active',
-  Active: 'active',
-  TransitioningToQuiet: 'transitioning-to-quiet',
-} as const;
-
-export type ViewPhase = (typeof VIEW_PHASE)[keyof typeof VIEW_PHASE];
+export enum ViewPhase {
+  QuietInitial = 'quiet-initial',
+  Quiet = 'quiet',
+  TransitioningToActive = 'transitioning-to-active',
+  Active = 'active',
+  TransitioningToQuiet = 'transitioning-to-quiet',
+}
 
 export const EXIT_DURATION_MS = 400;
 export const EXIT_EASING = 'cubic-bezier(0.2, 0, 0, 1)';
@@ -38,13 +37,14 @@ export const textFrames = fadeSlide(20, 3);
 export const buttonFrames = fadeSlide(8);
 
 export function useViewPhase(isActive: boolean): ViewPhase {
-  const [phase, setPhase] = useState<ViewPhase>(() => (isActive ? VIEW_PHASE.Active : VIEW_PHASE.QuietInitial));
-  const isMountedRef = useRef(false);
+  const [phase, setPhase] = useState<ViewPhase>(() => (isActive ? ViewPhase.Active : ViewPhase.QuietInitial));
+  const isMounted = useMountedState();
+  const isFirstRenderRef = useRef(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!isMountedRef.current) {
-      isMountedRef.current = true;
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
       return;
     }
 
@@ -53,12 +53,14 @@ export function useViewPhase(isActive: boolean): ViewPhase {
       timerRef.current = null;
     }
 
-    const nextPhase = isActive ? VIEW_PHASE.TransitioningToActive : VIEW_PHASE.TransitioningToQuiet;
-    const settledPhase = isActive ? VIEW_PHASE.Active : VIEW_PHASE.Quiet;
+    const nextPhase = isActive ? ViewPhase.TransitioningToActive : ViewPhase.TransitioningToQuiet;
+    const settledPhase = isActive ? ViewPhase.Active : ViewPhase.Quiet;
 
     setPhase(nextPhase);
     timerRef.current = setTimeout(() => {
-      setPhase(settledPhase);
+      if (isMounted()) {
+        setPhase(settledPhase);
+      }
       timerRef.current = null;
     }, TRANSITION_MS);
 
@@ -67,7 +69,7 @@ export function useViewPhase(isActive: boolean): ViewPhase {
         clearTimeout(timerRef.current);
       }
     };
-  }, [isActive]);
+  }, [isActive, isMounted]);
 
   return phase;
 }

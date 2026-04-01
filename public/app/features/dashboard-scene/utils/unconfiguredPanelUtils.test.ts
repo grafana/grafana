@@ -4,7 +4,7 @@ import {
   EXIT_DURATION_MS,
   TEXT_EXIT_DELAY_MS,
   TRANSITION_MS,
-  VIEW_PHASE,
+  ViewPhase,
   fadeSlide,
   useViewPhase,
 } from './unconfiguredPanelUtils';
@@ -66,12 +66,12 @@ describe('unconfiguredPanelUtils', () => {
     describe('initial state', () => {
       it('starts as QuietInitial when isActive is false', () => {
         const { result } = renderHook(() => useViewPhase(false));
-        expect(result.current).toBe(VIEW_PHASE.QuietInitial);
+        expect(result.current).toBe(ViewPhase.QuietInitial);
       });
 
       it('starts as Active when isActive is true', () => {
         const { result } = renderHook(() => useViewPhase(true));
-        expect(result.current).toBe(VIEW_PHASE.Active);
+        expect(result.current).toBe(ViewPhase.Active);
       });
     });
 
@@ -82,7 +82,7 @@ describe('unconfiguredPanelUtils', () => {
         });
 
         act(() => rerender({ isActive: true }));
-        expect(result.current).toBe(VIEW_PHASE.TransitioningToActive);
+        expect(result.current).toBe(ViewPhase.TransitioningToActive);
       });
 
       it('settles to Active after TRANSITION_MS', () => {
@@ -92,7 +92,7 @@ describe('unconfiguredPanelUtils', () => {
 
         act(() => rerender({ isActive: true }));
         act(() => jest.advanceTimersByTime(TRANSITION_MS));
-        expect(result.current).toBe(VIEW_PHASE.Active);
+        expect(result.current).toBe(ViewPhase.Active);
       });
 
       it('does not settle before TRANSITION_MS elapses', () => {
@@ -102,7 +102,7 @@ describe('unconfiguredPanelUtils', () => {
 
         act(() => rerender({ isActive: true }));
         act(() => jest.advanceTimersByTime(TRANSITION_MS - 1));
-        expect(result.current).toBe(VIEW_PHASE.TransitioningToActive);
+        expect(result.current).toBe(ViewPhase.TransitioningToActive);
       });
     });
 
@@ -113,7 +113,7 @@ describe('unconfiguredPanelUtils', () => {
         });
 
         act(() => rerender({ isActive: false }));
-        expect(result.current).toBe(VIEW_PHASE.TransitioningToQuiet);
+        expect(result.current).toBe(ViewPhase.TransitioningToQuiet);
       });
 
       it('settles to Quiet after TRANSITION_MS', () => {
@@ -123,7 +123,7 @@ describe('unconfiguredPanelUtils', () => {
 
         act(() => rerender({ isActive: false }));
         act(() => jest.advanceTimersByTime(TRANSITION_MS));
-        expect(result.current).toBe(VIEW_PHASE.Quiet);
+        expect(result.current).toBe(ViewPhase.Quiet);
       });
 
       it('does not settle before TRANSITION_MS elapses', () => {
@@ -133,7 +133,7 @@ describe('unconfiguredPanelUtils', () => {
 
         act(() => rerender({ isActive: false }));
         act(() => jest.advanceTimersByTime(TRANSITION_MS - 1));
-        expect(result.current).toBe(VIEW_PHASE.TransitioningToQuiet);
+        expect(result.current).toBe(ViewPhase.TransitioningToQuiet);
       });
     });
 
@@ -148,11 +148,11 @@ describe('unconfiguredPanelUtils', () => {
 
         // Flip back before the timer fires
         act(() => rerender({ isActive: false }));
-        expect(result.current).toBe(VIEW_PHASE.TransitioningToQuiet);
+        expect(result.current).toBe(ViewPhase.TransitioningToQuiet);
 
         // The original timer should not fire and resolve to Active
         act(() => jest.advanceTimersByTime(TRANSITION_MS));
-        expect(result.current).toBe(VIEW_PHASE.Quiet);
+        expect(result.current).toBe(ViewPhase.Quiet);
       });
 
       it('cancels a pending to-quiet transition when flipped back', () => {
@@ -165,10 +165,10 @@ describe('unconfiguredPanelUtils', () => {
 
         // Flip back before the timer fires
         act(() => rerender({ isActive: true }));
-        expect(result.current).toBe(VIEW_PHASE.TransitioningToActive);
+        expect(result.current).toBe(ViewPhase.TransitioningToActive);
 
         act(() => jest.advanceTimersByTime(TRANSITION_MS));
-        expect(result.current).toBe(VIEW_PHASE.Active);
+        expect(result.current).toBe(ViewPhase.Active);
       });
     });
   });

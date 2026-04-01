@@ -1,4 +1,4 @@
-import { css, cx, type keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
@@ -36,7 +36,7 @@ import {
   EXIT_DURATION_MS,
   EXIT_EASING,
   TEXT_EXIT_DELAY_MS,
-  VIEW_PHASE,
+  ViewPhase,
   buttonFrames,
   gearFrames,
   textFrames,
@@ -180,8 +180,8 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     );
   }
 
-  const isQuietVisible = phase !== VIEW_PHASE.Active;
-  const isButtonsVisible = phase !== VIEW_PHASE.QuietInitial && phase !== VIEW_PHASE.Quiet;
+  const isQuietVisible = phase !== ViewPhase.Active;
+  const isButtonsVisible = phase !== ViewPhase.QuietInitial && phase !== ViewPhase.Quiet;
 
   const buttons: Array<{
     key: string;
@@ -235,16 +235,16 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
             <div
               className={cx(
                 styles.gearIconWrapper,
-                phase === VIEW_PHASE.TransitioningToQuiet && styles.gearEntering,
-                phase === VIEW_PHASE.TransitioningToActive && styles.gearExiting
+                phase === ViewPhase.TransitioningToQuiet && styles.gearEntering,
+                phase === ViewPhase.TransitioningToActive && styles.gearExiting
               )}
             >
               <Icon name="cog" size="md" />
             </div>
             <span
               className={cx(
-                phase === VIEW_PHASE.TransitioningToQuiet && styles.textEntering,
-                phase === VIEW_PHASE.TransitioningToActive && styles.textExiting
+                phase === ViewPhase.TransitioningToQuiet && styles.textEntering,
+                phase === ViewPhase.TransitioningToActive && styles.textExiting
               )}
             >
               <Text color="secondary">
@@ -263,11 +263,11 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
                 key={button.key}
                 className={cx(
                   styles.buttonWrapper,
-                  phase === VIEW_PHASE.TransitioningToActive && styles.buttonEntering,
-                  phase === VIEW_PHASE.TransitioningToQuiet && styles.buttonExiting
+                  phase === ViewPhase.TransitioningToActive && styles.buttonEntering,
+                  phase === ViewPhase.TransitioningToQuiet && styles.buttonExiting
                 )}
                 style={
-                  phase === VIEW_PHASE.TransitioningToActive || phase === VIEW_PHASE.TransitioningToQuiet
+                  phase === ViewPhase.TransitioningToActive || phase === ViewPhase.TransitioningToQuiet
                     ? { animationDelay: `${(i + 1) * BUTTON_STAGGER_INTERVAL_MS}ms` }
                     : undefined
                 }
@@ -396,9 +396,6 @@ sceneUtils.registerRuntimePanelPlugin({
 });
 
 function getStyles(theme: GrafanaTheme2) {
-  const anim = (kf: ReturnType<typeof keyframes>, duration: number, easing: string): string =>
-    `${kf} ${duration}ms ${easing} both`;
-
   return {
     root: css({
       containerType: 'size',
@@ -446,22 +443,22 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     gearEntering: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: anim(gearFrames.enter, EXIT_DURATION_MS, EXIT_EASING),
+        animation: `${gearFrames.enter} ${EXIT_DURATION_MS}ms ${EXIT_EASING} both`,
       },
     }),
     gearExiting: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: anim(gearFrames.exit, EXIT_DURATION_MS, EXIT_EASING),
+        animation: `${gearFrames.exit} ${EXIT_DURATION_MS}ms ${EXIT_EASING} both`,
       },
     }),
     textEntering: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: anim(textFrames.enter, EXIT_DURATION_MS, EXIT_EASING),
+        animation: `${textFrames.enter} ${EXIT_DURATION_MS}ms ${EXIT_EASING} both`,
       },
     }),
     textExiting: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: anim(textFrames.exit, EXIT_DURATION_MS, EXIT_EASING),
+        animation: `${textFrames.exit} ${EXIT_DURATION_MS}ms ${EXIT_EASING} both`,
         animationDelay: `${TEXT_EXIT_DELAY_MS}ms`,
       },
     }),
@@ -489,12 +486,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     buttonEntering: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: anim(buttonFrames.enter, BUTTON_ANIM_DURATION_MS, 'ease-out'),
+        animation: `${buttonFrames.enter} ${BUTTON_ANIM_DURATION_MS}ms ease-out both`,
       },
     }),
     buttonExiting: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: anim(buttonFrames.exit, BUTTON_ANIM_DURATION_MS, 'ease-out'),
+        animation: `${buttonFrames.exit} ${BUTTON_ANIM_DURATION_MS}ms ease-out both`,
       },
     }),
     emptyStateWrapper: css({
