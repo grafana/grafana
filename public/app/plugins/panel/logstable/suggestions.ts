@@ -1,15 +1,15 @@
 import {
   DataFrameType,
-  PanelDataSummary,
+  type PanelDataSummary,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
 
-import { FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
+import { type FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
 
-import { Options } from './options/types';
+import { type Options } from './options/types';
 
 function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore | undefined {
   if (dataSummary.hasPreferredVisualisationType('logs')) {
