@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 
-import { ScopeNode } from '@grafana/data';
+import { type ScopeNode } from '@grafana/data';
 
 import { ScopesTree } from './ScopesTree';
-import { NodesMap, SelectedScope, TreeNode } from './types';
+import { type NodesMap, type SelectedScope, type TreeNode } from './types';
 
 // Mock the ScopesContextProvider hook since it requires a full context setup
 jest.mock('../ScopesContextProvider', () => ({
@@ -14,12 +14,20 @@ jest.mock('../ScopesContextProvider', () => ({
   }),
 }));
 
-describe('ScopesTree', () => {
-  const mockFilterNode = jest.fn();
-  const mockSelectScope = jest.fn();
-  const mockDeselectScope = jest.fn();
-  const mockToggleExpandedNode = jest.fn();
+// Mock useScopeActions hook
+const mockSelectScope = jest.fn();
+const mockDeselectScope = jest.fn();
+const mockToggleExpandedNode = jest.fn();
 
+jest.mock('./useScopeActions', () => ({
+  useScopeActions: () => ({
+    selectScope: mockSelectScope,
+    deselectScope: mockDeselectScope,
+    toggleExpandedNode: mockToggleExpandedNode,
+  }),
+}));
+
+describe('ScopesTree', () => {
   const createMockScopeNode = (name: string, parentName?: string): ScopeNode => ({
     metadata: { name },
     spec: {
@@ -60,10 +68,6 @@ describe('ScopesTree', () => {
     loadingNodeName: undefined,
     selectedScopes: [] as SelectedScope[],
     scopeNodes: defaultScopeNodes,
-    filterNode: mockFilterNode,
-    selectScope: mockSelectScope,
-    deselectScope: mockDeselectScope,
-    toggleExpandedNode: mockToggleExpandedNode,
   };
 
   beforeEach(() => {

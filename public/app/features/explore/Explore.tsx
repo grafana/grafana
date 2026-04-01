@@ -1,39 +1,39 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
-import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
+import { connect, type ConnectedProps } from 'react-redux';
+import AutoSizer, { type HorizontalSize } from 'react-virtualized-auto-sizer';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
-  EventBus,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  type EventBus,
   getNextRefId,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
-  QueryFixAction,
-  RawTimeRange,
-  SplitOpenOptions,
+  type QueryFixAction,
+  type RawTimeRange,
+  type SplitOpenOptions,
   store,
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import {
-  AdHocFilterItem,
+  type AdHocFilterItem,
   ErrorBoundaryAlert,
   PanelContainer,
   ScrollContainer,
-  Themeable2,
+  type Themeable2,
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -389,7 +389,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, timeZone, queryResponse, showFlameGraph } = this.props;
+    const { graphResult, timeZone, queryResponse, showFlameGraph, queriesChangedIndexAtRun } = this.props;
 
     return (
       <ContentOutlineItem panelId="Graph" title={t('explore.explore.title-graph', 'Graph')} icon="graph-bar">
@@ -404,6 +404,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           splitOpenFn={this.onSplitOpen('graph')}
           loadingState={queryResponse.state}
           eventBus={this.graphEventBus}
+          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
         />
       </ContentOutlineItem>
     );
@@ -813,6 +814,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     compact,
     queryLibraryRef,
+    queriesChangedIndexAtRun,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -847,6 +849,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
     queryLibraryRef,
+    queriesChangedIndexAtRun,
   };
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	amlabels "github.com/prometheus/alertmanager/pkg/labels"
 	"go.opentelemetry.io/otel/trace"
 
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
@@ -518,25 +519,41 @@ func buildQueryTail(query models.HistoryQuery) (string, error) {
 		}
 	}
 
-	requiredSize := 0
-	labelKeys := make([]string, 0, len(query.Labels))
-	for k, v := range query.Labels {
-		requiredSize += len(k) + len(v) + 13 // 13 all literals below
-		labelKeys = append(labelKeys, k)
-	}
-	// Ensure that all queries we build are deterministic.
-	sort.Strings(labelKeys)
-	b.Grow(requiredSize)
-	for _, k := range labelKeys {
+	// Sort matchers by name for deterministic queries.
+	sorted := make(amlabels.Matchers, len(query.Labels))
+	copy(sorted, query.Labels)
+	sort.Slice(sorted, func(i, j int) bool {
+		if sorted[i].Name != sorted[j].Name {
+			return sorted[i].Name < sorted[j].Name
+		}
+		return sorted[i].Value < sorted[j].Value
+	})
+	for _, m := range sorted {
 		b.WriteString(" | labels_")
-		b.WriteString(k)
-		b.WriteString("=")
-		_, err := fmt.Fprintf(&b, "%q", query.Labels[k])
+		b.WriteString(m.Name)
+		b.WriteString(logQLOperator(m.Type))
+		_, err := fmt.Fprintf(&b, "%q", m.Value)
 		if err != nil {
 			return "", err
 		}
 	}
 	return b.String(), nil
+}
+
+// logQLOperator maps an alertmanager MatchType to its LogQL filter operator string.
+func logQLOperator(t amlabels.MatchType) string {
+	switch t {
+	case amlabels.MatchEqual:
+		return "="
+	case amlabels.MatchNotEqual:
+		return "!="
+	case amlabels.MatchRegexp:
+		return "=~"
+	case amlabels.MatchNotRegexp:
+		return "!~"
+	default:
+		return "="
+	}
 }
 
 func queryHasLogFilters(query models.HistoryQuery) bool {
@@ -639,9 +656,7 @@ func (h *RemoteLokiBackend) getFolderUIDsForRuleFilter(ctx context.Context, quer
 			continue
 		}
 
-		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.Namespace{
-			UID: folderUID,
-		})
+		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.NewNamespaceUID(folderUID))
 		if err != nil {
 			// Including historical folders is an edge case enhancement, better to just log the error and continue
 			// with the current folder UID.

@@ -4,20 +4,29 @@ import {
   DataFrameType,
   DataTransformerID,
   FieldType,
-  PanelPluginVisualizationSuggestion,
-  VisualizationSuggestion,
+  type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestion,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
+import {
+  GraphDrawStyle,
+  type GraphFieldConfig,
+  GraphGradientMode,
+  LineInterpolation,
+  StackingMode,
+} from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const MAX_BARS = 100;
 const MAX_ROWS_SMOOTH_CHART = 200;
+
+const MAX_PREVIEW_SERIES = 8;
+const MAX_PREVIEW_BAR_ROWS = 30;
 
 const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
@@ -30,6 +39,7 @@ const withDefaults = (
       overrides: [],
     },
     cardOptions: {
+      maxSeries: MAX_PREVIEW_SERIES,
       previewModifier: (s) => {
         s.options!.disableKeyboardEvents = true;
         s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
@@ -67,6 +77,9 @@ const barChart = (name: string, stacking?: StackingMode) => ({
     },
     overrides: [],
   },
+  cardOptions: {
+    maxRows: MAX_PREVIEW_BAR_ROWS,
+  },
 });
 
 // TODO: all "gradient color scheme" suggestions have been removed. they will be re-added as part of the "styles" feature.
@@ -79,6 +92,11 @@ export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplier<Opt
     !dataSummary.hasFieldType(FieldType.number) ||
     dataSummary.rowCountTotal < 2
   ) {
+    return;
+  }
+
+  // don't suggest timeseries for instant queries
+  if (dataSummary.isInstant) {
     return;
   }
 

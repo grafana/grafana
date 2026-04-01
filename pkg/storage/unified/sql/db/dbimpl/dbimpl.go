@@ -8,6 +8,7 @@ import (
 
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 
@@ -118,9 +119,16 @@ func (p *resourceDBProvider) initDB(ctx context.Context) (db.DB, error) {
 	)
 
 	if p.registerMetrics {
-		err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", p.engine.DB().DB))
-		if err != nil {
-			p.log.Warn("Failed to register unified storage sql stats collector", "error", err)
+		if err := prometheus.Register(collectors.NewDBStatsCollector(p.engine.DB().DB, "unified_storage")); err != nil {
+			p.log.Warn("Failed to register 'Prometheus collector' unified storage sql stats collector", "error", err)
+		}
+
+		// TODO(@macabu/2026-03-04): Remove on G14 as these metrics are the same as the ones above.
+		if p.cfg.DatabaseRegisterDeprecatedMetrics {
+			err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", p.engine.DB().DB))
+			if err != nil {
+				p.log.Warn("Failed to register 'sqlstats' unified storage sql stats collector", "error", err)
+			}
 		}
 	}
 	_ = p.logQueries // TODO: configure SQL logging

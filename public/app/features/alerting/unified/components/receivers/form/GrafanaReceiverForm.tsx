@@ -15,19 +15,15 @@ import {
   isProvisionedResource,
 } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
-  GrafanaManagedContactPoint,
-  GrafanaManagedReceiverConfig,
-  Receiver,
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { useIntegrationTypeSchemas } from '../../../api/integrationSchemasApi';
+import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
+import { type GrafanaChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
 import { hasLegacyIntegrations } from '../../../utils/notifier-versions';
-import {
-  formChannelValuesToGrafanaChannelConfig,
-  formValuesToGrafanaReceiver,
-  grafanaReceiverToFormValues,
-} from '../../../utils/receiver-form';
+import { formValuesToGrafanaReceiver, grafanaReceiverToFormValues } from '../../../utils/receiver-form';
 import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
 import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
@@ -35,7 +31,7 @@ import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallInt
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 import { TestContactPointModal } from './TestContactPointModal';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   __id: '',
@@ -54,8 +50,6 @@ interface Props {
   editMode?: boolean;
 }
 
-const { useGrafanaNotifiersQuery } = alertmanagerApi;
-
 export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
@@ -73,8 +67,11 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     hasOnCallError,
   } = useOnCallIntegration();
 
-  const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
-  const [testReceivers, setTestReceivers] = useState<Receiver[]>();
+  const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useIntegrationTypeSchemas();
+  const [testChannelData, setTestChannelData] = useState<{
+    channelValues: GrafanaChannelValues;
+    existingIntegration?: GrafanaManagedReceiverConfig;
+  }>();
 
   // transform receiver DTO to form values
   const [existingValue, id2original] = useMemo((): [
@@ -116,24 +113,23 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
   const onTestChannel = (values: GrafanaChannelValues) => {
     const existing: GrafanaManagedReceiverConfig | undefined = id2original[values.__id];
-    const chan = formChannelValuesToGrafanaChannelConfig(values, defaultChannelValues, 'test', existing);
-
-    const receivers: Receiver[] = [
-      {
-        name: 'test',
-        grafana_managed_receiver_configs: [chan],
-      },
-    ];
-
-    setTestReceivers(receivers);
+    setTestChannelData({
+      channelValues: values,
+      existingIntegration: existing,
+    });
   };
+
+  const { canTest } = useTestContactPoint({
+    contactPoint,
+    defaultChannelValues,
+  });
 
   // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
   const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
   const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
   const isProvisioned = isProvisionedResource(contactPoint?.provenance);
   const isEditable = !readOnly && hasScopedEditPermissions && !isProvisioned;
-  const isTestable = !readOnly;
+  const isTestable = !readOnly && canTest;
   const canEditProtectedFields = editMode ? hasScopedEditProtectedPermissions : true;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
@@ -196,12 +192,14 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         }
         canEditProtectedFields={canEditProtectedFields}
       />
-      {testReceivers && (
+      {testChannelData && (
         <TestContactPointModal
-          onDismiss={() => setTestReceivers(undefined)}
-          isOpen={!!testReceivers}
-          alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
-          receivers={testReceivers}
+          onDismiss={() => setTestChannelData(undefined)}
+          isOpen={!!testChannelData}
+          contactPoint={contactPoint}
+          channelValues={testChannelData.channelValues}
+          existingIntegration={testChannelData.existingIntegration}
+          defaultChannelValues={defaultChannelValues}
         />
       )}
     </>

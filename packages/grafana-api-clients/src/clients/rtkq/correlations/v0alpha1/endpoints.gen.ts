@@ -408,14 +408,12 @@ export type ObjectMeta = {
   uid?: string;
 };
 export type CorrelationTargetSpec = {
-  [key: string]: {
-    [key: string]: any;
-  };
+  [key: string]: any;
 };
 export type CorrelationTransformationSpec = {
-  expression: string;
-  field: string;
-  mapValue: string;
+  expression?: string;
+  field?: string;
+  mapValue?: string;
   type: 'regex' | 'logfmt';
 };
 export type CorrelationConfigSpec = {

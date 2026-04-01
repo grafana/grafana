@@ -356,6 +356,8 @@ type GetDashboardQuery struct {
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+	// k8s version to try first when loading (e.g. v1beta1). empty uses the default. on error, falls back to default
+	K8sGetAPIVersion string
 }
 
 type DashboardTagCloudItem struct {
@@ -397,6 +399,31 @@ type SaveDashboardDTO struct {
 	Message   string
 	Overwrite bool
 	Dashboard *Dashboard
+}
+
+func LooksLikeK8sResource(data map[string]any) bool {
+	if _, ok := data["apiVersion"]; ok {
+		return true
+	}
+	if _, ok := data["metadata"]; ok {
+		return true
+	}
+	if _, ok := data["spec"]; ok {
+		return true
+	}
+	return false
+}
+
+const LooksLikeV2SpecMessage = "dashboard appears to be in v2 format. Please use the /apis/dashboard.grafana.app/v2 API"
+
+func LooksLikeV2Spec(data map[string]any) bool {
+	if _, ok := data["elements"]; ok {
+		return true
+	}
+	if _, ok := data["layout"]; ok {
+		return true
+	}
+	return false
 }
 
 type DashboardSearchProjection struct {

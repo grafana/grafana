@@ -1,18 +1,22 @@
 import { PureComponent } from 'react';
 
-import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
+import {
+  type DataSourcePluginOptionsEditorProps,
+  type SelectableValue,
+  updateDatasourcePluginOption,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, isFetchError, type TemplateSrv, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
 import {
-  AzureAPIResponse,
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorDataSourceSecureJsonData,
-  AzureMonitorDataSourceSettings,
-  Subscription,
+  type AzureAPIResponse,
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorDataSourceSecureJsonData,
+  type AzureMonitorDataSourceSettings,
+  type Subscription,
 } from '../../types/types';
 import { routeNames } from '../../utils/common';
 
@@ -44,7 +48,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.state = {
       unsaved: false,
     };
-    this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
+    this.baseURL = `/api/datasources/uid/${this.props.options.uid}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
 
   private updateOptions = (
@@ -59,7 +63,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   private saveOptions = async (): Promise<void> => {
     if (this.state.unsaved) {
       await getBackendSrv()
-        .put(`/api/datasources/${this.props.options.id}`, this.props.options)
+        .put(`/api/datasources/uid/${this.props.options.uid}`, this.props.options)
         .then((result: { datasource: AzureMonitorDataSourceSettings }) => {
           updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
         });

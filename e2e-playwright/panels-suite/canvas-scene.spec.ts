@@ -1,8 +1,6 @@
-import { Locator } from '@playwright/test';
+import { type Locator } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
-
-import { setVisualization } from '../utils/panel-helpers';
 
 test.use({
   featureToggles: {
@@ -13,7 +11,7 @@ test.describe('Canvas Panel - Scene Tests', () => {
   test.beforeEach(async ({ page, gotoDashboardPage }) => {
     const dashboardPage = await gotoDashboardPage({});
     const panelEditPage = await dashboardPage.addPanel();
-    await setVisualization(panelEditPage, 'Canvas');
+    await panelEditPage.setVisualization('Canvas');
 
     // Wait for canvas panel to load
     await page.waitForSelector('[data-testid="canvas-scene-pan-zoom"]', { timeout: 10000 });

@@ -1,8 +1,12 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, PluginMetaInfo, PluginType } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type PluginMetaInfo,
+  PluginType,
+} from '@grafana/data';
 import { setBackendSrv, getBackendSrv } from '@grafana/runtime';
 
 export const defaultSettings: DataSourceInstanceSettings = {
-  id: 0,
   uid: 'pyroscope',
   type: 'profiling',
   name: 'pyroscope',

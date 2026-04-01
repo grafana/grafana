@@ -1,6 +1,11 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 
-import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginType, PluginMetaInfo } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  PluginType,
+  type PluginMetaInfo,
+} from '@grafana/data';
 
 import { useFavoriteDatasources } from './useFavoriteDatasources';
 
@@ -56,7 +61,6 @@ describe('useFavoriteDatasources', () => {
       name: name,
       uid: `${name}-uid`,
       meta: createPluginMeta(name, builtIn),
-      id,
       access: 'direct',
       jsonData: {},
       type: name,

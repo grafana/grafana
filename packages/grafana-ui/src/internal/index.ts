@@ -41,7 +41,7 @@ export {
   frameHasName,
   getFrameFieldsDisplayNames,
   useFieldDisplayNames,
-  useSelectOptions,
+  useMatcherSelectOptions,
 } from '../components/MatchersUI/utils';
 export type { FieldMatcherUIRegistryItem } from '../components/MatchersUI/types';
 export { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '../components/MatchersUI/FieldsByFrameRefIdMatcher';
@@ -51,6 +51,7 @@ export { getStyles as getSliderStyles } from '../components/Slider/styles';
 export { getSelectStyles } from '../components/Select/getSelectStyles';
 export type { Props as InputProps } from '../components/Input/Input';
 export type { ModalsContextState } from '../components/Modal/ModalsContext';
+export { ModalBase, type ModalBaseProps } from '../components/Modal/ModalBase';
 export { getModalStyles } from '../components/Modal/getModalStyles';
 export { MultiValueRemove, type MultiValueRemoveProps } from '../components/Select/MultiValue';
 export { getSvgSize } from '../components/Icon/utils';
@@ -109,3 +110,5 @@ export { closePopover } from '../utils/closePopover';
 
 export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
+
+export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';

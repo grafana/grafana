@@ -5,7 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
-import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
@@ -13,24 +13,24 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { StepStatusInfo } from '../../Wizard/types';
+import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import { StatusInfo } from '../../types';
+import { type StatusInfo } from '../../types';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getDefaultWorkflow, getWorkflowOptions } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
 import { generateTimestamp } from '../utils/timestamp';
 
-import { DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { BulkActionFormData, BulkActionProvisionResourceProps } from './utils';
+import { type DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
+import { type BulkActionFormData, type BulkActionProvisionResourceProps } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
   repository: RepositoryView;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
 }
 
-function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
@@ -39,8 +39,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
-  const { handleSubmit, watch } = methods;
-  const workflow = watch('workflow');
+  const { handleSubmit } = methods;
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setHasSubmitted(true);
@@ -113,10 +112,9 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 isNew={false}
-                workflow={workflow}
-                workflowOptions={workflowOptions}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
-                hidePath
+                hiddenFields={['path']}
               />
               <Stack gap={2}>
                 <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>
@@ -149,7 +147,7 @@ export function BulkDeleteProvisionedResource({
   const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({
     folderName: isRootPage ? selectedItemsRepoUID : folderUid,
   });
-  const workflowOptions = getWorkflowOptions(repository);
+  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const timestamp = generateTimestamp();
 
   const initialValues = {
@@ -168,7 +166,7 @@ export function BulkDeleteProvisionedResource({
       onDismiss={onDismiss}
       initialValues={initialValues}
       repository={repository}
-      workflowOptions={workflowOptions}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
     />
   );
 }

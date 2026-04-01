@@ -1,29 +1,27 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
-import { Dispatch, FormEvent } from 'react';
-import { UnknownAction } from 'redux';
+import { type Dispatch, type FormEvent } from 'react';
+import { type UnknownAction } from 'redux';
 
-import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type PanelData, ReducerID, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
-import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
+import {
+  type ExpressionQuery,
+  ExpressionQueryType,
+  reducerTypes,
+  thresholdFunctions,
+} from 'app/features/expressions/types';
 import { getReducerType, isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { ToLabel } from '../../../../../expressions/components/ToLabel';
+import { type SimpleCondition } from '../../../types/rule-form';
 import { ExpressionResult } from '../../expressions/Expression';
 
 import { updateExpression } from './reducer';
-
-export interface SimpleCondition {
-  whenField?: string;
-  evaluator: {
-    params: number[];
-    type: EvalFunction;
-  };
-}
 
 /**
  * This is the simple condition editor if the user is in the simple mode in the query section
@@ -167,9 +165,17 @@ function updateReduceExpression(
 
   const newReduceExpression = reduceExpression
     ? produce(reduceExpression?.model, (draft) => {
-        if (draft && draft.conditions) {
+        if (draft && draft.conditions?.[0]) {
           draft.reducer = reducer;
-          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+          const reducerType = getReducerType(reducer) ?? ReducerID.last;
+          // API-loaded rules may have conditions without a reducer object (e.g. provisioned rules
+          // or rules created by older versions). Backfill it to keep conditions[0].reducer.type
+          // in sync with draft.reducer rather than silently skipping the update.
+          if (!draft.conditions[0].reducer) {
+            draft.conditions[0].reducer = { params: [], type: reducerType };
+          } else {
+            draft.conditions[0].reducer.type = reducerType;
+          }
         }
       })
     : undefined;
@@ -184,7 +190,7 @@ function updateThresholdFunction(
   const thresholdExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.threshold);
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.model.conditions) {
+    if (draft && draft.model.conditions?.[0]) {
       draft.model.conditions[0].evaluator.type = evaluator;
     }
   });
@@ -200,7 +206,7 @@ function updateThresholdValue(
   const thresholdExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.threshold);
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.model.conditions) {
+    if (draft && draft.model.conditions?.[0]) {
       draft.model.conditions[0].evaluator.params[index] = value;
     }
   });

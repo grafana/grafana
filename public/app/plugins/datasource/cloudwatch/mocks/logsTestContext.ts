@@ -1,20 +1,20 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   createDataFrame,
   dataFrameToJSON,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
-  ScopedVars,
-  DataSourceApi,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
+  type ScopedVars,
+  type DataSourceApi,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
 } from '@grafana/data';
-import { GetDataSourceListFilters, setDataSourceSrv, toDataQueryResponse } from '@grafana/runtime';
+import { type GetDataSourceListFilters, setDataSourceSrv, toDataQueryResponse } from '@grafana/runtime';
 
 import { CloudWatchLogsQueryStatus } from '../types';
 
@@ -55,7 +55,6 @@ export function setupForLogs() {
     async get() {
       const ds: DataSourceApi = {
         name: 'Xray',
-        id: 0,
         type: '',
         uid: '',
         query: function (

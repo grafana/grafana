@@ -1,56 +1,57 @@
-import { lastValueFrom, Observable, throwError } from 'rxjs';
+import { lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
   getDefaultTimeRange,
-  DataFrame,
+  type DataFrame,
   DataFrameView,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  MetricFindValue,
-  ScopedVars,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type MetricFindValue,
+  type ScopedVars,
   CoreApp,
   getSearchFilterScopedVar,
-  LegacyMetricFindQueryOptions,
-  VariableWithMultiSupport,
-  TimeRange,
+  type LegacyMetricFindQueryOptions,
+  type VariableWithMultiSupport,
+  type TimeRange,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 import {
-  BackendDataSourceResponse,
+  type BackendDataSourceResponse,
   DataSourceWithBackend,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
   toDataQueryResponse,
-  TemplateSrv,
+  type TemplateSrv,
   reportInteraction,
 } from '@grafana/runtime';
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditorLazy } from '../components/QueryEditorLazy';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
+import { type DB, type SQLQuery, type SQLOptions, type SqlQueryModel, QueryFormat, type SQLDialect } from '../types';
 import migrateAnnotation from '../utils/migration';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
-  id: number;
+  uid: string;
   responseParser: ResponseParser;
   name: string;
   interval: string;
   db: DB;
   preconfiguredDatabase: string;
+  dialect: SQLDialect = 'other';
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<SQLOptions>,
+    public instanceSettings: DataSourceInstanceSettings<SQLOptions>,
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
     this.responseParser = new ResponseParser();
-    this.id = instanceSettings.id;
+    this.uid = instanceSettings.uid;
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
@@ -65,7 +66,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     };
   }
 
-  abstract getDB(dsID?: number): DB;
+  abstract getDB(): DB;
 
   abstract getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): SqlQueryModel;
 

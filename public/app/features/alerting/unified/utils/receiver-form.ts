@@ -1,27 +1,28 @@
 import { has, isArray, isNil, omitBy, pickBy } from 'lodash';
 
 import {
-  CloudNotifierType,
-  NotificationChannelOption,
-  NotifierDTO,
-  NotifierType,
+  type CloudNotifierType,
+  type NotificationChannelOption,
+  type NotifierDTO,
+  type NotifierType,
 } from 'app/features/alerting/unified/types/alerting';
+import { getOptionsForVersion } from 'app/features/alerting/unified/utils/notifier-versions';
 import {
-  AlertmanagerReceiver,
-  GrafanaManagedContactPoint,
-  GrafanaManagedReceiverConfig,
-  GrafanaManagedReceiverSecureFields,
-  Receiver,
+  type AlertmanagerReceiver,
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
+  type GrafanaManagedReceiverSecureFields,
+  type Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import {
-  ChannelValues,
-  CloudChannelConfig,
-  CloudChannelMap,
-  CloudChannelValues,
-  GrafanaChannelMap,
-  GrafanaChannelValues,
-  ReceiverFormValues,
+  type ChannelValues,
+  type CloudChannelConfig,
+  type CloudChannelMap,
+  type CloudChannelValues,
+  type GrafanaChannelMap,
+  type GrafanaChannelValues,
+  type ReceiverFormValues,
 } from '../types/receiver-form';
 
 export function grafanaReceiverToFormValues(
@@ -220,7 +221,7 @@ export function getSecureFieldNames(notifier: NotifierDTO): string[] {
     }
   }
 
-  findSecureOptions(notifier.options);
+  findSecureOptions(getOptionsForVersion(notifier));
 
   return secureFieldPaths;
 }

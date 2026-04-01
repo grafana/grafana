@@ -1,11 +1,11 @@
-import { useLayoutEffect, useMemo, useRef, useState, ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as React from 'react';
 import { useMountedState } from 'react-use';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { Marker } from './Marker';
 import { XYCanvas } from './XYCanvas';
@@ -19,7 +19,7 @@ interface EventsCanvasProps {
 }
 
 export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords, config }: EventsCanvasProps) {
-  const plotInstance = useRef<uPlot>();
+  const plotInstance = useRef<uPlot | undefined>(undefined);
   // render token required to re-render annotation markers. Rendering lines happens in uPlot and the props do not change
   // so we need to force the re-render when the draw hook was performed by uPlot
   const [renderToken, setRenderToken] = useState(0);

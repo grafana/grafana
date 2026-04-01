@@ -6,7 +6,7 @@ import { FadeTransition, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { NestedEntry } from './NestedEntry';
 import getStyles from './styles';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
+import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from './types';
 import { findRow, parseResourceURI } from './utils';
 
 interface NestedRowProps {

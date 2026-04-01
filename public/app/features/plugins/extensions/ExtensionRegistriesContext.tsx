@@ -1,14 +1,14 @@
-import { PropsWithChildren, createContext, useContext } from 'react';
+import { type PropsWithChildren, createContext, useContext } from 'react';
 
-import { AddedComponentsRegistry } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
-import { AddedFunctionsRegistry } from 'app/features/plugins/extensions/registry/AddedFunctionsRegistry';
-import { AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
-import { ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
+import { type AddedComponentsRegistry } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
+import { type AddedFunctionsRegistry } from 'app/features/plugins/extensions/registry/AddedFunctionsRegistry';
+import { type AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
+import { type ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
 
-import { PluginExtensionRegistries } from './registry/types';
+import { type PluginExtensionRegistries } from './registry/types';
 
 export interface ExtensionRegistriesContextType {
-  registries: PluginExtensionRegistries;
+  registries?: PluginExtensionRegistries;
 }
 
 // Using a different context for each registry to avoid unnecessary re-renders
@@ -53,6 +53,10 @@ export const ExtensionRegistriesProvider = ({
   registries,
   children,
 }: PropsWithChildren<ExtensionRegistriesContextType>) => {
+  if (!registries) {
+    return null;
+  }
+
   return (
     <AddedLinksRegistryContext.Provider value={registries.addedLinksRegistry}>
       <AddedComponentsRegistryContext.Provider value={registries.addedComponentsRegistry}>

@@ -76,9 +76,13 @@ type DataSource struct {
 	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
 }
 
+func IsSecureSocksDSProxyEnabled(jsonData *simplejson.Json) bool {
+	return jsonData != nil && jsonData.Get("enableSecureSocksProxy").MustBool(false)
+}
+
 func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
 	if ds.isSecureSocksDSProxyEnabled == nil {
-		enabled := ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false)
+		enabled := IsSecureSocksDSProxyEnabled(ds.JsonData)
 		ds.isSecureSocksDSProxyEnabled = &enabled
 	}
 	return *ds.isSecureSocksDSProxyEnabled
@@ -246,7 +250,6 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgID           int64
 	DataSourceLimit int
-	User            *user.SignedInUser
 }
 
 type GetAllDataSourcesQuery struct{}
@@ -271,6 +274,10 @@ type GetDataSourceQuery struct {
 
 	// Required
 	OrgID int64
+
+	// Type is the datasource plugin type (e.g. "prometheus", "loki").
+	// When set alongside UID, it scopes the lookup to that specific type.
+	Type string
 }
 
 type DatasourcesPermissionFilterQuery struct {

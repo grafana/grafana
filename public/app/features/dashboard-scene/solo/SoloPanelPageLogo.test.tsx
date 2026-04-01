@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { shouldHideSoloPanelLogo, SoloPanelPageLogo } from './SoloPanelPageLogo';
 
@@ -33,7 +33,7 @@ global.ResizeObserver = jest.fn().mockImplementation((callback) => {
 });
 
 // Helper function to assign a mock div to a ref
-function assignMockDivToRef(ref: React.RefObject<HTMLDivElement>, mockDiv: HTMLDivElement) {
+function assignMockDivToRef(ref: React.RefObject<HTMLDivElement | null>, mockDiv: HTMLDivElement) {
   // Use type assertion to bypass readonly restriction in tests
   (ref as { current: HTMLDivElement | null }).current = mockDiv;
 }

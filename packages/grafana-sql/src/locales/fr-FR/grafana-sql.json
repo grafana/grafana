@@ -12,7 +12,7 @@
       "connection-limits": {
         "auto-max-idle": "Inactivité maximale automatique",
         "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-max-idle": "Le nombre maximal de connexions dans le pool de connexions inactives. Si <i>connexions ouvertes maximales</i> est supérieur à 0, mais inférieur à <i>connexions inactives maximales</i>, alors <i>connexions inactives maximales</i> sera réduit pour correspondre à la limite de <i>connexions ouvertes maximales</i>. Si défini à 0, aucune connexion inactive n’est conservée.",
         "content-max-lifetime": "La durée maximale en secondes pendant laquelle une connexion peut être réutilisée. Si la valeur est 0, les connexions sont réutilisées pour toujours.",
         "content-max-open": "",
         "max-idle": "Inactivité maximale",
@@ -69,6 +69,12 @@
         "placeholder-select-format": "Sélectionner le format",
         "run-query": "Exécuter la requête"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "Champ de texte",
+          "valueField": "Champ de valeur"
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Appuyer sur CTRL/CMD+Retour pour exécuter la requête",
         "tooltip-collapse": "Réduire l’éditeur",
@@ -76,7 +82,7 @@
         "tooltip-format-query": "Requête de format"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Cette requête traitera <strong>{{bytes}}</strong> lors de son exécution.",
         "validating-query": "Validation de la requête..."
       },
       "raw-editor": {

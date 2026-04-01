@@ -11,7 +11,19 @@ const (
 )
 
 type SecretsManagerSettings struct {
+	// Which encryption provider to use to encrypt any new secrets
 	CurrentEncryptionProvider string
+
+	// The time to live for decrypted data keys in memory
+	DataKeysCacheTTL time.Duration
+	// The interval to remove expired data keys from the cache
+	DataKeysCacheCleanupInterval time.Duration
+	// Whether to use a Redis cache for data keys instead of the in-memory cache
+	DataKeysCacheUseRedis bool
+	// DataKeysCacheEncryptionKey is used to encrypt data keys before storing them in the cache.
+	// If empty, a random key will be generated for each Grafana process at startup.
+	// If running in HA mode (i.e. with Redis cache enabled), this value must be set to the same value for all Grafana processes.
+	DataKeysCacheEncryptionKey string
 
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
@@ -72,6 +84,17 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 
 	cfg.SecretsManagement.AWSKeeperAccessKeyID = secretsMgmt.Key("aws_access_key_id").MustString("")
 	cfg.SecretsManagement.AWSKeeperSecretAccessKey = secretsMgmt.Key("aws_secret_access_key").MustString("")
+
+	cfg.SecretsManagement.DataKeysCacheUseRedis = secretsMgmt.Key("data_keys_cache_use_redis").MustBool(false)
+	cfg.SecretsManagement.DataKeysCacheTTL = secretsMgmt.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
+	cfg.SecretsManagement.DataKeysCacheCleanupInterval = secretsMgmt.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
+	// If empty, a random key will be generated at startup for encrypting cached data keys.
+	cfg.SecretsManagement.DataKeysCacheEncryptionKey = secretsMgmt.Key("data_keys_cache_encryption_key").MustString("")
+
+	if cfg.SecretsManagement.DataKeysCacheUseRedis && cfg.SecretsManagement.DataKeysCacheEncryptionKey == "" {
+		cfg.Logger.Error("DataKeysCacheEncryptionKey must be set when using Redis cache for data keys. Falling back to the OSS cache.")
+		cfg.SecretsManagement.DataKeysCacheUseRedis = false
+	}
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

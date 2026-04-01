@@ -3,29 +3,29 @@ import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
-import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
+import { type GrafanaTheme2, PageLayoutType, type TimeZone } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
-  PublicDashboardPageRouteParams,
-  PublicDashboardPageRouteSearchParams,
+  type PublicDashboardPageRouteParams,
+  type PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { DashboardInitError } from 'app/types/dashboard';
+import { type DashboardInitError } from 'app/types/dashboard';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
-import { PublicDashboardFooter } from '../components/PublicDashboard/PublicDashboardsFooter';
+import { DashboardBrandingFooter } from '../components/PublicDashboard/DashboardBrandingFooter';
 import { useGetPublicDashboardConfig } from '../components/PublicDashboard/usePublicDashboardConfig';
 import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state/DashboardModel';
+import { type DashboardModel } from '../state/DashboardModel';
 import { initDashboard } from '../state/initDashboard';
 
 export type Props = Omit<
@@ -114,7 +114,7 @@ const PublicDashboardPage = (props: Props) => {
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />
       </div>
       <div className={styles.footer}>
-        <PublicDashboardFooter />
+        <DashboardBrandingFooter />
       </div>
     </Page>
   );

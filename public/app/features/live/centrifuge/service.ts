@@ -1,35 +1,35 @@
 import {
   Centrifuge,
-  ConnectedContext,
-  ConnectingContext,
-  DisconnectedContext,
-  ErrorContext,
-  ServerPublicationContext,
+  type ConnectedContext,
+  type ConnectingContext,
+  type DisconnectedContext,
+  type ErrorContext,
+  type ServerPublicationContext,
   State,
 } from 'centrifuge';
-import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
+import { BehaviorSubject, type Observable, share, startWith } from 'rxjs';
 
 import {
-  DataQueryError,
-  DataQueryResponse,
-  LiveChannelAddress,
+  type DataQueryError,
+  type DataQueryResponse,
+  type LiveChannelAddress,
   LiveChannelConnectionState,
-  LiveChannelId,
+  type LiveChannelId,
   toLiveChannelId,
 } from '@grafana/data';
 import {
-  FetchResponse,
-  GrafanaLiveSrv,
-  LiveDataStreamOptions,
-  LivePublishOptions,
-  LiveQueryDataOptions,
+  type FetchResponse,
+  type GrafanaLiveSrv,
+  type LiveDataStreamOptions,
+  type LivePublishOptions,
+  type LiveQueryDataOptions,
   StreamingFrameAction,
-  StreamingFrameOptions,
-  BackendDataSourceResponse,
+  type StreamingFrameOptions,
+  type BackendDataSourceResponse,
   getBackendSrv,
 } from '@grafana/runtime';
 
-import { StreamingResponseData } from '../data/utils';
+import { type StreamingResponseData } from '../data/utils';
 
 import { LiveDataStream } from './LiveDataStream';
 import { CentrifugeLiveChannel } from './channel';
@@ -37,7 +37,7 @@ import { CentrifugeLiveChannel } from './channel';
 export type CentrifugeSrvDeps = {
   grafanaAuthToken: string | null;
   appUrl: string;
-  orgId: number;
+  namespace: string; // k8s namespace
   orgRole: string;
   liveEnabled: boolean;
   dataStreamSubscriberReadiness: Observable<boolean>;
@@ -154,7 +154,7 @@ export class CentrifugeService implements CentrifugeSrv {
    * channel will be returned with an error state indicated in its status
    */
   private getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
-    const id = `${this.deps.orgId}/${addr.scope}/${addr.namespace}/${addr.path}`;
+    const id = `${this.deps.namespace}/${addr.scope}/${addr.stream}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;

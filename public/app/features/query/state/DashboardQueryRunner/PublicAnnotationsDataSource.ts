@@ -1,14 +1,14 @@
-import { from, Observable, of } from 'rxjs';
+import { from, type Observable, of } from 'rxjs';
 
 import {
-  AnnotationQuery,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type AnnotationQuery,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
   DataSourceApi,
-  DataSourceJsonData,
-  DataSourcePluginMeta,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
   toDataFrame,
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
@@ -24,7 +24,6 @@ export class PublicAnnotationsDataSource extends DataSourceApi<DataQuery, DataSo
 
     super({
       name: 'public-ds',
-      id: 0,
       type: 'public-ds',
       meta,
       uid: PUBLIC_DATASOURCE,

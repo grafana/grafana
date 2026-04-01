@@ -14,7 +14,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/events"
@@ -24,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -282,6 +282,10 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
+}
+
+func (s *Service) returnFirstFolderSearchResult(ctx context.Context, orgID int64, hits v0alpha1.SearchResults) (*folder.Folder, error) {
 	if len(hits.Hits) == 0 {
 		return nil, dashboards.ErrFolderNotFound
 	}
@@ -347,22 +351,12 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		return nil, err
 	}
 
-	if len(hits.Hits) == 0 {
-		return nil, dashboards.ErrFolderNotFound
+	// If we're searching for top-level folders (parentUID == nil), and the first result is not in the root folder, remove it from the results.
+	for parentUID == nil && len(hits.Hits) > 0 && hits.Hits[0].Folder != "" {
+		hits.Hits = hits.Hits[1:]
 	}
 
-	uid := hits.Hits[0].Name
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
@@ -867,31 +861,5 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
-		return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
-	}
-
-	folders := []string{*q.UID}
-	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
-	descendantFolders, err := s.unifiedStore.GetDescendants(ctx, q.OrgID, *q.UID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
-		return nil, err
-	}
-
-	for _, f := range descendantFolders {
-		folders = append(folders, f.UID)
-	}
-	countsMap[entity.StandardKindFolder] = int64(len(descendantFolders))
-
-	for _, v := range s.registry {
-		c, err := v.CountInFolders(ctx, q.OrgID, folders, q.SignedInUser)
-		if err != nil {
-			s.log.ErrorContext(ctx, "failed to count folder descendants", "error", err)
-			return nil, err
-		}
-		countsMap[v.Kind()] = c
-	}
-	return countsMap, nil
+	return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
 }

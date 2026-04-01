@@ -1,9 +1,9 @@
 package repository
 
 repository: {
-	kind:	   "Repository"
+	kind:       "Repository"
 	pluralName: "Repositories"
-	current:	"v0alpha1"
+	current:    "v0alpha1"
 	validation: {
 		operations: [
 			"CREATE",
@@ -87,6 +87,12 @@ repository: {
 				#ConnectionInfo: {
 					name: string
 				}
+				#WebhookConfig: {
+					// Base URL of the Grafana instance used to construct the webhook endpoint.
+					// The API path is appended automatically. Trailing slashes are stripped.
+					// Must be a valid HTTP or HTTPS URL (e.g. `https://grafana.example.com`).
+					baseUrl?: string
+				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed
 					healthy: bool
@@ -120,12 +126,12 @@ repository: {
 					count:    int
 				}
 				#WebhookStatus: {
-					id?:               int
-					url?:              string
-					secret?:           string
-					encryptedSecret?:  [...string]
+					id?:     int
+					url?:    string
+					secret?: string
+					encryptedSecret?: [...string]
 					subscribedEvents?: [...string]
-					lastEvent?:        int
+					lastEvent?: int
 				}
 				spec: {
 					// The repository display name (shown in the UI)
@@ -140,6 +146,8 @@ repository: {
 					sync: #SyncOptions
 					// The repository type. When selected oneOf the values below should be non-nil
 					type: "local" | "github" | "git" | "bitbucket" | "gitlab"
+					// Webhook settings for the repository.
+					webhook?: #WebhookConfig
 					// The repository on the local file system.
 					// Mutually exclusive with local | github.
 					local?: #LocalRepositoryConfig

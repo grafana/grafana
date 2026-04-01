@@ -1,4 +1,4 @@
-import { VersionedSelectorGroup } from '../types';
+import { type VersionedSelectorGroup } from '../types';
 
 import { MIN_GRAFANA_VERSION } from './constants';
 
@@ -37,19 +37,6 @@ export const versionedPages = {
     },
     skip: {
       '10.2.3': 'data-testid Skip change password button',
-    },
-  },
-  PasswordlessLogin: {
-    url: {
-      [MIN_GRAFANA_VERSION]: '/login/passwordless/authenticate',
-    },
-    email: {
-      '10.2.3': 'data-testid Email input field',
-      [MIN_GRAFANA_VERSION]: 'Email input field',
-    },
-    submit: {
-      '10.2.3': 'data-testid PasswordlessLogin button',
-      [MIN_GRAFANA_VERSION]: 'PasswordlessLogin button',
     },
   },
   Home: {
@@ -189,6 +176,24 @@ export const versionedPages = {
       },
       outlineButton: {
         '12.4.0': 'data-testid Dashboard Sidebar outline button',
+      },
+      addButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar new button',
+      },
+      conditionalRendering: {
+        variable: {
+          valueInput: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Variable value input',
+          },
+          variableSelection: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Variable variable selection',
+          },
+        },
+        timeRange: {
+          select: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Time range select',
+          },
+        },
       },
     },
     DashNav: {
@@ -576,6 +581,9 @@ export const versionedPages = {
             applyButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
             },
+            previewTable: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-preview-table',
+            },
           },
           IntervalVariable: {
             intervalsValueInput: {
@@ -601,6 +609,9 @@ export const versionedPages = {
             modeToggle: {
               '10.4.0': 'data-testid group by variable mode toggle',
             },
+            defaultValueSection: {
+              '13.0.0': 'data-testid group by variable default value',
+            },
           },
           AdHocFiltersVariable: {
             datasourceSelect: {
@@ -611,6 +622,9 @@ export const versionedPages = {
             },
             modeToggle: {
               '11.0.0': 'data-testid ad-hoc filters variable mode toggle',
+            },
+            enableGroupByToggle: {
+              '13.0.0': 'data-testid ad-hoc filters variable enable group by toggle',
             },
           },
           SwitchVariable: {
@@ -648,8 +662,14 @@ export const versionedPages = {
       },
     },
     Annotations: {
+      tooltip: {
+        '10.0.0': 'annotation-marker',
+      },
       marker: {
         '10.0.0': 'data-testid annotation-marker',
+      },
+      clusterTooltip: {
+        '13.0.0': 'data-testid annotation-cluster-tooltip',
       },
     },
     Rows: {
@@ -975,6 +995,38 @@ export const versionedPages = {
       },
       addFromQueryLibrary: {
         '11.5.0': 'data-testid explore add from query library button',
+      },
+    },
+    toolbar: {
+      bar: {
+        '12.4.0': 'data-testid explore-toolbar',
+      },
+      contentOutline: {
+        '12.4.0': 'data-testid explore-toolbar-content-outline-button',
+      },
+      goQueryless: {
+        '12.4.0': 'data-testid explore-toolbar-go-queryless-button',
+      },
+      split: {
+        '12.4.0': 'data-testid explore-toolbar-split-button',
+      },
+      addTo: {
+        '12.4.0': 'data-testid explore-toolbar-add-dropdown-button',
+      },
+      share: {
+        '12.4.0': 'data-testid explore-toolbar-share-button',
+      },
+      copyLink: {
+        '12.4.0': 'data-testid explore-toolbar-copy-link-button',
+      },
+      live: {
+        '12.4.0': 'data-testid explore-toolbar-live-button',
+      },
+      refreshPicker: {
+        '12.4.0': 'data-testid explore-toolbar-refresh-picker',
+      },
+      add: {
+        '12.4.0': (key: string) => `data-testid explore-toolbar-add-button ${key}`,
       },
     },
     QueryHistory: {

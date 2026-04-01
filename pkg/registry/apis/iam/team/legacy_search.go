@@ -3,15 +3,19 @@ package team
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"math"
 	"strconv"
 	"strings"
 
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
+	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -22,23 +26,33 @@ const (
 	TeamResourceGroup = "iam.grafana.com"
 )
 
+var teamSortFieldMapping = map[string]string{
+	res.SEARCH_FIELD_TITLE: "name",
+	fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
+}
+
 // LegacyTeamSearchClient is a client for searching for teams in the legacy search engine.
 type LegacyTeamSearchClient struct {
 	resourcepb.ResourceIndexClient
 	teamService team.Service
-	log         *slog.Logger
+	log         log.Logger
+	tracer      trace.Tracer
 }
 
 // NewLegacyTeamSearchClient creates a new LegacyTeamSearchClient.
-func NewLegacyTeamSearchClient(teamService team.Service) *LegacyTeamSearchClient {
+func NewLegacyTeamSearchClient(teamService team.Service, tracer trace.Tracer) *LegacyTeamSearchClient {
 	return &LegacyTeamSearchClient{
 		teamService: teamService,
-		log:         slog.Default().With("logger", "legacy-team-search-client"),
+		log:         log.New("grafana-apiserver.teams.legacy-search"),
+		tracer:      tracer,
 	}
 }
 
 // Search searches for teams in the legacy search engine.
 func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "team.legacysearch")
+	defer span.End()
+
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -61,10 +75,13 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		Page:         int(req.Page),
 		Query:        req.Query,
 		OrgID:        signedInUser.GetOrgID(),
+		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, teamSortFieldMapping, teamsortopts.SortOptionsByQueryParam),
 	}
 
 	res, err := c.teamService.SearchTeams(ctx, query)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "team legacy search failed")
 		return nil, err
 	}
 

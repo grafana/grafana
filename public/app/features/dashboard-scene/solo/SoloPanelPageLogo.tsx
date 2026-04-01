@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';
 import grafanaTextLogoLightSvg from 'img/grafana_text_logo_light.svg';
 
 interface SoloPanelPageLogoProps {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   isHovered: boolean;
   hideLogo?: UrlQueryValue;
 }

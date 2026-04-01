@@ -585,6 +585,10 @@ message ResourceTableRow {
   // they may be lost in the conversion to k8s resource
   // +optional
   bytes object = 4;
+
+  // Sort fields for the hit, encoded as strings. This can be used in ResourceSearchRequest search_after or search_before fields.
+  // +optional
+  repeated string sort_fields = 5;
 }
 
 message QuotaUsageRequest {
@@ -641,10 +645,11 @@ service ManagedObjectIndex {
   rpc ListManagedObjects(ListManagedObjectsRequest) returns (ListManagedObjectsResponse);
 }
 
-// Clients can use this service directly
-// NOTE: This is read only, and no read afer write guarantees
+// Deprecated: Use the standard gRPC health checking protocol (grpc.health.v1.Health)
+// instead.
+// This service will be removed in a future release.
 service Diagnostics {
-  // Check if the service is healthy
+  // Deprecated: Use grpc.health.v1.Health/Check instead.
   rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
 }
 

@@ -1,17 +1,18 @@
 import { useMemo, useRef } from 'react';
 
-import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
+import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
+import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
-import { getErrorMessage } from '../utils/httpUtils';
 import { getStatusColor } from '../utils/repositoryStatus';
 import { formatTimestamp } from '../utils/time';
 
+import { JobAlerts } from './JobAlerts';
 import { JobSummary } from './JobSummary';
 
 interface Props {
@@ -85,16 +86,27 @@ interface ExpandedRowProps {
 function ExpandedRow({ row }: ExpandedRowProps) {
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
+  const hasWarnings = Boolean(row.status?.warnings?.length);
   const hasSpec = Boolean(row.spec);
 
   // the action is already showing
   const data = useMemo(() => {
     const v: TraceKeyValuePair[] = [];
-    const action = row.spec?.action;
-    if (!action) {
+    const spec = row.spec;
+    const action = spec?.action;
+    if (!action || !spec) {
       return v;
     }
-    const def = row.spec?.[action];
+    const actionOptions: Record<string, object | undefined> = {
+      delete: spec.delete,
+      fixFolderMetadata: spec.fixFolderMetadata,
+      migrate: spec.migrate,
+      move: spec.move,
+      pr: spec.pr,
+      pull: spec.pull,
+      push: spec.push,
+    };
+    const def = actionOptions[action];
     if (!def) {
       return v;
     }
@@ -104,17 +116,9 @@ function ExpandedRow({ row }: ExpandedRowProps) {
     return v;
   }, [row.spec]);
 
-  if (!hasSummary && !hasErrors && !hasSpec) {
+  if (!hasSummary && !hasErrors && !hasWarnings && !hasSpec) {
     return null;
   }
-
-  const state = row.status?.state;
-  const isValidState = state && ['success', 'warning', 'error'].includes(state);
-  const alertProps = isValidState
-    ? {
-        [state]: { message: row.status?.message },
-      }
-    : null;
 
   return (
     <Box padding={2}>
@@ -127,7 +131,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             <KeyValuesTable data={data} />
           </Stack>
         )}
-        {alertProps && <ProvisioningAlert {...alertProps} />}
+        {row.status && <JobAlerts status={row.status} />}
         {hasSummary && row.status?.summary && (
           <Stack direction="column" gap={2}>
             <Text variant="body" color="secondary">

@@ -1,19 +1,19 @@
 import {
-  DataSourcePluginMeta,
-  DataSourceSettings,
+  type DataSourcePluginMeta,
+  type DataSourceSettings,
   locationUtil,
-  TestDataSourceResponse,
+  type TestDataSourceResponse,
   DataSourceTestSucceeded,
   DataSourceTestFailed,
-  DataSourceApi,
+  type DataSourceApi,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   config,
-  DataSourceSrv,
+  type DataSourceSrv,
   DataSourceWithBackend,
   HealthCheckError,
-  HealthCheckResultDetails,
+  type HealthCheckResultDetails,
   isFetchError,
   locationService,
 } from '@grafana/runtime';
@@ -27,8 +27,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { AccessControlAction } from 'app/types/accessControl';
-import { DataSourcePluginCategory } from 'app/types/datasources';
-import { ThunkDispatch, ThunkResult } from 'app/types/store';
+import { type DataSourcePluginCategory } from 'app/types/datasources';
+import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
@@ -200,7 +200,7 @@ export function loadDataSources(): ThunkResult<Promise<void>> {
 
 export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
   return async (dispatch) => {
-    let dataSource = await api.getDataSourceByIdOrUid(uid);
+    let dataSource = await api.getDataSourceByUid(uid);
 
     // Reload route to use UID instead
     // -------------------------------
@@ -250,8 +250,16 @@ export function addDataSource(
       access: 'proxy',
     };
 
-    const result = await api.createDataSource(newInstance);
-    const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
+    let uid,
+      version = '';
+    if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
+      const result = await api.createDataSourceWithK8sAPI(newInstance);
+      uid = result.metadata.name;
+    } else {
+      const result = await api.createDataSource(newInstance);
+      uid = result.datasource.uid;
+      version = result.meta?.info?.version;
+    }
 
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
@@ -259,12 +267,12 @@ export function addDataSource(
     trackDataSourceCreated({
       grafana_version: config.buildInfo.version,
       plugin_id: plugin.id,
-      datasource_uid: result.datasource.uid,
-      plugin_version: result.meta?.info?.version,
+      datasource_uid: uid,
+      plugin_version: version,
       path: window.location.pathname,
     });
 
-    locationService.push(editLink);
+    locationService.push(editRoute.replace(/:uid/gi, uid));
   };
 }
 

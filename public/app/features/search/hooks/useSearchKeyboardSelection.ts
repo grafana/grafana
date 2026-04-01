@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Observable, Subject } from 'rxjs';
+import { type Observable, Subject } from 'rxjs';
 
-import { Field, locationUtil } from '@grafana/data';
+import { type Field, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { QueryResponse } from '../service/types';
+import { type QueryResponse } from '../service/types';
 
 export function useKeyNavigationListener() {
   const eventsRef = useRef(new Subject<React.KeyboardEvent>());
@@ -38,7 +38,7 @@ export function useSearchKeyboardNavigation(
 ): ItemSelection {
   const highlightIndexRef = useRef<ItemSelection>({ x: 0, y: -1 });
   const [highlightIndex, setHighlightIndex] = useState<ItemSelection>({ x: 0, y: -1 });
-  const urlsRef = useRef<Field>();
+  const urlsRef = useRef<Field | undefined>(undefined);
 
   // Clear selection when the search results change
   useEffect(() => {

@@ -1,33 +1,28 @@
-import { AsyncIterableX, from } from 'ix/asynciterable';
+import { type AsyncIterableX, from } from 'ix/asynciterable';
 import { empty } from 'ix/asynciterable/empty';
 import { merge } from 'ix/asynciterable/merge';
 import { catchError, concatMap, withAbort } from 'ix/asynciterable/operators';
 
 import {
-  DataSourceRuleGroupIdentifier,
-  DataSourceRulesSourceIdentifier,
-  GrafanaRuleGroupIdentifier,
+  type DataSourceRuleGroupIdentifier,
+  type DataSourceRulesSourceIdentifier,
+  type GrafanaRuleGroupIdentifier,
 } from 'app/types/unified-alerting';
 import {
-  GrafanaPromRuleDTO,
-  GrafanaPromRuleGroupDTO,
-  PromRuleDTO,
-  PromRuleGroupDTO,
+  type GrafanaPromRuleDTO,
+  type GrafanaPromRuleGroupDTO,
+  type PromRuleDTO,
+  type PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
-import {
-  getDataSourceByUid,
-  getDatasourceAPIUid,
-  getExternalRulesSources,
-  isSupportedExternalRulesSourceType,
-} from '../../utils/datasource';
-import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
+import { RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
+import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
+import { type RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter } from './datasourceFilter';
 import { getGrafanaFilter } from './grafanaFilter';
 import {
-  FetchGroupsLimitOptions,
+  type FetchGroupsLimitOptions,
   useGrafanaGroupsGenerator,
   usePrometheusGroupsGenerator,
 } from './prometheusGroupsGenerator';
@@ -73,16 +68,12 @@ interface GetIteratorResult {
 }
 
 export function useFilteredRulesIteratorProvider() {
-  const allExternalRulesSources = getExternalRulesSources();
-
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
 
   const getFilteredRulesIterable = (filterState: RulesFilter, options: FetchGroupsLimitOptions): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
-
-    const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
     const { backendFilter, frontendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(filterState);
 
@@ -106,9 +97,7 @@ export function useFilteredRulesIteratorProvider() {
     );
 
     // Determine which data sources to use
-    const externalRulesSourcesToFetchFrom = hasDataSourceFilterActive
-      ? getRulesSourcesFromFilter(filterState)
-      : allExternalRulesSources;
+    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(filterState);
 
     if (filterState.ruleSource === RuleSource.Grafana) {
       return { iterable: grafanaRulesGenerator, abortController };
@@ -166,15 +155,24 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
 /**
  * Finds all data sources that the user might want to filter by.
  * Only allows Prometheus and Loki data source types.
+ * Returns all external rules sources if no filter is provided.
  */
 function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
+  const allExternalSources = getExternalRulesSources();
+
+  // If no filter is provided, return all external sources
+  if (filter.dataSourceNames.length === 0) {
+    return allExternalSources;
+  }
+
   return filter.dataSourceNames.reduce<DataSourceRulesSourceIdentifier[]>((acc, dataSourceName) => {
     // since "getDatasourceAPIUid" can throw we'll omit any non-existing data sources
     try {
       const uid = getDatasourceAPIUid(dataSourceName);
-      const type = getDataSourceByUid(uid)?.type;
 
-      if (type === undefined || isSupportedExternalRulesSourceType(type) === false) {
+      // Only include data sources that exist in allExternalRulesSources
+      const existsInExternalSources = allExternalSources.some((source) => source.uid === uid);
+      if (!existsInExternalSources) {
         return acc;
       }
 

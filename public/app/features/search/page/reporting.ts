@@ -1,7 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
-import { InspectTab } from 'app/features/inspector/types';
+import { type InspectTab } from 'app/features/inspector/types';
 
-import { EventTrackingNamespace, SearchLayout } from '../types';
+import { type EventTrackingNamespace, type SearchLayout } from '../types';
 
 interface QueryProps {
   layout: SearchLayout;
@@ -11,6 +11,7 @@ interface QueryProps {
   tagCount: number;
   includePanels?: boolean;
   deleted: boolean;
+  createdBy?: boolean;
 }
 
 export const reportDashboardListViewed = (eventTrackingNamespace: EventTrackingNamespace, query: QueryProps) => {
@@ -49,5 +50,6 @@ const getQuerySearchContext = (query: QueryProps) => {
     queryLength: query.query?.length ?? 0,
     includePanels: query.includePanels ?? false,
     deleted: query.deleted ?? false,
+    createdBy: query.createdBy ?? false,
   };
 };

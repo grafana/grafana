@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
 

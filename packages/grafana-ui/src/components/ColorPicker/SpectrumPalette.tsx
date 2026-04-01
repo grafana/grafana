@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { Field } from '../Forms/Field';
+import { Stack } from '../Layout/Stack/Stack';
 
 import ColorInput from './ColorInput';
 
@@ -17,6 +20,7 @@ export interface SpectrumPaletteProps {
 
 const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
   const [currentColor, setColor] = useState(color);
+  const colorInputId = useId();
 
   useThrottleFn(
     (c) => {
@@ -36,17 +40,16 @@ const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
   }, [currentColor, theme, color]);
 
   return (
-    <div className={styles.wrapper}>
+    <Stack direction="column" grow={1} gap={2}>
       <RgbaStringColorPicker className={styles.root} color={rgbaString} onChange={setColor} />
-      <ColorInput color={rgbaString} onChange={setColor} className={styles.colorInput} />
-    </div>
+      <Field noMargin label={t('grafana-ui.color-picker.input-label', 'RGBA value')}>
+        <ColorInput id={colorInputId} color={rgbaString} onChange={setColor} />
+      </Field>
+    </Stack>
   );
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    flexGrow: 1,
-  }),
   root: css({
     '&.react-colorful': {
       width: 'auto',
@@ -68,9 +71,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
         width: theme.spacing(2),
       },
     },
-  }),
-  colorInput: css({
-    marginTop: theme.spacing(2),
   }),
 });
 

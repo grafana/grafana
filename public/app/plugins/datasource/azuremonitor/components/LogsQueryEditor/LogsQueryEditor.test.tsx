@@ -6,7 +6,7 @@ import { dateTime, LoadingState } from '@grafana/data';
 import { ResultFormat } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { EngineSchema } from '../../types/types';
+import { type EngineSchema } from '../../types/types';
 
 import LogsQueryEditor from './LogsQueryEditor';
 import { createMockResourcePickerData } from './mocks';
@@ -92,7 +92,7 @@ describe('LogsQueryEditor', () => {
         }),
       })
     );
-  });
+  }, 10000);
 
   it('should disable other resource types when selecting multiple resources', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });

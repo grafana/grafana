@@ -1,13 +1,13 @@
 import { isFunction } from 'lodash';
-import { ReplaySubject } from 'rxjs';
+import { type ReplaySubject } from 'rxjs';
 
-import { PluginExtensionAddedFunctionConfig } from '@grafana/data';
+import { type AppPluginConfig, type PluginExtensionAddedFunctionConfig } from '@grafana/data';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
 import { isAddedFunctionMetaInfoMissing } from '../validators';
 
-import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
 
 const logPrefix = 'Could not register function extension. Reason:';
 
@@ -20,12 +20,13 @@ export type AddedFunctionsRegistryItem<Signature = unknown> = {
 
 export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[], PluginExtensionAddedFunctionConfig> {
   constructor(
+    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedFunctionsRegistryItem[]>>;
       initialState?: RegistryType<AddedFunctionsRegistryItem[]>;
     } = {}
   ) {
-    super(options);
+    super(apps, options);
   }
 
   mapToRegistry(
@@ -49,7 +50,11 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedFunctionMetaInfoMissing(pluginId, config, configLog)) {
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isAddedFunctionMetaInfoMissing(pluginId, config, configLog, this.apps)
+      ) {
         continue;
       }
 
@@ -78,7 +83,7 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new AddedFunctionsRegistry({
+    return new AddedFunctionsRegistry(this.apps, {
       registrySubject: this.registrySubject,
     });
   }

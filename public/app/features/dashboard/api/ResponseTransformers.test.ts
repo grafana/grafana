@@ -1,15 +1,15 @@
-import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
+import { type AnnotationQuery, type DataQuery, type VariableModel, VariableRefresh, type Panel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultDataQueryKind,
-  GridLayoutItemKind,
-  GridLayoutKind,
-  PanelKind,
-  RowsLayoutKind,
-  RowsLayoutRowKind,
-  VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+  type GridLayoutItemKind,
+  type GridLayoutKind,
+  type PanelKind,
+  type RowsLayoutKind,
+  type RowsLayoutRowKind,
+  type VariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -25,7 +25,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import {
   getDefaultDatasource,
@@ -33,7 +33,7 @@ import {
   ResponseTransformers,
   transformMappingsToV1,
 } from './ResponseTransformers';
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -127,7 +127,7 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        gnetId: 'something-like-a-uid',
+        gnetId: 456,
         revision: 225,
         links: [
           {
@@ -406,7 +406,6 @@ describe('ResponseTransformers', () => {
           canStar: true,
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
         apiVersion: 'v1',
@@ -431,14 +430,14 @@ describe('ResponseTransformers', () => {
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
-      expect(transformed.apiVersion).toBe('v2beta1');
+      expect(transformed.apiVersion).toBe('v2');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedBy]).toEqual('user2');
       expect(transformed.metadata.annotations?.[AnnoKeyUpdatedTimestamp]).toEqual('2023-01-02T00:00:00Z');
       expect(transformed.metadata.annotations?.[AnnoKeyFolder]).toEqual('folder1');
       expect(transformed.metadata.annotations?.[AnnoKeySlug]).toEqual('dashboard-slug');
-      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
+      expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('456');
       expect(transformed.metadata.labels?.[DeprecatedInternalId]).toBe('123');
 
       // Spec
@@ -601,7 +600,7 @@ describe('ResponseTransformers', () => {
         fiscalYearStartMonth: 1,
         weekStart: 'monday',
         version: 1,
-        gnetId: 'something-like-a-uid',
+        gnetId: 456,
         revision: 225,
         links: [],
         annotations: {
@@ -750,7 +749,6 @@ describe('ResponseTransformers', () => {
           canStar: true,
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
         apiVersion: 'v1',
@@ -839,7 +837,7 @@ describe('ResponseTransformers', () => {
 
     it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-        apiVersion: 'v2beta1',
+        apiVersion: 'v2',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           creationTimestamp: '2023-01-01T00:00:00Z',
@@ -851,7 +849,7 @@ describe('ResponseTransformers', () => {
             'grafana.app/updatedTimestamp': '2023-01-02T00:00:00Z',
             'grafana.app/folder': 'folder1',
             'grafana.app/slug': 'dashboard-slug',
-            'grafana.app/dashboard-gnet-id': 'something-like-a-uid',
+            'grafana.app/dashboard-gnet-id': '456',
           },
         },
         spec: {
@@ -929,7 +927,6 @@ describe('ResponseTransformers', () => {
           slug: 'dashboard-slug',
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
       };
@@ -962,7 +959,6 @@ describe('ResponseTransformers', () => {
       expect(dashboard.liveNow).toBe(dashboardV2.spec.liveNow);
       expect(dashboard.editable).toBe(dashboardV2.spec.editable);
       expect(dashboard.revision).toBe(225);
-      expect(dashboard.gnetId).toBe(dashboardV2.metadata.annotations?.['grafana.app/dashboard-gnet-id']);
       expect(dashboard.time?.from).toBe(dashboardV2.spec.timeSettings.from);
       expect(dashboard.time?.to).toBe(dashboardV2.spec.timeSettings.to);
       expect(dashboard.timezone).toBe(dashboardV2.spec.timeSettings.timezone);
@@ -988,6 +984,14 @@ describe('ResponseTransformers', () => {
       validateAnnotation(dashboard.annotations!.list![1], dashboardV2.spec.annotations[1]);
       validateAnnotation(dashboard.annotations!.list![2], dashboardV2.spec.annotations[2]);
       validateAnnotation(dashboard.annotations!.list![3], dashboardV2.spec.annotations[3]);
+
+      const gnetId = dashboardV2.metadata.annotations?.[AnnoKeyDashboardGnetId];
+      if (gnetId?.length) {
+        expect(dashboard.gnetId).toBe(+gnetId);
+      } else {
+        expect(dashboard.gnetId).toBeUndefined();
+      }
+
       // panel
       const panelKey = 'panel-1';
       expect(dashboardV2.spec.elements[panelKey].kind).toBe('Panel');
@@ -1106,14 +1110,14 @@ describe('ResponseTransformers', () => {
           refId: q.spec.refId,
           hide: q.spec.hidden,
           datasource: {
-            type: q.spec.query.spec.group,
-            uid: q.spec.query.spec.datasource?.uid,
+            type: q.spec.query.group,
+            uid: q.spec.query.datasource?.name,
           },
           ...q.spec.query.spec,
         };
       })
     );
-    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => t.spec));
+    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => ({ id: t.group, ...t.spec })));
     const layoutElement = layoutV2.spec.items.find(
       (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
     ) as GridLayoutItemKind;

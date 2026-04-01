@@ -1,4 +1,4 @@
-import { ComponentPropsWithoutRef } from 'react';
+import { type ComponentPropsWithoutRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Tooltip } from '@grafana/ui';
@@ -54,6 +54,24 @@ export const ImportedResourceAlert = ({ resource, ...rest }: ResourceAlertProps)
       <Trans i18nKey="alerting.provisioning.body-imported">
         This {{ resource }} contains integrations that were imported from an external Alertmanager and is currently
         read-only. The integrations will become editable after the migration process is complete.
+      </Trans>
+    </Alert>
+  );
+};
+
+export const ImportedTimeIntervalAlert = (props: ExtraAlertProps) => {
+  return (
+    <Alert
+      title={t(
+        'alerting.provisioning.title-imported-time-interval',
+        'This time interval was imported and cannot be edited through the UI'
+      )}
+      severity="info"
+      {...props}
+    >
+      <Trans i18nKey="alerting.provisioning.body-imported-time-interval">
+        This time interval was imported from an external Alertmanager and is currently read-only. The time interval will
+        become editable after the migration process is complete.
       </Trans>
     </Alert>
   );

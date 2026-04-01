@@ -7,10 +7,11 @@ import { MetaText } from '../../components/MetaText';
 import { RuleDetailsDrawer } from '../rule-details/RuleDetailsDrawer';
 import { AlertRuleInstances } from '../scene/AlertRuleInstances';
 import { AlertRuleSummary } from '../scene/AlertRuleSummary';
-import { AlertRuleRow as AlertRuleRowType } from '../types';
+import { type AlertRuleRow as AlertRuleRowType } from '../types';
 
 import { GenericRow } from './GenericRow';
-import { OpenDrawerIconButton } from './OpenDrawerIconButton';
+import { RowActions } from './InstanceCountBadges';
+import { OpenDrawerButton } from './OpenDrawerButton';
 
 interface AlertRuleRowProps {
   row: AlertRuleRowType;
@@ -45,9 +46,14 @@ export const AlertRuleRow = ({
         width={leftColumnWidth}
         title={<Text variant="body">{title}</Text>}
         actions={
-          <OpenDrawerIconButton
-            aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
-            onClick={handleDrawerOpen}
+          <RowActions
+            counts={row.instanceCounts}
+            actionButton={
+              <OpenDrawerButton
+                aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
+                onClick={handleDrawerOpen}
+              />
+            }
           />
         }
         metadata={
@@ -62,8 +68,10 @@ export const AlertRuleRow = ({
         }
         content={<AlertRuleSummary ruleUID={ruleUID} />}
         depth={depth}
+        showIndentBorder
+        expandable={false}
       >
-        <AlertRuleInstances ruleUID={ruleUID} depth={depth + 1} />
+        <AlertRuleInstances ruleUID={ruleUID} depth={depth} />
       </GenericRow>
 
       {isDrawerOpen && <RuleDetailsDrawer ruleUID={ruleUID} onClose={handleDrawerClose} />}

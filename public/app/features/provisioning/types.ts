@@ -1,41 +1,20 @@
-import { ReactNode } from 'react';
-import { Path, UseFormReturn } from 'react-hook-form';
-
-import { SelectableValue } from '@grafana/data';
+import { type Path } from 'react-hook-form';
 
 import {
-  BitbucketRepositoryConfig,
-  ConnectionSpec,
-  GitHubRepositoryConfig,
-  GitLabRepositoryConfig,
-  GitRepositoryConfig,
-  LocalRepositoryConfig,
-  RepositorySpec,
+  type BitbucketRepositoryConfig,
+  type ConnectionSpec,
+  type GitHubRepositoryConfig,
+  type GitLabRepositoryConfig,
+  type GitRepositoryConfig,
+  type LocalRepositoryConfig,
+  type RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
+
+export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';
 
 // Repository type definition - extracted from API client
 export type RepositoryType = RepositorySpec['type'];
 export type RepoWorkflows = RepositorySpec['workflows'];
-
-// Field configuration interface
-export interface RepositoryFieldData {
-  label: string;
-  type: 'text' | 'secret' | 'switch' | 'select' | 'checkbox' | 'custom' | 'component' | 'number';
-  description?: string | ReactNode;
-  placeholder?: string;
-  path?: Path<RepositoryFormData>; // Optional nested field path, e.g., 'sync.intervalSeconds'
-  validation?: {
-    required?: boolean | string;
-    message?: string;
-    validate?: (value: unknown) => boolean | string;
-  };
-  defaultValue?: SelectableValue<string> | string | boolean;
-  options?: Array<SelectableValue<string>>;
-  multi?: boolean;
-  allowCustomValue?: boolean;
-  hidden?: boolean;
-  content?: (setValue: UseFormReturn<RepositoryFormData>['setValue']) => ReactNode; // For custom fields
-}
 
 export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySpec['type']> &
   BitbucketRepositoryConfig &
@@ -48,6 +27,8 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
+    // GitHub App connection name (when using app-based auth instead of PAT)
+    connectionName?: string;
   };
 
 export type RepositorySettingsField = Path<RepositoryFormData>;
@@ -56,19 +37,13 @@ export type RepositorySettingsField = Path<RepositoryFormData>;
 export type ConnectionType = ConnectionSpec['type'];
 
 export type ConnectionFormData = {
-  type: ConnectionSpec['type'];
+  type: ConnectionType;
+  title: string;
+  description: string;
   appID: string;
   installationID: string;
   privateKey?: string;
 };
-
-// Section configuration
-export interface RepositorySection {
-  name: string;
-  id: string;
-  hidden?: boolean;
-  fields: RepositorySettingsField[];
-}
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {
@@ -124,9 +99,17 @@ export interface TreeItem {
   hash?: string;
   status?: SyncStatus;
   hasFile?: boolean;
+  missingFolderMetadata?: boolean;
 }
 
 export interface FlatTreeItem {
   item: TreeItem;
   level: number;
+}
+
+// External repository from the provider (e.g., GitHub)
+export interface ExternalRepository {
+  name?: string;
+  owner?: string;
+  url?: string;
 }

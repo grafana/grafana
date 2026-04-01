@@ -42,7 +42,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	addQuotaMigration(mg)
 	addAppSettingsMigration(mg)
 	addSessionMigration(mg)
-	addPlaylistMigrations(mg)
 	addPreferencesMigrations(mg)
 	addAlertMigrations(mg)
 	addAnnotationMig(mg)
@@ -84,7 +83,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddManagedPermissionsMigration(mg, accesscontrol.ManagedPermissionsMigrationID)
 	accesscontrol.AddManagedFolderAlertActionsMigration(mg)
 	accesscontrol.AddActionNameMigrator(mg)
-	addPlaylistUIDMigration(mg)
 
 	ualert.UpdateRuleGroupIndexMigration(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatMigration(mg)
@@ -109,11 +107,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	// https://github.com/grafana/identity-access-team/issues/546: tracks removal of the feature toggle from the annotation permission migration
-	if oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagAnnotationPermissionUpdate) {
-		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
-	}
+	accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
 
 	addCloudMigrationsMigrations(mg)
 
@@ -173,4 +167,13 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.AddStateEvaluationDurationColumn(mg)
 	ualert.AddStateLastErrorColumn(mg)
+	ualert.AddStateLastResultColumn(mg)
+
+	accesscontrol.AddScopedReceiverTestingPermissions(mg)
+
+	ualert.AddAlertRuleFolderFullpath(mg)
+
+	ualert.AddRuleAlertRoutingColumns(mg)
+
+	accesscontrol.AddManagedRoutesPermissions(mg)
 }

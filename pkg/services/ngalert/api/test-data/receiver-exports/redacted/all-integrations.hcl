@@ -254,7 +254,7 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
 
   webhook {
     disable_resolve_message = true
-    url                     = "http://localhost"
+    url                     = "grafana://noop"
     http_method             = "PUT"
     max_alerts              = 2
     authorization_scheme    = "basic"

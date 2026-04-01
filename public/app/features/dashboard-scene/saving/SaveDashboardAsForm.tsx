@@ -1,5 +1,5 @@
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { UseFormSetValue, useForm } from 'react-hook-form';
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -8,9 +8,9 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
+import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
@@ -49,7 +49,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
 
-  const validationTimeoutRef = useRef<NodeJS.Timeout>();
+  const validationTimeoutRef = useRef<NodeJS.Timeout>(undefined);
 
   // Validate title on form mount to catch invalid default values
   useEffect(() => {
@@ -59,14 +59,18 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      clearTimeout(validationTimeoutRef.current);
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
     };
   }, []);
 
   const handleTitleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       setValue('title', e.target.value, { shouldDirty: true });
-      clearTimeout(validationTimeoutRef.current);
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
       validationTimeoutRef.current = setTimeout(() => {
         trigger('title');
       }, 400);
@@ -75,7 +79,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 
   const onSave = async (overwrite: boolean) => {
-    clearTimeout(validationTimeoutRef.current);
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
 
     const isTitleValid = await trigger('title');
 

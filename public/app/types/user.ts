@@ -1,6 +1,6 @@
-import { OrgRole, SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { type OrgRole, type SelectableValue, type WithAccessControlMetadata } from '@grafana/data';
 
-import { Role } from './accessControl';
+import { type Role } from './accessControl';
 
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
@@ -82,9 +82,6 @@ export interface Invitee {
 export interface UsersState {
   users: OrgUser[];
   searchQuery: string;
-  externalUserMngLinkUrl: string;
-  externalUserMngLinkName: string;
-  externalUserMngInfo: string;
   isLoading: boolean;
   rolesLoading?: boolean;
   page: number;

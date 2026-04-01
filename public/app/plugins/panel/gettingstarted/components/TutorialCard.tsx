@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
-import { MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import store from 'app/core/store';
 
-import { TutorialCardType } from '../types';
+import { type TutorialCardType } from '../types';
 
 import { cardContent, cardStyle } from './sharedStyles';
 
@@ -52,6 +51,10 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
       ...cardStyle(theme, complete),
       width: '460px',
       minWidth: '460px',
+
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
 
       [theme.breakpoints.down('xl')]: {
         minWidth: '368px',

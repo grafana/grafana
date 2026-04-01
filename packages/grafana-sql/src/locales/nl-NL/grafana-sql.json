@@ -12,7 +12,7 @@
       "connection-limits": {
         "auto-max-idle": "Automatisch maximaal inactief",
         "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-max-idle": "Het maximumaantal aantal verbindingen in de pool voor inactieve verbindingen.Als het <i>maximumaantal open verbindingen</i> groter is fan 0 maar kleiner is dan <i>maximumaantal inactieve verbindingen</i>, dan wordt het <i>maximumaantal inactieve verbindingen</i> verlaagd tot <i>het maximumaantal open verbindingen</i>. Als dit is ingesteld op 0, worden er geen inactieve verbindingen behouden.",
         "content-max-lifetime": "De maximale hoeveelheid tijd in seconden dat een verbinding opnieuw kan worden gebruikt. Indien ingesteld op 0, worden verbindingen voor altijd hergebruikt.",
         "content-max-open": "",
         "max-idle": "Max. inactief",
@@ -69,6 +69,12 @@
         "placeholder-select-format": "Selecteer het formaat",
         "run-query": "Query uitvoeren"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "Tekstveld",
+          "valueField": "Waardeveld"
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Druk op CTRL/CMD+Return om de query uit te voeren",
         "tooltip-collapse": "Editor samenvouwen",
@@ -76,7 +82,7 @@
         "tooltip-format-query": "Query-formaat"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Deze query zal <strong>{{bytes}}</strong> verwerken wanneer deze wordt uitgevoerd.",
         "validating-query": "Query valideren..."
       },
       "raw-editor": {

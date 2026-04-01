@@ -6,7 +6,7 @@ import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionI
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -16,9 +16,9 @@ import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
-import { useRegisterRecentScopesActions, useRegisterScopesActions } from './actions/scopeActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
-import { CommandPaletteAction } from './types';
+import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
+import { type CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {

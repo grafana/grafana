@@ -1,11 +1,19 @@
-import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import {
+  createTheme,
+  type Field,
+  FieldType,
+  LogLevel,
+  type LogRowModel,
+  LogsSortOrder,
+  toDataFrame,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine, createLogRow } from '../mocks/logRow';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/formats';
+import { OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
@@ -243,6 +251,23 @@ Value"
   "key": "value",
   "otherKey": "other\\nValue"
 }`);
+    });
+
+    test('Escapes literal \\n in non-JSON plain text logs (e.g. stack traces)', () => {
+      const entry =
+        'WARN c.n.l.BootstrapExecutor [main] - deployment failed. TimeoutException\\n at java.base/java.util.concurrent.CompletableFuture.wrapInCompletionException(CompletableFuture.java:323)';
+      const logListModel = createLogLine(
+        { entry, hasUnescapedContent: true },
+        {
+          escape: true,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true,
+          prettifyJSON: false,
+        }
+      );
+      expect(logListModel.body).toContain('TimeoutException\n at java.base');
+      expect(logListModel.body).not.toContain('TimeoutException\\n at');
     });
 
     test('Uses lossless parsing', () => {

@@ -1,13 +1,13 @@
 import { forwardRef, useCallback, useState } from 'react';
 
 import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
-import { Role } from 'app/types/accessControl';
+import { isNotDelegatable } from 'app/core/utils/roles';
+import { type Role } from 'app/types/accessControl';
 
 import { RoleMenuGroupOption } from './RoleMenuGroupOption';
 import { RoleMenuOption } from './RoleMenuOption';
 import { RolePickerSubMenu } from './RolePickerSubMenu';
 import { getStyles } from './styles';
-import { isNotDelegatable } from './utils';
 
 interface RoleMenuGroupsSectionProps {
   roles: Role[];

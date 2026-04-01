@@ -1,28 +1,21 @@
-import { isString } from 'lodash';
-import { combineLatest, map, Observable } from 'rxjs';
+import { combineLatest, from, map, type Observable, switchMap } from 'rxjs';
 
-import {
-  PluginExtensionTypes,
-  type PluginExtension,
-  type PluginExtensionLink,
-  type PluginExtensionComponent,
-} from '@grafana/data';
+import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
 import { log } from './logs/log';
-import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
-import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { RegistryType } from './registry/Registry';
-import { pluginExtensionRegistries } from './registry/setup';
+import { type AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
+import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { type RegistryType } from './registry/Registry';
+import { getPluginExtensionRegistries } from './registry/setup';
 import type { PluginExtensionRegistries } from './registry/types';
-import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
+import { type GetExtensions, type GetExtensionsOptions, type GetPluginExtensions } from './types';
 import {
+  addedLinkToExtensionLink,
   getReadOnlyProxy,
   generateExtensionId,
   wrapWithPluginContext,
-  getLinkExtensionOnClick,
   getLinkExtensionOverrides,
-  getLinkExtensionPathWithTracking,
 } from './utils';
 
 /**
@@ -38,22 +31,25 @@ export const getObservablePluginExtensions = (
   options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
-  const { addedComponentsRegistry, addedLinksRegistry } = pluginExtensionRegistries;
 
-  return combineLatest([
-    addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
-    addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
-  ]).pipe(
-    map(([components, links]) =>
-      getPluginExtensions({
-        ...options,
-        addedComponentsRegistry: {
-          [extensionPointId]: components,
-        },
-        addedLinksRegistry: {
-          [extensionPointId]: links,
-        },
-      })
+  return from(getPluginExtensionRegistries()).pipe(
+    switchMap((registries) =>
+      combineLatest([
+        registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
+        registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
+      ]).pipe(
+        map(([components, links]) =>
+          getPluginExtensions({
+            ...options,
+            addedComponentsRegistry: {
+              [extensionPointId]: components,
+            },
+            addedLinksRegistry: {
+              [extensionPointId]: links,
+            },
+          })
+        )
+      )
     )
   );
 };
@@ -128,22 +124,14 @@ export const getPluginExtensions: GetExtensions = ({
         continue;
       }
 
-      const path = overrides?.path || addedLink.path;
-      const extension: PluginExtensionLink = {
-        id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
-        type: PluginExtensionTypes.link,
-        pluginId: pluginId,
-        onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
-
-        // Configurable properties
-        icon: overrides?.icon || addedLink.icon,
-        title: overrides?.title || addedLink.title,
-        description: overrides?.description || addedLink.description || '',
-        path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
-        category: overrides?.category || addedLink.category,
-        openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
-      };
-
+      const extension = addedLinkToExtensionLink(
+        pluginId,
+        extensionPointId,
+        addedLink,
+        overrides,
+        linkLog,
+        frozenContext
+      );
       extensions.push(extension);
       extensionsByPlugin[pluginId] += 1;
     } catch (error) {

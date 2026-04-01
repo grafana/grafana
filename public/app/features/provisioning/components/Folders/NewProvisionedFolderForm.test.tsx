@@ -1,57 +1,41 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { HttpResponse, delay, http } from 'msw';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import {
-  ProvisionedFolderFormDataResult,
+  type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
+
+setupProvisioningMswServer();
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
-    getAppEvents: jest.fn(),
-    locationService: {
-      partial: jest.fn(),
-    },
     config: {
       ...actual.config,
     },
   };
 });
 
-jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
-  return {
-    validationSrv: {
-      validateNewFolderName: jest.fn(),
-    },
-  };
-});
+jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
+  useProvisionedRequestHandler: jest.fn(),
+}));
 
-jest.mock('app/api/clients/provisioning/v0alpha1', () => {
-  return {
-    useCreateRepositoryFilesWithPathMutation: jest.fn(),
-    useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
-    provisioningAPIv0alpha1: {
-      endpoints: {
-        listRepository: {
-          select: jest.fn().mockReturnValue(() => ({ data: { items: [] } })),
-        },
-      },
-    },
-  };
-});
-
-// Mock the new hooks that depend on router context
+jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
+  validationSrv: {
+    validateNewFolderName: jest.fn(),
+  },
+}));
 jest.mock('../../hooks/usePRBranch', () => ({
   usePRBranch: jest.fn().mockReturnValue(undefined),
 }));
@@ -63,26 +47,17 @@ jest.mock('../../hooks/useLastBranch', () => ({
   }),
 }));
 
-jest.mock('../../hooks/useProvisionedFolderFormData', () => {
-  return {
-    useProvisionedFolderFormData: jest.fn(),
-  };
-});
+jest.mock('../../hooks/useGetRepositoryFolders', () => ({
+  useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
+}));
 
-jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => {
-  return {
-    usePullRequestParam: jest.fn(),
-  };
-});
+jest.mock('../../hooks/useProvisionedFolderFormData', () => ({
+  useProvisionedFolderFormData: jest.fn(),
+}));
 
-jest.mock('react-redux', () => {
-  const actual = jest.requireActual('react-redux');
-  return {
-    ...actual,
-    useDispatch: jest.fn(),
-  };
-});
-
+jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
+  usePullRequestParam: jest.fn(),
+}));
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
@@ -97,8 +72,6 @@ interface Props {
 }
 
 function setup(props: Partial<Props> = {}, hookData = mockHookData) {
-  const user = userEvent.setup();
-
   const defaultProps: Props = {
     onDismiss: jest.fn(),
     parentFolder: {
@@ -122,19 +95,10 @@ function setup(props: Partial<Props> = {}, hookData = mockHookData) {
   (useProvisionedFolderFormData as jest.Mock).mockReturnValue(hookData);
 
   return {
-    user,
     ...render(<NewProvisionedFolderForm {...defaultProps} />),
     props: defaultProps,
   };
 }
-
-const mockRequest = {
-  isSuccess: false,
-  isError: false,
-  isLoading: false,
-  error: null,
-  data: { resource: { upsert: { metadata: { name: 'new-folder' } } } },
-};
 
 const mockHookData: ProvisionedFolderFormDataResult = {
   repository: {
@@ -148,17 +112,14 @@ const mockHookData: ProvisionedFolderFormDataResult = {
   folder: {
     metadata: {
       annotations: {
-        'grafana.app/sourcePath': '/dashboards',
+        'grafana.app/sourcePath': 'dashboards',
       },
     },
     spec: {
       title: '',
     },
   },
-  workflowOptions: [
-    { label: 'Commit directly', value: 'write' },
-    { label: 'Create a branch', value: 'branch' },
-  ],
+  canPushToConfiguredBranch: true,
   initialValues: {
     title: '',
     comment: '',
@@ -169,38 +130,32 @@ const mockHookData: ProvisionedFolderFormDataResult = {
   },
 };
 
+function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
+  expect(capturedRequest).not.toBeNull();
+  return capturedRequest as { url: URL; body: unknown };
+}
+
 describe('NewProvisionedFolderForm', () => {
+  let capturedRequest: { url: URL; body: unknown } | null = null;
+
   beforeEach(() => {
+    capturedRequest = null;
     jest.clearAllMocks();
-
-    // Setup default mocks
-    const mockAppEvents = {
-      publish: jest.fn(),
-    };
-    (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
-
-    // Mock usePullRequestParam
     (usePullRequestParam as jest.Mock).mockReturnValue({});
-
-    // Mock useCreateRepositoryFilesWithPathMutation
-    const mockCreate = jest.fn();
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([mockCreate, mockRequest]);
-
     (validationSrv.validateNewFolderName as jest.Mock).mockResolvedValue(true);
   });
 
-  it('should render the form with correct fields', () => {
+  it('should render the form with correct fields', async () => {
     setup();
 
-    // Check if form elements are rendered
-    expect(screen.getByRole('textbox', { name: /folder name/i })).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: /folder name/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^create$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
-  it('should return null when initialValues is not available', () => {
+  it('should return null when initialValues is not available', async () => {
     setup(
       {},
       {
@@ -208,10 +163,10 @@ describe('NewProvisionedFolderForm', () => {
         initialValues: undefined,
       }
     );
-    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Repository not found')).toBeInTheDocument();
   });
 
-  it('should show error when repository is not found', () => {
+  it('should show error when repository is not found', async () => {
     setup(
       {},
       {
@@ -220,58 +175,45 @@ describe('NewProvisionedFolderForm', () => {
         initialValues: undefined,
       }
     );
-    expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Repository not found')).toBeInTheDocument();
   });
 
-  it('should show branch field when branch workflow is selected', async () => {
-    const { user } = setup();
+  it('should show branch field for git repositories', async () => {
+    setup();
 
-    expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
-
-    const branchOption = screen.getByRole('radio', { name: /create a branch/i });
-    await user.click(branchOption);
-
-    expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: /branch/i })).toBeInTheDocument();
   });
 
   it('should validate branch name', async () => {
     const { user } = setup();
 
-    // Select branch workflow
-    const branchOption = screen.getByRole('radio', { name: /create a branch/i });
-    await user.click(branchOption);
-
-    // Enter invalid branch name
-    const branchInput = screen.getByRole('textbox', { name: /branch/i });
-    await user.clear(branchInput);
+    const branchInput = await screen.findByRole('combobox', { name: /branch/i });
+    await user.click(branchInput);
     await user.type(branchInput, 'invalid//branch');
+    await user.keyboard('{Enter}');
 
-    // Submit the form
     const submitButton = screen.getByRole('button', { name: /^create$/i });
     await user.click(submitButton);
 
-    // Wait for validation error to appear
     await waitFor(() => {
       expect(screen.getByText('Invalid branch name.')).toBeInTheDocument();
     });
   });
 
   it('should create folder successfully', async () => {
-    const mockCreate = jest.fn();
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      mockCreate,
-      {
-        ...mockRequest,
-        isSuccess: true,
-        isError: false,
-        isLoading: false,
-        error: null,
-      },
-    ]);
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
 
-    const { user, props } = setup();
+    const { user } = setup();
 
-    const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
 
     await user.clear(folderNameInput);
@@ -280,156 +222,183 @@ describe('NewProvisionedFolderForm', () => {
     await user.clear(commentInput);
     await user.type(commentInput, 'Creating a new test folder');
 
-    // Submit the form
     const submitButton = screen.getByRole('button', { name: /^create$/i });
     await user.click(submitButton);
 
-    // Check if create was called with correct parameters
     await waitFor(() => {
-      expect(mockCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ref: undefined, // write workflow uses undefined ref
-          name: 'test-repo',
-          path: '/dashboards/New Test Folder/',
-          message: 'Creating a new test folder',
-          body: {
-            title: 'New Test Folder',
-            type: 'folder',
-          },
-        })
-      );
+      expect(capturedRequest).not.toBeNull();
     });
 
-    // Check if onDismiss was called
-    expect(props.onDismiss).toHaveBeenCalled();
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/');
+    expect(request.url.pathname).toContain('New%20Test%20Folder');
+    expect(request.url.searchParams.get('message')).toBe('Creating a new test folder');
+    expect(request.body).toEqual({ title: 'New Test Folder', type: 'folder' });
+  });
+
+  it('should not produce double slashes when folder annotation has trailing slash', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
+
+    const hookDataWithTrailingSlash = {
+      ...mockHookData,
+      folder: {
+        metadata: {
+          annotations: {
+            'grafana.app/sourcePath': 'dashboards/',
+          },
+        },
+        spec: {
+          title: '',
+        },
+      },
+    };
+
+    const { user } = setup({}, hookDataWithTrailingSlash);
+
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'New Folder');
+
+    const submitButton = screen.getByRole('button', { name: /^create$/i });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).not.toContain('//');
+    expect(request.url.pathname).toContain('/dashboards/New%20Folder/');
   });
 
   it('should create folder with branch workflow', async () => {
-    const mockCreate = jest.fn();
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      mockCreate,
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
+    const { user } = setup(
+      {},
       {
-        ...mockRequest,
-        isSuccess: true,
-        isError: false,
-        isLoading: false,
-        error: null,
-      },
-    ]);
+        ...mockHookData,
+        initialValues: {
+          ...mockHookData.initialValues!,
+          ref: '',
+          workflow: 'branch',
+        },
+      }
+    );
 
-    const { user } = setup();
-
-    // Fill form
-    const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
     await user.clear(folderNameInput);
     await user.type(folderNameInput, 'Branch Folder');
 
-    // Select branch workflow
-    const branchOption = screen.getByRole('radio', { name: /create a branch/i });
-    await user.click(branchOption);
-
-    // Enter branch name
-    const branchInput = screen.getByRole('textbox', { name: /branch/i });
+    const branchInput = screen.getByRole('combobox', { name: /branch/i });
+    await user.click(branchInput);
     await user.clear(branchInput);
     await user.type(branchInput, 'feature/new-folder');
+    await user.keyboard('{Enter}');
 
-    // Submit the form
     const submitButton = screen.getByRole('button', { name: /^create$/i });
     await user.click(submitButton);
 
-    // Check if create was called with correct parameters
     await waitFor(() => {
-      expect(mockCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ref: 'feature/new-folder',
-          name: 'test-repo',
-          path: '/dashboards/Branch Folder/',
-          message: 'Create folder: Branch Folder',
-          body: {
-            title: 'Branch Folder',
-            type: 'folder',
-          },
-        })
-      );
+      expect(capturedRequest).not.toBeNull();
     });
+
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/');
+    expect(request.url.pathname).toContain('Branch%20Folder');
+    expect(request.url.searchParams.get('ref')).toBe('feature/new-folder');
+    expect(request.url.searchParams.get('message')).toBe('Create folder: Branch Folder');
+    expect(request.body).toEqual({ title: 'Branch Folder', type: 'folder' });
   });
 
-  it('should show error when folder creation fails', async () => {
-    const mockCreate = jest.fn();
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      mockCreate,
-      {
-        ...mockRequest,
-        isSuccess: false,
-        isError: true,
-        isLoading: false,
-        error: 'Failed to create folder',
-      },
-    ]);
+  // Error response handling (alertError publish, onDismiss) is tested in useProvisionedRequestHandler.test.ts.
+  // This test verifies the correct request is sent; the handler mock prevents response side-effects.
+  it('should send correct request body when folder creation fails', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({ message: 'Failed to create folder' }, { status: 500 });
+      })
+    );
 
     const { user } = setup();
 
-    // Fill form
-    const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
     await user.clear(folderNameInput);
     await user.type(folderNameInput, 'Error Folder');
 
-    // Submit the form
     const submitButton = screen.getByRole('button', { name: /^create$/i });
     await user.click(submitButton);
 
-    // Check if error alert was published
     await waitFor(() => {
-      const appEvents = getAppEvents();
-      expect(appEvents.publish).toHaveBeenCalledWith({
-        type: AppEvents.alertError.name,
-        payload: ['Error creating folder', 'Failed to create folder'],
-      });
+      expect(capturedRequest).not.toBeNull();
     });
+
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/');
+    expect(request.url.pathname).toContain('Error%20Folder');
+    expect(request.url.searchParams.get('message')).toBe('Create folder: Error Folder');
+    expect(request.body).toEqual({ title: 'Error Folder', type: 'folder' });
   });
 
   it('should disable create button when form is submitting', async () => {
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      jest.fn(),
-      {
-        ...mockRequest,
-        isSuccess: false,
-        isError: false,
-        isLoading: true,
-        error: null,
-      },
-    ]);
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async () => {
+        await delay('infinite');
+        return HttpResponse.json({});
+      })
+    );
 
-    setup();
+    const { user } = setup();
 
-    // Create button should be disabled and show loading text
-    const createButton = screen.getByRole('button', { name: /creating/i });
-    expect(createButton).toBeDisabled();
-    expect(createButton).toHaveTextContent('Creating...');
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'Test Folder');
+
+    const submitButton = screen.getByRole('button', { name: /^create$/i });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /creating/i })).toBeDisabled();
+    });
+    expect(screen.getByRole('button', { name: /creating/i })).toHaveTextContent('Creating...');
   });
 
-  it('should show PR link when PR URL is available', () => {
+  it('should show PR link when PR URL is available', async () => {
     (usePullRequestParam as jest.Mock).mockReturnValue({ prURL: 'https://github.com/grafana/grafana/pull/1234' });
 
     setup();
 
-    // PR alert should be visible - use text content instead of role
-    expect(screen.getByText('Pull request created')).toBeInTheDocument();
+    expect(await screen.findByText('Pull request created')).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveTextContent('https://github.com/grafana/grafana/pull/1234');
   });
 
   it('should call onDismiss when cancel button is clicked', async () => {
     const { user, props } = setup();
 
-    // Click cancel button
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    const cancelButton = await screen.findByRole('button', { name: /cancel/i });
     await user.click(cancelButton);
 
     expect(props.onDismiss).toHaveBeenCalled();
   });
 
-  it('should show read-only alert when repository has no workflows', () => {
-    // Mock repository with empty workflows array
+  it('should show read-only alert when repository has no workflows', async () => {
     setup(
       {},
       {
@@ -444,7 +413,6 @@ describe('NewProvisionedFolderForm', () => {
       }
     );
 
-    // Read-only alert should be visible
-    expect(screen.getByText('This repository is read only')).toBeInTheDocument();
+    expect(await screen.findByText('This repository is read only')).toBeInTheDocument();
   });
 });

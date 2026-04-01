@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { QueryEditorProps } from '@grafana/data';
+import { type QueryEditorProps } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 import { Space } from '@grafana/ui';
 
-import { SqlDatasource } from '../datasource/SqlDatasource';
+import { type SqlDatasource } from '../datasource/SqlDatasource';
 import { applyQueryDefaults } from '../defaults';
-import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
+import { type SQLQuery, type QueryRowFilter, type SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
-import { QueryHeader, QueryHeaderProps } from './QueryHeader';
+import { QueryHeader, type QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 export interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'dialect'>;
+  queryHeaderProps?: Pick<QueryHeaderProps, 'dialect' | 'hideRunButton' | 'hideFormatSelector'>;
 }
 
 export default function SqlQueryEditor({
@@ -24,6 +24,7 @@ export default function SqlQueryEditor({
   onChange,
   onRunQuery,
   range,
+  app,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
@@ -33,8 +34,8 @@ export default function SqlQueryEditor({
   const dialect = queryHeaderProps?.dialect ?? 'other';
   const { loading, error } = useAsync(async () => {
     return () => {
-      if (datasource.getDB(datasource.id).init !== undefined) {
-        datasource.getDB(datasource.id).init!();
+      if (datasource.getDB().init !== undefined) {
+        datasource.getDB().init!();
       }
     };
   }, [datasource]);
@@ -50,8 +51,8 @@ export default function SqlQueryEditor({
 
   useEffect(() => {
     return () => {
-      if (datasource.getDB(datasource.id).dispose !== undefined) {
-        datasource.getDB(datasource.id).dispose!();
+      if (datasource.getDB().dispose !== undefined) {
+        datasource.getDB().dispose!();
       }
     };
   }, [datasource]);
@@ -98,7 +99,11 @@ export default function SqlQueryEditor({
         queryRowFilter={queryRowFilter}
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
+        hideFormatSelector={queryHeaderProps?.hideFormatSelector}
+        hideRunButton={queryHeaderProps?.hideRunButton}
         dialect={dialect}
+        dataSourceInstanceSettings={datasource.instanceSettings}
+        app={app}
       />
 
       <Space v={0.5} />

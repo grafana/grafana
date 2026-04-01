@@ -25,6 +25,13 @@ type Example struct {
 	Status ExampleStatus `json:"status" yaml:"status"`
 }
 
+func NewExample() *Example {
+	return &Example{
+		Spec:   *NewExampleSpec(),
+		Status: *NewExampleStatus(),
+	}
+}
+
 func (o *Example) GetSpec() any {
 	return o.Spec
 }
@@ -236,6 +243,10 @@ func (o *Example) DeepCopyInto(dst *Example) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (Example) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.Example"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Example{}
 
@@ -287,6 +298,10 @@ func (o *ExampleList) DeepCopy() *ExampleList {
 
 func (o *ExampleList) DeepCopyInto(dst *ExampleList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (ExampleList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v0alpha1.ExampleList"
 }
 
 // Interface compliance compile-time check

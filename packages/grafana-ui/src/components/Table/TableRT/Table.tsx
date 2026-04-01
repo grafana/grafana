@@ -8,7 +8,7 @@ import {
   useSortBy,
   useTable,
 } from 'react-table';
-import { VariableSizeList } from 'react-window';
+import { type VariableSizeList } from 'react-window';
 
 import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -21,7 +21,7 @@ import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { FooterItem, GrafanaTableState, InspectCell, TableRTProps as Props } from '../types';
+import { type FooterItem, type GrafanaTableState, type InspectCell, type TableRTProps as Props } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -135,7 +135,7 @@ export const Table = memo((props: Props) => {
   // `useTableStateReducer`, which is needed to construct options for `useTable` (the hook that returns
   // `toggleAllRowsExpanded`), and if we used a variable, that variable would be undefined at the time
   // we initialize `useTableStateReducer`.
-  const toggleAllRowsExpandedRef = useRef<(value?: boolean) => void>();
+  const toggleAllRowsExpandedRef = useRef<((value?: boolean) => void) | undefined>(undefined);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer({

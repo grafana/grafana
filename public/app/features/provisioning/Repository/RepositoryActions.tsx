@@ -1,7 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
@@ -18,6 +18,7 @@ interface RepositoryActionsProps {
 export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const name = repository.metadata?.name ?? '';
   const repoHref = getRepoHrefForProvider(repository.spec);
+  const connectionName = repository.spec?.connection?.name;
 
   const repoType = repository.spec?.type;
   const repoConfig = repoType ? getRepositoryTypeConfig(repoType) : undefined;
@@ -34,9 +35,21 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
         </Button>
       )}
       <SyncRepository repository={repository} />
-      <LinkButton variant="secondary" icon="link" href={CONNECTIONS_URL}>
-        <Trans i18nKey="provisioning.repository-actions.connections">Connections</Trans>
-      </LinkButton>
+      {connectionName && (
+        <LinkButton
+          variant="secondary"
+          icon="link"
+          href={`${CONNECTIONS_URL}/${connectionName}/edit`}
+          onClick={() => {
+            reportInteraction('grafana_provisioning_repository_connection_opened', {
+              repositoryName: name,
+              connectionName,
+            });
+          }}
+        >
+          <Trans i18nKey="provisioning.repository-actions.connection">Connection</Trans>
+        </LinkButton>
+      )}
       <LinkButton
         variant="secondary"
         icon="cog"

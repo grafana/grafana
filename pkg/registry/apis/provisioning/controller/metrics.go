@@ -1,8 +1,11 @@
 package controller
 
 import (
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"sync"
+
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type finalizerMetrics struct {
@@ -45,40 +48,53 @@ func (m *finalizerMetrics) RecordFinalizer(finalizerType string, outcome string,
 	}
 }
 
+//go:generate mockery --name=HealthMetricsRecorder --structname=MockHealthMetricsRecorder --inpackage --filename metrics_mock.go --with-expecter
+type HealthMetricsRecorder interface {
+	RecordHealthCheck(resource, outcome string, duration float64)
+}
+
 type healthMetrics struct {
 	registry              prometheus.Registerer
 	healthCheckedTotal    *prometheus.CounterVec
 	healthCheckedDuration *prometheus.HistogramVec
 }
 
-func registerHealthMetrics(registry prometheus.Registerer) healthMetrics {
-	healthCheckedTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_health_checked_total",
-			Help: "Total number of health checks performed",
-		},
-		[]string{"outcome"},
-	)
-	registry.MustRegister(healthCheckedTotal)
+var (
+	once    sync.Once
+	metrics HealthMetricsRecorder
+)
 
-	healthCheckedDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "grafana_provisioning_health_checked_duration_seconds",
-			Help:    "Duration of health checks",
-			Buckets: []float64{0.1, 0.2, 0.5, 1.0, 2.0, 5.0},
-		},
-		[]string{},
-	)
-	registry.MustRegister(healthCheckedDuration)
+func NewHealthMetricsRecorder(registry prometheus.Registerer) HealthMetricsRecorder {
+	once.Do(func() {
+		healthCheckedTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_health_checked_total",
+				Help: "Total number of health checks performed",
+			},
+			[]string{"resource", "outcome"},
+		)
+		registry.MustRegister(healthCheckedTotal)
 
-	return healthMetrics{
-		registry:              registry,
-		healthCheckedTotal:    healthCheckedTotal,
-		healthCheckedDuration: healthCheckedDuration,
-	}
+		healthCheckedDuration := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_health_checked_duration_seconds",
+				Help:    "Duration of health checks",
+				Buckets: []float64{0.1, 0.2, 0.5, 1.0, 2.0, 5.0},
+			},
+			[]string{"resource"},
+		)
+		registry.MustRegister(healthCheckedDuration)
+
+		metrics = &healthMetrics{
+			registry:              registry,
+			healthCheckedTotal:    healthCheckedTotal,
+			healthCheckedDuration: healthCheckedDuration,
+		}
+	})
+	return metrics
 }
 
-func (m *healthMetrics) RecordHealthCheck(outcome string, duration float64) {
-	m.healthCheckedTotal.WithLabelValues(outcome).Inc()
-	m.healthCheckedDuration.WithLabelValues().Observe(duration)
+func (m *healthMetrics) RecordHealthCheck(resource, outcome string, duration float64) {
+	m.healthCheckedTotal.WithLabelValues(resource, outcome).Inc()
+	m.healthCheckedDuration.WithLabelValues(resource).Observe(duration)
 }

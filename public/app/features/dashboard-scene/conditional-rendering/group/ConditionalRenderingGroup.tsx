@@ -3,14 +3,14 @@ import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   sceneGraph,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
+  type SceneObjectRef,
+  type SceneObjectState,
 } from '@grafana/scenes';
-import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { type ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Stack } from '@grafana/ui';
 
 import { ConditionalRenderingChangedEvent, dashboardEditActions } from '../../edit-pane/shared';
@@ -19,13 +19,13 @@ import { ConditionalRenderingData } from '../conditions/ConditionalRenderingData
 import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from '../conditions/ConditionalRenderingVariable';
 import { conditionalRenderingSerializerRegistry } from '../conditions/serializers';
-import { ConditionalRenderingConditions } from '../conditions/types';
+import { type ConditionalRenderingConditions } from '../conditions/types';
 import { extractObjectType, getTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
 import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
 import { ConditionalRenderingGroupVisibility } from './ConditionalRenderingGroupVisibility';
-import { GroupConditionCondition, GroupConditionConditionType, GroupConditionVisibility } from './types';
+import { type GroupConditionCondition, type GroupConditionConditionType, type GroupConditionVisibility } from './types';
 
 export interface ConditionalRenderingGroupState extends SceneObjectState {
   conditions: ConditionalRenderingConditions[];

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 const (
@@ -62,8 +63,10 @@ func (pm *ProviderManager) Run(ctx context.Context) error {
 // GetMeta tries each provider in order until one succeeds, using cache when available.
 // Returns ErrMetaNotFound only if all providers return ErrMetaNotFound.
 // Otherwise, returns the last non-ErrMetaNotFound error if all providers fail.
-func (pm *ProviderManager) GetMeta(ctx context.Context, pluginID, version string) (*Result, error) {
-	cacheKey := pm.cacheKey(pluginID, version)
+func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
+	metrics.MetaRequestsTotal.WithLabelValues(ref.ID, ref.Version).Inc()
+
+	cacheKey := pm.cacheKey(ref)
 
 	// Check cache first
 	pm.cacheMu.RLock()
@@ -71,17 +74,25 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, pluginID, version string
 	pm.cacheMu.RUnlock()
 
 	if exists && time.Now().Before(cached.expiresAt) {
+		metrics.MetaCacheLookupTotal.WithLabelValues("hit").Inc()
 		return &Result{
 			Meta: cached.meta,
 			TTL:  cached.ttl,
 		}, nil
 	}
 
+	metrics.MetaCacheLookupTotal.WithLabelValues("miss").Inc()
+
 	// Try each provider in order until one succeeds
 	var lastErr error
 	for _, provider := range pm.providers {
-		result, err := provider.GetMeta(ctx, pluginID, version)
+		start := time.Now()
+		result, err := provider.GetMeta(ctx, ref)
+		duration := time.Since(start)
+
 		if err == nil {
+			metrics.MetaFetchDurationSeconds.WithLabelValues(provider.Name(), "success").Observe(duration.Seconds())
+
 			// Don't cache results with a zero TTL
 			if result.TTL == 0 {
 				return result, nil
@@ -93,6 +104,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, pluginID, version string
 				ttl:       result.TTL,
 				expiresAt: time.Now().Add(result.TTL),
 			}
+			metrics.MetaCacheSize.Set(float64(len(pm.cache)))
 			pm.cacheMu.Unlock()
 
 			return result, nil
@@ -100,9 +112,11 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, pluginID, version string
 
 		// If not found, try next provider
 		if errors.Is(err, ErrMetaNotFound) {
+			metrics.MetaFetchDurationSeconds.WithLabelValues(provider.Name(), "not_found").Observe(duration.Seconds())
 			continue
 		}
 
+		metrics.MetaFetchDurationSeconds.WithLabelValues(provider.Name(), "error").Observe(duration.Seconds())
 		lastErr = err
 	}
 
@@ -119,13 +133,24 @@ func (pm *ProviderManager) cleanupExpired() {
 
 	pm.cacheMu.Lock()
 	defer pm.cacheMu.Unlock()
+
+	evicted := 0
 	for key, entry := range pm.cache {
 		if now.After(entry.expiresAt) {
 			delete(pm.cache, key)
+			evicted++
 		}
+	}
+
+	if evicted > 0 {
+		metrics.MetaCacheEvictionsTotal.Add(float64(evicted))
+		metrics.MetaCacheSize.Set(float64(len(pm.cache)))
 	}
 }
 
-func (pm *ProviderManager) cacheKey(pluginID, version string) string {
-	return fmt.Sprintf("%s:%s", pluginID, version)
+func (pm *ProviderManager) cacheKey(ref PluginRef) string {
+	if ref.HasParent() {
+		return fmt.Sprintf("%s:%s:%s", ref.ID, ref.Version, ref.GetParentID())
+	}
+	return fmt.Sprintf("%s:%s", ref.ID, ref.Version)
 }

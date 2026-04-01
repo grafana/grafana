@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 
-import { LogGroup } from '../../../dataquery.gen';
+import { type LogGroup } from '../../../dataquery.gen';
 import getStyles from '../../styles';
 
 type CrossAccountLogsQueryProps = {
@@ -27,6 +27,10 @@ export const SelectedLogGroups = ({
   useEffect(() => {
     setVisibleSelectecLogGroups(selectedLogGroups.slice(0, maxNoOfVisibleLogGroups));
   }, [selectedLogGroups, maxNoOfVisibleLogGroups]);
+
+  if (selectedLogGroups.length === 0) {
+    return null;
+  }
 
   return (
     <>
@@ -57,18 +61,16 @@ export const SelectedLogGroups = ({
             Show all
           </Button>
         )}
-        {selectedLogGroups.length > 0 && (
-          <Button
-            size="sm"
-            variant="secondary"
-            icon="times"
-            fill="outline"
-            className={styles.removeButton}
-            onClick={() => setShowConfirm(true)}
-          >
-            Clear selection
-          </Button>
-        )}
+        <Button
+          size="sm"
+          variant="secondary"
+          icon="times"
+          fill="outline"
+          className={styles.removeButton}
+          onClick={() => setShowConfirm(true)}
+        >
+          Clear selection
+        </Button>
       </div>
       <ConfirmModal
         isOpen={showConfirm}
@@ -76,7 +78,6 @@ export const SelectedLogGroups = ({
         body="Are you sure you want to clear all log groups?"
         confirmText="Yes"
         dismissText="No"
-        icon="exclamation-triangle"
         onConfirm={() => {
           setShowConfirm(false);
           onChange([]);

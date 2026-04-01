@@ -6,18 +6,23 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -28,10 +33,6 @@ var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
-
-// CoreRoleStorageBackend uses the resource.StorageBackend interface to provide storage for core roles.
-// Used by wire to identify the storage backend for core roles.
-type CoreRoleStorageBackend interface{ resource.StorageBackend }
 
 // RoleStorageBackend uses the resource.StorageBackend interface to provide storage for custom roles.
 // Used by wire to identify the storage backend for custom roles.
@@ -50,17 +51,18 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Stores
 	store legacy.LegacyIdentityStore
 
-	userLegacyStore             *user.LegacyStore
-	saLegacyStore               *serviceaccount.LegacyStore
-	legacyTeamStore             *team.LegacyStore
-	teamBindingLegacyStore      *teambinding.LegacyBindingStore
-	ssoLegacyStore              *sso.LegacyStore
-	coreRolesStorage            CoreRoleStorageBackend
-	roleApiInstaller            RoleApiInstaller
-	globalRoleApiInstaller      GlobalRoleApiInstaller
-	resourcePermissionsStorage  resource.StorageBackend
-	roleBindingsStorage         RoleBindingStorageBackend
-	externalGroupMappingStorage ExternalGroupMappingStorageBackend
+	userLegacyStore                  *user.LegacyStore
+	saLegacyStore                    *serviceaccount.LegacyStore
+	legacyTeamStore                  *team.LegacyStore
+	teamBindingLegacyStore           *teambinding.LegacyBindingStore
+	ssoLegacyStore                   *sso.LegacyStore
+	roleApiInstaller                 RoleApiInstaller
+	globalRoleApiInstaller           GlobalRoleApiInstaller
+	teamLBACApiInstaller             TeamLBACApiInstaller
+	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
+	resourcePermissionsStorage       resource.StorageBackend
+	mappers                          *resourcepermission.MappersRegistry
+	roleBindingsStorage              RoleBindingStorageBackend
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
@@ -83,20 +85,42 @@ type IdentityAccessManagementAPIBuilder struct {
 	reg    prometheus.Registerer
 	logger log.Logger
 
-	dual              dualwrite.Service
-	unified           resource.ResourceClient
-	userSearchClient  resourcepb.ResourceIndexClient
-	userSearchHandler *user.SearchHandler
-	teamSearch        *TeamSearchHandler
+	dual                              dualwrite.Service
+	unified                           resource.ResourceClient
+	userSearchClient                  resourcepb.ResourceIndexClient
+	userSearchHandler                 *user.SearchHandler
+	teamSearch                        *TeamSearchHandler
+	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
+	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
 	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST
 
+	// ac is used for legacy permission checks in role bindings.
+	// nil where only k8s-mapped permissions are supported.
+	ac accesscontrol.AccessControl
+
+	// roleConfigProvider provides the REST config for a dynamic client that fetches
+	// roles referenced by role bindings
+	roleConfigProvider iamauthorizer.ConfigProvider
+
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
 
 	// Toggle for enabling authz management apis
 	features featuremgmt.FeatureToggles
+
+	tracing tracing.Tracer
+
+	cfgProvider    configprovider.ConfigProvider
+	settingService settingsvc.Service
+
+	apiConfig Config
+}
+
+// Config holds IAM-specific configuration
+type Config struct {
+	SingleOrganization bool
 }

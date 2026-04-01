@@ -2,21 +2,27 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { useEffectOnce } from 'react-use';
-import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Dashboard, DashboardCursorSync, FieldConfigSource, Panel, ThresholdsMode } from '@grafana/schema/src';
+import {
+  type Dashboard,
+  DashboardCursorSync,
+  type FieldConfigSource,
+  type Panel,
+  ThresholdsMode,
+} from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
-import { StoreState } from 'app/types/store';
+import { DashboardInitPhase, type DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
+import { type StoreState } from 'app/types/store';
 
 import { configureStore } from '../../../store/configureStore';
-import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
+import { type Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardModel } from '../state/DashboardModel';
 import { initDashboard } from '../state/initDashboard';
 
-import PublicDashboardPage, { Props } from './PublicDashboardPage';
+import PublicDashboardPage, { type Props } from './PublicDashboardPage';
 
 jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
   const LazyLoader = ({ children, onLoad }: Pick<LazyLoaderProps, 'children' | 'onLoad'>) => {

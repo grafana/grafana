@@ -1,4 +1,4 @@
-import { DataQueryRequest, DataQuery, CoreApp, dateTime } from '@grafana/data';
+import { type DataQueryRequest, type DataQuery, CoreApp, dateTime } from '@grafana/data';
 
 export function getQueryOptions<TQuery extends DataQuery>(
   options: Partial<DataQueryRequest<TQuery>>

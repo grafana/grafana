@@ -51,6 +51,10 @@ func (auth roleAuthorizer) Authorize(ctx context.Context, a authorizer.Attribute
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 		}
 	case org.RoleNone:
+		// allow api discovery endpoints (i.e. non resource requests)
+		if !a.IsResourceRequest() && a.GetVerb() == "get" {
+			return authorizer.DecisionAllow, "", nil
+		}
 		// HOTFIX: granting Viewer actions to None roles to a fixed group of APIs,
 		//  while we work on a proper fix.
 		if slices.Contains(orgRoleNoneAsViewerAPIGroups, a.GetAPIGroup()) {

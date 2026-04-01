@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { getAPINamespace } from '@grafana/api-clients';
-import { getDefaultTimeRange, TimeRange } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { getDefaultTimeRange, type TimeRange } from '@grafana/data';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 export function isDashboardDatasource(query: DataQuery): boolean {
@@ -66,22 +66,29 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
     setError(null);
 
     try {
-      // Filter out Dashboard datasource queries - they are frontend-only and can't be processed by backend
-      const backendQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
+      const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
 
-      if (backendQueries.length === 0) {
+      if (nonDashboardQueries.length === 0) {
         setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
         setLoading(false);
         return;
       }
 
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+      const resolvedQueries = nonDashboardQueries.map((query) => {
+        if (!query.datasource && defaultDs) {
+          return { ...query, datasource: { uid: defaultDs.uid, type: defaultDs.type } };
+        }
+        return query;
+      });
+
       const namespace = getAPINamespace();
       const currentTimeRange = timeRange || getDefaultTimeRange();
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
-        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
+        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
         {
-          queries: backendQueries,
+          queries: resolvedQueries,
           from: currentTimeRange.from.toISOString(),
           to: currentTimeRange.to.toISOString(),
         }

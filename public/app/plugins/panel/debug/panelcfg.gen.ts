@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/debug/panelcfg.cue file.
+
 export type UpdateConfig = {
   render: boolean,
   dataChanged: boolean,

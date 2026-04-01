@@ -2,15 +2,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  GrafanaConfig,
-  PluginMetaInfo,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type GrafanaConfig,
+  type PluginMetaInfo,
   PluginType,
   locationUtil,
 } from '@grafana/data';
 
-import { DataSourceModal, DataSourceModalProps } from './DataSourceModal';
+import { DataSourceModal, type DataSourceModalProps } from './DataSourceModal';
 
 const pluginMetaInfo: PluginMetaInfo = {
   author: { name: '' },
@@ -31,7 +31,6 @@ function createDS(name: string, id: number, builtIn: boolean): DataSourceInstanc
     name: name,
     uid: name + 'uid',
     meta: createPluginMeta(name, builtIn),
-    id,
     access: 'direct',
     jsonData: {},
     type: '',

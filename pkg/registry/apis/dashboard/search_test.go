@@ -109,7 +109,7 @@ func TestSearchFallback(t *testing.T) {
 		}
 	})
 
-	t.Run("should hit unified storage search handler on mode 3", func(t *testing.T) {
+	t.Run("should hit legacy search handler on mode 3", func(t *testing.T) {
 		mockClient := &MockClient{}
 		mockLegacyClient := &MockClient{}
 
@@ -128,11 +128,11 @@ func TestSearchFallback(t *testing.T) {
 
 		searchHandler.DoSearch(rr, req)
 
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
+		if mockClient.LastSearchRequest != nil {
 			t.Fatalf("expected Search NOT to be called, but it was")
+		}
+		if mockLegacyClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
 		}
 	})
 
@@ -772,7 +772,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		Resource:  "folders",
 		Namespace: "test-namespace",
 	}
-	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 
 	tests := map[string]struct {
 		queryString           string
@@ -1152,6 +1152,22 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 						{Key: "tags", Operator: "=", Values: []string{"monitoring", "prod"}},
 						{Key: "reference.LibraryPanel", Operator: "=", Values: []string{"panel1"}},
 					},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"createdBy filter": {
+			queryString: "createdBy=user:abc123",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "createdBy", Operator: "=", Values: []string{"user:abc123"}}},
 				},
 				Query:     "",
 				Limit:     50,

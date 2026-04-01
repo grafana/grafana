@@ -94,6 +94,14 @@ func (f *factory) Validate(ctx context.Context, obj runtime.Object) field.ErrorL
 		return list
 	}
 
+	// Validate title is required
+	if conn.Spec.Title == "" {
+		list = append(list, field.Required(
+			field.NewPath("spec", "title"),
+			"title is required",
+		))
+	}
+
 	// Check if connection type is supported
 	var foundExtra Extra
 	for _, e := range f.extras {

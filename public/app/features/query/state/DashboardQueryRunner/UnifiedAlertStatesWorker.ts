@@ -1,7 +1,7 @@
-import { Observable, from } from 'rxjs';
+import { type Observable, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { AlertState, AlertStateInfo } from '@grafana/data';
+import { AlertState, type AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
@@ -12,10 +12,14 @@ import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
-import { RuleNamespace } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RuleNamespace } from 'app/types/unified-alerting';
+import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
+import {
+  type DashboardQueryRunnerOptions,
+  type DashboardQueryRunnerWorker,
+  type DashboardQueryRunnerWorkerResult,
+} from './types';
 import { emptyResult, handleDashboardQueryRunnerWorkerError } from './utils';
 
 export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
@@ -94,7 +98,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
                   state,
                   id: Object.keys(panelIdToAlertState).length,
                   panelId,
-                  dashboardId: dashboard.id,
+                  dashboardUID: dashboard.uid,
                 };
               } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
                 panelIdToAlertState[panelId].state = AlertState.Alerting;

@@ -73,8 +73,8 @@ func NewStaticTokenExchangeTransportWrapper(
 // NewTokenExchangeTransportWrapperWithStrategies creates a transport.WrapperFunc with custom strategies.
 func NewTokenExchangeTransportWrapper(
 	exchanger authnlib.TokenExchanger,
-	namespaceProvider NamespaceProvider,
 	audienceProvider AudienceProvider,
+	namespaceProvider NamespaceProvider,
 ) transport.WrapperFunc {
 	return func(rt http.RoundTripper) http.RoundTripper {
 		return newTokenExchangeRoundTripperWithStrategies(

@@ -1,10 +1,17 @@
 import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
-import { DisplayList, iamAPIv0alpha1, useLazyGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
+import {
+  API_GROUP as IAM_API_GROUP,
+  API_VERSION as IAM_API_VERSION,
+  type DisplayList,
+  iamAPIv0alpha1,
+  useLazyGetDisplayMappingQuery,
+} from 'app/api/clients/iam/v0alpha1';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
@@ -15,13 +22,13 @@ import {
   useSaveFolderMutation as useLegacySaveFolderMutation,
   useMoveFolderMutation as useMoveFolderMutationLegacy,
   useGetAffectedItemsQuery as useLegacyGetAffectedItemsQuery,
-  MoveFoldersArgs,
-  DeleteFoldersArgs,
-  MoveFolderArgs,
+  type MoveFoldersArgs,
+  type DeleteFoldersArgs,
+  type MoveFolderArgs,
   browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { FolderDTO, NewFolder } from 'app/types/folders';
+import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
 import kbn from '../../../../core/utils/kbn';
@@ -32,7 +39,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
-  ManagerKind,
+  type ManagerKind,
 } from '../../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
@@ -50,12 +57,13 @@ import {
   useDeleteFolderMutation,
   useCreateFolderMutation,
   useUpdateFolderMutation,
-  Folder,
-  CreateFolderApiArg,
-  useReplaceFolderMutation,
-  ReplaceFolderApiArg,
+  type Folder,
+  type CreateFolderApiArg,
+  type UpdateFolderApiArg,
   useGetAffectedItemsQuery,
-  FolderInfo,
+  type FolderInfo,
+  type ObjectMeta,
+  type OwnerReference,
 } from './index';
 
 function getFolderUrl(uid: string, title: string): string {
@@ -66,6 +74,15 @@ function getFolderUrl(uid: string, title: string): string {
   return `${config.appSubUrl}/dashboards/f/${uid}/${slug}`;
 }
 
+/**
+ * FolderDTO with optional ownerReferences
+ *
+ * (owner references will only be populated with app platform API + team folders functionality)
+ */
+export type CombinedFolder = FolderDTO & {
+  ownerReferences?: OwnerReference[];
+};
+
 const combineFolderResponses = (
   folder: Folder,
   legacyFolder: FolderDTO,
@@ -75,7 +92,7 @@ const combineFolderResponses = (
   const updatedBy = folder.metadata.annotations?.[AnnoKeyUpdatedBy];
   const createdBy = folder.metadata.annotations?.[AnnoKeyCreatedBy];
 
-  const newData: FolderDTO = {
+  const newData: CombinedFolder = {
     canAdmin: legacyFolder.canAdmin,
     canDelete: legacyFolder.canDelete,
     canEdit: legacyFolder.canEdit,
@@ -84,6 +101,7 @@ const combineFolderResponses = (
     createdBy: (createdBy && userDisplay?.display[userDisplay?.keys.indexOf(createdBy)]?.displayName) || 'Anonymous',
     updatedBy: (updatedBy && userDisplay?.display[userDisplay?.keys.indexOf(updatedBy)]?.displayName) || 'Anonymous',
     ...appPlatformFolderToLegacyFolder(folder),
+    ownerReferences: folder.metadata.ownerReferences || [],
   };
 
   if (parents.length) {
@@ -101,7 +119,7 @@ const combineFolderResponses = (
   return newData;
 };
 
-export async function getFolderByUidFacade(uid: string): Promise<FolderDTO> {
+export async function getFolderByUidFacade(uid: string) {
   const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
 
@@ -132,7 +150,14 @@ export async function getFolderByUidFacade(uid: string): Promise<FolderDTO> {
     const [legacyFolderResponse, folderResponse, parentsResponse] = responses;
 
     if (!folderResponse?.data || !legacyFolderResponse?.data || !parentsResponse?.data) {
-      throw new Error('One of the folder responses is undefined');
+      // Throw the original error (with HTTP status) so callers can detect e.g. 403 and
+      // gracefully continue — this handles the case when a user has access to a dashboard
+      // but not to the containing folder.
+      const error =
+        ('error' in folderResponse ? folderResponse.error : undefined) ||
+        legacyFolderResponse?.error ||
+        ('error' in parentsResponse ? parentsResponse.error : undefined);
+      throw error || new Error('One of the folder responses is undefined');
     }
 
     const userKeys = getUserKeys(folderResponse.data);
@@ -216,7 +241,7 @@ export function useGetFolderQueryFacade(uid?: string) {
 
   // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
   // api client.
-  let newData: FolderDTO | undefined = undefined;
+  let newData: CombinedFolder | undefined = undefined;
   if (
     resultFolder.data &&
     resultParents.data &&
@@ -263,6 +288,7 @@ export function useDeleteFolderMutationFacade() {
       // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
       // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
       notify.success(t('folders.api.folder-deleted-success', 'Folder deleted'));
+      invalidateQuotaUsage(dispatch);
     }
     return result;
   };
@@ -303,6 +329,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
     }
 
     refresh({ parentsOf: folderUIDs });
+    invalidateQuotaUsage(dispatch);
     return { data: undefined };
   };
 }
@@ -359,13 +386,44 @@ export function useCreateFolder() {
     return legacyHook;
   }
 
-  const createFolderAppPlatform = async (folder: NewFolder) => {
-    const payload: CreateFolderApiArg = {
+  const createFolderAppPlatform = async (
+    payload: NewFolder & {
+      /**
+       * UIDs of teams to add as owner references to the new folder
+       */
+      teamOwnerReferences?: Array<{ uid: string; name: string }>;
+    }
+  ) => {
+    const { teamOwnerReferences: teamOwnerReferenceUids, ...folder } = payload;
+
+    /**
+     * Additional metadata to use for the folder
+     *
+     * If team details are included, add them as owner references to the folder
+     */
+    const partialMetadata: ObjectMeta =
+      teamOwnerReferenceUids && teamOwnerReferenceUids.length > 0
+        ? {
+            ownerReferences: [
+              ...teamOwnerReferenceUids.map(({ uid, name }) => ({
+                apiVersion: `${IAM_API_GROUP}/${IAM_API_VERSION}`,
+                kind: 'Team',
+                name,
+                uid,
+                controller: true,
+                blockOwnerDeletion: false,
+              })),
+            ],
+          }
+        : {};
+
+    const apiPayload: CreateFolderApiArg = {
       folder: {
         spec: {
           title: folder.title,
         },
         metadata: {
+          ...partialMetadata,
           generateName: 'f',
           annotations: {
             ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
@@ -374,9 +432,12 @@ export function useCreateFolder() {
       },
     };
 
-    const result = await createFolder(payload);
-    refresh({ childrenOf: folder.parentUid });
-    deletedDashboardsCache.clear();
+    const result = await createFolder(apiPayload);
+    if (!result.error) {
+      refresh({ childrenOf: folder.parentUid });
+      deletedDashboardsCache.clear();
+      invalidateQuotaUsage(dispatch);
+    }
 
     return {
       ...result,
@@ -388,7 +449,7 @@ export function useCreateFolder() {
 }
 
 export function useUpdateFolder() {
-  const [updateFolder, result] = useReplaceFolderMutation();
+  const [updateFolder, result] = useUpdateFolderMutation();
   const legacyHook = useLegacySaveFolderMutation();
   const refresh = useRefreshFolders();
 
@@ -397,9 +458,9 @@ export function useUpdateFolder() {
   }
 
   const updateFolderAppPlatform = async (folder: Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>) => {
-    const payload: ReplaceFolderApiArg = {
+    const payload: UpdateFolderApiArg = {
       name: folder.uid,
-      folder: {
+      patch: {
         spec: { title: folder.title },
         metadata: {
           name: folder.uid,

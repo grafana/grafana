@@ -2,7 +2,7 @@ import { useCallback, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { type MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -109,7 +109,7 @@ function AllowCustomSwitch({ variable, id }: InputProps) {
   return (
     <Switch
       id={id}
-      value={allowCustomValue}
+      value={allowCustomValue ?? true}
       onChange={(evt) => variable.setState({ allowCustomValue: evt.currentTarget.checked })}
     />
   );
