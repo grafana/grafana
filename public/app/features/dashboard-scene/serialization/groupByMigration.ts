@@ -50,14 +50,14 @@ function buildGroupByFilters(currentEntries: KeyWithLabel[], defaultEntries: Key
   const filters: GroupByFilterEntry[] = [];
   const seen = new Set<string>();
 
-  for (const entry of currentEntries) {
+  for (const entry of defaultEntries) {
     seen.add(entry.key);
-    filters.push(toGroupByFilter(entry.key, entry.label));
+    filters.push(toGroupByFilter(entry.key, entry.label, 'dashboard'));
   }
 
-  for (const entry of defaultEntries) {
+  for (const entry of currentEntries) {
     if (!seen.has(entry.key)) {
-      filters.push(toGroupByFilter(entry.key, entry.label, 'dashboard'));
+      filters.push(toGroupByFilter(entry.key, entry.label));
     }
   }
 
