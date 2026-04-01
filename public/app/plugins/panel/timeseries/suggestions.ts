@@ -23,7 +23,7 @@ import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils
 import { type Options } from './panelcfg.gen';
 
 const MAX_BARS = 100;
-const MAX_ROWS_SMOOTH_CHART = 200;
+const MAX_ROWS_SMOOTH_CHART = 30;
 
 const MAX_PREVIEW_SERIES = 8;
 const MAX_PREVIEW_BAR_ROWS = 30;
