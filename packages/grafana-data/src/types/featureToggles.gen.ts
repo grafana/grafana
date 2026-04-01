@@ -139,11 +139,6 @@ export interface FeatureToggles {
   */
   faroSessionReplay?: boolean;
   /**
-  * A table visualisation for logs in Explore
-  * @default true
-  */
-  logsExploreTableVisualisation?: boolean;
-  /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
   */
@@ -653,6 +648,11 @@ export interface FeatureToggles {
   * @default false
   */
   newSavedQueriesExperience?: boolean;
+  /**
+  * Enables the new unconfigured panel experience
+  * @default false
+  */
+  newUnconfiguredPanel?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -1755,4 +1755,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryServiceQueryCaching?: boolean;
+  /**
+  * Enables the time seeker in traces drilldown
+  * @default false
+  */
+  tracesDrilldownTimeSeeker?: boolean;
 }

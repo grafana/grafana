@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"slices"
 	"strings"
 	"unsafe"
 
 	"github.com/prometheus/alertmanager/timeinterval"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -300,7 +300,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
 		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
-		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
+		return MakeErrTimeIntervalInUse(true, slices.Collect(maps.Keys(ns)))
 	}
 
 	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(provenance), version, "delete"); err != nil {
@@ -314,7 +314,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 			return err
 		}
 		if len(keys) > 0 {
-			return MakeErrTimeIntervalInUse(false, maps.Keys(keys))
+			return MakeErrTimeIntervalInUse(false, slices.Collect(maps.Keys(keys)))
 		}
 
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
