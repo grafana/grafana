@@ -926,33 +926,13 @@ func TestUserK8sService_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var svc *UserK8sService
-
-			tracer := tracing.InitializeTracerForTest()
-			if tt.nilProvider {
-				svc = NewUserK8sService(log.NewNopLogger(), nil, nil, tracer)
-			} else {
-				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
-				defer ts.Close()
-
-				provider := &mockDirectRestConfigProvider{
-					restConfig: &rest.Config{Host: ts.URL},
-				}
-				svc = NewUserK8sService(log.NewNopLogger(), nil, provider, tracer)
-			}
-
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
-
-			if tt.requesterOrgID != 0 {
-				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
-			} else if !tt.noRequester {
-				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
-			}
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				noReqContext:   tt.noReqContext,
+				noRequester:    tt.noRequester,
+				requesterOrgID: tt.requesterOrgID,
+				serverResponse: tt.serverResponse,
+			})
 
 			err := svc.Update(ctx, tt.cmd)
 

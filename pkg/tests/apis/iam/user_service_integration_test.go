@@ -180,8 +180,8 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 			require.Equal(t, 200, createRsp.Response.StatusCode, "body: %s", string(createRsp.Body))
 			require.NotEmpty(t, createRsp.Result.UID)
 
-			if mode <= rest.Mode2 {
-				// Modes 0–2 write to the legacy SQL database, so the legacy API can verify the updated user.
+			if mode < rest.Mode4 {
+				// Modes 0–3 write to the legacy SQL database, so the legacy API can verify the updated user.
 				// UserK8sService.Update is exercised via PUT /api/users/{id} → Service.Update →
 				// k8sService.Update (because FlagKubernetesUsersRedirect is enabled).
 				t.Run("should update user via k8s service and verify it using the legacy API", func(t *testing.T) {
@@ -221,7 +221,7 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 					require.Equal(t, 200, deleteRsp.Response.StatusCode)
 				})
 			} else {
-				// Modes 3–5 use the kubernetes API as the primary (or only) storage. Since the
+				// Modes 4–5 use the kubernetes API as the primary (or only) storage. Since the
 				// internal ID is not populated for these modes, the update is applied directly
 				// via the k8s client and verified with a subsequent Get.
 				t.Run("should update user via k8s service and verify it using the kubernetes API", func(t *testing.T) {
