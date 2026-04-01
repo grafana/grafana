@@ -1150,7 +1150,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
           {(!newLogsPanelEnabled || (visualisationType === 'table' && !enableNewLogsTable)) &&
             logsPanelControlsEnabled &&
-            !enableNewLogsTable &&
+            (visualisationType === 'logs' || !enableNewLogsTable) &&
             hasData && (
               <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows

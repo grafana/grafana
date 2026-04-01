@@ -16,6 +16,7 @@ import {
   type DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
@@ -526,9 +527,12 @@ describe('Logs', () => {
   });
   describe('with table panel visualisation', () => {
     let origResizeObserver = global.ResizeObserver;
+    let originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
 
     beforeEach(() => {
       origResizeObserver = global.ResizeObserver;
+      originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
+      config.featureToggles.logsTablePanelNG = false;
       // Mock ResizeObserver
       global.ResizeObserver = class ResizeObserver {
         constructor(callback: unknown) {
@@ -549,6 +553,7 @@ describe('Logs', () => {
     });
 
     afterEach(() => {
+      config.featureToggles.logsTablePanelNG = originalLogsTablePanelNG;
       global.ResizeObserver = origResizeObserver;
     });
 
@@ -573,6 +578,23 @@ describe('Logs', () => {
     });
 
     it('should show logs', async () => {
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'logs',
+          },
+        },
+      });
+
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      const logs = await screen.findByTestId('logRows');
+      expect(logs).toBeInTheDocument();
+      expect(screen.getByText('log message 3')).toBeVisible();
+    });
+
+    it('should show logs when logsPanelControls is enabled and logsTablePanelNG is true', async () => {
+      config.featureToggles.logsTablePanelNG = true;
+
       setup({
         panelState: {
           logs: {
