@@ -20,6 +20,7 @@ export interface SnapshotSharingOptions {
   externalSnapshotName: string;
   externalSnapshotURL: string;
   snapshotEnabled: boolean;
+  snapshotTTLDays?: number;
 }
 
 export interface SnapshotCreateCommand {

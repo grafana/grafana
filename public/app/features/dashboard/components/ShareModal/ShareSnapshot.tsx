@@ -78,9 +78,16 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
   async getSnaphotShareOptions() {
     const shareOptions = await getDashboardSnapshotSrv().getSharingOptions();
+    const defaultExpireOption =
+      shareOptions.snapshotTTLDays !== undefined
+        ? this.expireOptions.find((o) => o.value === shareOptions.snapshotTTLDays! * 60 * 60 * 24) ??
+          this.expireOptions[2]
+        : this.expireOptions[2];
     this.setState({
       sharingButtonText: shareOptions.externalSnapshotName,
       externalEnabled: shareOptions.externalEnabled,
+      selectedExpireOption: defaultExpireOption,
+      snapshotExpires: defaultExpireOption.value,
     });
   }
 

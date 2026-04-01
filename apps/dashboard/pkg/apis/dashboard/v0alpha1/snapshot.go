@@ -40,6 +40,8 @@ type SnapshotSharingOptions struct {
 	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
 	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
 	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
+	// Default TTL for new snapshots in days. 0 means never expire.
+	SnapshotTTLDays int `json:"snapshotTTLDays"`
 }
 
 func (SnapshotSharingOptions) OpenAPIModelName() string {

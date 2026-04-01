@@ -399,6 +399,7 @@ type Cfg struct {
 
 	// Snapshots
 	SnapshotEnabled      bool
+	SnapshotTTLDays      int
 	ExternalSnapshotUrl  string
 	ExternalSnapshotName string
 	ExternalEnabled      bool
@@ -2135,6 +2136,7 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	snapshots := iniFile.Section("snapshots")
 
 	cfg.SnapshotEnabled = snapshots.Key("enabled").MustBool(true)
+	cfg.SnapshotTTLDays = snapshots.Key("snapshot_ttl_days").MustInt(7)
 
 	cfg.ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
 	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
