@@ -28,10 +28,10 @@ cards:
       height: 24
       href: ./grafanacli-workflows
       title: Manage resources with Grafana CLI
-    - description: Overview of the Grafana Cloud CLI    
+    - description: Overview of the Grafana Cloud CLI
       height: 24
       href: ./grafanagcx
-      title: Grafana Cloud CLI    
+      title: Grafana Cloud CLI
   title_class: pt-0 lh-1
 hero:
   description: Grafana CLI (`grafanactl`) is a command-line tool designed to simplify interaction with Grafana instances. It enables users to authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. Whether you're automating workflows in CI/CD pipelines or switching between staging and production environments, Grafana CLI provides a flexible and scriptable way to manage your Grafana setup efficiently. `grafanactl` works across all environments for Grafana OSS, Enterprise, and Cloud.

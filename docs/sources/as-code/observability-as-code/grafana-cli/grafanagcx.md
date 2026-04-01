@@ -28,16 +28,15 @@ The Grafana Cloud CLI is available in [public preview](https://grafana.com/docs/
 
 {{< /admonition >}}
 
-
-The Grafana Cloud CLI `gcx` is a single CLI that allows you to manage both Grafana (dashboards, folders, alert rules, datasources) and Grafana Cloud products (SLOs, Synthetic Monitoring, OnCall, K6, Fleet Management, Incidents, Knowledge Graph, and Adaptive Telemetry).
+The Grafana Cloud CLI `gcx` is a single CLI that allows you to manage both Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products (SLOs, Synthetic Monitoring, OnCall, K6, Fleet Management, Incidents, Knowledge Graph, and Adaptive Telemetry).
 
 It provides the following benefits:
 
-- Manage Grafana & Grafana Cloud — one tool for dashboards, alerting, SLOs, on-call, synthetic checks, load testing, and more
-- AI agent friendly — JSON/YAML output, structured errors, predictable exit codes. Agent mode auto-detected for Claude Code, Copilot, Cursor, and others
-- GitOps — pull resources to files, version in git, push back with full round-trip fidelity
-- Observability as code — scaffold Go projects, import existing dashboards, lint with Rego rules, live-reload dev server
-- **Multi-environment:** Use named contexts to switch between dev, staging, and production environments.
+- **Manage Grafana on-prem and Grafana Cloud:** Use a single tool for dashboards, alerting, SLOs, on-call, synthetic checks, load testing, and more.
+- **AI agent friendly:** Agent mode auto-detected for Claude Code, Copilot, Cursor, and other.
+- **Automation:** `gcx` uses JSON/YAML output, structured errors, and predictable exit codes.
+- **GitOps**: Pull resources to files, version in Git, or push back with full round-trip fidelity.
+- **Observability as code:** `gcx` can scaffold Go projects, import existing dashboards, lint with Rego rules, or live-reload development servers.
+- **Multi-environment:** Use named contexts to switch between development, staging, and production environments.
 
 For more information refer to the [`clx` repository](https://github.com/grafana/gcx) in GitHub.
-
