@@ -120,13 +120,12 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
+          "csvContent": "Time,Value\n1759456312660, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "noise": 10,
           "refId": "A",
-          "scenarioId": "random_walk",
-          "spread": 10
+          "scenarioId": "csv_content"
         },
         {
           "datasource": {
@@ -231,13 +230,12 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
+          "csvContent": "Time,Value\n1759456312660, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "noise": 10,
           "refId": "A",
-          "scenarioId": "random_walk",
-          "spread": 10
+          "scenarioId": "csv_content"
         },
         {
           "datasource": {
@@ -342,13 +340,12 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
+          "csvContent": "Time,Value\n1759456312660, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "noise": 10,
           "refId": "A",
-          "scenarioId": "random_walk",
-          "spread": 10
+          "scenarioId": "csv_content"
         },
         {
           "datasource": {
@@ -453,13 +450,12 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
+          "csvContent": "Time,Value\n1759456312660, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
-          "noise": 10,
           "refId": "A",
-          "scenarioId": "random_walk",
-          "spread": 10
+          "scenarioId": "csv_content"
         },
         {
           "datasource": {
@@ -578,12 +574,12 @@
           "scenarioId": "raw_frame"
         },
         {
+          "csvContent": "Time,Value\n1759456312660, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
           "refId": "B",
-          "scenarioId": "random_walk",
-          "seriesCount": 1
+          "scenarioId": "csv_content"
         }
       ],
       "title": "Alert annos links",
@@ -815,12 +811,12 @@
           "scenarioId": "raw_frame"
         },
         {
+          "csvContent": "Time,Value\n1759456312660, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
           "refId": "B",
-          "scenarioId": "random_walk",
-          "seriesCount": 1
+          "scenarioId": "csv_content"
         }
       ],
       "title": "Region clustering (off)",
@@ -938,12 +934,12 @@
           "scenarioId": "raw_frame"
         },
         {
+          "csvContent": "Time,Value\n1759456312660, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
           "refId": "B",
-          "scenarioId": "random_walk",
-          "seriesCount": 1
+          "scenarioId": "csv_content"
         }
       ],
       "title": "Region clustering (on)",
@@ -1037,12 +1033,12 @@
       "pluginVersion": "13.0.0-local",
       "targets": [
         {
+          "csvContent": "Time,Value\n1759456312660, 1",
           "datasource": {
             "type": "grafana-testdata-datasource"
           },
           "refId": "A",
-          "scenarioId": "random_walk",
-          "seriesCount": 1
+          "scenarioId": "csv_content"
         }
       ],
       "title": "wip annotations panel",

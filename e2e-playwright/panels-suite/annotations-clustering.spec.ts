@@ -55,9 +55,9 @@ const ALERT_ANNOTATIONS_COUNTS = {
 
 test.use({ viewport: { width: 1000, height: 1840 }, featureToggles: { annotationsClustering: true } });
 
-test.describe.only('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
+test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
   test.describe('width: 1000', () => {
-    test.only('Clustering status', async ({ gotoDashboardPage, selectors }) => {
+    test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams(),
