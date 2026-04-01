@@ -961,6 +961,14 @@
             }
           },
           {
+            "name": "title",
+            "in": "query",
+            "description": "exact match on team name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "description": "limit the number of results",

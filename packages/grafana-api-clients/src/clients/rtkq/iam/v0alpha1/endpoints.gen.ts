@@ -174,6 +174,7 @@ const injectedRtkApi = api
           url: `/searchTeams`,
           params: {
             query: queryArg.query,
+            title: queryArg.title,
             limit: queryArg.limit,
             offset: queryArg.offset,
             page: queryArg.page,
@@ -913,6 +914,8 @@ export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
 export type GetSearchTeamsApiArg = {
   /** team name query string */
   query?: string;
+  /** exact match on team name */
+  title?: string;
   /** limit the number of results */
   limit?: number;
   /** start the query at the given offset */
