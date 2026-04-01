@@ -35,7 +35,7 @@ export interface SearchQuery {
   panel_type?: string;
   createdBy?: string;
 
-  // Both name and UID translate to reasource.name in k8s world
+  // Both name and UID translate to resource.name in k8s world
   name?: string[];
   uid?: string[];
 
