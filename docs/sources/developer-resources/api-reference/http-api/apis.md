@@ -14,12 +14,16 @@ labels:
     - enterprise
     - oss
     - cloud
-title: New API Structure
-menuTitle: New API Structure
+title: API structure in Grafana
+menuTitle: API Structure
 weight: 01
 ---
 
-# The new API structure in Grafana
+# The API structure in Grafana
+
+{{< admonition type="note" >}}
+Available in Grafana 12 and later.
+{{< /admonition >}}
 
 The new Grafana HTTP APIs follow a standardized API structure alongside consistent API versioning.
 
