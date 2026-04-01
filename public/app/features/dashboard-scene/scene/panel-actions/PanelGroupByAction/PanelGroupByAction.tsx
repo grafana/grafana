@@ -1,23 +1,15 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { fuzzySearch, MetricFindValue } from '@grafana/data';
+import { fuzzySearch, type MetricFindValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-<<<<<<< HEAD
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
-  type GroupByVariable,
+  type AdHocFiltersVariable,
+  GroupByVariable,
   type SceneDataQuery,
   type VariableValueOption,
   type VariableValueSingle,
-=======
-import { getDataSourceSrv } from '@grafana/runtime';
-import {
-  AdHocFiltersVariable,
-  GroupByVariable,
-  SceneDataQuery,
-  VariableValueOption,
-  VariableValueSingle,
->>>>>>> e84d6d41162 (fetch groupBy keys based on queries instead of filtering all keys through applicability)
 } from '@grafana/scenes';
 import { Button, Icon, Popover } from '@grafana/ui';
 
