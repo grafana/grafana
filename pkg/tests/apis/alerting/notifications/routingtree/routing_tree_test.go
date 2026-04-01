@@ -907,7 +907,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 		assert.Equal(t, expectedRoute.Spec, gotRoute.Spec)
 		assert.Equal(t, expectedRoute.TypeMeta, gotRoute.TypeMeta)
-		assert.Equal(t, expectedRoute.ObjectMeta.Name, gotRoute.ObjectMeta.Name)
+		assert.Equal(t, expectedRoute.Name, gotRoute.Name)
 	}
 
 	t.Run("Create", func(t *testing.T) {
