@@ -142,7 +142,7 @@ func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery,
 		s.logger.Debug("Graphite", "empty query target", queryJSON)
 		return "", &queryJSON, false, nil
 	}
-	target := fixIntervalFormat(currTarget)
+	target := strings.TrimSpace(fixIntervalFormat(currTarget))
 
 	return target, nil, queryJSON.IsMetricTank, nil
 }
