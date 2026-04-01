@@ -720,7 +720,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteW
 
 			require.Equal(t, "error", status.Health)
 			require.NotNil(t, status.LastError)
-			require.ErrorContains(t, status.LastError, "unable to find dependent node")
+			require.ErrorContains(t, status.LastError, "could not find dependent node")
 		})
 
 		t.Run("no write was performed", func(t *testing.T) {

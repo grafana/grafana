@@ -4821,6 +4821,19 @@
     },
     {
       "metadata": {
+        "name": "sseExpressionErrorIsolation",
+        "resourceVersion": "1774386001085",
+        "creationTimestamp": "2026-03-24T21:00:01Z"
+      },
+      "spec": {
+        "description": "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sseGroupByDatasource",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-09-07T20:02:07Z"
