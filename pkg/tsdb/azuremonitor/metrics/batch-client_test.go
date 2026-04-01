@@ -86,28 +86,28 @@ func TestBuildBatchURL(t *testing.T) {
 		assert.Empty(t, q.Get("aggregation"))
 	})
 
-	t.Run("always includes Microsoft.ResourceId for per-resource splitting", func(t *testing.T) {
+	t.Run("omits filter when no dimension filter is set", func(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "", from, to, nil, nil)
 		parsed, err := url.Parse(buildBatchURL(batch))
 		require.NoError(t, err)
-		assert.Equal(t, "Microsoft.ResourceId eq '*'", parsed.Query().Get("filter"))
+		assert.Empty(t, parsed.Query().Get("filter"))
 	})
 
-	t.Run("combines Microsoft.ResourceId with dimension filter, stripping $ prefix", func(t *testing.T) {
+	t.Run("forwards dimension filter, stripping $ prefix", func(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "$VMName eq 'vm1'", from, to, nil, nil)
 		parsed, err := url.Parse(buildBatchURL(batch))
 		require.NoError(t, err)
-		assert.Equal(t, "Microsoft.ResourceId eq '*' and (VMName eq 'vm1')", parsed.Query().Get("filter"))
+		assert.Equal(t, "VMName eq 'vm1'", parsed.Query().Get("filter"))
 	})
 
-	t.Run("combines Microsoft.ResourceId with dimension filter without $ prefix", func(t *testing.T) {
+	t.Run("forwards dimension filter without $ prefix unchanged", func(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "VMName eq 'vm1'", from, to, nil, nil)
 		parsed, err := url.Parse(buildBatchURL(batch))
 		require.NoError(t, err)
-		assert.Equal(t, "Microsoft.ResourceId eq '*' and (VMName eq 'vm1')", parsed.Query().Get("filter"))
+		assert.Equal(t, "VMName eq 'vm1'", parsed.Query().Get("filter"))
 	})
 
 	t.Run("forwards top from first query when set", func(t *testing.T) {

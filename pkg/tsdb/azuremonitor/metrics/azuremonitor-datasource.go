@@ -84,19 +84,22 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, d
 
 	azJSONModel := queryJSONModel.AzureMonitor
 
+	// Determine the query-level defaults for subscription and region.
+	defaultSub := dsInfo.Settings.SubscriptionId
+	if queryJSONModel.Subscription != nil && *queryJSONModel.Subscription != "" {
+		defaultSub = *queryJSONModel.Subscription
+	}
+
 	// Single-resource or legacy queries need no splitting.
 	if hasOne, _, _ := hasOneResource(queryJSONModel); hasOne || len(azJSONModel.Resources) == 0 {
 		q, err := e.buildQuery(query, dsInfo)
 		if err != nil {
 			return nil, err
 		}
+		if q.Subscription == "" {
+			q.Subscription = defaultSub
+		}
 		return []*types.AzureMonitorQuery{q}, nil
-	}
-
-	// Determine the query-level defaults for subscription and region.
-	defaultSub := dsInfo.Settings.SubscriptionId
-	if queryJSONModel.Subscription != nil && *queryJSONModel.Subscription != "" {
-		defaultSub = *queryJSONModel.Subscription
 	}
 	defaultRegion := ""
 	if azJSONModel.Region != nil {
@@ -130,6 +133,9 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, d
 		if err != nil {
 			return nil, err
 		}
+		if q.Subscription == "" {
+			q.Subscription = orderedKeys[0].sub
+		}
 		return []*types.AzureMonitorQuery{q}, nil
 	}
 
@@ -160,6 +166,38 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, d
 		result = append(result, q)
 	}
 	return result, nil
+}
+
+// splitQueryByResource splits a multi-resource query into one backend.DataQuery
+// per resource. Single-resource and legacy queries are returned unchanged.
+// Used to fan out non-batchable queries (e.g. custom namespace) so that each
+// resource is fetched via its own resource-level ARM URL.
+func splitQueryByResource(query backend.DataQuery) ([]backend.DataQuery, error) {
+	var model dataquery.AzureMonitorQuery
+	if err := json.Unmarshal(query.JSON, &model); err != nil {
+		return nil, err
+	}
+	az := model.AzureMonitor
+	if az == nil || len(az.Resources) <= 1 {
+		return []backend.DataQuery{query}, nil
+	}
+
+	queries := make([]backend.DataQuery, 0, len(az.Resources))
+	for _, resource := range az.Resources {
+		azCopy := *az
+		azCopy.Resources = []dataquery.AzureMonitorResource{resource}
+		modelCopy := model
+		modelCopy.AzureMonitor = &azCopy
+
+		copyJSON, err := json.Marshal(modelCopy)
+		if err != nil {
+			return nil, err
+		}
+		queryCopy := query
+		queryCopy.JSON = copyJSON
+		queries = append(queries, queryCopy)
+	}
+	return queries, nil
 }
 
 // isBatchableQuery reports whether a backend query can be sent to the Metrics
@@ -194,18 +232,34 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	// Non-batchable queries are executed individually via the legacy ARM endpoint.
 	var batchableQueries []backend.DataQuery
 	for _, query := range originalQueries {
-		if !isBatchableQuery(query) {
-			azureQuery, err := e.buildQuery(query, dsInfo)
+		batchable := isBatchableQuery(query)
+		e.Logger.Debug("query batchability", "refID", query.RefID, "batchable", batchable)
+		if !batchable {
+			subQueries, err := splitQueryByResource(query)
 			if err != nil {
 				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
 			}
-			res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, armURL)
-			if err != nil {
-				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
-				continue
+			e.Logger.Debug("split non-batchable query", "refID", query.RefID, "numSubQueries", len(subQueries))
+			for i, subQuery := range subQueries {
+				azureQuery, err := e.buildQuery(subQuery, dsInfo)
+				if err != nil {
+					e.Logger.Debug("buildQuery error", "refID", query.RefID, "subQuery", i, "err", err)
+					result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+					break
+				}
+				e.Logger.Debug("executing sub-query", "refID", query.RefID, "subQuery", i, "url", azureQuery.URL)
+				res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, armURL)
+				if err != nil {
+					e.Logger.Debug("executeQuery error", "refID", query.RefID, "subQuery", i, "err", err)
+					result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+					break
+				}
+				e.Logger.Debug("sub-query result", "refID", query.RefID, "subQuery", i, "numFrames", len(res.Frames))
+				dr := result.Responses[query.RefID]
+				dr.Frames = append(dr.Frames, res.Frames...)
+				result.Responses[query.RefID] = dr
 			}
-			result.Responses[query.RefID] = *res
 		} else {
 			batchableQueries = append(batchableQueries, query)
 		}
@@ -232,24 +286,31 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	batches := createBatches(groupQueriesForBatch(azureQueries))
 	batchResults := executeBatchRequests(ctx, batches, client)
 
-	// Map batch-level errors to every query in the failed batch.
-	for _, br := range batchResults {
-		if br.Err != nil {
-			for _, q := range br.Batch.Queries {
-				if _, exists := result.Responses[q.RefID]; !exists {
-					result.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(br.Err)
-				}
-			}
-		}
-	}
-
-	// Distribute successful frames into per-RefID responses.
+	// Distribute successful frames into per-RefID responses first, so that
+	// partial data from successful batches is never discarded by a failed batch.
 	azurePortalURL := dsInfo.Routes["Azure Portal"].URL
 	frames, _ := distributeBatchResults(batchResults, azurePortalURL, dsInfo.Settings.SubscriptionId)
 	for _, frame := range frames {
 		dr := result.Responses[frame.RefID]
 		dr.Frames = append(dr.Frames, frame)
 		result.Responses[frame.RefID] = dr
+	}
+
+	// Map batch-level errors to every query in the failed batch. If a query
+	// already has frames (from a different successful batch), preserve them and
+	// record the error alongside — Grafana renders partial data with an error indicator.
+	for _, br := range batchResults {
+		if br.Err != nil {
+			for _, q := range br.Batch.Queries {
+				dr := result.Responses[q.RefID]
+				if dr.Error == nil {
+					errResp := backend.ErrorResponseWithErrorSource(br.Err)
+					dr.Error = errResp.Error
+					dr.ErrorSource = errResp.ErrorSource
+					result.Responses[q.RefID] = dr
+				}
+			}
+		}
 	}
 
 	return result, nil

@@ -49,15 +49,13 @@ func buildBatchURL(batch Batch) string {
 	if batch.Key.Aggregation != "" {
 		params.Set("aggregation", batch.Key.Aggregation)
 	}
-	// The batch API requires Microsoft.ResourceId in the filter to split results
-	// per resource. Combine it with any user-supplied dimension filter.
-	filter := "Microsoft.ResourceId eq '*'"
+	// Only forward user-supplied dimension filters. Resource separation is handled
+	// automatically by the batch API via the resourceids body parameter; adding
+	// Microsoft.ResourceId here causes a 400 "invalid at Resource level" error.
 	if batch.Key.DimFilter != "" {
 		// Batch API uses "filter" without the "$" prefix used by the ARM API.
-		dimFilter := strings.TrimPrefix(batch.Key.DimFilter, "$")
-		filter = fmt.Sprintf("%s and (%s)", filter, dimFilter)
+		params.Set("filter", strings.TrimPrefix(batch.Key.DimFilter, "$"))
 	}
-	params.Set("filter", filter)
 	// top is not part of the group key but is forwarded from the first query if set.
 	if len(batch.Queries) > 0 {
 		if top := batch.Queries[0].Params.Get("top"); top != "" {

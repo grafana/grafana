@@ -51,6 +51,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   basicLogsEnabled?: boolean;
+  batchAPIEnabled?: boolean;
   resourcePath: string;
   declare resourceGroup: string;
   declare resourceName: string;
@@ -64,6 +65,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
     this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
+    this.batchAPIEnabled = instanceSettings.jsonData.batchAPIEnabled;
 
     this.resourcePath = routeNames.azureMonitor;
   }
@@ -232,7 +234,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       this.replaceSingleTemplateVariables(query),
       this.templateSrv,
       multipleResources,
-      region
+      region,
+      this.batchAPIEnabled
     );
     return this.getResource(url).then((result: AzureAPIResponse<Metric>) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
@@ -249,7 +252,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       this.replaceSingleTemplateVariables(query),
       this.templateSrv,
       multipleResources,
-      region
+      region,
+      this.batchAPIEnabled
     );
     return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
       return ResponseParser.parseMetadata(result, this.templateSrv.replace(metricName));
