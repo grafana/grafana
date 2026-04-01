@@ -464,9 +464,9 @@ var (
 	// deprecatedActionsRole contains deprecated actions just to keep the actions in the registry. The actions are granted to Admin just to make sure we do not accidentally completely lose access to an API or feature that happen to use only legacy
 	deprecatedActionsRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy.config:writer",
+			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy:writer",
 			Hidden:      true,
-			DisplayName: "Alerting legacy config write permission (deprecated, admin only)",
+			DisplayName: "Alerting legacy permissions (deprecated, admin only)",
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{

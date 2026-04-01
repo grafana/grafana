@@ -2,7 +2,7 @@
   {
     "grant": "Admin",
     "roles": [
-      "fixed:alerting.legacy.config:writer",
+      "fixed:alerting.legacy:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
       "fixed:alerting.provisioning:writer",

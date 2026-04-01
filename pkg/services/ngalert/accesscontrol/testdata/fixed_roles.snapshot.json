@@ -802,8 +802,8 @@
     ]
   },
   {
-    "name": "fixed:alerting.legacy.config:writer",
-    "displayName": "Alerting legacy config write permission (deprecated, admin only)",
+    "name": "fixed:alerting.legacy:writer",
+    "displayName": "Alerting legacy permissions (deprecated, admin only)",
     "description": "",
     "group": "Alerting",
     "hidden": true,
