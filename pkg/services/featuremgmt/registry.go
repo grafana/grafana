@@ -200,14 +200,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "logsExploreTableVisualisation",
-			Description:  "A table visualisation for logs in Explore",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -324,6 +316,13 @@ var (
 		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "sseExpressionErrorIsolation",
+			Description: "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
@@ -755,7 +754,7 @@ var (
 		{
 			Name:         "timeComparison",
 			Description:  "Enables time comparison option in supported panels",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
@@ -1020,6 +1019,14 @@ var (
 			Name:         "newSavedQueriesExperience",
 			Description:  "Enables the new Saved queries (query library) modal experience",
 			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "newUnconfiguredPanel",
+			Description:  "Enables the new unconfigured panel experience",
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
 			Expression:   "false",
@@ -1783,7 +1790,7 @@ var (
 			Name:        "tempoAlerting",
 			Description: "Enables creating alerts from Tempo data source",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -2307,7 +2314,7 @@ var (
 			Name:            "panelTimeSettings",
 			Description:     "Enables a new panel time settings drawer",
 			FrontendOnly:    false,
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			HideFromDocs:    false,
@@ -2784,6 +2791,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "tracesDrilldownTimeSeeker",
+			Description:  "Enables the time seeker in traces drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
 		},
 	}
 )

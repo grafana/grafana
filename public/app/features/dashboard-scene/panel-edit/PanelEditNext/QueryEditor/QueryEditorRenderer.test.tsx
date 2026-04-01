@@ -127,6 +127,8 @@ describe('QueryEditorRenderer', () => {
             pendingSavedQuery: null,
             setPendingSavedQuery: jest.fn(),
             showVersionBanner: false,
+            selectedQueryRefIds: [],
+            selectedTransformationIds: [],
           }}
           actions={mockActions}
         >

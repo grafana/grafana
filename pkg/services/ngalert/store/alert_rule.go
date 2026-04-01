@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
@@ -1431,7 +1431,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 
 				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 					OrgID:        orgID,
-					UIDs:         maps.Keys(uids),
+					UIDs:         slices.Collect(maps.Keys(uids)),
 					WithFullpath: true,
 					SignedInUser: schedulerUser,
 				})

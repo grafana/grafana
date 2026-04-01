@@ -1292,7 +1292,7 @@ spec:
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "folder.json").
-			Body([]byte(`apiVersion: folder.grafana.app/v1beta1
+			Body([]byte(`apiVersion: folder.grafana.app/v1
 kind: Folder
 metadata:
   name: someFolder
