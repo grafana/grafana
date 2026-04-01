@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { UserStorage } from '@grafana/runtime/internal';
+import { useUserStorage } from '@grafana/runtime/internal';
 
 const STORAGE_KEY = 'dismissedVersion';
-const splashStorage = new UserStorage('splash-screen');
 
 export function useShouldShowSplash(version: string) {
   const [shouldShow, setShouldShow] = useState(false);
+  const splashStorage = useUserStorage('grafana-splash-screen');
 
   useEffect(() => {
     splashStorage.getItem(STORAGE_KEY).then((dismissedVersion) => {
@@ -14,12 +14,12 @@ export function useShouldShowSplash(version: string) {
         setShouldShow(true);
       }
     });
-  }, [version]);
+  }, [version, splashStorage]);
 
   const dismiss = useCallback(() => {
     splashStorage.setItem(STORAGE_KEY, version);
     setShouldShow(false);
-  }, [version]);
+  }, [version, splashStorage]);
 
   return { shouldShow, dismiss };
 }
