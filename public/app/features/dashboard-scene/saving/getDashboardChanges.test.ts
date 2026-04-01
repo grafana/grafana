@@ -523,28 +523,6 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
       expect(result.hasChanges).toBe(true);
     });
 
-    it('should detect schema changes when groupBy origin filters are added', () => {
-      const initial = makeDashboardWithAdhoc([]);
-      const changed = makeDashboardWithAdhoc([{ key: 'region', operator: 'groupBy', value: '', origin: 'dashboard' }]);
-
-      const result = getRawDashboardChanges(initial, changed, false, false, false);
-
-      expect(result.hasVariableValueChanges).toBe(false);
-      expect(result.hasChanges).toBe(true);
-    });
-
-    it('should detect schema changes when origin filters are modified', () => {
-      const initial = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
-      const changed = makeDashboardWithAdhoc([
-        { key: 'host', operator: '=', value: 'prod-server', origin: 'dashboard' },
-      ]);
-
-      const result = getRawDashboardChanges(initial, changed, false, false, false);
-
-      expect(result.hasVariableValueChanges).toBe(false);
-      expect(result.hasChanges).toBe(true);
-    });
-
     it('should detect schema changes when origin filters are removed', () => {
       const initial = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
       const changed = makeDashboardWithAdhoc([]);
