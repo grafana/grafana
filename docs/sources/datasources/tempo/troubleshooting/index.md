@@ -109,7 +109,7 @@ For issues with Tempo itself (not the Grafana data source), refer to the Tempo p
 
 Additional resources for Grafana Cloud:
 
-- [Troubleshoot Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/), which covers quick checks, ingestion issues, traceQL and search, service graph, exemplars, and rate limiting and retry.
+- [Troubleshoot Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/), which covers quick checks, ingestion issues, TraceQL and search, service graph, exemplars, and rate limiting and retry.
 - [Investigate traces with Grafana Assistant](https://grafana.com/docs/grafana-cloud/send-data/traces/investigate-traces-with-assistant/) - Use Grafana Assistant to help troubleshoot any issues.
 - [Troubleshoot traces collection with Alloy](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/traces-with-alloy/#troubleshoot)
 - [Troubleshoot errors with metrics-generator in Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/configure/metrics-generator/#troubleshoot-errors)
