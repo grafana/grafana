@@ -1,9 +1,11 @@
-import type { AdHocVariableModel, GroupByVariableModel, TypedVariableModel } from '@grafana/data';
+import {
+  type AdHocVariableModel,
+  type GroupByVariableModel,
+  LoadingState,
+  type TypedVariableModel,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
-import type {
-  AdhocVariableKind,
-  GroupByVariableKind,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import type { AdhocVariableKind, GroupByVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { migrateGroupByVariablesV1, migrateGroupByVariablesV2 } from './groupByMigration';
 
@@ -89,9 +91,7 @@ describe('groupByMigration', () => {
       const result = migrateGroupByVariablesV1([adhoc, groupBy]);
       const migrated = result[0] as AdHocVariableModel;
 
-      expect(migrated.filters).toEqual([
-        { key: 'cpu', operator: 'groupBy', value: '', condition: '' },
-      ]);
+      expect(migrated.filters).toEqual([{ key: 'cpu', operator: 'groupBy', value: '', condition: '' }]);
     });
 
     it('should preserve existing adhoc filters and append groupBy filters', () => {
@@ -221,7 +221,7 @@ function makeAdhocV1(overrides?: Partial<AdHocVariableModel>): AdHocVariableMode
     id: 'adhoc',
     global: false,
     index: 0,
-    state: 0 as any,
+    state: LoadingState.NotStarted,
     error: null,
     name: 'adhoc',
     type: 'adhoc',
@@ -239,7 +239,7 @@ function makeGroupByV1(overrides?: Partial<GroupByVariableModel>): GroupByVariab
     id: 'groupby',
     global: false,
     index: 1,
-    state: 0 as any,
+    state: LoadingState.NotStarted,
     error: null,
     name: 'groupby',
     type: 'groupby',
