@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,6 +50,7 @@ func TestIntegrationUsers(t *testing.T) {
 
 			if mode < 3 {
 				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
+				doUserStatusUpdateTests(t, helper)
 			}
 		})
 	}
@@ -535,5 +537,74 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 		require.NoError(t, err)
 		require.Empty(t, listByUnknownEmail.Items)
+	})
+}
+
+func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should update lastSeenAt via status subresource", func(t *testing.T) {
+		ctx := context.Background()
+
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create a user
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		createdUID := created.GetName()
+		t.Cleanup(func() {
+			_ = userClient.Resource.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
+		})
+
+		// Get the user and check initial lastSeenAt (should be old — set to 10 years ago on creation)
+		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		status := fetched.Object["status"].(map[string]interface{})
+		initialLastSeenAt, ok := status["lastSeenAt"]
+		require.True(t, ok, "expected status.lastSeenAt to be present")
+
+		// The initial lastSeenAt should be well in the past (10 years ago)
+		initialLastSeenAtInt, ok := initialLastSeenAt.(int64)
+		if !ok {
+			// JSON numbers may come back as float64 from unstructured
+			initialLastSeenAtFloat, ok := initialLastSeenAt.(float64)
+			require.True(t, ok, "expected lastSeenAt to be a number, got %T", initialLastSeenAt)
+			initialLastSeenAtInt = int64(initialLastSeenAtFloat)
+		}
+		initialTime := time.Unix(initialLastSeenAtInt, 0)
+		require.True(t, initialTime.Before(time.Now().Add(-1*time.Hour)),
+			"expected initial lastSeenAt to be in the past, got %v", initialTime)
+
+		beforeUpdate := time.Now().Add(-1 * time.Second)
+
+		// Update status subresource — this should trigger the lastSeenAt update in the legacy store
+		statusObj := fetched.DeepCopy()
+		statusMap := statusObj.Object["status"].(map[string]interface{})
+		statusMap["lastSeenAt"] = time.Now().Unix()
+		statusObj.Object["status"] = statusMap
+
+		updated, err := userClient.Resource.UpdateStatus(ctx, statusObj, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		// Fetch the user again to verify lastSeenAt was updated
+		fetchedAfter, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		statusAfter := fetchedAfter.Object["status"].(map[string]interface{})
+		updatedLastSeenAt, ok := statusAfter["lastSeenAt"]
+		require.True(t, ok, "expected status.lastSeenAt after update")
+
+		updatedLastSeenAtInt, ok := updatedLastSeenAt.(int64)
+		if !ok {
+			updatedLastSeenAtFloat, ok := updatedLastSeenAt.(float64)
+			require.True(t, ok, "expected lastSeenAt to be a number after update, got %T", updatedLastSeenAt)
+			updatedLastSeenAtInt = int64(updatedLastSeenAtFloat)
+		}
+		updatedTime := time.Unix(updatedLastSeenAtInt, 0)
+		require.True(t, updatedTime.After(beforeUpdate),
+			"expected lastSeenAt to be updated to recent time, got %v (before update: %v)", updatedTime, beforeUpdate)
 	})
 }
