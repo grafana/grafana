@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
-	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -70,12 +69,17 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, fmt.Errorf("invalid page number: %d", req.Page)
 	}
 
+	title, err := titleFromRequirements(req.Options)
+	if err != nil {
+		return nil, err
+	}
+
 	query := &team.SearchTeamsQuery{
 		SignedInUser: signedInUser,
 		Limit:        int(req.Limit),
 		Page:         int(req.Page),
 		Query:        req.Query,
-		Name:         titleFromRequirements(req.Options),
+		Name:         title,
 		OrgID:        signedInUser.GetOrgID(),
 		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, teamSortFieldMapping, teamsortopts.SortOptionsByQueryParam),
 	}
@@ -162,14 +166,17 @@ func createDefaultCells(t *team.TeamDTO) [][]byte {
 	}
 }
 
-func titleFromRequirements(opts *resourcepb.ListOptions) string {
+func titleFromRequirements(opts *resourcepb.ListOptions) (string, error) {
 	if opts == nil {
-		return ""
+		return "", nil
 	}
 	for _, r := range opts.Fields {
-		if r != nil && r.Key == res.SEARCH_FIELD_TITLE && r.Operator == string(selection.Equals) && len(r.Values) > 0 {
-			return r.Values[0]
+		if r != nil && r.Key == res.SEARCH_FIELD_TITLE {
+			if len(r.Values) != 1 {
+				return "", fmt.Errorf("title filter requires exactly one value, got %d", len(r.Values))
+			}
+			return r.Values[0], nil
 		}
 	}
-	return ""
+	return "", nil
 }
