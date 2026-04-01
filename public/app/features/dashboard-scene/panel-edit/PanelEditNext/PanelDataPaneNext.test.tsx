@@ -1,9 +1,20 @@
-import { DataSourceInstanceSettings, DataTransformerConfig, getDataSourceRef, PluginType } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  type DataTransformerConfig,
+  getDataSourceRef,
+  PluginType,
+} from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { SceneDataTransformer, sceneGraph, SceneObjectRef, SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import {
+  SceneDataTransformer,
+  sceneGraph,
+  type SceneObjectRef,
+  type SceneQueryRunner,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 
-import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
+import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 

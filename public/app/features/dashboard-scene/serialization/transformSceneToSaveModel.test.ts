@@ -2,15 +2,15 @@ import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataSourceApi,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataSourceApi,
   dateTime,
   FieldType,
-  PanelData,
-  PanelPluginMeta,
+  type PanelData,
+  type PanelPluginMeta,
   standardTransformersRegistry,
-  StandardVariableQuery,
+  type StandardVariableQuery,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
@@ -19,24 +19,24 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   CustomVariable,
-  MultiValueVariable,
+  type MultiValueVariable,
   sceneGraph,
   SceneGridLayout,
-  SceneGridRow,
+  type SceneGridRow,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
+import { type Dashboard, LoadingState, type Panel, type RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { getReduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { type RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';

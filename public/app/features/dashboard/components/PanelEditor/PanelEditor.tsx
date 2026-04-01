@@ -1,10 +1,16 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
-import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
+import {
+  type FieldConfigSource,
+  type GrafanaTheme2,
+  type NavModel,
+  type NavModelItem,
+  PageLayoutType,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -14,7 +20,7 @@ import {
   ModalsController,
   RadioButtonGroup,
   stylesFactory,
-  Themeable2,
+  type Themeable2,
   ToolbarButton,
   ToolbarButtonRow,
   withTheme2,
@@ -27,18 +33,18 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
-import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { type PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { UnlinkModal } from '../../../dashboard-scene/scene/UnlinkModal';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getVariablesByKey } from '../../../variables/state/selectors';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { SaveDashboardDrawer } from '../SaveDashboard/SaveDashboardDrawer';
 
@@ -47,9 +53,9 @@ import { PanelEditorTableView } from './PanelEditorTableView';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { VisualizationButton } from './VisualizationButton';
 import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
-import { PanelEditorUIState, toggleTableView } from './state/reducers';
+import { type PanelEditorUIState, toggleTableView } from './state/reducers';
 import { getPanelEditorTabs } from './state/selectors';
-import { DisplayMode, displayModes, PanelEditorTab } from './types';
+import { type DisplayMode, displayModes, type PanelEditorTab } from './types';
 import { calculatePanelSize } from './utils';
 
 interface OwnProps {

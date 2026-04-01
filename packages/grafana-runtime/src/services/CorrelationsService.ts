@@ -1,10 +1,10 @@
 import {
-  DataFrame,
-  DataLinkPostProcessor,
-  DataLinkTransformationConfig,
-  DataSourceInstanceSettings,
-  RelativeTimeRange,
-  TimeRange,
+  type RelativeTimeRange,
+  type DataFrame,
+  type DataLinkPostProcessor,
+  type DataLinkTransformationConfig,
+  type DataSourceInstanceSettings,
+  type TimeRange,
 } from '@grafana/data';
 
 export type CorrelationConfigQuery = {

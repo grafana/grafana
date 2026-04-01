@@ -9,7 +9,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 
-import { AddToDashboardForm, Props } from './AddToDashboardForm';
+import { AddToDashboardForm, type Props } from './AddToDashboardForm';
 
 const [_, { dashbdE }] = getFolderFixtures();
 

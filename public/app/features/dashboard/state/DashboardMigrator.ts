@@ -1,13 +1,13 @@
 import { each, find, findIndex, flattenDeep, isArray, isString, map, max, some } from 'lodash';
 
 import {
-  AnnotationQuery,
-  ConstantVariableModel,
-  DataLink,
+  type AnnotationQuery,
+  type ConstantVariableModel,
+  type DataLink,
   DataLinkBuiltInVars,
-  DataQuery,
-  DataSourceRef,
-  FieldConfigSource,
+  type DataQuery,
+  type DataSourceRef,
+  type FieldConfigSource,
   FieldMatcherID,
   FieldType,
   getActiveThreshold,
@@ -15,21 +15,21 @@ import {
   isDataSourceRef,
   isEmptyObject,
   MappingType,
-  ReducerID,
+  type ReducerID,
   SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
-  TextBoxVariableModel,
-  ThresholdsConfig,
+  type TextBoxVariableModel,
+  type ThresholdsConfig,
   urlUtil,
-  ValueMap,
-  ValueMapping,
+  type ValueMap,
+  type ValueMapping,
   VariableHide,
 } from '@grafana/data';
 import { labelsToFieldsTransformer, mergeTransformer } from '@grafana/data/internal';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { DataTransformerConfig } from '@grafana/schema';
-import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
+import { type DataTransformerConfig } from '@grafana/schema';
+import { AxisPlacement, type GraphFieldConfig } from '@grafana/ui';
 import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/internal';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import {
@@ -44,13 +44,13 @@ import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
-  RefIdTransformerOptions,
-  TimeSeriesTableTransformerOptions,
+  type RefIdTransformerOptions,
+  type TimeSeriesTableTransformerOptions,
 } from 'app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/dataquery.gen';
-import { LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { type CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/dataquery.gen';
+import { type LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
@@ -59,7 +59,7 @@ import {
   migrateMultipleStatsMetricsQuery,
 } from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
 
-import { DashboardModel } from './DashboardModel';
+import { type DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 

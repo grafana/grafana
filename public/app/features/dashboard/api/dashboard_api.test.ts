@@ -33,6 +33,7 @@ function mockDiscoveryFailure() {
 }
 
 beforeAll(() => {
+  config.featureToggles.kubernetesDashboards = false;
   dashboardAPIVersionResolver.set({ v1: 'v1beta1', v2: 'v2beta1' });
 });
 

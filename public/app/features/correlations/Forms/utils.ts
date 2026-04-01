@@ -1,7 +1,7 @@
-import { TimeOption } from '@grafana/data';
+import { type TimeOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { Correlation } from '../types';
+import { type Correlation } from '../types';
 
 type CorrelationBaseData = Pick<Correlation, 'uid' | 'sourceUID'>;
 

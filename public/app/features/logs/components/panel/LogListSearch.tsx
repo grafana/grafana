@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VariableSizeList } from 'react-window';
+import { type ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type VariableSizeList } from 'react-window';
 
-import { escapeRegex, GrafanaTheme2, shallowCompare } from '@grafana/data';
+import { escapeRegex, type GrafanaTheme2, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 interface Props {
   listRef: VariableSizeList | null;

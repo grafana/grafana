@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, useState } from 'react';
-import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-form';
+import { type ChangeEvent, useState } from 'react';
+import { Controller, type FieldError, useFormContext, useWatch } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationExternal, CorrelationQueryTimeRange } from '@grafana/runtime';
+import { type CorrelationExternal, type CorrelationQueryTimeRange } from '@grafana/runtime';
 import {
   Checkbox,
   Field,
@@ -19,11 +19,11 @@ import {
 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { CorrelationType } from '../types';
+import { type CorrelationType } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { assertIsQueryTypeError, FormDTO } from './types';
+import { assertIsQueryTypeError, type FormDTO } from './types';
 import { getQuickOptionsForCorrelation } from './utils';
 
 type CorrelationTypeOptions = {

@@ -1,4 +1,4 @@
-import { RelativeTimeRange, TimeOption } from '@grafana/data';
+import { type RelativeTimeRange, type TimeOption } from '@grafana/data';
 
 const getRegex = (relativeToNow = true) => {
   return relativeToNow ? /^now$|^now(\-|\+)(\d{1,10})([wdhms])$/ : /^field$|^field(\-|\+)(\d{1,10})([wdhms])$/;

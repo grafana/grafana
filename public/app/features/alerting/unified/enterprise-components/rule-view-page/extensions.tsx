@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { FeatureState, NavModelItem } from '@grafana/data';
+import { FeatureState, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FeatureBadge, useStyles2 } from '@grafana/ui';
 

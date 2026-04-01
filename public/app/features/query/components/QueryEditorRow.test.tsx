@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
-import { CoreApp, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
+import { filterPanelDataToQuery, type Props, QueryEditorRow } from './QueryEditorRow';
 
 const mockDS = mockDataSource({
   name: 'test',

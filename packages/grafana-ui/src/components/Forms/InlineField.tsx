@@ -1,13 +1,13 @@
 import { cx, css } from '@emotion/css';
-import { cloneElement, ReactNode, useId } from 'react';
+import { cloneElement, type ReactNode, useId } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getChildId } from '../../utils/reactUtils';
-import { PopoverContent } from '../Tooltip/types';
+import { type PopoverContent } from '../Tooltip/types';
 
-import { FieldProps } from './Field';
+import { type FieldProps } from './Field';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { InlineLabel } from './InlineLabel';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';

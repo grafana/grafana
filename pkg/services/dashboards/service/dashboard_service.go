@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/exp/maps"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,7 +27,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -97,7 +97,6 @@ type DashboardServiceImpl struct {
 	publicDashboardService publicdashboards.ServiceWrapper
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
-	dual                   dualwrite.Service
 
 	dashboardPermissionsReady chan struct{}
 }
@@ -179,12 +178,6 @@ func (dr *DashboardServiceImpl) executeCleanupWithLock(ctx context.Context) erro
 func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context, batchSize int64, timeout time.Duration) error {
 	ctx, span := tracer.Start(ctx, "dashboards.service.cleanupK8sDashboardResources")
 	defer span.End()
-
-	readingFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, dr.dual)
-	if readingFromLegacy {
-		// Legacy does its own cleanup
-		return nil
-	}
 
 	// Create a timeout context to ensure we complete before the lock expires
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -415,7 +408,7 @@ func ProvideDashboardServiceImpl(
 	quotaService quota.Service,
 	orgService org.Service,
 	publicDashboardService publicdashboards.ServiceWrapper,
-	dual dualwrite.Service,
+	_ dualwrite.Service,
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 	k8sClient dashboardclient.K8sHandlerWithFallback,
@@ -436,7 +429,6 @@ func ProvideDashboardServiceImpl(
 		publicDashboardService:    publicDashboardService,
 		serverLockService:         serverLockService,
 		kvstore:                   kvstore,
-		dual:                      dual,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -1378,8 +1370,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
 	isNested := obj.GetFolder() != ""
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+	if isNested {
 		// Don't set any permissions for nested dashboards
 		return nil
 	}
@@ -2500,5 +2491,5 @@ func getFolderUIDs(hits []dashboardv0.DashboardHit) []string {
 			folderSet[hit.Folder] = true
 		}
 	}
-	return maps.Keys(folderSet)
+	return slices.Collect(maps.Keys(folderSet))
 }
