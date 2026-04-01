@@ -24,8 +24,15 @@ import {
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
+import { getDashboardSceneFor } from '../../utils/utils';
 
-import { type EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
+import {
+  type EditableVariableType,
+  getEditableVariableDefinition,
+  getNextAvailableId,
+  getVariableScene,
+  getVariableTypeSelectOptions,
+} from './utils';
 
 export function openAddVariablePane(dashboard: DashboardScene) {
   const element = new VariableAdd({ dashboardRef: dashboard.getRef() });
@@ -52,6 +59,18 @@ export interface SectionVariableAddState extends SceneObjectState {
 }
 
 export class SectionVariableAdd extends SceneObjectBase<SectionVariableAddState> {}
+
+export interface VariableTypeChangeState extends SceneObjectState {
+  variableRef: SceneObjectRef<SceneVariable>;
+}
+
+export class VariableTypeChange extends SceneObjectBase<VariableTypeChangeState> {}
+
+export function openChangeVariableTypePane(variable: SceneVariable) {
+  const dashboard = getDashboardSceneFor(variable);
+  const element = new VariableTypeChange({ variableRef: variable.getRef() });
+  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
+}
 
 function useEditPaneOptions(
   this: VariableAddEditableElement,
@@ -125,7 +144,46 @@ export class SectionVariableAddEditableElement implements EditableDashboardEleme
   public useEditPaneOptions = useSectionEditPaneOptions.bind(this, this.sectionVariableAdd);
 }
 
-function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
+function useTypeChangeEditPaneOptions(
+  this: VariableTypeChangeEditableElement,
+  variableTypeChange: VariableTypeChange
+): OptionsPaneCategoryDescriptor[] {
+  const id = useId();
+  const options = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'variable-type-change' }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id,
+        skipField: true,
+        render: () => <VariableTypeChangeSelection variableTypeChange={variableTypeChange} />,
+      })
+    );
+  }, [variableTypeChange, id]);
+
+  return [options];
+}
+
+export class VariableTypeChangeEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Variable';
+
+  public constructor(private variableTypeChange: VariableTypeChange) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    const variable = this.variableTypeChange.state.variableRef.resolve();
+    const variableEditorDef = getEditableVariableDefinition(variable.state.type);
+
+    return {
+      typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
+      icon: 'dollar-alt',
+      instanceName: variable.state.name,
+    };
+  }
+
+  public useEditPaneOptions = useTypeChangeEditPaneOptions.bind(this, this.variableTypeChange);
+}
+
+export function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 
@@ -171,12 +229,42 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
       const newVar = getVariableScene(type, { name: getNextAvailableId(type, allVars) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-      DashboardInteractions.newVariableTypeSelected({ type });
+      DashboardInteractions.variableTypeSelected({ type });
     },
     [variableAdd]
   );
 
   return <VariableTypeSelectionUI onSelectType={onAddVariable} />;
+}
+
+function VariableTypeChangeSelection({ variableTypeChange }: { variableTypeChange: VariableTypeChange }) {
+  const onChangeVariableType = useCallback(
+    (type: EditableVariableType) => {
+      const variable = variableTypeChange.state.variableRef.resolve();
+      const dashboard = getDashboardSceneFor(variable);
+      const variableSet = variable.parent;
+
+      if (!(variableSet instanceof SceneVariableSet)) {
+        return;
+      }
+
+      if (type === variable.state.type) {
+        dashboard.state.editPane.selectObject(variable, variable.state.key!, { force: true, multi: false });
+        return;
+      }
+
+      const newVariable = getVariableScene(type, { name: variable.state.name, label: variable.state.label });
+      dashboardEditActions.changeVariableType({
+        source: variableSet,
+        oldVariable: variable,
+        newVariable,
+      });
+      DashboardInteractions.variableTypeChanged({ old: variable.state.type, new: newVariable.state.type });
+    },
+    [variableTypeChange]
+  );
+
+  return <VariableTypeSelectionUI onSelectType={onChangeVariableType} />;
 }
 
 function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableAdd: SectionVariableAdd }) {
@@ -201,7 +289,7 @@ function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableA
       });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-      DashboardInteractions.newSectionVariableTypeSelected({ type });
+      DashboardInteractions.sectionVariableTypeSelected({ type });
     },
     [sectionVariableAdd]
   );
