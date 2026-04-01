@@ -321,6 +321,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "sseExpressionErrorIsolation",
+			Description: "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "lokiRunQueriesInParallel",
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -862,10 +869,10 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStageGeneralAvailability,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
-			Expression:   "true",
+			Expression:   "false",
 		},
 		{
 			Name:         "sqlExpressionsColumnAutoComplete",
@@ -2792,6 +2799,15 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+		},
+		{
+			Name:         "clearPreviousFieldValues",
+			Description:  "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 	}
 )

@@ -236,11 +236,13 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
             )}
-            {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
-              <div className={styles.fixedControls}>
-                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
-              </div>
-            )}
+            {(config.featureToggles.dashboardFiltersOverview ||
+              config.featureToggles.dashboardUnifiedDrilldownControls) &&
+              !config.featureToggles.dashboardNewLayouts && (
+                <div className={styles.fixedControls}>
+                  <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+                </div>
+              )}
           </div>
         </div>
         {!hideVariableControls && (
@@ -280,11 +282,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
-        {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
-            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
-          </div>
-        )}
+        {(config.featureToggles.dashboardFiltersOverview || config.featureToggles.dashboardUnifiedDrilldownControls) &&
+          !config.featureToggles.dashboardNewLayouts && (
+            <div className={styles.fixedControls}>
+              <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+            </div>
+          )}
       </div>
       {config.featureToggles.scopeFilters && !editPanel && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />

@@ -214,6 +214,11 @@ export interface FeatureToggles {
   */
   sseGroupByDatasource?: boolean;
   /**
+  * Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
+  * @default false
+  */
+  sseExpressionErrorIsolation?: boolean;
+  /**
   * Enables running Loki queries in parallel
   * @default false
   */
@@ -555,7 +560,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default true
+  * @default false
   */
   sqlExpressions?: boolean;
   /**
@@ -1760,4 +1765,9 @@ export interface FeatureToggles {
   * @default false
   */
   tracesDrilldownTimeSeeker?: boolean;
+  /**
+  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
+  * @default false
+  */
+  clearPreviousFieldValues?: boolean;
 }
