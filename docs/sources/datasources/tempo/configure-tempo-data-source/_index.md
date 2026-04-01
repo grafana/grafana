@@ -166,28 +166,7 @@ To check the status, select Explore in the menu, select your Tempo data source, 
 
 ### Troubleshoot streaming
 
-If streaming isn't working, check the following common causes.
-
-#### gRPC transport security error
-
-```
-rpc error: code = Unavailable desc = credentials require transport level security
-```
-
-This error occurs when Grafana tries to use gRPC over an insecure (non-TLS) connection. To fix this:
-
-- Configure TLS between Grafana and Tempo. Refer to [Configure TLS communication](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/network/tls/).
-- If TLS isn't an option, disable streaming and use standard HTTP queries instead.
-
-#### Streaming returns no results or times out
-
-- Verify that `stream_over_http_enabled: true` is set in your Tempo configuration. Without this setting, Tempo doesn't serve streaming responses.
-- Check whether your load balancer or reverse proxy supports gRPC or HTTP2. Proxies that don't support these protocols silently drop streaming connections. If you can't reconfigure the proxy, disable streaming.
-- If you're using [Private Data Source Connect (PDC)](additional-settings/#private-data-source-connect) to reach Tempo, verify that the PDC tunnel is running and that the Tempo instance is reachable from the PDC agent. PDC connectivity issues can present as streaming timeouts.
-
-#### Streaming works for search but not metrics (or vice versa)
-
-The two streaming toggles (**Search queries** and **Metrics queries**) are independent. Verify that the toggle for the query type you're using is enabled.
+If streaming isn't working, refer to [Streaming issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#streaming-issues) in the troubleshooting guide.
 
 ## Connect traces to other signals
 

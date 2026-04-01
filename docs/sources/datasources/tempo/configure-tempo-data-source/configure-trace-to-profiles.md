@@ -70,22 +70,9 @@ After configuring trace to profiles, verify the integration:
 
 ## Troubleshooting
 
-### Profiles for this span button doesn't appear
+If trace to profiles links aren't appearing or the flame graph is empty, refer to [Trace to logs/metrics/profiles issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#trace-to-logsmetricsprofiles-issues) in the troubleshooting guide. For additional diagnosis steps, refer to [Troubleshoot trace to profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/) in the Pyroscope documentation.
 
-- Verify the Tempo data source has a Pyroscope data source selected in **Trace to profiles** > **Data source**.
-- Confirm the span includes the `pyroscope.profile.id` attribute. If this attribute is missing, the OpenTelemetry span profiling bridge isn't configured correctly. Refer to [Configure trace span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/) for setup instructions.
-- Check that at least one of the configured tags exists as an attribute on the span. If none of the tags match, Grafana doesn't generate the link.
-
-### Button appears but flame graph is empty
-
-- Confirm the tag values on the span match the labels in Pyroscope. For example, `service.name=checkout` in the span must match a corresponding label in Pyroscope.
-- Verify the **Profile type** setting matches the profile type your application emits (for example, `process_cpu`).
-
-### Configuration fields are greyed out
-
-Your data source is provisioned. Refer to the [Provisioning](#provisioning) section for how to update the configuration via YAML.
-
-For additional diagnosis steps, refer to [Troubleshoot trace to profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/) in the Pyroscope documentation.
+If the configuration fields are greyed out, your data source is provisioned. Refer to the [Provisioning](#provisioning) section for how to update the configuration via YAML.
 
 ## Next steps
 

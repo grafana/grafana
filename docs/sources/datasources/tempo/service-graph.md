@@ -125,27 +125,7 @@ You can also use TraceQL to query the same data programmatically. Refer to [Trac
 
 ## Troubleshoot
 
-If the Service Graph isn't displaying data, check the following common causes.
-
-### The node graph is empty or the query returns no results
-
-- Confirm that a Prometheus data source is linked in **Tempo data source settings > Additional settings > Service graph**. Refer to [Additional settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/additional-settings/#service-graph).
-- Verify that `traces_service_graph_request_total` exists in your Prometheus data source. You can check by running the following query in Explore with your Prometheus data source selected:
-
-  ```promql
-  {__name__=~"traces_service_graph_request.*"}
-  ```
-
-- Check that the metrics generator or Alloy is running and writing metrics to Prometheus. Refer to [Enable service graphs](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-from-traces/service_graphs/enable-service-graphs/).
-
-### The Service Graph view table is empty
-
-- Confirm that `traces_spanmetrics_calls_total` and `traces_spanmetrics_duration_seconds_bucket` exist in your Prometheus data source.
-- Verify that span metrics generation is enabled in your Tempo or Alloy configuration.
-
-### High cardinality warnings
-
-- Refer to [Cardinality](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-from-traces/metrics-generator/cardinality/) in the Tempo documentation for guidance on managing label cardinality.
+If the Service Graph isn't displaying data, the table is empty, or you see high cardinality warnings, refer to [Service graph issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#service-graph-issues) in the troubleshooting guide.
 
 ## Next steps
 

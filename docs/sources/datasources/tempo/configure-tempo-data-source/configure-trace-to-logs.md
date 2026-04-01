@@ -235,31 +235,9 @@ After configuring both data sources:
 
 ## Troubleshooting
 
-This section covers common issues with trace to logs correlation.
+If trace to logs links aren't appearing, return no data, or only work for some services, refer to [Trace to logs/metrics/profiles issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#trace-to-logsmetricsprofiles-issues) in the troubleshooting guide.
 
-### Logs for this span link doesn't appear
-
-- Verify the Tempo data source has a Loki data source selected in **Trace to logs** > **Data source**.
-- Check that the tag names in the Tempo data source match the actual label names on your Loki streams. An exact string match is required.
-- Confirm that at least one of the configured tags exists as an attribute on the span. When using Loki, if none of the tags match, Grafana doesn't generate a link.
-
-### Logs for this span link appears but returns no results
-
-- Increase the span start and end time shift values, for example to `-5s` and `5s`, and retry.
-- Confirm the Loki label values match the span attribute values. For example, `service_name=nginx` in Loki must match `service.name=nginx` in the span.
-
-### Loki log lines don't show a trace link
-
-- Verify the derived field regular expression matches the trace ID format in your log lines. Use **Show example log message** in the derived field settings to test the regular expression against a sample log line.
-- Confirm the **Internal link** toggle is enabled and points to the correct Tempo data source.
-
-### Configuration fields are greyed out
-
-Your data source is provisioned. Refer to [Provision trace to logs settings](#provision-trace-to-logs-settings) for options.
-
-### Correlation works for some services but not others
-
-Different services may write trace IDs in different formats. Add a derived field entry in Loki for each format, or standardize on OpenTelemetry structured metadata to avoid per-service regular expression patterns.
+If the configuration fields are greyed out, your data source is provisioned. Refer to [Provision trace to logs settings](#provision-trace-to-logs-settings) for options.
 
 ## Next steps
 

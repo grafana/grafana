@@ -132,20 +132,9 @@ To navigate in the reverse direction â€” from a metric to its associated trace â
 
 ## Troubleshooting
 
-### Metrics for this span link doesn't appear
+If trace to metrics links aren't appearing or return no data, refer to [Trace to logs/metrics/profiles issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#trace-to-logsmetricsprofiles-issues) in the troubleshooting guide.
 
-- Verify the Tempo data source has a metrics data source selected in **Trace to metrics** > **Data source**.
-- Check that the configured tag names exist as attributes on the span. The link only appears on spans that have at least one of the configured tags.
-- Confirm the tag mapping is correct. If the span attribute is `service.name` but you mapped it to `service_name`, ensure the metrics data source uses the label `service_name`.
-
-### Link appears but query returns no results
-
-- Increase the **Span start time shift** and **Span end time shift** values (for example, `-5m` and `5m`) to widen the query time window.
-- Verify the metric name in your custom query exists in the target data source. Run the query directly in the metrics data source Explore view to confirm.
-
-### Configuration fields are greyed out
-
-Your data source is provisioned. Refer to the [Provisioning](#provisioning) section for how to update the configuration via YAML.
+If the configuration fields are greyed out, your data source is provisioned. Refer to the [Provisioning](#provisioning) section for how to update the configuration via YAML.
 
 ## Next steps
 
