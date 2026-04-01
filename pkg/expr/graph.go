@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
@@ -168,9 +168,7 @@ func (dp *DataPipeline) GetDatasourceTypes() []string {
 		}
 		m[name] = struct{}{}
 	}
-	result := maps.Keys(m)
-	slices.Sort(result)
-	return result
+	return slices.Sorted(maps.Keys(m))
 }
 
 // GetCommandTypes returns a sorted unique list of all server-side expression commands used in the pipeline.
@@ -192,9 +190,7 @@ func (dp *DataPipeline) GetCommandTypes() []string {
 		}
 		m[name] = struct{}{}
 	}
-	result := maps.Keys(m)
-	slices.Sort(result)
-	return result
+	return slices.Sorted(maps.Keys(m))
 }
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an

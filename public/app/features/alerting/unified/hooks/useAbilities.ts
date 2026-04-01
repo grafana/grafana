@@ -198,6 +198,26 @@ export const useAlertingAbility = (action: AlertingAction): Ability => {
 };
 
 /**
+ * UI-only permission helper for places that need contact point visibility checks
+ * without requiring AlertmanagerContext.
+ */
+export function useCanViewContactPoints(): boolean {
+  return useMemo(
+    () =>
+      ctx.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+      ctx.hasPermission(AccessControlAction.AlertingReceiversRead),
+    []
+  );
+}
+
+/**
+ * UI-only permission helper for actions that create silences.
+ */
+export function useCanCreateSilences(): boolean {
+  return useMemo(() => ctx.hasPermission(AccessControlAction.AlertingInstanceCreate), []);
+}
+
+/**
  * This one will check for enrichment abilities
  */
 export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {

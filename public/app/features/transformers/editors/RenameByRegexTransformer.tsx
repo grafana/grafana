@@ -12,7 +12,6 @@ import { type RenameByRegexTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/renameByRegex.svg';
 import lightImage from '../images/light/renameByRegex.svg';
 
@@ -107,7 +106,6 @@ export const getRenameByRegexTransformRegistryItem: () => TransformerRegistryIte
       'Rename parts of the query results using a regular expression and replacement pattern.'
     ),
     categories: new Set([TransformerCategory.ReorderAndRename]),
-    help: getTransformationContent(DataTransformerID.renameByRegex).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

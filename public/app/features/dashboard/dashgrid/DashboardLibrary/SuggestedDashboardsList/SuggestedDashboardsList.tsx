@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncFn, useDebounce } from 'react-use';
 
@@ -16,7 +17,7 @@ import { useTrackingContext } from '../TrackingContext';
 import { checkDashboardCompatibility } from '../api/compatibilityApi';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, PAGE_SIZE } from '../constants';
-import { DashboardLibraryInteractions } from '../interactions';
+import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from '../interactions';
 import { type GnetDashboard } from '../types';
 import { onUseCommunityDashboard, interpolateDashboardForCompatibilityCheck } from '../utils/communityDashboardHelpers';
 import { getPageSlice } from '../utils/suggestedDashboardHelpers';
@@ -67,6 +68,7 @@ export const SuggestedDashboardsList = ({
 }: SuggestedDashboardsListProps) => {
   const styles = useStyles2(getStyles);
   const { sourceEntryPoint, eventLocation } = useTrackingContext();
+  const isSuggestedDashboardsAssistantButtonEnabled = useBooleanFlagValue('suggestedDashboardsAssistantButton', false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -288,7 +290,7 @@ export const SuggestedDashboardsList = ({
         contentKinds.push(CONTENT_KINDS.COMMUNITY_DASHBOARD);
       }
 
-      DashboardLibraryInteractions.loaded({
+      SuggestedDashboardInteractions.loaded({
         numberOfItems: provisionedDashboards.length + communityDashboards.length,
         contentKinds,
         datasourceTypes: [datasourceType],
@@ -307,8 +309,8 @@ export const SuggestedDashboardsList = ({
   ]);
 
   // Provisioned dashboard click handler
-  const onClickProvisionedDashboard = (dashboard: PluginDashboard) => {
-    DashboardLibraryInteractions.itemClicked({
+  const onClickProvisionedDashboard = (dashboard: PluginDashboard, customizeWithAssistant?: boolean) => {
+    SuggestedDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
@@ -316,6 +318,7 @@ export const SuggestedDashboardsList = ({
       sourceEntryPoint,
       eventLocation,
       discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+      action: customizeWithAssistant ? 'assistant' : 'use_dashboard',
     });
 
     const params = new URLSearchParams({
@@ -331,14 +334,18 @@ export const SuggestedDashboardsList = ({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
+    if (customizeWithAssistant) {
+      params.set('assistantSource', 'assistant_button');
+    }
+
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
     locationService.push(templateUrl);
   };
 
   // Community dashboard click handler
   const [{ error: isPreviewDashboardError }, onClickCommunityDashboard] = useAsyncFn(
-    async (dashboard: GnetDashboard) => {
-      DashboardLibraryInteractions.itemClicked({
+    async (dashboard: GnetDashboard, customizeWithAssistant?: boolean) => {
+      SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [datasourceType],
         libraryItemId: String(dashboard.id),
@@ -346,6 +353,7 @@ export const SuggestedDashboardsList = ({
         sourceEntryPoint,
         eventLocation,
         discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+        action: customizeWithAssistant ? 'assistant' : 'use_dashboard',
       });
 
       await onUseCommunityDashboard({
@@ -354,6 +362,7 @@ export const SuggestedDashboardsList = ({
         sourceEntryPoint,
         eventLocation,
         onShowMapping,
+        assistantSource: customizeWithAssistant ? 'assistant_button' : undefined,
       });
     },
     [datasourceType, datasourceUid, debouncedSearchQuery, onShowMapping, sourceEntryPoint, eventLocation]
@@ -499,6 +508,7 @@ export const SuggestedDashboardsList = ({
             datasourceUid={datasourceUid}
             isCompatibilityAppEnabled={isCompatibilityAppEnabled}
             compatibilityMap={compatibilityMap}
+            showAssistantButton={isSuggestedDashboardsAssistantButtonEnabled}
             onClickProvisionedDashboard={onClickProvisionedDashboard}
             onClickCommunityDashboard={onClickCommunityDashboard}
             onCheckCompatibility={onCheckCompatibility}

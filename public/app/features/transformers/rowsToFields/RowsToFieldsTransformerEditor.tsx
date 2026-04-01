@@ -1,6 +1,5 @@
 import { PluginState, type TransformerRegistryItem, type TransformerUIProps, TransformerCategory } from '@grafana/data';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import darkImage from '../images/dark/rowsToFields.svg';
 import lightImage from '../images/light/rowsToFields.svg';
@@ -36,7 +35,6 @@ export const getRowsToFieldsTransformRegistryItem: () => TransformerRegistryItem
     description: rowsToFieldsTransformer.description,
     state: PluginState.beta,
     categories: new Set([TransformerCategory.Reformat]),
-    help: getTransformationContent(rowsToFieldsTransformer.id).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   };

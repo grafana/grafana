@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -59,7 +60,7 @@ type mockConnectionClient struct {
 	err    error
 }
 
-func (m *mockConnectionClient) GetConnectionByUID(_ *contextmodel.ReqContext, _ string) (*queryV0.DataSourceConnectionList, error) {
+func (m *mockConnectionClient) GetConnectionByUID(_ context.Context, _ int64, _ string) (*queryV0.DataSourceConnectionList, error) {
 	return m.result, m.err
 }
 

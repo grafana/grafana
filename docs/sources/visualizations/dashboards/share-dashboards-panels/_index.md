@@ -172,7 +172,7 @@ To export a dashboard in its current state as a PDF, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down in the sidebar and select **Export as PDF**.
+1. Click the **Export** drop-down in the toolbar and select **Export as PDF**.
 1. In the **Export dashboard PDF** drawer that opens, select either **Landscape** or **Portrait** for the PDF orientation.
 1. Select either **Grid** or **Simple** for the PDF layout.
 1. Set the **Zoom** level; zoom in to enlarge text, or zoom out to see more data (like table columns) per panel.
@@ -189,7 +189,7 @@ To export a JSON file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the sidebar and select **Export as code**.
+1. Click the **Export** drop-down list in the toolbar and select **Export as code**.
 
    The **Export dashboard** drawer opens.
 
@@ -213,7 +213,7 @@ To export a dashboard in its current state as a PNG image file, follow these ste
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the sidebar and select **Export as image**.
+1. Click the **Export** drop-down list in the toolbar and select **Export as image**.
 
    The **Export as image** drawer opens.
 

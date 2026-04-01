@@ -106,14 +106,30 @@ export class AnnotationEditableElement implements EditableDashboardElement {
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
+  public onDuplicate() {
+    const dataLayerSet = this.layer.parent;
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
+    }
+
+    annotationEditActions.addAnnotation({
+      source: dataLayerSet,
+      addedObject: this.layer.clone({
+        key: undefined,
+        name: `${this.layer.state.name} - Copy`,
+      }),
+    });
+  }
+
   public onDelete() {
     const dataLayerSet = this.layer.parent;
-
-    if (dataLayerSet instanceof DashboardDataLayerSet) {
-      annotationEditActions.removeAnnotation({
-        source: dataLayerSet,
-        removedObject: this.layer,
-      });
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
     }
+
+    annotationEditActions.removeAnnotation({
+      source: dataLayerSet,
+      removedObject: this.layer,
+    });
   }
 }
