@@ -23,6 +23,7 @@ func ExportAllWithNewUIDs(ctx context.Context, repoName string, options provisio
 }
 
 func exportAll(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool, folderAPIVersion string) error {
+	// FIXME: should we sign with grafana user?
 	folderClient, _, err := clients.Folder(ctx, folderAPIVersion)
 	if err != nil {
 		return err
