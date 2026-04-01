@@ -385,19 +385,18 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       overflow: 'hidden',
-      maxWidth: 700,
-      minWidth: '97vw',
+      minWidth: calculateMinWidth('97vw'),
       [theme.breakpoints.up('md')]: {
-        minWidth: '80vw',
+        minWidth: calculateMinWidth('80vw'),
       },
       [theme.breakpoints.up('lg')]: {
-        minWidth: '60vw',
+        minWidth: calculateMinWidth('60vw'),
       },
       [theme.breakpoints.up('xl')]: {
-        minWidth: '50vw',
+        minWidth: calculateMinWidth('50vw'),
       },
       [theme.breakpoints.up('xxl')]: {
-        minWidth: '40vw',
+        minWidth: calculateMinWidth('40vw'),
       },
     }),
     picker: css({
@@ -416,6 +415,10 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.secondary,
     }),
   };
+}
+
+function calculateMinWidth(width: string): string {
+  return `min(700px, ${width})`;
 }
 
 export interface FooterProps extends PickerContentProps {}
