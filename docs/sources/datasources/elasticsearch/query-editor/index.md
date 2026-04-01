@@ -211,7 +211,7 @@ For an introduction to ES|QL syntax and concepts, refer to [Get started with ES|
 How the editor handles index selection depends on your data source configuration:
 
 - **No index name configured:** You specify which index to query using the `FROM` command directly in your ES|QL query. This lets you query any index without creating a separate data source for each one.
-- **Index name configured:** The editor automatically inserts `FROM <index>` when the ES|QL field receives focus. You can override this and query a different index if needed.
+- **Index name configured:** The editor automatically inserts ` FROM $__index` when the ES|QL field receives focus. You can override this and query a different index if needed.
 
 ### Editor features
 
