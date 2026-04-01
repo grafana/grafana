@@ -207,6 +207,12 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	if a.service.options.RequestValidator != nil {
+		if _, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID); err != nil {
+			return response.Err(err)
+		}
+	}
+
 	// Teams-specific redirect: read team permissions from TeamBinding K8s API instead of
 	// the generic resource permissions API. Falls back to legacy on failure.
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -340,6 +346,16 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	}
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	if a.service.options.RequestValidator != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
+			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
+		}
+	}
+
 	resp := a.validateTeamResource(c, resourceID)
 	if resp != nil {
 		return resp
@@ -437,6 +453,16 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	}
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	if a.service.options.RequestValidator != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
+			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
+		}
+	}
+
 	var cmd setPermissionCommand
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -506,6 +532,16 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	if a.service.options.RequestValidator != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
+			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
+		}
+	}
+
 	cmd := setPermissionCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -564,8 +600,19 @@ type SetResourcePermissionsParams struct {
 func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.resourcepermissions.setPermissions")
 	defer span.End()
+	c.Req = c.Req.WithContext(ctx)
 
 	resourceID := web.Params(c.Req)[":resourceID"]
+
+	if a.service.options.RequestValidator != nil {
+		enrichedCtx, err := a.service.options.RequestValidator(c.Req, c.GetOrgID(), resourceID)
+		if err != nil {
+			return response.Err(err)
+		}
+		if enrichedCtx != nil {
+			c.Req = c.Req.WithContext(enrichedCtx)
+		}
+	}
 
 	cmd := setPermissionsCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -585,7 +632,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	}
 
 	metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_bulk", a.service.options.Resource, a.getFallbackStatus()).Inc()
-	_, err := a.service.SetPermissions(ctx, c.GetOrgID(), resourceID, cmd.Permissions...)
+	_, err := a.service.SetPermissions(c.Req.Context(), c.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Err(err)
 	}

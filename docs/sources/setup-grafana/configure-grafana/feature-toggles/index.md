@@ -90,6 +90,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
+| `timeComparison`                  | Enables time comparison option in supported panels                                                     |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                          |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
@@ -104,6 +105,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
+| `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 
 ## Development feature toggles

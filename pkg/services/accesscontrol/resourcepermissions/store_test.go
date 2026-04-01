@@ -983,6 +983,8 @@ func TestStore_ResolveActionSet(t *testing.T) {
 	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":view", []string{accesscontrol.ActionAlertingManagedRoutesRead})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":edit", []string{accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite})
 
 	type actionSetTest struct {
 		desc               string
@@ -1010,6 +1012,14 @@ func TestStore_ResolveActionSet(t *testing.T) {
 			desc:               "should be able to resolve multiple action sets for the resource of a different type",
 			action:             "dashboards:read",
 			expectedActionSets: []string{"folders:view", "folders:edit", "dashboards:view"},
+		},
+		{
+			desc:   "should support routes",
+			action: accesscontrol.ActionAlertingManagedRoutesRead,
+			expectedActionSets: []string{
+				accesscontrol.AlertingRoutesKind + ":view",
+				accesscontrol.AlertingRoutesKind + ":edit",
+			},
 		},
 	}
 
