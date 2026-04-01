@@ -172,9 +172,9 @@ var (
 		{
 			Name:        "renderAuthJWT",
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "refactorVariablesTimeRange",
@@ -525,6 +525,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "datasourcesQuerierRawOutput",
+			Description:     "use raw output mode for the data source querier",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
@@ -614,6 +622,14 @@ var (
 			Description:  "Enables new dashboard layouts",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "dashboardDefaultLayoutSelector",
+			Description:  "Enables default layout selector in dashboard settings",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
 		},
@@ -739,7 +755,7 @@ var (
 		{
 			Name:         "timeComparison",
 			Description:  "Enables time comparison option in supported panels",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
@@ -1489,13 +1505,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "k8SFolderCounts",
-			Description: "Enable folder's api server counts",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "improvedExternalSessionHandlingSAML",
 			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1529,9 +1538,9 @@ var (
 		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
-			Stage:       FeatureStagePrivatePreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "elasticsearchImprovedParsing",
@@ -1884,9 +1893,9 @@ var (
 		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "recentlyViewedDashboards",
@@ -1948,14 +1957,6 @@ var (
 		{
 			Name:         "alertingImportAlertmanagerAPI",
 			Description:  "Enables the API to import Alertmanager configuration",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "alertingImportAlertmanagerUI",
-			Description:  "Enables the UI to see imported Alertmanager configuration",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -2184,10 +2185,10 @@ var (
 		{
 			Name:         "newVizSuggestions",
 			Description:  "Enable new visualization suggestions",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "panelStyleActions",
@@ -2208,18 +2209,10 @@ var (
 		{
 			Name:         "externalVizSuggestions",
 			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-		},
-		{
-			Name:         "vizLegendSeriesLimit",
-			Description:  "Limit the number of legend items by default, with an option to show all",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "nestedFramesFieldOverrides",
@@ -2240,6 +2233,14 @@ var (
 		{
 			Name:         "heatmapRowsAxisOptions",
 			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "pieChartGradientColorScheme",
+			Description:  "Enable gradient color scheme option for the pie chart panel",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
@@ -2306,7 +2307,7 @@ var (
 			Name:            "panelTimeSettings",
 			Description:     "Enables a new panel time settings drawer",
 			FrontendOnly:    false,
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			HideFromDocs:    false,
@@ -2756,6 +2757,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "streamingForwardTeamHeadersTempo",
+			Description:  "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+			Stage:        FeatureStagePrivatePreview,
+			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
 			Name:        "lokiAlignedQuerySplitting",
 			Description: "Aligns query splitting chunks with UTC midnight",
 			Stage:       FeatureStageExperimental,
@@ -2767,6 +2776,13 @@ var (
 			Description: "Enables the query service to fetch the configuration from the settings service",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryServiceQueryCaching",
+			Description: "Enables the query service to do query caching",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
 	}

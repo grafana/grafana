@@ -1,4 +1,4 @@
-import { ExtensionsLog } from './log';
+import { type ExtensionsLog } from './log';
 
 export function createLogMock(): ExtensionsLog {
   const { log: original } = jest.requireActual('./log');

@@ -56,6 +56,9 @@ const (
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
 
+// Default renderer auth token from [rendering]renderer_token.
+const DefaultRendererAuthToken = "-"
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -92,6 +95,7 @@ type Cfg struct {
 	configFiles                  []string
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
+	commandLineProps             map[string]string
 
 	// HTTP Server Settings
 	CertFile          string
@@ -203,7 +207,10 @@ type Cfg struct {
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
-	CSPReportOnlyTemplate           string
+	CSPReportOnlyTemplate string
+	// FormActionAdditionalHosts is the list of additional hostnames for the CSP form-action directive.
+	// These are appended to the template; 'self' should be in the template itself.
+	FormActionAdditionalHosts       []string
 	EnableFrontendSandboxForPlugins []string
 	DisableGravatar                 bool
 	DataProxyWhiteList              map[string]bool
@@ -552,6 +559,7 @@ type Cfg struct {
 	ZanzanaClient     ZanzanaClientSettings
 	ZanzanaServer     ZanzanaServerSettings
 	ZanzanaReconciler ZanzanaReconcilerSettings
+	ZanzanaGRPCStore  ZanzanaGRPCStoreSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -888,6 +896,13 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 
 		for _, m := range sectionMappings {
 			if strings.HasPrefix(envKey, m.prefix) {
+				// Skip root feature_toggles section — handled by
+				// applyFeatureToggleEnvOverrides which preserves casing.
+				// Subsections like feature_toggles.openfeature are still
+				// handled here because they match a longer prefix first.
+				if m.section.Name() == "feature_toggles" {
+					break
+				}
 				keyName := strings.ToLower(envKey[len(m.prefix):])
 				if keyName == "" {
 					continue
@@ -1000,23 +1015,43 @@ type AnnotationCleanupSettings struct {
 }
 
 type AnnotationAppPlatformSettings struct {
-	Enabled           bool
-	StoreBackend      string // "sql" (default) or "grpc"
+	Enabled      bool
+	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
+	RetentionTTL time.Duration // Retention TTL for annotations
+
 	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
 	GRPCTLSCAFile     string // Path to CA certificate file (optional)
 	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
+
+	// Postgres store configuration
+	PostgresConnectionString string        // PostgreSQL connection string
+	PostgresMaxConnections   int           // Maximum number of connections in the pool
+	PostgresMaxIdleConns     int           // Maximum number of idle connections
+	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
+	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
+	PostgresTagCacheSize     int           // Size of the tag query cache
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("sql"),
+		Enabled:      appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend: appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL: appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
 		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
 		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
+
+		// Postgres configuration
+		PostgresConnectionString: appPlatformSection.Key("postgres_connection_string").MustString(""),
+		PostgresMaxConnections:   appPlatformSection.Key("postgres_max_connections").MustInt(10),
+		PostgresMaxIdleConns:     appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
+		PostgresConnMaxLifetime:  appPlatformSection.Key("postgres_conn_max_lifetime").MustDuration(time.Hour),
+		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
+		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
 	}
 }
 
@@ -1038,12 +1073,12 @@ func EnvKey(sectionName string, keyName string) string {
 	return "GF_" + envNameFromIniName(sectionName) + "_" + envNameFromIniName(keyName)
 }
 
-func (cfg *Cfg) applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
+func (cfg *Cfg) applyCommandLineDefaultProperties(file *ini.File) {
 	cfg.appliedCommandLineProperties = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			keyString := fmt.Sprintf("default.%s.%s", section.Name(), key.Name())
-			value, exists := props[keyString]
+			value, exists := cfg.commandLineProps[keyString]
 			if exists {
 				key.SetValue(value)
 				cfg.appliedCommandLineProperties = append(cfg.appliedCommandLineProperties,
@@ -1053,7 +1088,7 @@ func (cfg *Cfg) applyCommandLineDefaultProperties(props map[string]string, file 
 	}
 }
 
-func (cfg *Cfg) applyCommandLineProperties(props map[string]string, file *ini.File) {
+func (cfg *Cfg) applyCommandLineProperties(file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DefaultSection {
@@ -1061,7 +1096,7 @@ func (cfg *Cfg) applyCommandLineProperties(props map[string]string, file *ini.Fi
 		}
 		for _, key := range section.Keys() {
 			keyString := sectionName + key.Name()
-			value, exists := props[keyString]
+			value, exists := cfg.commandLineProps[keyString]
 			if exists {
 				cfg.appliedCommandLineProperties = append(cfg.appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 				key.SetValue(value)
@@ -1158,9 +1193,9 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	}
 
 	// command line props
-	commandLineProps := cfg.getCommandLineProperties(args.Args)
+	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
 	// load default overrides
-	cfg.applyCommandLineDefaultProperties(commandLineProps, parsedFile)
+	cfg.applyCommandLineDefaultProperties(parsedFile)
 
 	// load specified config file
 	err = cfg.loadSpecifiedConfigFile(args.Config, parsedFile)
@@ -1180,7 +1215,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	}
 
 	// apply command line overrides
-	cfg.applyCommandLineProperties(commandLineProps, parsedFile)
+	cfg.applyCommandLineProperties(parsedFile)
 
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)
@@ -1851,6 +1886,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
+	cfg.FormActionAdditionalHosts = security.Key("form_action_additional_hosts").Strings(" ")
 
 	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
 	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
@@ -2070,7 +2106,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererServerUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
-	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
+	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", DefaultRendererAuthToken)
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)

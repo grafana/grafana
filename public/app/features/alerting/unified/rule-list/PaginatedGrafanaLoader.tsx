@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
-import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
+import { type GrafanaPromRuleGroupDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import MoreButton from '../components/MoreButton';
 import { WithReturnButton } from '../components/WithReturnButton';
@@ -27,7 +27,7 @@ import { NoRulesFound } from './components/NoRulesFound';
 import { getGrafanaFilter, hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
-import { DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
+import { type DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 

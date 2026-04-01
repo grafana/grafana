@@ -1,16 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   EventBusSrv,
-  FieldConfigSource,
+  type FieldConfigSource,
   LoadingState,
   LogsSortOrder,
-  PanelData,
+  type PanelData,
   toUtc,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { Options } from 'app/plugins/panel/logstable/options/types';
+import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from '../../logs/components/fieldSelector/FieldSelector';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, useLayoutEffect, useRef } from 'react';
+import { type PropsWithChildren, useLayoutEffect, useRef } from 'react';
 import * as React from 'react';
 import ReactDOM from 'react-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';

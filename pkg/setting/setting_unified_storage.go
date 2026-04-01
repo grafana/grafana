@@ -29,8 +29,8 @@ const (
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:    true,  // Only Mode5!
-	FolderResource:      true,  // enabled by default
-	DashboardResource:   true,  // enabled by default
+	FolderResource:      true,  // Only Mode5!
+	DashboardResource:   true,  // Only Mode5!
 	ShortURLResource:    false, // Requires kubernetesShortURLs to be enabled by default
 	DataSourceResources: false,
 }
@@ -117,6 +117,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		}
 		// the resource name is the part after the first dot
 		resourceName := strings.SplitAfterN(sectionName, ".", 2)[1]
+
+		// The resource specific settings do not apply
+		if MigratedUnifiedResources[resourceName] {
+			cfg.Logger.Warn("Unified storage config has no effect for fully migrated resources", "resource", resourceName)
+		}
 
 		// parse dualWriter modes from the section
 		dualWriterMode := section.Key("dualWriterMode").MustInt(0)

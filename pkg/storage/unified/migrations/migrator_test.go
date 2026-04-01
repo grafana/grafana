@@ -21,7 +21,6 @@ import (
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	shorturl "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -122,11 +121,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 	}
 
-	// Provisioning requires dashboards/folders to be read from unified storage.
-	// Steps that use Mode0 (legacy-only) would fail the provisioning startup
-	// check, so we disable it throughout the migration test suite.
-	disableProvisioning := []string{featuremgmt.FlagProvisioning}
-
 	// Store UIDs created by each test case
 	type testCaseState struct {
 		tc testcases.ResourceMigratorTestCase
@@ -157,14 +151,13 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		// Set up test environment with Mode0 (writes only to legacy)
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			DisableDBCleanup:      true,
-			APIServerStorageType:  "unified",
-			UnifiedStorageConfig:  unifiedConfig,
-			EnableFeatureToggles:  featureToggles,
-			DisableFeatureToggles: disableProvisioning,
-			EnableSQLKVBackend:    opts.enableSQLKVBackend,
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			DisableDBCleanup:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: unifiedConfig,
+			EnableFeatureToggles: featureToggles,
+			EnableSQLKVBackend:   opts.enableSQLKVBackend,
 		})
 		t.Cleanup(helper.Shutdown)
 		org1 = &helper.Org1
@@ -217,14 +210,13 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDBCleanup:      true,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig:  unifiedConfig,
-				EnableFeatureToggles:  featureToggles,
-				DisableFeatureToggles: disableProvisioning,
-				EnableSQLKVBackend:    opts.enableSQLKVBackend,
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				DisableDBCleanup:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: unifiedConfig,
+				EnableFeatureToggles: featureToggles,
+				EnableSQLKVBackend:   opts.enableSQLKVBackend,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -254,14 +246,13 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDBCleanup:      true,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig:  unifiedConfig,
-				EnableFeatureToggles:  featureToggles,
-				DisableFeatureToggles: disableProvisioning,
-				EnableSQLKVBackend:    opts.enableSQLKVBackend,
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				DisableDBCleanup:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: unifiedConfig,
+				EnableFeatureToggles: featureToggles,
+				EnableSQLKVBackend:   opts.enableSQLKVBackend,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -281,13 +272,12 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDBCleanup:      true,
-				APIServerStorageType:  "unified",
-				EnableFeatureToggles:  featureToggles,
-				DisableFeatureToggles: disableProvisioning,
-				EnableSQLKVBackend:    opts.enableSQLKVBackend,
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				DisableDBCleanup:     true,
+				APIServerStorageType: "unified",
+				EnableFeatureToggles: featureToggles,
+				EnableSQLKVBackend:   opts.enableSQLKVBackend,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -333,7 +323,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				UnifiedStorageConfig:   unifiedConfig,
 				MigrationParquetBuffer: true,
 				EnableFeatureToggles:   featureToggles,
-				DisableFeatureToggles:  disableProvisioning,
 				EnableSQLKVBackend:     opts.enableSQLKVBackend,
 			},
 			Org1Users: org1,

@@ -7,8 +7,8 @@ import {
   dataLayers,
   LocalValueVariable,
   SceneGridRow,
-  SceneObject,
-  SceneVariable,
+  type SceneObject,
+  type SceneVariable,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
@@ -16,12 +16,17 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
 import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
-import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
+import {
+  SectionVariableAdd,
+  SectionVariableAddEditableElement,
+  VariableAdd,
+  VariableAddEditableElement,
+} from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
@@ -69,6 +74,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (sceneObj instanceof VariableAdd) {
     return new VariableAddEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof SectionVariableAdd) {
+    return new SectionVariableAddEditableElement(sceneObj);
   }
 
   if (sceneObj instanceof LinkEdit) {

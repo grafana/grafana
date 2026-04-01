@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin, PluginUpdateStrategy } from '../types';
+import { type CatalogPlugin, PluginUpdateStrategy } from '../types';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 

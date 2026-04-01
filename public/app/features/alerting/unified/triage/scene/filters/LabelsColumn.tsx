@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
 import { FilterInput, Icon, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -22,7 +22,7 @@ const COLLAPSED_WIDTH = 36;
  * Contains a state filter (firing / pending) and the full label breakdown.
  */
 export function LabelsColumn() {
-  const { labels, isLoading } = useLabelsBreakdown();
+  const { labels } = useLabelsBreakdown();
   const [open, toggleOpen] = useToggle(true);
   const [labelFilter, setLabelFilter] = useState('');
   const styles = useStyles2(getStyles);
@@ -66,14 +66,14 @@ export function LabelsColumn() {
                 <Trans i18nKey="alerting.triage.labels-column-title">Labels</Trans>
               </Text>
               <FilterInput
-                placeholder={t('alerting.triage.filter-labels-placeholder', 'Filter')}
+                placeholder={t('alerting.triage.filter-labels-placeholder', 'Search labels')}
                 value={labelFilter}
                 onChange={setLabelFilter}
                 aria-label={t('alerting.triage.filter-labels', 'Filter labels')}
                 className={styles.labelFilterInput}
               />
             </div>
-            {!isLoading && labels.length > 0 && <AllLabelsContent allLabels={labels} labelFilter={labelFilter} />}
+            {labels.length > 0 && <AllLabelsContent allLabels={labels} labelFilter={labelFilter} />}
           </div>
         </ScrollContainer>
       )}

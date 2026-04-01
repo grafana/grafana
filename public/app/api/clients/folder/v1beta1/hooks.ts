@@ -8,7 +8,7 @@ import { config, getAppEvents } from '@grafana/runtime';
 import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
-  DisplayList,
+  type DisplayList,
   iamAPIv0alpha1,
   useLazyGetDisplayMappingQuery,
 } from 'app/api/clients/iam/v0alpha1';
@@ -22,13 +22,13 @@ import {
   useSaveFolderMutation as useLegacySaveFolderMutation,
   useMoveFolderMutation as useMoveFolderMutationLegacy,
   useGetAffectedItemsQuery as useLegacyGetAffectedItemsQuery,
-  MoveFoldersArgs,
-  DeleteFoldersArgs,
-  MoveFolderArgs,
+  type MoveFoldersArgs,
+  type DeleteFoldersArgs,
+  type MoveFolderArgs,
   browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { FolderDTO, NewFolder } from 'app/types/folders';
+import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
 import kbn from '../../../../core/utils/kbn';
@@ -39,7 +39,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
-  ManagerKind,
+  type ManagerKind,
 } from '../../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
@@ -57,13 +57,13 @@ import {
   useDeleteFolderMutation,
   useCreateFolderMutation,
   useUpdateFolderMutation,
-  Folder,
-  CreateFolderApiArg,
-  UpdateFolderApiArg,
+  type Folder,
+  type CreateFolderApiArg,
+  type UpdateFolderApiArg,
   useGetAffectedItemsQuery,
-  FolderInfo,
-  ObjectMeta,
-  OwnerReference,
+  type FolderInfo,
+  type ObjectMeta,
+  type OwnerReference,
 } from './index';
 
 function getFolderUrl(uid: string, title: string): string {

@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { AlertLabel } from '@grafana/alerting/unstable';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 
-import { EmptyLabelValue, GenericGroupedRow } from '../types';
+import { EmptyLabelValue, type GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
 import { RowActions } from './InstanceCountBadges';

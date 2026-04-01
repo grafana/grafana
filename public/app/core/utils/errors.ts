@@ -1,4 +1,4 @@
-import { FetchError, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 
 export function getMessageFromError(err: unknown): string {
   if (typeof err === 'string') {

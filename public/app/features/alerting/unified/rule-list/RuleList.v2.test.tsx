@@ -10,7 +10,7 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
 import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { RulesFilter } from '../search/rulesSearchParser';
+import { type RulesFilter } from '../search/rulesSearchParser';
 import { setupDataSources } from '../testSetup/datasources';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
@@ -191,7 +191,7 @@ describe('RuleListActions', () => {
       newGrafanaRecordingRule: byRole('menuitem', { name: /new grafana recording rule/i }),
       newDataSourceRecordingRule: byRole('menuitem', { name: /new data source recording rule/i }),
       importAlertRules: byRole('menuitem', { name: /import alert rules/i }),
-      importToGma: byRole('menuitem', { name: /import to gma/i }),
+      importToGma: byRole('menuitem', { name: /import to grafana alerting/i }),
       exportAllGrafanaRules: byRole('menuitem', { name: /export all grafana rules/i }),
     },
     exportDrawer: byRole('dialog', { name: /export/i }),
@@ -325,10 +325,10 @@ describe('RuleListActions', () => {
     });
   });
 
-  describe('Import to GMA Wizard', () => {
+  describe('Import to Grafana Alerting Wizard', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
 
-    it('should show "Import to GMA" option when user is admin with required permissions', async () => {
+    it('should show "Import to Grafana Alerting" option when user is admin with required permissions', async () => {
       grantUserRole(OrgRole.Admin);
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
 
@@ -339,7 +339,7 @@ describe('RuleListActions', () => {
       expect(ui.menuOptions.importToGma.query(menu)).toBeInTheDocument();
     });
 
-    it('should not show "Import to GMA" option when user is not admin', async () => {
+    it('should not show "Import to Grafana Alerting" option when user is not admin', async () => {
       grantUserRole(OrgRole.Viewer);
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
 
