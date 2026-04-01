@@ -86,7 +86,8 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		hooksService: hooksService,
 		config:       cfg,
 		license:      license,
-		bootScript:   template.JS(bootScriptRaw),
+		//nolint:gosec
+		bootScript: template.JS(bootScriptRaw),
 	}, nil
 }
 
