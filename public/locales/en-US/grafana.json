@@ -10341,6 +10341,8 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "hide": "Hide",
+      "show": "Show",
       "undock": "Undock"
     },
     "slider": {
