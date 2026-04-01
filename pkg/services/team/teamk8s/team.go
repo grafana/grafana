@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
+	iamteam "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -198,9 +200,7 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	if query.Name != "" || len(query.TeamIds) > 0 || len(query.UIDs) > 0 {
-		return s.legacyService.SearchTeams(ctx, query)
-	}
+	sortParams := legacysort.ConvertToSortParams(query.SortOpts, iamteam.TeamSortFieldMapping)
 
 	namespace := s.namespaceMapper(query.OrgID)
 	restClient, err := s.getRESTClient(ctx)
@@ -215,6 +215,9 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 	if query.Query != "" {
 		req = req.Param("query", query.Query)
 	}
+	if query.Name != "" {
+		req = req.Param("title", query.Name)
+	}
 	if query.Limit > 0 {
 		req = req.Param("limit", strconv.Itoa(query.Limit))
 	}
@@ -223,6 +226,15 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 	}
 	if query.WithAccessControl {
 		req = req.Param("accesscontrol", "true")
+	}
+	for _, uid := range query.UIDs {
+		req = req.Param("uid", uid)
+	}
+	for _, id := range query.TeamIds {
+		req = req.Param("teamId", strconv.FormatInt(id, 10))
+	}
+	for _, sortParam := range sortParams {
+		req = req.Param("sort", sortParam)
 	}
 
 	result := req.Do(ctx)

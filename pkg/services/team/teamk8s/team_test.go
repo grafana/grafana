@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -773,47 +774,155 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 			},
 		},
 		{
-			name: "falls back to legacy for Name filter",
+			name: "forwards title param when Name is set",
 			query: &team.SearchTeamsQuery{
 				OrgID: 1,
 				Name:  "exact-name",
 				Limit: 10,
 				Page:  1,
 			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "exact-name", r.URL.Query().Get("title"))
+
+				resp := iamv0alpha1.GetSearchTeamsResponse{
+					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
+						TotalHits: 1,
+						Hits:      []iamv0alpha1.GetSearchTeamsTeamHit{{Name: "uid-1", Title: "exact-name"}},
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
 			expectResult: team.SearchTeamQueryResult{
 				TotalCount: 1,
+				Page:       1,
+				PerPage:    10,
 				Teams: []*team.TeamDTO{
-					{ID: 1, UID: "legacy-uid", OrgID: 1, Name: "Legacy Team"},
+					{UID: "uid-1", OrgID: 1, Name: "exact-name"},
 				},
 			},
 		},
 		{
-			name: "falls back to legacy for TeamIds filter",
+			name: "forwards teamId params when TeamIds are set",
 			query: &team.SearchTeamsQuery{
 				OrgID:   1,
 				TeamIds: []int64{1, 2},
 				Limit:   10,
 				Page:    1,
 			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, []string{"1", "2"}, r.URL.Query()["teamId"])
+
+				resp := iamv0alpha1.GetSearchTeamsResponse{
+					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
+						TotalHits: 1,
+						Hits:      []iamv0alpha1.GetSearchTeamsTeamHit{{Name: "uid-1", Title: "Team One"}},
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
 			expectResult: team.SearchTeamQueryResult{
 				TotalCount: 1,
+				Page:       1,
+				PerPage:    10,
 				Teams: []*team.TeamDTO{
-					{ID: 1, UID: "legacy-uid", OrgID: 1, Name: "Legacy Team"},
+					{UID: "uid-1", OrgID: 1, Name: "Team One"},
 				},
 			},
 		},
 		{
-			name: "falls back to legacy for UIDs filter",
+			name: "forwards uid params when UIDs are set",
 			query: &team.SearchTeamsQuery{
 				OrgID: 1,
-				UIDs:  []string{"uid-1"},
+				UIDs:  []string{"uid-1", "uid-2"},
 				Limit: 10,
 				Page:  1,
 			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, []string{"uid-1", "uid-2"}, r.URL.Query()["uid"])
+
+				resp := iamv0alpha1.GetSearchTeamsResponse{
+					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
+						TotalHits: 1,
+						Hits:      []iamv0alpha1.GetSearchTeamsTeamHit{{Name: "uid-1", Title: "Team One"}},
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
 			expectResult: team.SearchTeamQueryResult{
 				TotalCount: 1,
+				Page:       1,
+				PerPage:    10,
 				Teams: []*team.TeamDTO{
-					{ID: 1, UID: "legacy-uid", OrgID: 1, Name: "Legacy Team"},
+					{UID: "uid-1", OrgID: 1, Name: "Team One"},
+				},
+			},
+		},
+		{
+			name: "forwards supported sort options as query params",
+			query: &team.SearchTeamsQuery{
+				OrgID: 1,
+				Limit: 10,
+				Page:  1,
+				SortOpts: []model.SortOption{
+					{Name: "name-desc"},
+					{Name: "email-asc"},
+				},
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				sortParams := r.URL.Query()["sort"]
+				assert.Equal(t, []string{"-title", "email"}, sortParams)
+
+				resp := iamv0alpha1.GetSearchTeamsResponse{
+					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
+						TotalHits: 1,
+						Hits: []iamv0alpha1.GetSearchTeamsTeamHit{
+							{Name: "uid-1", Title: "Team One"},
+						},
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectResult: team.SearchTeamQueryResult{
+				TotalCount: 1,
+				Page:       1,
+				PerPage:    10,
+				Teams: []*team.TeamDTO{
+					{UID: "uid-1", OrgID: 1, Name: "Team One"},
+				},
+			},
+		},
+		{
+			name: "skips unsupported sort options",
+			query: &team.SearchTeamsQuery{
+				OrgID: 1,
+				Limit: 10,
+				Page:  1,
+				SortOpts: []model.SortOption{
+					{Name: "member_count-desc"},
+				},
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Empty(t, r.URL.Query()["sort"])
+
+				resp := iamv0alpha1.GetSearchTeamsResponse{
+					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
+						TotalHits: 1,
+						Hits:      []iamv0alpha1.GetSearchTeamsTeamHit{{Name: "uid-1", Title: "Team One"}},
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectResult: team.SearchTeamQueryResult{
+				TotalCount: 1,
+				Page:       1,
+				PerPage:    10,
+				Teams: []*team.TeamDTO{
+					{UID: "uid-1", OrgID: 1, Name: "Team One"},
 				},
 			},
 		},

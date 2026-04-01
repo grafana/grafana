@@ -68,8 +68,7 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	hasUnsupportedFilters := query.Name != "" || len(query.TeamIds) > 0 || len(query.SortOpts) > 0
-	if s.isKubernetesTeamServiceEnabled(ctx) && !hasUnsupportedFilters {
+	if s.isKubernetesTeamServiceEnabled(ctx) {
 		return s.k8sService.SearchTeams(ctx, query)
 	}
 

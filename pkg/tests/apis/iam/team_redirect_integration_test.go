@@ -364,7 +364,7 @@ func TestIntegrationSearchTeamsRedirect(t *testing.T) {
 		assert.NotEqual(t, page1.Teams[0].UID, page2.Teams[0].UID, "pages should return different teams")
 	})
 
-	t.Run("sort falls back to legacy", func(t *testing.T) {
+	t.Run("redirect supports sort", func(t *testing.T) {
 		setTeamK8sFeatureToggle(t, true)
 		result := searchTeamsViaAPI(t, helper, url.Values{
 			"query": {"search-redirect"},
