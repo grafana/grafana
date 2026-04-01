@@ -26,7 +26,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -310,7 +309,7 @@ func RegisterAPIService(
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
-	folderAPIVersion := folderv1.APIVersion
+	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(

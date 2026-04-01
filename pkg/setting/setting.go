@@ -153,8 +153,9 @@ type Cfg struct {
 	ProvisioningLokiUser                  string
 	ProvisioningLokiPassword              string
 	ProvisioningLokiTenantID              string
-	ProvisioningMaxResourcesPerRepository int64 // 0 = unlimited
-	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
+	ProvisioningMaxResourcesPerRepository int64  // 0 = unlimited
+	ProvisioningMaxRepositories           int64  // default 10, 0 in config = unlimited (converted to -1 internally)
+	ProvisioningFolderAPIVersion          string // "v1" (default for on-prem) or "v1beta1"
 	DataPath                              string
 	LogsPath                              string
 	EnterpriseLicensePath                 string
@@ -2386,6 +2387,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
+	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

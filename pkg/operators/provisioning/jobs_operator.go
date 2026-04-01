@@ -224,6 +224,7 @@ type jobsControllerConfig struct {
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
 	maxSyncWorkers       int
+	folderAPIVersion     string
 }
 
 func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
@@ -232,15 +233,19 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 		return nil, err
 	}
 
+	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	folderAPIVersion := operatorSec.Key("folders_api_version").MustString(folderv1beta1.APIVersion)
+
 	return &jobsControllerConfig{
 		ControllerConfig:     *controllerCfg,
-		historyExpiration:    cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
-		concurrentDrivers:    cfg.SectionWithEnvOverrides("operator").Key("concurrent_drivers").MustInt(3),
-		maxSyncWorkers:       cfg.SectionWithEnvOverrides("operator").Key("max_sync_workers").MustInt(10),
-		maxJobTimeout:        cfg.SectionWithEnvOverrides("operator").Key("max_job_timeout").MustDuration(20 * time.Minute),
-		cleanupInterval:      cfg.SectionWithEnvOverrides("operator").Key("cleanup_interval").MustDuration(time.Minute),
-		jobInterval:          cfg.SectionWithEnvOverrides("operator").Key("job_interval").MustDuration(30 * time.Second),
-		leaseRenewalInterval: cfg.SectionWithEnvOverrides("operator").Key("lease_renewal_interval").MustDuration(30 * time.Second),
+		historyExpiration:    operatorSec.Key("history_expiration").MustDuration(0),
+		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
+		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
+		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
+		cleanupInterval:      operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
+		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
+		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(30 * time.Second),
+		folderAPIVersion:     folderAPIVersion,
 	}, nil
 }
 
@@ -255,7 +260,7 @@ func setupWorkers(
 	features := featuremgmt.ProvideToggles(featureManager)
 	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
-	folderAPIVersion := folderv1beta1.APIVersion
+	folderAPIVersion := controllerCfg.folderAPIVersion
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
