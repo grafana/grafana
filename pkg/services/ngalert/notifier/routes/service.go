@@ -45,6 +45,7 @@ type routeAccessControl interface {
 	AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, uid string) error
 	SetDefaultPermissions(ctx context.Context, user identity.Requester, route *legacy_storage.ManagedRoute) error
 	DeleteAllPermissions(ctx context.Context, orgID int64, route *legacy_storage.ManagedRoute) error
+	Access(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) (map[string]models.RoutePermissionSet, error)
 }
 
 type Service struct {
@@ -57,6 +58,24 @@ type Service struct {
 	FeatureToggles  featuremgmt.FeatureToggles
 	tracer          tracing.Tracer
 	routeAccess     routeAccessControl
+}
+
+func (nps *Service) AccessControlMetadata(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) (map[string]models.RoutePermissionSet, error) {
+	permissions, err := nps.routeAccess.Access(ctx, user, routes...)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range routes {
+		if m.Origin == models.ResourceOriginGrafana {
+			continue
+		}
+		perms := permissions[m.GetUID()]
+		perms.Set(models.RoutePermissionAdmin, false)
+		perms.Set(models.RoutePermissionWrite, false)
+		perms.Set(models.RoutePermissionDelete, false)
+		permissions[m.GetUID()] = perms
+	}
+	return permissions, nil
 }
 
 func NewService(
@@ -359,8 +378,10 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
-			return err
+		if name != legacy_storage.UserDefinedRoutingTreeName { // do not delete permissions on reset of default route
+			if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
+				return err
+			}
 		}
 		return nps.provenanceStore.DeleteProvenance(ctx, existing, orgID)
 	})

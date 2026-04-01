@@ -1,6 +1,7 @@
 import {
   FieldColorModeId,
   type FieldConfigSource,
+  FieldType,
   ThresholdsMode,
   type VisualizationPresetsSupplier,
   type VisualizationSuggestion,
@@ -248,6 +249,14 @@ const FEW_POINTS_THRESHOLD = 80;
 const MAX_PREVIEW_BAR_ROWS = 30;
 
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
+  if (
+    !dataSummary?.hasData ||
+    !dataSummary.hasFieldType(FieldType.time) ||
+    !dataSummary.hasFieldType(FieldType.number)
+  ) {
+    return [];
+  }
+
   const isSingleSeries = (dataSummary?.frameCount ?? 0) === 1;
   const isMultiSeries = (dataSummary?.frameCount ?? 0) > 1;
   const hasFewPoints = (dataSummary?.rowCountMax ?? 0) < FEW_POINTS_THRESHOLD;

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { debounce } from 'lodash';
 import { type Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
@@ -323,6 +324,7 @@ const LogListComponent = ({
     ]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -379,6 +381,7 @@ const LogListComponent = ({
         {
           getFieldLinks,
           escape: forceEscape ?? false,
+          otelLogsFormattingEnabled,
           prettifyJSON,
           order: sortOrder,
           timeZone,
@@ -390,7 +393,18 @@ const LogListComponent = ({
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [
+    forceEscape,
+    getFieldLinks,
+    grammar,
+    logs,
+    otelLogsFormattingEnabled,
+    prettifyJSON,
+    sortOrder,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  ]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);

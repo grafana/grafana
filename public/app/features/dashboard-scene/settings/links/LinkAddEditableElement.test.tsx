@@ -154,6 +154,23 @@ describe('LinkAddEditableElement', () => {
       });
     });
 
+    describe('onDuplicate', () => {
+      it('duplicates the link at the given index', () => {
+        const dashboard = buildDashboard([
+          createTestLink({ title: 'First' }),
+          createTestLink({ title: 'Second' }),
+          createTestLink({ title: 'Third' }),
+        ]);
+        const linkEdit = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex: 1 });
+        const element = new LinkEditEditableElement(linkEdit);
+
+        element.onDuplicate();
+
+        expect(dashboard.state.links).toHaveLength(4);
+        expect(dashboard.state.links.map((l) => l.title)).toEqual(['First', 'Second', 'Third', 'Second - Copy']);
+      });
+    });
+
     describe('onDelete', () => {
       it('removes the link at the given index', () => {
         const dashboard = buildDashboard([createTestLink({ title: 'First' }), createTestLink({ title: 'Second' })]);

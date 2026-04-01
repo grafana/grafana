@@ -174,6 +174,9 @@ const injectedRtkApi = api
           url: `/searchTeams`,
           params: {
             query: queryArg.query,
+            title: queryArg.title,
+            uid: queryArg.uid,
+            teamId: queryArg.teamId,
             limit: queryArg.limit,
             offset: queryArg.offset,
             page: queryArg.page,
@@ -911,8 +914,14 @@ export type SearchExternalGroupMappingsApiArg = {
 };
 export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
 export type GetSearchTeamsApiArg = {
-  /** team name query string */
+  /** team name query string (fuzzy/partial match). Mutually exclusive with title. */
   query?: string;
+  /** exact match on team name. Mutually exclusive with query. */
+  title?: string;
+  /** filter by team UIDs. Mutually exclusive with teamId. */
+  uid?: string[];
+  /** filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid. */
+  teamId?: number[];
   /** limit the number of results */
   limit?: number;
   /** start the query at the given offset */
