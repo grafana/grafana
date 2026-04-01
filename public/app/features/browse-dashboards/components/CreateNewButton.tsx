@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -15,13 +16,7 @@ import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
-import {
-  getImportPhrase,
-  getNewDashboardPhrase,
-  getNewFolderPhrase,
-  getNewPhrase,
-  getNewTemplateDashboardPhrase,
-} from 'app/features/search/tempI18nPhrases';
+import { getNewFolderPhrase, getNewPhrase } from 'app/features/search/tempI18nPhrases';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ManagerKind } from '../../apiserver/types';
@@ -50,6 +45,7 @@ export default function CreateNewButton({
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const theme = useTheme2();
 
   const handleVisibleChange = () => {
     if (!isOpen) {
@@ -65,6 +61,8 @@ export default function CreateNewButton({
     const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
     renderPreBuiltDashboardAction = testDataSources.length > 0;
   }
+
+  const canImport = canCreateDashboard && !isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo;
 
   const onCreateFolder = async (folderName: string, teamOwnerRefs?: OwnerReference[]) => {
     try {
@@ -97,9 +95,11 @@ export default function CreateNewButton({
   const newMenu = (
     <Menu>
       {canCreateDashboard && (
-        <>
+        <Menu.Group label={t('browse-dashboards.create-new.dashboard-group', 'Dashboard')}>
           <MenuItem
-            label={getNewDashboardPhrase()}
+            label={t('browse-dashboards.create-new.blank', 'Blank')}
+            icon="plus"
+            iconColor={theme.colors.success.text}
             onClick={() =>
               reportInteraction('grafana_menu_item_clicked', {
                 url: buildUrl('/dashboard/new', parentFolder?.uid),
@@ -110,7 +110,9 @@ export default function CreateNewButton({
           />
           {renderPreBuiltDashboardAction && (
             <MenuItem
-              label={getNewTemplateDashboardPhrase()}
+              label={t('browse-dashboards.create-new.from-template', 'From template')}
+              icon="table"
+              iconColor={theme.colors.success.text}
               onClick={() =>
                 isAnalyticsFrameworkEnabled
                   ? NewDashboardLibraryInteractions.entryPointClicked({
@@ -125,19 +127,29 @@ export default function CreateNewButton({
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
             />
           )}
-        </>
+          {canImport && (
+            <MenuItem
+              label={t('browse-dashboards.create-new.import', 'Import')}
+              icon="download-alt"
+              iconColor={theme.colors.success.text}
+              onClick={() =>
+                reportInteraction('grafana_menu_item_clicked', {
+                  url: buildUrl('/dashboard/import', parentFolder?.uid),
+                  from: location.pathname,
+                })
+              }
+              url={buildUrl('/dashboard/import', parentFolder?.uid)}
+            />
+          )}
+        </Menu.Group>
       )}
-      {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />}
-      {canCreateDashboard && !isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo && (
+      {canCreateDashboard && canCreateFolder && <Menu.Divider />}
+      {canCreateFolder && (
         <MenuItem
-          label={getImportPhrase()}
-          onClick={() =>
-            reportInteraction('grafana_menu_item_clicked', {
-              url: buildUrl('/dashboard/import', parentFolder?.uid),
-              from: location.pathname,
-            })
-          }
-          url={buildUrl('/dashboard/import', parentFolder?.uid)}
+          onClick={() => setShowNewFolderDrawer(true)}
+          label={getNewFolderPhrase()}
+          icon="folder-plus"
+          iconColor={theme.colors.success.text}
         />
       )}
     </Menu>
