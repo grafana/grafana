@@ -198,7 +198,7 @@ func newBulkImportRequest(namespace, name string, action resourcepb.BulkRequest_
 func collectBulkImportNames(t *testing.T, backend *kvStorageBackend, namespace string) []string {
 	t.Helper()
 
-	names := make([]string, 0)
+	names := make([]string, 0, 2)
 	for key, err := range backend.dataStore.Keys(context.Background(), ListRequestKey{
 		Namespace: namespace,
 		Group:     testBulkImportGroup,
