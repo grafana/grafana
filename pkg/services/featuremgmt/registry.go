@@ -2785,6 +2785,14 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},
+		{
+			Name:         "tracesDrilldownTimeSeeker",
+			Description:  "Enables the time seeker in traces drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
 	}
 )
 

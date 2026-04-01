@@ -1755,4 +1755,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryServiceQueryCaching?: boolean;
+  /**
+  * Enables the time seeker in traces drilldown
+  * @default false
+  */
+  tracesDrilldownTimeSeeker?: boolean;
 }

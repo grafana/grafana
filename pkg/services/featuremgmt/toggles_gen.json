@@ -5048,6 +5048,20 @@
     },
     {
       "metadata": {
+        "name": "tracesDrilldownTimeSeeker",
+        "resourceVersion": "1775047709831",
+        "creationTimestamp": "2026-04-01T12:48:29Z"
+      },
+      "spec": {
+        "description": "Enables the time seeker in traces drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "transformationsEmptyPlaceholder",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-11-17T13:57:05Z"
