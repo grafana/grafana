@@ -94,6 +94,12 @@ For issues with Tempo itself (not the Grafana data source), refer to the Tempo p
 - [Too many requests error](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/too-many-requests-error/) - Query capacity limits and 429 errors.
 - [Query issues](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/) - Server-side query failures, bad blocks, and performance tuning.
 
+Additional resources for Grafana Cloud: 
+
+- [Troubleshoot Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/), which covers quick checks, ingestion issues, traceQL and search,  service graph, exemplars, and rate limiting and retry.
+- [Investigate traces with Grafana Assistant](https://grafana.com/docs/grafana-cloud/send-data/traces/investigate-traces-with-assistant/) - Use Grafana Assistant to help troubleshoot any issues. 
+- [Troubleshoot traces collection with Alloy](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/traces-with-alloy/#troubleshoot)
+- [Troubleshoot errors with metrics-generator in Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/configure/metrics-generator/#troubleshoot-errors)
 ## Connection errors
 
 These errors occur when Grafana cannot establish or maintain a connection to the Tempo instance.
@@ -188,7 +194,7 @@ These errors occur when there are issues with authentication credentials or perm
 1. Check that the authenticated user has access to the specified tenant.
 1. For cross-tenant queries, ensure all specified tenants are accessible.
 
-For more information, refer to [Enable multitenancy](https://grafana.com/docs/tempo/<TEMPO_VERSION>/operations/multitenancy/) and [Tenant IDs](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/tenant-ids/).
+For more information, refer to [Enable multi-tenancy](https://grafana.com/docs/tempo/<TEMPO_VERSION>/operations/multitenancy/) and [Tenant IDs](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/tenant-ids/).
 
 ## Query errors
 
