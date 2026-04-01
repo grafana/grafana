@@ -262,6 +262,27 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
   });
 
+  test('renamed field appears as column in nested table', async ({ gotoPanelEditPage, selectors, page }) => {
+    // Regression test: a field renamed via Organize Fields before a Group to Nested Tables
+    // transform must retain its display name as the nested table column header.
+    // The field "A" is renamed to "Gauge" via the organize transform, then grouped into
+    // nested tables. The nested table column header must read "Gauge", not "A".
+    const panelEditPage = await gotoPanelEditPage({
+      dashboard: {
+        uid: NESTED_COMPLEX_DASHBOARD_UID,
+      },
+      id: '1',
+    });
+
+    await panelEditPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .first()
+      .click();
+
+    const firstNestedTable = page.locator('.rdg').nth(1);
+    await expect(firstNestedTable.getByRole('columnheader', { name: 'Gauge' })).toBeVisible();
+  });
+
   test('tooltip from field', async ({ gotoPanelEditPage, page, selectors }) => {
     const panelEditPage = await gotoPanelEditPage({
       dashboard: {
