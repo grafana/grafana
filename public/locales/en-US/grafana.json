@@ -4367,6 +4367,10 @@
     "filters": {
       "all-teams": "All teams",
       "owner-aria-label": "Owner filter",
+      "owner-limit-warning": "Listing only first {{limit}} teams out of {{totalCount}}.",
+      "owner-limit-warning-icon": "Owner filter limit warning",
+      "owner-load-error-icon": "Owner filter load error",
+      "owner-load-error-prefix": "Failed to load teams because of error:",
       "owner-loading": "Loading teams...",
       "owner-no-options": "No teams found",
       "owner-placeholder": "Filter by owner"

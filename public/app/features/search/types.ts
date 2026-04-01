@@ -1,5 +1,3 @@
-import { type Action } from 'redux';
-
 import { type WithAccessControlMetadata } from '@grafana/data';
 
 import { type ManagerKind } from '../apiserver/types';
