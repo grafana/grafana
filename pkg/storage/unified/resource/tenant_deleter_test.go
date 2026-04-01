@@ -31,6 +31,12 @@ func (v *testGcomVerifier) GetPlugins(ctx context.Context, requestID string) (ma
 	return map[string]gcom.Plugin{}, nil
 }
 
+// testStacksNS1 and testStacksNS2 are authlib-parseable cloud namespaces (StackID > 0).
+const (
+	testStacksNS1 = "stacks-1"
+	testStacksNS2 = "stacks-2"
+)
+
 // failOnceBatchDeleteKV wraps a KV and makes BatchDelete fail on the Nth call,
 // then succeed on all subsequent calls. This simulates a transient failure
 // partway through a deletion pass.
@@ -99,16 +105,16 @@ func futureTime() string {
 func TestRunDeletionPass_SkipsNotExpired(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
 
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter: futureTime(),
 	}))
 
 	td.runDeletionPass(t.Context())
 
 	// Data should still be present.
-	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix := listKey.Prefix()
 	var count int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -121,7 +127,7 @@ func TestRunDeletionPass_SkipsNotExpired(t *testing.T) {
 	assert.Equal(t, 1, count, "resource should still exist for non-expired tenant")
 
 	// Pending delete record should still be there.
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	assert.NoError(t, err)
 }
 
@@ -130,17 +136,17 @@ func TestRunDeletionPass_SkipsNotExpired(t *testing.T) {
 func TestRunDeletionPass_DeletesExpired(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash2", 101, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash2", 101, nil)
 
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter: pastTime(),
 	}))
 
 	td.runDeletionPass(t.Context())
 
-	// All data keys for tenant-1 should be gone.
-	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	// All data keys for the expired tenant should be gone.
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix := listKey.Prefix()
 	var count int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -153,7 +159,7 @@ func TestRunDeletionPass_DeletesExpired(t *testing.T) {
 	assert.Equal(t, 0, count, "resources should have been deleted for expired tenant")
 
 	// Pending delete record should be gone.
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
@@ -162,21 +168,21 @@ func TestRunDeletionPass_DeletesExpired(t *testing.T) {
 func TestRunDeletionPass_PreservesOtherTenants(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
-	// tenant-1 is expired; tenant-2 is not.
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
-	saveTestResource(t, ds, "tenant-2", "apps", "dashboards", "dash2", 101, nil)
+	// First tenant is expired; second is not.
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS2, "apps", "dashboards", "dash2", 101, nil)
 
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter: pastTime(),
 	}))
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-2", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS2, PendingDeleteRecord{
 		DeleteAfter: futureTime(),
 	}))
 
 	td.runDeletionPass(t.Context())
 
-	// tenant-1 data gone.
-	listKey1 := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	// First tenant's data gone.
+	listKey1 := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix1 := listKey1.Prefix()
 	var count1 int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -186,10 +192,10 @@ func TestRunDeletionPass_PreservesOtherTenants(t *testing.T) {
 		require.NoError(t, err)
 		count1++
 	}
-	assert.Equal(t, 0, count1, "tenant-1 resources should have been deleted")
+	assert.Equal(t, 0, count1, "first tenant resources should have been deleted")
 
-	// tenant-2 data intact.
-	listKey2 := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-2"}
+	// Second tenant's data intact.
+	listKey2 := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS2}
 	prefix2 := listKey2.Prefix()
 	var count2 int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -199,13 +205,13 @@ func TestRunDeletionPass_PreservesOtherTenants(t *testing.T) {
 		require.NoError(t, err)
 		count2++
 	}
-	assert.Equal(t, 1, count2, "tenant-2 resources should remain")
+	assert.Equal(t, 1, count2, "second tenant resources should remain")
 
-	// tenant-1 pending delete record gone; tenant-2 record still exists.
-	_, err := pds.Get(t.Context(), "tenant-1")
+	// First tenant's pending delete record gone; second tenant's record still exists.
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	assert.ErrorIs(t, err, ErrNotFound)
 
-	_, err = pds.Get(t.Context(), "tenant-2")
+	_, err = pds.Get(t.Context(), testStacksNS2)
 	assert.NoError(t, err)
 }
 
@@ -214,16 +220,16 @@ func TestRunDeletionPass_PreservesOtherTenants(t *testing.T) {
 func TestRunDeletionPass_DryRun(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, true /* dryRun */)
 
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
 
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter: pastTime(),
 	}))
 
 	td.runDeletionPass(t.Context())
 
 	// Data should still be present.
-	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix := listKey.Prefix()
 	var count int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -236,7 +242,7 @@ func TestRunDeletionPass_DryRun(t *testing.T) {
 	assert.Equal(t, 1, count, "data should not be deleted in dry-run mode")
 
 	// Pending delete record should still exist.
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	assert.NoError(t, err)
 }
 
@@ -246,14 +252,14 @@ func TestRunDeletionPass_NoDataCleansUpRecord(t *testing.T) {
 	td, _, pds := newTestTenantDeleter(t, false)
 
 	// No resources saved — only a pending-delete record.
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter: pastTime(),
 	}))
 
 	td.runDeletionPass(t.Context())
 
 	// Pending delete record should be removed.
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
@@ -262,24 +268,24 @@ func TestRunDeletionPass_NoDataCleansUpRecord(t *testing.T) {
 func TestRunDeletionPass_IdempotentRerun(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash2", 101, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash2", 101, nil)
 
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter: pastTime(),
 	}))
 
 	// First pass deletes everything.
 	td.runDeletionPass(t.Context())
 
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	require.ErrorIs(t, err, ErrNotFound)
 
 	// Second pass should be a no-op (no record, no data).
 	td.runDeletionPass(t.Context())
 
 	// Verify data is still gone.
-	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix := listKey.Prefix()
 	var count int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -312,10 +318,10 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	td := NewTenantDeleter(ds, pds, cfg)
 
 	// Create data across two group/resources.
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
-	saveTestResource(t, ds, "tenant-1", "core", "pods", "pod1", 101, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS1, "core", "pods", "pod1", 101, nil)
 
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter: pastTime(),
 	}))
 
@@ -323,7 +329,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	td.runDeletionPass(t.Context())
 
 	// Dashboards should be deleted.
-	dashPrefix := (&ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}).Prefix()
+	dashPrefix := (&ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}).Prefix()
 	var dashCount int
 	for _, err := range realKV.Keys(t.Context(), dataSection, ListOptions{
 		StartKey: dashPrefix, EndKey: PrefixRangeEnd(dashPrefix),
@@ -334,7 +340,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	assert.Equal(t, 0, dashCount, "dashboards should have been deleted in the first pass")
 
 	// Pods should still exist (BatchDelete failed for this group).
-	podPrefix := (&ListRequestKey{Group: "core", Resource: "pods", Namespace: "tenant-1"}).Prefix()
+	podPrefix := (&ListRequestKey{Group: "core", Resource: "pods", Namespace: testStacksNS1}).Prefix()
 	var podCount int
 	for _, err := range realKV.Keys(t.Context(), dataSection, ListOptions{
 		StartKey: podPrefix, EndKey: PrefixRangeEnd(podPrefix),
@@ -345,7 +351,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	assert.Equal(t, 1, podCount, "pods should survive the failed first pass")
 
 	// Pending-delete record must still exist (deleteTenant returned an error).
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	require.NoError(t, err, "pending-delete record should survive after partial failure")
 
 	// Second pass: no more injected failures — should finish the job.
@@ -360,7 +366,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	}
 	assert.Equal(t, 0, podCount, "pods should be deleted after retry pass")
 
-	_, err = pds.Get(t.Context(), "tenant-1")
+	_, err = pds.Get(t.Context(), testStacksNS1)
 	assert.ErrorIs(t, err, ErrNotFound, "pending-delete record should be removed after retry")
 }
 
@@ -370,12 +376,12 @@ func TestRunDeletionPass_DataWithoutPendingRecord(t *testing.T) {
 	td, ds, _ := newTestTenantDeleter(t, false)
 
 	// Save data but do NOT create a pending-delete record.
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
 
 	td.runDeletionPass(t.Context())
 
 	// Data should be untouched.
-	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix := listKey.Prefix()
 	var count int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -393,17 +399,17 @@ func TestRunDeletionPass_DataWithoutPendingRecord(t *testing.T) {
 func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
-	saveTestResource(t, ds, "tenant-1", "core", "pods", "pod1", 101, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS1, "core", "pods", "pod1", 101, nil)
 
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter: pastTime(),
 	}))
 
 	groupResources, err := ds.getGroupResources(t.Context())
 	require.NoError(t, err)
 
-	err = td.deleteTenant(t.Context(), "tenant-1", groupResources)
+	err = td.deleteTenant(t.Context(), testStacksNS1, groupResources)
 	require.NoError(t, err)
 
 	// Both group/resource pairs should be gone.
@@ -411,7 +417,7 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 		{"apps", "dashboards"},
 		{"core", "pods"},
 	} {
-		listKey := ListRequestKey{Group: gr.group, Resource: gr.resource, Namespace: "tenant-1"}
+		listKey := ListRequestKey{Group: gr.group, Resource: gr.resource, Namespace: testStacksNS1}
 		prefix := listKey.Prefix()
 		var count int
 		for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -425,7 +431,7 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 	}
 
 	// Pending delete record should also be removed.
-	_, err = pds.Get(t.Context(), "tenant-1")
+	_, err = pds.Get(t.Context(), testStacksNS1)
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
@@ -434,9 +440,9 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
 
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter:      pastTime(),
 		LabelingComplete: true,
 		Force:            true,
@@ -444,7 +450,7 @@ func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 
 	td.runDeletionPass(t.Context())
 
-	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix := listKey.Prefix()
 	var count int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -456,7 +462,7 @@ func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 	}
 	assert.Equal(t, 0, count, "force record resources should be deleted when expired")
 
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
@@ -471,18 +477,19 @@ func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
 		Interval: time.Hour,
 		Log:      log.NewNopLogger(),
 		Gcom: &testGcomVerifier{
-			getInstance: func(_ context.Context, _, _ string) (gcom.Instance, error) {
+			getInstance: func(_ context.Context, _, instanceID string) (gcom.Instance, error) {
+				require.Equal(t, "1", instanceID)
 				return gcom.Instance{ID: 42, Slug: "active-stack"}, nil
 			},
 		},
 	})
 
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{DeleteAfter: pastTime()}))
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
 
 	td.runDeletionPass(t.Context())
 
-	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix := listKey.Prefix()
 	var count int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -494,7 +501,7 @@ func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
 	}
 	assert.Equal(t, 1, count, "resources must remain while GCOM still has the instance")
 
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
 	require.NoError(t, err, "pending-delete record must remain")
 }
 
@@ -509,18 +516,19 @@ func TestRunDeletionPass_SkipsWhenGcomCheckFails(t *testing.T) {
 		Interval: time.Hour,
 		Log:      log.NewNopLogger(),
 		Gcom: &testGcomVerifier{
-			getInstance: func(_ context.Context, _, _ string) (gcom.Instance, error) {
+			getInstance: func(_ context.Context, _, instanceID string) (gcom.Instance, error) {
+				require.Equal(t, "1", instanceID)
 				return gcom.Instance{}, fmt.Errorf("injected GCOM transport error")
 			},
 		},
 	})
 
-	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
-	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{DeleteAfter: pastTime()}))
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
 
 	td.runDeletionPass(t.Context())
 
-	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
 	prefix := listKey.Prefix()
 	var count int
 	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
@@ -532,6 +540,47 @@ func TestRunDeletionPass_SkipsWhenGcomCheckFails(t *testing.T) {
 	}
 	assert.Equal(t, 1, count)
 
-	_, err := pds.Get(t.Context(), "tenant-1")
+	_, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+}
+
+// TestRunDeletionPass_SkipsWhenNamespaceHasNoStackID verifies non-cloud namespaces
+// do not call GCOM and do not delete local data.
+func TestRunDeletionPass_SkipsWhenNamespaceHasNoStackID(t *testing.T) {
+	kv := setupBadgerKV(t)
+	ds := newDataStore(kv)
+	pds := newPendingDeleteStore(kv)
+	called := false
+	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
+		DryRun:   false,
+		Interval: time.Hour,
+		Log:      log.NewNopLogger(),
+		Gcom: &testGcomVerifier{
+			getInstance: func(_ context.Context, _, _ string) (gcom.Instance, error) {
+				called = true
+				return gcom.Instance{}, gcom.ErrInstanceNotFound
+			},
+		},
+	})
+
+	const orgStyleNS = "org-999"
+	saveTestResource(t, ds, orgStyleNS, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), orgStyleNS, PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	td.runDeletionPass(t.Context())
+
+	require.False(t, called, "GCOM should not be called without a resolvable stack id")
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: orgStyleNS}
+	prefix := listKey.Prefix()
+	var count int
+	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	}) {
+		require.NoError(t, err)
+		count++
+	}
+	assert.Equal(t, 1, count)
+	_, err := pds.Get(t.Context(), orgStyleNS)
 	require.NoError(t, err)
 }

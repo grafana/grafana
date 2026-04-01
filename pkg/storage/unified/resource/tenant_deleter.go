@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"math/rand/v2"
+	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/gcom"
@@ -152,16 +154,24 @@ func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantNam
 		return true
 	}
 
+	info, err := types.ParseNamespace(tenantName)
+	if err != nil || info.StackID <= 0 {
+		td.log.Error("GCOM verification requires a cloud stack namespace (stacks-{stackId}); skipping local data deletion",
+			"tenant", tenantName, "err", err, "stack_id", info.StackID)
+		return false
+	}
+	instanceID := strconv.FormatInt(info.StackID, 10)
+
 	reqID := tracing.TraceIDFromContext(ctx, false)
-	_, err := td.gcom.GetInstanceByID(ctx, reqID, tenantName)
+	_, err = td.gcom.GetInstanceByID(ctx, reqID, instanceID)
 	if err == nil {
-		td.log.Warn("tenant still exists in GCOM; skipping local data deletion", "tenant", tenantName)
+		td.log.Warn("tenant still exists in GCOM; skipping local data deletion", "tenant", tenantName, "gcom_instance_id", instanceID)
 		return false
 	}
 	if errors.Is(err, gcom.ErrInstanceNotFound) {
 		return true
 	}
-	td.log.Error("GCOM instance check failed; skipping local data deletion", "tenant", tenantName, "err", err)
+	td.log.Error("GCOM instance check failed; skipping local data deletion", "tenant", tenantName, "gcom_instance_id", instanceID, "err", err)
 	return false
 }
 
