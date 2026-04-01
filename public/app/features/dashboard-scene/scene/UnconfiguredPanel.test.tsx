@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react';
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { CoreApp, getDefaultTimeRange, PanelProps } from '@grafana/data';
+import { CoreApp, getDefaultTimeRange, type PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';
@@ -126,8 +126,7 @@ beforeEach(() => {
   mockSceneGraphGetTimeRange.mockReturnValue({ state: { value: getDefaultTimeRange() } });
 
   config.featureToggles.newVizSuggestions = false;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (config.featureToggles as any).newUnconfiguredPanel = true;
+  config.featureToggles.newUnconfiguredPanel = true;
   contextSrv.isSignedIn = true;
   (window as Window & { __grafanaSceneContext?: unknown }).__grafanaSceneContext = null;
 });
@@ -135,8 +134,7 @@ beforeEach(() => {
 afterEach(() => {
   delete (window as Window & { __grafanaSceneContext?: unknown }).__grafanaSceneContext;
   config.featureToggles.newVizSuggestions = false;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (config.featureToggles as any).newUnconfiguredPanel = false;
+  config.featureToggles.newUnconfiguredPanel = false;
   contextSrv.isSignedIn = false;
 });
 

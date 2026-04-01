@@ -1,12 +1,11 @@
 import { css, cx, type keyframes } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
-import { CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
+import { AppEvents, CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { SceneDataTransformer, SceneQueryRunner, sceneGraph, sceneUtils } from '@grafana/scenes';
-import { type DataQuery } from '@grafana/schema';
+import { config, locationService } from '@grafana/runtime';
+import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import {
   Box,
   Button,
@@ -29,7 +28,6 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { AccessControlAction } from 'app/types/accessControl';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
-import { NEW_PANEL_TITLE } from '../../dashboard/utils/dashboard';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
 import {
@@ -44,7 +42,7 @@ import {
   textFrames,
   useViewPhase,
 } from '../utils/unconfiguredPanelUtils';
-import { findVizPanelByKey, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -58,10 +56,10 @@ function hasSavedQueryReadPermissions(): boolean {
 }
 
 export function UnconfiguredPanelComp(props: PanelProps) {
-  // if (config.featureToggles.newUnconfiguredPanel) {
-  return <NewUnconfiguredPanelComp {...props} />;
-  // }
-  // return <LegacyUnconfiguredPanelComp {...props} />;
+  if (config.featureToggles.newUnconfiguredPanel) {
+    return <NewUnconfiguredPanelComp {...props} />;
+  }
+  return <LegacyUnconfiguredPanelComp {...props} />;
 }
 
 function NewUnconfiguredPanelComp(props: PanelProps) {
@@ -279,7 +277,6 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const panelContext = usePanelContext();
   const styles = useStyles2(getStyles);
-  const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onMenuClick = useCallback(
     (isOpen: boolean) => {
@@ -312,84 +309,6 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
   };
 
-  const onUseSavedQuery = useCallback(async () => {
-    if (!queryLibraryEnabled) {
-      return;
-    }
-
-    if (!dashboard || !(dashboard instanceof DashboardScene) || !panel) {
-      return;
-    }
-
-    openQueryLibraryDrawer({
-      onSelectQuery: async (query: DataQuery) => {
-        try {
-          let queryRunner = getQueryRunnerFor(panel);
-
-          if (!queryRunner && !panel.state.$data) {
-            const defaultDatasource = getDataSourceSrv().getInstanceSettings(null)?.name;
-            panel.setState({
-              $data: new SceneDataTransformer({
-                $data: new SceneQueryRunner({
-                  datasource: {
-                    uid: defaultDatasource,
-                  },
-                  queries: [],
-                }),
-                transformations: [],
-              }),
-            });
-            queryRunner = getQueryRunnerFor(panel);
-          }
-
-          if (!queryRunner) {
-            console.error('Failed to get or create query runner for panel');
-            return;
-          }
-
-          const enrichedQuery = query.datasource
-            ? query
-            : {
-                ...query,
-                datasource: queryRunner.state.datasource || { uid: config.defaultDatasource },
-              };
-
-          queryRunner.setState({ queries: [enrichedQuery] });
-
-          panel.changePluginType('table');
-
-          if (enrichedQuery.datasource?.uid) {
-            const dsSettings = await getDataSourceSrv().get({ uid: enrichedQuery.datasource.uid });
-            queryRunner.setState({ datasource: { uid: dsSettings.uid, type: dsSettings.type } });
-          }
-
-          locationService.partial({ editPanel: props.id });
-
-          setTimeout(() => {
-            queryRunner.runQueries();
-          }, 0);
-        } catch (error) {
-          console.error('Failed to set query from library:', error);
-        }
-      },
-      options: {
-        context: CoreApp.Dashboard,
-      },
-    });
-  }, [dashboard, panel, props.id, openQueryLibraryDrawer, queryLibraryEnabled]);
-
-  useEffect(() => {
-    if (!panel || !config.featureToggles.newVizSuggestions) {
-      return;
-    }
-
-    if (panelContext.app === CoreApp.PanelEditor) {
-      panel.setState({ title: '' });
-    } else if (!panel.state.title) {
-      panel.setState({ title: NEW_PANEL_TITLE });
-    }
-  }, [panel, panelContext.app]);
-
   const MenuActions = () => (
     <Menu>
       <Menu.Item
@@ -397,13 +316,6 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
         label={t('dashboard.new-panel.menu-open-panel-editor', 'Configure')}
         onClick={onConfigure}
       ></Menu.Item>
-      {queryLibraryEnabled && hasSavedQueryReadPermissions() && (
-        <Menu.Item
-          icon="book-open"
-          label={t('dashboard.new-panel.menu-use-saved-query', 'Use saved query')}
-          onClick={onUseSavedQuery}
-        ></Menu.Item>
-      )}
       <Menu.Item
         icon="library-panel"
         label={t('dashboard.new-panel.menu-use-library-panel', 'Use library panel')}
@@ -431,11 +343,7 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
     );
   }
 
-  if (!dashboard || !(dashboard instanceof DashboardScene)) {
-    return null;
-  }
-
-  const { isEditing } = dashboard.state;
+  const { isEditing } = dashboard instanceof DashboardScene ? dashboard.state : { isEditing: false };
 
   return (
     <Stack direction={'row'} alignItems={'center'} height={'100%'} justifyContent={'center'}>
