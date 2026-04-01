@@ -77,7 +77,7 @@ function useUnconfiguredPanelDashboard(): { dashboard: DashboardScene | null; is
     if (!dashboard) {
       return;
     }
-    const sub = dashboard.subscribeToState((state) => setIsEditing(state.isEditing));
+    const sub = dashboard.subscribeToState((state) => setIsEditing(state.isEditing ?? false));
     return () => sub.unsubscribe();
   }, [dashboard]);
 
@@ -153,13 +153,13 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
   };
 
   const onUseLibraryPanel = () => {
-    if (!dashboard || !(dashboard instanceof DashboardScene)) {
-      throw new Error('DashboardScene not found');
+    if (!dashboard) {
+      return;
     }
 
     const panel = findVizPanelByKey(dashboard, panelKey);
     if (!panel) {
-      throw new Error('Panel not found');
+      return;
     }
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
@@ -319,11 +319,11 @@ function LegacyUnconfiguredPanelComp(props: PanelProps) {
 
   const onUseLibraryPanel = () => {
     if (!dashboard) {
-      throw new Error('DashboardScene not found');
+      return;
     }
 
     if (!panel) {
-      throw new Error('Panel not found');
+      return;
     }
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
@@ -398,7 +398,6 @@ sceneUtils.registerRuntimePanelPlugin({
 function getStyles(theme: GrafanaTheme2) {
   return {
     root: css({
-      containerType: 'size',
       position: 'relative',
       display: 'flex',
       alignItems: 'center',
@@ -472,10 +471,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       alignItems: 'stretch',
       gap: theme.spacing(1),
-      [`${theme.breakpoints.container.up('md')} and (max-height: 149px)`]: {
-        flexDirection: 'row',
-        alignItems: 'center',
-      },
     }),
     buttonListCompact: css({
       flexDirection: 'row',

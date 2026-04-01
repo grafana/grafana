@@ -7,6 +7,7 @@ import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -421,6 +422,38 @@ describe('UnconfiguredPanelComp', () => {
 
           expect(mockGetVizSuggestionForQuery).not.toHaveBeenCalled();
         });
+      });
+    });
+
+    describe('savedQueriesRBAC = true', () => {
+      beforeEach(() => {
+        mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
+        config.featureToggles.savedQueriesRBAC = true;
+        buildDashboard({ isEditing: true });
+      });
+
+      afterEach(() => {
+        config.featureToggles.savedQueriesRBAC = false;
+      });
+
+      it('renders the "Use saved query" button when the user has QueriesRead permission', async () => {
+        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+        const { user, root } = renderPanel();
+
+        await user.hover(root);
+
+        expect(screen.getByRole('button', { name: /use saved query/i })).toBeInTheDocument();
+        expect(contextSrv.hasPermission).toHaveBeenCalledWith(AccessControlAction.QueriesRead);
+      });
+
+      it('does not render the "Use saved query" button when the user lacks QueriesRead permission', async () => {
+        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+        const { user, root } = renderPanel();
+
+        await user.hover(root);
+
+        expect(screen.queryByRole('button', { name: /use saved query/i })).not.toBeInTheDocument();
+        expect(contextSrv.hasPermission).toHaveBeenCalledWith(AccessControlAction.QueriesRead);
       });
     });
 
