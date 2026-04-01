@@ -31,13 +31,14 @@ on:
         default: false
         type: boolean
 
-permissions:
-  # contents: write allows the action(s) to create github releases
-  contents: write
-  id-token: write
+permissions: {}
 
 jobs:
   main:
+    permissions:
+      # contents: write allows the action(s) to create github releases
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Create GitHub release (manually invoked)
