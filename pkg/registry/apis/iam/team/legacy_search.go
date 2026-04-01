@@ -74,6 +74,7 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		Limit:        int(req.Limit),
 		Page:         int(req.Page),
 		Query:        req.Query,
+		Name:         titleFromRequirements(req.Options),
 		OrgID:        signedInUser.GetOrgID(),
 		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, teamSortFieldMapping, teamsortopts.SortOptionsByQueryParam),
 	}
@@ -158,4 +159,16 @@ func createDefaultCells(t *team.TeamDTO) [][]byte {
 		[]byte(t.UID),
 		[]byte(t.Name),
 	}
+}
+
+func titleFromRequirements(opts *resourcepb.ListOptions) string {
+	if opts == nil {
+		return ""
+	}
+	for _, r := range opts.Fields {
+		if r != nil && r.Key == res.SEARCH_FIELD_TITLE && len(r.Values) > 0 {
+			return r.Values[0]
+		}
+	}
+	return ""
 }
