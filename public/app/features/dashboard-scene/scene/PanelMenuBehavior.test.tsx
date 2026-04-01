@@ -966,7 +966,9 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
     });
 
-    it.each(['trend', 'candlestick'])('should show styles menu for %s panel', async (pluginId) => {
+    it.each(['trend', 'candlestick', 'stat', 'gauge', 'bargauge', 'barchart', 'piechart'])(
+      'should show styles menu for %s panel',
+      async (pluginId) => {
       const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
       const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
@@ -985,7 +987,7 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeDefined();
     });
 
-    it.each(['trend', 'candlestick'])(
+    it.each(['trend', 'candlestick', 'stat', 'gauge', 'bargauge', 'barchart', 'piechart'])(
       'should show paste option for %s panel when matching styles are copied',
       async (pluginId) => {
         store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: pluginId, styles: {} }));
@@ -1011,7 +1013,7 @@ describe('panelMenuBehavior', () => {
       }
     );
 
-    it.each(['trend', 'candlestick'])(
+    it.each(['trend', 'candlestick', 'stat', 'gauge', 'bargauge', 'barchart', 'piechart'])(
       'should not show paste option for %s panel when timeseries styles are copied',
       async (pluginId) => {
         store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
