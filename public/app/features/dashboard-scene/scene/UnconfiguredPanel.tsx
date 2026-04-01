@@ -205,7 +205,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
     },
   ];
 
-  if (queryLibraryEnabled && hasSavedQueryReadPermissions()) {
+  if (queryLibraryEnabled && config.featureToggles.newVizSuggestions && hasSavedQueryReadPermissions()) {
     buttons.splice(1, 0, {
       key: 'saved-query',
       icon: 'book-open',

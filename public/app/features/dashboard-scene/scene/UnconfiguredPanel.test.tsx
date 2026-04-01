@@ -307,8 +307,22 @@ describe('UnconfiguredPanelComp', () => {
     });
 
     describe('queryLibraryEnabled = true', () => {
-      it('renders the "Use saved query" button', async () => {
+      beforeEach(() => {
+        config.featureToggles.newVizSuggestions = true;
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
+      });
+
+      it('does not render the "Use saved query" button when newVizSuggestions is off', async () => {
+        config.featureToggles.newVizSuggestions = false;
+        buildDashboard({ isEditing: true });
+        const { user, root } = renderPanel();
+
+        await user.hover(root);
+
+        expect(screen.queryByRole('button', { name: /use saved query/i })).not.toBeInTheDocument();
+      });
+
+      it('renders the "Use saved query" button', async () => {
         buildDashboard({ isEditing: true });
         const { user, root } = renderPanel();
 
@@ -321,6 +335,7 @@ describe('UnconfiguredPanelComp', () => {
         const mockOpenDrawer = jest.fn();
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: mockOpenDrawer, queryLibraryEnabled: true });
         buildDashboard({ isEditing: true });
+
         const { user, root } = renderPanel();
 
         await user.hover(root);
@@ -349,6 +364,7 @@ describe('UnconfiguredPanelComp', () => {
           const mockOpenDrawer = jest.fn();
           mockUseQueryLibraryContext.mockReturnValue({ openDrawer: mockOpenDrawer, queryLibraryEnabled: true });
           buildDashboard({ isEditing: true });
+
           const { user, root } = renderPanel();
 
           await user.hover(root);
@@ -428,6 +444,7 @@ describe('UnconfiguredPanelComp', () => {
     describe('savedQueriesRBAC = true', () => {
       beforeEach(() => {
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
+        config.featureToggles.newVizSuggestions = true;
         config.featureToggles.savedQueriesRBAC = true;
         buildDashboard({ isEditing: true });
       });
@@ -464,6 +481,7 @@ describe('UnconfiguredPanelComp', () => {
 
       it('shows all buttons as icon-only with tooltips', async () => {
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
+        config.featureToggles.newVizSuggestions = true;
         buildDashboard({ isEditing: true });
         const { user, root } = renderPanel();
 
