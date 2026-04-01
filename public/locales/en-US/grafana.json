@@ -4364,6 +4364,13 @@
       "title": "You haven't created any dashboards yet",
       "title-folder": "This folder doesn't have any dashboards yet"
     },
+    "filters": {
+      "all-teams": "All teams",
+      "owner-aria-label": "Owner filter",
+      "owner-loading": "Loading teams...",
+      "owner-no-options": "No teams found",
+      "owner-placeholder": "Filter by owner"
+    },
     "folder-actions-button": {
       "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
