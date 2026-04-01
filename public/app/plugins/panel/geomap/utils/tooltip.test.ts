@@ -1,14 +1,14 @@
 import Feature from 'ol/Feature';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
+import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { Point } from 'ol/geom';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import VectorSource from 'ol/source/Vector';
 
-import { DataFrame, PanelProps } from '@grafana/data';
+import { type DataFrame, type PanelProps } from '@grafana/data';
 
 import { GeomapPanel } from '../GeomapPanel';
-import { GeomapHoverPayload, GeomapLayerHover } from '../event';
-import { Options } from '../types';
+import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';
+import { type Options } from '../panelcfg.gen';
 
 import { pointerMoveListener } from './tooltip';
 

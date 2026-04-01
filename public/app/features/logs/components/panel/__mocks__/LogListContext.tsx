@@ -3,8 +3,8 @@ import { createContext, useContext } from 'react';
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
-import { LogListContextData, Props } from '../LogListContext';
-import { LogListModel } from '../processing';
+import { type LogListContextData, type Props } from '../LogListContext';
+import { type LogListModel } from '../processing';
 
 jest.mock('@grafana/assistant', () => {
   return {
@@ -31,6 +31,7 @@ export const LogListContext = createContext<LogListContextData>({
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
+  setShowLevel: () => {},
   setShowTime: () => {},
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
@@ -38,6 +39,7 @@ export const LogListContext = createContext<LogListContextData>({
   setTimestampResolution: () => {},
   setUnwrappedColumns: () => {},
   setWrapLogMessage: () => {},
+  showLevel: true,
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
@@ -76,6 +78,7 @@ export const defaultValue: LogListContextData = {
   setForceEscape: jest.fn(),
   setLogListState: jest.fn(),
   setPinnedLogs: jest.fn(),
+  setShowLevel: jest.fn(),
   setShowTime: jest.fn(),
   setShowUniqueLabels: jest.fn(),
   setSortOrder: jest.fn(),
@@ -92,6 +95,7 @@ export const defaultValue: LogListContextData = {
   app: CoreApp.Explore,
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
+  showLevel: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   unwrappedColumns: false,
@@ -119,6 +123,7 @@ export const defaultProps: Props = {
   onUnpinLine: jest.fn(),
   pinnedLogs: [],
   showControls: true,
+  showLevel: true,
   showTime: true,
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
@@ -144,6 +149,7 @@ export const LogListContextProvider = ({
   onUnpinLine = jest.fn(),
   permalinkedLogId,
   pinnedLogs = [],
+  showLevel = true,
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
@@ -187,6 +193,7 @@ export const LogListContextProvider = ({
         setSortOrder: jest.fn(),
         setSyntaxHighlighting: jest.fn(),
         setWrapLogMessage: jest.fn(),
+        showLevel,
         showTime,
         sortOrder,
         syntaxHighlighting,

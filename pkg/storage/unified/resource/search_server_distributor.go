@@ -43,18 +43,25 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 		tracing:    tracer,
 	}
 
-	healthService, err := ProvideHealthService(s)
-	if err != nil {
-		return nil, err
-	}
-
 	srv := provider.GetServer()
 	resourcepb.RegisterResourceIndexServer(srv, s)
 	resourcepb.RegisterManagedObjectIndexServer(srv, s)
-	grpc_health_v1.RegisterHealthServer(srv, healthService)
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
-
-	s.BasicService = services.NewIdleService(nil, nil).WithName(modules.SearchServerDistributor)
+	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
+		ringWatcher := services.NewFailureWatcher()
+		ringWatcher.WatchService(s.ring)
+		defer ringWatcher.Close()
+		if state := s.ring.State(); state != services.Running {
+			return fmt.Errorf("ring is not running: state=%s", state)
+		}
+		select {
+		case err := <-ringWatcher.Chan():
+			return fmt.Errorf("ring failure: %w", err)
+		case <-ctx.Done():
+			s.log.Info("Stopping search distributor server")
+			return nil
+		}
+	}, nil).WithName(modules.SearchServerDistributor)
 	return s, nil
 }
 

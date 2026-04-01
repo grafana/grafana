@@ -1,23 +1,27 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 
-import { DataSourceApi, FeatureState, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { type DataSourceApi, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, FeatureBadge, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, InlineField, type PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
-import { SqlExpr } from './components/SqlExpressions/SqlExpr';
 import { Threshold } from './components/Threshold';
-import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
+import { type ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
 export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 
 const labelWidth = 15;
+const SqlExpr = lazy(() =>
+  import('./components/SqlExpressions/SqlExpr').then((module) => ({
+    default: module.SqlExpr,
+  }))
+);
 
 type NonClassicExpressionType = Exclude<ExpressionQueryType, ExpressionQueryType.classic>;
 type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, string>>;
@@ -27,9 +31,7 @@ type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, stri
  * @param type - The expression type.
  * @returns The configuration for the expression type.
  */
-const getExpressionTypeConfig = (
-  type: ExpressionQueryType
-): { helperText: PopoverContent; featureState: FeatureState | undefined } => {
+const getExpressionTypeConfig = (type: ExpressionQueryType): { helperText: PopoverContent } => {
   const description = expressionTypes.find(({ value }) => value === type)?.description;
 
   switch (type) {
@@ -42,12 +44,10 @@ const getExpressionTypeConfig = (
             columns, as returned from the data source.
           </Trans>
         ),
-        featureState: FeatureState.preview,
       };
     default:
       return {
         helperText: description ?? '',
-        featureState: undefined,
       };
   }
 };
@@ -131,19 +131,21 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
 
       case ExpressionQueryType.sql:
         return (
-          <SqlExpr
-            onChange={onChange}
-            query={query}
-            refIds={refIds}
-            queries={queries}
-            metadata={props}
-            onRunQuery={onRunQuery}
-          />
+          <Suspense fallback={null}>
+            <SqlExpr
+              onChange={onChange}
+              query={query}
+              refIds={refIds}
+              queries={queries}
+              metadata={props}
+              onRunQuery={onRunQuery}
+            />
+          </Suspense>
         );
     }
   };
 
-  const { helperText, featureState } = getExpressionTypeConfig(query.type);
+  const { helperText } = getExpressionTypeConfig(query.type);
 
   return (
     <div>
@@ -159,7 +161,6 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
           </ExpressionTypeDropdown>
         </InlineField>
         <div className={styles.fieldContainer}>
-          {featureState && <FeatureBadge featureState={featureState} />}
           {helperText && <IconButton name="info-circle" tooltip={helperText} />}
         </div>
       </div>

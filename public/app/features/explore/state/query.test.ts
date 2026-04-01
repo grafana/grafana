@@ -4,27 +4,27 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourcePluginMeta,
-  DataSourceWithSupplementaryQueriesSupport,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+  type DataSourceWithSupplementaryQueriesSupport,
   LoadingState,
   MutableDataFrame,
-  RawTimeRange,
+  type RawTimeRange,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
-import { ExploreItemState } from 'app/types/explore';
-import { createAsyncThunk, StoreState, ThunkDispatch } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk, type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import * as richHistory from '../../../core/utils/richHistory';
 import { configureStore } from '../../../store/configureStore';
-import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
 import { makeLogs } from '../mocks/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
@@ -46,7 +46,7 @@ import {
   cleanSupplementaryQueryDataProviderAction,
   clearLogs,
   queryStreamUpdatedAction,
-  QueryEndedPayload,
+  type QueryEndedPayload,
   changeQueries,
 } from './query';
 import * as actions from './query';
@@ -164,6 +164,7 @@ describe('runQueries', () => {
   beforeEach(() => {
     config.queryHistoryEnabled = false;
     jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
   it('should pass dataFrames to state even if there is error in response', async () => {
@@ -196,21 +197,24 @@ describe('runQueries', () => {
   });
 
   it('should set state to done if query completes without emitting', async () => {
+    jest.useFakeTimers();
     const { dispatch, getState } = setupTests();
     const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
     jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
     await dispatch(runQueries({ exploreId: 'left' }));
-    await new Promise((resolve) => setTimeout(() => resolve(''), 500));
+    await jest.advanceTimersByTimeAsync(500);
     expect(getState().explore.panes.left!.queryResponse.state).toBe(LoadingState.Done);
   });
 
   it('shows results only after correlations are loaded', async () => {
+    jest.useFakeTimers();
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
     await dispatch(runQueries({ exploreId: 'left' }));
     expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
+    await jest.advanceTimersByTimeAsync(500);
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
   });
 

@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -36,6 +37,16 @@ type alertmanagerConfigStore interface {
 
 type provenanceValidator func(from, to models.Provenance) error
 
+type routeAccessControl interface {
+	FilterRead(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) ([]*legacy_storage.ManagedRoute, error)
+	AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error
+	AuthorizeCreate(ctx context.Context, user identity.Requester) error
+	AuthorizeUpdateByUID(ctx context.Context, user identity.Requester, uid string) error
+	AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, uid string) error
+	SetDefaultPermissions(ctx context.Context, user identity.Requester, route *legacy_storage.ManagedRoute) error
+	DeleteAllPermissions(ctx context.Context, orgID int64, route *legacy_storage.ManagedRoute) error
+}
+
 type Service struct {
 	configStore     alertmanagerConfigStore
 	provenanceStore routeProvenanceStore
@@ -45,6 +56,7 @@ type Service struct {
 	validator       provenanceValidator
 	FeatureToggles  featuremgmt.FeatureToggles
 	tracer          tracing.Tracer
+	routeAccess     routeAccessControl
 }
 
 func NewService(
@@ -56,6 +68,7 @@ func NewService(
 	log log.Logger,
 	validator provenanceValidator,
 	tracer tracing.Tracer,
+	routeAccess routeAccessControl,
 ) *Service {
 	return &Service{
 		configStore:     am,
@@ -66,10 +79,11 @@ func NewService(
 		FeatureToggles:  features,
 		validator:       validator,
 		tracer:          tracer,
+		routeAccess:     routeAccess,
 	}
 }
 
-func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error) {
+func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.get", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("query_name", name),
@@ -83,6 +97,9 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
+	if err := nps.routeAccess.AuthorizeReadByUID(ctx, user, name); err != nil {
+		return legacy_storage.ManagedRoute{}, err
+	}
 	rev, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return legacy_storage.ManagedRoute{}, err
@@ -117,7 +134,7 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 	return *route, nil
 }
 
-func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_storage.ManagedRoutes, error) {
+func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (legacy_storage.ManagedRoutes, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.getMany", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
@@ -166,11 +183,16 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_s
 		attribute.Int("count", len(managedRoutes)),
 	))
 
+	managedRoutes, err = nps.routeAccess.FilterRead(ctx, user, managedRoutes...)
+	if err != nil {
+		return nil, err
+	}
+
 	managedRoutes.Sort()
 	return managedRoutes, nil
 }
 
-func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, version string) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.update", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -181,6 +203,10 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
+	}
+
+	if err := nps.routeAccess.AuthorizeUpdateByUID(ctx, user, name); err != nil {
+		return nil, err
 	}
 
 	err := subtree.Validate()
@@ -255,7 +281,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	return updated, nil
 }
 
-func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name string, p models.Provenance, version string) error {
+func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name string, p models.Provenance, version string, user identity.Requester) error {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.delete", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -268,6 +294,10 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return models.ErrRouteNotFound.Errorf("route %q not found", name)
+	}
+
+	if err := nps.routeAccess.AuthorizeDeleteByUID(ctx, user, name); err != nil {
+		return err
 	}
 
 	revision, err := nps.configStore.Get(ctx, orgID)
@@ -329,6 +359,9 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
+		if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
+			return err
+		}
 		return nps.provenanceStore.DeleteProvenance(ctx, existing, orgID)
 	})
 	if err != nil {
@@ -341,7 +374,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	return nil
 }
 
-func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.create", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -352,6 +385,10 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	// Backwards compatibility when managed routes FF is disabled. This is not allowed.
 	if !nps.managedRoutesEnabled() {
 		return nil, models.ErrMultipleRoutesNotSupported.Errorf("")
+	}
+
+	if err := nps.routeAccess.AuthorizeCreate(ctx, user); err != nil {
+		return nil, err
 	}
 
 	err := subtree.Validate()
@@ -379,6 +416,9 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
+		}
+		if err := nps.routeAccess.SetDefaultPermissions(ctx, user, created); err != nil {
 			return err
 		}
 		return nps.provenanceStore.SetProvenance(ctx, created, orgID, p)

@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import { OpenTsdbQuery } from '../types';
+import { type OpenTsdbQuery } from '../types';
 
-import { RateSection, RateSectionProps, testIds } from './RateSection';
+import { RateSection, type RateSectionProps, testIds } from './RateSection';
 
 const onRunQuery = jest.fn();
 const onChange = jest.fn();

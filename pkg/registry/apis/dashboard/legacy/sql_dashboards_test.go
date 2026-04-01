@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -516,6 +517,110 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		updatedTimestamp, err := meta.GetUpdatedTimestamp()
 		require.NoError(t, err)
 		require.Nil(t, updatedTimestamp)
+	})
+}
+
+func TestRowsWrapper_PropagatesRowsErr(t *testing.T) {
+	mockDB, smock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() {
+		_ = mockDB.Close()
+	}()
+
+	provisioner := provisioning.NewProvisioningServiceMock(context.Background())
+	provisioner.GetDashboardProvisionerResolvedPathFunc = func(name string) string { return "provisioner" }
+	store := &dashboardSqlAccess{
+		namespacer:   func(_ int64) string { return "default" },
+		provisioning: provisioner,
+		log:          log.New("test"),
+	}
+
+	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
+	timestamp := time.Now()
+
+	t.Run("rows.Err after partial iteration is surfaced via Error()", func(t *testing.T) {
+		// Simulate: first row succeeds, second row triggers a rows.Err()
+		simulatedErr := fmt.Errorf("connection reset by peer")
+		rows := sqlmock.NewRows(columns).
+			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1").
+			RowError(1, simulatedErr). // error on second row
+			AddRow(1, int64(2), "uid2", "Dashboard 2", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
+
+		smock.ExpectQuery("SELECT").WillReturnRows(rows)
+		sqlRows, err := mockDB.Query("SELECT")
+		require.NoError(t, err)
+
+		wrapper := &rowsWrapper{
+			rows:    sqlRows,
+			a:       store,
+			history: false,
+		}
+		defer func() {
+			_ = wrapper.Close()
+		}()
+
+		// First call should succeed
+		require.True(t, wrapper.Next())
+		require.NoError(t, wrapper.Error())
+		require.Equal(t, "uid1", wrapper.Name())
+
+		// Second call should return false and surface the rows.Err()
+		require.False(t, wrapper.Next())
+		require.Error(t, wrapper.Error())
+		require.ErrorContains(t, wrapper.Error(), "connection reset by peer")
+	})
+
+	t.Run("rows.Err on first row surfaces error and returns no rows", func(t *testing.T) {
+		// Simulate: error on the very first row — migration would see 0 rows
+		simulatedErr := fmt.Errorf("database is locked")
+		rows := sqlmock.NewRows(columns).
+			RowError(0, simulatedErr).
+			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
+
+		smock.ExpectQuery("SELECT").WillReturnRows(rows)
+		sqlRows, err := mockDB.Query("SELECT")
+		require.NoError(t, err)
+
+		wrapper := &rowsWrapper{
+			rows:    sqlRows,
+			a:       store,
+			history: false,
+		}
+		defer func() {
+			_ = wrapper.Close()
+		}()
+
+		// First call should return false (error on first row)
+		require.False(t, wrapper.Next())
+		// The error from rows.Err() must be surfaced
+		require.Error(t, wrapper.Error(), "rows.Err() must be propagated to wrapper.Error()")
+		require.ErrorContains(t, wrapper.Error(), "database is locked")
+	})
+
+	t.Run("no error when all rows are consumed successfully", func(t *testing.T) {
+		rows := sqlmock.NewRows(columns).
+			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1").
+			AddRow(1, int64(2), "uid2", "Dashboard 2", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
+
+		smock.ExpectQuery("SELECT").WillReturnRows(rows)
+		sqlRows, err := mockDB.Query("SELECT")
+		require.NoError(t, err)
+
+		wrapper := &rowsWrapper{
+			rows:    sqlRows,
+			a:       store,
+			history: false,
+		}
+		defer func() {
+			_ = wrapper.Close()
+		}()
+
+		require.True(t, wrapper.Next())
+		require.NoError(t, wrapper.Error())
+		require.True(t, wrapper.Next())
+		require.NoError(t, wrapper.Error())
+		require.False(t, wrapper.Next())
+		require.NoError(t, wrapper.Error(), "no error expected when all rows consumed successfully")
 	})
 }
 

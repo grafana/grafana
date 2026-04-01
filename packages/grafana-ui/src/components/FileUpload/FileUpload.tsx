@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { FormEvent, useCallback, useState } from 'react';
+import { type FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { ComponentSize } from '../../types/size';
+import { type ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';
 import { getButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';

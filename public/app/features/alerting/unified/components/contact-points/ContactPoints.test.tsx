@@ -1,12 +1,15 @@
-import { MemoryHistoryBuildOptions } from 'history';
-import { ComponentProps, ReactNode } from 'react';
+import { type MemoryHistoryBuildOptions } from 'history';
+import { type ComponentProps, type ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -23,7 +26,7 @@ import setupMimirFlavoredServer from './mocks/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
 } from './mocks/vanillaAlertmanagerServer';
-import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
+import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, type RouteReference } from './utils';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -135,39 +138,39 @@ describe('contact points', () => {
       test('loads contact points tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=contact_points'] });
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('loads templates tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=templates'] });
 
-        expect(await screen.findByText(/add notification template/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new notification template/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with invalid query param', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=foo_bar'] });
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with no query param', async () => {
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab if user has only read permission', async () => {
         grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab if user has only create permission', async () => {
         grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
       });
     });
 
@@ -263,10 +266,7 @@ describe('contact points', () => {
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await user.click(notificationTemplatesTab);
-      expect(screen.getByRole('link', { name: 'Add notification template group' })).toHaveAttribute(
-        'aria-disabled',
-        'true'
-      );
+      expect(screen.getByRole('link', { name: 'New notification template' })).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('allows deleting when not disabled', async () => {
@@ -477,7 +477,7 @@ describe('contact points', () => {
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await user.click(notificationTemplatesTab);
-      expect(screen.queryByRole('link', { name: 'Add notification template group' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'New notification template' })).not.toBeInTheDocument();
     });
   });
 

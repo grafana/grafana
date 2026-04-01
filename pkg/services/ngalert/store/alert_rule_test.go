@@ -240,6 +240,70 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			require.EqualValues(t, 1, count) // only the current version
 		})
 	})
+
+	t.Run("updated rules should have FolderFullpath populated", func(t *testing.T) {
+		// Create a fake folder service for this test
+		fakeFolderService := foldertest.NewFakeService()
+		testStore := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
+
+		// Create two folders with known fullpaths
+		folderAUID := util.GenerateShortUID()
+		folderATitle := "Folder A"
+		folderBUID := util.GenerateShortUID()
+		folderBTitle := "Folder B"
+
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderAUID,
+			Title:    folderATitle,
+			OrgID:    1,
+			Fullpath: folderATitle,
+		})
+
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderBUID,
+			Title:    folderBTitle,
+			OrgID:    1,
+			Fullpath: folderBTitle,
+		})
+
+		// Create a rule in folder A using the low-level createRule helper
+		ruleGen := gen.With(gen.WithNamespaceUID(folderAUID), gen.WithOrgID(1))
+		rule := createRule(t, testStore, ruleGen)
+
+		// Manually set the folder_fullpath to simulate existing rule
+		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("UPDATE alert_rule SET folder_fullpath = ? WHERE uid = ?", folderATitle, rule.UID)
+			return err
+		})
+		require.NoError(t, err)
+
+		// Fetch the rule to get current state
+		existingRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, folderATitle, existingRule.FolderFullpath, "Initial folder fullpath should be Folder A")
+
+		// Move the rule to folder B by updating NamespaceUID
+		newRule := models.CopyRule(existingRule)
+		newRule.NamespaceUID = folderBUID
+
+		err = testStore.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
+			Existing: existingRule,
+			New:      *newRule,
+		}})
+		require.NoError(t, err)
+
+		// Retrieve the rule and verify FolderFullpath is updated
+		updatedRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, updatedRule.FolderFullpath, "FolderFullpath should be populated")
+		assert.Equal(t, folderBTitle, updatedRule.FolderFullpath, "FolderFullpath should be updated to Folder B")
+	})
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
@@ -264,12 +328,14 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	rule1 := createRule(t, store, gen)
 	rule2 := createRule(t, store, gen)
 	rule3 := createRule(t, store, recordingGen)
+	rule4 := createRule(t, store, gen.With(gen.WithGroupName("")))
 
 	parentFolderUid := uuid.NewString()
 	parentFolderTitle := "Very Parent Folder"
 	rule1FolderTitle := "folder-" + rule1.Title
 	rule2FolderTitle := "folder-" + rule2.Title
 	rule3FolderTitle := "folder-" + rule3.Title
+	rule4FolderTitle := "folder-" + rule4.Title
 
 	fakeFolderService.AddFolder(&folder.Folder{
 		UID:       rule1.NamespaceUID,
@@ -293,6 +359,13 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		Fullpath:  rule3FolderTitle,
 	})
 	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule4.NamespaceUID,
+		Title:     rule4FolderTitle,
+		OrgID:     rule4.OrgID,
+		ParentUID: "",
+		Fullpath:  rule4FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
 		UID:       parentFolderUid,
 		Title:     parentFolderTitle,
 		OrgID:     rule1.OrgID,
@@ -310,7 +383,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}{
 		{
 			name:  "without a rule group filter, it returns all created rules",
-			rules: []string{rule1.Title, rule2.Title, rule3.Title},
+			rules: []string{rule1.Title, rule2.Title, rule3.Title, rule4.Title},
 		},
 		{
 			name:       "with a rule group filter, it only returns the rules that match on rule group",
@@ -325,17 +398,17 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:         "with a filter on orgs, it returns rules that do not belong to that org",
 			rules:        []string{rule1.Title},
-			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID},
+			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID, rule4.OrgID},
 		},
 		{
 			name:    "with populate folders enabled, it returns them",
-			rules:   []string{rule1.Title, rule2.Title, rule3.Title},
-			folders: map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle, rule2.GetFolderKey(): rule2FolderTitle, rule3.GetFolderKey(): rule3FolderTitle},
+			rules:   []string{rule1.Title, rule2.Title, rule3.Title, rule4.Title},
+			folders: map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle, rule2.GetFolderKey(): rule2FolderTitle, rule3.GetFolderKey(): rule3FolderTitle, rule4.GetFolderKey(): rule4FolderTitle},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
-			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID},
+			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID, rule4.OrgID},
 			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle},
 		},
 	}
@@ -392,8 +465,37 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 			rule1.GetFolderKey(): parentFolderTitle + "/" + rule1FolderTitle,
 			rule2.GetFolderKey(): rule2FolderTitle,
 			rule3.GetFolderKey(): rule3FolderTitle,
+			rule4.GetFolderKey(): rule4FolderTitle,
 		}
 		require.Equal(t, expected, query.ResultFoldersTitles)
+	})
+
+	t.Run("with a no-group rule group filter, it returns the rule matching by UID", func(t *testing.T) {
+		noGroup, err := models.NewNoGroupRuleGroup(rule4.UID)
+		require.NoError(t, err)
+
+		query := &models.GetAlertRulesForSchedulingQuery{
+			RuleGroups: []string{noGroup.String()},
+		}
+		require.NoError(t, store.GetAlertRulesForScheduling(context.Background(), query))
+		require.Len(t, query.ResultRules, 1)
+		require.Equal(t, rule4.Title, query.ResultRules[0].Title)
+	})
+
+	t.Run("with mixed real and no-group rule group filter, it returns both", func(t *testing.T) {
+		noGroup, err := models.NewNoGroupRuleGroup(rule4.UID)
+		require.NoError(t, err)
+
+		query := &models.GetAlertRulesForSchedulingQuery{
+			RuleGroups: []string{rule2.RuleGroup, noGroup.String()},
+		}
+		require.NoError(t, store.GetAlertRulesForScheduling(context.Background(), query))
+
+		resultTitles := make([]string, 0, len(query.ResultRules))
+		for _, r := range query.ResultRules {
+			resultTitles = append(resultTitles, r.Title)
+		}
+		require.ElementsMatch(t, []string{rule4.Title, rule2.Title}, resultTitles)
 	})
 }
 
@@ -905,6 +1007,37 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, insertedRule.UpdatedBy)
+	})
+
+	t.Run("inserted rules should have FolderFullpath populated", func(t *testing.T) {
+		// Create a fake folder service for this test
+		fakeFolderService := foldertest.NewFakeService()
+		testStore := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
+
+		// Create a folder with a known fullpath
+		folderUID := util.GenerateShortUID()
+		folderTitle := "Test Folder"
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderUID,
+			Title:    folderTitle,
+			OrgID:    orgID,
+			Fullpath: folderTitle,
+		})
+
+		// Create an alert rule in this folder
+		rule := gen.With(gen.WithNamespaceUID(folderUID)).Generate()
+		insertedRules, err := testStore.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: rule}})
+		require.NoError(t, err)
+		require.Len(t, insertedRules, 1)
+
+		// Retrieve the rule and verify FolderFullpath is populated
+		savedRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: orgID,
+			UID:   insertedRules[0].UID,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, savedRule.FolderFullpath, "FolderFullpath should be populated")
+		assert.Equal(t, folderTitle, savedRule.FolderFullpath, "FolderFullpath should match folder fullpath")
 	})
 }
 
@@ -2103,6 +2236,219 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		// After all pages, token should be empty
 		require.Empty(t, continueToken2, "should be no more pages")
 	})
+
+	t.Run("should filter by no-group rule group", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		ns := "test-ns-nogroup"
+		groupedRule := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("normal-group"),
+		))
+
+		noGroupRule := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+		))
+
+		noGroup, err := models.NewNoGroupRuleGroup(noGroupRule.UID)
+		require.NoError(t, err)
+
+		t.Run("only no-group filter returns matching rule by UID", func(t *testing.T) {
+			result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID:      orgID,
+					RuleGroups: []string{noGroup.String()},
+				},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, noGroupRule.UID, result[0].UID)
+		})
+
+		t.Run("mixed real and no-group filter returns both", func(t *testing.T) {
+			result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+				ListAlertRulesQuery: models.ListAlertRulesQuery{
+					OrgID:      orgID,
+					RuleGroups: []string{groupedRule.RuleGroup, noGroup.String()},
+				},
+			})
+			require.NoError(t, err)
+			require.Len(t, result, 2)
+			resultUIDs := []string{result[0].UID, result[1].UID}
+			require.ElementsMatch(t, []string{groupedRule.UID, noGroupRule.UID}, resultUIDs)
+		})
+	})
+
+	t.Run("should paginate with no-group rule group filter", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		ns := "test-ns-nogroup-paginated"
+		// Create rules in a normal group
+		groupedRule1 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-a"),
+		))
+		groupedRule2 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName("group-a"),
+		))
+		// Create a rule that we'll query via no-group
+		noGroupRule := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID(ns),
+			ruleGen.WithGroupName(""),
+		))
+
+		noGroup, err := models.NewNoGroupRuleGroup(noGroupRule.UID)
+		require.NoError(t, err)
+
+		// Page 1: limit to 1 group
+		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:      orgID,
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+			},
+			Limit: 1,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, token1, "should have a continuation token")
+
+		// Page 2: continue
+		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:      orgID,
+				RuleGroups: []string{groupedRule1.RuleGroup, noGroup.String()},
+			},
+			Limit:         1,
+			ContinueToken: token1,
+		})
+		require.NoError(t, err)
+
+		allResults := append(page1, page2...)
+		allUIDs := make([]string, 0, len(allResults))
+		for _, r := range allResults {
+			allUIDs = append(allUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{groupedRule1.UID, groupedRule2.UID, noGroupRule.UID}, allUIDs)
+		require.Empty(t, token2, "should have no more pages")
+	})
+
+	t.Run("should sort by folder fullpath when enabled", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		// Intentionally make namespace and fullpath sort orders conflict.
+		ruleNamespaceFirst := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("a-namespace"),
+			ruleGen.WithGroupName("group-z"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "z-folder"
+			},
+		))
+
+		ruleFullpathFirst := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("z-namespace"),
+			ruleGen.WithGroupName("group-a"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "a-folder"
+			},
+		))
+
+		resultByNamespace, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+		})
+		require.NoError(t, err)
+		require.Len(t, resultByNamespace, 2)
+		require.Equal(t, ruleNamespaceFirst.UID, resultByNamespace[0].UID)
+		require.Equal(t, ruleFullpathFirst.UID, resultByNamespace[1].UID)
+
+		resultByFullpath, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, resultByFullpath, 2)
+		require.Equal(t, ruleFullpathFirst.UID, resultByFullpath[0].UID)
+		require.Equal(t, ruleNamespaceFirst.UID, resultByFullpath[1].UID)
+	})
+
+	t.Run("should paginate with fullpath cursor and include folder fullpath in token", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		// Intentionally make namespace and fullpath order different to validate fullpath cursor behavior.
+		rule1 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("b-namespace"),
+			ruleGen.WithGroupName("group-1"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "a-folder"
+			},
+		))
+		rule2 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("a-namespace"),
+			ruleGen.WithGroupName("group-2"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "b-folder"
+			},
+		))
+		rule3 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("c-namespace"),
+			ruleGen.WithGroupName("group-3"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "c-folder"
+			},
+		))
+
+		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page1, 1)
+		require.Equal(t, rule1.UID, page1[0].UID)
+		require.NotEmpty(t, token1)
+
+		cursor1, err := models.DecodeGroupCursor(token1)
+		require.NoError(t, err)
+		require.Equal(t, "a-folder", cursor1.FolderFullpath)
+		require.Equal(t, "b-namespace", cursor1.NamespaceUID)
+		require.Equal(t, "group-1", cursor1.RuleGroup)
+
+		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			ContinueToken:       token1,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page2, 1)
+		require.Equal(t, rule2.UID, page2[0].UID)
+		require.NotEmpty(t, token2)
+
+		cursor2, err := models.DecodeGroupCursor(token2)
+		require.NoError(t, err)
+		require.Equal(t, "b-folder", cursor2.FolderFullpath)
+		require.Equal(t, "a-namespace", cursor2.NamespaceUID)
+		require.Equal(t, "group-2", cursor2.RuleGroup)
+
+		page3, token3, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			ContinueToken:       token2,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page3, 1)
+		require.Equal(t, rule3.UID, page3[0].UID)
+		require.Empty(t, token3)
+	})
 }
 
 func Benchmark_ListAlertRules(b *testing.B) {
@@ -2947,6 +3293,101 @@ func createTestStore(
 		Bus:            bus,
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
+}
+
+func Test_collectNamespaceUIDsByOrg(t *testing.T) {
+	t.Run("empty rules slice returns empty result", func(t *testing.T) {
+		result := collectNamespaceUIDsByOrg([]*models.AlertRule{})
+		require.Empty(t, result)
+	})
+
+	t.Run("rules with empty NamespaceUID are skipped", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: ""},
+			{OrgID: 1, NamespaceUID: ""},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Empty(t, result)
+	})
+
+	t.Run("single rule returns single entry", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple rules in same org/folder are deduplicated", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-1"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple folders in same org", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 1, NamespaceUID: "folder-1"}, // duplicate
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple orgs produce separate orgNamespaces entries", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 2, NamespaceUID: "folder-3"},
+			{OrgID: 2, NamespaceUID: "folder-4"},
+			{OrgID: 3, NamespaceUID: "folder-5"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 3)
+
+		// Sort by OrgID for consistent testing
+		slices.SortFunc(result, func(a, b orgNamespaces) int {
+			if a.OrgID < b.OrgID {
+				return -1
+			}
+			if a.OrgID > b.OrgID {
+				return 1
+			}
+			return 0
+		})
+
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+
+		assert.Equal(t, int64(2), result[1].OrgID)
+		assert.ElementsMatch(t, []string{"folder-3", "folder-4"}, result[1].NamespaceUIDs)
+
+		assert.Equal(t, int64(3), result[2].OrgID)
+		assert.ElementsMatch(t, []string{"folder-5"}, result[2].NamespaceUIDs)
+	})
+
+	t.Run("mix of empty and non-empty namespace UIDs", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: ""},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 1, NamespaceUID: ""},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+	})
 }
 
 type fakeBus struct {

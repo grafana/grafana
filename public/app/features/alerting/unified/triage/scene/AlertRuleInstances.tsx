@@ -2,7 +2,7 @@ import { omit } from 'lodash';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { DataFrame, Labels, findCommonLabels } from '@grafana/data';
+import { type DataFrame, type Labels, findCommonLabels } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useQueryRunner, useTimeRange } from '@grafana/scenes-react';
 import { Box } from '@grafana/ui';
@@ -64,13 +64,12 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
     return (
       <GenericRow
         width={leftColumnWidth}
-        title={<Trans i18nKey="alerting.triage.alert-instances">Alert instances</Trans>}
-        depth={depth}
-      >
-        <div>
+        title={
           <Trans i18nKey="alerting.triage.no-instances-found">No alert instances found for rule: {{ ruleUID }}</Trans>
-        </div>
-      </GenericRow>
+        }
+        depth={depth}
+        showIndentBorder
+      />
     );
   }
 

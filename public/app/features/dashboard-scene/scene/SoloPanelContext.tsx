@@ -1,18 +1,20 @@
 import React, { useContext, useEffect, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { LazyLoader, VizPanel } from '@grafana/scenes';
+import { LazyLoader, type VizPanel } from '@grafana/scenes';
 import { Box, Spinner } from '@grafana/ui';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export interface SoloPanelContextValue {
   matches: (VizPanel: VizPanel) => boolean;
   matchFound: boolean;
+  matchedPanels?: VizPanel[];
 }
 
 export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
   public matchFound = false;
+  public matchedPanels: VizPanel[] = [];
 
   public constructor(public keyPath: string) {}
 
@@ -21,6 +23,9 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
     if (/^\d+$/.test(this.keyPath)) {
       if (`panel-${this.keyPath}` === panel.state.key!) {
         this.matchFound = true;
+        if (!this.matchedPanels.includes(panel)) {
+          this.matchedPanels.push(panel);
+        }
         return true;
       }
 
@@ -29,6 +34,9 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
 
     if (this.keyPath === panel.getPathId()) {
       this.matchFound = true;
+      if (!this.matchedPanels.includes(panel)) {
+        this.matchedPanels.push(panel);
+      }
       return true;
     }
 

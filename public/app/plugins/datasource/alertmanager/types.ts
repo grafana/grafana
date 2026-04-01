@@ -1,9 +1,14 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
-import { ObjectMeta } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
-import { ExtraConfiguration } from 'app/features/alerting/unified/utils/alertmanager/extraConfigs';
+import { type ObjectMeta } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type DataSourceJsonData, type WithAccessControlMetadata } from '@grafana/data';
 
 export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
+
+export interface ExtraConfiguration {
+  identifier: string;
+  source?: string;
+  createdAt?: string;
+}
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;

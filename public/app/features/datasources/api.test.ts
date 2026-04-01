@@ -1,16 +1,17 @@
 import { of } from 'rxjs';
 
-import { DataSourceSettings } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { type DataSourceSettings } from '@grafana/data';
+import { type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 import {
   getDataSourceByUid,
+  deleteDataSource,
   convertK8sDatasourceSettingsToLegacyDatasourceSettings,
   convertLegacyDatasourceSettingsToK8sDatasourceSettings,
-  DataSourceSettingsK8s,
-  K8sMetadata,
-  DatasourceInstanceK8sSpec,
+  type DataSourceSettingsK8s,
+  type K8sMetadata,
+  type DatasourceInstanceK8sSpec,
 } from './api';
 
 jest.mock('app/core/services/backend_srv');
@@ -63,7 +64,7 @@ describe('Datasources / API', () => {
         secureJsonFields: {
           basicAuthPassword: true,
         },
-        readOnly: false,
+        readOnly: true,
         withCredentials: false,
       };
 
@@ -71,7 +72,7 @@ describe('Datasources / API', () => {
         name: 'fortytwo',
         namespace: 'default',
         uid: 'fortytwo',
-        resourceVersion: 'fortytwo',
+        resourceVersion: '',
         generation: 42,
         creationTimestamp: '1234',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
@@ -85,6 +86,7 @@ describe('Datasources / API', () => {
         basicAuth: true,
         basicAuthUser: 'zaphod',
         isDefault: true,
+        readOnly: true,
       };
       let dsK8sSettings: DataSourceSettingsK8s = {
         kind: 'DataSource',
@@ -94,6 +96,19 @@ describe('Datasources / API', () => {
         secure: { basicAuthPassword: { foo: 'bar' } },
       };
       expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings)).toEqual(dsLegacySettings);
+    });
+  });
+
+  describe('deleteDataSource()', () => {
+    it('should return the result of the delete request', async () => {
+      const deleteResult = { message: 'Data source deleted' };
+      const deleteFn = jest.fn().mockResolvedValue(deleteResult);
+      (getBackendSrv as jest.Mock).mockReturnValueOnce({ delete: deleteFn });
+
+      const result = await deleteDataSource('abc123');
+
+      expect(deleteFn).toHaveBeenCalledWith('/api/datasources/uid/abc123');
+      expect(result).toEqual(deleteResult);
     });
   });
 
@@ -116,13 +131,13 @@ describe('Datasources / API', () => {
         isDefault: true,
         jsonData: { authType: 'bar' },
         secureJsonFields: {},
-        readOnly: false,
+        readOnly: true,
         withCredentials: false,
       };
       let k8sMetadata: K8sMetadata = {
         name: 'fortytwo',
         namespace: 'default',
-        resourceVersion: 'fortytwo',
+        resourceVersion: '',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
         annotations: {},
       };
@@ -134,6 +149,7 @@ describe('Datasources / API', () => {
         basicAuth: true,
         basicAuthUser: 'zaphod',
         isDefault: true,
+        readOnly: true,
       };
       let dsK8sSettings: DataSourceSettingsK8s = {
         kind: 'DataSource',

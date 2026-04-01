@@ -18,7 +18,7 @@ This guide shows you how to create an access policy and a token for Frontend Obs
 
 ## Before you begin
 
-Before you begin, you should have the following available:
+Before you begin, ensure you have the following:
 
 - A Grafana Cloud account, as shown in [Get started](https://grafana.com/docs/grafana-cloud/get-started/)
 - [Terraform](https://www.terraform.io/downloads) installed on your machine
@@ -98,8 +98,8 @@ provider "grafana" {
 }
 ```
 
-## Conclusion
+## Summary
 
 In this guide, you created an access policy and a token for Frontend Observability using Terraform.
 
-To learn more about managing Grafana Cloud using Terraform, refer to [Grafana provider's documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+To learn more about managing Grafana Cloud using Terraform, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).

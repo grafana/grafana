@@ -3,10 +3,10 @@ import { t } from '@grafana/i18n';
 import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
-import { FieldConfig as TableFieldConfig, Options as TableOptions } from '../table/panelcfg.gen';
+import { type FieldConfig as TableFieldConfig, type Options as TableOptions } from '../table/panelcfg.gen';
 
 import { LogsTable } from './LogsTable';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
 import { logstableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(LogsTable)

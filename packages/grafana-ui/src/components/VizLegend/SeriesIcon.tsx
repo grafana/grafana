@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
-import { LineStyle } from '@grafana/schema';
+import { type GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
+import { type LineStyle } from '@grafana/schema';
 
 import { useTheme2, useStyles2 } from '../../themes/ThemeContext';
 
@@ -11,11 +11,10 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   color?: string;
   gradient?: string;
   lineStyle?: LineStyle;
-  noMargin?: boolean;
 }
 
 export const SeriesIcon = React.memo(
-  React.forwardRef<HTMLDivElement, Props>(({ color, className, gradient, lineStyle, noMargin, ...restProps }, ref) => {
+  React.forwardRef<HTMLDivElement, Props>(({ color, className, gradient, lineStyle, ...restProps }, ref) => {
     const theme = useTheme2();
     const styles = useStyles2(getStyles);
 
@@ -60,7 +59,7 @@ export const SeriesIcon = React.memo(
       <div
         data-testid="series-icon"
         ref={ref}
-        className={cx(className, styles.forcedColors, styles.container, noMargin ? null : styles.margin)}
+        className={cx(className, styles.forcedColors, styles.container)}
         style={customStyle}
         {...restProps}
       />
@@ -69,9 +68,6 @@ export const SeriesIcon = React.memo(
 );
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  margin: css({
-    marginRight: '8px',
-  }),
   container: css({
     display: 'inline-block',
     width: '14px',

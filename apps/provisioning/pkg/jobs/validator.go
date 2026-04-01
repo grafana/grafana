@@ -69,6 +69,15 @@ func ValidateJob(job *provisioning.Job) error {
 		} else {
 			list = append(list, validateMoveJobOptions(job.Spec.Move)...)
 		}
+
+	case provisioning.JobActionFixFolderMetadata:
+		// No required options for fix-folder-metadata; it's a no-op placeholder
+
+	case provisioning.JobActionReleaseResources,
+		provisioning.JobActionDeleteResources:
+		// No additional options required; validation is handled by the jobs connector
+		// via inverted repo validation (only allowed when repo is missing or Terminating).
+
 	default:
 		list = append(list, field.Invalid(field.NewPath("spec", "action"), job.Spec.Action, "invalid action"))
 	}

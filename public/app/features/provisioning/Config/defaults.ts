@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 
-import { RepositorySpec, RepositoryViewList } from '../../../api/clients/provisioning/v0alpha1';
-import { RepositoryFormData } from '../types';
+import { type RepositorySpec, type RepositoryViewList } from '../../../api/clients/provisioning/v0alpha1';
+import { type RepositoryFormData } from '../types';
 import { specToData } from '../utils/data';
 
 export interface GetDefaultValuesOptions {
@@ -31,7 +31,7 @@ export function getDefaultValues({
         target: defaultTarget,
         intervalSeconds: 60,
       },
-      enablePushToConfiguredBranch: true,
+      enablePushToConfiguredBranch: false,
     };
   }
   return specToData(repository);

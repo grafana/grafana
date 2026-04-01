@@ -8,6 +8,7 @@ import "github.com/grafana/alerting/definition"
 //
 //     Responses:
 //       200: NotificationTemplates
+//       403: ForbiddenError
 
 // swagger:route GET /v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
@@ -15,6 +16,7 @@ import "github.com/grafana/alerting/definition"
 //
 //     Responses:
 //       200: NotificationTemplate
+//       403: ForbiddenError
 //       404: PublicError
 
 // swagger:route PUT /v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
@@ -27,6 +29,7 @@ import "github.com/grafana/alerting/definition"
 //     Responses:
 //       202: NotificationTemplate
 //       400: PublicError
+//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
@@ -35,6 +38,7 @@ import "github.com/grafana/alerting/definition"
 //
 //     Responses:
 //       204: description: The template was deleted successfully.
+//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate

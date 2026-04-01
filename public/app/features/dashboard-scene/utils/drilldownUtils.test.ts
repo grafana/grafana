@@ -1,5 +1,5 @@
 import type { DrilldownsApplicability } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -7,9 +7,9 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   VizPanel,
-  VizPanelState,
+  type VizPanelState,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';

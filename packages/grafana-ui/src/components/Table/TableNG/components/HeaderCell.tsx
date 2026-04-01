@@ -1,15 +1,17 @@
 import { css } from '@emotion/css';
+import memoize from 'micro-memoize';
 import React, { useEffect, useRef } from 'react';
-import { Column, SortDirection } from 'react-data-grid';
+import { type Column, type SortDirection } from 'react-data-grid';
 
-import { Field, GrafanaTheme2 } from '@grafana/data';
+import { type Field, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
-import { FilterType, TableRow, TableSummaryRow } from '../types';
+import { isTableCellStylesKeyEqual } from '../styles';
+import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
 
 interface HeaderCellProps {
@@ -19,17 +21,14 @@ interface HeaderCellProps {
   direction?: SortDirection;
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  crossFilterOrder: string[];
-  crossFilterRows: { [key: string]: TableRow[] };
   showTypeIcons?: boolean;
   selectFirstCell: () => void;
   disableKeyboardEvents?: boolean;
+  parentIndex?: number;
 }
 
-const HeaderCell: React.FC<HeaderCellProps> = ({
+export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
-  crossFilterOrder,
-  crossFilterRows,
   direction,
   disableKeyboardEvents,
   field,
@@ -38,6 +37,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   selectFirstCell,
   setFilter,
   showTypeIcons,
+  parentIndex,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -111,37 +111,37 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
           filter={filter}
           setFilter={setFilter}
           field={field}
-          crossFilterOrder={crossFilterOrder}
-          crossFilterRows={crossFilterRows}
           iconClassName={styles.headerCellIcon}
+          parentIndex={parentIndex}
         />
       )}
     </Stack>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
-  headerCellLabel: css({
-    all: 'unset',
-    cursor: 'pointer',
-    fontWeight: theme.typography.fontWeightMedium,
-    color: theme.colors.text.secondary,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
-    borderRadius: theme.spacing(0.25),
-    lineHeight: '20px',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-    '&::selection': {
-      backgroundColor: 'var(--rdg-background-color)',
+const getStyles = memoize(
+  (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
+    headerCellLabel: css({
+      all: 'unset',
+      cursor: 'pointer',
+      fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
-    },
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
+      borderRadius: theme.spacing(0.25),
+      lineHeight: '20px',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+      '&::selection': {
+        backgroundColor: 'var(--rdg-background-color)',
+        color: theme.colors.text.secondary,
+      },
+    }),
+    headerCellIcon: css({
+      color: theme.colors.text.secondary,
+    }),
   }),
-  headerCellIcon: css({
-    color: theme.colors.text.secondary,
-  }),
-});
-
-export { HeaderCell };
+  { isMatchingKey: isTableCellStylesKeyEqual }
+);

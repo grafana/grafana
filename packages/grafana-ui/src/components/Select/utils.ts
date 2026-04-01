@@ -1,6 +1,6 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
-import { SelectableOptGroup } from './types';
+import { type SelectableOptGroup } from './types';
 
 /**
  * Normalize the value format to SelectableValue[] | []. Only used for single select
