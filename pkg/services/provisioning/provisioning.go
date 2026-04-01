@@ -68,6 +68,7 @@ func ProvideService(
 	dual dualwrite.Service,
 	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
 	serverLockService *serverlock.ServerLockService,
+	routesPermissions accesscontrol.RoutePermissionsService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -96,6 +97,7 @@ func ProvideService(
 		migratePrometheusType:        promTypeMigrationProvider.Run,
 		dual:                         dual,
 		serverLock:                   serverLockService,
+		routesPermissions:            routesPermissions,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -238,6 +240,7 @@ type ProvisioningServiceImpl struct {
 	secretService                secrets.Service
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
+	routesPermissions            accesscontrol.RoutePermissionsService
 	tracer                       tracing.Tracer
 	dual                         dualwrite.Service
 	serverLock                   *serverlock.ServerLockService
