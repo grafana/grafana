@@ -33,11 +33,6 @@ func TestMain(m *testing.M) {
 func TestIntegration_AdminApiReencrypt(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: this test is failing due to DB locks in SQLite.
-	if db.IsTestDbSQLite() {
-		t.Skip("skip flaky in sqlite while we figure out the problem with this test")
-	}
-
 	const (
 		dataSourceTable              = "data_source"
 		secretsTable                 = "secrets"
@@ -99,6 +94,7 @@ func RunAdminApiReencryptTest(
 ) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		APIServerStorageType: options.StorageTypeUnified,
+		EnableLog:            true,
 	})
 
 	grafanaListenAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -110,25 +106,17 @@ func RunAdminApiReencryptTest(
 	require.NoError(t, err)
 
 	// Reencrypt with new data key.
-	require.Eventually(t, func() bool {
-		ok, err := env.Server.HTTPServer.SecretsMigrator.ReEncryptSecrets(context.Background())
-		if err != nil {
-			return false
-		}
-		return ok
-	}, 5*time.Second, time.Second)
+	ok, err := env.Server.HTTPServer.SecretsMigrator.ReEncryptSecrets(context.Background())
+	require.NoError(t, err)
+	require.True(t, ok, "Failed to reencrypt all secrets")
 
 	afterReencrypt := getSecrets(t, secretsFns, env)
 	verifyAllSecrets(t, env, beforeReencrypt, afterReencrypt)
 
 	// Rollback from envelope to legacy encryption.
-	require.Eventually(t, func() bool {
-		ok, err := env.Server.HTTPServer.SecretsMigrator.RollBackSecrets(context.Background())
-		if err != nil {
-			return false
-		}
-		return ok
-	}, 5*time.Second, time.Second)
+	ok, err = env.Server.HTTPServer.SecretsMigrator.RollBackSecrets(context.Background())
+	require.NoError(t, err)
+	require.True(t, ok, "Failed to rollback all secrets")
 
 	afterRollback := getSecrets(t, secretsFns, env)
 	verifyAllSecrets(t, env, afterReencrypt, afterRollback)

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -13,11 +13,16 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+  isEditableDashboardElement,
+} from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
-import { openAddVariablePane } from './VariableAddEditableElement';
+import { openAddVariablePane } from './VariableTypeSelectionPane';
 import { isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
@@ -52,11 +57,22 @@ export class VariableSetEditableElement implements EditableDashboardElement {
 
   public getOutlineChildren() {
     const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(
-      this.set.state.variables
+      filterSectionRepeatLocalVariables(this.set.state.variables, this.set)
         // filter out system and snapshot variables
         .filter((variable) => isEditableVariableType(variable.state.type))
     );
     return [...visible, ...controlsMenu, ...hidden];
+  }
+
+  public scrollIntoView() {
+    let current: SceneObject | undefined = this.set.parent;
+    while (current) {
+      if (isEditableDashboardElement(current) && current.scrollIntoView) {
+        current.scrollIntoView();
+        return;
+      }
+      current = current.parent;
+    }
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
@@ -83,7 +99,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
   const { editableVariables, nonEditableVariables } = useMemo(() => {
     const editableVariables: SceneVariable[] = [];
     const nonEditableVariables: SceneVariable[] = [];
-    variables.forEach((variable) => {
+    filterSectionRepeatLocalVariables(variables, set).forEach((variable) => {
       if (isEditableVariableType(variable.state.type)) {
         editableVariables.push(variable);
       } else {
@@ -94,7 +110,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       editableVariables,
       nonEditableVariables,
     };
-  }, [variables]);
+  }, [variables, set]);
 
   const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(editableVariables);
 

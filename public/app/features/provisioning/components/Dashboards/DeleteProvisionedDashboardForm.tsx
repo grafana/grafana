@@ -5,15 +5,19 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
-import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import {
+  type Job,
+  type RepositoryView,
+  useDeleteRepositoryFilesWithPathMutation,
+} from 'app/api/clients/provisioning/v0alpha1';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
+import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { StatusInfo } from '../../types';
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { type StatusInfo } from '../../types';
+import { type ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';

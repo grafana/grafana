@@ -1,8 +1,8 @@
 import { cx } from '@emotion/css';
-import { ChangeEvent, useMemo } from 'react';
+import { type ChangeEvent, useMemo } from 'react';
 
-import { AzureAuthType, AzureCredentials } from '@grafana/azure-sdk';
-import { SelectableValue } from '@grafana/data';
+import { type AzureAuthType, type AzureCredentials } from '@grafana/azure-sdk';
+import { type SelectableValue } from '@grafana/data';
 import { InlineFormLabel, Button, Select, Input } from '@grafana/ui';
 
 export interface Props {

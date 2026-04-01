@@ -1,22 +1,22 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
 import {
   DataTransformerID,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import {
   createOrderFieldsComparer,
   Order,
-  OrderByItem,
+  type OrderByItem,
   OrderByMode,
   OrderByType,
-  OrganizeFieldsTransformerOptions,
+  type OrganizeFieldsTransformerOptions,
 } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -35,7 +35,6 @@ import {
 } from '@grafana/ui';
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/organize.svg';
 import lightImage from '../images/light/organize.svg';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
@@ -513,7 +512,6 @@ export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryIt
       'Re-order, hide, or rename fields.'
     ),
     categories: new Set([TransformerCategory.ReorderAndRename]),
-    help: getTransformationContent(DataTransformerID.organize).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

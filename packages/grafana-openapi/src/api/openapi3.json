@@ -3118,9 +3118,6 @@
         "properties": {
           "dashboard": {
             "$ref": "#/components/schemas/AnnotationActions"
-          },
-          "organization": {
-            "$ref": "#/components/schemas/AnnotationActions"
           }
         },
         "type": "object"
@@ -4300,10 +4297,6 @@
           },
           "uid": {
             "type": "string"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -5291,6 +5284,40 @@
             "type": "array"
           }
         },
+        "type": "object"
+      },
+      "ExternalAlertmanagerConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "ExternalAlertmanagerStatus": {
+        "properties": {
+          "cluster": {
+            "$ref": "#/components/schemas/clusterStatus"
+          },
+          "config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "uptime": {
+            "description": "uptime",
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionInfo": {
+            "$ref": "#/components/schemas/versionInfo"
+          }
+        },
+        "required": ["cluster", "config", "uptime", "versionInfo"],
         "type": "object"
       },
       "ExtraConfiguration": {
@@ -12327,10 +12354,6 @@
               "$ref": "#/components/schemas/Permission"
             },
             "type": "array"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "required": ["displayName", "description", "group"],

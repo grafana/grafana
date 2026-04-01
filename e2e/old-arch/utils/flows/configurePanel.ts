@@ -2,7 +2,7 @@ import { e2e } from '..';
 import { getScenarioContext } from '../support/scenarioContext';
 
 import { setDashboardTimeRange } from './setDashboardTimeRange';
-import { TimeRangeConfig } from './setTimeRange';
+import { type TimeRangeConfig } from './setTimeRange';
 
 interface AddPanelOverrides {
   dataSourceName: string;

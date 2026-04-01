@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 
-import { Props } from './MonacoQueryFieldProps';
+import { type Props } from './MonacoQueryFieldProps';
 
 const Field = lazy(() => import(/* webpackChunkName: "loki-query-field" */ './MonacoQueryField'));
 

@@ -2,9 +2,9 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
-  AlertManagerCortexConfig,
-  AlertmanagerGroup,
-  AlertmanagerStatus,
+  type AlertManagerCortexConfig,
+  type AlertmanagerGroup,
+  type AlertmanagerStatus,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';

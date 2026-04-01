@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
+import type * as AppsModule from './apps';
 import {
   getAppPluginMeta,
   getAppPluginMetas,
@@ -20,6 +21,7 @@ import {
   usePanelPluginVersion,
   usePanelPluginMetasMap,
 } from './hooks';
+import type * as PanelsModule from './panels';
 import {
   getListedPanelPluginIds,
   getListedPanelPluginMetas,
@@ -33,8 +35,8 @@ import {
 import { apps } from './test-fixtures/config.apps';
 import { panels } from './test-fixtures/config.panels';
 
-const actualApps = jest.requireActual<typeof import('./apps')>('./apps');
-const actualPanels = jest.requireActual<typeof import('./panels')>('./panels');
+const actualApps = jest.requireActual<typeof AppsModule>('./apps');
+const actualPanels = jest.requireActual<typeof PanelsModule>('./panels');
 jest.mock('./apps', () => ({
   ...jest.requireActual('./apps'),
   getAppPluginMetas: jest.fn(),
@@ -464,6 +466,7 @@ describe('useListedPanelPluginIds', () => {
       'candlestick',
       'canvas',
       'dashlist',
+      'debug',
       'flamegraph',
       'gauge',
       'geomap',

@@ -3,7 +3,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { createJob, createRepository } from '../mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';

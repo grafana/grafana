@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Spinner, Stack, Text } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
-import { Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../Wizard/types';
-import { JobType } from '../types';
+import { type StepStatusInfo } from '../Wizard/types';
+import { type JobType } from '../types';
 
 import { FinishedJobStatus } from './FinishedJobStatus';
 import { JobContent } from './JobContent';

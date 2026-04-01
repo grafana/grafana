@@ -21,6 +21,27 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
 )
 
+// StoreProvider creates OpenFGA datastores. Enterprise builds can override
+// with an implementation that supports alternative backends (e.g. gRPC).
+type StoreProvider interface {
+	NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error)
+	NewStandaloneStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error)
+}
+
+type defaultStoreProvider struct{}
+
+func (p *defaultStoreProvider) NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error) {
+	return NewEmbeddedStore(cfg, db, logger)
+}
+
+func (p *defaultStoreProvider) NewStandaloneStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
+	return NewStore(cfg, logger)
+}
+
+func ProvideDefaultStoreProvider() StoreProvider {
+	return &defaultStoreProvider{}
+}
+
 func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
 	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
 	if err != nil {

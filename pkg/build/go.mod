@@ -19,11 +19,11 @@ require (
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.7 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel v1.42.0 // indirect; @grafana/grafana-backend-group
-	go.opentelemetry.io/otel/sdk v1.40.0 // indirect; @grafana/grafana-backend-group
+	go.opentelemetry.io/otel/sdk v1.42.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.42.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.51.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.52.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
-	golang.org/x/text v0.34.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/text v0.35.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/grpc v1.79.3 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.11 // indirect; @grafana/plugins-platform-backend
 )
@@ -37,7 +37,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.42.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260209200024-4cfbd4190f57 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
 )
 
 require (
@@ -70,12 +70,12 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.15.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.39.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.39.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.40.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.40.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.42.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.42.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.40.0 // indirect
 	go.opentelemetry.io/otel/log v0.15.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.15.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v1.42.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

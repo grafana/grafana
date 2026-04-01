@@ -3,8 +3,8 @@ import { useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import {
-  CreateTeamApiArg,
-  SetTeamRolesApiArg,
+  type CreateTeamApiArg,
+  type SetTeamRolesApiArg,
   useCreateTeamMutation,
   useSetTeamRolesMutation,
 } from '@grafana/api-clients/internal/rtkq/legacy';
@@ -15,11 +15,11 @@ import { config, getAppEvents } from '@grafana/runtime';
 import { useCreateFolder } from '../../../api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from '../../../api/utils';
 import { contextSrv } from '../../../core/services/context_srv';
-import { Role } from '../../../types/accessControl';
-import { TeamDTO } from '../../../types/teams';
+import { type Role } from '../../../types/accessControl';
+import { type TeamDTO } from '../../../types/teams';
 import { canUpdateRoles } from '../hooks';
 
-import { StepResultAlertProps } from './StepResultAlert';
+import { type StepResultAlertProps } from './StepResultAlert';
 
 /**
  * Each step is in one of these states.
