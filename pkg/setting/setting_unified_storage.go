@@ -200,6 +200,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EnableTenantDeleter = section.Key("tenant_deleter_enabled").MustBool(false)
 	cfg.TenantDeleterDryRun = section.Key("tenant_deleter_dry_run").MustBool(true)
 	cfg.TenantDeleterInterval = section.Key("tenant_deleter_interval").MustDuration(1 * time.Hour)
+	cfg.TenantDeleterGcomAPIToken = section.Key("tenant_deleter_gcom_api_token").MustString("")
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)

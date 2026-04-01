@@ -10,9 +10,26 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testGcomVerifier implements gcom.Service for tests. Default behavior: instance not in GCOM.
+type testGcomVerifier struct {
+	getInstance func(ctx context.Context, requestID, instanceID string) (gcom.Instance, error)
+}
+
+func (v *testGcomVerifier) GetInstanceByID(ctx context.Context, requestID, instanceID string) (gcom.Instance, error) {
+	if v.getInstance != nil {
+		return v.getInstance(ctx, requestID, instanceID)
+	}
+	return gcom.Instance{}, gcom.ErrInstanceNotFound
+}
+
+func (v *testGcomVerifier) GetPlugins(ctx context.Context, requestID string) (map[string]gcom.Plugin, error) {
+	return map[string]gcom.Plugin{}, nil
+}
 
 // failOnceBatchDeleteKV wraps a KV and makes BatchDelete fail on the Nth call,
 // then succeed on all subsequent calls. This simulates a transient failure
@@ -63,6 +80,7 @@ func newTestTenantDeleter(t *testing.T, dryRun bool) (*TenantDeleter, *dataStore
 		DryRun:   dryRun,
 		Interval: time.Hour,
 		Log:      log.NewNopLogger(),
+		Gcom:     &testGcomVerifier{},
 	}
 	td := NewTenantDeleter(ds, pds, cfg)
 	return td, ds, pds
@@ -289,6 +307,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 		DryRun:   false,
 		Interval: time.Hour,
 		Log:      log.NewNopLogger(),
+		Gcom:     &testGcomVerifier{},
 	}
 	td := NewTenantDeleter(ds, pds, cfg)
 
@@ -439,4 +458,80 @@ func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 
 	_, err := pds.Get(t.Context(), "tenant-1")
 	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+// TestRunDeletionPass_SkipsWhenGcomInstanceStillExists verifies that local data is
+// not removed while GCOM still returns the stack instance.
+func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
+	kv := setupBadgerKV(t)
+	ds := newDataStore(kv)
+	pds := newPendingDeleteStore(kv)
+	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
+		DryRun:   false,
+		Interval: time.Hour,
+		Log:      log.NewNopLogger(),
+		Gcom: &testGcomVerifier{
+			getInstance: func(_ context.Context, _, _ string) (gcom.Instance, error) {
+				return gcom.Instance{ID: 42, Slug: "active-stack"}, nil
+			},
+		},
+	})
+
+	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	td.runDeletionPass(t.Context())
+
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	prefix := listKey.Prefix()
+	var count int
+	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	}) {
+		require.NoError(t, err)
+		count++
+	}
+	assert.Equal(t, 1, count, "resources must remain while GCOM still has the instance")
+
+	_, err := pds.Get(t.Context(), "tenant-1")
+	require.NoError(t, err, "pending-delete record must remain")
+}
+
+// TestRunDeletionPass_SkipsWhenGcomCheckFails verifies that a non-404 GCOM error
+// does not delete local data (fail-safe on outage or permission errors).
+func TestRunDeletionPass_SkipsWhenGcomCheckFails(t *testing.T) {
+	kv := setupBadgerKV(t)
+	ds := newDataStore(kv)
+	pds := newPendingDeleteStore(kv)
+	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
+		DryRun:   false,
+		Interval: time.Hour,
+		Log:      log.NewNopLogger(),
+		Gcom: &testGcomVerifier{
+			getInstance: func(_ context.Context, _, _ string) (gcom.Instance, error) {
+				return gcom.Instance{}, fmt.Errorf("injected GCOM transport error")
+			},
+		},
+	})
+
+	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	td.runDeletionPass(t.Context())
+
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	prefix := listKey.Prefix()
+	var count int
+	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	}) {
+		require.NoError(t, err)
+		count++
+	}
+	assert.Equal(t, 1, count)
+
+	_, err := pds.Get(t.Context(), "tenant-1")
+	require.NoError(t, err)
 }

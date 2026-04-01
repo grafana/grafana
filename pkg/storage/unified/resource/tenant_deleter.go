@@ -2,10 +2,13 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"math/rand/v2"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,6 +17,9 @@ type TenantDeleterConfig struct {
 	DryRun   bool
 	Interval time.Duration
 	Log      log.Logger
+	// Gcom, when non-nil, is used to confirm the stack no longer exists in GCOM
+	// before local tenant data is removed (GetInstanceByID must return ErrInstanceNotFound).
+	Gcom gcom.Service
 }
 
 // NewTenantDeleterConfig creates a TenantDeleterConfig from Grafana settings and returns nil
@@ -42,6 +48,7 @@ type TenantDeleter struct {
 	pendingDeleteStore *PendingDeleteStore
 	dataStore          *dataStore
 	cfg                TenantDeleterConfig
+	gcom               gcom.Service
 	stopCh             chan struct{}
 }
 
@@ -52,6 +59,7 @@ func NewTenantDeleter(ds *dataStore, pds *PendingDeleteStore, cfg TenantDeleterC
 		pendingDeleteStore: pds,
 		dataStore:          ds,
 		cfg:                cfg,
+		gcom:               cfg.Gcom,
 		stopCh:             make(chan struct{}),
 	}
 }
@@ -126,12 +134,35 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 			continue
 		}
 
-		// TODO add check to verify with GCOM that tenant is deleted
+		if !td.gcomAllowsTenantDeletion(ctx, tenantName) {
+			continue
+		}
 
 		if err := td.deleteTenant(ctx, tenantName, groupResources); err != nil {
 			td.log.Error("failed to delete tenant data", "tenant", tenantName, "error", err)
 		}
 	}
+}
+
+// gcomAllowsTenantDeletion returns true when GCOM is not configured, or when
+// the stack instance is not found in GCOM (removed). If the instance still
+// exists, or GCOM returns an unexpected error, it returns false and logs.
+func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantName string) bool {
+	if td.gcom == nil {
+		return true
+	}
+
+	reqID := tracing.TraceIDFromContext(ctx, false)
+	_, err := td.gcom.GetInstanceByID(ctx, reqID, tenantName)
+	if err == nil {
+		td.log.Warn("tenant still exists in GCOM; skipping local data deletion", "tenant", tenantName)
+		return false
+	}
+	if errors.Is(err, gcom.ErrInstanceNotFound) {
+		return true
+	}
+	td.log.Error("GCOM instance check failed; skipping local data deletion", "tenant", tenantName, "err", err)
+	return false
 }
 
 // deleteTenant removes all resource data for the given tenant from the data

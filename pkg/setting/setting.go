@@ -695,6 +695,9 @@ type Cfg struct {
 	EnableTenantDeleter           bool
 	TenantDeleterDryRun           bool
 	TenantDeleterInterval         time.Duration
+	// TenantDeleterGcomAPIToken is the bearer token for GCOM when verifying stack
+	// removal before deleting tenant data. If empty, CloudMigration.GcomAPIToken is used.
+	TenantDeleterGcomAPIToken string
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings

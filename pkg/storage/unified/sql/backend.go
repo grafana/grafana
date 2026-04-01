@@ -8,7 +8,9 @@ import (
 	"iter"
 	"math"
 	"math/rand"
+	"net/http"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -32,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -47,6 +50,22 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 
 const defaultPollingInterval = 100 * time.Millisecond
+
+// newTenantDeleterGcomClient returns a GCOM client for tenant-deleter verification when
+// [unified_storage] tenant_deleter_gcom_api_token or [cloud_migration] gcom_api_token
+// and [grafana_com] api_url are configured.
+func newTenantDeleterGcomClient(cfg *setting.Cfg) gcom.Service {
+	token := strings.TrimSpace(cfg.TenantDeleterGcomAPIToken)
+	if token == "" {
+		token = strings.TrimSpace(cfg.CloudMigration.GcomAPIToken)
+	}
+	apiURL := strings.TrimSpace(cfg.GrafanaComAPIURL)
+	if token == "" || apiURL == "" {
+		return nil
+	}
+	hc := &http.Client{Timeout: 30 * time.Second}
+	return gcom.New(gcom.Config{ApiURL: apiURL, Token: token}, hc)
+}
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultGarbageCollectionBatchWait = 1 * time.Second
 
@@ -150,6 +169,13 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("error creating sqlkv: %s", err)
 	}
 
+	tenantDeleterCfg := resource.NewTenantDeleterConfig(cfg)
+	if tenantDeleterCfg != nil {
+		if gcomClient := newTenantDeleterGcomClient(cfg); gcomClient != nil {
+			tenantDeleterCfg.Gcom = gcomClient
+		}
+	}
+
 	kvBackendOpts := resource.KVBackendOptions{
 		KvStore:              sqlkv,
 		Tracer:               tracer,
@@ -159,7 +185,7 @@ func NewStorageBackend(
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
 		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
+		TenantDeleterConfig:  tenantDeleterCfg,
 		GarbageCollection: resource.GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,

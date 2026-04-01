@@ -16,6 +16,11 @@ const LogPrefix = "gcom.service"
 
 var ErrTokenNotFound = errors.New("gcom: token not found")
 
+// ErrInstanceNotFound is returned by GetInstanceByID when GCOM has no instance
+// with the given ID (HTTP 404). Callers can use errors.Is to treat a deleted
+// stack as distinct from transport or permission errors.
+var ErrInstanceNotFound = errors.New("gcom: instance not found")
+
 type Service interface {
 	GetInstanceByID(ctx context.Context, requestID string, instanceID string) (Instance, error)
 	GetPlugins(ctx context.Context, requestID string) (map[string]Plugin, error)
@@ -83,6 +88,9 @@ func (client *GcomClient) GetInstanceByID(ctx context.Context, requestID string,
 		}
 	}()
 
+	if response.StatusCode == http.StatusNotFound {
+		return Instance{}, ErrInstanceNotFound
+	}
 	if response.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(response.Body)
 		return Instance{}, fmt.Errorf("unexpected response when fetching instance by id: code=%d body=%s", response.StatusCode, body)
