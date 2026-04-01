@@ -25,21 +25,6 @@ import { type PopoverContent } from '../Tooltip/types';
 import { type Column } from './types';
 import { EXPANDER_CELL_ID, getColumns } from './utils';
 
-/** Build an Emotion className for explicit column width/minWidth/maxWidth values. */
-function getColumnSizeClass(col: { width?: number; minWidth?: number; maxWidth?: number }): string | undefined {
-  const styles: Record<string, number> = {};
-  if (typeof col.width === 'number' && col.width > 0) {
-    styles.width = col.width;
-  }
-  if (typeof col.minWidth === 'number' && col.minWidth > 0) {
-    styles.minWidth = col.minWidth;
-  }
-  if (typeof col.maxWidth === 'number' && col.maxWidth > 0) {
-    styles.maxWidth = col.maxWidth;
-  }
-  return Object.keys(styles).length > 0 ? css(styles) : undefined;
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
@@ -295,7 +280,7 @@ export function InteractiveTable<TableData extends object>({
                     <th
                       key={key}
                       {...headerCellProps}
-                      className={cx(styles.header, getColumnSizeClass(column), {
+                      className={cx(styles.header, column.widthClass, {
                         [styles.disableGrow]: column.width === 0,
                         [styles.sortableHeader]: column.canSort,
                       })}
@@ -329,7 +314,7 @@ export function InteractiveTable<TableData extends object>({
                       <td
                         key={key}
                         {...otherCellProps}
-                        className={cx(styles.cell, getColumnSizeClass(cell.column))}
+                        className={cx(styles.cell, cell.column.widthClass)}
                       >
                         {cell.render('Cell', { __rowID: rowId })}
                       </td>
