@@ -4988,13 +4988,16 @@
     {
       "metadata": {
         "name": "tempoAlerting",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-15T13:36:36Z"
+        "resourceVersion": "1774957674648",
+        "creationTimestamp": "2025-07-15T13:36:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-31 11:47:54.648231 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables creating alerts from Tempo data source",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-traces-and-profiling",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },

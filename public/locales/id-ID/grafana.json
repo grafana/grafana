@@ -5632,10 +5632,16 @@
       "add-visualization-body": "Pilih sumber data, kemudian kueri dan visualisasikan data Anda dengan bagan, statistik, dan tabel atau buat daftar, markdown, dan widget lainnya.",
       "add-visualization-button": "Tambahkan visualisasi",
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
+      "auto-grid": "",
+      "auto-grid-description": "",
+      "custom-grid": "",
+      "custom-grid-description": "",
       "description": "Tambahkan panel untuk memvisualisasikan data Anda",
       "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
       "import-dashboard-button": "Impor dasbor",
+      "layout-default-hint": "",
+      "select-layout-header": "",
       "title": "Dasbor baru"
     },
     "errors": {
@@ -6954,6 +6960,12 @@
       "sql-transformation-description": "Manipulasi data Anda menggunakan sintaksis mirip MySQL"
     },
     "general-settings-edit-view": {
+      "default_grid_options": {
+        "label": {
+          "auto": "",
+          "custom": ""
+        }
+      },
       "editable_options": {
         "label": {
           "editable": "Dapat diedit",
@@ -7697,6 +7709,8 @@
     "general": {
       "auto-refresh-description": "Tentukan interval muat ulang otomatis yang seharusnya tersedia dalam daftar muat ulang otomatis. Gunakan format '5d' untuk detik, '1m' untuk menit, '1j' untuk jam, dan '1h' untuk hari (misalnya: '5d, 10d, 30d, 1m, 5m, 15m, 30m,1j, 2j, 1h').",
       "auto-refresh-label": "Muat ulang otomatis",
+      "default-grid-description": "",
+      "default-grid-label": "",
       "description-label": "Deskripsi",
       "editable-description": "Atur ke hanya baca untuk menonaktifkan semua pengeditan. Muat ulang dasbor agar perubahan diterapkan",
       "editable-label": "Dapat diedit",
@@ -12931,6 +12945,10 @@
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
     },
+    "cloud-info-box": {
+      "body": "",
+      "title": ""
+    },
     "code-block": {
       "aria-label-copy": "Salin kode ke papan klip"
     },
@@ -14592,10 +14610,46 @@
     "select-aria-label": "Urutkan"
   },
   "splash-screen": {
-    "body": "",
+    "aria-label": "",
+    "assistant": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "badge": "",
     "close": "",
-    "get-started": "",
-    "title": ""
+    "explore": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "git-sync": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "library": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "nav": {
+      "go-to": "",
+      "next": "",
+      "prev": ""
+    }
   },
   "sql-expressions": {
     "add-query-tooltip": "Tambahkan setidaknya satu kueri data untuk membuat saran SQL",
