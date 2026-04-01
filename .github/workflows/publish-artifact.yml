@@ -58,9 +58,20 @@ jobs:
           service_account: ${{ inputs.service-account }}
       - name: Coalesce artifacts
         run: |
-          mkdir out
-          find ./artifact -mindepth 2 -maxdepth 2 -exec cp -r {} out/ \;
+          mkdir -p out
+          shopt -s nullglob
+          for entry in ./artifact/*; do
+            if [ -d "$entry" ]; then
+              cp -r "$entry"/. out/
+            else
+              cp -r "$entry" out/
+            fi
+          done
           ls -al out
+          if [ -z "$(ls -A out)" ]; then
+            echo "No artifacts were downloaded to ./artifact"
+            exit 1
+          fi
       - name: Upload artifacts
         uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:

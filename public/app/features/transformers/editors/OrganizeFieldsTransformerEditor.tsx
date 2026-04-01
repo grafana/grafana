@@ -35,7 +35,6 @@ import {
 } from '@grafana/ui';
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/organize.svg';
 import lightImage from '../images/light/organize.svg';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
@@ -513,7 +512,6 @@ export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryIt
       'Re-order, hide, or rename fields.'
     ),
     categories: new Set([TransformerCategory.ReorderAndRename]),
-    help: getTransformationContent(DataTransformerID.organize).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

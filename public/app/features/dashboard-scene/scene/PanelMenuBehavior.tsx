@@ -34,6 +34,7 @@ import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
@@ -306,7 +307,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (panel.state.pluginId === 'timeseries' && config.featureToggles.panelStyleActions && dashboard.state.isEditing) {
+    if (
+      getPanelStyleConfig(panel.state.pluginId) &&
+      config.featureToggles.panelStyleActions &&
+      dashboard.state.isEditing
+    ) {
       const stylesSubMenu: PanelMenuItem[] = [];
 
       stylesSubMenu.push({
@@ -322,7 +327,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         },
       });
 
-      if (DashboardScene.hasPanelStylesToPaste('timeseries')) {
+      if (DashboardScene.hasPanelStylesToPaste(panel.state.pluginId)) {
         stylesSubMenu.push({
           text: t('panel.header-menu.paste-styles', `Paste styles`),
           iconClassName: 'clipboard-alt',
