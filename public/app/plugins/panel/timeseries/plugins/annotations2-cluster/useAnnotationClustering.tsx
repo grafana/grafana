@@ -97,7 +97,7 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
               // Push the first clustered annotation
               time: () => timeVals[idxs[0]],
               // push the max annotation end time
-              timeEnd: () => (maxTimeEnd > lastTimeVal ? maxTimeEnd : lastTimeVal),
+              timeEnd: () => Math.max(maxTimeEnd, lastTimeVal),
               // Clusters are regions
               isRegion: () => true,
               // Push color of the first annotation in the region

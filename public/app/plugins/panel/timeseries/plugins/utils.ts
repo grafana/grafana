@@ -38,9 +38,15 @@ export function getAnnoRegionBoxStyle(plotWidth: number, right: number, left: nu
 }
 
 export function shouldRenderAnnotationLine(width: number | undefined, multiLane: boolean | undefined) {
-  return (width !== undefined ? width > 0 : undefined) ?? !multiLane;
+  if (width !== undefined) {
+    return width > 0;
+  }
+  return !multiLane;
 }
 
 export function shouldRenderAnnotationRegion(opacity: number | undefined, multiLane: boolean | undefined) {
-  return (opacity !== undefined ? opacity > 0 : undefined) ?? !multiLane;
+  if (opacity !== undefined) {
+    return opacity > 0;
+  }
+  return !multiLane;
 }
