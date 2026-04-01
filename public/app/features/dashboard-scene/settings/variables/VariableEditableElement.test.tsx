@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode, useMemo } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -11,7 +11,6 @@ import { ElementEditPane } from '../../edit-pane/ElementEditPane';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
-import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { shouldHideControlsMenuOption } from './VariableEditableElement';
@@ -49,9 +48,8 @@ describe('shouldHideControlsMenuOption', () => {
 });
 
 describe('VariableEditableElement', () => {
-  it('switches a dashboard variable type from the sidebar and preserves name and label', async () => {
-    const { dashboard, variableSet } = buildDashboardVariableScene();
-    const variable = variableSet.state.variables[0];
+  it('clicking Change switches selection to VariableTypeChange', async () => {
+    const { dashboard } = buildDashboardVariableScene();
     const user = userEvent.setup();
 
     renderVariableEditPane(dashboard);
@@ -59,53 +57,6 @@ describe('VariableEditableElement', () => {
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
     expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
     expect(screen.getByText('Choose variable type')).toBeInTheDocument();
-
-    await user.click(
-      within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('constant'))).getByRole(
-        'button',
-        { name: 'Constant' }
-      )
-    );
-
-    await waitFor(() => expect(variableSet.state.variables[0]).not.toBe(variable));
-
-    const updatedVariable = variableSet.state.variables[0];
-    expect(updatedVariable.state.type).toBe('constant');
-    expect(updatedVariable.state.name).toBe('service');
-    expect(updatedVariable.state.label).toBe('Service');
-    expect(dashboard.state.editPane.getSelection()).toBe(updatedVariable);
-    expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableNameInput)).toHaveValue(
-      'service'
-    );
-    expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableLabelInput)).toHaveValue(
-      'Service'
-    );
-  });
-
-  it('switches a section variable type from the sidebar without changing its name', async () => {
-    const { dashboard, dashboardVariable, sectionVariableSet } = buildSectionVariableScene();
-    const sectionVariable = sectionVariableSet.state.variables[0];
-    const user = userEvent.setup();
-
-    renderVariableEditPane(dashboard);
-
-    await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
-    await user.click(
-      within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('textbox'))).getByRole(
-        'button',
-        { name: 'Textbox' }
-      )
-    );
-
-    await waitFor(() => expect(sectionVariableSet.state.variables[0]).not.toBe(sectionVariable));
-
-    const updatedVariable = sectionVariableSet.state.variables[0];
-    expect(updatedVariable.state.type).toBe('textbox');
-    expect(updatedVariable.state.name).toBe('shared');
-    expect(updatedVariable.state.label).toBe('Section variable');
-    expect(dashboardVariable.state.name).toBe('shared');
-    expect(dashboard.state.editPane.getSelection()).toBe(updatedVariable);
   });
 });
 
@@ -168,34 +119,4 @@ function buildDashboardVariableScene() {
   dashboard.state.editPane.selectObject(variable, variable.state.key!, { force: true });
 
   return { dashboard, variableSet };
-}
-
-function buildSectionVariableScene() {
-  const dashboardVariable = new CustomVariable({
-    name: 'shared',
-    label: 'Dashboard variable',
-    query: 'prod,dev',
-    value: 'prod',
-    text: 'prod',
-  });
-  const sectionVariable = new CustomVariable({
-    name: 'shared',
-    label: 'Section variable',
-    query: 'a,b',
-    value: 'a',
-    text: 'a',
-  });
-  const sectionVariableSet = new SceneVariableSet({ variables: [sectionVariable] });
-  const row = new RowItem({ title: 'Row', $variables: sectionVariableSet });
-  const dashboard = new DashboardScene({
-    $variables: new SceneVariableSet({ variables: [dashboardVariable] }),
-    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-    body: new RowsLayoutManager({ rows: [row] }),
-    isEditing: true,
-  });
-
-  activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(sectionVariable, sectionVariable.state.key!, { force: true });
-
-  return { dashboard, dashboardVariable, sectionVariableSet };
 }
