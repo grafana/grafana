@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, type SceneObject, type SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar, useStyles2 } from '@grafana/ui';
+import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -57,6 +58,17 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
   const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
+
+  const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+  const sidebarContext = useSidebarContext();
+  const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      sidebarContext?.onToggleIsHidden();
+      e.currentTarget.blur();
+    },
+    [sidebarContext]
+  );
 
   return (
     <>
@@ -172,7 +184,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane === 'outline'}
-          ></Sidebar.Button>
+          />
           {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardFiltersOverview && adHocVar && (
             <Sidebar.Button
               icon="filter"
@@ -192,6 +204,17 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               icon="link"
               onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
             />
+          )}
+          {isMobile && !isEditing && (
+            <>
+              <Sidebar.Divider />
+              <Sidebar.Button
+                icon={'arrow-to-right'}
+                onClick={onClickHideSidebar}
+                title={t('grafana-ui.sidebar.hide', 'Hide')}
+                data-testid={selectors.components.Sidebar.showHideToggle}
+              />
+            </>
           )}
         </div>
       </Sidebar.Toolbar>
