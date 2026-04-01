@@ -106,7 +106,7 @@ To add TraceQL panels to your dashboard, refer to the [Traces panel documentatio
 
 To learn more about Grafana dashboards, refer to the [Use dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/).
 
-For example dashboards with traces, visit [play.grafana.org](https://play.grafana.org).
+For example dashboards with traces, visit [Grafana Play](https://play.grafana.org).
 
 ## Set options for query builder and editor
 

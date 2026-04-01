@@ -131,7 +131,7 @@ In this example, you configure trace to logs by service name and a trace identif
 
 ### Example 2: Trace to custom URL
 
-In this example, you configure trace corrections with a custom URL.
+In this example, you configure trace correlations with a custom URL.
 
 1. On step 1, add a new correlation with the label **Open custom URL** and an optional description.
 
