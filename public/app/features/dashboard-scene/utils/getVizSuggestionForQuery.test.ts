@@ -1,9 +1,9 @@
 import { of, Subject } from 'rxjs';
 
-import { LoadingState, PanelPluginVisualizationSuggestion } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { LoadingState, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';

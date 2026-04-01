@@ -10,15 +10,13 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { type VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneQueryRunner, type SceneObject, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-
-import { getQueryRunnerFor } from './utils';
 
 const SUGGESTION_TIMEOUT_MS = 5_000;
 
@@ -56,6 +54,20 @@ export async function getVizSuggestionForQuery(
   const { suggestions } = await getAllSuggestions(series);
 
   return suggestions[0];
+}
+
+function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
+  if (!sceneObject) {
+    return undefined;
+  }
+  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
+  if (dataProvider instanceof SceneQueryRunner) {
+    return dataProvider;
+  }
+  if (dataProvider instanceof SceneDataTransformer) {
+    return getQueryRunnerFor(dataProvider);
+  }
+  return undefined;
 }
 
 /**
