@@ -45,9 +45,9 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
 
               {receiverInGroup && (
                 <MetaText icon="at">
-                  <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
-                    Delivered to{' '}
-                    {canViewContactPoint ? (
+                  {canViewContactPoint ? (
+                    <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
+                      Delivered to{' '}
                       <TextLink
                         href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
                         variant="bodySmall"
@@ -56,17 +56,21 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
                       >
                         {'{{name}}'}
                       </TextLink>
-                    ) : (
-                      <Tooltip
-                        content={t(
-                          'alerting.alert-group.view-contact-point-no-permission',
-                          'You do not have permission to view contact points'
-                        )}
-                      >
-                        <span className={styles.disabledContactPointName}>{'{{name}}'}</span>
-                      </Tooltip>
-                    )}
-                  </Trans>
+                    </Trans>
+                  ) : (
+                    <Tooltip
+                      content={t(
+                        'alerting.alert-group.view-contact-point-no-permission',
+                        'You do not have permission to view contact points'
+                      )}
+                    >
+                      <span>
+                        <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
+                          Delivered to <span className={styles.disabledContactPointName}>{'{{name}}'}</span>
+                        </Trans>
+                      </span>
+                    </Tooltip>
+                  )}
                 </MetaText>
               )}
             </Stack>
