@@ -1,12 +1,12 @@
 import { groupBy } from 'lodash';
 
 import {
-  DataFrame,
-  Field as DataFrameField,
-  DataFrameJSON,
-  Field,
+  type DataFrame,
+  type Field as DataFrameField,
+  type DataFrameJSON,
+  type Field,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   MappingType,
   ThresholdsMode,
   getDisplayProcessor,
@@ -14,8 +14,8 @@ import {
 import { fieldIndexComparer } from '@grafana/data/internal';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
-import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
+import { isPromQLStyleMatcher, parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
+import { type LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
 import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
 import { StateFilterValues } from './constants';
@@ -24,20 +24,19 @@ const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
 
 /**
- * Parse label filters and prepare backend filters.
- * Backend supports only exact matchers.
+ * Normalise a free-text PromQL-style label filter string into the selector
+ * format expected by the backend `matchers` query parameter.
+ *
+ * - Empty / whitespace-only input → undefined (param omitted from request)
+ * - Already wrapped in `{}` → returned as-is
+ * - Bare matchers like `foo="bar",baz=~".*"` → wrapped in `{foo="bar",baz=~".*"}`
  */
-export function parseBackendLabelFilters(labelFilter: string): Record<string, string> {
-  const labelMatchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
-  const labelFilters: Record<string, string> = {};
-
-  labelMatchers.forEach((matcher) => {
-    if (!matcher.isRegex && matcher.isEqual) {
-      labelFilters[matcher.name] = matcher.value;
-    }
-  });
-
-  return labelFilters;
+export function toMatchersParam(labelFilter: string): string | undefined {
+  const trimmed = labelFilter.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  return isPromQLStyleMatcher(trimmed) ? trimmed : `{${trimmed}}`;
 }
 
 interface HistoryFilters {

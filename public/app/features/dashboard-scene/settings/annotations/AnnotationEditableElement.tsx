@@ -1,13 +1,16 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { dataLayers } from '@grafana/scenes';
+import { type dataLayers } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 
 import {
   AnnotationColorPicker,
@@ -103,14 +106,30 @@ export class AnnotationEditableElement implements EditableDashboardElement {
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
+  public onDuplicate() {
+    const dataLayerSet = this.layer.parent;
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
+    }
+
+    annotationEditActions.addAnnotation({
+      source: dataLayerSet,
+      addedObject: this.layer.clone({
+        key: undefined,
+        name: `${this.layer.state.name} - Copy`,
+      }),
+    });
+  }
+
   public onDelete() {
     const dataLayerSet = this.layer.parent;
-
-    if (dataLayerSet instanceof DashboardDataLayerSet) {
-      annotationEditActions.removeAnnotation({
-        source: dataLayerSet,
-        removedObject: this.layer,
-      });
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
     }
+
+    annotationEditActions.removeAnnotation({
+      source: dataLayerSet,
+      removedObject: this.layer,
+    });
   }
 }

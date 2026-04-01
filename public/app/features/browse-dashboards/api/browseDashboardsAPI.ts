@@ -1,14 +1,14 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { handleRequestError } from '@grafana/api-clients';
+import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
@@ -16,15 +16,20 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
-import { PermissionLevel } from 'app/types/acl';
-import { ImportDashboardResponseDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
-import { DescendantCount, DescendantCountDTO, FolderDTO, FolderListItemDTO } from 'app/types/folders';
+import { type PermissionLevel } from 'app/types/acl';
+import { type ImportDashboardResponseDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
+import {
+  type DescendantCount,
+  type DescendantCountDTO,
+  type FolderDTO,
+  type FolderListItemDTO,
+} from 'app/types/folders';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -129,17 +134,20 @@ export const browseDashboardsAPI = createApi({
           parentUid,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(async ({ data: folder }) => {
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
-          // Refetch quota usage after mutations that change the total number of dashboards or folders
-          invalidateQuotaUsage(dispatch);
-        });
+      onQueryStarted: async ({ parentUid }, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+        } catch {
+          return; // Error handled by mutation caller
+        }
+        dispatch(
+          refetchChildren({
+            parentUID: parentUid,
+            pageSize: PAGE_SIZE,
+          })
+        );
+        // Refetch quota usage after mutations that change the total number of dashboards or folders
+        invalidateQuotaUsage(dispatch);
       },
     }),
 
@@ -253,8 +261,9 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ dashboardUIDs, destinationUID }, _api, _extraOptions, baseQuery) => {
         // Move all the dashboards sequentially
         // TODO error handling here
+        const api = await getDashboardAPI();
         for (const dashboardUID of dashboardUIDs) {
-          const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const fullDash = await api.getDashboardDTO(dashboardUID);
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
@@ -267,7 +276,7 @@ export const browseDashboardsAPI = createApi({
               continue;
             }
           }
-          await getDashboardAPI().saveDashboard({
+          await api.saveDashboard({
             dashboard,
             folderUid: destinationUID,
             overwrite: false,
@@ -373,12 +382,13 @@ export const browseDashboardsAPI = createApi({
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
         // TODO error handling here
+        const api = await getDashboardAPI();
         try {
           for (const dashboardUID of dashboardUIDs) {
             // It's not possible to select a mix of provisioned and non-provisioned dashboards
             // from the UI, so this is mostly a guard in case that somehow happens
             if (config.featureToggles.provisioning) {
-              const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+              const dto = await api.getDashboardDTO(dashboardUID);
               if (isProvisionedDashboard(dto)) {
                 appEvents.publish({
                   type: AppEvents.alertWarning.name,
@@ -389,7 +399,7 @@ export const browseDashboardsAPI = createApi({
                 continue;
               }
             }
-            await getDashboardAPI().deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
+            await api.deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
 
             deletedCount++;
             deletedDashboardUIDs.push(dashboardUID);
@@ -453,12 +463,14 @@ export const browseDashboardsAPI = createApi({
       queryFn: async (cmd) => {
         try {
           if (isV2DashboardCommand(cmd)) {
-            const response = await getDashboardAPI('v2').saveDashboard(cmd);
+            const api = await getDashboardAPI('v2');
+            const response = await api.saveDashboard(cmd);
             return { data: response };
           }
 
           if (isV1DashboardCommand(cmd)) {
-            const rsp = await getDashboardAPI('v1').saveDashboard(cmd);
+            const api = await getDashboardAPI('v1');
+            const rsp = await api.saveDashboard(cmd);
             return { data: rsp };
           }
           throw new Error('Invalid dashboard version');
@@ -501,7 +513,8 @@ export const browseDashboardsAPI = createApi({
         let currentFolderUid: string | undefined;
         if (dashboard.uid) {
           try {
-            const existingDashboard = await getDashboardAPI().getDashboardDTO(dashboard.uid);
+            const api = await getDashboardAPI();
+            const existingDashboard = await api.getDashboardDTO(dashboard.uid);
             currentFolderUid = isDashboardV2Resource(existingDashboard)
               ? existingDashboard.metadata?.name
               : existingDashboard.meta?.folderUid;
@@ -549,7 +562,7 @@ export const browseDashboardsAPI = createApi({
       providesTags: ['getFolder'],
       queryFn: async () => {
         try {
-          const api = getDashboardAPI();
+          const api = await getDashboardAPI();
           const response = await api.listDeletedDashboards({});
 
           return { data: response };
@@ -564,7 +577,7 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboard }) => {
         try {
-          const api = getDashboardAPI();
+          const api = await getDashboardAPI();
           const response = await api.restoreDashboard(dashboard);
           const name = response.spec.title || '';
           const parentFolder = response.metadata?.annotations?.[AnnoKeyFolder];

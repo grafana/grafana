@@ -1,9 +1,9 @@
 import { t } from '@grafana/i18n';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { EditableDashboardElementInfo, EditableDashboardElement } from '../types/EditableDashboardElement';
+import { type EditableDashboardElementInfo, type EditableDashboardElement } from '../types/EditableDashboardElement';
 
-import { RowItem } from './RowItem';
+import { type RowItem } from './RowItem';
 import { getEditOptions } from './RowItemsEditor';
 
 export class RowItems implements EditableDashboardElement {

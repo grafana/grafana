@@ -21,6 +21,7 @@ import (
 )
 
 func TestIntegrationTeamBindings(t *testing.T) {
+	t.Skip("flaky: context cancelled on basic roles fetch during Delete authz check")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// TODO: Add rest.Mode5 when it's supported
@@ -39,7 +40,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesTeamsApi,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})

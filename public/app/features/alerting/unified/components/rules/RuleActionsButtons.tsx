@@ -9,7 +9,7 @@ import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/component
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { useDispatch } from 'app/types/store';
-import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
+import { type CombinedRule, type RuleIdentifier, type RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';

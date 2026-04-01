@@ -385,6 +385,8 @@ When `disabled = true` is set for a `defined_by` query, only the `query` field i
 
 ## Best practices
 
+Consider the following best practices when creating custom model rules with Terraform.
+
 ### Entity models
 
 - Design your entity models to reflect your actual infrastructure and application architecture

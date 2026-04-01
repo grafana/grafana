@@ -5,7 +5,10 @@ import (
 	"testing"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -160,4 +163,50 @@ func TestService_resolveScopeMap(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test that fetch* functions paginate through all results when the store returns multiple pages.
+// Each test uses pageSize=2 with 5 items, expecting 3 pages (2+2+1).
+func TestService_fetchPagination(t *testing.T) {
+	ns := types.NamespaceInfo{Value: "org-1", OrgID: 1}
+
+	t.Run("teams", func(t *testing.T) {
+		s := setupService()
+		store := &fakeIdentityStore{disableNsCheck: true, pageSize: 2, teams: []team.Team{
+			{ID: 1, UID: "t1"}, {ID: 2, UID: "t2"}, {ID: 3, UID: "t3"}, {ID: 4, UID: "t4"}, {ID: 5, UID: "t5"},
+		}}
+		s.identityStore = store
+
+		got, err := s.fetchTeams(context.Background(), ns)
+		require.NoError(t, err)
+		require.Len(t, got, 5)
+		require.Equal(t, 3, store.calls)
+	})
+
+	t.Run("service accounts", func(t *testing.T) {
+		s := setupService()
+		store := &fakeIdentityStore{disableNsCheck: true, pageSize: 2, serviceAccounts: []legacy.ServiceAccount{
+			{ID: 1, UID: "sa1"}, {ID: 2, UID: "sa2"}, {ID: 3, UID: "sa3"}, {ID: 4, UID: "sa4"}, {ID: 5, UID: "sa5"},
+		}}
+		s.identityStore = store
+
+		got, err := s.fetchServiceAccounts(context.Background(), ns)
+		require.NoError(t, err)
+		require.Len(t, got, 5)
+		require.Equal(t, 3, store.calls)
+	})
+
+	t.Run("users", func(t *testing.T) {
+		s := setupService()
+		store := &fakeIdentityStore{disableNsCheck: true, pageSize: 2, users: []common.UserWithRole{
+			{User: user.User{ID: 1, UID: "u1"}}, {User: user.User{ID: 2, UID: "u2"}}, {User: user.User{ID: 3, UID: "u3"}},
+			{User: user.User{ID: 4, UID: "u4"}}, {User: user.User{ID: 5, UID: "u5"}},
+		}}
+		s.identityStore = store
+
+		got, err := s.fetchUsers(context.Background(), ns)
+		require.NoError(t, err)
+		require.Len(t, got, 5)
+		require.Equal(t, 3, store.calls)
+	})
 }

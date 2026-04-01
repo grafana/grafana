@@ -1,6 +1,6 @@
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 
-import { DashboardLayoutManager } from './DashboardLayoutManager';
+import { type DashboardLayoutManager } from './DashboardLayoutManager';
 
 /**
  * This interface is needed to support layouts existing on different levels of the scene (DashboardScene and inside the TabsLayoutManager)

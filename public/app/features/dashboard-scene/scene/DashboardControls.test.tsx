@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,9 +12,11 @@ import {
   ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { KioskMode } from 'app/types/dashboard';
 
-import { DashboardControls, DashboardControlsState } from './DashboardControls';
+import { DashboardControls, type DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
@@ -33,6 +37,14 @@ jest.mock('@grafana/runtime', () => ({
     registerRuntimeDataSource: jest.fn(),
   })),
 }));
+
+function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
+  const context = getGrafanaContextMock();
+  if (kioskMode !== undefined) {
+    context.chrome.update({ kioskMode: KioskMode.Full });
+  }
+  return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
+}
 
 describe('DashboardControls', () => {
   describe('Given a standard scene', () => {
@@ -211,7 +223,7 @@ describe('DashboardControls', () => {
         dashboard.setState({ isEditing: true });
 
         const controls = dashboard.state.controls as DashboardControls;
-        render(<controls.Component model={controls} />);
+        renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
         // Hidden variables should still be visible in edit mode.
         expect(await screen.findByText('query0')).toBeInTheDocument();
@@ -228,6 +240,7 @@ describe('DashboardControls', () => {
         '_dash.hideVariables',
         '_dash.hideLinks',
         '_dash.hideDashboardControls',
+        '_dash.hidePlaylistNav',
       ]);
     });
 
@@ -239,6 +252,7 @@ describe('DashboardControls', () => {
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       expect(scene.getUrlState()).toEqual({});
     });
@@ -250,21 +264,25 @@ describe('DashboardControls', () => {
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
         '_dash.hideDashboardControls': 'true',
+        '_dash.hidePlaylistNav': 'true',
       });
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
       expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
       scene.updateFromUrl({
         '_dash.hideTimePicker': '',
         '_dash.hideVariables': '',
         '_dash.hideLinks': '',
         '_dash.hideDashboardControls': '',
+        '_dash.hidePlaylistNav': '',
       });
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
       expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
     });
 
     it('should not override state if no new state comes from url', () => {
@@ -273,12 +291,14 @@ describe('DashboardControls', () => {
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       scene.updateFromUrl({});
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
       expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
     });
 
     it('should not call setState if no changes', () => {
@@ -287,6 +307,7 @@ describe('DashboardControls', () => {
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       const setState = jest.spyOn(scene, 'setState');
 
@@ -295,6 +316,7 @@ describe('DashboardControls', () => {
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
         '_dash.hideDashboardControls': 'true',
+        '_dash.hidePlaylistNav': 'true',
       });
 
       expect(setState).toHaveBeenCalledTimes(0);
@@ -311,12 +333,12 @@ describe('DashboardControls', () => {
 
     afterEach(() => {
       config.featureToggles = originalFeatureToggles;
-      jest.clearAllMocks();
+      jest.resetAllMocks();
     });
 
     it('should show EditDashboardSwitch when editable is true', async () => {
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(await screen.findByRole('button', { name: /edit/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
@@ -324,7 +346,7 @@ describe('DashboardControls', () => {
 
     it('should show MakeDashboardEditableButton when editable is false', async () => {
       const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(await screen.findByRole('button', { name: /make editable/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
@@ -337,7 +359,7 @@ describe('DashboardControls', () => {
         canMakeEditable: false,
         isSnapshot: true,
       });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
@@ -347,10 +369,64 @@ describe('DashboardControls', () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
+    });
+
+    it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
+
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
+    });
+
+    it('should hide playlist nav buttons when hidePlaylistNav is true', async () => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
+
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      controls.setState({ hidePlaylistNav: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('DashboardControlActions kiosk mode', () => {
+    const originalFeatureToggles = { ...config.featureToggles };
+
+    beforeEach(() => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
+      config.featureToggles.dashboardNewLayouts = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+      jest.resetAllMocks();
+    });
+
+    it('should hide Edit and Share buttons in kiosk mode', async () => {
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, KioskMode.Full);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container)).not.toBeInTheDocument();
+    });
+
+    it('should show Edit and Share buttons when not in kiosk mode', async () => {
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
   });
 });

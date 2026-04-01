@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL } from '../constants';
@@ -48,6 +48,15 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                     >
                       Configure with {'{{ provider }}'}
                     </Trans>
+                    {config.tooltip && (
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                        variant="secondary"
+                      />
+                    )}
                   </Stack>
                 </Card.Heading>
               </Card>
@@ -88,6 +97,15 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                         Configure with {'{{ provider }}'}
                       </Trans>
                     )}
+                    {config.tooltip && (
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                        variant="secondary"
+                      />
+                    )}
                   </Stack>
                 </Card.Heading>
               </Card>
@@ -112,6 +130,9 @@ function getStyles(theme: GrafanaTheme2, disabled?: boolean) {
           color: theme.colors.text.secondary,
         },
       }),
+    }),
+    infoIcon: css({
+      zIndex: 1,
     }),
   };
 }

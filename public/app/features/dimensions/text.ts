@@ -1,7 +1,7 @@
-import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
-import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
+import { type DataFrame, type Field, FieldType, formattedValueToString } from '@grafana/data';
+import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier } from './types';
+import { type DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------

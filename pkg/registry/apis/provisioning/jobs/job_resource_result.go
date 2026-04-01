@@ -82,15 +82,27 @@ func isWarningError(err error) bool {
 	return ok
 }
 
+// isNonFailingWarning reports whether the warning represents an informational
+// issue where the underlying resource operation still succeeded (e.g. missing
+// or invalid folder metadata).
+func isNonFailingWarning(err error) bool {
+	if err == nil {
+		return false
+	}
+	return errors.Is(err, resources.ErrMissingFolderMetadata) ||
+		errors.Is(err, resources.ErrInvalidFolderMetadata)
+}
+
 // JobResourceResult represents the result of a resource operation in a job.
 type JobResourceResult struct {
-	name    string
-	group   string
-	kind    string
-	path    string
-	action  repository.FileAction
-	err     error
-	warning error
+	name         string
+	group        string
+	kind         string
+	path         string
+	previousPath string
+	action       repository.FileAction
+	err          error
+	warning      error
 }
 
 // jobResourceResultBuilder is a builder for creating JobResourceResult instances using a fluent API.
@@ -171,6 +183,14 @@ func (b *jobResourceResultBuilder) WithPath(path string) *jobResourceResultBuild
 	return b
 }
 
+// WithPreviousPath sets the source path for rename operations.
+// When a rename fails the resource stays at the previous (source) path,
+// so safety checks need both paths to prevent premature folder deletion.
+func (b *jobResourceResultBuilder) WithPreviousPath(path string) *jobResourceResultBuilder {
+	b.result.previousPath = path
+	return b
+}
+
 // WithAction sets the action performed on the resource.
 func (b *jobResourceResultBuilder) WithAction(action repository.FileAction) *jobResourceResultBuilder {
 	b.result.action = action
@@ -234,6 +254,11 @@ func (r JobResourceResult) Kind() string {
 // Path returns the path of the resource.
 func (r JobResourceResult) Path() string {
 	return r.path
+}
+
+// PreviousPath returns the source path for rename operations.
+func (r JobResourceResult) PreviousPath() string {
+	return r.previousPath
 }
 
 // Action returns the action performed on the resource.
