@@ -160,8 +160,9 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			if uidOnlyCorr.Provisioned {
 				return ErrCorrelationReadOnly
 			}
-			foundSourceUID = correlation.SourceUID
+			foundSourceUID = uidOnlyCorr.SourceUID
 			foundCorrelation = uidOnlyCorr
+			correlation.SourceUID = uidOnlyCorr.SourceUID
 		} else {
 			foundSourceUID = cmd.SourceUID
 		}
