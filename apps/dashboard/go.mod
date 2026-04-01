@@ -7,7 +7,7 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039
 	github.com/grafana/grafana-app-sdk v0.52.1
 	github.com/grafana/grafana-app-sdk/logging v0.51.4
-	github.com/grafana/grafana-plugin-sdk-go v0.290.2-0.20260331091023-83f3e9a09a2e
+	github.com/grafana/grafana-plugin-sdk-go v0.291.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/prometheus/client_golang v1.23.2

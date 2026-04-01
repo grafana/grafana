@@ -4,7 +4,7 @@ go 1.25.8
 
 require (
 	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039
-	github.com/grafana/grafana-plugin-sdk-go v0.290.2-0.20260331091023-83f3e9a09a2e
+	github.com/grafana/grafana-plugin-sdk-go v0.291.0
 	github.com/open-feature/go-sdk v1.17.1
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7
 )
