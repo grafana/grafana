@@ -5631,6 +5631,8 @@
         "title": "Variables"
       },
       "variable": {
+        "change-type": "Change",
+        "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
           "change-value": "Change variable value",
@@ -6526,6 +6528,9 @@
       },
       "name": {
         "action": "Change variable name"
+      },
+      "type": {
+        "action": "Change variable type"
       }
     },
     "version-history-comparison": {
