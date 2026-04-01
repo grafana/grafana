@@ -95,9 +95,7 @@ You can view the notification history or an alert rule from a Rule view page. To
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 1. Select an alert rule and click **View**.
-1. Click the **Notifications** tab.  
-
-
+1. Click the **Notifications** tab.
 
 ## View, compare and restore alert rules versions.
 
