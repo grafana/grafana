@@ -151,7 +151,7 @@ func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *contextmodel.ReqCo
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	// Parse Request Body
-	conf := apimodels.PostableUserConfig{}
+	conf := apimodels.ExternalAlertmanagerConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

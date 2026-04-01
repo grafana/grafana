@@ -341,6 +341,18 @@ describe('dashboardLibraryApi', () => {
       expect(result).toEqual([]);
     });
 
+    it('should filter out dashboards that have been removed', async () => {
+      const activeDashboard1 = createMockPluginDashboard({ uid: 'active', title: 'Active', removed: false });
+      const activeDashboard2 = createMockPluginDashboard({ uid: 'active2', title: 'Active2' });
+      const removedDashboard = createMockPluginDashboard({ uid: 'removed', title: 'Removed', removed: true });
+
+      mockGet.mockResolvedValue([activeDashboard1, activeDashboard2, removedDashboard]);
+
+      const result = await fetchProvisionedDashboards('prometheus');
+
+      expect(result).toEqual([activeDashboard1, activeDashboard2]);
+    });
+
     it('should return empty array for datasource with no provisioned dashboards', async () => {
       mockGet.mockResolvedValue([]);
 

@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "No se puede mostrar la vista previa de la consulta. Algunas de las fuentes de datos utilizadas en las consultas no están disponibles.",
       "preview-alerts": "Vista previa de las alertas",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Borrar filtros",
       "configured-alert-rules": "Las fuentes de datos que contienen reglas de alerta configuradas son fuentes de datos Mimir o Loki donde las reglas de alerta se almacenan y evalúan en la propia fuente de datos.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtra las reglas de alerta que se enrutan directamente al punto de contacto seleccionado. No se mostrarán las reglas de alerta enrutadas a políticas de notificación.",
       "contact-point-tooltip-title": "Ayuda del filtro de punto de contacto",
       "dashboard": "Panel de control",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Seleccionar fuentes de datos",
       "placeholder-group-search": "Buscar grupo",
       "placeholder-labels": "Seleccionar etiquetas",
+      "placeholder-policy": "",
       "plugin-rules": "Reglas del plugin",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Fuente de datos gestionada",
         "grafana": "Gestionadas por Grafana"
@@ -3212,6 +3220,7 @@
       "title-group": "Grupo",
       "title-health": "Salud",
       "title-labels": "Etiquetas",
+      "title-policy": "",
       "title-rule": "Regla",
       "title-state": "Estado",
       "title-type": "Tipo"
@@ -5653,10 +5662,16 @@
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "auto-grid": "",
+      "auto-grid-description": "",
+      "custom-grid": "",
+      "custom-grid-description": "",
       "description": "Añade un panel para visualizar tus datos",
       "import-a-dashboard-body": "Importa dashboards desde archivos o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control",
+      "layout-default-hint": "",
+      "select-layout-header": "",
       "title": "Nuevo dashboard"
     },
     "errors": {
@@ -6980,6 +6995,12 @@
       "sql-transformation-description": "Manipula tus datos utilizando una sintaxis similar a MySQL"
     },
     "general-settings-edit-view": {
+      "default_grid_options": {
+        "label": {
+          "auto": "",
+          "custom": ""
+        }
+      },
       "editable_options": {
         "label": {
           "editable": "Editable",
@@ -7264,6 +7285,9 @@
           "metrics-drilldown": "Desglose de la métrica"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -7728,6 +7752,8 @@
     "general": {
       "auto-refresh-description": "Define los intervalos de actualización automática que deben estar disponibles en la lista de actualización automática. Utiliza el formato «5 s» para los segundos, «1 m» para los minutos, «1 h» para las horas y «1 d» para los días (por ejemplo: «5 s, 10 s, 30 s, 1 m, 5 m, 15 m, 30 m, 1 h, 2 h, 1 d»).",
       "auto-refresh-label": "Actualización automática",
+      "default-grid-description": "",
+      "default-grid-label": "",
       "description-label": "Descripción",
       "editable-description": "Establecer como de solo lectura para desactivar toda la edición. Recargar el tablero para que los cambios surtan efecto",
       "editable-label": "Editable",
@@ -12988,6 +13014,10 @@
       "folders-count_one": "{{count}} carpeta",
       "folders-count_other": "{{count}} carpetas"
     },
+    "cloud-info-box": {
+      "body": "",
+      "title": ""
+    },
     "code-block": {
       "aria-label-copy": "Copiar código al portapapeles"
     },
@@ -14667,9 +14697,46 @@
     "select-aria-label": "Ordenar"
   },
   "splash-screen": {
-    "body": "",
-    "get-started": "",
-    "title": ""
+    "aria-label": "",
+    "assistant": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "badge": "",
+    "close": "",
+    "explore": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "git-sync": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "library": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "nav": {
+      "go-to": "",
+      "next": "",
+      "prev": ""
+    }
   },
   "sql-expressions": {
     "add-query-tooltip": "Añade al menos una consulta de datos para generar sugerencias de SQL",

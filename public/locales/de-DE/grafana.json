@@ -2592,6 +2592,9 @@
       "view-policies": "",
       "view-policies-aria": ""
     },
+    "policyFilter": {
+      "label": ""
+    },
     "preview-rule": {
       "body-preview-is-not-available": "Die Abfragevorschau kann nicht angezeigt werden. Einige der in den Abfragen verwendeten Datenquellen sind nicht verfügbar.",
       "preview-alerts": "Vorschau der Warnungen ansehen",
@@ -3107,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Filter zurücksetzen",
       "configured-alert-rules": "Datenquellen mit konfigurierten Warnregeln sind Mimir- oder Loki-Datenquellen, wobei die Warnregeln in der Datenquelle selbst gespeichert und bewertet werden.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Filtert Alertregeln, die direkt an den ausgewählten Kontaktpunkt geleitet werden. Alertregeln, die zu Benachrichtigungsrichtlinien geleitet werden, werden nicht angezeigt.",
       "contact-point-tooltip-title": "Hilfe zum Kontaktpunktfilter",
       "dashboard": "Dashboard",
@@ -3131,7 +3135,11 @@
       "placeholder-data-sources": "Datenquellen auswählen",
       "placeholder-group-search": "Gruppe suchen",
       "placeholder-labels": "Labels auswählen",
+      "placeholder-policy": "",
       "plugin-rules": "Plugin-Regeln",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Datenquelle verwaltet",
         "grafana": "Von Grafana verwaltet"
@@ -3212,6 +3220,7 @@
       "title-group": "Gruppe",
       "title-health": "Zustand",
       "title-labels": "Labels",
+      "title-policy": "",
       "title-rule": "Regel",
       "title-state": "Status",
       "title-type": "Typ"
@@ -5653,10 +5662,16 @@
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "auto-grid": "",
+      "auto-grid-description": "",
+      "custom-grid": "",
+      "custom-grid-description": "",
       "description": "Fügen Sie zur Visualisierung Ihrer Daten ein Panel hinzu",
       "import-a-dashboard-body": "Importieren Sie Dashboards aus Dateien oder von <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
+      "layout-default-hint": "",
+      "select-layout-header": "",
       "title": "Neues Dashboard"
     },
     "errors": {
@@ -6980,6 +6995,12 @@
       "sql-transformation-description": "Bearbeiten Sie Ihre Daten mit MySQL-ähnlicher Syntax"
     },
     "general-settings-edit-view": {
+      "default_grid_options": {
+        "label": {
+          "auto": "",
+          "custom": ""
+        }
+      },
       "editable_options": {
         "label": {
           "editable": "Editierbar",
@@ -7264,6 +7285,9 @@
           "metrics-drilldown": "Metrik-Drilldown"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -7728,6 +7752,8 @@
     "general": {
       "auto-refresh-description": "Definieren Sie die Intervalle für die automatischen Aktualisierungen, die in der Liste für die automatische Aktualisierung verfügbar sein sollen. Verwenden Sie das Format „5s“ für Sekunden, „1m“ für Minuten, „1h“ für Stunden und „1d“ für Tage (z. B.: „5s,10s,30s,1m,5m,15m,30m,1h,2h,1d“).",
       "auto-refresh-label": "Automatisch aktualisieren",
+      "default-grid-description": "",
+      "default-grid-label": "",
       "description-label": "Beschreibung",
       "editable-description": "Schreibgeschützt um alle Bearbeitung zu deaktivieren. Aktualisieren Sie das Dashboard, damit Änderungen wirksam werden",
       "editable-label": "Editierbar",
@@ -12988,6 +13014,10 @@
       "folders-count_one": "{{count}} Ordner",
       "folders-count_other": "{{count}} Ordner"
     },
+    "cloud-info-box": {
+      "body": "",
+      "title": ""
+    },
     "code-block": {
       "aria-label-copy": "Code in Zwischenablage kopieren"
     },
@@ -14667,9 +14697,46 @@
     "select-aria-label": "Sortieren"
   },
   "splash-screen": {
-    "body": "",
-    "get-started": "",
-    "title": ""
+    "aria-label": "",
+    "assistant": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "badge": "",
+    "close": "",
+    "explore": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "git-sync": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "library": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "nav": {
+      "go-to": "",
+      "next": "",
+      "prev": ""
+    }
   },
   "sql-expressions": {
     "add-query-tooltip": "Fügen Sie mindestens eine Datenabfrage hinzu, um SQL-Vorschläge zu generieren.",

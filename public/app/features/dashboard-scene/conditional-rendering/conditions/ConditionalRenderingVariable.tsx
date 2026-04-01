@@ -274,6 +274,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
       isObjectSupported={true}
       model={model}
       title={t('dashboard.conditional-rendering.conditions.variable.label', 'Template variable')}
+      ruleId="variable"
     >
       <Stack direction="column" gap={0.5}>
         <Stack direction="row" gap={0.5} grow={1}>

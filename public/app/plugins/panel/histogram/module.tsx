@@ -19,6 +19,8 @@ import { changeToHistogramPanelMigrationHandler } from './migrations';
 import { type FieldConfig, type Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { originalDataHasHistogram } from './utils';
 
+const MAX_SUGGESTIONS_SERIES = 20;
+
 export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
   .setPanelChangeHandler(changeToHistogramPanelMigrationHandler)
   .setPanelOptions((builder) => {
@@ -154,13 +156,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
     },
   })
   .setSuggestionsSupplier((ds) => {
-    if (ds.rawFrames && ds.hasData && buildHistogram(ds.rawFrames)) {
+    if (ds.rawFrames && ds.hasData && buildHistogram(ds.rawFrames.slice(0, MAX_SUGGESTIONS_SERIES)) != null) {
       return [
         {
           score: ds.hasDataFrameType(DataFrameType.Histogram)
             ? VisualizationSuggestionScore.Best
             : VisualizationSuggestionScore.OK,
           cardOptions: {
+            maxSeries: MAX_SUGGESTIONS_SERIES,
             previewModifier: (s) => {
               s.options!.legend = {
                 calcs: [],
