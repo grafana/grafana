@@ -43,7 +43,7 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
 
       if (groupByVariable) {
         const ds = await getDataSourceSrv().get(groupByVariable.state.datasource);
-        const keys = await groupByVariable._getKeys(ds as any, queries);
+        const keys = await groupByVariable._getKeys(ds, queries);
         fetchedOptions = metricFindValuesToOptions(Array.isArray(keys) ? keys : (keys.data ?? []));
       } else if (adhocGroupByVariable) {
         const selectableValues = await adhocGroupByVariable._getGroupByKeys(null, queries);
