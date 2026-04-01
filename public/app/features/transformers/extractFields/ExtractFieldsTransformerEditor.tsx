@@ -13,7 +13,6 @@ import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, type ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/extractFields.svg';
 import lightImage from '../images/light/extractFields.svg';
 
@@ -193,7 +192,6 @@ export const getExtractFieldsTransformRegistryItem: () => TransformerRegistryIte
     'Parse fields from content (JSON, labels, etc).'
   ),
   categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

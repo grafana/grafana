@@ -22,7 +22,7 @@ function openAddFilterPane(dashboard: DashboardScene) {
   const newVar = getVariableScene(type, { name: getNextAvailableId(name, variablesSet.state.variables ?? []) });
   dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
   dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-  DashboardInteractions.newVariableTypeSelected({ type });
+  DashboardInteractions.variableTypeSelected({ type });
 }
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardScene }) {

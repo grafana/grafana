@@ -19,12 +19,7 @@ test.describe(
   () => {
     (
       [
-        {
-          url: '/?orgId=1',
-          // DISABLED: The RSS panel on the home-page currently shows links that violate the a11y rules.
-          //   We need to get this fixed before re-enabling.
-          ignoredRules: ['link-name'],
-        },
+        { url: '/?orgId=1' },
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge' },
 
         // Dashboard settings
@@ -37,12 +32,7 @@ test.describe(
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json' },
 
         // Misc
-        {
-          url: '/?orgId=1&search=open',
-          // DISABLED: The RSS panel on the home-page currently shows links that violate the a11y rules.
-          //   We need to get this fixed before re-enabling.
-          ignoredRules: ['link-name'],
-        },
+        { url: '/?orgId=1&search=open' },
         { url: '/alerting/list', ignoredRules: ['button-name'] },
         { url: '/datasources' },
         { url: '/org/users' },

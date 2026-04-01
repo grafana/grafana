@@ -120,7 +120,7 @@ export interface FeatureToggles {
   disableSSEDataplane?: boolean;
   /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default false
+  * @default true
   */
   renderAuthJWT?: boolean;
   /**
@@ -138,11 +138,6 @@ export interface FeatureToggles {
   * @default false
   */
   faroSessionReplay?: boolean;
-  /**
-  * A table visualisation for logs in Explore
-  * @default true
-  */
-  logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
@@ -409,6 +404,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables default layout selector in dashboard settings
+  * @default false
+  */
+  dashboardDefaultLayoutSelector?: boolean;
+  /**
   * Enables the assistant prompt popover on panel click in dashboard view mode
   * @default false
   */
@@ -648,6 +648,11 @@ export interface FeatureToggles {
   * @default false
   */
   newSavedQueriesExperience?: boolean;
+  /**
+  * Enables the new unconfigured panel experience
+  * @default false
+  */
+  newUnconfiguredPanel?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -1197,7 +1202,7 @@ export interface FeatureToggles {
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
-  * @default false
+  * @default true
   */
   restoreDashboards?: boolean;
   /**
@@ -1750,4 +1755,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryServiceQueryCaching?: boolean;
+  /**
+  * Enables the time seeker in traces drilldown
+  * @default false
+  */
+  tracesDrilldownTimeSeeker?: boolean;
 }
