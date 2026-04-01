@@ -55,6 +55,7 @@ jobs:
 
     env:
       BUCKET_NAME: grafana-storybook
+      VERSION: ${{ inputs.version }}
 
     steps:
       - name: Checkout code
@@ -78,7 +79,7 @@ jobs:
       - name: Create deploy name
         id: create-deploy-name
         run: |
-          if [[ -n "${{ inputs.version }}" ]]; then
+          if [[ -n "$VERSION" ]]; then
             echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
           else
             echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
