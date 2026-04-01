@@ -90,7 +90,16 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     const parent = this.panel.parent;
-    const isHidden = parent instanceof AutoGridItem ? !parent.state.conditionalRendering?.state.result : undefined;
+    let isHidden: boolean | undefined;
+
+    if (parent instanceof AutoGridItem) {
+      const repeatIndex = parent.state.repeatedPanels?.indexOf(this.panel) ?? -1;
+      if (repeatIndex >= 0) {
+        isHidden = !parent.state.repeatedConditionalRendering![repeatIndex].state.result;
+      } else {
+        isHidden = !parent.state.conditionalRendering?.state.result;
+      }
+    }
 
     return {
       typeName: t('dashboard.edit-pane.elements.panel', 'Panel'),
