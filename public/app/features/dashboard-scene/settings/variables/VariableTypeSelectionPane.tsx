@@ -229,7 +229,7 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
       const newVar = getVariableScene(type, { name: getNextAvailableId(type, allVars) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-      DashboardInteractions.newVariableTypeSelected({ type });
+      DashboardInteractions.variableTypeSelected({ type });
     },
     [variableAdd]
   );
@@ -259,6 +259,7 @@ function VariableTypeChangeSelection({ variableTypeChange }: { variableTypeChang
         oldVariable: variable,
         newVariable,
       });
+      DashboardInteractions.variableTypeChanged({ old: variable.state.type, new: newVariable.state.type });
     },
     [variableTypeChange]
   );
@@ -288,7 +289,7 @@ function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableA
       });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-      DashboardInteractions.newSectionVariableTypeSelected({ type });
+      DashboardInteractions.sectionVariableTypeSelected({ type });
     },
     [sectionVariableAdd]
   );

@@ -87,14 +87,14 @@ describe('VariableAddEditableElement', () => {
     jest.restoreAllMocks();
   });
 
-  it('calls DashboardInteractions.newVariableTypeSelected when a variable type is clicked', () => {
-    const newVariableTypeSelectedSpy = jest.spyOn(DashboardInteractions, 'newVariableTypeSelected');
+  it('calls DashboardInteractions.variableTypeSelected when a variable type is clicked', () => {
+    const variableTypeSelectedSpy = jest.spyOn(DashboardInteractions, 'variableTypeSelected');
 
     const { getByRole } = renderTestScene();
 
     getByRole('button', { name: /query/i }).click();
 
-    expect(newVariableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' });
+    expect(variableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' });
   });
 
   it('generates a non-conflicting name when a section variable of the same type already exists', () => {

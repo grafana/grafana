@@ -1,3 +1,4 @@
+import { type VariableType } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
@@ -101,13 +102,17 @@ export const DashboardInteractions = {
 
   // dashboards_new_variable_type_selected
   // when a user selects a variable type when creating a new variable
-  newVariableTypeSelected: (properties: { type: string }) => {
+  variableTypeSelected: (properties: { type: string }) => {
     reportDashboardInteraction('new_variable_type_selected', properties);
+  },
+
+  variableTypeChanged: (properties: { old: VariableType; new: VariableType }) => {
+    reportDashboardInteraction('variable_type_changed', properties);
   },
 
   // dashboards_new_section_variable_type_selected
   // when a user selects a variable type when creating a new section (row/tab) variable
-  newSectionVariableTypeSelected: (properties: { type: string }) => {
+  sectionVariableTypeSelected: (properties: { type: string }) => {
     reportDashboardInteraction('new_section_variable_type_selected', properties);
   },
 
