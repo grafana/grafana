@@ -562,12 +562,6 @@ describe('AnnotationsPlugin2', () => {
           options: { clustering },
         });
 
-        act(() => {
-          //@ts-expect-error
-          hooks.ready(new uPlot());
-        });
-
-        // No annos? No draw!
         expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(0);
         uplotMockInstance.redraw.mockClear();
 
@@ -588,7 +582,6 @@ describe('AnnotationsPlugin2', () => {
           );
         });
 
-        // You got the annos? We got the draw!
         expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
         expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
       });
