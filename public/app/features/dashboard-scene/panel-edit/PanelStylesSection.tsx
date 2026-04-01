@@ -67,7 +67,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
     );
   };
 
-  if (!presets || presets.length === 0 || !hasData(data)) {
+  if (!presets || presets.length === 0 || !data || !hasData(data)) {
     return null;
   }
 
@@ -85,7 +85,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
     >
       <VisualizationCardGrid
         items={presets}
-        data={data!}
+        data={data}
         onItemClick={(preset, index) => handlePresetApply(preset, index)}
         getItemKey={(preset) => preset.hash}
         selectedKey={selectedPreset}
