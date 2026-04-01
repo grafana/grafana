@@ -1511,11 +1511,6 @@ export interface FeatureToggles {
   */
   useMTPlugins?: boolean;
   /**
-  * Enables datasource plugin importer to resolve plugin metadata internally instead of receiving it from callers
-  * @default false
-  */
-  datasourcePluginMetaLookup?: boolean;
-  /**
   * Enables support for variables whose values can have multiple properties
   * @default true
   */
