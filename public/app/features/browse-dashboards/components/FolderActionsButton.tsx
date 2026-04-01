@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
@@ -39,6 +40,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const [moveFolder] = useMoveFolderMutationFacade();
   const isProvisionedInstance = useIsProvisionedInstance();
   const deleteFolder = useDeleteFolderMutationFacade();
+  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const {
     canEditFolders,
@@ -54,8 +56,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   // Can only delete folders when the folder has the right permission and is not provisioned root folder
   const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
   // Show permissions only if the folder is not provisioned, or if the provisioningFolderMetadata flag is enabled
-  const canShowPermissions =
-    canViewPermissions && (!isProvisionedFolder || !!config.featureToggles.provisioningFolderMetadata);
+  const canShowPermissions = canViewPermissions && (!isProvisionedFolder || provisioningFolderMetadataEnabled);
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });

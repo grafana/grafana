@@ -189,6 +189,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
       isObjectSupported={objectType === 'panel'}
       model={model}
       title={t('dashboard.conditional-rendering.conditions.data.label', 'Query result')}
+      ruleId="data"
     >
       <Combobox
         options={enableConditionOptions}
