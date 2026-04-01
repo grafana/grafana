@@ -171,6 +171,29 @@ func TestKVStorageBackendProcessBulkPreservesImportedHistory(t *testing.T) {
 	require.Empty(t, collectLatestBulkImportNames(t, backend, namespace))
 }
 
+func TestKVStorageBackendProcessBulkRejectsInvalidDataKeysBeforeBatchInsert(t *testing.T) {
+	backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+
+	const namespace = "sqlkv-invalid-key"
+	req := newBulkImportRequest(namespace, "item-1", resourcepb.BulkRequest_ADDED)
+	req.Folder = "bad/folder"
+
+	resp := backend.ProcessBulk(context.Background(), BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{
+			Namespace: namespace,
+			Group:     testBulkImportGroup,
+			Resource:  testBulkImportResource,
+		}},
+	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{req}))
+
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Rejected, 1)
+	require.Contains(t, resp.Rejected[0].Error, "invalid data key")
+	require.Equal(t, int64(1), resp.Processed)
+	require.Empty(t, collectBulkImportNames(t, backend, namespace))
+	require.Empty(t, collectLatestBulkImportNames(t, backend, namespace))
+}
+
 func TestKVStorageBackendProcessBulkRollsBackOnImportBatchError(t *testing.T) {
 	sqlKV := setupSqlKV(t)
 	writer, ok := sqlKV.(importBatchWriter)

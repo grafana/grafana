@@ -2031,6 +2031,15 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				Folder:          req.Folder,
 			}
 
+			if err := validateDataKey(dataKey); err != nil {
+				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  fmt.Sprintf("failed to save resource: invalid data key: %s", err),
+				})
+				continue
+			}
+
 			item := kvBulkImportItem{
 				req:     req,
 				dataKey: dataKey,
