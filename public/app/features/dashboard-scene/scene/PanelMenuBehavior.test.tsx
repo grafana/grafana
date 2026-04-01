@@ -969,23 +969,24 @@ describe('panelMenuBehavior', () => {
     it.each(['trend', 'candlestick', 'stat', 'gauge', 'bargauge', 'barchart', 'piechart'])(
       'should show styles menu for %s panel',
       async (pluginId) => {
-      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
-      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
-      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+        const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+        const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
+        panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
-      new DashboardScene({
-        title: 'My dashboard',
-        uid: 'dash-1',
-        meta: { canEdit: true },
-        isEditing: true,
-        body: DefaultGridLayoutManager.fromVizPanels([panel]),
-      });
+        new DashboardScene({
+          title: 'My dashboard',
+          uid: 'dash-1',
+          meta: { canEdit: true },
+          isEditing: true,
+          body: DefaultGridLayoutManager.fromVizPanels([panel]),
+        });
 
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeDefined();
-    });
+        expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeDefined();
+      }
+    );
 
     it.each(['trend', 'candlestick', 'stat', 'gauge', 'bargauge', 'barchart', 'piechart'])(
       'should show paste option for %s panel when matching styles are copied',

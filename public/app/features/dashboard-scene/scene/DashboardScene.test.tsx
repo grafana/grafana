@@ -754,7 +754,13 @@ describe('DashboardScene', () => {
             fieldConfig: {
               defaults: {
                 color: { mode: 'thresholds' },
-                thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: 0 }, { color: 'red', value: 80 }] },
+                thresholds: {
+                  mode: ThresholdsMode.Absolute,
+                  steps: [
+                    { color: 'green', value: 0 },
+                    { color: 'red', value: 80 },
+                  ],
+                },
                 mappings: [],
               },
               overrides: [],
@@ -788,7 +794,11 @@ describe('DashboardScene', () => {
           scene.pastePanelStyles(target);
           expect(mockOnFieldConfigChange).toHaveBeenCalled();
           expect(mockOnOptionsChange).toHaveBeenCalledWith(
-            expect.objectContaining({ colorMode: 'background', showPercentChange: true, text: { titleSize: 16, valueSize: 24 } })
+            expect.objectContaining({
+              colorMode: 'background',
+              showPercentChange: true,
+              text: { titleSize: 16, valueSize: 24 },
+            })
           );
         });
 
@@ -814,7 +824,13 @@ describe('DashboardScene', () => {
             fieldConfig: {
               defaults: {
                 color: { mode: 'thresholds' },
-                thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: 0 }, { color: 'red', value: 80 }] },
+                thresholds: {
+                  mode: ThresholdsMode.Absolute,
+                  steps: [
+                    { color: 'green', value: 0 },
+                    { color: 'red', value: 80 },
+                  ],
+                },
                 mappings: [],
               },
               overrides: [],
@@ -870,7 +886,13 @@ describe('DashboardScene', () => {
             fieldConfig: {
               defaults: {
                 color: { mode: 'thresholds' },
-                thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: 0 }, { color: 'red', value: 80 }] },
+                thresholds: {
+                  mode: ThresholdsMode.Absolute,
+                  steps: [
+                    { color: 'green', value: 0 },
+                    { color: 'red', value: 80 },
+                  ],
+                },
                 mappings: [],
               },
               overrides: [],
