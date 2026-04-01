@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"slices"
@@ -1049,6 +1050,61 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 	k8sCliMock.AssertExpectations(t)
 }
 
+func TestGetDashboardsByPluginIDReturnsFirstErrorByUIDOrder(t *testing.T) {
+	service := &DashboardServiceImpl{
+		cfg: setting.NewCfg(),
+	}
+	query := &dashboards.GetDashboardsByPluginIDQuery{
+		PluginID: "testing",
+		OrgID:    1,
+	}
+
+	ctx, k8sCliMock := setupK8sDashboardTests(service)
+	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+		return ( // gofmt comment helper
+		req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindPlugin) &&
+			req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
+	})).Return(&resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: []*resourcepb.ResourceTableRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid1", Resource: "dashboard"},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte(""),
+					},
+				},
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid2", Resource: "dashboard"},
+					Cells: [][]byte{
+						[]byte("Dashboard 2"),
+						[]byte(""),
+					},
+				},
+			},
+		},
+		TotalHits: 2,
+	}, nil)
+
+	// Ensure uid2 fails first in wall-clock time; service should still return uid1's error by uid order.
+	k8sCliMock.On("Get", mock.Anything, "uid1", mock.Anything, mock.Anything, mock.Anything).
+		Run(func(mock.Arguments) { time.Sleep(25 * time.Millisecond) }).
+		Return(nil, nil)
+	secondErr := errors.New("unexpected get failure")
+	k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(nil, secondErr)
+
+	_, err := service.GetDashboardsByPluginID(ctx, query)
+	require.Error(t, err)
+	require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
+	require.NotErrorIs(t, err, secondErr)
+	k8sCliMock.AssertExpectations(t)
+}
+
 func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
@@ -1613,6 +1669,61 @@ func TestGetDashboards(t *testing.T) {
 	result, err = service.GetDashboards(ctx, queryByUIDs)
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, result)
+	k8sCliMock.AssertExpectations(t)
+}
+
+func TestGetDashboardsReturnsErrorWhenSingleGetFails(t *testing.T) {
+	service := &DashboardServiceImpl{
+		cfg: setting.NewCfg(),
+	}
+
+	queryByUIDs := &dashboards.GetDashboardsQuery{
+		DashboardUIDs: []string{"uid1", "uid2"},
+		OrgID:         1,
+	}
+	uid1Unstructured := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name":       "uid1",
+			"generation": int64(1),
+		},
+		"spec": map[string]any{
+			"title": "Dashboard 1",
+		},
+	}}
+
+	ctx, k8sCliMock := setupK8sDashboardTests(service)
+	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: []*resourcepb.ResourceTableRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid1", Resource: "dashboard"},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte(""),
+					},
+				},
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid2", Resource: "dashboard"},
+					Cells: [][]byte{
+						[]byte("Dashboard 2"),
+						[]byte(""),
+					},
+				},
+			},
+		},
+		TotalHits: 2,
+	}, nil)
+	k8sCliMock.On("Get", mock.Anything, "uid1", mock.Anything, mock.Anything, mock.Anything).Return(uid1Unstructured, nil)
+	k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+
+	_, err := service.GetDashboards(ctx, queryByUIDs)
+	require.Error(t, err)
+	require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
 	k8sCliMock.AssertExpectations(t)
 }
 
