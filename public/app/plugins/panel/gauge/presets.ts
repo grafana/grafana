@@ -1,5 +1,6 @@
 import {
   FieldColorModeId,
+  FieldType,
   ThresholdsMode,
   type VisualizationPresetsSupplier,
   type VisualizationSuggestion,
@@ -272,6 +273,10 @@ const neonSegmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfi
   };
 };
 
-export const gaugePresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = () => {
+export const gaugePresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
   return [defaultPreset(), segmentedPreset(), gradientPreset(), circlePreset(), neonPreset(), neonSegmentedPreset()];
 };
