@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,16 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
-// starsTestCase tests the "playlists" ResourceMigration
-type starsTestCase struct {
-	stars map[apis.User]collectionsV1.StarsResource
-}
+// starsTestCase tests the "stars" ResourceMigration
+type starsTestCase struct{}
 
 // NewStarsTestCase creates a test case for the stars migrator
 func NewStarsTestCase() ResourceMigratorTestCase {
-	return &starsTestCase{
-		stars: map[apis.User]collectionsV1.StarsResource{},
-	}
+	return &starsTestCase{}
 }
 
 func (tc *starsTestCase) Name() string {
@@ -90,12 +85,6 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 		require.NoError(t, err)
 		require.NotNil(t, res)
 		require.Len(t, res.UserStars, 2)
-
-		tc.stars[user] = collectionsV1.StarsResource{
-			Group: "dashboard.grafana.app",
-			Kind:  "Dashboard",
-			Names: []string{"dash-1", "dash-2"}, // sorted order
-		}
 	}
 
 	return true // will exist in mode0
@@ -103,11 +92,20 @@ func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 
 func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
-	apiList := &v1.APIResourceList{}
 
-	time.Sleep(15 * time.Second) // wait for the apiserver to be ready
+	expected := collectionsV1.StarsResource{
+		Group: "dashboard.grafana.app",
+		Kind:  "Dashboard",
+		Names: []string{"dash-1", "dash-2"}, // sorted order
+	}
 
-	for user, expected := range tc.stars {
+	users := []apis.User{
+		helper.Org1.Admin,
+		helper.Org1.Editor,
+		helper.OrgB.Admin,
+	}
+
+	for _, user := range users {
 		namespace := authlib.OrgNamespaceFormatter(user.Identity.GetOrgID())
 		id := user.Identity.GetIdentifier()
 		require.Equal(t, authlib.TypeUser, user.Identity.GetIdentityType())
@@ -117,9 +115,6 @@ func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, should
 			Namespace: namespace,
 			GVR:       collectionsV1.GroupVersion.WithResource("stars"),
 		})
-		client2 := user.RESTClient(t, &collectionsV1.GroupVersion)
-		err := client2.Get().Do(ctx).Into(apiList)
-		require.NoError(t, err, "unable to see the apiserver")
 
 		found, err := client.Resource.Get(ctx, "user-"+id, v1.GetOptions{})
 		if !shouldExist {
@@ -130,10 +125,10 @@ func (tc *starsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, should
 
 		tmp, err := found.MarshalJSON()
 		require.NoError(t, err)
-		stars := &collectionsV1.Stars{}
-		err = json.Unmarshal(tmp, stars)
+		star := &collectionsV1.Stars{}
+		err = json.Unmarshal(tmp, star)
 		require.NoError(t, err)
-		require.Len(t, stars.Spec.Resource, 1)
-		require.Equal(t, expected, stars.Spec.Resource[0])
+		require.Len(t, star.Spec.Resource, 1)
+		require.Equal(t, expected, star.Spec.Resource[0])
 	}
 }
