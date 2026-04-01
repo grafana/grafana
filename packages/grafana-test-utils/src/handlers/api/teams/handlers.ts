@@ -162,6 +162,11 @@ export const getSearchTeamsHandler = (teams: SearchTeam[], totalCount = teams.le
     });
   });
 
+export const getSearchTeamsErrorHandler = (message = 'Failed to load teams', status = 500) =>
+  http.get('/api/teams/search', async () => {
+    return HttpResponse.json({ message }, { status });
+  });
+
 const createTeamHandler = () =>
   http.post<never, { name: string; email: string }>('/api/teams', async ({ request }) => {
     const body = await request.json();
