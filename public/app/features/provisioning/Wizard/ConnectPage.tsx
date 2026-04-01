@@ -8,7 +8,7 @@ import { isGitProvider } from '../utils/repositoryTypes';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 import { StepStatusProvider } from './StepStatusContext';
-import { RepoType } from './types';
+import { type RepoType } from './types';
 
 export default function ConnectPage() {
   const { type } = useParams<{ type: RepoType }>();

@@ -1145,6 +1145,45 @@
    },
    "type": "object"
   },
+  "ExternalAlertmanagerConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/Config"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "ExternalAlertmanagerStatus": {
+   "properties": {
+    "cluster": {
+     "$ref": "#/definitions/clusterStatus"
+    },
+    "config": {
+     "$ref": "#/definitions/Config"
+    },
+    "uptime": {
+     "description": "uptime",
+     "format": "date-time",
+     "type": "string"
+    },
+    "versionInfo": {
+     "$ref": "#/definitions/versionInfo"
+    }
+   },
+   "required": [
+    "cluster",
+    "config",
+    "uptime",
+    "versionInfo"
+   ],
+   "type": "object"
+  },
   "ExtraConfiguration": {
    "properties": {
     "alertmanager_config": {
@@ -5991,29 +6030,6 @@
    }
   },
   "/alertmanager/grafana/config/api/v1/alerts": {
-   "delete": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteDeleteGrafanaAlertingConfig",
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "deletes the Alerting config for a tenant",
-    "tags": [
-     "alertmanager"
-    ]
-   },
    "get": {
     "deprecated": true,
     "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
@@ -8703,6 +8719,7 @@
   "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
+    "deprecated": true,
     "responses": {
      "200": {
       "description": "ProvisionedAlertRules",
@@ -8721,6 +8738,7 @@
      "application/json"
     ],
     "operationId": "RoutePostAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "in": "body",
@@ -8827,6 +8845,7 @@
   "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -8853,6 +8872,7 @@
    },
    "get": {
     "operationId": "RouteGetAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -8883,6 +8903,7 @@
      "application/json"
     ],
     "operationId": "RoutePutAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -9181,6 +9202,7 @@
    "delete": {
     "description": "Delete rule group",
     "operationId": "RouteDeleteAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "path",
@@ -9218,6 +9240,7 @@
    },
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "path",
@@ -9253,6 +9276,7 @@
      "application/json"
     ],
     "operationId": "RoutePutAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "header",

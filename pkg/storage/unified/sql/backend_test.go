@@ -954,38 +954,93 @@ func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context
 	}, ctx
 }
 
-func TestBackend_prunerHistoryLimit(t *testing.T) {
+func TestSqlPruneHistoryRequest_Validate(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
-		name     string
-		group    string
-		resource string
-		expected int64
+		name    string
+		req     sqlPruneHistoryRequest
+		wantErr string
 	}{
 		{
-			name:     "plugin resource returns custom limit",
-			group:    "plugins.grafana.app",
-			resource: "plugins",
-			expected: 3,
+			name: "valid namespaced key",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
 		},
 		{
-			name:     "dashboard resource returns default limit",
-			group:    "dashboard.grafana.app",
-			resource: "dashboards",
-			expected: defaultPrunerHistoryLimit,
+			name: "valid cluster-scoped key (no namespace)",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "",
+					Group:     "cluster.example.io",
+					Resource:  "clusterresources",
+					Name:      "my-cluster-resource",
+				},
+				HistoryLimit: 10,
+			},
 		},
 		{
-			name:     "other resource returns default limit",
-			group:    "some.app",
-			resource: "resources",
-			expected: defaultPrunerHistoryLimit,
+			name: "missing key",
+			req: sqlPruneHistoryRequest{
+				HistoryLimit: 10,
+			},
+			wantErr: "missing key",
+		},
+		{
+			name: "missing group",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing group",
+		},
+		{
+			name: "missing resource",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing resource",
+		},
+		{
+			name: "invalid history limit",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 0,
+			},
+			wantErr: "history limit must be greater than zero",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			b, _ := setupBackendTest(t)
-			limit := b.prunerHistoryLimit(tc.group, tc.resource)
-			require.Equal(t, tc.expected, limit)
+			t.Parallel()
+			err := tc.req.Validate()
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

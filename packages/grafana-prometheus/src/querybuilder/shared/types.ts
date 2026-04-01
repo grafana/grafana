@@ -2,11 +2,11 @@
 /**
  * Shared types that can be reused by Loki and other data sources
  */
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { DataSourceApi, RegistryItem, SelectableValue, TimeRange } from '@grafana/data';
+import { type DataSourceApi, type RegistryItem, type SelectableValue, type TimeRange } from '@grafana/data';
 
-import { PromVisualQuery } from '../types';
+import { type PromVisualQuery } from '../types';
 
 export interface QueryBuilderLabelFilter {
   label: string;

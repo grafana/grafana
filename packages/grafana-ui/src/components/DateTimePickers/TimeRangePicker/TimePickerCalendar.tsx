@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { createRef, FormEvent, memo } from 'react';
+import { createRef, type FormEvent, memo } from 'react';
 
-import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { type DateTime, type GrafanaTheme2, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getModalStyles } from '../../Modal/getModalStyles';
-import { WeekStart } from '../WeekStartPicker';
+import { type WeekStart } from '../WeekStartPicker';
 
 import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';

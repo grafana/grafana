@@ -1,5 +1,5 @@
-import { Labels } from '../types/data';
-import { DataFrame, Field, FieldType } from '../types/dataFrame';
+import { type Labels } from '../types/data';
+import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 
 /**
  * Synthetic facet key representing the field/metric name as a filterable dimension.
@@ -81,10 +81,13 @@ export function matchAllLabels(expect: Labels, against?: Labels): boolean {
 /**
  * Collects unique label values per key across all fields.
  * Adds a synthetic `__name__` facet when fields have multiple distinct names.
+ * Falls back to frame names when all fields share the same raw name
+ * (e.g. multiple queries each returning a "Value" field with distinct frame names).
  */
 export function extractFacetedLabels(frames: DataFrame[]): Record<string, string[]> {
   const valuesByKey: Record<string, Set<string>> = {};
   const fieldNames = new Set<string>();
+  const frameNames = new Set<string>();
 
   for (const frame of frames) {
     for (const field of frame.fields) {
@@ -93,6 +96,10 @@ export function extractFacetedLabels(frames: DataFrame[]): Record<string, string
       }
 
       fieldNames.add(field.name);
+
+      if (frame.name) {
+        frameNames.add(frame.name);
+      }
 
       if (field.labels) {
         for (const [key, value] of Object.entries(field.labels)) {
@@ -104,8 +111,9 @@ export function extractFacetedLabels(frames: DataFrame[]): Record<string, string
 
   const result: Record<string, string[]> = {};
 
-  if (fieldNames.size > 1) {
-    result[FIELD_NAME_FACET_KEY] = Array.from(fieldNames).sort();
+  const names = fieldNames.size > 1 ? fieldNames : frameNames;
+  if (names.size > 1) {
+    result[FIELD_NAME_FACET_KEY] = Array.from(names).sort();
   }
 
   for (const key in valuesByKey) {
@@ -140,7 +148,7 @@ export function resolveFacetedFilterNames(
 
       const matches = activeKeys.every(([key, allowed]) => {
         if (key === FIELD_NAME_FACET_KEY) {
-          return allowed.includes(field.name);
+          return allowed.includes(field.name) || (frame.name != null && allowed.includes(frame.name));
         }
         return field.labels?.[key] !== undefined && allowed.includes(field.labels[key]);
       });

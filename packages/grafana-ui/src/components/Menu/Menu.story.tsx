@@ -1,5 +1,7 @@
-import { Meta } from '@storybook/react';
+import { css } from '@emotion/css';
+import { type Meta } from '@storybook/react';
 
+import { useTheme2 } from '../../themes/ThemeContext';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
@@ -29,6 +31,7 @@ const meta: Meta<typeof Menu> = {
 };
 
 export function Examples() {
+  const theme = useTheme2();
   return (
     <Stack direction="column" width="fit-content">
       <StoryExample name="Plain">
@@ -117,6 +120,23 @@ export function Examples() {
           <Menu.Item label="Disabled destructive action" icon="trash-alt" destructive disabled />
         </Menu>
       </StoryExample>
+      <StoryExample name="With icon colors">
+        <Menu>
+          <Menu.Item label="Primary" icon="star" iconColor={theme.colors.primary.text} />
+          <Menu.Item label="Secondary" icon="cog" iconColor={theme.colors.secondary.text} />
+          <Menu.Item label="Success" icon="plus" iconColor={theme.colors.success.text} />
+          <Menu.Item label="Warning" icon="bell" iconColor={theme.colors.warning.text} />
+          <Menu.Item label="Purple" icon="download-alt" iconColor="#B877D9" />
+          <Menu.Divider />
+          <Menu.Item
+            label="Destructive wins over iconColor"
+            icon="trash-alt"
+            iconColor={theme.colors.success.text}
+            destructive
+          />
+          <Menu.Item label="Disabled wins over iconColor" icon="lock" iconColor={theme.colors.success.text} disabled />
+        </Menu>
+      </StoryExample>
       <StoryExample name="With header & groups">
         <Menu
           header={
@@ -143,6 +163,65 @@ export function Examples() {
             <Menu.Item label="item1" icon="history" />
           </Menu.Group>
         </Menu>
+      </StoryExample>
+      <StoryExample name="With custom spacing (via className)">
+        <Stack direction="row" gap={4}>
+          <Stack direction="column" gap={2}>
+            <div>Default spacing</div>
+            <Menu>
+              <Menu.Group label="New dashboard">
+                <Menu.Item label="Blank" icon="plus" iconColor={theme.colors.success.text} />
+                <Menu.Item label="From template" icon="table" iconColor={theme.colors.success.text} />
+                <Menu.Item label="Import" icon="download-alt" iconColor={theme.colors.success.text} />
+              </Menu.Group>
+              <Menu.Divider />
+              <Menu.Group label="New alert rule">
+                <Menu.Item label="Create" icon="plus" iconColor={theme.colors.success.text} />
+                <Menu.Item label="Import" icon="download-alt" iconColor={theme.colors.success.text} />
+              </Menu.Group>
+            </Menu>
+          </Stack>
+          <Stack direction="column" gap={2}>
+            <div>Custom style</div>
+            <Menu style={{ padding: theme.spacing(1, 2) }}>
+              <Menu.Group label="New dashboard">
+                <Menu.Item
+                  label="Blank"
+                  icon="plus"
+                  iconColor={theme.colors.success.text}
+                  className={css({ padding: theme.spacing(1, 2), minHeight: theme.spacing(5) })}
+                />
+                <Menu.Item
+                  label="From template"
+                  icon="table"
+                  iconColor={theme.colors.success.text}
+                  className={css({ padding: theme.spacing(1, 2), minHeight: theme.spacing(5) })}
+                />
+                <Menu.Item
+                  label="Import"
+                  icon="download-alt"
+                  iconColor={theme.colors.success.text}
+                  className={css({ padding: theme.spacing(1, 2), minHeight: theme.spacing(5) })}
+                />
+              </Menu.Group>
+              <Menu.Divider />
+              <Menu.Group label="New alert rule">
+                <Menu.Item
+                  label="Create"
+                  icon="plus"
+                  iconColor={theme.colors.success.text}
+                  className={css({ padding: theme.spacing(1, 2), minHeight: theme.spacing(5) })}
+                />
+                <Menu.Item
+                  label="Import"
+                  icon="download-alt"
+                  iconColor={theme.colors.success.text}
+                  className={css({ padding: theme.spacing(1, 2), minHeight: theme.spacing(5) })}
+                />
+              </Menu.Group>
+            </Menu>
+          </Stack>
+        </Stack>
       </StoryExample>
       <StoryExample name="With submenu and shortcuts">
         <Menu>

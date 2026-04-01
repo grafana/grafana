@@ -37,7 +37,7 @@ refs:
 
 ### Get all folders
 
-`GET /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders`
+`GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders`
 
 Returns all folders that the authenticated user has permission to view within the given organization. Use the `limit` query parameter to control the maximum number of dashboards returned. To retrieve additional dashboards, utilize the `continue` token provided in the response to fetch the next page.
 
@@ -59,7 +59,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders?limit=1 HTTP/1.1
+GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -72,14 +72,14 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "FolderList",
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "continue": "eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ=="
   },
   "items": [
     {
       "kind": "Folder",
-      "apiVersion": "folder.grafana.app/v1beta1",
+      "apiVersion": "folder.grafana.app/v1",
       "metadata": {
         "name": "aef30vrzxs3y8d",
         "namespace": "default",
@@ -105,7 +105,7 @@ The `metadata.continue` field contains a token to fetch the next page.
 **Example subsequent request using continue token**:
 
 ```http
-GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
+GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -118,11 +118,11 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "FolderList",
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "folder.grafana.app/v1",
   "items": [
     {
       "kind": "Folder",
-      "apiVersion": "folder.grafana.app/v1beta1",
+      "apiVersion": "folder.grafana.app/v1",
       "metadata": {
         "name": "bef30vrzxs3y8e",
         "namespace": "default",
@@ -153,7 +153,7 @@ Status Codes:
 
 ### Get folder by uid
 
-`GET /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid`
+`GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
 
 Will return the folder given the folder uid.
 
@@ -171,7 +171,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/aef30vrzxs3y8d HTTP/1.1
+GET /apis/folder.grafana.app/v1/namespaces/default/folders/aef30vrzxs3y8d HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -184,7 +184,7 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "name": "aef30vrzxs3y8d",
     "namespace": "default",
@@ -215,7 +215,7 @@ Status Codes:
 
 ### Create folder
 
-`POST /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders`
+`POST /apis/folder.grafana.app/v1/namespaces/:namespace/folders`
 
 Creates a new folder.
 
@@ -235,7 +235,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-POST /apis/folder.grafana.app/v1beta1/namespaces/default/folders HTTP/1.1
+POST /apis/folder.grafana.app/v1/namespaces/default/folders HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -270,7 +270,7 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "name": "eef33r1fprd34d",
     "namespace": "default",
@@ -301,7 +301,7 @@ Status Codes:
 
 ### Update folder
 
-`PUT /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid`
+`PUT /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
 
 Updates an existing folder identified by uid.
 
@@ -319,7 +319,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-PUT /apis/folder.grafana.app/v1beta1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
+PUT /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -353,7 +353,7 @@ Content-Type: application/json
 
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "name": "fef30w4jaxla8b",
     "namespace": "default",
@@ -395,7 +395,7 @@ Content-Length: 97
 
 ### Delete folder
 
-`DELETE /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid`
+`DELETE /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
 
 Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
 
@@ -415,7 +415,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-DELETE /apis/folder.grafana.app/v1beta1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
+DELETE /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -430,7 +430,7 @@ Content-Type: application/json
 
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "folder.grafana.app/v1",
   "metadata": {
     "name": "fef30w4jaxla8b",
     "namespace": "default",

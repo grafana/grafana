@@ -1,15 +1,18 @@
-import { ReactNode, useId, useMemo } from 'react';
+import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { SceneObject, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { useLayoutCategory } from '../../scene/layouts-shared/DashboardLayoutSelector';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 

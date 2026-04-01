@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import InfluxQueryModel from './influx_query_model';
-import { InfluxQuery } from './types'; // FIXME: these functions are a beginning of a refactoring of influx_query_model.ts
+import { type InfluxQuery } from './types'; // FIXME: these functions are a beginning of a refactoring of influx_query_model.ts
 
 // FIXME: these functions are a beginning of a refactoring of influx_query_model.ts
 // into a simpler approach with full typescript types.

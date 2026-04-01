@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 
 export type User = {
   uid: string;

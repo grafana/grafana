@@ -1,12 +1,12 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx, type keyframes } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
-import { AppEvents, CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, sceneGraph, sceneUtils } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import {
   Box,
   Button,

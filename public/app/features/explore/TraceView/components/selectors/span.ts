@@ -14,7 +14,7 @@
 
 import { createSelector } from 'reselect';
 
-import { TraceSpanData, TraceSpanReference } from '../types/trace';
+import { type TraceSpanData, type TraceSpanReference } from '../types/trace';
 
 export const getSpanId = (span: TraceSpanData) => span.spanID;
 export const getSpanReferences = (span: TraceSpanData) => span.references || [];

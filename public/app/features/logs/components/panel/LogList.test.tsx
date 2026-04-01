@@ -3,18 +3,18 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
-  DataFrame,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   store,
   toDataFrame,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
+import { type TempoDatasource } from '@grafana-plugins/tempo/datasource';
 import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
@@ -22,7 +22,7 @@ import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '.
 import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { LogList, Props } from './LogList';
+import { LogList, type Props } from './LogList';
 
 jest.mock('@openfeature/react-sdk', () => ({
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
@@ -577,7 +577,7 @@ describe('LogList', () => {
       expect(screen.getByText('debug')).toBeInTheDocument();
 
       // Click the "Log Level" checkbox in the field selector to hide log level
-      const logLevelCheckbox = screen.getByRole('checkbox', { name: 'Log level' });
+      const logLevelCheckbox = screen.getByRole('checkbox', { name: 'Show log level' });
       expect(logLevelCheckbox).toBeChecked();
       await userEvent.click(logLevelCheckbox);
 
@@ -589,13 +589,13 @@ describe('LogList', () => {
       expect(screen.getByText('backend')).toBeInTheDocument();
 
       // Click again to show log level (checkbox is now in Suggested section)
-      const logLevelCheckboxAfter = screen.getByRole('checkbox', { name: 'Log level' });
+      const logLevelCheckboxAfter = screen.getByRole('checkbox', { name: 'Show log level' });
       await userEvent.click(logLevelCheckboxAfter);
 
       // Level is shown again (wait for list to re-render)
       expect(await screen.findByText('info')).toBeInTheDocument();
       expect(screen.getByText('debug')).toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: 'Log level' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Show log level' })).toBeChecked();
     });
   });
 

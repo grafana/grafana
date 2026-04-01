@@ -1,7 +1,7 @@
 // NOTE: these two functions are similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 
-import { QueryVariableModel, CustomVariableModel } from '@grafana/data';
+import { type QueryVariableModel, type CustomVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 export function interpolateQueryExpr(

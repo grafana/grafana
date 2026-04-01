@@ -1,6 +1,6 @@
 import {
-  AzureCredentials,
-  AzureDataSourceSettings,
+  type AzureCredentials,
+  type AzureDataSourceSettings,
   getDatasourceCredentials,
   getDefaultAzureCloud,
 } from '@grafana/azure-sdk';

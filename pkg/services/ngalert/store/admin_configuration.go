@@ -87,7 +87,25 @@ func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) erro
 			return err
 		}
 
-		_, err = sess.Table("ngalert_configuration").AllCols().Update(cmd.AdminConfiguration)
+		_, err = sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Cols(
+			buildUpdateCols(cmd.AdminConfiguration)...,
+		).Update(cmd.AdminConfiguration)
 		return err
 	})
+}
+
+// buildUpdateCols builds a list of column names to update based on which fields of the admin configuration are set.
+// this is necessary to avoid overwriting fields with null values when they are not included in the update request.
+func buildUpdateCols(adminConfig *ngmodels.AdminConfiguration) []string {
+	var cols []string
+
+	if adminConfig.SendAlertsTo != nil {
+		cols = append(cols, "send_alerts_to")
+	}
+
+	if adminConfig.ExternalAlertmanagerUID != nil {
+		cols = append(cols, "external_alertmanager_uid")
+	}
+
+	return cols
 }

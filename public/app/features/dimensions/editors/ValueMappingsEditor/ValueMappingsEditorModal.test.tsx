@@ -5,7 +5,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { MappingType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { ValueMappingsEditorModal, Props } from './ValueMappingsEditorModal';
+import { ValueMappingsEditorModal, type Props } from './ValueMappingsEditorModal';
 
 const setup = (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
   const props: Props = {

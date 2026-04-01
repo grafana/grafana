@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/situation.test.ts
-import { getSituation, Situation } from './situation';
+import { getSituation, type Situation } from './situation';
 
 // we use the `^` character as the cursor-marker in the string.
 function assertSituation(situation: string, expectedSituation: Situation | null) {
