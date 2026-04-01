@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -74,12 +75,20 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, err
 	}
 
+	uids := valuesFromRequirements(req.Options, res.SEARCH_FIELD_NAME)
+	teamIds, err := legacyIDsFromRequirements(req.Options)
+	if err != nil {
+		return nil, err
+	}
+
 	query := &team.SearchTeamsQuery{
 		SignedInUser: signedInUser,
 		Limit:        int(req.Limit),
 		Page:         int(req.Page),
 		Query:        req.Query,
 		Name:         title,
+		UIDs:         uids,
+		TeamIds:      teamIds,
 		OrgID:        signedInUser.GetOrgID(),
 		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, teamSortFieldMapping, teamsortopts.SortOptionsByQueryParam),
 	}
@@ -179,4 +188,44 @@ func titleFromRequirements(opts *resourcepb.ListOptions) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+func valuesFromRequirements(opts *resourcepb.ListOptions, key string) []string {
+	if opts == nil {
+		return nil
+	}
+	for _, r := range opts.Fields {
+		if r != nil && r.Key == key && len(r.Values) > 0 {
+			return r.Values
+		}
+	}
+	return nil
+}
+
+func valuesFromLabels(opts *resourcepb.ListOptions, key string) []string {
+	if opts == nil {
+		return nil
+	}
+	for _, r := range opts.Labels {
+		if r != nil && r.Key == key && len(r.Values) > 0 {
+			return r.Values
+		}
+	}
+	return nil
+}
+
+func legacyIDsFromRequirements(opts *resourcepb.ListOptions) ([]int64, error) {
+	values := valuesFromLabels(opts, utils.LabelKeyDeprecatedInternalID)
+	if len(values) == 0 {
+		return nil, nil
+	}
+	ids := make([]int64, 0, len(values))
+	for _, v := range values {
+		id, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid legacy team ID %q: %w", v, err)
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }

@@ -121,6 +121,25 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "uid",
+										In:          "query",
+										Description: "filter by team UIDs. Mutually exclusive with teamId.",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "teamId",
+										In:          "query",
+										Description: "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
+										Required:    false,
+										Deprecated:  true,
+										Schema:      spec.ArrayProperty(spec.Int64Property()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "limit",
 										In:          "query",
 										Description: "limit the number of results",
@@ -324,6 +343,32 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 			Key:      resource.SEARCH_FIELD_TITLE,
 			Operator: string(selection.Equals),
 			Values:   []string{title},
+		})
+	}
+
+	uids := queryParams["uid"]
+	teamIds := queryParams["teamId"]
+	if len(uids) > 0 && len(teamIds) > 0 {
+		http.Error(w, "uid and teamId parameters are mutually exclusive", http.StatusBadRequest)
+		return
+	}
+
+	if len(uids) > 0 {
+		if searchRequest.Options.Fields == nil {
+			searchRequest.Options.Fields = make([]*resourcepb.Requirement, 0, 1)
+		}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.In),
+			Values:   uids,
+		})
+	}
+
+	if len(teamIds) > 0 {
+		searchRequest.Options.Labels = append(searchRequest.Options.Labels, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_LEGACY_ID,
+			Operator: string(selection.In),
+			Values:   teamIds,
 		})
 	}
 
