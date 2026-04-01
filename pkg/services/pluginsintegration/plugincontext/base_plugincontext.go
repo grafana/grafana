@@ -49,7 +49,7 @@ func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginst
 		Namespace:     ns,
 	}
 	if user != nil && !user.IsNil() {
-		pCtx.OrgID = user.GetOrgID()
+		pCtx.OrgID = user.GetOrgID() // nolint:staticcheck
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 		if ns == "" {
 			pCtx.Namespace = user.GetNamespace()
