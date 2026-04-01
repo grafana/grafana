@@ -654,6 +654,11 @@ export interface FeatureToggles {
   */
   newSavedQueriesExperience?: boolean;
   /**
+  * Enables the new unconfigured panel experience
+  * @default false
+  */
+  newUnconfiguredPanel?: boolean;
+  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -1202,7 +1207,7 @@ export interface FeatureToggles {
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
-  * @default false
+  * @default true
   */
   restoreDashboards?: boolean;
   /**

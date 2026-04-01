@@ -209,9 +209,10 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 
-	Kind       string `json:"-"`
-	Attribute  string `json:"-"`
-	Identifier string `json:"-"`
+	Kind           string `json:"-"`
+	Attribute      string `json:"-"`
+	Identifier     string `json:"-"`
+	DatasourceType string `json:"-" xorm:"datasource_type"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
@@ -493,15 +494,16 @@ const (
 	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
 	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
 
+	AlertingNotificationsApiGroup = "notifications.alerting.grafana.app"
+	AlertingRoutesResource        = "routingtrees"
+	AlertingRoutesKind            = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource
 	// Alerting managed routes actions (new, scoped per-resource)
-	ActionAlertingManagedRoutesRead   = "alert.notifications.routes.managed:read"
-	ActionAlertingManagedRoutesWrite  = "alert.notifications.routes.managed:write"
-	ActionAlertingManagedRoutesCreate = "alert.notifications.routes.managed:create"
-	ActionAlertingManagedRoutesDelete = "alert.notifications.routes.managed:delete"
-
-	// Alerting routes permissions actions
-	ActionAlertingRoutesPermissionsRead  = "routes.permissions:read"
-	ActionAlertingRoutesPermissionsWrite = "routes.permissions:write"
+	ActionAlertingManagedRoutesRead      = AlertingRoutesKind + ":get"
+	ActionAlertingManagedRoutesWrite     = AlertingRoutesKind + ":update"
+	ActionAlertingManagedRoutesCreate    = AlertingRoutesKind + ":create"
+	ActionAlertingManagedRoutesDelete    = AlertingRoutesKind + ":delete"
+	ActionAlertingRoutesPermissionsRead  = AlertingRoutesKind + ":set_permissions"
+	ActionAlertingRoutesPermissionsWrite = AlertingRoutesKind + ":get_permissions"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"

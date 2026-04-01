@@ -115,7 +115,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 				continue
 			}
 
-			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path))
+			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), resources.FolderKind)
 			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
 				fmt.Sprintf("Add folder metadata for %s", folder.Path))
 

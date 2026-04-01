@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -546,7 +547,7 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name st
 		return nil, err
 	}
 
-	return maps.Keys(keys), nil
+	return slices.Collect(maps.Keys(keys)), nil
 }
 
 // AccessControlMetadata returns access control metadata for the given Receivers.
