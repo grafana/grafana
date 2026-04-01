@@ -430,5 +430,9 @@
     [[range $asset := .Assets.JSFiles]]
       <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
     [[end]]
+
+     <script nonce="[[.Nonce]]">
+      performance.mark('frontend_boot_js_done_time_seconds');
+    </script>
   </body>
 </html>
