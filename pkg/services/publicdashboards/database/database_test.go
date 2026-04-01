@@ -58,7 +58,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 
 	setup := func() {
 		cfg = setting.NewCfg()
-		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -458,7 +458,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 	setup := func() {
 		cfg = setting.NewCfg()
-		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store
@@ -538,7 +538,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 
 	setup := func() {
 		cfg = setting.NewCfg()
-		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
@@ -875,7 +875,7 @@ func TestIntegrationGetMetrics(t *testing.T) {
 
 	setup := func() {
 		cfg = setting.NewCfg()
-		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
+		sqlStore = sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		dashboardStore = store

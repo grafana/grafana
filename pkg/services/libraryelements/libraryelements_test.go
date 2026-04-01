@@ -38,9 +38,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 const userInDbName = "user_in_db"
 const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"

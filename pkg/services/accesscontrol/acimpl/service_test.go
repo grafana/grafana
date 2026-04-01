@@ -1377,8 +1377,6 @@ func TestIntegrationService_GetRoleByName(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Parallel()
 
-	t.Parallel()
-
 	ctx := context.Background()
 
 	t.Run("when the role does not exists, it returns an error", func(t *testing.T) {

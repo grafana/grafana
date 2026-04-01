@@ -29,7 +29,10 @@ import (
 )
 
 func TestIntegrationUserAuthToken(t *testing.T) {
-	t.Parallel()
+	// NOTE: Do not add t.Parallel() here. Subtests share the store created by
+	// createTestContext(t) in the parent scope. If the parent is marked parallel
+	// it may finish and trigger cleanup (closing the DB) while subtests are still
+	// running, causing "sql: database is closed" errors.
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := createTestContext(t)
@@ -113,11 +116,24 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			require.Equal(t, auth.ErrUserTokenNotFound, err)
 		})
 
-		ctx = createTestContext(t)
-		userToken = createToken()
+		// Use a fresh context for the remaining subtests so that
+		// cleanup of its store doesn't close the parent's DB.
+		freshCtx := createTestContext(t)
+		freshCreateToken := func() *auth.UserToken {
+			userToken, err := freshCtx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  net.ParseIP("192.168.10.11"),
+				UserAgent: "some user agent",
+			})
+			require.Nil(t, err)
+			require.NotNil(t, userToken)
+			require.False(t, userToken.AuthTokenSeen)
+			return userToken
+		}
+		freshToken := freshCreateToken()
 
 		t.Run("When creating an additional token", func(t *testing.T) {
-			userToken2, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			userToken2, err := freshCtx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
 				User:      usr,
 				ClientIP:  net.ParseIP("192.168.10.11"),
 				UserAgent: "some user agent",
@@ -126,36 +142,36 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			require.NotNil(t, userToken2)
 
 			t.Run("Can get first user token", func(t *testing.T) {
-				token, err := ctx.tokenService.GetUserToken(context.Background(), usr.ID, userToken.Id)
+				token, err := freshCtx.tokenService.GetUserToken(context.Background(), usr.ID, freshToken.Id)
 				require.Nil(t, err)
 				require.NotNil(t, token)
-				require.Equal(t, userToken.Id, token.Id)
+				require.Equal(t, freshToken.Id, token.Id)
 			})
 
 			t.Run("Can get second user token", func(t *testing.T) {
-				token, err := ctx.tokenService.GetUserToken(context.Background(), usr.ID, userToken2.Id)
+				token, err := freshCtx.tokenService.GetUserToken(context.Background(), usr.ID, userToken2.Id)
 				require.Nil(t, err)
 				require.NotNil(t, token)
 				require.Equal(t, userToken2.Id, token.Id)
 			})
 
 			t.Run("Can get user tokens", func(t *testing.T) {
-				tokens, err := ctx.tokenService.GetUserTokens(context.Background(), usr.ID)
+				tokens, err := freshCtx.tokenService.GetUserTokens(context.Background(), usr.ID)
 				require.Nil(t, err)
 				require.Equal(t, 2, len(tokens))
-				require.Equal(t, userToken.Id, tokens[0].Id)
+				require.Equal(t, freshToken.Id, tokens[0].Id)
 				require.Equal(t, userToken2.Id, tokens[1].Id)
 			})
 
 			t.Run("Can revoke all user tokens", func(t *testing.T) {
-				err := ctx.tokenService.RevokeAllUserTokens(context.Background(), usr.ID)
+				err := freshCtx.tokenService.RevokeAllUserTokens(context.Background(), usr.ID)
 				require.Nil(t, err)
 
-				model, err := ctx.getAuthTokenByID(userToken.Id)
+				model, err := freshCtx.getAuthTokenByID(freshToken.Id)
 				require.Nil(t, err)
 				require.Nil(t, model)
 
-				model2, err := ctx.getAuthTokenByID(userToken2.Id)
+				model2, err := freshCtx.getAuthTokenByID(userToken2.Id)
 				require.Nil(t, err)
 				require.Nil(t, model2)
 			})
@@ -167,7 +183,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 				for i := 0; i < 3; i++ {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
-					_, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+					_, err := freshCtx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
 						User:      usr,
 						ClientIP:  net.ParseIP("192.168.10.11"),
 						UserAgent: "some user agent",
@@ -175,11 +191,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 					require.Nil(t, err)
 				}
 
-				err := ctx.tokenService.BatchRevokeAllUserTokens(context.Background(), userIds)
+				err := freshCtx.tokenService.BatchRevokeAllUserTokens(context.Background(), userIds)
 				require.Nil(t, err)
 
 				for _, v := range userIds {
-					tokens, err := ctx.tokenService.GetUserTokens(context.Background(), v)
+					tokens, err := freshCtx.tokenService.GetUserTokens(context.Background(), v)
 					require.Nil(t, err)
 					require.Equal(t, 0, len(tokens))
 				}
@@ -188,6 +204,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("When creating token with external session", func(t *testing.T) {
+		ctx := createTestContext(t)
 		createToken := func() *auth.UserToken {
 			userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
 				User:            usr,
@@ -431,6 +448,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("keeps prev token valid for 1 minute after it is confirmed", func(t *testing.T) {
+		ctx := createTestContext(t)
 		getTime = func() time.Time { return now }
 		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
 			User:      usr,
@@ -468,6 +486,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("will not mark token unseen when prev and current are the same", func(t *testing.T) {
+		ctx := createTestContext(t)
 		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
 			User:      usr,
 			ClientIP:  net.ParseIP("192.168.10.11"),
@@ -491,6 +510,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("RotateToken", func(t *testing.T) {
+		ctx := createTestContext(t)
 		advanceTime := func(d time.Duration) {
 			currentTime := getTime()
 			getTime = func() time.Time {

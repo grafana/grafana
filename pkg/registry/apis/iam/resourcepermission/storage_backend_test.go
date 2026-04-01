@@ -116,7 +116,6 @@ func TestIntegration_ResourcePermSqlBackend_ReadResource(t *testing.T) {
 }
 
 func TestWriteEvent_Add(t *testing.T) {
-	t.Parallel()
 	store := sqlstore.NewTestStore(t)
 
 	timeNow = func() time.Time {
@@ -268,7 +267,6 @@ func TestWriteEvent_Add(t *testing.T) {
 }
 
 func TestIntegration_ResourcePermSqlBackend_ListIterator(t *testing.T) {
-	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// No result => list resource version should be current time
@@ -658,7 +656,6 @@ func TestIntegration_WriteEvent_Delete(t *testing.T) {
 }
 
 func TestWriteEvent_Modify(t *testing.T) {
-	t.Parallel()
 	store := sqlstore.NewTestStore(t)
 
 	timeNow = func() time.Time {

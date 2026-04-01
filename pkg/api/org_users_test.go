@@ -75,7 +75,7 @@ func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 
-	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings), sqlstore.WithDefaultOrgAndUser())
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings))
 	hs.SQLStore = sqlStore
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}

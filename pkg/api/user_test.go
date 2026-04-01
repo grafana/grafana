@@ -62,7 +62,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings), sqlstore.WithDefaultOrgAndUser())
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings))
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
@@ -487,7 +487,7 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
 	t.Helper()
 
-	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
+	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 
 	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
@@ -719,7 +719,7 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		}
 
 		nsMock := notifications.MockNotificationService()
-		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings), sqlstore.WithDefaultOrgAndUser())
+		sqlStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(settings))
 
 		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))

@@ -22,12 +22,17 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type testEnv struct {
 	engine *xorm.Engine

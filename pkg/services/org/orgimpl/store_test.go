@@ -153,16 +153,23 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
-		ss = sqlstore.NewTestStore(t)
+		freshSS := sqlstore.NewTestStore(t)
+		freshOrgStore := sqlStore{
+			db:      freshSS,
+			dialect: freshSS.GetDialect(),
+			log:     log.NewNopLogger(),
+		}
+		var orgIDs []int64
 		for i := 1; i < 4; i++ {
 			cmd := &org.CreateOrgCommand{Name: fmt.Sprint("Orga #", i)}
-			_, err := orgStore.CreateWithMember(context.Background(), cmd)
+			result, err := freshOrgStore.CreateWithMember(context.Background(), cmd)
 			require.NoError(t, err)
+			orgIDs = append(orgIDs, result.ID)
 		}
 
 		t.Run("Should be able to search with defaults", func(t *testing.T) {
 			query := &org.SearchOrgsQuery{}
-			result, err := orgStore.Search(context.Background(), query)
+			result, err := freshOrgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
 			assert.Equal(t, 3, len(result))
@@ -170,7 +177,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 
 		t.Run("Should be able to limit search", func(t *testing.T) {
 			query := &org.SearchOrgsQuery{Limit: 1}
-			result, err := orgStore.Search(context.Background(), query)
+			result, err := freshOrgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(result))
@@ -178,15 +185,15 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 
 		t.Run("Should be able to limit and paginate search", func(t *testing.T) {
 			query := &org.SearchOrgsQuery{Limit: 2, Page: 1}
-			result, err := orgStore.Search(context.Background(), query)
+			result, err := freshOrgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(result))
 		})
 
 		t.Run("Get org by ID", func(t *testing.T) {
-			query := &org.GetOrgByIDQuery{ID: 1}
-			result, err := orgStore.GetByID(context.Background(), query)
+			query := &org.GetOrgByIDQuery{ID: orgIDs[0]}
+			result, err := freshOrgStore.GetByID(context.Background(), query)
 
 			require.NoError(t, err)
 			assert.Equal(t, "Orga #1", result.Name)
@@ -194,31 +201,31 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 
 		t.Run("Get org by handler name", func(t *testing.T) {
 			query := &org.GetOrgByNameQuery{Name: "Orga #1"}
-			result, err := orgStore.GetByName(context.Background(), query)
+			result, err := freshOrgStore.GetByName(context.Background(), query)
 
 			require.NoError(t, err)
-			assert.Equal(t, int64(1), result.ID)
+			assert.Equal(t, orgIDs[0], result.ID)
 		})
 	})
 
 	t.Run("Testing Account DB Access", func(t *testing.T) {
-		ss := sqlstore.NewTestStore(t)
-		orgStore = sqlStore{
-			db:      ss,
-			dialect: ss.GetDialect(),
+		freshSS := sqlstore.NewTestStore(t)
+		freshOrgStore := sqlStore{
+			db:      freshSS,
+			dialect: freshSS.GetDialect(),
 		}
 		ids := []int64{}
 
 		for i := 1; i < 4; i++ {
 			cmd := &org.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-			res, err := orgStore.CreateWithMember(context.Background(), cmd)
+			res, err := freshOrgStore.CreateWithMember(context.Background(), cmd)
 			require.NoError(t, err)
 			ids = append(ids, res.ID)
 		}
 
 		t.Run("Given we have organizations, we can query them by IDs", func(t *testing.T) {
 			query := &org.SearchOrgsQuery{IDs: ids}
-			queryResult, err := orgStore.Search(context.Background(), query)
+			queryResult, err := freshOrgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
 			require.Equal(t, len(queryResult), 3)
@@ -226,7 +233,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 
 		t.Run("Should be able to search with defaults", func(t *testing.T) {
 			query := &org.SearchOrgsQuery{}
-			queryResult, err := orgStore.Search(context.Background(), query)
+			queryResult, err := freshOrgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
 			require.Equal(t, len(queryResult), 3)
@@ -234,7 +241,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 
 		t.Run("Should be able to limit search", func(t *testing.T) {
 			query := &org.SearchOrgsQuery{Limit: 1}
-			queryResult, err := orgStore.Search(context.Background(), query)
+			queryResult, err := freshOrgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
 			require.Equal(t, len(queryResult), 1)
@@ -242,7 +249,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 
 		t.Run("Should be able to limit and paginate search", func(t *testing.T) {
 			query := &org.SearchOrgsQuery{Limit: 2, Page: 1}
-			queryResult, err := orgStore.Search(context.Background(), query)
+			queryResult, err := freshOrgStore.Search(context.Background(), query)
 
 			require.NoError(t, err)
 			require.Equal(t, len(queryResult), 1)
@@ -333,6 +340,11 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	t.Run("GetOrgUsers and UpdateOrgUsers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ss := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+		orgUserStore := sqlStore{
+			db:      ss,
+			dialect: ss.GetDialect(),
+			log:     log.NewNopLogger(),
+		}
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
@@ -492,6 +504,12 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		cfg.AutoAssignOrgId = 1
 		cfg.AutoAssignOrgRole = "Viewer"
 
+		localOrgUserStore := sqlStore{
+			db:      ss,
+			dialect: ss.GetDialect(),
+			log:     log.NewNopLogger(),
+		}
+
 		orgSvc, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 		testUser := &user.SignedInUser{
@@ -522,7 +540,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 				Page:  1,
 				User:  testUser,
 			}
-			result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
+			result, err := localOrgUserStore.SearchOrgUsers(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, 2, len(result.OrgUsers))
 		})
@@ -534,7 +552,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 				Page:  1,
 				User:  testUser,
 			}
-			result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
+			result, err := localOrgUserStore.SearchOrgUsers(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, 1, len(result.OrgUsers))
 		})
@@ -739,7 +757,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	defer userimpl.ResetTimeNow()
 
 	cfg := setting.NewCfg()
-	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
@@ -747,9 +765,8 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	}
 	_, usrSvc := createOrgAndUserSvc(t, store, cfg)
 
-	id, err := orgUserStore.Insert(context.Background(),
+	orgID, err := orgUserStore.Insert(context.Background(),
 		&org.Org{
-			ID:      1,
 			Created: constNow,
 			Updated: constNow,
 		})
@@ -758,7 +775,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	newUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 		Login:      "Viewer",
 		Email:      "viewer@localhost",
-		OrgID:      id,
+		OrgID:      orgID,
 		IsDisabled: true,
 		Name:       "Viewer Localhost",
 	})
@@ -766,17 +783,17 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 
 	err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 		Role:   "Viewer",
-		OrgID:  1,
+		OrgID:  orgID,
 		UserID: newUser.ID,
 	})
 	require.NoError(t, err)
 
 	query := &org.SearchOrgUsersQuery{
-		OrgID:  1,
+		OrgID:  orgID,
 		UserID: newUser.ID,
 		User: &user.SignedInUser{
-			OrgID:       1,
-			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+			OrgID:       orgID,
+			Permissions: map[int64]map[string][]string{orgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 		},
 	}
 	result, err := orgUserStore.SearchOrgUsers(context.Background(), query)
@@ -784,8 +801,8 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	require.Len(t, result.OrgUsers, 1)
 
 	actual := result.OrgUsers[0]
-	assert.Equal(t, int64(1), actual.OrgID)
-	assert.Equal(t, int64(1), actual.UserID)
+	assert.Equal(t, orgID, actual.OrgID)
+	assert.Equal(t, newUser.ID, actual.UserID)
 	assert.Equal(t, "viewer@localhost", actual.Email)
 	assert.Equal(t, "Viewer Localhost", actual.Name)
 	assert.Equal(t, "viewer", actual.Login)
@@ -801,7 +818,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := setting.NewCfg()
-	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg), sqlstore.WithDefaultOrgAndUser())
+	store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),

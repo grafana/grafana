@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -45,6 +46,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 // This test should run before TestIntegrationPluginManager because this test relies on having a pre-existing Admin user
 // and because the SQLStore instance is shared between tests, this test does all the necessary setup

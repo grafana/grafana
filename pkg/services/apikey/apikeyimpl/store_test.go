@@ -202,7 +202,7 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 
 		for _, tt := range tests {
 			t.Run(tt.desc, func(t *testing.T) {
-				db := sqlstore.NewTestStore(t, sqlstore.WithDefaultOrgAndUser())
+				db := sqlstore.NewTestStore(t)
 				store := fn(db)
 				seedApiKeys(t, store, 10)
 

@@ -3247,7 +3247,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 		return t0
 	}
 
-	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithDefaultOrgAndUser())
+	sqlStore := sqlstore.NewTestStore(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	cfg.UnifiedAlerting.RuleVersionRecordLimit = -1

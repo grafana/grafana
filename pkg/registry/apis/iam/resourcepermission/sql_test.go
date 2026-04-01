@@ -400,10 +400,7 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 }
 
 func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
-	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
-
-	store := sqlstore.NewTestStore(t)
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
@@ -465,7 +462,7 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 			assigned   int
 			roleID     int64
 			permission accesscontrol.Permission
-			sess       = store.GetSqlxSession()
+			sess       = sqlHelper.DB.GetSqlxSession()
 		)
 
 		// Check that the roles were created and assigned
