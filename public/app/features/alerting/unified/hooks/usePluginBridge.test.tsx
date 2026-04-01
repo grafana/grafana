@@ -1,10 +1,13 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
+import { OrgRole, PluginIncludeType } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
+
 import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 import { pluginMeta } from '../testSetup/plugins';
 import { SupportedPlugin } from '../types/pluginBridges';
 
-import { useIrmPlugin } from './usePluginBridge';
+import { canAccessPluginPage, useIrmPlugin } from './usePluginBridge';
 
 jest.mock('../api/pluginsApi');
 
@@ -236,5 +239,71 @@ describe('useIrmPlugin', () => {
     expect(result.current.pluginId).toBe(SupportedPlugin.Irm);
     expect(result.current.installed).toBe(true);
     expect(result.current.settings).toEqual(pluginMeta[SupportedPlugin.Irm]);
+  });
+});
+
+describe('canAccessPluginPage', () => {
+  const previousRole = contextSrv.user.orgRole;
+  const previousPermissions = contextSrv.user.permissions;
+  const previousIsEditor = contextSrv.isEditor;
+  const previousIsGrafanaAdmin = contextSrv.isGrafanaAdmin;
+
+  afterEach(() => {
+    contextSrv.user.orgRole = previousRole;
+    contextSrv.user.permissions = previousPermissions;
+    contextSrv.isEditor = previousIsEditor;
+    contextSrv.isGrafanaAdmin = previousIsGrafanaAdmin;
+  });
+
+  it('returns false when include requires action and user lacks permission', () => {
+    contextSrv.user.permissions = {};
+    const settings = {
+      ...pluginMeta[SupportedPlugin.Incident],
+      includes: [
+        {
+          type: PluginIncludeType.page,
+          name: 'Declare incident',
+          path: '/a/grafana-incident-app/incidents/declare',
+          action: 'grafana-incident-app.incidents:write',
+        },
+      ],
+    };
+
+    expect(canAccessPluginPage(settings, '/a/grafana-incident-app/incidents/declare')).toBe(false);
+  });
+
+  it('returns true when include requires action and user has permission', () => {
+    contextSrv.user.permissions = { 'grafana-incident-app.incidents:write': true };
+    const settings = {
+      ...pluginMeta[SupportedPlugin.Incident],
+      includes: [
+        {
+          type: PluginIncludeType.page,
+          name: 'Declare incident',
+          path: '/a/grafana-incident-app/incidents/declare',
+          action: 'grafana-incident-app.incidents:write',
+        },
+      ],
+    };
+
+    expect(canAccessPluginPage(settings, '/a/grafana-incident-app/incidents/declare')).toBe(true);
+  });
+
+  it('returns false when include role is editor and user is viewer', () => {
+    contextSrv.user.orgRole = OrgRole.Viewer;
+    contextSrv.isEditor = false;
+    const settings = {
+      ...pluginMeta[SupportedPlugin.Incident],
+      includes: [
+        {
+          type: PluginIncludeType.page,
+          name: 'Declare incident',
+          path: '/a/grafana-incident-app/incidents/declare',
+          role: OrgRole.Editor,
+        },
+      ],
+    };
+
+    expect(canAccessPluginPage(settings, '/a/grafana-incident-app/incidents/declare')).toBe(false);
   });
 });

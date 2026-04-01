@@ -204,7 +204,7 @@ export function TableNG(props: TableNGProps) {
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
 
-  const { rows: filteredRows, filter, setFilter } = useFilteredRows(rows, data.fields, hasNestedFrames);
+  const { rows: filteredRows, filter, setFilter, filterResult } = useFilteredRows(rows, data.fields, hasNestedFrames);
 
   const {
     rows: sortedRows,
@@ -566,6 +566,13 @@ export function TableNG(props: TableNGProps) {
         cellRootRenderers: {},
       };
 
+      // Reuse pre-computed filter results — no re-scanning of rows needed.
+      // Top-level tables use filterResult from useFilteredRows; nested tables use the
+      // filterResult stored on their NestedRowEntry by useNestedRows.
+      const parentIndex = visibleRows[0]?.__parentIndex;
+      const { crossFilterRows, crossFilterTailRows } =
+        parentIndex == null ? filterResult : nestedRows[parentIndex].filterResult;
+
       let lastRowIdx = -1;
       // shared when whole row will be styled by a single cell's color
       let rowCellStyle: Partial<CSSProperties> = {
@@ -837,7 +844,9 @@ export function TableNG(props: TableNGProps) {
               disableKeyboardEvents={disableKeyboardEvents}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
-              parentIndex={visibleRows[0]?.__parentIndex}
+              parentIndex={parentIndex}
+              crossFilterRows={crossFilterRows}
+              crossFilterTailRows={crossFilterTailRows}
               selectFirstCell={() => {
                 gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
               }}
@@ -860,25 +869,27 @@ export function TableNG(props: TableNGProps) {
       return result;
     },
     [
-      theme,
+      applyToRowBgFn,
+      disableKeyboardEvents,
+      disableSanitizeHtml,
+      filter,
+      filterResult,
+      footers,
+      frozenColumns,
+      getCellActions,
+      getCellColorInlineStyles,
+      getTextColorForBackground,
+      isUniformFooter,
+      maxRowHeight,
+      nestedRows,
+      numFrozenColsFullyInView,
       onCellFilterAdded,
       rowHeight,
-      maxRowHeight,
-      applyToRowBgFn,
-      frozenColumns,
-      numFrozenColsFullyInView,
-      getCellColorInlineStyles,
       rowHeightFn,
-      timeRange,
-      getCellActions,
-      disableSanitizeHtml,
-      getTextColorForBackground,
-      filter,
       setFilter,
-      disableKeyboardEvents,
       showTypeIcons,
-      footers,
-      isUniformFooter,
+      theme,
+      timeRange,
     ]
   );
 
