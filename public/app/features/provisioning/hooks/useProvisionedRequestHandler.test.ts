@@ -2,11 +2,11 @@ import { renderHook } from '@testing-library/react';
 
 import { AppEvents } from '@grafana/data';
 import { setAppEvents } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
-import { appEvents } from 'app/core/app_events';
+import { type Dashboard } from '@grafana/schema';
+import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { type appEvents } from 'app/core/app_events';
 
-import { useProvisionedRequestHandler, RequestHandlers } from './useProvisionedRequestHandler';
+import { useProvisionedRequestHandler, type RequestHandlers } from './useProvisionedRequestHandler';
 
 const mockDispatch = jest.fn();
 jest.mock('react-redux', () => {

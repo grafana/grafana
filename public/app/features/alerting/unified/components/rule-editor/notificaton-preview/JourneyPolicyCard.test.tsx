@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { LabelMatcher, RouteWithID } from '@grafana/alerting';
+import { type LabelMatcher, type RouteWithID } from '@grafana/alerting';
 
 import { JourneyPolicyCard } from './JourneyPolicyCard';
 

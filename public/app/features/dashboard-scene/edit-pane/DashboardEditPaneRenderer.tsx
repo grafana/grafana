@@ -1,21 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useMedia } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, SceneObject, SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar } from '@grafana/ui';
+import { sceneGraph, type SceneObject, type SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
+import { Sidebar, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
-import { ToolbarActionProps } from '../scene/new-toolbar/types';
+import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardCodePane } from './DashboardCodePane';
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
@@ -54,6 +55,17 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
   const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
+
+  const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+  const sidebarContext = useSidebarContext();
+  const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      sidebarContext?.onToggleIsHidden();
+      e.currentTarget.blur();
+    },
+    [sidebarContext]
+  );
 
   return (
     <>
@@ -124,24 +136,26 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            <Sidebar.Button
-              style={{ color: '#ff671d' }}
-              icon="comment-alt-message"
-              onClick={() =>
-                window.open(
-                  'https://docs.google.com/forms/d/e/1FAIpQLSfDZJM_VlZgRHDx8UPtLWbd9bIBPRxoA28qynTHEYniyPXO6Q/viewform',
-                  '_blank'
-                )
-              }
-              title={t(
-                'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
-                'Give feedback on the new dashboard editing experience'
-              )}
-              tooltip={t(
-                'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
-                'Give feedback on the new dashboard editing experience'
-              )}
-            />
+            {config.featureToggles.feedbackButton && (
+              <Sidebar.Button
+                style={{ color: '#ff671d' }}
+                icon="comment-alt-message"
+                onClick={() =>
+                  window.open(
+                    'https://docs.google.com/forms/d/e/1FAIpQLSfDZJM_VlZgRHDx8UPtLWbd9bIBPRxoA28qynTHEYniyPXO6Q/viewform',
+                    '_blank'
+                  )
+                }
+                title={t(
+                  'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
+                  'Give feedback on the new dashboard editing experience'
+                )}
+                tooltip={t(
+                  'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
+                  'Give feedback on the new dashboard editing experience'
+                )}
+              />
+            )}
             <Sidebar.Button
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
@@ -187,6 +201,17 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             icon="link"
             onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
           />
+        )}
+        {isMobile && !isEditing && (
+          <>
+            <Sidebar.Divider />
+            <Sidebar.Button
+              icon={'arrow-to-right'}
+              onClick={onClickHideSidebar}
+              title={t('grafana-ui.sidebar.hide', 'Hide')}
+              data-testid={selectors.components.Sidebar.showHideToggle}
+            />
+          </>
         )}
       </Sidebar.Toolbar>
     </>

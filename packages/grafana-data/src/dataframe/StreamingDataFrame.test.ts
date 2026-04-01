@@ -1,14 +1,14 @@
 import { getFieldDisplayName } from '../field/fieldState';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { FieldType, DataFrame } from '../types/dataFrame';
+import { FieldType, type DataFrame } from '../types/dataFrame';
 
-import { DataFrameJSON } from './DataFrameJSON';
+import { type DataFrameJSON } from './DataFrameJSON';
 import {
   closestIdx,
   getStreamingFrameOptions,
   StreamingDataFrame,
   StreamingFrameAction,
-  StreamingFrameOptions,
+  type StreamingFrameOptions,
 } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {

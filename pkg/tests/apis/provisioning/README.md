@@ -144,6 +144,39 @@ All shared test infrastructure lives in `common/testing.go`:
 | `RunGrafanaWithGitServer(t, opts...)` | Starts a standalone Grafana + git server for a single test |
 | `GrafanaOption` | Functional option type (`WithProvisioningFolderMetadata`, `WithRepositoryTypes`, etc.) |
 
+## Package Layout
+
+### SharedEnv packages (no git server)
+
+| Package | Env Options |
+| ------- | ----------- |
+| `provisioning/` (root) | `SecretsManagerEnableDBMigrations`, `WithoutExportFeatureFlag` |
+| `connection/` | none |
+| `repository/` | `WithProvisioningFolderMetadata` |
+| `quota/` | none |
+| `jobs/` | none (GitHub mock in helper) |
+| `jobs/conflict/` | `DisableControllers` — controllers race with manual job updates |
+| `jobs/instanceauth/` | none — requires isolated server for instance-scoped RBAC checks |
+| `enterprise/` | enterprise repo types (skipped in OSS) |
+
+### SharedGitEnv packages (git server required)
+
+| Package | Env Options |
+| ------- | ----------- |
+| `git/` | none |
+| `git/sourcepath_guard/` | none |
+| `foldermetadata/` | `WithProvisioningFolderMetadata`, `WithRepositoryTypes(["git","local"])` — mixed-env (see below) |
+| `foldermetadata/incremental/` | `WithProvisioningFolderMetadata` |
+| `foldermetadata/full/` | none |
+
+### Mixed-env package
+
+`foldermetadata/` uses `SharedGitEnv` with `WithProvisioningFolderMetadata` and
+`WithRepositoryTypes(["git","local"])` to support both local-filesystem tests and
+git-backed tests in a single package. The non-git tests use `sharedHelper(t)`
+(returns `*ProvisioningTestHelper`), while git-backed tests use `sharedGitHelper(t)`
+(returns `*GitTestHelper`).
+
 ## Migration Checklist for Other Packages
 
 1. Create `helpers_test.go` with `common.NewSharedEnv(...)` or `common.NewSharedGitEnv(...)` + helper func + `TestMain`

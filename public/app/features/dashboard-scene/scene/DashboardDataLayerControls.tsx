@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { annotationEditActions } from '../settings/annotations/actions';

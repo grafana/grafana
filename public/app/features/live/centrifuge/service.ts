@@ -1,35 +1,35 @@
 import {
   Centrifuge,
-  ConnectedContext,
-  ConnectingContext,
-  DisconnectedContext,
-  ErrorContext,
-  ServerPublicationContext,
+  type ConnectedContext,
+  type ConnectingContext,
+  type DisconnectedContext,
+  type ErrorContext,
+  type ServerPublicationContext,
   State,
 } from 'centrifuge';
-import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
+import { BehaviorSubject, type Observable, share, startWith } from 'rxjs';
 
 import {
-  DataQueryError,
-  DataQueryResponse,
-  LiveChannelAddress,
+  type DataQueryError,
+  type DataQueryResponse,
+  type LiveChannelAddress,
   LiveChannelConnectionState,
-  LiveChannelId,
+  type LiveChannelId,
   toLiveChannelId,
 } from '@grafana/data';
 import {
-  FetchResponse,
-  GrafanaLiveSrv,
-  LiveDataStreamOptions,
-  LivePublishOptions,
-  LiveQueryDataOptions,
+  type FetchResponse,
+  type GrafanaLiveSrv,
+  type LiveDataStreamOptions,
+  type LivePublishOptions,
+  type LiveQueryDataOptions,
   StreamingFrameAction,
-  StreamingFrameOptions,
-  BackendDataSourceResponse,
+  type StreamingFrameOptions,
+  type BackendDataSourceResponse,
   getBackendSrv,
 } from '@grafana/runtime';
 
-import { StreamingResponseData } from '../data/utils';
+import { type StreamingResponseData } from '../data/utils';
 
 import { LiveDataStream } from './LiveDataStream';
 import { CentrifugeLiveChannel } from './channel';

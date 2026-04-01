@@ -1,23 +1,25 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   ControlsLabel,
-  ControlsLayout,
+  type ControlsLayout,
   sceneGraph,
   sceneUtils,
-  SceneVariable,
+  type SceneVariable,
+  type SceneVariables,
   SceneVariableSet,
-  SceneVariableState,
+  type SceneVariableState,
   SceneVariableValueChangedEvent,
   useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
+import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
@@ -220,6 +222,37 @@ function VariableLabel({
     />
   );
 }
+
+export function SectionVariableControls({ variableSet }: { variableSet: SceneVariables }) {
+  const { variables } = variableSet.useState();
+  const styles = useStyles2(getSectionVariableStyles);
+
+  const visibleVariables = filterSectionRepeatLocalVariables(variables, variableSet).filter(
+    (v) => v.state.hide !== VariableHide.hideVariable
+  );
+
+  if (visibleVariables.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.sectionVariables}>
+      {visibleVariables.map((variable) => (
+        <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+      ))}
+    </div>
+  );
+}
+
+const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+  sectionVariables: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  }),
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
