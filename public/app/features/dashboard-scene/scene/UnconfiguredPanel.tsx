@@ -268,7 +268,7 @@ function NewUnconfiguredPanelComp(props: PanelProps) {
                 )}
                 style={
                   phase === ViewPhase.TransitioningToActive || phase === ViewPhase.TransitioningToQuiet
-                    ? { animationDelay: `${(i + 1) * BUTTON_STAGGER_INTERVAL_MS}ms` }
+                    ? { animationDelay: `${i * BUTTON_STAGGER_INTERVAL_MS}ms` }
                     : undefined
                 }
               >
