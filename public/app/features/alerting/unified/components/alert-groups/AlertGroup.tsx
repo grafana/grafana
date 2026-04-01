@@ -5,10 +5,9 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types/accessControl';
 
+import { useCanViewContactPoints } from '../../hooks/useAbilities';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { MetaText } from '../MetaText';
@@ -24,13 +23,11 @@ interface Props {
 export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
+  const canViewContactPoint = useCanViewContactPoints();
 
   // When group is grouped, receiver.name is 'NONE' as it can contain multiple receivers
   const receiverInGroup = group.receiver.name !== 'NONE';
   const contactPoint = group.receiver.name;
-  const canViewContactPoint =
-    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
   return (
     <div className={styles.wrapper}>

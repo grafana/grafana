@@ -4,11 +4,11 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import { type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { createBridgeURL } from '../../components/PluginBridge';
+import { useCanCreateSilences } from '../../hooks/useAbilities';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
 import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -25,6 +25,7 @@ interface InstanceDetailsDrawerTitleProps {
 export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDetailsDrawerTitleProps) {
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
+  const canCreateSilence = useCanCreateSilences();
 
   const silenceLink = useMemo(() => {
     if (!rule) {
@@ -40,9 +41,8 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
   const canAccessIncident = settings
     ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare'))
     : false;
-  const hasGlobalSilencePermission = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
   const hasFolderSilencePermission = folder?.accessControl?.[AccessControlAction.AlertingSilenceCreate] ?? false;
-  const canSilence = hasGlobalSilencePermission || hasFolderSilencePermission;
+  const canSilence = canCreateSilence || hasFolderSilencePermission;
 
   return (
     <Stack direction="column" gap={2}>

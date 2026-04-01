@@ -4,11 +4,10 @@ import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dropdown, Menu, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import MoreButton from '../components/MoreButton';
 import { DeclareIncidentMenuItem } from '../components/bridges/DeclareIncidentButton';
+import { useCanCreateSilences, useCanViewContactPoints } from '../hooks/useAbilities';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../utils/misc';
 import { createRelativeUrl } from '../utils/url';
 
@@ -20,14 +19,12 @@ interface NotificationActionsMenuProps {
 
 export function NotificationActionsMenu({ notification }: NotificationActionsMenuProps) {
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
+  const canViewContactPoint = useCanViewContactPoints();
+  const canSilence = useCanCreateSilences();
 
   const shouldShowDeclareIncident = !isOpenSourceEdition() || isLocalDevEnv();
 
   const hasSilenceableLabels = notification.groupLabels && Object.keys(notification.groupLabels).length > 0;
-  const canViewContactPoint =
-    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
-  const canSilence = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
 
   const ruleUIDs = notification.ruleUIDs ?? [];
 
