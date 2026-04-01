@@ -45,7 +45,8 @@ const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) 
 
 function makePreset(
   name: string,
-  fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>>
+  fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>>,
+  maxRows?: number
 ): VisualizationSuggestion<Options, GraphFieldConfig> {
   return {
     name,
@@ -56,7 +57,7 @@ function makePreset(
       },
       overrides: fieldConfig.overrides,
     },
-    cardOptions: { previewModifier },
+    cardOptions: { previewModifier, maxRows },
   };
 }
 
@@ -244,6 +245,7 @@ const FC_MULTI_STACKED_BARS: FieldConfigSource<Partial<GraphFieldConfig>> = {
 };
 
 const FEW_POINTS_THRESHOLD = 80;
+const MAX_PREVIEW_BAR_ROWS = 30;
 
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
   const isSingleSeries = (dataSummary?.frameCount ?? 0) === 1;
@@ -257,8 +259,12 @@ export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, Gr
         makePreset(t('timeseries.presets.single-smooth-scheme', 'Smooth scheme'), FC_SINGLE_SMOOTH_SCHEME),
         makePreset(t('timeseries.presets.single-dashed-threshold', 'Dashed threshold'), FC_SINGLE_DASHED_THRESHOLD),
         makePreset(t('timeseries.presets.single-step-fill', 'Step fill'), FC_SINGLE_STEP_FILL),
-        makePreset(t('timeseries.presets.single-bars', 'Bars'), FC_SINGLE_BARS_HUE),
-        makePreset(t('timeseries.presets.single-bars-scheme', 'Bars scheme'), FC_SINGLE_BARS_SCHEME),
+        makePreset(t('timeseries.presets.single-bars', 'Bars'), FC_SINGLE_BARS_HUE, MAX_PREVIEW_BAR_ROWS),
+        makePreset(
+          t('timeseries.presets.single-bars-scheme', 'Bars scheme'),
+          FC_SINGLE_BARS_SCHEME,
+          MAX_PREVIEW_BAR_ROWS
+        ),
       ];
     } else {
       return [
@@ -279,7 +285,11 @@ export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, Gr
           t('timeseries.presets.multi-stacked-points', 'Stacked lines'),
           makeMultiStackedConfig(StackingMode.Normal)
         ),
-        makePreset(t('timeseries.presets.multi-stacked-bars', 'Stacked bars'), FC_MULTI_STACKED_BARS),
+        makePreset(
+          t('timeseries.presets.multi-stacked-bars', 'Stacked bars'),
+          FC_MULTI_STACKED_BARS,
+          MAX_PREVIEW_BAR_ROWS
+        ),
       ];
     } else {
       return [

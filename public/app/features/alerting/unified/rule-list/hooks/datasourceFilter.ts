@@ -15,6 +15,7 @@ import {
   labelsFilter,
   namespaceFilter,
   pluginsFilter,
+  policyFilter,
   ruleHealthFilter,
   ruleMatches,
   ruleNameFilter,
@@ -63,6 +64,7 @@ export function getDatasourceFilter(filterState: RulesFilter) {
     dashboardUid: dashboardUidFilter,
     plugins: pluginsFilter,
     contactPoint: contactPointFilter,
+    policy: policyFilter,
   };
 
   const dsGroupFilterConfig: GroupFilterConfig = {

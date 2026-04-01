@@ -131,6 +131,61 @@ func TestIntegrationApi_getDescription(t *testing.T) {
 	}
 }
 
+func TestIntegrationApi_getDescription_K8sFormat(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []getDescriptionTestCase{
+		{
+			desc: "should return description with k8s action format",
+			options: Options{
+				Resource:          "testresources",
+				ResourceAttribute: "uid",
+				APIGroup:          "test.grafana.app",
+				K8sActionFormat:   true,
+				Assignments: Assignments{
+					Users:        true,
+					Teams:        true,
+					BuiltInRoles: true,
+				},
+				PermissionsToActions: map[string][]string{
+					"View": {"test.grafana.app/testresources:get"},
+					"Edit": {"test.grafana.app/testresources:get", "test.grafana.app/testresources:update"},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "test.grafana.app/testresources:get_permissions"},
+			},
+			expected: Description{
+				Assignments: Assignments{
+					Users:        true,
+					Teams:        true,
+					BuiltInRoles: true,
+				},
+				Permissions: []string{"View", "Edit"},
+			},
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service, _, _ := setupTestEnvironment(t, tt.options)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}}, service)
+
+			// Verify endpoint still works at legacy URL
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
+			require.NoError(t, err)
+			recorder := httptest.NewRecorder()
+			server.ServeHTTP(recorder, req)
+
+			got := Description{}
+			require.NoError(t, json.NewDecoder(recorder.Body).Decode(&got))
+			assert.Equal(t, tt.expected, got)
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
+		})
+	}
+}
+
 type getPermissionsTestCase struct {
 	desc           string
 	resourceID     string
