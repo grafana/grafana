@@ -496,6 +496,64 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
         { key: 'env', operator: '=', value: 'prod' },
       ]);
     });
+
+    it('should preserve origin filters and restore runtime filters when saveVariables is false', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'env', operator: '=', value: 'prod' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'staging' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, false, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+    });
+
+    it('should detect schema changes when origin filters are added', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when groupBy origin filters are added', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'region', operator: 'groupBy', value: '', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when origin filters are modified', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'host', operator: '=', value: 'prod-server', origin: 'dashboard' },
+      ]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when origin filters are removed', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+      const changed = makeDashboardWithAdhoc([]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
   });
 
   describe('when feature flag is disabled', () => {
@@ -679,5 +737,127 @@ describe('getRawDashboardV2Changes - section variables', () => {
     expect(getCurrentValue(row?.spec.variables)).toBe('dev');
     expect(result.hasVariableValueChanges).toBe(true);
     expect(result.hasChanges).toBe(false);
+  });
+});
+
+describe('getRawDashboardV2Changes - origin adhoc and groupBy filters', () => {
+  afterEach(() => {
+    config.featureToggles.adHocFilterDefaultValues = false;
+  });
+
+  const makeV2AdhocDashboard = (
+    filters: Array<{ key: string; operator: string; value: string; origin?: string }>
+  ): DashboardV2Spec => ({
+    title: 'Dashboard V2',
+    description: '',
+    cursorSync: 'Crosshair',
+    editable: true,
+    links: [],
+    tags: [],
+    preload: false,
+    liveNow: false,
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '5m',
+      autoRefreshIntervals: [],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [
+      {
+        kind: 'AdhocVariable',
+        group: 'prometheus',
+        datasource: { name: 'default' },
+        spec: {
+          name: 'adhoc0',
+          label: '',
+          hide: 'dontHide',
+          skipUrlSync: false,
+          baseFilters: [],
+          filters,
+          defaultKeys: [],
+          allowCustomValue: true,
+        },
+      } as VariableKind,
+    ],
+    elements: {},
+    annotations: [],
+    layout: { kind: 'GridLayout', spec: { items: [] } },
+  });
+
+  describe('when adHocFilterDefaultValues is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+    });
+
+    it('should detect schema changes when origin filters are added', () => {
+      const initial = makeV2AdhocDashboard([]);
+      const changed = makeV2AdhocDashboard([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when groupBy origin filters are added', () => {
+      const initial = makeV2AdhocDashboard([]);
+      const changed = makeV2AdhocDashboard([{ key: 'region', operator: 'groupBy', value: '', origin: 'dashboard' }]);
+
+      const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when origin filters are modified', () => {
+      const initial = makeV2AdhocDashboard([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+      const changed = makeV2AdhocDashboard([{ key: 'host', operator: '=', value: 'prod-server', origin: 'dashboard' }]);
+
+      const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when origin filters are removed', () => {
+      const initial = makeV2AdhocDashboard([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+      const changed = makeV2AdhocDashboard([]);
+
+      const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should preserve origin filters and restore runtime filters when saveVariables is false', () => {
+      const initial = makeV2AdhocDashboard([{ key: 'env', operator: '=', value: 'prod' }]);
+      const changed = makeV2AdhocDashboard([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'staging' },
+      ]);
+
+      const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+
+      const adhoc = result.changedSaveModel.variables[0];
+      expect(adhoc.kind).toBe('AdhocVariable');
+      if (adhoc.kind === 'AdhocVariable') {
+        expect(adhoc.spec.filters).toEqual([
+          { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+          { key: 'env', operator: '=', value: 'prod' },
+        ]);
+      }
+    });
+
+    it('should not report hasChanges when origin filters are unchanged', () => {
+      const initial = makeV2AdhocDashboard([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+      const changed = makeV2AdhocDashboard([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(false);
+    });
   });
 });
