@@ -25,8 +25,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) (resource.KVBackend, sqldb.DB) {
-	dbstore := sqlstore.NewTestStore(t)
+func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool, existingStore ...*sqlstore.SQLStore) (resource.KVBackend, sqldb.DB) {
+	var dbstore *sqlstore.SQLStore
+	if len(existingStore) > 0 && existingStore[0] != nil {
+		dbstore = existingStore[0]
+	} else {
+		dbstore = sqlstore.NewTestStore(t)
+	}
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(ctx)

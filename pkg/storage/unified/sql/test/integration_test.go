@@ -44,7 +44,7 @@ var initMutex = &sync.Mutex{}
 // newTestBackend creates a fresh database and backend for a test.
 // It uses a mutex to ensure the entire initialization and migration
 // process is atomic and does not race with other parallel tests.
-func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int) resource.StorageBackend {
+func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int, existingStore ...*sqlstore.SQLStore) resource.StorageBackend {
 	// Lock to ensure the entire init block is atomic.
 	initMutex.Lock()
 	// Unlock once the function returns the initialized backend.
@@ -61,7 +61,12 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	cfg.DisablePruner = db.IsTestDbSQLite()
 	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
-	dbstore := sqlstore.NewTestStore(t)
+	var dbstore *sqlstore.SQLStore
+	if len(existingStore) > 0 && existingStore[0] != nil {
+		dbstore = existingStore[0]
+	} else {
+		dbstore = sqlstore.NewTestStore(t)
+	}
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
 		dbSection.Key("high_availability").SetValue("true")
@@ -112,24 +117,30 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	t.Parallel()
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, true)
-	}
-
 	opts := &unitest.TestOptions{
 		SearchServerFactory: newTestResourceServerWithSearch,
 	}
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		// Create a single shared store so both backends use the same database.
+		sharedStore := sqlstore.NewTestStore(t)
+
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, true, 0, 0)
-		}, newKvBackend, opts)
+			return newTestBackend(t, true, 0, 0, sharedStore)
+		}, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
+			return unitest.NewTestSqlKvBackend(t, ctx, true, sharedStore)
+		}, opts)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		// Create a single shared store so both backends use the same database.
+		sharedStore := sqlstore.NewTestStore(t)
+
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, false, 0, 0)
-		}, newKvBackend, opts)
+			return newTestBackend(t, false, 0, 0, sharedStore)
+		}, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
+			return unitest.NewTestSqlKvBackend(t, ctx, true, sharedStore)
+		}, opts)
 	})
 }
 
