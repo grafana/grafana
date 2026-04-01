@@ -49,13 +49,9 @@ const getValuePillStyles = (theme: GrafanaTheme2, disabled?: boolean) => ({
     padding: theme.spacing(0.25),
     border: disabled ? `1px solid ${theme.colors.border.weak}` : 'none',
     fontSize: theme.typography.bodySmall.fontSize,
-    flexShrink: 0,
+    flexShrink: 1,
     minWidth: '50px',
     alignItems: 'center',
-
-    '&:first-child:has(+ div)': {
-      flexShrink: 1,
-    },
   }),
 
   text: css({

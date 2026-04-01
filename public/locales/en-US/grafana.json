@@ -5631,6 +5631,8 @@
         "title": "Variables"
       },
       "variable": {
+        "change-type": "Change",
+        "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
           "change-value": "Change variable value",
@@ -6534,6 +6536,9 @@
       },
       "name": {
         "action": "Change variable name"
+      },
+      "type": {
+        "action": "Change variable type"
       }
     },
     "version-history-comparison": {
@@ -6614,8 +6619,8 @@
   "dashboard-library": {
     "card": {
       "community-badge": "Community",
-      "customize-with-assistant-button": "Customize with assistant",
-      "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
+      "customize-with-assistant-button": "Customize with Assistant",
+      "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available ",

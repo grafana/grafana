@@ -3321,7 +3321,8 @@
       "metadata": {
         "name": "logsExploreTableVisualisation",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-07-12T13:52:42Z"
+        "creationTimestamp": "2023-07-12T13:52:42Z",
+        "deletionTimestamp": "2026-03-24T16:21:01Z"
       },
       "spec": {
         "description": "A table visualisation for logs in Explore",
@@ -4820,6 +4821,19 @@
     },
     {
       "metadata": {
+        "name": "sseExpressionErrorIsolation",
+        "resourceVersion": "1774386001085",
+        "creationTimestamp": "2026-03-24T21:00:01Z"
+      },
+      "spec": {
+        "description": "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sseGroupByDatasource",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-09-07T20:02:07Z"
@@ -5042,6 +5056,20 @@
         "description": "Enables time pickers sync",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "tracesDrilldownTimeSeeker",
+        "resourceVersion": "1775047709831",
+        "creationTimestamp": "2026-04-01T12:48:29Z"
+      },
+      "spec": {
+        "description": "Enables the time seeker in traces drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
         "expression": "false"
       }
     },

@@ -69,11 +69,17 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, fmt.Errorf("invalid page number: %d", req.Page)
 	}
 
+	title, err := titleFromRequirements(req.Options)
+	if err != nil {
+		return nil, err
+	}
+
 	query := &team.SearchTeamsQuery{
 		SignedInUser: signedInUser,
 		Limit:        int(req.Limit),
 		Page:         int(req.Page),
 		Query:        req.Query,
+		Name:         title,
 		OrgID:        signedInUser.GetOrgID(),
 		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, teamSortFieldMapping, teamsortopts.SortOptionsByQueryParam),
 	}
@@ -158,4 +164,19 @@ func createDefaultCells(t *team.TeamDTO) [][]byte {
 		[]byte(t.UID),
 		[]byte(t.Name),
 	}
+}
+
+func titleFromRequirements(opts *resourcepb.ListOptions) (string, error) {
+	if opts == nil {
+		return "", nil
+	}
+	for _, r := range opts.Fields {
+		if r != nil && r.Key == res.SEARCH_FIELD_TITLE {
+			if len(r.Values) != 1 {
+				return "", fmt.Errorf("title filter requires exactly one value, got %d", len(r.Values))
+			}
+			return r.Values[0], nil
+		}
+	}
+	return "", nil
 }

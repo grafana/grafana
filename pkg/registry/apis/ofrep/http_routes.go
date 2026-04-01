@@ -104,6 +104,7 @@ func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) 
 		}
 
 		authNamespace, valid := b.validateNamespaceIfPresent(r, evalCtx)
+		b.logger.Debug("validating namespace in rootOneFlagHandler", "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "valid", valid, "flag", flagKey)
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
@@ -138,6 +139,7 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 		}
 
 		authNamespace, valid := b.validateNamespaceIfPresent(r, evalCtx)
+		b.logger.Debug("validating namespace in rootAllFlagsHandler", "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "valid", valid)
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
 			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))

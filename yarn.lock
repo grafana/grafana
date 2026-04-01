@@ -3848,13 +3848,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.3.0":
-  version: 7.3.0
-  resolution: "@grafana/scenes-react@npm:7.3.0"
+"@grafana/scenes-react@npm:7.3.1":
+  version: 7.3.1
+  resolution: "@grafana/scenes-react@npm:7.3.1"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.3.0"
+    "@grafana/scenes": "npm:7.3.1"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3868,7 +3868,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/212d3f039f80d3dc8c469433cf2dd60f34e36a30497bb2f909f75e0c5404c0419ef3b8ae677ea39fdd6993bc0113fe12772b45f3cd37d81602d37c6258c33a99
+  checksum: 10/87754b9d0a6dbe1299c406c5efd012fb688cdb07d7dcc20cc8beb4e3d5bafea6fc1456e45d0e4f9120d1c6fa8ddde94a77b5a8dade29fa950c2df8346757b5ce
   languageName: node
   linkType: hard
 
@@ -3903,9 +3903,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.3.0":
-  version: 7.3.0
-  resolution: "@grafana/scenes@npm:7.3.0"
+"@grafana/scenes@npm:7.3.1":
+  version: 7.3.1
+  resolution: "@grafana/scenes@npm:7.3.1"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -3930,7 +3930,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/3ae4c7aeba14c7447228acd48668b088cbe87ca796fa16fa5ffc107c3f91326cae69975b637b712aa061b929b266671744b49e4278a4b6857e1bdc3646426dd9
+  checksum: 10/0690ceaa52579e36f2714dd3c89996e82a5bfd31e0e623f28f6430620e3ba906c39564092d9ba0a0396425cd2d3ba760c96207ec101b9c21644c761293777725
   languageName: node
   linkType: hard
 
@@ -20090,8 +20090,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.3.0"
-    "@grafana/scenes-react": "npm:7.3.0"
+    "@grafana/scenes": "npm:7.3.1"
+    "@grafana/scenes-react": "npm:7.3.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -21074,11 +21074,11 @@ __metadata:
   linkType: hard
 
 "i18next-browser-languagedetector@npm:^8.0.0":
-  version: 8.2.0
-  resolution: "i18next-browser-languagedetector@npm:8.2.0"
+  version: 8.2.1
+  resolution: "i18next-browser-languagedetector@npm:8.2.1"
   dependencies:
     "@babel/runtime": "npm:^7.23.2"
-  checksum: 10/b2e78feb256e92b219cd378b38af00404b8f667473f886d64c53588df0592bce145ad29ad7d8238c75f78a9c79f02c84d400569dd5c0ab94c751ac62a4e1f8dd
+  checksum: 10/3410c839285f70f04546b6d5960e3fe263cbefb3098afa17e4254677af8e2149f287968d4e4fb3bcbf76a0e2300761e56e0315e41f1b5ed5c1c78a2d037cc64f
   languageName: node
   linkType: hard
 

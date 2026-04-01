@@ -139,11 +139,6 @@ export interface FeatureToggles {
   */
   faroSessionReplay?: boolean;
   /**
-  * A table visualisation for logs in Explore
-  * @default true
-  */
-  logsExploreTableVisualisation?: boolean;
-  /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
   */
@@ -218,6 +213,11 @@ export interface FeatureToggles {
   * @default false
   */
   sseGroupByDatasource?: boolean;
+  /**
+  * Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
+  * @default false
+  */
+  sseExpressionErrorIsolation?: boolean;
   /**
   * Enables running Loki queries in parallel
   * @default false
@@ -1760,4 +1760,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryServiceQueryCaching?: boolean;
+  /**
+  * Enables the time seeker in traces drilldown
+  * @default false
+  */
+  tracesDrilldownTimeSeeker?: boolean;
 }

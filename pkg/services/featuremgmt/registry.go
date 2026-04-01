@@ -200,14 +200,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "logsExploreTableVisualisation",
-			Description:  "A table visualisation for logs in Explore",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -324,6 +316,13 @@ var (
 		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "sseExpressionErrorIsolation",
+			Description: "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
@@ -2792,6 +2791,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "tracesDrilldownTimeSeeker",
+			Description:  "Enables the time seeker in traces drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
 		},
 	}
 )
