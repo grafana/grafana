@@ -68,7 +68,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "id": 1,
       "maxDataPoints": 30,
@@ -179,7 +179,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 3
       },
       "id": 14,
       "maxDataPoints": 30,
@@ -290,7 +290,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 11
       },
       "id": 15,
       "maxDataPoints": 30,
@@ -401,7 +401,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 11
       },
       "id": 16,
       "maxDataPoints": 30,
@@ -518,7 +518,7 @@
         "h": 12,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 19
       },
       "id": 13,
       "options": {
@@ -634,7 +634,7 @@
         "h": 12,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 19
       },
       "id": 17,
       "options": {
@@ -744,7 +744,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 28
+        "y": 31
       },
       "id": 18,
       "options": {
@@ -777,6 +777,27 @@
       ],
       "title": "wip annotations panel",
       "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 19,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "#### **Note:** All annotations in this dashboard are on **October 2, 2025**. Adjust the time range to that day to see them.",
+        "mode": "markdown"
+      },
+      "title": "",
+      "transparent": false,
+      "type": "text"
     }
   ],
   "preload": false,
@@ -788,11 +809,11 @@
   },
   "time": {
     "from": "2025-10-02T00:00:00.000Z",
-    "to": "2025-10-03T04:00:00.000Z"
+    "to": "2025-10-02T23:59:59.000Z"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Annotations clustering",
+  "title": "Panel tests - Timeseries - Annotations clustering",
   "uid": "ad7p5pjk",
-  "version": 17
+  "version": 18
 }

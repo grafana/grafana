@@ -1,4 +1,5 @@
 import { type Property } from 'csstype';
+import { uniq } from 'lodash';
 import memoize from 'micro-memoize';
 import WKT from 'ol/format/WKT';
 import Geometry from 'ol/geom/Geometry';
@@ -758,7 +759,7 @@ export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: 
       rows[rowCount] = {
         __depth: 0,
         __index: i,
-        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
+        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',\n')}
       };
       if (nestedRowIndex != null) {
         rows[rowCount].__parentIndex = nestedRowIndex;
