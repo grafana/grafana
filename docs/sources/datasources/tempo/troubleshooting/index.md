@@ -81,9 +81,9 @@ This document provides solutions to common issues you may encounter when configu
 
 This guide covers issues related to connecting Grafana to Tempo and using the data source features. It applies to the following setups:
 
-- **Self-managed Grafana + self-managed Tempo** — you manage both Grafana (OSS or Enterprise) and Tempo.
-- **Grafana Cloud + Cloud Traces** — you use Grafana Cloud with the managed Tempo backend (Grafana Cloud Traces). Some configuration (streaming, metrics generator) is handled automatically.
-- **Grafana Cloud + self-managed Tempo via PDC** — you use Grafana Cloud but connect to your own Tempo instance through [Private data source connect](ref:private-data-source-connect).
+- **Self-managed Grafana + self-managed Tempo**—you manage both Grafana (OSS or Enterprise) and Tempo.
+- **Grafana Cloud + Cloud Traces**—you use Grafana Cloud with the managed Tempo backend (Grafana Cloud Traces). Some configuration (streaming, metrics generator) is handled automatically.
+- **Grafana Cloud + self-managed Tempo via PDC**—you use Grafana Cloud but connect to your own Tempo instance through [Private data source connect](ref:private-data-source-connect).
 
 Where troubleshooting steps differ between these setups, the guide calls it out. Sections labeled _Grafana Cloud only_ or _self-managed Tempo_ apply only to those environments.
 
@@ -108,7 +108,7 @@ These errors occur when Grafana cannot establish or maintain a connection to the
 
 1. Verify that the Tempo instance is running and accessible from the Grafana server.
 1. Check that the URL is correct in the [data source configuration](ref:configure-tempo-data-source). The default Tempo HTTP port is `3200`. Common URL mistakes include:
-   - Adding trailing path segments like `/api` or `/tempo` to self-managed Tempo URLs. The correct format is `http://<HOST>:3200` with no path. The `/tempo` suffix is only used for Grafana Cloud Traces URLs.
+   - Adding trailing path segments, for example, `/api` or `/tempo`, to self-managed Tempo URLs. The correct format is `http://<HOST>:3200` with no path. The `/tempo` suffix is only used for Grafana Cloud Traces URLs.
    - Using the gRPC port (`9095`) instead of the HTTP port (`3200`). The Tempo data source URL must be the HTTP endpoint. Grafana derives the gRPC connection for streaming from the same URL.
    - Refer to the [Connection](ref:configure-tempo-data-source) section for URL format examples by environment.
 1. Ensure there are no firewall rules blocking the connection between Grafana and Tempo.
@@ -133,7 +133,7 @@ These errors occur when Grafana cannot establish or maintain a connection to the
 
 **Error message:** `TLS handshake failed` or `x509: certificate signed by unknown authority`
 
-**Cause:** There is a mismatch between the TLS settings in Grafana and what the Tempo instance supports or requires. For example, Tempo may present a self-signed certificate that the Grafana server doesn't trust, or the certificate's hostname doesn't match the URL.
+**Cause:** There's a mismatch between the TLS settings in Grafana and what the Tempo instance supports or requires. For example, Tempo may present a self-signed certificate that the Grafana server doesn't trust, or the certificate's hostname doesn't match the URL.
 
 **Solution:**
 
@@ -166,7 +166,7 @@ These errors occur when there are issues with authentication credentials or perm
 
 **Error message:** `Tempo echo endpoint returned status 404` when selecting **Save & test**
 
-**Cause:** Grafana's health check reaches the server but the `api/echo` endpoint returns a 404. The most common cause is incorrect path segments in the URL (such as `/api` or `/tempo` on a self-managed instance) that shift the health check request to a nonexistent path. A 404 can also occur when a reverse proxy in front of Tempo rejects requests that include unexpected basic authentication headers.
+**Cause:** The Grafana health check reaches the server but the `api/echo` endpoint returns a 404. The most common cause is incorrect path segments in the URL (such as `/api` or `/tempo` on a self-managed instance) that shift the health check request to a nonexistent path. A 404 can also occur when a reverse proxy in front of Tempo rejects requests that include unexpected basic authentication headers.
 
 **Solution:**
 
@@ -224,7 +224,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 
 1. Verify the query follows [TraceQL syntax](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql).
 1. Check that all braces, parentheses, and quotes are balanced.
-1. Ensure attribute names are correctly formatted with the correct scope. Use dot notation for span or resource attributes, for example `span.http.status_code` or `resource.service.name`.
+1. Ensure attribute names are correctly formatted with the correct scope. Use dot notation for span or resource attributes, for example, `span.http.status_code` or `resource.service.name`.
 1. Use the **Search** query builder to generate valid TraceQL queries if you're unfamiliar with the syntax.
 1. Verify operators are used correctly. Supported operators include `=`, `!=`, `=~`, `!~`, `>`, `<`, `>=`, `<=`.
 
@@ -239,7 +239,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 1. Check that the attribute names match exactly, as they're case-sensitive.
 1. Use the **Search** query builder to explore available attributes and values.
 1. Start with a broader query and progressively add filters to narrow results.
-1. Note that Tempo search is non-deterministic — identical queries can return different results because Tempo scans in parallel and returns the first matching traces. Refer to [Understand search behavior](ref:tempo-query-editor) for details.
+1. Note that Tempo search is non-deterministic—identical queries can return different results because Tempo scans in parallel and returns the first matching traces. Refer to [Understand search behavior](ref:tempo-query-editor) for details.
 1. Verify traces are being ingested into Tempo by querying for a known trace ID.
 
 ### Traces not appearing after successful connection
@@ -252,7 +252,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 1. For Grafana Cloud users who send traces with Alloy, refer to [Troubleshoot sending traces with Alloy](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/traces-with-alloy/#troubleshoot) for ingestion-side issues.
 1. Confirm that the query time range covers the period when traces were generated. Trace data only appears for the window in which spans were ingested.
 1. For multi-tenant setups, verify that the `X-Scope-OrgID` header is the same on both the write path (collector) and the read path (Grafana data source). A mismatch causes traces to be ingested under one tenant and queried under another.
-1. Try a broad query like `{}` with a short, recent time range to confirm that any traces exist in Tempo. If this returns results, your original query filters are too narrow.
+1. Try a broad query, for example, `{}`, with a short, recent time range to confirm that any traces exist in Tempo. If this returns results, your original query filters are too narrow.
 
 ### Query timeout
 
@@ -287,7 +287,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 
 ## Streaming issues
 
-Streaming enables TraceQL query results to be displayed as they become available. Without streaming, no results are displayed until all results have returned. Streaming is available for Grafana Cloud users by default. For self-managed Tempo, search streaming requires Tempo v2.2 or later, and metrics streaming requires Tempo v2.7 or later. Both require `stream_over_http_enabled: true` in the Tempo configuration.
+Streaming displays TraceQL query results as they become available. Without streaming, you don't see results until the query completes. Streaming is available for Grafana Cloud users by default. For self-managed Tempo, search streaming requires Tempo v2.2 or later, and metrics streaming requires Tempo v2.7 or later. Both require `stream_over_http_enabled: true` in the Tempo configuration.
 
 For more information, refer to [Streaming](ref:streaming).
 
@@ -298,7 +298,7 @@ For more information, refer to [Streaming](ref:streaming).
 **Solution:**
 
 1. For self-managed Tempo, verify that you're using the required Tempo version (v2.2 or later for search streaming, v2.7 or later for metrics streaming) and that streaming is enabled in your configuration (`stream_over_http_enabled: true`). Refer to [Tempo gRPC API](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#tempo-grpc-api) in the Tempo documentation. Streaming is available for Grafana Cloud users by default.
-1. Verify that **Streaming** is enabled in your [Tempo data source settings](ref:streaming). The **Search queries** and **Metrics queries** toggles are independent — check that the toggle for the query type you're using is enabled.
+1. Verify that **Streaming** is enabled in your [Tempo data source settings](ref:streaming). The **Search queries** and **Metrics queries** toggles are independent—check that the toggle for the query type you're using is enabled.
 1. If your Tempo instance is behind a load balancer or proxy that doesn't support gRPC or HTTP2, streaming may not work. Disable streaming and use standard HTTP queries instead.
 1. If you're using [Private data source connect (PDC)](ref:private-data-source-connect) to reach Tempo, verify that the PDC tunnel is running and the Tempo instance is reachable from the PDC agent. PDC connectivity issues can present as streaming timeouts.
 
@@ -358,7 +358,7 @@ The Service Graph visualizes service dependencies and highlights request rate, e
 
 **Solution:**
 
-1. The Service Graph view table uses a different set of metrics from the node graph. The Grafana frontend queries `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket`. Confirm that these metrics exist in your linked Prometheus data source. Newer Tempo versions may produce `traces_spanmetrics_duration_seconds_bucket` instead of `traces_spanmetrics_latency_bucket`. If you only have the newer metric name, the duration column will show no data until the Grafana frontend is updated to support the renamed metric.
+1. The Service Graph view table uses a different set of metrics from the node graph. The Grafana frontend queries `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket`. Confirm that these metrics exist in your linked Prometheus data source. Newer Tempo versions may produce `traces_spanmetrics_duration_seconds_bucket` instead of `traces_spanmetrics_latency_bucket`. If you only have the newer metric name, the duration column shows no data until the Grafana frontend supports the renamed metric.
 1. Verify that span metrics generation is enabled in your Tempo or Alloy configuration. Refer to [Enable service graphs](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-from-traces/service_graphs/enable-service-graphs/) in the Tempo documentation.
 
 ### High cardinality warnings
@@ -367,7 +367,7 @@ The Service Graph visualizes service dependencies and highlights request rate, e
 
 **Solution:**
 
-1. Review the label cardinality of your service graph and span metrics. High-cardinality labels (such as unique pod names or request IDs) create many time series and degrade query performance.
+1. Review the label cardinality of your service graph and span metrics. High-cardinality labels (such as unique Pod names or request IDs) create many time series and degrade query performance.
 1. Refer to [Cardinality](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-from-traces/metrics-generator/cardinality/) in the Tempo documentation for guidance on managing label cardinality.
 
 ### Service graph shows incomplete data
@@ -396,18 +396,18 @@ These issues relate to the correlation features that link traces to other teleme
 1. Ensure at least one mapped tag has a non-empty value in the span.
 1. If using a custom query, verify the query syntax is valid for the target data source.
 1. Check that **Filter by trace ID** or **Filter by span ID** aren't enabled when using a custom query.
-1. If using **Filter by trace ID** with Loki derived fields, verify that the derived field regex matches the trace ID field name used in your logs. Different instrumentation libraries use different field names (`traceID`, `trace_id`, or `traceId`). Refer to [Trace to logs](ref:trace-to-logs) for common regex patterns by instrumentation format.
+1. If using **Filter by trace ID** with Loki derived fields, verify that the derived field regular expression matches the trace ID field name used in your logs. Different instrumentation libraries use different field names (`traceID`, `trace_id`, or `traceId`). Refer to [Trace to logs](ref:trace-to-logs) for common regular expression patterns by instrumentation format.
 
 ### Loki log lines don't show a trace link
 
-**Cause:** The reverse direction — navigating from a Loki log line to a trace — isn't working. No trace link appears on log lines.
+**Cause:** The reverse direction—navigating from a Loki log line to a trace—isn't working. No trace link appears on log lines.
 
 **Solution:**
 
 1. Verify that a derived field is configured in the Loki data source under **Additional settings > Derived fields**. The derived field extracts the trace ID from log lines and creates a link to Tempo.
-1. Check that the derived field regex matches the trace ID format in your logs. Use **Show example log message** in the derived field settings to test the regex against a sample log line.
+1. Check that the derived field regular expression matches the trace ID format in your logs. Use **Show example log message** in the derived field settings to test the regular expression against a sample log line.
 1. Confirm the **Internal link** toggle is enabled and points to the correct Tempo data source.
-1. If different services use different trace ID field names, you need a separate derived field entry for each format. Refer to [Trace to logs](ref:trace-to-logs) for regex patterns by format.
+1. If different services use different trace ID field names, you need a separate derived field entry for each format. Refer to [Trace to logs](ref:trace-to-logs) for regular expression patterns by format.
 
 ### Trace to metrics link not appearing
 
@@ -486,18 +486,18 @@ The following issues don't produce specific error messages but are commonly enco
 
 ### Autocomplete not working
 
-**Cause:** The TraceQL editor doesn't show suggestions for attributes or values. Autocomplete relies on Tempo's ability to enumerate tags, which requires a supported storage backend (vParquet or later).
+**Cause:** The TraceQL editor doesn't show suggestions for attributes or values. Autocomplete requires Tempo to enumerate tags, which requires a supported storage backend (`vParquet` or later).
 
 **Solution:**
 
-1. For self-managed Tempo, verify that the storage backend supports tag search. Tempo requires vParquet format or later for tag-based search and autocomplete. Refer to [Parquet configuration](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/parquet/) for details. Grafana Cloud Traces supports autocomplete by default.
+1. For self-managed Tempo, verify that the storage backend supports tag search. Tempo requires `vParquet` format or later for tag-based search and autocomplete. Refer to [Parquet configuration](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/parquet/) for details. Grafana Cloud Traces supports autocomplete by default.
 1. Check the **Tags time range** setting in the [data source settings](ref:additional-settings) to ensure it covers a period with recent trace data.
 1. Increase the **Tag limit** setting if you have many unique attributes.
 1. Verify the Tempo data source connection is working by selecting **Save & test** in the data source settings.
 
 ### Data source settings disappear after restart
 
-**Cause:** You configured settings in the Grafana UI (such as trace-to-logs links, service graph, or span time shifts), but they disappear after Grafana restarts. This happens when the data source is provisioned via a YAML configuration file, Helm chart, or Terraform. Provisioned data sources are read-only in the UI — any changes made through the UI aren't persisted and silently revert on the next restart.
+**Cause:** You configured settings in the Grafana UI (such as trace-to-logs links, service graph, or span time shifts), but they disappear after Grafana restarts. This happens when the data source is provisioned via a YAML configuration file, Helm chart, or Terraform. Provisioned data sources are read-only in the UI—any changes you make through the UI aren't persisted and silently revert on the next restart.
 
 You can tell a data source is provisioned if the settings form is read-only and the button reads **Test** instead of **Save & test**.
 
@@ -526,7 +526,7 @@ Alternatively, use the Tempo metrics generator to produce Prometheus metrics fro
 
 ### Switching between multiple Tempo instances
 
-**Cause:** You have multiple Tempo data sources configured (for example, one per environment or per tenant), but there is no built-in UI dropdown in Explore or dashboards to switch between them dynamically.
+**Cause:** You have multiple Tempo data sources configured (for example, one per environment or per tenant), but there's no built-in UI dropdown in Explore or dashboards to switch between them dynamically.
 
 **Workaround:**
 
