@@ -1,11 +1,11 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useId } from 'react';
 
-import { TypeaheadInput } from '../../types/completion';
+import { type TypeaheadInput } from '../../types/completion';
 import { Field } from '../Forms/Field';
 import { Label } from '../Forms/Label';
 
-import { QueryField, QueryFieldProps } from './QueryField';
+import { QueryField, type QueryFieldProps } from './QueryField';
 
 const meta: Meta<typeof QueryField> = {
   title: 'Inputs/Deprecated/QueryField',

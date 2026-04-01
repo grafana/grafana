@@ -1,17 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
-import { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data';
+import { type CustomVariableModel, type DataSourceInstanceSettings } from '@grafana/data';
+import type * as runtime from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
-import * as ui from '@grafana/ui';
+import type * as ui from '@grafana/ui';
 
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../../dataquery.gen';
+import { type CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
 import { setupMockedTemplateService } from '../../../mocks/CloudWatchDataSource';
 import { initialVariableModelState } from '../../../mocks/CloudWatchVariables';
-import { CloudWatchJsonData } from '../../../types';
+import { type CloudWatchJsonData } from '../../../types';
 
-import { MetricsQueryEditor, Props } from './MetricsQueryEditor';
+import { MetricsQueryEditor, type Props } from './MetricsQueryEditor';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual<typeof ui>('@grafana/ui'),
@@ -21,7 +22,7 @@ jest.mock('@grafana/ui', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual<typeof import('@grafana/runtime')>('@grafana/runtime'),
+  ...jest.requireActual<typeof runtime>('@grafana/runtime'),
   config: {
     featureToggles: {
       cloudWatchCrossAccountQuerying: true,

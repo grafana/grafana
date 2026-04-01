@@ -11,12 +11,13 @@ const mockGetBackendSrv = getBackendSrv as jest.MockedFunction<typeof getBackend
 
 const BETA_FALLBACK = { v1: 'v1beta1', v2: 'v2beta1' };
 
-function mockDiscoveryResponse(versions: string[]) {
+function mockDiscoveryResponse(versions: string[], preferred?: string) {
+  const preferredVersion = preferred ?? versions[0];
   mockGetBackendSrv.mockReturnValue({
     get: jest.fn().mockResolvedValue({
       name: 'dashboard.grafana.app',
       versions: versions.map((v) => ({ groupVersion: `dashboard.grafana.app/${v}`, version: v })),
-      preferredVersion: { groupVersion: `dashboard.grafana.app/${versions[0]}`, version: versions[0] },
+      preferredVersion: { groupVersion: `dashboard.grafana.app/${preferredVersion}`, version: preferredVersion },
     }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
@@ -38,17 +39,72 @@ describe('DashboardAPIVersionResolver', () => {
   });
 
   describe('resolve', () => {
-    it.each([
-      { versions: ['v2', 'v2beta1', 'v1', 'v1beta1'], expected: { v1: 'v1', v2: 'v2' }, desc: 'both stable' },
-      { versions: ['v2beta1', 'v1beta1'], expected: BETA_FALLBACK, desc: 'beta only' },
-      { versions: ['v2beta1', 'v1', 'v1beta1'], expected: { v1: 'v1', v2: 'v2beta1' }, desc: 'v1 stable only' },
-      { versions: ['v2', 'v2beta1', 'v1beta1'], expected: { v1: 'v1beta1', v2: 'v2' }, desc: 'v2 stable only' },
-    ])('should resolve correctly when $desc are available', async ({ versions, expected }) => {
-      mockDiscoveryResponse(versions);
+    describe('preferredVersion-based resolution', () => {
+      it.each([
+        {
+          versions: ['v2', 'v2beta1', 'v1', 'v1beta1'],
+          expected: { v1: 'v1', v2: 'v2' },
+          desc: 'both stable, preferred=v2 (first in list)',
+        },
+        { versions: ['v2beta1', 'v1beta1'], expected: BETA_FALLBACK, desc: 'beta only, preferred=v2beta1' },
+        {
+          versions: ['v2beta1', 'v1', 'v1beta1'],
+          expected: { v1: 'v1', v2: 'v2beta1' },
+          desc: 'v1 stable only, preferred=v2beta1',
+        },
+        {
+          versions: ['v2', 'v2beta1', 'v1beta1'],
+          expected: { v1: 'v1beta1', v2: 'v2' },
+          desc: 'v2 stable only, preferred=v2',
+        },
+      ])(
+        'should resolve correctly when $desc are available (preferred defaults to first version)',
+        async ({ versions, expected }) => {
+          mockDiscoveryResponse(versions);
 
-      const result = await dashboardAPIVersionResolver.resolve();
+          const result = await dashboardAPIVersionResolver.resolve();
 
-      expect(result).toEqual(expected);
+          expect(result).toEqual(expected);
+        }
+      );
+
+      it('should respect preferredVersion=v1beta1 even when v1 is available', async () => {
+        mockDiscoveryResponse(['v2', 'v2beta1', 'v1', 'v1beta1'], 'v1beta1');
+
+        const result = await dashboardAPIVersionResolver.resolve();
+
+        expect(result).toEqual({ v1: 'v1beta1', v2: 'v2' });
+      });
+
+      it('should respect preferredVersion=v2beta1 even when v2 is available', async () => {
+        mockDiscoveryResponse(['v2', 'v2beta1', 'v1', 'v1beta1'], 'v2beta1');
+
+        const result = await dashboardAPIVersionResolver.resolve();
+
+        expect(result).toEqual({ v1: 'v1', v2: 'v2beta1' });
+      });
+
+      it('should fall back to version scanning when preferredVersion is for a different family', async () => {
+        // preferred is v1, so v2 falls back to scanning available versions
+        mockDiscoveryResponse(['v2', 'v2beta1', 'v1', 'v1beta1'], 'v1');
+
+        const result = await dashboardAPIVersionResolver.resolve();
+
+        expect(result).toEqual({ v1: 'v1', v2: 'v2' });
+      });
+    });
+
+    it('should call discovery endpoint with showErrorAlert disabled', async () => {
+      mockDiscoveryResponse(['v2beta1', 'v1beta1']);
+      await dashboardAPIVersionResolver.resolve();
+
+      const mockGet = mockGetBackendSrv()?.get as jest.Mock;
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining('/apis/dashboard.grafana.app/'),
+        undefined,
+        undefined,
+        expect.objectContaining({ showErrorAlert: false })
+      );
     });
 
     it('should retry discovery after a transient failure', async () => {

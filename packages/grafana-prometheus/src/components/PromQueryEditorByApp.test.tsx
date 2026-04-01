@@ -4,11 +4,11 @@ import { noop } from 'lodash';
 
 import { CoreApp } from '@grafana/data';
 
-import { PrometheusDatasource } from '../datasource';
+import { type PrometheusDatasource } from '../datasource';
 
 import { PromQueryEditorByApp } from './PromQueryEditorByApp';
 import { alertingTestIds } from './PromQueryEditorForAlerting';
-import { Props } from './monaco-query-field/MonacoQueryFieldProps';
+import { type Props } from './monaco-query-field/MonacoQueryFieldProps';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related

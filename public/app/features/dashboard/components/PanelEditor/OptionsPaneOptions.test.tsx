@@ -4,13 +4,13 @@ import configureMockStore from 'redux-mock-store';
 import { render } from 'test/test-utils';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
-  TimeRange,
+  type TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';

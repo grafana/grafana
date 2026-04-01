@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 
 import { getDashboardModel } from '../../../../../test/helpers/getDashboardModel';
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
 
 import { DashNavTimeControls } from './DashNavTimeControls';

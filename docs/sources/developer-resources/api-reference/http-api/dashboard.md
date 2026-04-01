@@ -18,15 +18,17 @@ labels:
 title: Dashboard HTTP API
 ---
 
-# New Dashboard APIs
+# Dashboard APIs (new)
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+{{< admonition type="note" >}}
+Available in Grafana 12 and later. To learn more about the new API structure, refer to [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
-> To view more about the new API structure, refer to [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+{{< /admonition >}}
 
 ## Create Dashboard
 
-`POST /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards`
+`POST /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`
 
 Creates a new dashboard.
 
@@ -47,7 +49,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 **Example Create Request**:
 
 ```http
-POST /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards HTTP/1.1
+POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -244,7 +246,7 @@ Content-Length: 485
 
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "metadata": {
     "name": "gdxccn",
     "namespace": "default",
@@ -476,7 +478,7 @@ Status Codes:
 
 ## Update Dashboard
 
-`PUT /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid`
+`PUT /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
 
 Updates an existing dashboard via the dashboard uid.
 
@@ -497,7 +499,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 **Example Update Request**:
 
 ```http
-POST /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/gdxccn HTTP/1.1
+POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -538,7 +540,7 @@ Content-Length: 485
 
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "metadata": {
     "name": "gdxccn",
     "namespace": "default",
@@ -571,7 +573,7 @@ Status Codes:
 
 ## Get Dashboard
 
-`GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid`
+`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
 
 Gets a dashboard via the dashboard uid.
 
@@ -592,7 +594,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 **Example Get Request**:
 
 ```http
-GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/gdxccn HTTP/1.1
+GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -607,7 +609,7 @@ Content-Length: 485
 
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "metadata": {
     "name": "gdxccn",
     "namespace": "default",
@@ -638,7 +640,7 @@ Status Codes:
 
 ### Retrieve additional access information
 
-`GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid/dto`
+`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto`
 
 Retrieves a dashboard with additional access information.
 
@@ -646,7 +648,7 @@ The `GET` response includes an additional `access` section with data such as if 
 
 ## List Dashboards
 
-`GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards`
+`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`
 
 Lists all dashboards in the given organization. You can control the maximum number of dashboards returned through the `limit` query parameter. You can then use the `continue` token returned to fetch the next page of dashboards.
 
@@ -671,7 +673,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 **Example Get Request**:
 
 ```http
-GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards?limit=1 HTTP/1.1
+GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -725,7 +727,7 @@ The `metadata.continue` field contains a token to fetch the next page.
 **Example subsequent request using continue token**:
 
 ```http
-GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
+GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -779,7 +781,7 @@ Status Codes:
 
 ## Delete Dashboard
 
-`DELETE /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid`
+`DELETE /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
 
 Deletes a dashboard via the dashboard uid.
 
@@ -800,7 +802,7 @@ See note in the [introduction](#new-dashboard-apis) for an explanation.
 **Example Delete Request**:
 
 ```http
-DELETE /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/gdxccn HTTP/1.1
+DELETE /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -1068,6 +1070,8 @@ Content-Length: 97
 
 Will return the dashboard given the dashboard unique identifier (uid). Information about the unique identifier of a folder containing the requested dashboard might be found in the metadata.
 
+Optional query parameter **`apiVersion`** requests which API version Grafana tries first when loading the dashboard (for example `v1`). If that request fails, Grafana retries using the default version. When omitted, only the default is used.
+
 **Required permissions**
 
 See note in the [introduction](#dashboard-api) for an explanation.
@@ -1085,6 +1089,14 @@ See note in the [introduction](#dashboard-api) for an explanation.
 GET /api/dashboards/uid/cIBgcSjkk HTTP/1.1
 Accept: application/json
 Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+Example with an explicit API version:
+
+```http
+GET /api/dashboards/uid/cIBgcSjkk?apiVersion=v1 HTTP/1.1
+Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 

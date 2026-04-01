@@ -561,7 +561,7 @@ func TestSortResourceListForDeletion(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			sortResourceListForDeletion(&tc.input)
+			resources.SortResourceListForDeletion(&tc.input)
 			assert.Equal(t, tc.expected, tc.input)
 		})
 	}
@@ -639,7 +639,7 @@ func TestSortResourceListForRelease(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			sortResourceListForRelease(&tc.input)
+			resources.SortResourceListForRelease(&tc.input)
 			assert.Equal(t, tc.expected, tc.input)
 		})
 	}

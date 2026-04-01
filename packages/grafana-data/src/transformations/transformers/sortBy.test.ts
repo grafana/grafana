@@ -1,11 +1,11 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { type Field, FieldType } from '../../types/dataFrame';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { sortByTransformer, SortByTransformerOptions } from './sortBy';
+import { sortByTransformer, type SortByTransformerOptions } from './sortBy';
 
 const testFrame = toDataFrame({
   name: 'A',

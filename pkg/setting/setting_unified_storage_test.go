@@ -179,12 +179,11 @@ func TestApplyMigrationEnforcements(t *testing.T) {
 
 	enableMigrations := func(cfg *Cfg) {
 		cfg.Target = []string{"all"}
-		cfg.DisableDataMigrations = false
 		// storage_type defaults to "unified", no need to set it
 	}
 
 	disableMigrations := func(cfg *Cfg) {
-		cfg.DisableDataMigrations = true
+		cfg.Target = []string{"backend"}
 	}
 
 	t.Run("enforces EnableSearch when migrations run and search is disabled", func(t *testing.T) {
@@ -283,6 +282,27 @@ func TestApplyMigrationEnforcements(t *testing.T) {
 
 		assert.True(t, cfg.EnableSearch)
 	})
+}
+
+func TestParseCommaSeparatedList(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{name: "empty string", input: "", expected: nil},
+		{name: "single value", input: "dashboard.grafana.app/dashboards", expected: []string{"dashboard.grafana.app/dashboards"}},
+		{name: "multiple values", input: "dashboard.grafana.app/dashboards,folder.grafana.app/folders", expected: []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}},
+		{name: "with whitespace", input: " dashboard.grafana.app/dashboards , folder.grafana.app/folders ", expected: []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}},
+		{name: "trailing comma", input: "dashboard.grafana.app/dashboards,", expected: []string{"dashboard.grafana.app/dashboards"}},
+		{name: "only commas", input: ",,", expected: []string{}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, parseCommaSeparatedList(tt.input))
+		})
+	}
 }
 
 func TestIsTargetEligibleForMigrations(t *testing.T) {

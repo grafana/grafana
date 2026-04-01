@@ -1,6 +1,6 @@
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { Tab } from '../Tabs/Tab';
 import { TabsBar } from '../Tabs/TabsBar';
 
@@ -14,16 +14,15 @@ interface ModalTab {
 }
 
 interface Props {
-  icon: IconName;
   title: string;
   tabs: ModalTab[];
   activeTab: string;
   onChangeTab(tab: ModalTab): void;
 }
 
-export const ModalTabsHeader = ({ icon, title, tabs, activeTab, onChangeTab }: Props) => {
+export const ModalTabsHeader = ({ title, tabs, activeTab, onChangeTab }: Props) => {
   return (
-    <ModalHeader icon={icon} title={title}>
+    <ModalHeader title={title}>
       <TabsBar hideBorder={true}>
         {tabs.map((t, index) => {
           return (

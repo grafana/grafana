@@ -126,7 +126,7 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 		}
 	}
 
-	if cmd.FolderUID != nil {
+	if cmd.FolderUID != nil && l.folderService != nil {
 		f, err := l.folderService.Get(c, &folder.GetFolderQuery{
 			OrgID:        signedInUser.GetOrgID(),
 			UID:          cmd.FolderUID,

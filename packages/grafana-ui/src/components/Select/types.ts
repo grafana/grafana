@@ -1,13 +1,13 @@
-import * as React from 'react';
+import type * as React from 'react';
 import type { JSX } from 'react';
 import {
-  ActionMeta as SelectActionMeta,
-  CommonProps as ReactSelectCommonProps,
-  GroupBase,
-  OptionsOrGroups,
+  type ActionMeta as SelectActionMeta,
+  type CommonProps as ReactSelectCommonProps,
+  type GroupBase,
+  type OptionsOrGroups,
 } from 'react-select';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 export type ActionMeta = SelectActionMeta<{}>;

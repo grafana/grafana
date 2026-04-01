@@ -1,17 +1,17 @@
 import { config, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Status, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
-import { Resource } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { isDashboardSceneEnabled } from 'app/features/dashboard-scene/utils/utils';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 export function isV2StoredVersion(version: string | undefined): boolean {
-  return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2beta2' || version === 'v2';
+  return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2';
 }
 
 export function isV0V1StoredVersion(version: string | undefined): boolean {
