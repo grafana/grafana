@@ -1057,6 +1057,13 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:        "orgDashboardTemplates",
+			Description: "Enables org-defined dashboard templates for enterprise",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "dashboardTemplatesAssistantButton",
 			Description:  "Enables the Assistant button in the dashboard templates card",
 			Stage:        FeatureStageExperimental,

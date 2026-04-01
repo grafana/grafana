@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { type Params, useParams } from 'react-router-dom-v5-compat';
+import { type Params, useParams, useSearchParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -18,6 +18,7 @@ import {
   type DashboardPageRouteParams,
   type DashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
+import { TemplateDashboardModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
@@ -25,6 +26,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { TemplateSavedBanner } from '../components/TemplateSavedBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
@@ -41,6 +43,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
   const prevMatch = usePrevious({ params });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const templateSavedName = searchParams.get('templateSaved');
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
@@ -140,8 +144,22 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
+      {templateSavedName && (
+        <TemplateSavedBanner
+          templateName={templateSavedName}
+          onDismiss={() => {
+            searchParams.delete('templateSaved');
+            setSearchParams(searchParams);
+          }}
+          onOpenGallery={() => {
+            searchParams.set('templateDashboards', 'true');
+            setSearchParams(searchParams);
+          }}
+        />
+      )}
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
+      {config.featureToggles.orgDashboardTemplates && <TemplateDashboardModal />}
       <DashboardBrandingFooter
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}

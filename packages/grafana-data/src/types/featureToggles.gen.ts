@@ -674,6 +674,11 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables org-defined dashboard templates for enterprise
+  * @default false
+  */
+  orgDashboardTemplates?: boolean;
+  /**
   * Enables the Assistant button in the dashboard templates card
   * @default false
   */

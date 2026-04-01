@@ -614,7 +614,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const datasource = searchParams.get('datasource');
     const gnetId = searchParams.get('gnetId');
     const pluginId = searchParams.get('pluginId');
-
     const path = searchParams.get('path');
 
     // Check if this is a template dashboard
@@ -946,6 +945,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     if (rsp) {
       const scene = transformSaveModelSchemaV2ToScene(rsp, options);
 
+      // Special handling for Template route - set up edit mode and dirty state
+      if (config.featureToggles.orgDashboardTemplates && options.route === DashboardRoutes.Template) {
+        scene.onEnterEditMode();
+        scene.setState({ isDirty: true });
+      }
+
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid) {
         this.setSceneCache(options.uid, scene);
@@ -1015,6 +1020,16 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
+        case DashboardRoutes.Template: {
+          const templateSearchParams = new URLSearchParams(window.location.search);
+          const orgTemplateUid = templateSearchParams.get('orgTemplateUid');
+          if (orgTemplateUid) {
+            rsp = await this.loadOrgTemplate(orgTemplateUid);
+            break;
+          }
+          // Non-org templates are V1 only — throw to fallback
+          throw new DashboardVersionError('v0alpha1', 'Non-org template dashboards use V1 schema');
+        }
         default:
           if (config.featureToggles.reloadDashboardsOnParamsChange) {
             const queryParamsObject = processQueryParamsForDashboardLoad();
@@ -1056,6 +1071,31 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       throw e;
     }
     return rsp;
+  }
+
+  private async loadOrgTemplate(orgTemplateUid: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    const namespace = 'default';
+    const response = await getBackendSrv().get(
+      `/apis/orgtemplate.grafana.app/v1alpha1/namespaces/${namespace}/orgdashboardtemplates/${orgTemplateUid}`
+    );
+
+    return {
+      apiVersion: dashboardAPIVersionResolver.getV2(),
+      kind: 'DashboardWithAccessInfo',
+      metadata: {
+        creationTimestamp: '',
+        name: '',
+        resourceVersion: '0',
+      },
+      spec: response.spec.dashboard,
+      access: {
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+      },
+    };
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap): Promise<void> {
@@ -1275,9 +1315,14 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       this.setActiveManager(newDashboardVersion);
     }
 
-    // Template dashboards are currently in v1 schema format.
+    // Template dashboards: org templates use V2, gnet templates use V1
     if (options.route === DashboardRoutes.Template) {
-      this.setActiveManager('v1');
+      const templateSearchParams = new URLSearchParams(window.location.search);
+      if (templateSearchParams.get('orgTemplateUid')) {
+        this.setActiveManager('v2');
+      } else {
+        this.setActiveManager('v1');
+      }
     }
 
     return this.withVersionHandling((manager) => {

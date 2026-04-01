@@ -126,6 +126,7 @@ export enum DashboardRoutes {
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
   AssistantPreview = 'assistant-preview',
+  TemplateEdit = 'template-edit-dashboard',
 }
 
 export enum DashboardInitPhase {

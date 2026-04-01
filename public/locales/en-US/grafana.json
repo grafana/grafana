@@ -6395,6 +6395,9 @@
       "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
+      "save-as-template": {
+        "label": "Save as template"
+      },
       "save-dashboard": {
         "label": "Save dashboard",
         "tooltip": "Save changes"
@@ -6646,6 +6649,9 @@
     "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
       "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "no-org-templates": "No custom templates yet. Save a dashboard as a template to get started.",
+      "tab-custom": "Custom templates",
+      "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
     }
   },
@@ -7368,6 +7374,19 @@
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
+    "save-as-template-form": {
+      "aria-label-template-description": "Template description field",
+      "aria-label-template-title": "Template title field",
+      "cancel": "Cancel",
+      "description": "Custom templates are saved as a separate resource, similar to dashboards with custom metadata. They can be used through the template gallery, and edited through your folders.",
+      "error-title": "Failed to save template",
+      "save": "Save as template",
+      "saving": "Saving...",
+      "template-description": "Template description",
+      "template-tags": "Tags",
+      "template-title": "Template title",
+      "title-required": "Required"
+    },
     "save-button": {
       "save": "Save",
       "save-and-overwrite": "Save and overwrite",
@@ -7392,7 +7411,8 @@
         "label-details": "Details",
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
-        "title-provisioned": "Provisioned dashboard"
+        "title-provisioned": "Provisioned dashboard",
+        "title-template": "Save as template"
       }
     },
     "save-dashboard-form": {
@@ -7455,6 +7475,18 @@
       "title-same-as-folder": "Dashboard name cannot be the same as the folder name",
       "title-validation-failed": "Dashboard title validation failed."
     },
+    "save-template-edit-form": {
+      "aria-label-template-description": "Template description field",
+      "aria-label-template-title": "Template title field",
+      "cancel": "Cancel",
+      "error-title": "Failed to update template",
+      "save": "Update template",
+      "saving": "Saving...",
+      "template-description": "Template description",
+      "template-tags": "Tags",
+      "template-title": "Template title",
+      "title-required": "Required"
+    },
     "scenes-new-rule-from-panel-button": {
       "body-no-alerting-capable-query-found": "Cannot create alerts from this panel because no query to an alerting capable datasource is found.",
       "disabled-tooltip": "Save the dashboard before creating alert rules",
@@ -7506,6 +7538,10 @@
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
+    },
+    "template-saved-banner": {
+      "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
+      "title": "Template saved"
     },
     "text-box-variable": {
       "name-default-value": "Default value"

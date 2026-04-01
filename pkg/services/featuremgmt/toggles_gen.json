@@ -3784,6 +3784,19 @@
     },
     {
       "metadata": {
+        "name": "orgDashboardTemplates",
+        "resourceVersion": "1774974293488",
+        "creationTimestamp": "2026-03-31T16:24:53Z"
+      },
+      "spec": {
+        "description": "Enables org-defined dashboard templates for enterprise",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "otelLogsFormatting",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-16T15:42:14Z"

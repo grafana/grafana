@@ -1,13 +1,16 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Box, Grid, Modal, Text, useStyles2 } from '@grafana/ui';
+import { config, getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { Box, Grid, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
+
+import { listOrgTemplates, type OrgDashboardTemplate } from '../../../dashboard-scene/saving/orgTemplateApi';
+import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
 import { NewTemplateDashboardInteractions } from './analytics/main';
@@ -21,17 +24,20 @@ import {
 import { TemplateDashboardInteractions } from './interactions';
 import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
-
 const SourceEntryPointMap: Record<string, SourceEntryPoint> = {
   quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
   commandPalette: TemplateDashboardSourceEntryPoint.COMMAND_PALETTE,
   createNewButton: TemplateDashboardSourceEntryPoint.BROWSE_DASHBOARDS_PAGE,
 };
 
+type TemplateTab = 'grafana' | 'custom';
+
 export const TemplateDashboardModal = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
+  const showOrgTemplates = Boolean(config.featureToggles.orgDashboardTemplates);
+  const [activeTab, setActiveTab] = useState<TemplateTab>(showOrgTemplates ? 'custom' : 'grafana');
   const isDashboardTemplatesAssistantButtonEnabled = useBooleanFlagValue('dashboardTemplatesAssistantButton', false);
   const isDashboardTemplatesAssistantToolEnabled = useBooleanFlagValue(
     'assistant.frontend.tools.dashboardTemplates',
@@ -122,9 +128,111 @@ export const TemplateDashboardModal = () => {
     }
   }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading, isAnalyticsFrameworkEnabled]);
 
-  if (!testDataSource || (dashboards.length === 0 && !loading)) {
+  const { value: orgTemplates = [], loading: orgTemplatesLoading } = useAsync(async () => {
+    if (!isOpen || !showOrgTemplates) {
+      return [];
+    }
+    try {
+      const namespace = 'default';
+      const response = await listOrgTemplates(namespace);
+      return response.items;
+    } catch (error) {
+      console.error('Error loading org templates', error);
+      return [];
+    }
+  }, [isOpen, showOrgTemplates]);
+
+  const onUseOrgTemplate = (template: OrgDashboardTemplate) => {
+    onClose();
+    const params = new URLSearchParams({
+      orgTemplateUid: template.metadata.name,
+    });
+    locationService.push(`${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`);
+  };
+
+  if (!testDataSource || (dashboards.length === 0 && !loading && orgTemplates.length === 0 && !orgTemplatesLoading)) {
     return null;
   }
+
+  const renderGrafanaTemplates = () => (
+    <Grid
+      gap={4}
+      columns={{
+        xs: 1,
+        sm: 2,
+        lg: 3,
+      }}
+    >
+      {loading
+        ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
+        : dashboards?.map((dashboard) => {
+            const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
+            const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
+
+            return (
+              <DashboardCard
+                key={dashboard.id}
+                title={dashboard.name}
+                imageUrl={thumbnailUrl}
+                onClick={(customizeWithAssistant?: boolean) =>
+                  onPreviewDashboardClick(dashboard, customizeWithAssistant)
+                }
+                onClose={onClose}
+                dashboard={dashboard}
+                kind="template_dashboard"
+                showAssistantButton={
+                  isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
+                }
+              />
+            );
+          })}
+    </Grid>
+  );
+
+  const renderOrgTemplates = () => (
+    <Grid
+      gap={4}
+      columns={{
+        xs: 1,
+        sm: 2,
+        lg: 3,
+      }}
+    >
+      {orgTemplatesLoading
+        ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
+        : orgTemplates.map((template: OrgDashboardTemplate, index: number) => {
+            // Create a GnetDashboard-compatible object for the card
+            const dashboardCompat: GnetDashboard = {
+              id: index,
+              name: template.spec.title,
+              description: template.spec.description,
+              slug: template.metadata.name,
+              downloads: 0,
+              datasource: '',
+              screenshots: [],
+            };
+
+            return (
+              <DashboardCard
+                key={template.metadata.name}
+                title={template.spec.title}
+                onClick={() => onUseOrgTemplate(template)}
+                onClose={onClose}
+                dashboard={dashboardCompat}
+                kind="template_dashboard"
+                showAssistantButton={false}
+              />
+            );
+          })}
+      {!orgTemplatesLoading && orgTemplates.length === 0 && (
+        <Text color="secondary">
+          <Trans i18nKey="dashboard-library.template-dashboard-modal.no-org-templates">
+            No custom templates yet. Save a dashboard as a template to get started.
+          </Trans>
+        </Text>
+      )}
+    </Grid>
+  );
 
   return (
     <Modal
@@ -140,40 +248,23 @@ export const TemplateDashboardModal = () => {
             Get started with Grafana templates using sample data. Connect your data to power them with real metrics.
           </Trans>
         </Text>
+        {showOrgTemplates && (
+          <TabsBar>
+            <Tab
+              label={t('dashboard-library.template-dashboard-modal.tab-custom', 'Custom templates')}
+              active={activeTab === 'custom'}
+              onChangeTab={() => setActiveTab('custom')}
+            />
+            <Tab
+              label={t('dashboard-library.template-dashboard-modal.tab-grafana', 'Grafana-provisioned')}
+              active={activeTab === 'grafana'}
+              onChangeTab={() => setActiveTab('grafana')}
+            />
+          </TabsBar>
+        )}
       </div>
       <Box direction="column" gap={4} display="flex">
-        <Grid
-          gap={4}
-          columns={{
-            xs: 1,
-            sm: 2,
-            lg: 3,
-          }}
-        >
-          {loading
-            ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
-            : dashboards?.map((dashboard) => {
-                const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-                const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
-
-                return (
-                  <DashboardCard
-                    key={dashboard.id}
-                    title={dashboard.name}
-                    imageUrl={thumbnailUrl}
-                    onClick={(customizeWithAssistant?: boolean) =>
-                      onPreviewDashboardClick(dashboard, customizeWithAssistant)
-                    }
-                    onClose={onClose}
-                    dashboard={dashboard}
-                    kind="template_dashboard"
-                    showAssistantButton={
-                      isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
-                    }
-                  />
-                );
-              })}
-        </Grid>
+        {showOrgTemplates && activeTab === 'custom' ? renderOrgTemplates() : renderGrafanaTemplates()}
       </Box>
     </Modal>
   );

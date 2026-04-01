@@ -371,6 +371,10 @@ const (
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
 
+	// FlagOrgDashboardTemplates
+	// Enables org-defined dashboard templates for enterprise
+	FlagOrgDashboardTemplates = "orgDashboardTemplates"
+
 	// FlagAlertingNavigationV2
 	// Enables the new Alerting navigation structure with improved menu grouping
 	FlagAlertingNavigationV2 = "alertingNavigationV2"

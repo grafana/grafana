@@ -7,6 +7,7 @@ import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisi
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
+import { SaveAsTemplateForm } from './SaveAsTemplateForm';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -18,6 +19,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveVariables?: boolean;
   saveRefresh?: boolean;
   saveAsCopy?: boolean;
+  saveAsTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
 }
@@ -49,7 +51,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 }
 
 function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboardDrawer>) {
-  const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
+  const { showDiff, saveAsCopy, saveAsTemplate, saveTimeRange, saveVariables, saveRefresh } = model.useState();
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
 
@@ -80,7 +82,9 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   );
 
   let title = t('dashboard-scene.save-dashboard-drawer.tabs.title', 'Save dashboard');
-  if (saveAsCopy) {
+  if (saveAsTemplate) {
+    title = t('dashboard-scene.save-dashboard-drawer.tabs.title-template', 'Save as template');
+  } else if (saveAsCopy) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
   } else if (isProvisioned || isProvisionedNG) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
@@ -99,6 +103,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           newFolder={folderTitle}
         />
       );
+    }
+
+    if (saveAsTemplate) {
+      return <SaveAsTemplateForm dashboard={dashboard} changeInfo={changeInfo} />;
     }
 
     if (isProvisionedNG) {
@@ -124,7 +132,12 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   };
 
   return (
-    <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
+    <Drawer
+      title={title}
+      subtitle={dashboard.state.title}
+      onClose={model.onClose}
+      tabs={saveAsTemplate ? undefined : tabs}
+    >
       {renderBody()}
     </Drawer>
   );
