@@ -3726,12 +3726,15 @@
     {
       "metadata": {
         "name": "newUnconfiguredPanel",
-        "resourceVersion": "1774990297637",
-        "creationTimestamp": "2026-03-31T20:51:37Z"
+        "resourceVersion": "1775046318180",
+        "creationTimestamp": "2026-03-31T20:51:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 12:25:18.180841 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new unconfigured panel experience",
-        "stage": "GA",
+        "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"
