@@ -7,7 +7,7 @@ import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { COMBINED_FILTER_LABEL_KEYS } from '../../constants';
 import { type LabelStats } from '../useLabelsBreakdown';
-import { addOrReplaceFilter, removeFilter, useFilterValue } from '../utils';
+import { addOrReplaceFilter, removeFilter, useRegexFilterValue } from '../utils';
 
 import { SEVERITY_DEFINITIONS, type SeverityLevel, canonicalSeverity, severityFilterRegex } from './severity';
 
@@ -46,7 +46,7 @@ interface SeverityFilterProps {
 export function SeverityFilter({ labels }: SeverityFilterProps) {
   const styles = useStyles2(getStyles);
   const sceneContext = useSceneContext();
-  const activeValue = useFilterValue('severity');
+  const activeValue = useRegexFilterValue('severity');
   const counts = useSeverityCounts(labels);
 
   const activeLevel = SEVERITY_DEFINITIONS.find((d) => activeValue === severityFilterRegex(d.level))?.level;

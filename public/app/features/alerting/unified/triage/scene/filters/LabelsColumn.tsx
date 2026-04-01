@@ -11,7 +11,7 @@ import { COMBINED_FILTER_LABEL_KEYS } from '../../constants';
 import { countInstances } from '../SummaryStats';
 import { summaryInstanceCountQuery } from '../queries';
 import { type LabelStats, useLabelsBreakdown } from '../useLabelsBreakdown';
-import { addOrReplaceFilter, removeFilter, useFilterValue, useQueryFilter } from '../utils';
+import { addOrReplaceFilter, removeFilter, useFilterValue, useQueryFilter, useRegexFilterValue } from '../utils';
 
 import { AllLabelsContent } from './LabelsContent';
 import { SeverityFilter } from './SeverityFilter';
@@ -29,7 +29,7 @@ export function LabelsColumn() {
   const [open, toggleOpen] = useToggle(true);
   const [labelFilter, setLabelFilter] = useState('');
   const styles = useStyles2(getStyles);
-  const activeSeverityValue = useFilterValue('severity');
+  const activeSeverityValue = useRegexFilterValue('severity');
   const activeSidebarFilterValues: Record<SidebarFilterKey, string | undefined> = {
     alertname: useFilterValue('alertname'),
     grafana_folder: useFilterValue('grafana_folder'),
