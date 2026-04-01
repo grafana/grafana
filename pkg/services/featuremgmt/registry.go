@@ -2454,7 +2454,7 @@ var (
 		{
 			Name:         "queryEditorNext",
 			Description:  "Enables next generation query editor experience",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
 			Expression:   "false",
