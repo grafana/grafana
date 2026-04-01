@@ -772,8 +772,6 @@ github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD
 github.com/grafana/grafana-app-sdk v0.51.4/go.mod h1:wmcl3uF4lW1LoJpIc3n3ZhezBlhbRg905bSDbI44EFE=
 github.com/grafana/grafana-app-sdk/logging v0.50.4/go.mod h1:RKAy6LaGkWcnmyq3JW+9C4v7TEicBXYllH8vtjsLnJk=
 github.com/grafana/grafana-plugin-sdk-go v0.290.1/go.mod h1:KDkcxp1XqbKz0WD/q9p98Cf5Wp50LG0NkoPlVlptSWs=
-github.com/grafana/grafana-plugin-sdk-go v0.291.0 h1:VlA6wYdjMxx7xpthEd0qZgbtfqlRWRZJ3CqnMNks0+U=
-github.com/grafana/grafana-plugin-sdk-go v0.291.0/go.mod h1:cLkz5/DpTRGiX65qF1k4RoIydzWtYbwTD/asDOY7aMk=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0 h1:bjh0PVYSVVFxzINqPFYJmAmJNrWPgnVjuSdYJGHmtFU=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0/go.mod h1:7t5XR+2IA8P2qggOAHTj/GCZfoLBle3OvNSYh1VkRBU=
 github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 h1:+ngKgrYPPJrOjhax5N+uePQ0Fh1Z7PheYoUI/0nzkPA=
@@ -1610,6 +1608,8 @@ golang.org/x/text v0.33.0/go.mod h1:LuMebE6+rBincTi9+xWTY8TztLzKHc/9C1uBCG27+q8=
 golang.org/x/time v0.9.0/go.mod h1:3BpzKBy/shNhVucY/MWOyx10tF3SFh9QdLuxbVysPQM=
 golang.org/x/time v0.12.0/go.mod h1:CDIdPxbZBQxdj6cxyCIdrNogrJKMJ7pr37NYpMcMDSg=
 golang.org/x/time v0.13.0/go.mod h1:eL/Oa2bBBK0TkX57Fyni+NgnyQQN4LitPmob2Hjnqw4=
+golang.org/x/time v0.15.0 h1:bbrp8t3bGUeFOx08pvsMYRTCVSMk89u4tKbNOZbp88U=
+golang.org/x/time v0.15.0/go.mod h1:Y4YMaQmXwGQZoFaVFk4YpCt4FLQMYKZe9oeV/f4MSno=
 golang.org/x/tools v0.0.0-20200113040837-eac381796e91/go.mod h1:TB2adYChydJhpapKDTa4BR/hXlZSLoq2Wpct/0txZ28=
 golang.org/x/tools v0.0.0-20200317205521-2944c61d58b4/go.mod h1:Sl4aGygMT6LrqrWclx+PTx3U+LnKx/seiNR+3G19Ar8=
 golang.org/x/tools v0.26.0/go.mod h1:TPVVj70c7JJ3WCazhD8OdXcZg/og+b9+tH/KxylGwH0=
