@@ -68,7 +68,7 @@ These endpoints were deprecated in Grafana v12 and rely on legacy single-tenant 
 Use the Kubernetes-style resource APIs under `notifications.alerting.grafana.app/v1beta1`:
 
 | Resource              | API path                                                                                       |
-|-----------------------|------------------------------------------------------------------------------------------------|
+| --------------------- | ---------------------------------------------------------------------------------------------- |
 | Receivers             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`            |
 | Notification policies | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`         |
 | Templates             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`       |
