@@ -72,9 +72,7 @@ const graphPanelStyleConfig: PanelStyleConfig = {
  * comes from standard fieldConfig properties and panel-level options.
  *
  * fieldConfig.defaults:
- *   color      – color scheme
- *   thresholds – thresholds driving color mode
- *   mappings   – value-to-display mappings
+ *   color – color scheme
  *
  * options:
  *   orientation          – panel orientation (auto, horizontal, vertical)
@@ -89,7 +87,7 @@ const graphPanelStyleConfig: PanelStyleConfig = {
  */
 const statPanelStyleConfig: PanelStyleConfig = {
   fieldConfig: {
-    defaultsProps: ['color', 'thresholds', 'mappings'],
+    defaultsProps: ['color'],
     customProps: [],
   },
   options: {
@@ -112,9 +110,7 @@ const statPanelStyleConfig: PanelStyleConfig = {
  * comes from standard fieldConfig properties and panel-level options.
  *
  * fieldConfig.defaults:
- *   color      – color scheme
- *   thresholds – threshold config that drives gauge color bands
- *   mappings   – value-to-display mappings
+ *   color – color scheme
  *
  * options:
  *   orientation         – panel orientation
@@ -137,7 +133,7 @@ const statPanelStyleConfig: PanelStyleConfig = {
  */
 const gaugePanelStyleConfig: PanelStyleConfig = {
   fieldConfig: {
-    defaultsProps: ['color', 'thresholds', 'mappings'],
+    defaultsProps: ['color'],
     customProps: [],
   },
   options: {
@@ -168,9 +164,7 @@ const gaugePanelStyleConfig: PanelStyleConfig = {
  * comes from standard fieldConfig properties and panel-level options.
  *
  * fieldConfig.defaults:
- *   color      – color scheme
- *   thresholds – threshold config driving bar colors
- *   mappings   – value-to-display mappings
+ *   color – color scheme
  *
  * options:
  *   orientation  – panel orientation (auto, horizontal, vertical)
@@ -187,7 +181,7 @@ const gaugePanelStyleConfig: PanelStyleConfig = {
  */
 const barGaugePanelStyleConfig: PanelStyleConfig = {
   fieldConfig: {
-    defaultsProps: ['color', 'thresholds', 'mappings'],
+    defaultsProps: ['color'],
     customProps: [],
   },
   options: {
@@ -211,8 +205,7 @@ const barGaugePanelStyleConfig: PanelStyleConfig = {
  * Style config for the bar chart panel.
  *
  * fieldConfig.defaults:
- *   color      – color scheme
- *   thresholds – threshold config (used by thresholdsStyle overlay)
+ *   color – color scheme
  *
  * fieldConfig.defaults.custom:
  *   lineWidth        – bar border width
@@ -248,7 +241,7 @@ const barGaugePanelStyleConfig: PanelStyleConfig = {
  */
 const barChartPanelStyleConfig: PanelStyleConfig = {
   fieldConfig: {
-    defaultsProps: ['color', 'thresholds'],
+    defaultsProps: ['color'],
     customProps: [
       'lineWidth',
       'fillOpacity',

@@ -3,7 +3,6 @@ import {
   type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
-  ThresholdsMode,
   getDefaultTimeRange,
   locationUtil,
   store,
@@ -754,14 +753,6 @@ describe('DashboardScene', () => {
             fieldConfig: {
               defaults: {
                 color: { mode: 'thresholds' },
-                thresholds: {
-                  mode: ThresholdsMode.Absolute,
-                  steps: [
-                    { color: 'green', value: 0 },
-                    { color: 'red', value: 80 },
-                  ],
-                },
-                mappings: [],
               },
               overrides: [],
             },
@@ -772,8 +763,6 @@ describe('DashboardScene', () => {
           const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
           expect(stored.panelType).toBe('stat');
           expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
-          expect(stored.styles.fieldConfig.defaults.thresholds).toBeDefined();
-          expect(stored.styles.fieldConfig.defaults.mappings).toEqual([]);
           expect(stored.styles.options.orientation).toBe('horizontal');
           expect(stored.styles.options.colorMode).toBe('background');
           expect(stored.styles.options.showPercentChange).toBe(true);
@@ -824,14 +813,6 @@ describe('DashboardScene', () => {
             fieldConfig: {
               defaults: {
                 color: { mode: 'thresholds' },
-                thresholds: {
-                  mode: ThresholdsMode.Absolute,
-                  steps: [
-                    { color: 'green', value: 0 },
-                    { color: 'red', value: 80 },
-                  ],
-                },
-                mappings: [],
               },
               overrides: [],
             },
@@ -842,7 +823,6 @@ describe('DashboardScene', () => {
           const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
           expect(stored.panelType).toBe('gauge');
           expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
-          expect(stored.styles.fieldConfig.defaults.thresholds).toBeDefined();
           expect(stored.styles.options.shape).toBe('circle');
           expect(stored.styles.options.barWidthFactor).toBe(0.8);
           expect(stored.styles.options.effects).toEqual({ barGlow: true, centerGlow: false, gradient: true });
@@ -886,14 +866,6 @@ describe('DashboardScene', () => {
             fieldConfig: {
               defaults: {
                 color: { mode: 'thresholds' },
-                thresholds: {
-                  mode: ThresholdsMode.Absolute,
-                  steps: [
-                    { color: 'green', value: 0 },
-                    { color: 'red', value: 80 },
-                  ],
-                },
-                mappings: [],
               },
               overrides: [],
             },
@@ -904,7 +876,6 @@ describe('DashboardScene', () => {
           const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
           expect(stored.panelType).toBe('bargauge');
           expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
-          expect(stored.styles.fieldConfig.defaults.thresholds).toBeDefined();
           expect(stored.styles.options.displayMode).toBe('gradient');
           expect(stored.styles.options.showUnfilled).toBe(false);
           expect(stored.styles.options.text).toEqual({ titleSize: 14, valueSize: 20 });
