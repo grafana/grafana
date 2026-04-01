@@ -422,10 +422,6 @@ run-go: ## Build and run web server immediately.
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
-.PHONY: run-bra
-run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(bra) run
-
 .PHONY: frontend-service-check
 frontend-service-check:
 	./devenv/frontend-service/local-init.sh
