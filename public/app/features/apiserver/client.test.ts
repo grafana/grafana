@@ -1,4 +1,7 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { Subject, throwError } from 'rxjs';
+
+import { type LiveChannelEvent, LiveChannelConnectionState, LiveChannelEventType } from '@grafana/data';
+import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { DatasourceAPIVersions, ScopedResourceClient } from './client';
@@ -9,8 +12,10 @@ jest.mock('@grafana/runtime', () => ({
     get: jest.fn(),
     post: jest.fn(),
   }),
+  getGrafanaLiveSrv: jest.fn(),
   config: {
     buildInfo: { versionString: 'test-version' },
+    liveEnabled: true,
   },
 }));
 
@@ -251,5 +256,355 @@ describe('ScopedResourceClient', () => {
         { params: undefined }
       );
     });
+  });
+});
+
+describe('ScopedResourceClient watch (polling fallback)', () => {
+  const provisioningGvr: GroupVersionResource = {
+    group: 'provisioning.grafana.app',
+    version: 'v0alpha1',
+    resource: 'repositories',
+  };
+
+  let client: ScopedResourceClient;
+  let getMock: jest.Mock;
+  let getStreamMock: jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    // The polling fallback logs via console.warn; suppress jest-fail-on-console.
+    jest.spyOn(console, 'warn').mockImplementation();
+
+    getMock = jest.fn();
+    getStreamMock = jest.fn();
+
+    (getGrafanaLiveSrv as jest.Mock).mockReturnValue({
+      getStream: getStreamMock,
+    });
+
+    (getBackendSrv as jest.Mock).mockReturnValue({
+      get: getMock,
+    });
+
+    contextSrv.user.uid = 'test-uid';
+    client = new ScopedResourceClient(provisioningGvr);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.useRealTimers();
+  });
+
+  it('forwards events from the Live channel when it works', () => {
+    const stream = new Subject<LiveChannelEvent>();
+    getStreamMock.mockReturnValue(stream.asObservable());
+
+    const events: Array<{ type: string; object: unknown }> = [];
+    const subscription = client.watch().subscribe({
+      next: (event) => events.push(event),
+    });
+
+    const resourceEvent = { type: 'ADDED', object: { metadata: { name: 'repo-1' }, spec: {} } };
+    stream.next({
+      type: LiveChannelEventType.Message,
+      message: resourceEvent,
+    });
+
+    expect(events).toEqual([resourceEvent]);
+    subscription.unsubscribe();
+  });
+
+  it('falls back to polling when live channel errors', async () => {
+    const wsError = new Error('WebSocket failed');
+    getStreamMock.mockReturnValue(throwError(() => wsError));
+
+    const itemA = { metadata: { name: 'repo-a', resourceVersion: '1' }, spec: {} };
+    getMock.mockResolvedValueOnce({ items: [itemA], metadata: {} });
+
+    const events: Array<{ type: string; object: unknown }> = [];
+    client.watch().subscribe({
+      next: (event) => events.push(event),
+      error: () => {},
+    });
+
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(events).toEqual([{ type: 'ADDED', object: itemA }]);
+    expect(getMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces original watch error when first poll also fails', async () => {
+    const wsError = new Error('WebSocket failed');
+    getStreamMock.mockReturnValue(throwError(() => wsError));
+
+    getMock.mockRejectedValueOnce(new Error('HTTP 403'));
+
+    let receivedError: unknown;
+    client.watch().subscribe({
+      next: () => {},
+      error: (err) => {
+        receivedError = err;
+      },
+    });
+
+    await jest.advanceTimersByTimeAsync(0);
+
+    // Original watch error is surfaced, not the poll error
+    expect(receivedError).toBe(wsError);
+  });
+
+  it('emits correct diff events across polling cycles', async () => {
+    getStreamMock.mockReturnValue(throwError(() => new Error('ws')));
+
+    const itemA = { metadata: { name: 'a', resourceVersion: '1' }, spec: {} };
+    const itemB = { metadata: { name: 'b', resourceVersion: '1' }, spec: {} };
+    const itemAv2 = { metadata: { name: 'a', resourceVersion: '2' }, spec: { updated: true } };
+    const itemC = { metadata: { name: 'c', resourceVersion: '1' }, spec: {} };
+
+    // First poll: A, B
+    getMock.mockResolvedValueOnce({ items: [itemA, itemB], metadata: {} });
+    // Second poll: A (changed RV), C (new) — B removed
+    getMock.mockResolvedValueOnce({ items: [itemAv2, itemC], metadata: {} });
+    // Third poll: same as second — no changes
+    getMock.mockResolvedValueOnce({ items: [itemAv2, itemC], metadata: {} });
+
+    const events: Array<{ type: string; object: unknown }> = [];
+    client.watch().subscribe({
+      next: (event) => events.push(event),
+      error: () => {},
+    });
+
+    // First poll
+    await jest.advanceTimersByTimeAsync(0);
+    expect(events).toEqual([
+      { type: 'ADDED', object: itemA },
+      { type: 'ADDED', object: itemB },
+    ]);
+
+    events.length = 0;
+
+    // Second poll (5s later)
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(events).toEqual([
+      { type: 'MODIFIED', object: itemAv2 },
+      { type: 'ADDED', object: itemC },
+      { type: 'DELETED', object: itemB },
+    ]);
+
+    events.length = 0;
+
+    // Third poll (another 5s) — same data, no events
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(events).toEqual([]);
+  });
+
+  it('tolerates subsequent poll errors without terminating', async () => {
+    getStreamMock.mockReturnValue(throwError(() => new Error('ws')));
+
+    const itemA = { metadata: { name: 'a', resourceVersion: '1' }, spec: {} };
+    const itemAv2 = { metadata: { name: 'a', resourceVersion: '2' }, spec: {} };
+
+    getMock.mockResolvedValueOnce({ items: [itemA], metadata: {} });
+    getMock.mockRejectedValueOnce(new Error('timeout'));
+    getMock.mockResolvedValueOnce({ items: [itemAv2], metadata: {} });
+
+    const events: Array<{ type: string; object: unknown }> = [];
+    let error: unknown;
+    client.watch().subscribe({
+      next: (event) => events.push(event),
+      error: (err) => {
+        error = err;
+      },
+    });
+
+    // First poll: success
+    await jest.advanceTimersByTimeAsync(0);
+    expect(events).toHaveLength(1);
+
+    // Second poll: error swallowed
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(error).toBeUndefined();
+
+    // Third poll: recovery
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(events).toHaveLength(2);
+    expect(events[1]).toEqual({ type: 'MODIFIED', object: itemAv2 });
+  });
+
+  it('errors after max consecutive poll failures', async () => {
+    getStreamMock.mockReturnValue(throwError(() => new Error('ws')));
+
+    const itemA = { metadata: { name: 'a', resourceVersion: '1' }, spec: {} };
+
+    // First poll succeeds, then 5 consecutive failures
+    getMock.mockResolvedValueOnce({ items: [itemA], metadata: {} });
+    for (let i = 0; i < 5; i++) {
+      getMock.mockRejectedValueOnce(new Error('server down'));
+    }
+
+    let error: unknown;
+    client.watch().subscribe({
+      next: () => {},
+      error: (err) => {
+        error = err;
+      },
+    });
+
+    // First poll: success
+    await jest.advanceTimersByTimeAsync(0);
+    expect(error).toBeUndefined();
+
+    // Failures 1-4: tolerated
+    for (let i = 0; i < 4; i++) {
+      await jest.advanceTimersByTimeAsync(5000);
+      expect(error).toBeUndefined();
+    }
+
+    // Failure 5: circuit breaker trips
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('server down');
+  });
+
+  it('stops polling when unsubscribed', async () => {
+    getStreamMock.mockReturnValue(throwError(() => new Error('ws')));
+
+    const itemA = { metadata: { name: 'a', resourceVersion: '1' }, spec: {} };
+    getMock.mockResolvedValue({ items: [itemA], metadata: {} });
+
+    const subscription = client.watch().subscribe({ next: () => {} });
+
+    // First poll
+    await jest.advanceTimersByTimeAsync(0);
+    expect(getMock).toHaveBeenCalledTimes(1);
+
+    subscription.unsubscribe();
+
+    // Should not poll again
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(getMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes selectors from watch options to list during polling', async () => {
+    getStreamMock.mockReturnValue(throwError(() => new Error('ws')));
+    getMock.mockResolvedValueOnce({ items: [], metadata: {} });
+
+    client
+      .watch({
+        fieldSelector: 'metadata.name=my-job',
+        labelSelector: 'app=grafana',
+      })
+      .subscribe({ next: () => {} });
+
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(getMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        fieldSelector: 'metadata.name=my-job',
+        labelSelector: 'app=grafana',
+      })
+    );
+  });
+
+  it('name option overrides fieldSelector for polling', async () => {
+    getStreamMock.mockReturnValue(throwError(() => new Error('ws')));
+    getMock.mockResolvedValueOnce({ items: [], metadata: {} });
+
+    client.watch({ name: 'my-repo' }).subscribe({ next: () => {} });
+
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(getMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        fieldSelector: 'metadata.name=my-repo',
+      })
+    );
+  });
+
+  it('goes straight to polling when liveEnabled is false', async () => {
+    const { config } = jest.requireMock('@grafana/runtime');
+    config.liveEnabled = false;
+
+    getMock.mockResolvedValueOnce({
+      items: [{ metadata: { name: 'repo-a', resourceVersion: '1' }, spec: {} }],
+      metadata: {},
+    });
+
+    const events: Array<{ type: string; object: unknown }> = [];
+    client.watch().subscribe({
+      next: (event) => events.push(event),
+      error: () => {},
+    });
+
+    await jest.advanceTimersByTimeAsync(0);
+
+    // Polling started without even attempting the Live channel
+    expect(getStreamMock).not.toHaveBeenCalled();
+    expect(events).toEqual([
+      { type: 'ADDED', object: expect.objectContaining({ metadata: { name: 'repo-a', resourceVersion: '1' } }) },
+    ]);
+
+    config.liveEnabled = true;
+  });
+
+  it('falls back to polling when live channel hangs (proxy-blocked WebSocket)', async () => {
+    // Simulate a proxy-blocked WebSocket: getStream returns an Observable that
+    // emits an initial Pending status (no error) and then hangs forever.
+    const stream = new Subject<LiveChannelEvent>();
+    getStreamMock.mockReturnValue(stream.asObservable());
+
+    // Emit the initial Pending status (no error) — this is what the channel does
+    // synchronously in getStream() before the subscription is established.
+    // The watch pipe filters this out (not a message event), leaving silence.
+
+    const itemA = { metadata: { name: 'repo-a', resourceVersion: '1' }, spec: {} };
+    getMock.mockResolvedValueOnce({ items: [itemA], metadata: {} });
+
+    const events: Array<{ type: string; object: unknown }> = [];
+    client.watch().subscribe({
+      next: (event) => events.push(event),
+      error: () => {},
+    });
+
+    // Nothing happens yet — the stream is hanging
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(events).toHaveLength(0);
+
+    // After the 10s timeout, the fallback kicks in
+    await jest.advanceTimersByTimeAsync(5000);
+    await jest.advanceTimersByTimeAsync(0); // flush poll microtasks
+
+    expect(events).toEqual([{ type: 'ADDED', object: itemA }]);
+  });
+
+  it('does NOT fall back to polling when the channel is connected but idle', async () => {
+    const stream = new Subject<LiveChannelEvent>();
+    getStreamMock.mockReturnValue(stream.asObservable());
+
+    const events: Array<{ type: string; object: unknown }> = [];
+    const subscription = client.watch().subscribe({
+      next: (event) => events.push(event),
+      error: () => {},
+    });
+
+    // Channel emits Connected status — this cancels the connection timeout.
+    stream.next({
+      type: LiveChannelEventType.Status,
+      id: 'test',
+      timestamp: Date.now(),
+      state: LiveChannelConnectionState.Connected,
+    } as LiveChannelEvent);
+
+    // Advance well past the timeout — should NOT trigger polling.
+    await jest.advanceTimersByTimeAsync(30_000);
+
+    // No polling requests were made (list was never called).
+    expect(getMock).not.toHaveBeenCalled();
+    expect(events).toHaveLength(0);
+
+    subscription.unsubscribe();
   });
 });
