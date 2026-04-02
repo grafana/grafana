@@ -14739,6 +14739,7 @@
     },
     "badge": "NEW FEATURE",
     "close": "Close",
+    "cta-new-tab": "(opens in new tab)",
     "explore": {
       "bullet-1": "Streamlined query building across all data sources",
       "bullet-2": "Side-by-side comparison of metrics, logs, and traces",
@@ -14764,10 +14765,13 @@
       "title": "Dashboard creation with saved queries and templates"
     },
     "nav": {
+      "counter": "Slide {{current}} of {{total}}",
       "go-to": "Go to slide {{number}}",
-      "next": "Next",
-      "prev": "Previous"
-    }
+      "label": "Slide navigation",
+      "next": "Next slide",
+      "prev": "Previous slide"
+    },
+    "slide-announcement": "Slide {{current}} of {{total}}: {{title}}"
   },
   "sql-expressions": {
     "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
