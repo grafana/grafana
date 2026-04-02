@@ -44,30 +44,30 @@ type DirectRestConfigProvider interface {
 	IsReady() bool
 }
 
-func ProvideEventualRestConfigProvider() *eventualRestConfigProvider {
-	return &eventualRestConfigProvider{
+func ProvideEventualRestConfigProvider() *EventualRestConfigProvider {
+	return &EventualRestConfigProvider{
 		ready: make(chan struct{}),
 	}
 }
 
-// ProvideDirectRestConfigProvider provides a DirectRestConfigProvider for use in
+// ProvideDirectRestConfigProvider provides an EventualRestConfigProvider for use in
 // CLI wire sets that don't start the full apiserver.
-func ProvideDirectRestConfigProvider() DirectRestConfigProvider {
-	return &eventualRestConfigProvider{
+func ProvideDirectRestConfigProvider() *EventualRestConfigProvider {
+	return &EventualRestConfigProvider{
 		ready: make(chan struct{}),
 	}
 }
 
 var (
-	_ RestConfigProvider       = (*eventualRestConfigProvider)(nil)
-	_ DirectRestConfigProvider = (*eventualRestConfigProvider)(nil)
+	_ RestConfigProvider       = (*EventualRestConfigProvider)(nil)
+	_ DirectRestConfigProvider = (*EventualRestConfigProvider)(nil)
 )
 
-// eventualRestConfigProvider is a RestConfigProvider that will not return a rest config until the ready channel is closed.
+// EventualRestConfigProvider is a RestConfigProvider that will not return a rest config until the ready channel is closed.
 // This exists to alleviate a circular dependency between the apiserver.server's dependencies and their dependencies wanting a rest config.
 // Importantly, this is handled by wire as opposed to a mutable global.
 // NOTE: this implementation's GetRestConfig can't be used in (wire-based) Provide functions, or a function called by Provide functions. TODO: determine why that is. @charandas: in one such attempt, the GetRestConfig waits forever and Grafana doesn't start.
-type eventualRestConfigProvider struct {
+type EventualRestConfigProvider struct {
 	// When this channel is closed, we can start returning the rest config.
 	ready chan struct{}
 	cfg   interface {
@@ -76,7 +76,7 @@ type eventualRestConfigProvider struct {
 	}
 }
 
-func (e *eventualRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
+func (e *EventualRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	select {
 	case <-e.ready:
 		return e.cfg.GetRestConfig(ctx)
@@ -85,7 +85,7 @@ func (e *eventualRestConfigProvider) GetRestConfig(ctx context.Context) (*client
 	}
 }
 
-func (e *eventualRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
+func (e *EventualRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
 	select {
 	case <-e.ready:
 		return e.cfg.GetDirectRestConfig(c)
@@ -94,7 +94,7 @@ func (e *eventualRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqCont
 	}
 }
 
-func (e *eventualRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (e *EventualRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	select {
 	case <-e.ready:
 		e.cfg.DirectlyServeHTTP(w, r)
@@ -103,7 +103,7 @@ func (e *eventualRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r 
 	}
 }
 
-func (e *eventualRestConfigProvider) IsReady() bool {
+func (e *EventualRestConfigProvider) IsReady() bool {
 	select {
 	case <-e.ready:
 		return true

@@ -128,7 +128,7 @@ func ProvideService(
 	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
-	eventualRestConfigProvider *eventualRestConfigProvider,
+	EventualRestConfigProvider *EventualRestConfigProvider,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
 	appInstallers []appsdkapiserver.AppInstaller,
@@ -215,8 +215,8 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
-	eventualRestConfigProvider.cfg = s
-	close(eventualRestConfigProvider.ready)
+	EventualRestConfigProvider.cfg = s
+	close(EventualRestConfigProvider.ready)
 
 	return s, nil
 }

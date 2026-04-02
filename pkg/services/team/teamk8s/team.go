@@ -23,7 +23,6 @@ import (
 	iamteam "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -39,13 +38,13 @@ type TeamK8sService struct {
 	logger          log.Logger
 	cfg             *setting.Cfg
 	namespaceMapper request.NamespaceMapper
-	configProvider  apiserver.DirectRestConfigProvider
-	legacyService   team.Service
+	configProvider apiserver.RestConfigProvider
+	legacyService  team.Service
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, legacyService team.Service) *TeamK8sService {
+func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.RestConfigProvider, legacyService team.Service) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
 		cfg:             cfg,
@@ -60,12 +59,12 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 		return nil, errors.New("config provider not initialized")
 	}
 
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return nil, errors.New("no request context")
+	restConfig, err := s.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	dyn, err := dynamic.NewForConfig(s.configProvider.GetDirectRestConfig(reqCtx))
+	dyn, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -189,12 +188,12 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 		return nil, errors.New("config provider not initialized")
 	}
 
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return nil, errors.New("no request context")
+	restConfig, err := s.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	cfg := dynamic.ConfigFor(s.configProvider.GetDirectRestConfig(reqCtx))
+	cfg := dynamic.ConfigFor(restConfig)
 	cfg.GroupVersion = &iamv0alpha1.GroupVersion
 	return rest.RESTClientFor(cfg)
 }

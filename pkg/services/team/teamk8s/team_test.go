@@ -16,8 +16,6 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,7 +28,6 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 		requesterOrgID int64
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
-		noReqContext   bool
 		expectErr      bool
 		expectTeam     team.Team
 	}{
@@ -128,12 +125,6 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 			expectErr:      true,
 		},
 		{
-			name:         "returns error when no request context",
-			cmd:          &team.CreateTeamCommand{Name: "Any Team"},
-			noReqContext: true,
-			expectErr:    true,
-		},
-		{
 			name:        "returns error when requester is not set in context",
 			cmd:         &team.CreateTeamCommand{Name: "Any Team"},
 			nilProvider: true,
@@ -176,19 +167,13 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
 
-				provider := &mockDirectRestConfigProvider{
+				provider := &mockRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
 				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, nil)
 			}
 
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
-
+			ctx := context.Background()
 			if tt.requesterOrgID != 0 {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
 			}
@@ -221,7 +206,6 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 		legacyErr      error
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
-		noReqContext   bool
 		expectErr      bool
 		expectDTO      *team.TeamDTO
 	}{
@@ -360,12 +344,6 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			expectErr:      true,
 		},
 		{
-			name:         "returns error when no request context",
-			query:        &team.GetTeamByIDQuery{UID: "team-uid-1"},
-			noReqContext: true,
-			expectErr:    true,
-		},
-		{
 			name:        "returns error when requester is not set in context",
 			query:       &team.GetTeamByIDQuery{UID: "team-uid-1"},
 			nilProvider: true,
@@ -422,18 +400,13 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 				}))
 				defer ts.Close()
 
-				provider := &mockDirectRestConfigProvider{
+				provider := &mockRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
 				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, mock)
 			}
 
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
+			ctx := context.Background()
 
 			if tt.requesterOrgID != 0 {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
@@ -470,7 +443,6 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 		legacyErr      error
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
-		noReqContext   bool
 		expectErr      bool
 	}{
 		{
@@ -592,13 +564,6 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			expectErr:      true,
 		},
 		{
-			name:         "returns error when no request context",
-			cmd:          &team.UpdateTeamCommand{ID: 1, Name: "Any"},
-			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
-			noReqContext: true,
-			expectErr:    true,
-		},
-		{
 			name:         "returns error when requester is not set in context",
 			cmd:          &team.UpdateTeamCommand{ID: 1, Name: "Any"},
 			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
@@ -655,18 +620,13 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
 
-				provider := &mockDirectRestConfigProvider{
+				provider := &mockRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
 				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, mock)
 			}
 
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
+			ctx := context.Background()
 
 			if tt.requesterOrgID != 0 {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
@@ -690,7 +650,6 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 		query          *team.SearchTeamsQuery
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
-		noReqContext   bool
 		expectErr      bool
 		expectResult   team.SearchTeamQueryResult
 	}{
@@ -975,12 +934,6 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 			nilProvider: true,
 			expectErr:   true,
 		},
-		{
-			name:         "returns error when no request context",
-			query:        &team.SearchTeamsQuery{OrgID: 1, Limit: 10, Page: 1},
-			noReqContext: true,
-			expectErr:    true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -1008,18 +961,13 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 				}))
 				defer ts.Close()
 
-				provider := &mockDirectRestConfigProvider{
+				provider := &mockRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
 				svc = NewTeamK8sService(log.NewNopLogger(), cfg, provider, mock)
 			}
 
-			var ctx context.Context
-			if tt.noReqContext {
-				ctx = context.Background()
-			} else {
-				ctx = contextWithReqContext()
-			}
+			ctx := context.Background()
 
 			result, err := svc.SearchTeams(ctx, tt.query)
 
@@ -1065,21 +1013,10 @@ func (m *mockLegacyService) SearchTeams(_ context.Context, _ *team.SearchTeamsQu
 	return m.searchTeamsResult, m.searchTeamsErr
 }
 
-type mockDirectRestConfigProvider struct {
+type mockRestConfigProvider struct {
 	restConfig *clientrest.Config
 }
 
-func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *clientrest.Config {
-	return m.restConfig
-}
-
-func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
-
-func (m *mockDirectRestConfigProvider) IsReady() bool {
-	return true
-}
-
-func contextWithReqContext() context.Context {
-	reqCtx := &contextmodel.ReqContext{}
-	return context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+func (m *mockRestConfigProvider) GetRestConfig(_ context.Context) (*clientrest.Config, error) {
+	return m.restConfig, nil
 }
