@@ -437,7 +437,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
 	require.NoError(t, err)
-	require.Equal(t, "none", current.GetProvenanceStatus())
+	require.Empty(t, current.GetProvenanceStatus())
 
 	t.Run("should not let update provenance if provisioned without set-status permission", func(t *testing.T) {
 		updated := current.Copy().(*v1beta1.RoutingTree)

@@ -345,7 +345,7 @@ func TestIntegrationInhibitionRuleProvisioning(t *testing.T) {
 		},
 	}, resource.CreateOptions{})
 	require.NoError(t, err)
-	require.Equal(t, "none", created.GetProvenanceStatus())
+	require.Empty(t, created.GetProvenanceStatus())
 
 	t.Run("should not let update provenance if provisioned without set-status permission", func(t *testing.T) {
 		updated := created.Copy().(*v1beta1.InhibitionRule)
