@@ -48,7 +48,7 @@ Elasticsearch groups aggregations into three categories:
 
 ## Select a query type
 
-There are three types of queries you can create with the Elasticsearch query builder. Each type is explained in detail below.
+There are two types of queries you can create with the Elasticsearch query builder. Each type is explained in detail below.
 
 ### Metrics query type
 
@@ -132,16 +132,6 @@ Logs queries analyze Elasticsearch log data. You can configure the following opt
 
 - **Logs Options/Limit** - Limits the number of logs to analyze. The default is `500`.
 
-### Raw data query type
-
-Run a raw data query to retrieve a table of all fields that are associated with each log line.
-
-- **Raw data size** - Number of raw data documents. You can specify a different amount. The default is `500`.
-
-{{< admonition type="note" >}}
-The option to run a **raw document query** is deprecated as of Grafana v10.1.
-{{< /admonition >}}
-
 ## Raw query editor
 
 {{< docs/experimental product="The raw query editor" featureFlag="elasticsearchRawDSLQuery" >}}
@@ -196,7 +186,6 @@ The raw query editor supports all query types:
 
 - **Metrics queries** are used to query time series data with aggregations. The query parser will automatically extract bucket and metric aggregations from your DSL and use them for response processing.
 - **Logs queries** are used to query log data.
-- **Raw data queries** are used for document-level data retrieval.
 
 ## ES|QL query editor
 
