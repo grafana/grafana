@@ -10,10 +10,6 @@ import {
 
 import { CentrifugeService, type CentrifugeSrvDeps } from './service';
 
-// ---------------------------------------------------------------------------
-// Centrifuge mock
-// ---------------------------------------------------------------------------
-
 let mockCentrifugeState = State.Disconnected;
 
 const mockCentrifuge = {
@@ -44,15 +40,10 @@ jest.mock('centrifuge', () => ({
   Centrifuge: jest.fn(() => mockCentrifuge),
 }));
 
-// Suppress getBackendSrv usage inside onError handler
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(() => ({ get: jest.fn() })),
 }));
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 const baseAddr = {
   scope: LiveChannelScope.Grafana,
@@ -72,10 +63,6 @@ function makeDeps(overrides: Partial<CentrifugeSrvDeps> = {}): CentrifugeSrvDeps
   };
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe('CentrifugeService', () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -92,26 +79,20 @@ describe('CentrifugeService', () => {
   it('should timeout and shut down channel when centrifuge never connects', async () => {
     jest.useFakeTimers();
 
-    // centrifuge stays Disconnected — connectionBlocker never resolves
     const service = new CentrifugeService(makeDeps());
 
     const stream$ = service.getStream(baseAddr);
 
-    // Collect all emitted events
     const eventsPromise = lastValueFrom(stream$.pipe(toArray()));
 
-    // Advance past the 10s timeout
     await jest.advanceTimersByTimeAsync(10_000);
 
     const events = await eventsPromise;
 
-    // Should have at least 2 status events: initial Pending, then the error
     expect(events.length).toBeGreaterThanOrEqual(2);
 
     const errorEvent = events.find((e) => isLiveChannelStatusEvent(e) && e.error === 'Grafana Live connection timeout');
     expect(errorEvent).toBeDefined();
-
-    // Stream should have completed (lastValueFrom resolved)
   });
 
   it('should immediately shut down channel when liveEnabled is false', async () => {
@@ -120,23 +101,19 @@ describe('CentrifugeService', () => {
     const stream$ = service.getStream(baseAddr);
     const events = await lastValueFrom(stream$.pipe(toArray()));
 
-    // Should contain the error status
     const errorEvent = events.find((e) => isLiveChannelStatusEvent(e) && e.error === 'Grafana Live is disabled');
     expect(errorEvent).toBeDefined();
 
-    // Should NOT have created a subscription
     expect(mockCentrifuge.newSubscription).not.toHaveBeenCalled();
   });
 
   it('should proceed normally when centrifuge is already connected', async () => {
-    // Set connected state BEFORE constructing the service so connectionBlocker resolves immediately
     mockCentrifugeState = State.Connected;
 
     const service = new CentrifugeService(makeDeps());
 
     const stream$ = service.getStream(baseAddr);
 
-    // The stream should emit the initial Pending status and stay open (subscription created)
     const firstEvent = await new Promise<LiveChannelEvent>((resolve) => {
       stream$.subscribe({ next: resolve });
     });
@@ -146,7 +123,6 @@ describe('CentrifugeService', () => {
       expect(firstEvent.state).toBe(LiveChannelConnectionState.Pending);
     }
 
-    // initChannel should have succeeded — subscription was created
     expect(mockCentrifuge.newSubscription).toHaveBeenCalled();
     expect(mockSubscription.subscribe).toHaveBeenCalled();
   });
