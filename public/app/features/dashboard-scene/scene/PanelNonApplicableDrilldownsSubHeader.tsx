@@ -5,15 +5,15 @@ import { useMeasure } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type AdHocFiltersVariable, type GroupByVariable, type SceneQueryRunner } from '@grafana/scenes';
+import {
+  isGroupByFilter,
+  type AdHocFiltersVariable,
+  type GroupByVariable,
+  type SceneQueryRunner,
+} from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getDrilldownApplicability } from '../utils/drilldownUtils';
-
-// Inline check until isGroupByFilter is available from @grafana/scenes
-function isGroupByFilter(filter: { operator: string }): boolean {
-  return filter.operator === 'groupBy';
-}
 
 const GAP_SIZE = 8;
 const FONT_SIZE = 12;
