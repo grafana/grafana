@@ -108,13 +108,11 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 
 	k8sHandler := client.NewK8sHandler(
-		dual,
 		request.GetNamespaceMapper(cfg),
 		folderv1.FolderResourceInfo.GroupVersionResource(),
 		restConfig.GetRestConfig,
 		userService,
 		resourceClient,
-		features,
 	)
 
 	unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer, cfg)
@@ -123,13 +121,11 @@ func ProvideService(
 	srv.k8sclient = k8sHandler
 
 	dashHandler := client.NewK8sHandler(
-		dual,
 		request.GetNamespaceMapper(cfg),
 		dashboardv1.DashboardResourceInfo.GroupVersionResource(),
 		restConfig.GetRestConfig,
 		userService,
 		resourceClient,
-		features,
 	)
 	srv.dashboardK8sClient = dashHandler
 

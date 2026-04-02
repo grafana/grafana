@@ -57,6 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -418,7 +419,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	fStore := folderimpl.ProvideStore(sc.db, cfg)
 	folderServiceWithFlagOn := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), resource.NewMockResourceClient(b), dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
@@ -446,7 +447,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 			client.MockTestRestConfig{},
 			dashStore,
 			sc.userSvc,
-			nil,
+			resource.NewMockResourceClient(b),
 			sort.ProvideService(),
 			dualwrite.ProvideTestService(),
 			nil,

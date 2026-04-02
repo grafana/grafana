@@ -13,10 +13,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -49,15 +46,13 @@ type k8sHandler struct {
 	userService user.Service
 }
 
-func NewK8sHandler(dual dualwrite.Service, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
-	restConfig func(context.Context) (*rest.Config, error), userSvc user.Service, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) K8sHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), gvr.GroupResource(), resourceClient, nil, features)
-
+func NewK8sHandler(namespacer request.NamespaceMapper, gvr schema.GroupVersionResource,
+	restConfig func(context.Context) (*rest.Config, error), userSvc user.Service, resourceClient resourcepb.ResourceIndexClient) K8sHandler {
 	return &k8sHandler{
 		namespacer:  namespacer,
 		gvr:         gvr,
 		restConfig:  restConfig,
-		searcher:    searchClient,
+		searcher:    resourceClient,
 		userService: userSvc,
 	}
 }

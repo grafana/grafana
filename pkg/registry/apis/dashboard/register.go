@@ -161,8 +161,8 @@ func RegisterAPIService(
 
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified, features)
-	dashboardClient := client.NewK8sHandler(dual, namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified, features)
+	folderClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
+	dashboardClient := client.NewK8sHandler(namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
 		SnapshotsEnabled:     cfg.SnapshotEnabled,
@@ -179,7 +179,7 @@ func RegisterAPIService(
 		accessControl:            accessControl,
 		accessClient:             accessClient,
 		unified:                  unified,
-		search:                   NewSearchHandler(tracing, dual, unified, features),
+		search:                   NewSearchHandler(tracing, unified, features),
 		dashStore:                dashStore,
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,

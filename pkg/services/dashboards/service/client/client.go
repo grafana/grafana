@@ -390,7 +390,7 @@ func newK8sClientFactory(
 		}
 
 		span.AddEvent("Creating new client")
-		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, userService, resourceClient, features)
+		newClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, userService, resourceClient)
 		clientCache[version] = newClient
 
 		return newClient
