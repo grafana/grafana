@@ -188,6 +188,11 @@ func splitQueryByResource(query backend.DataQuery) ([]backend.DataQuery, error) 
 		azCopy.Resources = []dataquery.AzureMonitorResource{resource}
 		modelCopy := model
 		modelCopy.AzureMonitor = &azCopy
+		// Use the resource's own subscription so the ARM URL targets the correct
+		// subscription when resources span multiple subscriptions.
+		if resource.Subscription != nil && *resource.Subscription != "" {
+			modelCopy.Subscription = resource.Subscription
+		}
 
 		copyJSON, err := json.Marshal(modelCopy)
 		if err != nil {
