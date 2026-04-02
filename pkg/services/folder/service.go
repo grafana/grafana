@@ -7,11 +7,6 @@ import (
 )
 
 type LegacyService interface {
-	CreateLegacy(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
-	GetLegacy(ctx context.Context, q *GetFolderQuery) (*Folder, error)
-	UpdateLegacy(ctx context.Context, cmd *UpdateFolderCommand) (*Folder, error)
-	DeleteLegacy(ctx context.Context, cmd *DeleteFolderCommand) error
-	MoveLegacy(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	GetFoldersLegacy(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
 }
 

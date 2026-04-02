@@ -40,7 +40,10 @@ func (s *FakeService) SetFolders(folders map[string]*folder.Folder) {
 	}
 }
 
-var _ folder.Service = (*FakeService)(nil)
+var (
+	_ folder.Service       = (*FakeService)(nil)
+	_ folder.LegacyService = (*FakeService)(nil)
+)
 
 func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	if s.ExpectedError != nil {
@@ -65,9 +68,6 @@ func (s *FakeService) GetParents(ctx context.Context, q folder.GetParentsQuery) 
 func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
 
 func (s *FakeService) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	if q.UID != nil && s.foldersByUID != nil {
@@ -77,28 +77,16 @@ func (s *FakeService) Get(ctx context.Context, q *folder.GetFolderQuery) (*folde
 	}
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
 
 func (s *FakeService) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
-func (s *FakeService) UpdateLegacy(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
 
 func (s *FakeService) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	return s.ExpectedError
 }
-func (s *FakeService) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	return s.ExpectedError
-}
 
 func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
-func (s *FakeService) MoveLegacy(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
 
