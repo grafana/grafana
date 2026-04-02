@@ -94,7 +94,7 @@
     "zod": "^4.3.0"
   },
   "devDependencies": {
-    "@grafana/scenes": "7.3.4--canary.1392.23867401174.0",
+    "@grafana/scenes": "7.3.4--canary.1392.23878728663.0",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@testing-library/react": "16.3.0",
