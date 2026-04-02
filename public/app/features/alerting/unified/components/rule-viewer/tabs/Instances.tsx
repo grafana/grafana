@@ -10,16 +10,16 @@ interface Props {
 
 const InstancesList = ({ rule }: Props) => {
   const rulerRule = rule.rulerRule;
-  const isSimplifiedRouting =
+  const isGrafanaManagedUsingNotificationPolicies =
     rulerRuleType.grafana.alertingRule(rulerRule) &&
-    Boolean(rulerRule.grafana_alert.notification_settings?.receiver);
+    !rulerRule.grafana_alert.notification_settings?.receiver;
 
   return (
     <RuleDetailsMatchingInstances
       rule={rule}
       pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
       enableFiltering
-      showPreviewRouting={!isSimplifiedRouting}
+      showPreviewRouting={isGrafanaManagedUsingNotificationPolicies}
     />
   );
 };
