@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Install the grafanactl CLI
+title: Install and set up the grafanactl CLI
 menuTitle: grafanactl CLI
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/install-grafana-cli/
@@ -23,8 +23,10 @@ aliases:
   - ../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/
 ---
 
+# Install and set up the `grafanactl` CLI
+
 {{< admonition type="caution" >}}
-`grafanactl` is under active development. Command-line flags and subcommands described here may change. Documentation and support is available based on the different tiers but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+`grafanactl` is under development. Command-line flags and subcommands described here may change. Documentation and support is available based on the different tiers but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
 {{< /admonition >}}
 
 The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. It is available for Grafana OSS, Enterprise, and Cloud.

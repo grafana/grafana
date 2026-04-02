@@ -33,7 +33,7 @@ aliases:
   - ../../observability-as-code/grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/
 ---
 
-## Introduction to the Grafana CLIs
+# Introduction to the Grafana CLIs
 
 Grafana command-line tools are designed to simplify interaction with Grafana instances. You can authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. Whether you're automating workflows in CI/CD pipelines or switching between staging and production environments, the Grafana CLIs provide a flexible and scriptable way to manage your Grafana setup efficiently.
 
