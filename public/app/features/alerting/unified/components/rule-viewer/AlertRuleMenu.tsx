@@ -17,14 +17,8 @@ import {
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import {
-  AlertRuleAction,
-  EnrichmentAction,
-  skipToken,
-  useEnrichmentAbility,
-  useGrafanaPromRuleAbilities,
-  useRulerRuleAbilities,
-} from '../../hooks/useAbilities';
+import { skipToken, useEnrichmentAbility, usePromRuleAbilities, useRulerRuleAbilities } from '../../hooks/useAbilities';
+import { EnrichmentAction, RuleAction } from '../../hooks/useAbilities.types';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import {
@@ -74,11 +68,11 @@ const AlertRuleMenu = ({
   // check all abilities and permissions using rulerRule
   const [rulerPauseAbility, rulerDeleteAbility, rulerDuplicateAbility, rulerSilenceAbility, rulerExportAbility] =
     useRulerRuleAbilities(rulerRule, groupIdentifier, [
-      AlertRuleAction.Pause,
-      AlertRuleAction.Delete,
-      AlertRuleAction.Duplicate,
-      AlertRuleAction.Silence,
-      AlertRuleAction.ModifyExport,
+      RuleAction.Pause,
+      RuleAction.Delete,
+      RuleAction.Duplicate,
+      RuleAction.Silence,
+      RuleAction.ModifyExport,
     ]);
 
   // check all abilities and permissions using promRule
@@ -88,12 +82,12 @@ const AlertRuleMenu = ({
     grafanaDuplicateAbility,
     grafanaSilenceAbility,
     grafanaExportAbility,
-  ] = useGrafanaPromRuleAbilities(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
-    AlertRuleAction.Pause,
-    AlertRuleAction.Delete,
-    AlertRuleAction.Duplicate,
-    AlertRuleAction.Silence,
-    AlertRuleAction.ModifyExport,
+  ] = usePromRuleAbilities(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
+    RuleAction.Pause,
+    RuleAction.Delete,
+    RuleAction.Duplicate,
+    RuleAction.Silence,
+    RuleAction.ModifyExport,
   ]);
 
   const [pauseSupported, pauseAllowed] = rulerPauseAbility;

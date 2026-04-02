@@ -31,7 +31,8 @@ import { ExpressionResult } from './components/expressions/Expression';
 import { type ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
-import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
+import { useCombinedRuleAbility } from './hooks/useAbilities';
+import { RuleAction } from './hooks/useAbilities.types';
 
 interface GrafanaRuleViewerProps {
   rule: CombinedRule;
@@ -109,7 +110,7 @@ export function QueryPreview({
 }: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
   const isExpression = isExpressionQuery(model);
-  const [exploreSupported, exploreAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Explore);
+  const [exploreSupported, exploreAllowed] = useCombinedRuleAbility(rule, RuleAction.Explore);
   const canExplore = exploreSupported && exploreAllowed;
 
   const headerItems: React.ReactNode[] = [];

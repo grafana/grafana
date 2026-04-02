@@ -26,12 +26,11 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
+import { useCanTestTemplates } from '../../hooks/useNotificationAbilities';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
@@ -108,9 +107,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   // Check if user has permission to test templates
-  const canTestTemplates =
-    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsTemplatesTest) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
+  const canTestTemplates = useCanTestTemplates();
 
   // Only show preview and payload panels if both conditions are met:
   // 1. It's a Grafana Alertmanager

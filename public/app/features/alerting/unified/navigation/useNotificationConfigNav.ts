@@ -4,10 +4,14 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
+import {
+  useCanViewContactPoints,
+  useCanViewNotificationPolicies,
+  useCanViewTemplates,
+  useCanViewTimeIntervals,
+} from '../hooks/useNotificationAbilities';
 import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
 
 /**
@@ -16,34 +20,6 @@ import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
  */
 export function getNotificationConfigNavId(): string {
   return config.featureToggles.alertingNavigationV2 ? NAV_IDS.NOTIFICATION_CONFIG : NAV_IDS.RECEIVERS;
-}
-
-/**
- * Check if user has permission to view contact points
- */
-function canViewContactPoints(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
-}
-
-/**
- * Check if user has permission to view notification policies
- */
-function canViewNotificationPolicies(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead);
-}
-
-/**
- * Check if user has permission to view templates
- */
-function canViewTemplates(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingTemplatesRead);
-}
-
-/**
- * Check if user has permission to view time intervals (mute timings)
- */
-function canViewTimeIntervals(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingTimeIntervalsRead);
 }
 
 function isSubPathOf(child: string, parent: string): boolean {
@@ -85,6 +61,11 @@ export function useNotificationConfigNav() {
   // V2 Navigation: Get the notification config nav item
   const notificationConfigNav = navIndex[NAV_IDS.NOTIFICATION_CONFIG];
 
+  const canViewContactPoints = useCanViewContactPoints();
+  const canViewNotificationPolicies = useCanViewNotificationPolicies();
+  const canViewTemplates = useCanViewTemplates();
+  const canViewTimeIntervals = useCanViewTimeIntervals();
+
   // Build tabs based on permissions - memoized to avoid recreating on every render
   const tabs = useMemo(() => {
     if (!useV2Nav || !notificationConfigNav) {
@@ -93,7 +74,7 @@ export function useNotificationConfigNav() {
 
     const tabItems: NavModelItem[] = [];
 
-    if (canViewContactPoints()) {
+    if (canViewContactPoints) {
       tabItems.push({
         id: 'notification-config-contact-points',
         text: t('alerting.navigation.contact-points', 'Contact points'),
@@ -103,7 +84,7 @@ export function useNotificationConfigNav() {
       });
     }
 
-    if (canViewNotificationPolicies()) {
+    if (canViewNotificationPolicies) {
       tabItems.push({
         id: 'notification-config-policies',
         text: t('alerting.navigation.notification-policies', 'Notification policies'),
@@ -113,7 +94,7 @@ export function useNotificationConfigNav() {
       });
     }
 
-    if (canViewTemplates()) {
+    if (canViewTemplates) {
       tabItems.push({
         id: 'notification-config-templates',
         text: t('alerting.navigation.templates', 'Templates'),
@@ -123,7 +104,7 @@ export function useNotificationConfigNav() {
       });
     }
 
-    if (canViewTimeIntervals()) {
+    if (canViewTimeIntervals) {
       tabItems.push({
         id: 'notification-config-time-intervals',
         text: t('alerting.navigation.time-intervals', 'Time intervals'),
@@ -134,7 +115,15 @@ export function useNotificationConfigNav() {
     }
 
     return tabItems;
-  }, [location.pathname, notificationConfigNav, useV2Nav]);
+  }, [
+    canViewContactPoints,
+    canViewNotificationPolicies,
+    canViewTemplates,
+    canViewTimeIntervals,
+    location.pathname,
+    notificationConfigNav,
+    useV2Nav,
+  ]);
 
   if (!useV2Nav) {
     // Legacy navigation: return simple navId (each page handles its own navId)

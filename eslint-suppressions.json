@@ -1249,11 +1249,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/Authorize.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/alert-groups/AlertGroupFilter.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

@@ -20,7 +20,8 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction } from '../../hooks/useAbilities.types';
+import { useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {

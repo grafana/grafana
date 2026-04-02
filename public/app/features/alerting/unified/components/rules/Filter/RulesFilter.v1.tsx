@@ -7,12 +7,11 @@ import { type DataSourceInstanceSettings, type GrafanaTheme2, type SelectableVal
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
+import { useCanViewContactPoints } from '../../../hooks/useNotificationAbilities';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { type RulesFilterProps } from '../../../rule-list/filter/RulesFilter';
 import { RuleHealth, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
@@ -33,8 +32,6 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'Error', value: RuleHealth.Error },
 ];
 
-const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
-
 const RuleStateOptions = Object.entries(PromAlertingRuleState)
   .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
   .map(([key, value]) => ({
@@ -46,6 +43,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
+  const canRenderContactPointSelector = useCanViewContactPoints();
 
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));

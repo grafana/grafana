@@ -6,7 +6,8 @@ import { useReturnToPrevious } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
-import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { useCombinedRuleAbility } from '../../hooks/useAbilities';
+import { RuleAction } from '../../hooks/useAbilities.types';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';
@@ -31,7 +32,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
 
   const setReturnToPrevious = useReturnToPrevious();
 
-  const [exploreSupported, exploreAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Explore);
+  const [exploreSupported, exploreAllowed] = useCombinedRuleAbility(rule, RuleAction.Explore);
 
   const buttons: JSX.Element[] = [];
 

@@ -6,7 +6,7 @@ import { Alert, useStyles2 } from '@grafana/ui';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
+import { useCanViewNotificationPolicies, useCanViewSilences } from '../hooks/useNotificationAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface GrafanaAlertmanagerWarningProps {
@@ -21,10 +21,9 @@ function GrafanaExternalAlertmanagerConfigWarning({ currentAlertmanager }: Grafa
   const styles = useStyles2(getStyles);
   const externalAlertmanager = currentAlertmanager !== GRAFANA_RULES_SOURCE_NAME;
 
-  const [readConfigurationStatusSupported, readConfigurationStatusAllowed] = useAlertingAbility(
-    AlertingAction.ReadConfigurationStatus
-  );
-  const canReadConfigurationStatus = readConfigurationStatusSupported && readConfigurationStatusAllowed;
+  const canViewSilences = useCanViewSilences();
+  const canViewNotificationPolicies = useCanViewNotificationPolicies();
+  const canReadConfigurationStatus = canViewSilences || canViewNotificationPolicies;
 
   const { currentData: amChoiceStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(
     undefined,

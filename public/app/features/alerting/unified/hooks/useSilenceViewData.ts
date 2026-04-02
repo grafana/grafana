@@ -8,7 +8,8 @@ import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
-import { AlertmanagerAction, useAlertmanagerAbility } from './useAbilities';
+import { AlertmanagerAction } from './useAbilities.types';
+import { useAlertmanagerAbility } from './useAlertmanagerAbilities';
 
 interface UseSilenceViewDataResult {
   silence?: Silence;

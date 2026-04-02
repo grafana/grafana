@@ -14,7 +14,7 @@ import {
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
+import { useAlertmanagerAbilities } from '../../hooks/useAlertmanagerAbilities';
 import { mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
@@ -28,8 +28,8 @@ import {
   useCreateDropdownMenuActions,
 } from './Policy';
 
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
+jest.mock('../../hooks/useAlertmanagerAbilities', () => ({
+  ...jest.requireActual('../../hooks/useAlertmanagerAbilities'),
   useAlertmanagerAbilities: jest.fn(),
 }));
 

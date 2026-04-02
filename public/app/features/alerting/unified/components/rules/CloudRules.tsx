@@ -11,7 +11,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
-import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useExternalRuleAbility } from '../../hooks/useAbilities';
+import { ExternalRuleAction } from '../../hooks/useAbilities.types';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
@@ -143,7 +144,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export function CreateRecordingRuleButton() {
-  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useExternalRuleAbility(ExternalRuleAction.CreateAlertRule);
   const location = useLocation();
 
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;

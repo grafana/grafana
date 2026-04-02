@@ -8,8 +8,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { createBridgeURL } from '../../components/PluginBridge';
-import { useCanCreateSilences } from '../../hooks/useAbilities';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
+import { useCanCreateSilences } from '../../hooks/useNotificationAbilities';
 import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';

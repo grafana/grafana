@@ -15,12 +15,12 @@ import {
   TabsBar,
   Text,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { AccessControlAction } from 'app/types/accessControl';
 
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction } from '../../hooks/useAbilities.types';
+import { useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
@@ -54,7 +54,7 @@ const ContactPointsTab = () => {
   // as we get metadata about this from the API
   const fetchPolicies = !shouldUseK8sApi(selectedAlertmanager!);
   // User may have access to list contact points, but not permission to fetch the status endpoint
-  const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
+  const fetchStatuses = useCanViewContactPoints();
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,

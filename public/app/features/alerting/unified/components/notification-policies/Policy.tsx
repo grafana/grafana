@@ -34,7 +34,8 @@ import {
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction } from '../../hooks/useAbilities.types';
+import { useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { isProvisionedResource } from '../../utils/k8s/utils';

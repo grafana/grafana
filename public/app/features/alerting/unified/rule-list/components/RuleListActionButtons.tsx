@@ -6,7 +6,8 @@ import { LinkButton, Stack } from '@grafana/ui';
 
 import { LogMessages } from '../../Analytics';
 import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
-import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useExternalRuleAbility, useRuleAbility } from '../../hooks/useAbilities';
+import { ExternalRuleAction, RuleAction } from '../../hooks/useAbilities.types';
 import { createReturnTo } from '../../hooks/useReturnTo';
 import { createRelativeUrl } from '../../utils/url';
 
@@ -30,8 +31,8 @@ export const RuleListActionButtons = memo<RuleListActionButtonsProps>(({ hasAler
 RuleListActionButtons.displayName = 'RuleListActionButtons';
 
 function CreateAlertButtons() {
-  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+  const [createRuleSupported, createRuleAllowed] = useRuleAbility(RuleAction.Create);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useExternalRuleAbility(ExternalRuleAction.CreateAlertRule);
 
   const returnTo = createReturnTo();
 

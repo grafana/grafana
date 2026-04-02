@@ -7,7 +7,7 @@ import { appEvents } from 'app/core/app_events';
 
 import MoreButton from '../components/MoreButton';
 import { DeclareIncidentMenuItem } from '../components/bridges/DeclareIncidentButton';
-import { useCanCreateSilences, useCanViewContactPoints } from '../hooks/useAbilities';
+import { useCanCreateSilences, useCanViewContactPoints } from '../hooks/useNotificationAbilities';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../utils/misc';
 import { createRelativeUrl } from '../utils/url';
 

@@ -19,17 +19,13 @@ import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import * as misc from '../utils/misc';
 
+import { useAllCombinedRuleAbilities, useEnrichmentAbilities, useEnrichmentAbility } from './useAbilities';
+import { AlertmanagerAction, RuleAction, EnrichmentAction } from './useAbilities.types'; // eslint-disable-line sort-imports
 import {
-  AlertRuleAction,
-  AlertmanagerAction,
-  EnrichmentAction,
   useAlertmanagerAbilities,
   useAlertmanagerAbility,
-  useAllAlertRuleAbilities,
   useAllAlertmanagerAbilities,
-  useEnrichmentAbilities,
-  useEnrichmentAbility,
-} from './useAbilities';
+} from './useAlertmanagerAbilities';
 
 /**
  * This test will write snapshots with a record of the current permissions assigned to actions.
@@ -156,8 +152,8 @@ const wrapper = () => getWrapper({ renderWithRouter: true });
  * after API requests. Without this approach, the hook might return `[false, false]` whilst
  * API requests are still loading
  */
-const RenderActionPermissions = ({ rule, action }: { rule: CombinedRule; action: AlertRuleAction }) => {
-  const result = useAllAlertRuleAbilities(rule);
+const RenderActionPermissions = ({ rule, action }: { rule: CombinedRule; action: RuleAction }) => {
+  const result = useAllCombinedRuleAbilities(rule);
   const [isSupported, isAllowed] = result[action];
   return (
     <>
@@ -171,7 +167,7 @@ describe('AlertRule abilities', () => {
   it('should report that all actions are supported for a Grafana Managed alert rule', async () => {
     const rule = getGrafanaRule();
 
-    const { result } = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: wrapper() });
+    const { result } = renderHook(() => useAllCombinedRuleAbilities(rule), { wrapper: wrapper() });
 
     await waitFor(() => {
       const results = Object.values(result.current);
@@ -189,7 +185,7 @@ describe('AlertRule abilities', () => {
 
     const rule = getGrafanaRule();
 
-    render(<RenderActionPermissions rule={rule} action={AlertRuleAction.Silence} />);
+    render(<RenderActionPermissions rule={rule} action={RuleAction.Silence} />);
 
     expect(await screen.findByText(/supported/)).toBeInTheDocument();
     expect(await screen.findByText(/allowed/)).toBeInTheDocument();
@@ -200,7 +196,7 @@ describe('AlertRule abilities', () => {
 
     const rule = getGrafanaRule();
 
-    render(<RenderActionPermissions rule={rule} action={AlertRuleAction.Silence} />);
+    render(<RenderActionPermissions rule={rule} action={RuleAction.Silence} />);
 
     expect(await screen.findByText(/supported/)).toBeInTheDocument();
     expect(screen.queryByText(/allowed/)).not.toBeInTheDocument();
@@ -212,7 +208,7 @@ describe('AlertRule abilities', () => {
 
     const rule = getCloudRule({}, { rulesSource: mimirDs });
 
-    const { result } = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: wrapper() });
+    const { result } = renderHook(() => useAllCombinedRuleAbilities(rule), { wrapper: wrapper() });
 
     await waitFor(() => {
       expect(result.current).not.toBeUndefined();
@@ -227,17 +223,17 @@ describe('AlertRule abilities', () => {
       labels: { __grafana_origin: 'plugin/non-existent-plugin' },
     });
 
-    const { result } = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: wrapper() });
+    const { result } = renderHook(() => useAllCombinedRuleAbilities(rule), { wrapper: wrapper() });
 
     await waitFor(() => {
       // Wait for the abilities to settle - update should be supported (not loading)
-      const [updateSupported] = result.current[AlertRuleAction.Update];
+      const [updateSupported] = result.current[RuleAction.Update];
       expect(updateSupported).toBe(true);
     });
 
     // When plugin is not installed, these actions should be supported
-    const [updateSupported] = result.current[AlertRuleAction.Update];
-    const [deleteSupported] = result.current[AlertRuleAction.Delete];
+    const [updateSupported] = result.current[RuleAction.Update];
+    const [deleteSupported] = result.current[RuleAction.Delete];
 
     expect(updateSupported).toBe(true);
     expect(deleteSupported).toBe(true);

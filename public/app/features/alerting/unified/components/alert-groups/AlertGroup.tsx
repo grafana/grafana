@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
-import { useCanViewContactPoints } from '../../hooks/useAbilities';
+import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { MetaText } from '../MetaText';

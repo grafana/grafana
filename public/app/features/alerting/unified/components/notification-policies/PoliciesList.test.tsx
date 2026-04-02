@@ -10,7 +10,8 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 
 import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction } from '../../hooks/useAbilities.types';
+import { useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
@@ -28,8 +29,8 @@ jest.mock('../export/GrafanaPoliciesExporter', () => ({
   GrafanaPoliciesExporter: () => null,
 }));
 
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
+jest.mock('../../hooks/useAlertmanagerAbilities', () => ({
+  ...jest.requireActual('../../hooks/useAlertmanagerAbilities'),
   useAlertmanagerAbilities: jest.fn(),
   useAlertmanagerAbility: jest.fn(),
 }));

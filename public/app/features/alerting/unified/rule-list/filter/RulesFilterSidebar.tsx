@@ -20,8 +20,6 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackAlertRuleFilterEvent } from '../../Analytics';
@@ -31,6 +29,7 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 
 import { type AdvancedFilters } from './types';
@@ -77,7 +76,7 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
-  const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+  const canRenderContactPointSelector = useCanViewContactPoints();
 
   // Create portal container for combobox dropdowns
   const portalContainer = usePortalContainer(theme.zIndex.portal + 100);

@@ -11,7 +11,8 @@ import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredR
 import { useDispatch } from 'app/types/store';
 import { type CombinedRule, type RuleIdentifier, type RulesSource } from 'app/types/unified-alerting';
 
-import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { useCombinedRuleAbility } from '../../hooks/useAbilities';
+import { RuleAction } from '../../hooks/useAbilities.types';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { groupIdentifier } from '../../utils/groupIdentifier';
@@ -57,7 +58,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
 
   const isProvisioned = rulerRuleType.grafana.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
-  const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
+  const [editRuleSupported, editRuleAllowed] = useCombinedRuleAbility(rule, RuleAction.Update);
 
   const canEditRule = editRuleSupported && editRuleAllowed;
 

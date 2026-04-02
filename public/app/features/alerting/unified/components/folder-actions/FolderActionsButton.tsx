@@ -7,12 +7,8 @@ import { useDispatch } from 'app/types/store';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import {
-  AlertingAction,
-  FolderBulkAction,
-  useAlertingAbility,
-  useFolderBulkActionAbility,
-} from '../../hooks/useAbilities';
+import { useFolderBulkActionAbility, useRuleAbility } from '../../hooks/useAbilities';
+import { FolderBulkAction, RuleAction } from '../../hooks/useAbilities.types';
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -35,7 +31,7 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
   const listView2Enabled = shouldUseAlertingListViewV2();
 
-  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+  const [exportRulesSupported, exportRulesAllowed] = useRuleAbility(RuleAction.ExportRules);
 
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 

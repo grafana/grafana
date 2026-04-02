@@ -5,11 +5,10 @@ import { useEffectOnce } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type AlertQuery, type Labels } from 'app/types/unified-alerting-dto';
 
+import { useCanViewNotificationPolicies } from '../../../hooks/useNotificationAbilities';
 import { type Folder, type KBObjectArray } from '../../../types/rule-form';
 import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
 
@@ -181,10 +180,9 @@ export const NotificationPreview = ({
  * - alert.notifications.routes:read (new granular permission)
  */
 function NotificationPreviewGrafanaPermissionCheck({ children }: React.PropsWithChildren) {
-  const hasLegacyNotificationPermission = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
-  const hasNotificationPolicyTreePermission = contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead);
+  const canViewNotificationPolicies = useCanViewNotificationPolicies();
 
-  if (hasLegacyNotificationPermission || hasNotificationPolicyTreePermission) {
+  if (canViewNotificationPolicies) {
     return <>{children}</>;
   }
 

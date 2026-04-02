@@ -8,7 +8,7 @@ import { CodeText } from 'app/features/alerting/unified/components/common/TextVa
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { Authorize } from '../../components/Authorize';
-import { AlertmanagerAction } from '../../hooks/useAbilities';
+import { AlertmanagerAction } from '../../hooks/useAbilities.types';
 import { getAlertTableStyles } from '../../styles/table';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';

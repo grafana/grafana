@@ -11,7 +11,8 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
-import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
+import { useExternalRuleAbility, useRuleAbility } from '../hooks/useAbilities';
+import { ExternalRuleAction, RuleAction } from '../hooks/useAbilities.types';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
@@ -52,9 +53,9 @@ function RuleList() {
 }
 
 export function RuleListActions() {
-  const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
-  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+  const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useRuleAbility(RuleAction.Create);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useExternalRuleAbility(ExternalRuleAction.CreateAlertRule);
+  const [exportRulesSupported, exportRulesAllowed] = useRuleAbility(RuleAction.ExportRules);
 
   // Check if there are any data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);

@@ -1,7 +1,7 @@
 import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton } from '@grafana/ui';
 
-import { AlertmanagerAction } from '../../../hooks/useAbilities';
+import { ExternalAlertmanagerAction } from '../../../hooks/useAbilities.types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { makeAMLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
@@ -14,7 +14,7 @@ export const GlobalConfigAlert = ({ alertManagerName }: GlobalConfigAlertProps) 
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
 
   return (
-    <Authorize actions={[AlertmanagerAction.UpdateExternalConfiguration]}>
+    <Authorize actions={[ExternalAlertmanagerAction.UpdateExternalConfiguration]}>
       <Alert
         severity="info"
         title={t(

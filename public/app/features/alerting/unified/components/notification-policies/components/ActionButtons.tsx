@@ -4,7 +4,8 @@ import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
-import { AlertmanagerAction, useAlertmanagerAbilities } from '../../../hooks/useAbilities';
+import { AlertmanagerAction } from '../../../hooks/useAbilities.types';
+import { useAlertmanagerAbilities } from '../../../hooks/useAlertmanagerAbilities';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
