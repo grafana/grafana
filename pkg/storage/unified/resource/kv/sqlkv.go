@@ -32,6 +32,25 @@ type DataImportRow struct {
 	GUID    string
 	KeyPath string
 	Value   []byte
+
+	// Legacy stores temporary sql/backend compatibility fields for resource_history.
+	// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
+	Legacy *DataImportLegacyFields
+}
+
+// DataImportLegacyFields stores the temporary legacy resource_history columns
+// needed to keep sqlkv compatible with the old SQL backend during bulk import.
+// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
+type DataImportLegacyFields struct {
+	Group           string
+	Resource        string
+	Namespace       string
+	Name            string
+	Action          int64
+	Folder          string
+	ResourceVersion int64
+	PreviousRV      int64
+	Generation      int64
 }
 
 type SqlKV struct {

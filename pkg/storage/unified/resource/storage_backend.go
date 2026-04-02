@@ -1937,23 +1937,13 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	updatedResources := make(map[NamespacedResource]bool)
 	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
 	lastMicroRV := make(map[string]int64)
-	recordSavedItem := func(item kvBulkImportItem) error {
+	recordSavedItem := func(item kvBulkImportItem) {
 		saved = append(saved, item.dataKey)
 		updatedResources[NamespacedResource{
 			Namespace: item.dataKey.Namespace,
 			Group:     item.dataKey.Group,
 			Resource:  item.dataKey.Resource,
 		}] = true
-
-		if rvManagerDB == nil {
-			return nil
-		}
-
-		if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, rvManagerDB, item.dataKey, item.microRV, item.previousRV, item.generation); err != nil {
-			return fmt.Errorf("failed to update legacy resource_history for bulk: %w", err)
-		}
-
-		return nil
 	}
 
 	batchIter, ok := iter.(BulkRequestBatchIterator)
@@ -2061,11 +2051,34 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			}
 
 			batchItems = append(batchItems, item)
-			batchRows = append(batchRows, kv.DataImportRow{
+			importRow := kv.DataImportRow{
 				GUID:    uuid.New().String(),
 				KeyPath: kv.DataSection + "/" + dataKey.String(),
 				Value:   req.Value,
-			})
+			}
+			if rvManagerDB != nil {
+				var legacyAction int64
+				switch action {
+				case DataActionCreated:
+					legacyAction = 1
+				case DataActionUpdated:
+					legacyAction = 2
+				case DataActionDeleted:
+					legacyAction = 3
+				}
+				importRow.Legacy = &kv.DataImportLegacyFields{
+					Group:           dataKey.Group,
+					Resource:        dataKey.Resource,
+					Namespace:       dataKey.Namespace,
+					Name:            dataKey.Name,
+					Action:          legacyAction,
+					Folder:          dataKey.Folder,
+					ResourceVersion: item.microRV,
+					PreviousRV:      item.previousRV,
+					Generation:      item.generation,
+				}
+			}
+			batchRows = append(batchRows, importRow)
 		}
 
 		usedBatchWriter, err := b.dataStore.insertDataImportBatch(ctx, batchRows)
@@ -2087,10 +2100,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 					continue
 				}
 
-				if err := recordSavedItem(item); err != nil {
-					b.log.Error("failed to update legacy resource_history for bulk", "error", err)
-					return rsp
-				}
+				recordSavedItem(item)
 				if item.nameKey != "" {
 					lastMicroRV[item.nameKey] = item.microRV
 				}
@@ -2099,10 +2109,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		for _, item := range batchItems {
-			if err := recordSavedItem(item); err != nil {
-				b.log.Error("failed to update legacy resource_history for bulk", "error", err)
-				return rsp
-			}
+			recordSavedItem(item)
 			if item.nameKey != "" {
 				lastMicroRV[item.nameKey] = item.microRV
 			}
