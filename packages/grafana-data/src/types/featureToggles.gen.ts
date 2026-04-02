@@ -690,7 +690,7 @@ export interface FeatureToggles {
   suggestedDashboardsAssistantButton?: boolean;
   /**
   * Enables the new alert list view design
-  * @default false
+  * @default true
   */
   alertingListViewV2?: boolean;
   /**
