@@ -58,6 +58,10 @@ type dataStore struct {
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 }
 
+type dataImportBatchWriter interface {
+	InsertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) error
+}
+
 func newDataStore(kv KV) *dataStore {
 	ds := &dataStore{
 		kv:    kv,
@@ -545,6 +549,15 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 	}
 
 	return writer.Close()
+}
+
+func (d *dataStore) insertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) (bool, error) {
+	writer, ok := d.kv.(dataImportBatchWriter)
+	if !ok {
+		return false, nil
+	}
+
+	return true, writer.InsertDataImportBatch(ctx, rows)
 }
 
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {

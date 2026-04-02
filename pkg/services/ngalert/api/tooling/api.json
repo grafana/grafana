@@ -2307,17 +2307,6 @@
    "title": "Label is a key/value pair of strings.",
    "type": "object"
   },
-  "LabelSet": {
-   "additionalProperties": {
-    "$ref": "#/definitions/LabelValue"
-   },
-   "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
-   "type": "object"
-  },
-  "LabelValue": {
-   "title": "A LabelValue is an associated value for a LabelName.",
-   "type": "string"
-  },
   "Labels": {
    "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
    "items": {
@@ -4615,80 +4604,6 @@
     }
    },
    "title": "TelegramConfig configures notifications via Telegram.",
-   "type": "object"
-  },
-  "TestReceiverConfigResult": {
-   "properties": {
-    "error": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string"
-    },
-    "uid": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiverResult": {
-   "properties": {
-    "grafana_managed_receiver_configs": {
-     "items": {
-      "$ref": "#/definitions/TestReceiverConfigResult"
-     },
-     "type": "array"
-    },
-    "name": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversConfigAlertParams": {
-   "properties": {
-    "annotations": {
-     "$ref": "#/definitions/LabelSet"
-    },
-    "labels": {
-     "$ref": "#/definitions/LabelSet"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversConfigBodyParams": {
-   "properties": {
-    "alert": {
-     "$ref": "#/definitions/TestReceiversConfigAlertParams"
-    },
-    "receivers": {
-     "items": {
-      "$ref": "#/definitions/PostableApiReceiver"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversResult": {
-   "properties": {
-    "alert": {
-     "$ref": "#/definitions/TestReceiversConfigAlertParams"
-    },
-    "notified_at": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "receivers": {
-     "items": {
-      "$ref": "#/definitions/TestReceiverResult"
-     },
-     "type": "array"
-    }
-   },
    "type": "object"
   },
   "TestRulePayload": {

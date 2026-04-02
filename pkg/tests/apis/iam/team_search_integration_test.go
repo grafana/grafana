@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -42,12 +43,12 @@ func TestIntegrationTeamSearch(t *testing.T) {
 					featuremgmt.FlagKubernetesTeamsApi,
 				},
 			})
-			doTeamSearchTests(t, helper)
+			doTeamSearchTests(t, helper, mode)
 		})
 	}
 }
 
-func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	ctx := context.Background()
 	namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
 
@@ -258,6 +259,166 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should return error when both title and query are provided", func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?title=%s&query=Test", namespace, url.QueryEscape("Test Team 1"))
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
+	})
+
+	t.Run("should filter teams by UID", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?uid=%s", namespace, team1.GetName())
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusOK, response.Response.StatusCode)
+		require.NotNil(t, response.Result)
+		require.Len(t, result.Hits, 1, "should return exactly 1 hit by UID")
+		require.Equal(t, team1.GetName(), result.Hits[0].Name)
+	})
+
+	t.Run("should filter teams by multiple UIDs", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?uid=%s&uid=%s", namespace, team1.GetName(), team2.GetName())
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusOK, response.Response.StatusCode)
+		require.NotNil(t, response.Result)
+		require.Len(t, result.Hits, 2, "should return both teams by UIDs")
+	})
+
+	t.Run("should filter teams by legacy team ID", func(t *testing.T) {
+		if mode == rest.Mode5 {
+			t.Skip("legacy team IDs are not available in unified-only mode")
+		}
+		team1LegacyID := team1.GetLabels()["grafana.app/deprecatedInternalID"]
+		require.NotEmpty(t, team1LegacyID, "team1 should have a legacy ID label")
+
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?teamId=%s", namespace, team1LegacyID)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusOK, response.Response.StatusCode)
+		require.NotNil(t, response.Result)
+		require.Len(t, result.Hits, 1, "should return exactly 1 hit by legacy ID")
+		require.Equal(t, team1.GetName(), result.Hits[0].Name)
+	})
+
+	t.Run("should filter teams by multiple legacy team IDs", func(t *testing.T) {
+		if mode == rest.Mode5 {
+			t.Skip("legacy team IDs are not available in unified-only mode")
+		}
+		team1LegacyID := team1.GetLabels()["grafana.app/deprecatedInternalID"]
+		require.NotEmpty(t, team1LegacyID, "team1 should have a legacy ID label")
+		team2LegacyID := team2.GetLabels()["grafana.app/deprecatedInternalID"]
+		require.NotEmpty(t, team2LegacyID, "team2 should have a legacy ID label")
+
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?teamId=%s&teamId=%s", namespace, team1LegacyID, team2LegacyID)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusOK, response.Response.StatusCode)
+		require.NotNil(t, response.Result)
+		require.Len(t, result.Hits, 2, "should return both teams by legacy IDs")
+	})
+
+	t.Run("should return no results for non-existent UID", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?uid=nonexistent-uid", namespace)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusOK, response.Response.StatusCode)
+		require.NotNil(t, response.Result)
+		require.Len(t, result.Hits, 0, "should return 0 hits for non-existent UID")
+	})
+
+	t.Run("should return error when both uid and teamId are provided", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?uid=%s&teamId=1", namespace, team1.GetName())
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
+	})
+
+	t.Run("should return error when uid count exceeds maximum", func(t *testing.T) {
+		params := make([]string, 101)
+		for i := range params {
+			params[i] = fmt.Sprintf("uid=uid-%d", i)
+		}
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?%s", namespace, strings.Join(params, "&"))
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
+	})
+
+	t.Run("should return error when teamId count exceeds maximum", func(t *testing.T) {
+		params := make([]string, 101)
+		for i := range params {
+			params[i] = fmt.Sprintf("teamId=%d", i+1)
+		}
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?%s", namespace, strings.Join(params, "&"))
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.NotNil(t, response)
+		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
+	})
+
+	t.Run("should return error when teamId is not a valid integer", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?teamId=notanumber", namespace)
 		var result iamv0alpha1.GetSearchTeamsResponse
 
 		response := apis.DoRequest(helper, apis.RequestParams{

@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Доставлено <2>{{name}} </2>",
-      "no-grouping": "Без группировки"
+      "delivered-to-disabled": "",
+      "no-grouping": "Без группировки",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1074,6 +1076,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Инструмент Grafana Incident не установлен или настроен неправильно",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Заявить об инциденте"
     },
     "delete-rule-modal": {
@@ -2264,7 +2267,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3615,8 +3620,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Сведения об экземпляре",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "У вас нет экземпляров оповещений в состоянии отправки или ожидания для выбранного временного интервала.",
@@ -4309,6 +4316,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Необходимо указать имя папки.",
       "new-folder-owner-selector-checkbox": "Назначить владельца папки",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Вы выбрали как подготовленные, так и неподготовленные ресурсы. Совместная обработка невозможна. Выберите только подготовленные или неподготовленные ресурсы и повторите попытку.",
       "selected-mix-resources-modal-title": "Выбраны разные типы ресурсов"
     },
@@ -4482,6 +4490,20 @@
       "error": "Не удалось загрузить последние просмотренные дашборды.",
       "retry": "Повторить попытку",
       "title": "Последние просмотренные"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5669,6 +5691,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Применить",
           "change-value": "Изменить значение переменной",
@@ -6566,6 +6590,9 @@
       },
       "name": {
         "action": "Изменить имя переменной"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10436,6 +10463,8 @@
     "sidebar": {
       "close": "Закрыть",
       "dock": "Закрепить",
+      "hide": "",
+      "show": "",
       "undock": "Открепить"
     },
     "slider": {
@@ -13094,12 +13123,14 @@
       "not-saved": "Остальные пользователи Grafana в вашей организации будут по-прежнему видеть текущую версию, сохраненную в заданной ветви по умолчанию, до тех пор, пока эта ветвь не будет объединена",
       "open-in-repo-button": "Открыть в {{repoType}}",
       "open-pull-request-in-repo": "Открыть запрос на включение изменений в {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "Просмотрите его в {{repoType}}, чтобы увидеть последние изменения.",
       "view-pull-request-in-repo": "Просмотреть запрос на включение изменений в {{repoType}}"
     },
     "title-created-branch-in-repo": "В ветви в {{repoType}} создан новый ресурс.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Этот ресурс загружается из ветви, которую вы только что создали в {{repoType}}, и виден только вам"
+    "title-loaded-pull-request-in-repo": "Этот ресурс загружается из ветви, которую вы только что создали в {{repoType}}, и виден только вам",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15540,8 +15571,7 @@
       "bar": "Гистограмма",
       "bar-stacked": "Гистограмма: с накоплением",
       "bar-stacked-percent": "Гистограмма: с накоплением по процентам",
-      "line": "Линейная диаграмма",
-      "line-smooth": "Линейная диаграмма: сглаженная"
+      "line": "Линейная диаграмма"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Добавить часовой пояс",

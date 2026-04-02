@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -23,11 +25,26 @@ const (
 
 var _ KV = &SqlKV{}
 
+var sqlKVLog = log.New("resource-sqlkv")
+
+// DataImportRow represents a single append-only resource_history row written during bulk import.
+type DataImportRow struct {
+	GUID    string
+	KeyPath string
+	Value   []byte
+}
+
 type SqlKV struct {
 	db         *sql.DB
 	dialect    Dialect
 	DriverName string // TODO: remove when backwards compatibility is no longer needed.
 }
+
+const (
+	// Match the existing SQL backend sqlite cap so both bulk import paths chunk the same way.
+	dataImportBatchSQLiteMaxRows  = 8
+	dataImportBatchDefaultMaxRows = 1000
+)
 
 func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
 	if db == nil {
@@ -88,6 +105,31 @@ func (k *SqlKV) Ping(ctx context.Context) error {
 	return k.db.PingContext(ctx)
 }
 
+func dataImportBatchRowLimit(dialectName string) int {
+	if dialectName == "sqlite" {
+		return dataImportBatchSQLiteMaxRows
+	}
+
+	return dataImportBatchDefaultMaxRows
+}
+
+func dataImportBatchStatementCount(rowCount, maxRows int) int {
+	if rowCount == 0 || maxRows <= 0 {
+		return 0
+	}
+
+	return (rowCount + maxRows - 1) / maxRows
+}
+
+func dataImportBatchPayloadBytes(rows []DataImportRow) int {
+	payloadBytes := 0
+	for _, row := range rows {
+		payloadBytes += len(row.Value)
+	}
+
+	return payloadBytes
+}
+
 // conn returns the dbtx from the context (set during bulk import on SQLite)
 // or falls back to the default *sql.DB connection pool.
 func (k *SqlKV) conn(ctx context.Context) dbtx {
@@ -95,6 +137,92 @@ func (k *SqlKV) conn(ctx context.Context) dbtx {
 		return db
 	}
 	return k.db
+}
+
+// InsertDataImportBatch writes a batch of append-only resource_history rows for the bulk import path.
+func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow) (err error) {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	qb, err := k.getQueryBuilder(DataSection)
+	if err != nil {
+		return err
+	}
+
+	insertStart := time.Now()
+	conn := k.conn(ctx)
+	var tx *sql.Tx
+	usingContextTx := false
+	if _, ok := dbtxFromCtx(ctx); !ok {
+		tx, err = k.db.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to begin data import transaction: %w", err)
+		}
+		conn = tx
+		defer func() {
+			if err != nil {
+				err = errors.Join(err, tx.Rollback())
+			}
+		}()
+	} else {
+		usingContextTx = true
+	}
+
+	maxRows := dataImportBatchRowLimit(k.dialect.Name())
+	statementCount := dataImportBatchStatementCount(len(rows), maxRows)
+	payloadBytes := dataImportBatchPayloadBytes(rows)
+	for start := 0; start < len(rows); start += maxRows {
+		end := start + maxRows
+		if end > len(rows) {
+			end = len(rows)
+		}
+
+		query, args := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		if _, err = conn.ExecContext(ctx, query, args...); err != nil {
+			sqlKVLog.Error("sqlkv bulk import insert failed",
+				"error", err,
+				"dialect", k.dialect.Name(),
+				"rows", len(rows),
+				"statements", statementCount,
+				"max_rows", maxRows,
+				"payload_bytes", payloadBytes,
+				"using_context_tx", usingContextTx,
+			)
+			return fmt.Errorf("failed to insert data import batch: %w", err)
+		}
+	}
+
+	if tx != nil {
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit data import batch: %w", err)
+		}
+	}
+
+	insertDuration := time.Since(insertStart)
+	if insertDuration > 500*time.Millisecond {
+		sqlKVLog.Warn("slow sqlkv bulk import insert",
+			"dialect", k.dialect.Name(),
+			"rows", len(rows),
+			"statements", statementCount,
+			"max_rows", maxRows,
+			"payload_bytes", payloadBytes,
+			"using_context_tx", usingContextTx,
+			"insert", insertDuration,
+		)
+	} else {
+		sqlKVLog.Debug("sqlkv bulk import insert timing",
+			"dialect", k.dialect.Name(),
+			"rows", len(rows),
+			"statements", statementCount,
+			"max_rows", maxRows,
+			"payload_bytes", payloadBytes,
+			"using_context_tx", usingContextTx,
+			"insert", insertDuration,
+		)
+	}
+
+	return nil
 }
 
 func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
