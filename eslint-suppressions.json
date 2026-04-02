@@ -798,11 +798,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/VizLegend/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
