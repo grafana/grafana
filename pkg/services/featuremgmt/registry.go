@@ -383,14 +383,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:            "kubernetesAlertingRules",
-			Description:     "Adds support for Kubernetes alerting and recording rules",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
 			Name:            "kubernetesCorrelations",
 			Description:     "Adds support for Kubernetes correlations",
 			Stage:           FeatureStageExperimental,
