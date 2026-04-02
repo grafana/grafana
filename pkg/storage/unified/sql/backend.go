@@ -33,8 +33,8 @@ import (
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -62,6 +62,7 @@ func newTenantDeleterGcomClient(cfg *setting.Cfg) gcom.Service {
 	hc := &http.Client{Timeout: 30 * time.Second}
 	return gcom.New(gcom.Config{ApiURL: apiURL, Token: token}, hc)
 }
+
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultGarbageCollectionBatchWait = 1 * time.Second
 
