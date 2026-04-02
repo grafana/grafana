@@ -510,6 +510,12 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	s.rolesMu.Unlock()
 
 	if s.seeder != nil {
+		// Force cleanup of orphaned plugin roles and permissions for plugins
+		// that have been permanently uninstalled (configured via [rbac] plugin_seed_cleanups)
+		if err := s.seeder.ForcePluginCleanups(ctx, s.cfg.RBAC.PluginSeedCleanups); err != nil {
+			return err
+		}
+
 		if err := s.seeder.SeedRoles(ctx, registrations); err != nil {
 			return err
 		}

@@ -646,4 +646,5 @@ type RoleStore interface {
 	SetPermissions(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
 	CreateRole(ctx context.Context, role RoleDTO) error
 	DeleteRoles(ctx context.Context, roleUIDs []string) error
+	DeletePluginPermissions(ctx context.Context, pluginID string) error
 }

@@ -294,6 +294,16 @@ func (s *AccessControlStore) DeleteRoles(ctx context.Context, roleUIDs []string)
 	})
 }
 
+func (s *AccessControlStore) DeletePluginPermissions(ctx context.Context, pluginID string) error {
+	return s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec(
+			"DELETE FROM permission WHERE action LIKE ? OR action LIKE ?",
+			pluginID+".%", pluginID+":%",
+		)
+		return err
+	})
+}
+
 // OSS basic-role permission refresh uses seeding.Seeder.Seed() with a desired set computed in memory.
 // These methods implement the permission seeding part of seeding.SeedingBackend against the current permission table.
 func (s *AccessControlStore) LoadPrevious(ctx context.Context) (map[accesscontrol.SeedPermission]struct{}, error) {
