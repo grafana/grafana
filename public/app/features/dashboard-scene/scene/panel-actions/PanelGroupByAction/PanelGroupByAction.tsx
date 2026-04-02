@@ -37,6 +37,7 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
       return;
     }
 
+    //demo
     setIsLoading(true);
     try {
       let fetchedOptions: VariableValueOption[];
