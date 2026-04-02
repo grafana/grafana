@@ -74,7 +74,7 @@ The data section contains tabs where you enter queries, transform your data, and
 
 The display options section contains tabs where you configure almost every aspect of your data visualization.
 
-When you first open the panel editor, Grafana analyzes your query results and suggests visualizations that suit the shape of the data. You can select a suggested visualization or click **All visualizations** to browse the full list of available panel types. Once you've selected a visualization, the display options section provides further configuration.
+When you first open the panel editor, Grafana analyzes your query results and suggests visualizations that suit the shape of the data. You can select a suggested visualization or click **All visualizations** to browse the full list of available panel types. After you've selected a visualization, the display options section provides further configuration.
 
 For more information about individual visualizations, refer to [Visualizations options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/).
 
