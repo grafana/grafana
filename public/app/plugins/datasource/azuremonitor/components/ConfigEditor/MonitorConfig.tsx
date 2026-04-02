@@ -74,7 +74,9 @@ export const MonitorConfig = (props: Props) => {
             options={options.jsonData}
           />
           <BasicLogsToggle options={options.jsonData} onBasicLogsEnabledChange={onBasicLogsEnabledChange} />
-          <BatchAPIToggle options={options.jsonData} onBatchAPIEnabledChange={onBatchAPIEnabledChange} />
+          {config.featureToggles.azureMonitorBatchAPI && (
+            <BatchAPIToggle options={options.jsonData} onBatchAPIEnabledChange={onBatchAPIEnabledChange} />
+          )}
         </>
       </AzureCredentialsForm>
     </>
