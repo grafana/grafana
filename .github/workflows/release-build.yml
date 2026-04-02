@@ -241,6 +241,8 @@ jobs:
           - name: linux-riscv64
             os: linux
             arch: riscv64
+            deb: true
+            rpm: true
           - name: windows-amd64
             os: windows
             arch: amd64
@@ -277,6 +279,8 @@ jobs:
           BUILD_NUMBER: ${{ github.run_id }}
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
         run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - uses: ./.github/actions/setup-fpm
+        if: matrix.deb || matrix.rpm
       - name: Build deb
         if: matrix.deb
         env:

@@ -1,0 +1,31 @@
+name: Setup FPM
+description: Installs Ruby and the fpm packaging gem with heavy caching.
+
+inputs:
+  fpm-version:
+    description: Version of the fpm gem to install.
+    required: false
+    default: '1.17.0'
+
+runs:
+  using: composite
+  steps:
+    - uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64 # v1.299.0
+      with:
+        ruby-version: '3.x'
+        bundler-cache: false
+    - name: Cache fpm gem
+      id: cache-fpm
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      with:
+        path: ${{ runner.temp }}/fpm-gems
+        key: fpm-${{ runner.os }}-${{ runner.arch }}-${{ inputs.fpm-version }}
+    - name: Install fpm
+      if: steps.cache-fpm.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        GEM_HOME: ${{ runner.temp }}/fpm-gems
+      run: gem install fpm -v '${{ inputs.fpm-version }}' --no-document
+    - name: Add fpm to PATH
+      shell: bash
+      run: echo "${{ runner.temp }}/fpm-gems/bin" >> "$GITHUB_PATH" # zizmor: ignore[github-env]
