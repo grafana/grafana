@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -240,48 +239,14 @@ func (l *LibraryElementService) DeleteLibraryElement(c context.Context, signedIn
 		}
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 
-		dashboardIDs := []int64{}
-		// get all connections for this element
-		if err := session.SQL("SELECT connection_id FROM library_element_connection where element_id = ?", element.ID).Find(&dashboardIDs); err != nil {
-			return err
-		}
-
-		// then find the dashboards that were supposed to be connected to this element.
-		// A identity may be able to delete a library element but not read all dashboards so we fetch then as the
-		// service user so we can prevent deletion of those connections
-		serviceCtx, serviceIdent := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
-		dashs, err := l.dashboardsService.FindDashboards(serviceCtx, &dashboards.FindPersistedDashboardsQuery{
-			Type:         searchstore.TypeDashboard,
-			OrgId:        serviceIdent.GetOrgID(),
-			DashboardIds: dashboardIDs,
-			SignedInUser: serviceIdent,
-		})
-
+		// Check for connected dashboards via search, using a service identity so we see
+		// all dashboards regardless of the calling user's folder permissions
+		serviceCtx, _ := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
+		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, uid, signedInUser.GetOrgID())
 		if err != nil {
 			return err
 		}
-
-		foundDashes := make([]int64, len(dashs))
-		for i, d := range dashs {
-			foundDashes[i] = d.ID
-		}
-
-		// delete any connections that are orphaned for this element (i.e. the dashboard was deleted)
-		session.Table("library_element_connection")
-		session.Where("element_id = ?", element.ID)
-		session.NotIn("connection_id", foundDashes)
-		if _, err = session.Delete(model.LibraryElementConnectionWithMeta{}); err != nil {
-			return err
-		}
-
-		// now try to delete the element, but fail if it is connected to any dashboards
-		var connectionIDs []struct {
-			ConnectionID int64 `xorm:"connection_id"`
-		}
-		sql := "SELECT connection_id FROM library_element_connection WHERE element_id=?"
-		if err := session.SQL(sql, element.ID).Find(&connectionIDs); err != nil {
-			return err
-		} else if len(connectionIDs) > 0 {
+		if len(connectedDashboards) > 0 {
 			return model.ErrLibraryElementHasConnections
 		}
 
