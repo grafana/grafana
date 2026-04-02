@@ -6769,6 +6769,11 @@
         "change-annotation-panel-filter": "Change annotation panel filter"
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "Delete annotation query",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete annotation query"
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7184,6 +7189,12 @@
       "add-link": "Add link",
       "remove-link": "Remove link",
       "update-link": "Update link"
+    },
+    "link-editable-element": {
+      "delete-confirm": "Delete link",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete link",
+      "unnamed": "Unnamed link"
     },
     "link-list": {
       "create-drag-end-handler": {
@@ -7635,6 +7646,11 @@
           "label": "Above dashboard, label hidden"
         }
       }
+    },
+    "variable-editable-element": {
+      "delete-confirm": "Delete variable",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete variable"
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
