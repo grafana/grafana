@@ -172,16 +172,18 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const lastDropTarget = this._lastDropTarget;
     const dropPosition = this._currentDropPosition;
 
-    // Check if there's a valid drop target under the mouse
-    // (tab headers and other non-drop areas return null)
+    // Fresh target under the pointer at drop time takes priority over
+    // lastDropTarget which may be stale if pointermove events were coalesced.
     const validDropTargetUnderMouse = this._getDropTargetUnderMouse(evt);
+    const effectiveDropTarget = validDropTargetUnderMouse ?? lastDropTarget;
 
     // TabsLayoutManager is not a valid panel drop target — it represents the
     // tab bar area between tab headers. Cancel the drop so the panel either
     // stays in place or returns to its source layout.
-    const droppedOnTabBar =
-      lastDropTarget instanceof TabsLayoutManager || validDropTargetUnderMouse instanceof TabsLayoutManager;
-    if (droppedOnTabBar) {
+    if (effectiveDropTarget instanceof TabsLayoutManager) {
+      this._clearDropPosition();
+      this._lastDropTarget?.setIsDropTarget?.(false);
+
       if (wasDetached && gridItem) {
         setTimeout(() => {
           sourceDropTarget?.draggedGridItemInside?.(gridItem);
@@ -189,25 +191,18 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
             sourceDropTarget.state.layout.endExternalDrag();
           }
         });
-      } else {
-        this._clearDropPosition();
-        this._lastDropTarget?.setIsDropTarget?.(false);
       }
-    } else if (wasDetached && !validDropTargetUnderMouse && gridItem && lastDropTarget instanceof TabItem) {
-      // noTargetUnderMouse = wasDetached && !validDropTargetUnderMouse && gridItem;
-      // canDropIntoCurrentTab = noTargetUnderMouse && lastDropTarget instanceof TabItem;
+    } else if (wasDetached && !validDropTargetUnderMouse && gridItem && effectiveDropTarget instanceof TabItem) {
       // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
       // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
-      // Drop into the current tab's layout
       setTimeout(() => {
-        lastDropTarget.draggedGridItemInside?.(gridItem);
-        // Clean up source grid state
+        effectiveDropTarget.draggedGridItemInside?.(gridItem);
         if (sourceDropTarget instanceof AutoGridLayoutManager) {
           sourceDropTarget.state.layout.endExternalDrag();
         }
       });
     } else {
-      const isCrossLayoutDrop = sourceDropTarget !== lastDropTarget || wasDetached;
+      const isCrossLayoutDrop = sourceDropTarget !== effectiveDropTarget || wasDetached;
 
       // Handle cross-layout or cross-tab drop
       if (isCrossLayoutDrop) {
@@ -221,7 +216,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
             }
             // Pass drop position for precise placement (AutoGrid uses this)
             // Note: draggedGridItemInside also clears isDropTarget and dropPosition
-            lastDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
+            effectiveDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
 
             // Clean up source grid's drag state (CSS variables and draggingKey) after item is moved.
             // This is done here (after movement) to prevent flickering where the item
