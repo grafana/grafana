@@ -88,6 +88,12 @@ While visualization suggestions help you choose _which_ panel type to use, panel
 
 Each style is displayed as a live preview card that shows how it changes the visualization. Clicking a style applies a combination of display options and field configuration to the panel—for example, switching a time series panel from a line chart with a gradient fill to a stacked bar chart, or changing a stat panel's color scheme and graph mode.
 
-Presets merge their settings with the panel's existing defaults, so only the fields the preset defines are changed. Presets can modify thresholds and color settings - any preset that modifies thresholds displays a badge on the preview card. However, presets don't affect any field overrides you've configured; your existing overrides are preserved when you apply a preset. You can further customize the panel after applying a preset.
+Panel styles merge their settings with the panel's existing defaults as follows:
+
+ - Only the fields the style defines are changed. 
+ - Styles can modify thresholds and color settings—any preset that modifies thresholds displays a badge on the preview card. 
+ - Styles don't affect field overrides
+ 
+ You can further customize the panel after applying a style.
 
 Panel styles are available for time series, stat, gauge, bar gauge, and bar chart panels. Plugin authors can add Panel styles support to their own panel plugins.
