@@ -25,7 +25,10 @@ runs:
       shell: bash
       env:
         GEM_HOME: ${{ runner.temp }}/fpm-gems
-      run: gem install fpm -v '${{ inputs.fpm-version }}' --no-document
-    - name: Add fpm to PATH
+        FPM_VERSION: ${{ inputs.fpm-version }}
+      run: gem install fpm -v "$FPM_VERSION" --no-document
+    - name: Export GEM_HOME and add fpm to PATH
       shell: bash
-      run: echo "${{ runner.temp }}/fpm-gems/bin" >> "$GITHUB_PATH" # zizmor: ignore[github-env]
+      run: | # zizmor: ignore[github-env]
+        echo "GEM_HOME=${{ runner.temp }}/fpm-gems" | tee -a "$GITHUB_ENV"
+        echo "${{ runner.temp }}/fpm-gems/bin" | tee -a "$GITHUB_PATH"
