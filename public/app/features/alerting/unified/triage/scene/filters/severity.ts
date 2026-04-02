@@ -23,5 +23,5 @@ export function severityFilterRegex(level: SeverityLevel): string {
 
 export function canonicalSeverity(value: string): SeverityLevel | undefined {
   const lower = value.toLowerCase();
-  return SEVERITY_DEFINITIONS.find((d) => d.values.includes(lower))?.level;
+  return SEVERITY_DEFINITIONS.find((d) => d.values.some((v) => v.toLowerCase() === lower))?.level;
 }
