@@ -57,7 +57,6 @@ export function SplashScreenModal() {
         size="md"
       >
         {activeFeature.ctaText}
-        <span className="sr-only">{t('splash-screen.cta-new-tab', '(opens in new tab)')}</span>
       </LinkButton>
     </>
   );
