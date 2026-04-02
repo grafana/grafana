@@ -1949,6 +1949,20 @@
     },
     {
       "metadata": {
+        "name": "enableColorblindSafePanelOptions",
+        "resourceVersion": "1775147722376",
+        "creationTimestamp": "2026-04-02T16:35:22Z"
+      },
+      "spec": {
+        "description": "Enables new colorblind safe palette and line fill patterns for panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDashboardEmptyExtensions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-13T07:03:13Z"

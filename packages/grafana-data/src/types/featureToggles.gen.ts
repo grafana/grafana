@@ -1760,4 +1760,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableDatasourceMetaApiPluginLoading?: boolean;
+  /**
+  * Enables new colorblind safe palette and line fill patterns for panels
+  * @default false
+  */
+  enableColorblindSafePanelOptions?: boolean;
 }
