@@ -1,18 +1,18 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { useMeasure } from 'react-use';
+import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
+import { useLocalStorage, useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { CompletionItemKind, LanguageDefinition, SQLEditor, TableIdentifier } from '@grafana/plugin-ui';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
-import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
-import { SqlExpressionQuery } from '../../types';
+import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
+import { type SqlExpressionQuery } from '../../types';
 import { fetchSQLFields } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
@@ -20,7 +20,7 @@ import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProv
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
 import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
-import { SqlExprContextValue, SqlExprProvider } from './SqlExprContext';
+import { type SqlExprContextValue, SqlExprProvider } from './SqlExprContext';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
@@ -35,9 +35,15 @@ const GenAIExplanationDrawer = lazy(() =>
     default: module.GenAIExplanationDrawer,
   }))
 );
+const SQLEditor = lazy(() =>
+  import('@grafana/plugin-ui').then((module) => ({
+    default: module.SQLEditor,
+  }))
+);
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
+const SCHEMA_INSPECTOR_OPEN_KEY = 'grafana.sql-expression.schema-inspector-open';
 
 export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
@@ -76,7 +82,8 @@ LIMIT
   10`;
 
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
-  const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
+  const [isSchemaInspectorOpen = true, setIsSchemaInspectorOpen] = useLocalStorage(SCHEMA_INSPECTOR_OPEN_KEY, true);
+
   const styles = useStyles2((theme) => getStyles(theme));
   const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
     useSQLSuggestions();
@@ -249,19 +256,21 @@ LIMIT
       <div className={styles.editorContainer}>
         <AutoSizer>
           {({ width, height }) => (
-            <SQLEditor
-              query={query.expression || initialQuery}
-              onChange={onEditorChange}
-              language={EDITOR_LANGUAGE_DEFINITION}
-              width={width}
-              height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
-            >
-              {({ formatQuery }) => (
-                <div ref={toolboxRef}>
-                  <QueryToolbox query={query} onFormatCode={formatQuery} />
-                </div>
-              )}
-            </SQLEditor>
+            <Suspense fallback={null}>
+              <SQLEditor
+                query={query.expression || initialQuery}
+                onChange={onEditorChange}
+                language={EDITOR_LANGUAGE_DEFINITION}
+                width={width}
+                height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+              >
+                {({ formatQuery }) => (
+                  <div ref={toolboxRef}>
+                    <QueryToolbox query={query} onFormatCode={formatQuery} />
+                  </div>
+                )}
+              </SQLEditor>
+            </Suspense>
           )}
         </AutoSizer>
       </div>

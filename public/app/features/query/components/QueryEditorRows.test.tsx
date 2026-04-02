@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event';
 
 import type { DataSourceApi } from '@grafana/data';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
-import { DataSourceRef, type DataQuery } from '@grafana/schema';
+import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { QueryEditorRows, Props } from './QueryEditorRows';
+import { QueryEditorRows, type Props } from './QueryEditorRows';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',

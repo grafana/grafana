@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { createDebugLog } from 'app/core/utils/debugLog';
-import { K8sAPIGroup } from 'app/features/apiserver/types';
+import { type K8sAPIGroup } from 'app/features/apiserver/types';
 
 const debugLog = createDebugLog('dashboardAPI', 'Dashboard API');
 
@@ -69,13 +69,21 @@ class DashboardAPIVersionResolver {
   }
 
   private async discover(): Promise<ResolvedDashboardVersions> {
-    const group = await getBackendSrv().get<K8sAPIGroup>(`/apis/${DASHBOARD_API_GROUP}/`);
+    const group = await getBackendSrv().get<K8sAPIGroup>(`/apis/${DASHBOARD_API_GROUP}/`, undefined, undefined, {
+      showErrorAlert: false,
+    });
     const availableVersions = new Set(group.versions.map((v) => v.version));
+    const preferred = group.preferredVersion?.version;
 
-    const v1: DashboardV1Version = availableVersions.has('v1') ? 'v1' : BETA_V1;
-    const v2: DashboardV2Version = availableVersions.has('v2') ? 'v2' : BETA_V2;
+    const v1: DashboardV1Version =
+      preferred === 'v1' || preferred === 'v1beta1' ? preferred : availableVersions.has('v1') ? 'v1' : BETA_V1;
 
-    debugLog(`Version negotiation: v1=${v1}, v2=${v2} (available: ${Array.from(availableVersions).join(', ')})`);
+    const v2: DashboardV2Version =
+      preferred === 'v2' || preferred === 'v2beta1' ? preferred : availableVersions.has('v2') ? 'v2' : BETA_V2;
+
+    debugLog(
+      `Version negotiation: v1=${v1}, v2=${v2}, preferred=${preferred ?? 'none'} (available: ${Array.from(availableVersions).join(', ')})`
+    );
 
     return { v1, v2 };
   }

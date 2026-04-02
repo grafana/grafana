@@ -1,27 +1,26 @@
 import { css } from '@emotion/css';
 import {
-  CSSProperties,
+  type CSSProperties,
   memo,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  MouseEvent,
+  type MouseEvent,
   useLayoutEffect,
 } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useIntersection } from 'react-use';
 import tinycolor from 'tinycolor2';
 
-import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
+import { findHighlightChunksInText, type GrafanaTheme2, LogsDedupStrategy, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogLabels } from '../LogLabels';
 import { LogMessageAnsi } from '../LogMessageAnsi';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { useLogDetailsContext } from './LogDetailsContext';
@@ -29,12 +28,12 @@ import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
-import { getNormalizedFieldName, LogListModel } from './processing';
+import { getNormalizedFieldName, type LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
   getLogLineDOMHeight,
-  LogFieldDimension,
-  LogLineVirtualization,
+  type LogFieldDimension,
+  type LogLineVirtualization,
   DEFAULT_LINE_HEIGHT,
 } from './virtualization';
 

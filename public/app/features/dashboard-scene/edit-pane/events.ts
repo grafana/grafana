@@ -1,11 +1,13 @@
 // Extracted from shared.ts to avoid circular dependency through DashboardScene.
 import { BusEventWithPayload } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 
 export interface DashboardEditActionEventPayload {
   removedObject?: SceneObject;
   addedObject?: SceneObject;
   movedObject?: SceneObject;
+  selectedObjectOnPerform?: SceneObject;
+  selectedObjectOnUndo?: SceneObject;
   source: SceneObject;
   description?: string;
   perform: () => void;

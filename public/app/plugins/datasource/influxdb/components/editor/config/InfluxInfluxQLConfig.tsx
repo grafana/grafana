@@ -2,18 +2,18 @@ import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceOption,
   onUpdateDatasourceSecureJsonDataOption,
-  SelectableValue,
+  type SelectableValue,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { Alert, Field, InlineLabel, Input, SecretInput, Select, useStyles2 } from '@grafana/ui';
 
-import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
+import { type InfluxOptions, type InfluxSecureJsonData } from '../../../types';
 
 import { WIDTH_SHORT } from './constants';
 import {

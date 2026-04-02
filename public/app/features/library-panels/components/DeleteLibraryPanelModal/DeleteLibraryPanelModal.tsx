@@ -1,11 +1,11 @@
-import { FC, useEffect, useMemo, useReducer } from 'react';
+import { type FC, useEffect, useMemo, useReducer } from 'react';
 
 import { LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, useStyles2 } from '@grafana/ui';
 
 import { getModalStyles } from '../../styles';
-import { LibraryElementDTO } from '../../types';
+import { type LibraryElementDTO } from '../../types';
 import { asyncDispatcher } from '../LibraryPanelsView/actions';
 
 import { getConnectedDashboards } from './actions';
@@ -35,7 +35,6 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
     <Modal
       className={styles.modal}
       title={t('library-panels.delete-library-panel-modal.title-delete-library-panel', 'Delete library panel')}
-      icon="trash-alt"
       onDismiss={onDismiss}
       isOpen={true}
     >

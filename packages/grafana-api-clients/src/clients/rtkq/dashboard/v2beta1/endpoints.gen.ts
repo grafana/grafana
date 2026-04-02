@@ -873,6 +873,8 @@ export type DashboardAdhocVariableSpec = {
   baseFilters: DashboardAdHocFilterWithLabels[];
   defaultKeys: DashboardMetricFindValue[];
   description?: string;
+  /** Whether the group-by operator is enabled in the ad hoc filter combobox. */
+  enableGroupBy?: boolean;
   filters: DashboardAdHocFilterWithLabels[];
   hide: string;
   label?: string;
@@ -1301,7 +1303,6 @@ export type AnnotationActions = {
 };
 export type AnnotationPermission = {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
 };
 export type DashboardAccess = {
   annotationsPermissions: AnnotationPermission;

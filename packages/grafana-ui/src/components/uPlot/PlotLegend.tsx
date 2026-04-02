@@ -2,15 +2,15 @@ import { css } from '@emotion/css';
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import {
-  DataFrame,
-  GrafanaTheme2,
+  type DataFrame,
+  type GrafanaTheme2,
   extractFacetedLabels,
   getFieldDisplayName,
   getFieldSeriesColor,
   resolveFacetedFilterNames,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
+import { type VizLegendOptions, AxisPlacement } from '@grafana/schema';
 
 import { SeriesVisibilityChangeMode } from '../../components/PanelChrome/types';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -18,12 +18,12 @@ import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 import { usePanelContext } from '../PanelChrome';
 import { Toggletip } from '../Toggletip/Toggletip';
-import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
+import { VizLayout, type VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { FacetedLabelsFilter } from '../VizLegend/FacetedLabelsFilter';
 import { VizLegend } from '../VizLegend/VizLegend';
-import { VizLegendItem } from '../VizLegend/types';
+import { type VizLegendItem } from '../VizLegend/types';
 
-import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { getDisplayValuesForCalcs } from './utils';
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
@@ -123,13 +123,14 @@ export const PlotLegend = memo(function PlotLegend({
       return false;
     }
 
+    const expectedSet = new Set(expectedVisible);
     const actuallyVisible = new Set(legendItems.filter((item) => !item.disabled).map((item) => item.label));
 
-    if (expectedVisible.length !== actuallyVisible.size) {
+    if (expectedSet.size !== actuallyVisible.size) {
       return true;
     }
 
-    return !expectedVisible.every((name) => actuallyVisible.has(name));
+    return !Array.from(expectedSet).every((name) => actuallyVisible.has(name));
   }, [hasActiveFilters, data, selectedLabels, legendItems]);
 
   const handleLabelsChange = useCallback(

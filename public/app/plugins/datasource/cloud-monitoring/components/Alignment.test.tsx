@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { openMenu } from 'react-select-event';
 
-import { CustomVariableModel } from '@grafana/data';
+import { type CustomVariableModel } from '@grafana/data';
 
 import { MetricKind, ValueTypes } from '../dataquery.gen';
 import { createMockDatasource } from '../mocks/cloudMonitoringDatasource';

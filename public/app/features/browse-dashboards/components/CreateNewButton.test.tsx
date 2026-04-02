@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 import { config } from '@grafana/runtime';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import { mockFolderDTO } from '../fixtures/folder.fixture';
 

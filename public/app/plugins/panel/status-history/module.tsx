@@ -1,12 +1,11 @@
 import { FieldColorModeId, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { AxisPlacement, LegendDisplayMode, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
-import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
+import { type Options, type FieldConfig, defaultFieldConfig } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
   .useFieldConfig({
@@ -111,7 +110,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         },
       });
 
-    commonOptionsBuilder.addLegendOptions(builder, false, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, false, true);
     commonOptionsBuilder.addTooltipOptions(builder);
     addAnnotationOptions(builder);
   })
