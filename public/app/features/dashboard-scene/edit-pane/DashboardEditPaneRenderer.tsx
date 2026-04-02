@@ -24,6 +24,7 @@ import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
+import { getEditableElementFor } from './shared';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -34,13 +35,13 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
-  const selectedObject = selection?.getFirstObject();
-  const isNewElement = selection?.isNewElement() ?? false;
+  const selectedObject = editPane.getSelectedObject();
+  const isNewElement = false; // selection?.isNewElement() ?? false;
   // the layout element that was selected when opening the 'add' pane
   // used when adding new panel from the sidebar
   const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
@@ -48,12 +49,8 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   );
 
   const editableElement = useMemo(() => {
-    if (selection) {
-      return selection.createSelectionElement();
-    }
-
-    return undefined;
-  }, [selection]);
+    return getEditableElementFor(selectedObject);
+  }, [selectedObject]);
 
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));

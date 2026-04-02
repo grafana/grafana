@@ -11,7 +11,6 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
-import { ElementSelection } from './ElementSelection';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
@@ -25,7 +24,6 @@ import {
 import { type EditPaneSelectionActions } from './types';
 
 export interface DashboardEditPaneState extends SceneObjectState {
-  selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
 
   undoStack: DashboardEditActionEventPayload[];
@@ -112,7 +110,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     return () => {
-      if (this.state.selection) {
+      if (this.state.selectionContext.selected.length) {
         this.clearSelection(true);
       }
       this.disableSelection();
@@ -236,7 +234,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
 
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
-      selection: undefined,
       openPane: undefined,
     });
   }
@@ -260,58 +257,34 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.selectObject(obj, obj.state.key!, options);
   }
 
-  public getSelection(): SceneObject | SceneObject[] | undefined {
-    return this.state.selection?.getSelection();
-  }
-
   public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
-    if (!force) {
-      if (multi) {
-        if (this.state.selection?.hasValue(id)) {
-          this.removeMultiSelectedObject(id);
-          return;
-        }
+    const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
+
+    if (multi) {
+      if (hasItem) {
+        this.setState({
+          selectionContext: {
+            ...this.state.selectionContext,
+            selected: this.state.selectionContext.selected.filter((i) => i.id !== id),
+          },
+        });
       } else {
-        if (this.state.selection?.getFirstObject() === obj) {
-          this.clearSelection();
-          return;
-        }
+        this.setState({
+          selectionContext: {
+            ...this.state.selectionContext,
+            selected: [...this.state.selectionContext.selected, { id }],
+          },
+        });
+      }
+    } else {
+      if (hasItem) {
+        this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] } });
+      } else {
+        this.setState({
+          selectionContext: { ...this.state.selectionContext, selected: [{ id }] },
+        });
       }
     }
-
-    const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
-    const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
-
-    this.updateSelection(new ElementSelection(selection), selected);
-  }
-
-  private removeMultiSelectedObject(id: string) {
-    if (!this.state.selection) {
-      return;
-    }
-
-    const { entries, contextItems: selected } = this.state.selection.getStateWithoutValueAt(id);
-
-    if (entries.length === 0) {
-      this.clearSelection();
-      return;
-    }
-
-    this.updateSelection(new ElementSelection([...entries]), selected);
-  }
-
-  private updateSelection(selection: ElementSelection | undefined, selected: ElementSelectionContextItem[]) {
-    // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
-    // This make sure they fire before unmounting
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-
-    this.setState({
-      selection,
-      selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selection ? 'element' : undefined,
-    });
   }
 
   /**
@@ -319,26 +292,27 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
    * @returns
    */
   public clearSelection(force = false) {
-    if (!this.state.selection) {
+    if (!this.state.selectionContext.selected.length) {
       return;
     }
 
-    // If we are docked then clearing selection should select dashboard itself
-    // Unless the user explicitly closes pane
-    if (this.state.isDocked && !force) {
-      const obj = this.state.selection?.getFirstObject();
-      const dashboard = getDashboardSceneFor(this);
-      if (obj !== dashboard) {
-        this.selectObject(dashboard, dashboard.state.key!);
-      }
-      return;
-    }
+    this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] } });
+    // // If we are docked then clearing selection should select dashboard itself
+    // // Unless the user explicitly closes pane
+    // if (this.state.isDocked && !force) {
+    //   const obj = this.state.selection?.getFirstObject();
+    //   const dashboard = getDashboardSceneFor(this);
+    //   if (obj !== dashboard) {
+    //     this.selectObject(dashboard, dashboard.state.key!);
+    //   }
+    //   return;
+    // }
 
-    this.updateSelection(undefined, []);
+    // this.updateSelection(undefined, []);
   }
 
   public openPane(openPane: DashboardSidebarPaneName) {
-    if (this.state.selection) {
+    if (this.state.selectionContext.selected.length) {
       this.clearSelection(true);
     }
 
@@ -350,7 +324,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   public closePane() {
-    if (this.state.selection) {
+    if (this.state.selectionContext.selected.length) {
       this.clearSelection(true);
     }
 
@@ -361,7 +335,13 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
 
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
-    this.state.selection?.markAsNewElement();
+    //this.state.selection?.markAsNewElement();
+  }
+
+  public getSelectedObject(): SceneObject | undefined {
+    const selected = this.state.selectionContext.selected[0];
+    const obj = sceneGraph.findObject(this, (obj) => obj.state.key === selected?.id);
+    return obj ?? undefined;
   }
 
   public addNewPanel(targetElement?: SceneObject) {
