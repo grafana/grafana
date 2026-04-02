@@ -16,9 +16,9 @@ export class RequestsRecorder {
 
   #currentRequests: Set<Request> = new Set<Request>();
 
-  #inflatedSizeBytesCounter: prom.Counter<'type' | 'host_type'>;
-  #transferSizeBytesCounter: prom.Counter<'type' | 'host_type'>;
-  #requestCountCounter: prom.Counter<'type' | 'host_type'>;
+  #inflatedSizeBytesCounter: prom.Counter<'type' | 'host_type' | 'plugin_name'>;
+  #transferSizeBytesCounter: prom.Counter<'type' | 'host_type' | 'plugin_name'>;
+  #requestCountCounter: prom.Counter<'type' | 'host_type' | 'plugin_name'>;
   #resolve?: () => void;
 
   constructor(page: Page) {
@@ -27,21 +27,21 @@ export class RequestsRecorder {
     this.#inflatedSizeBytesCounter = new prom.Counter({
       name: 'fe_perf_inflated_size_bytes',
       help: 'The size of the inflated response body in bytes',
-      labelNames: ['type', 'host_type'],
+      labelNames: ['type', 'host_type', 'plugin_name'],
       registers: [],
     });
 
     this.#transferSizeBytesCounter = new prom.Counter({
       name: 'fe_perf_transfer_size_bytes',
       help: 'The size of the transfered response body in bytes',
-      labelNames: ['type', 'host_type'],
+      labelNames: ['type', 'host_type', 'plugin_name'],
       registers: [],
     });
 
     this.#requestCountCounter = new prom.Counter({
       name: 'fe_perf_request_count',
       help: 'The number of requests made',
-      labelNames: ['type', 'host_type'],
+      labelNames: ['type', 'host_type', 'plugin_name'],
       registers: [],
     });
   }
@@ -91,6 +91,7 @@ export class RequestsRecorder {
 
     const url = response.url();
     const type = response.request().resourceType();
+    const plugin_name = getPluginName(url);
 
     // Record when a document response comes in so we can keep track of future requests
     if (type === 'document') {
@@ -115,16 +116,16 @@ export class RequestsRecorder {
 
     if (!noBodyStatusCode) {
       const body = await response.body();
-      this.#inflatedSizeBytesCounter.inc({ type, host_type: hostType }, body.length);
+      this.#inflatedSizeBytesCounter.inc({ type, host_type: hostType, plugin_name }, body.length);
     }
 
     const sizes = await response.request().sizes();
 
     this.#transferSizeBytesCounter.inc(
-      { type, host_type: hostType },
+      { type, host_type: hostType, plugin_name },
       sizes.responseBodySize + sizes.responseHeadersSize
     );
-    this.#requestCountCounter.inc({ type, host_type: hostType });
+    this.#requestCountCounter.inc({ type, host_type: hostType, plugin_name });
 
     this.#requestsInFlight -= 1;
 
@@ -136,6 +137,13 @@ export class RequestsRecorder {
   getMetrics() {
     return [this.#inflatedSizeBytesCounter, this.#transferSizeBytesCounter, this.#requestCountCounter];
   }
+}
+
+const PLUGIN_NAME_REGEXP = /([\w-]+?-app)\//i;
+
+function getPluginName(url: string) {
+  const m = url.match(PLUGIN_NAME_REGEXP);
+  return m?.[1];
 }
 
 /**
