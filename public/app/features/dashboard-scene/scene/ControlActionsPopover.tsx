@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, offset, safePolygon, useFloating, useHover, useInteractions } from '@floating-ui/react';
-import { cloneElement, useState } from 'react';
+import React, { cloneElement, useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -56,6 +56,21 @@ export function ControlEditActions({
 }) {
   const styles = useStyles2(getStyles);
 
+  const onClickEditInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      onClickEdit();
+    },
+    [onClickEdit]
+  );
+  const onClickDeleteInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      onClickDelete();
+    },
+    [onClickDelete]
+  );
+
   if (!isEditable) {
     return null;
   }
@@ -67,7 +82,7 @@ export function ControlEditActions({
         variant="primary"
         size="md"
         className={cx(styles.action, styles.editAction)}
-        onClick={onClickEdit}
+        onPointerDown={onClickEditInternal}
         aria-label={t('dashboard-scene.control-edit-actions.aria-label-edit', 'Edit')}
       />
       <div className={styles.actionsDivider} />
@@ -76,7 +91,7 @@ export function ControlEditActions({
         variant="destructive"
         size="md"
         className={cx(styles.action, styles.deleteAction)}
-        onClick={onClickDelete}
+        onPointerDown={onClickDeleteInternal}
         aria-label={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
       />
     </div>
