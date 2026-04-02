@@ -44,8 +44,8 @@ type SearchHandler struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher, features)
+func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
+	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, nil, features)
 	return &SearchHandler{
 		client:   searchClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),

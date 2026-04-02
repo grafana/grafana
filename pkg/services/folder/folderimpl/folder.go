@@ -112,10 +112,8 @@ func ProvideService(
 		request.GetNamespaceMapper(cfg),
 		folderv1.FolderResourceInfo.GroupVersionResource(),
 		restConfig.GetRestConfig,
-		dashboardStore,
 		userService,
 		resourceClient,
-		sorter,
 		features,
 	)
 
@@ -129,10 +127,8 @@ func ProvideService(
 		request.GetNamespaceMapper(cfg),
 		dashboardv1.DashboardResourceInfo.GroupVersionResource(),
 		restConfig.GetRestConfig,
-		dashboardStore,
 		userService,
 		resourceClient,
-		sorter,
 		features,
 	)
 	srv.dashboardK8sClient = dashHandler
