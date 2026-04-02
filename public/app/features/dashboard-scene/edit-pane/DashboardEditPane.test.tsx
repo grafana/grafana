@@ -190,6 +190,7 @@ describe('DashboardEditPane', () => {
       });
       const { editPane, variables } = buildTestSceneWithRepeat(layoutManager);
       editPane.enableSelection();
+      editPane.setState({ isDocked: true });
 
       const [sourceRow] = layoutManager.state.rows;
       const [sourceTab] = (sourceRow.state.layout as TabsLayoutManager).state.tabs;
@@ -215,6 +216,75 @@ describe('DashboardEditPane', () => {
       editPane.state.selectionContext.onSelect({ id: clonedTabInClonedRow.state.key! }, {});
 
       expect(editPane.getSelection()).toBe(sourceTab);
+    });
+  });
+
+  describe('selectObject tab behavior with docked/undocked edit pane', () => {
+    function setupTabScene({ isDocked }: { isDocked: boolean }) {
+      const tab1 = new TabItem({ title: 'Tab 1' });
+      const tab2 = new TabItem({ title: 'Tab 2' });
+      const tabsLayout = new TabsLayoutManager({ tabs: [tab1, tab2] });
+      const dashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        isEditing: true,
+        body: tabsLayout,
+      });
+      config.featureToggles.dashboardNewLayouts = true;
+      activateFullSceneTree(dashboard);
+
+      const editPane = dashboard.state.editPane;
+      editPane.enableSelection();
+      editPane.setState({ isDocked });
+
+      tabsLayout.setState({ currentTabSlug: tab1.getSlug() });
+
+      return { editPane, tab1, tab2 };
+    }
+
+    it('docked: selecting a non-active tab selects it', () => {
+      const { editPane, tab2 } = setupTabScene({ isDocked: true });
+
+      editPane.selectObject(tab2, tab2.state.key!, {});
+
+      expect(editPane.getSelection()).toBe(tab2);
+    });
+
+    it('undocked, pane closed: selecting a non-active tab does not open the pane', () => {
+      const { editPane, tab2 } = setupTabScene({ isDocked: false });
+
+      editPane.selectObject(tab2, tab2.state.key!, {});
+
+      expect(editPane.getSelection()).toBeUndefined();
+    });
+
+    it('undocked, pane open: selecting a non-active tab updates the selection', () => {
+      const { editPane, tab1, tab2 } = setupTabScene({ isDocked: false });
+
+      // Open the pane by selecting the active tab
+      editPane.selectObject(tab1, tab1.state.key!, {});
+      expect(editPane.getSelection()).toBe(tab1);
+
+      // Clicking a non-active tab should update the pane
+      editPane.selectObject(tab2, tab2.state.key!, {});
+      expect(editPane.getSelection()).toBe(tab2);
+    });
+
+    it('undocked, pane closed: selecting the active tab selects it', () => {
+      const { editPane, tab1 } = setupTabScene({ isDocked: false });
+
+      editPane.selectObject(tab1, tab1.state.key!, {});
+
+      expect(editPane.getSelection()).toBe(tab1);
+    });
+
+    it('undocked: selecting an already-selected tab deselects it', () => {
+      const { editPane, tab1 } = setupTabScene({ isDocked: false });
+
+      editPane.selectObject(tab1, tab1.state.key!, {});
+      expect(editPane.getSelection()).toBe(tab1);
+
+      editPane.selectObject(tab1, tab1.state.key!, {});
+      expect(editPane.getSelection()).toBeUndefined();
     });
   });
 
