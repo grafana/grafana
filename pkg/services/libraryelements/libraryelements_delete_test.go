@@ -80,7 +80,7 @@ func TestIntegration_DeleteLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When a non-admin user cannot see a connected dashboard, deletion should still be blocked",
 		func(t *testing.T, sc scenarioContext) {
 			// Downgrade user to Editor, so they can delete library panels but cannot see all folders/dashboards
-			sc.reqContext.SignedInUser.OrgRole = org.RoleEditor
+			sc.reqContext.OrgRole = org.RoleEditor
 
 			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID",
 				mock.MatchedBy(func(ctx context.Context) bool {
