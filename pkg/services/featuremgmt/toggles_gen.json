@@ -942,15 +942,15 @@
     {
       "metadata": {
         "name": "annotationsClustering",
-        "resourceVersion": "1773352347788",
+        "resourceVersion": "1775140656883",
         "creationTimestamp": "2026-03-12T21:45:54Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-03-12 21:52:27.788294 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-02 14:37:36.883749 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables annotation clustering and switches to refactored annotation code",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
