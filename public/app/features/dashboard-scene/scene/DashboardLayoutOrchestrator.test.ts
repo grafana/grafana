@@ -84,6 +84,94 @@ describe('DashboardLayoutOrchestrator', () => {
       });
     });
 
+    it('should cancel drop when panel is released between tab headers (not detached)', () => {
+      const { orchestrator, tab1Manager, gridItem, tabsManager, tab1 } = setupWithTwoTabs();
+
+      orchestrator.setState({
+        draggingGridItem: gridItem.getRef(),
+        sourceTabKey: tab1.state.key,
+      });
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceDropTarget = tab1Manager;
+      // Cursor moved between tab headers so _lastDropTarget is the TabsLayoutManager
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = tabsManager;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._itemDetachedFromSource = false;
+
+      expect(tab1Manager.state.layout.state.children).toHaveLength(1);
+
+      // @ts-expect-error - accessing private method for testing
+      const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tabsManager);
+
+      const mockEvent = { clientX: 100, clientY: 100 } as PointerEvent;
+
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._stopDraggingSync(mockEvent);
+
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
+
+      // Panel should still be in Tab 1 (drop was cancelled)
+      expect(tab1Manager.state.layout.state.children).toHaveLength(1);
+      expect(tab1Manager.state.layout.state.children[0]).toBe(gridItem);
+    });
+
+    it('should return panel to source when dropped between tab headers after detach', () => {
+      const { orchestrator, tab1Manager, tab2Manager, gridItem, tabsManager, tab1 } = setupWithTwoTabs();
+
+      orchestrator.setState({
+        draggingGridItem: gridItem.getRef(),
+        sourceTabKey: tab1.state.key,
+      });
+
+      const tab2 = tabsManager.state.tabs[1];
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceDropTarget = tab1Manager;
+      // Cursor moved between tab headers so _lastDropTarget is the TabsLayoutManager
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = tabsManager;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._itemDetachedFromSource = true;
+
+      // Simulate the item being removed from source (as happens during tab switch)
+      tab1Manager.draggedGridItemOutside(gridItem);
+      tabsManager.switchToTab(tab2);
+
+      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
+      expect(tab2Manager.state.layout.state.children).toHaveLength(0);
+
+      // @ts-expect-error - accessing private method for testing
+      const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tabsManager);
+
+      const mockEvent = { clientX: 100, clientY: 100 } as PointerEvent;
+
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._stopDraggingSync(mockEvent);
+
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
+
+      return new Promise<void>((resolve) => {
+        setTimeout(() => {
+          // Panel should be returned to source (Tab 1)
+          expect(tab1Manager.state.layout.state.children).toHaveLength(1);
+          expect(tab1Manager.state.layout.state.children[0]).toBe(gridItem);
+
+          // Tab 2 should remain empty
+          expect(tab2Manager.state.layout.state.children).toHaveLength(0);
+
+          resolve();
+        }, 0);
+      });
+    });
+
     it('should complete normal drop when valid drop target exists', () => {
       const { orchestrator, tab1Manager, tab2Manager, gridItem, tab1 } = setupWithTwoTabs();
 

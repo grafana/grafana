@@ -176,12 +176,28 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // (tab headers and other non-drop areas return null)
     const validDropTargetUnderMouse = this._getDropTargetUnderMouse(evt);
 
-    // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
-    // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
-    const noTargetUnderMouse = wasDetached && !validDropTargetUnderMouse && gridItem;
-    const canDropIntoCurrentTab = noTargetUnderMouse && lastDropTarget instanceof TabItem;
-
-    if (canDropIntoCurrentTab) {
+    // TabsLayoutManager is not a valid panel drop target — it represents the
+    // tab bar area between tab headers. Cancel the drop so the panel either
+    // stays in place or returns to its source layout.
+    const droppedOnTabBar =
+      lastDropTarget instanceof TabsLayoutManager || validDropTargetUnderMouse instanceof TabsLayoutManager;
+    if (droppedOnTabBar) {
+      if (wasDetached && gridItem) {
+        setTimeout(() => {
+          sourceDropTarget?.draggedGridItemInside?.(gridItem);
+          if (sourceDropTarget instanceof AutoGridLayoutManager) {
+            sourceDropTarget.state.layout.endExternalDrag();
+          }
+        });
+      } else {
+        this._clearDropPosition();
+        this._lastDropTarget?.setIsDropTarget?.(false);
+      }
+    } else if (wasDetached && !validDropTargetUnderMouse && gridItem && lastDropTarget instanceof TabItem) {
+      // noTargetUnderMouse = wasDetached && !validDropTargetUnderMouse && gridItem;
+      // canDropIntoCurrentTab = noTargetUnderMouse && lastDropTarget instanceof TabItem;
+      // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
+      // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
       // Drop into the current tab's layout
       setTimeout(() => {
         lastDropTarget.draggedGridItemInside?.(gridItem);
