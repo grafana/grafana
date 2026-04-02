@@ -1,16 +1,16 @@
 import { attempt, isError } from 'lodash';
 
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type PromRuleDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
+import { type GrafanaPromRulesOptions } from '../../api/prometheusApi';
 import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../../featureToggles';
-import { RulesFilter } from '../../search/rulesSearchParser';
+import { type RulesFilter } from '../../search/rulesSearchParser';
 import { parseMatcher } from '../../utils/matchers';
 
 import { buildTitleSearch, normalizeFilterState } from './filterNormalization';
 import {
-  GroupFilterConfig,
-  RuleFilterConfig,
+  type GroupFilterConfig,
+  type RuleFilterConfig,
   dashboardUidFilter,
   dataSourceNamesFilter,
   freeFormFilter,
@@ -20,6 +20,7 @@ import {
   mapDataSourceNamesToUids,
   namespaceFilter,
   pluginsFilter,
+  policyFilter,
   ruleMatches,
   ruleNameFilter,
   ruleTypeFilter,
@@ -42,7 +43,8 @@ export function hasGrafanaClientSideFilters(filterState: Partial<RulesFilter>): 
     (ruleFilterConfig.ruleHealth !== null && Boolean(filterState?.ruleHealth)) ||
     (ruleFilterConfig.dashboardUid !== null && Boolean(filterState?.dashboardUid)) ||
     (ruleFilterConfig.plugins !== null && Boolean(filterState?.plugins)) ||
-    (ruleFilterConfig.contactPoint !== null && Boolean(filterState?.contactPoint));
+    (ruleFilterConfig.contactPoint !== null && Boolean(filterState?.contactPoint)) ||
+    (ruleFilterConfig.policy !== null && Boolean(filterState?.policy));
 
   // Check each group filter: if the config has a non-null handler AND the filter state has a value, we need client-side filtering
   const hasActiveGroupFilters =
@@ -96,6 +98,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
     ruleMatchers: ruleMatchersBackendFilter,
     plugins: ruleFilterConfig.plugins ? undefined : normalizedFilterState.plugins,
+    searchFolder: groupFilterConfig.namespace ? undefined : normalizedFilterState.namespace,
   };
 
   return {
@@ -131,10 +134,11 @@ function buildGrafanaFilterConfigs() {
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
     plugins: useBackendFilters || useFullyCompatibleBackendFilters ? null : pluginsFilter,
     contactPoint: null,
+    policy: policyFilter,
   };
 
   const groupFilterConfig: GroupFilterConfig = {
-    namespace: namespaceFilter,
+    namespace: useBackendFilters ? null : namespaceFilter,
     groupName: useBackendFilters ? null : groupNameFilter,
   };
 

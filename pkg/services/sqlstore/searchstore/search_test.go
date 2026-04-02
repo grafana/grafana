@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -229,46 +230,6 @@ func TestIntegrationBuilder_RBAC(t *testing.T) {
 				int64(1),
 			},
 		},
-		{
-			desc: "user with edit permission remove subquery",
-			userPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
-			},
-			level:    dashboardaccess.PERMISSION_EDIT,
-			features: featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-			expectedParams: []any{
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:write",
-				"folders:edit",
-				"folders:admin",
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:create",
-				"folders:edit",
-				"folders:admin",
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:write",
-				"dashboards:edit",
-				"dashboards:admin",
-			},
-		},
 	}
 
 	user := &user.SignedInUser{
@@ -300,6 +261,7 @@ func TestIntegrationBuilder_RBAC(t *testing.T) {
 						tc.features,
 						recursiveQueriesAreSupported,
 						store.GetDialect(),
+						setting.NewCfg().MaxNestedFolderDepth,
 					),
 				},
 				Dialect:  store.GetDialect(),

@@ -1,9 +1,9 @@
 import {
-  DataQuery,
+  type DataQuery,
   DataSourceApi,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   PluginType,
-  TestDataSourceResponse,
+  type TestDataSourceResponse,
 } from '@grafana/data';
 
 export abstract class RuntimeDataSource<TQuery extends DataQuery = DataQuery> extends DataSourceApi<TQuery> {
@@ -14,7 +14,6 @@ export abstract class RuntimeDataSource<TQuery extends DataQuery = DataQuery> ex
       name: 'RuntimeDataSource-' + pluginId,
       uid: uid,
       type: pluginId,
-      id: 1,
       readOnly: true,
       jsonData: {},
       access: 'direct',

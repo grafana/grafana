@@ -1,17 +1,25 @@
 import { isNumber, isString } from 'lodash';
 
-import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
-import { ConnectionDirection } from '@grafana/schema';
+import {
+  type DataFrame,
+  type Field,
+  AppEvents,
+  getFieldDisplayName,
+  PluginState,
+  type SelectableValue,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { type ConnectionDirection } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { hasAlphaPanels, config } from 'app/core/config';
-import { CanvasConnection, CanvasElementItem, CanvasElementOptions } from 'app/features/canvas/element';
+import { hasAlphaPanels } from 'app/core/config';
+import { type CanvasConnection, type CanvasElementItem, type CanvasElementOptions } from 'app/features/canvas/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
-import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
+import { type Scene, type SelectionParams } from 'app/features/canvas/runtime/scene';
 
-import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
+import { type AnchorPoint, type ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {

@@ -3,10 +3,16 @@
  */
 
 // Contact Points
-export * from './grafana/api/notifications/v0alpha1/types';
-export { useListContactPoints } from './grafana/contactPoints/hooks/v0alpha1/useContactPoints';
+export * from './grafana/api/notifications/v1beta1/types';
+export { useListContactPoints } from './grafana/contactPoints/hooks/v1beta1/useContactPoints';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export { getContactPointDescription } from './grafana/contactPoints/utils';
+
+// Notification Policies / Routing Trees
+export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
+export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
+export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
+export { isDefaultRoutingTree } from './grafana/notificationPolicies/consts';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
@@ -19,5 +25,8 @@ export { type LabelMatcher, type Label } from './grafana/matchers/types';
 export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } from './grafana/matchers/utils';
 
 // API endpoints
-export { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+export { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+/** @deprecated Use notificationsAPIv1beta1 instead */
+export { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 export { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+export { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';

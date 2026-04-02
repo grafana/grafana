@@ -50,8 +50,9 @@ The dashboard settings page allows you to:
 
 To access the dashboard setting page:
 
-1. Click **Edit** in the top-right corner of the dashboard.
-1. Click **Settings**.
+1. Click **Edit**.
+1. In the toolbar, click the **Dashboard options** icon.
+1. In the sidebar, click **Settings**.
 
 ## Modify dashboard time settings
 

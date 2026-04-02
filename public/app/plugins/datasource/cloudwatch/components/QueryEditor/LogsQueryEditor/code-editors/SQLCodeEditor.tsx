@@ -1,10 +1,10 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import { useCallback, useRef } from 'react';
 
-import { CodeEditor, Monaco } from '@grafana/ui';
+import { CodeEditor, type Monaco } from '@grafana/ui';
 
-import { CloudWatchLogsQuery } from '../../../../dataquery.gen';
-import { CloudWatchDatasource } from '../../../../datasource';
+import { type CloudWatchLogsQuery } from '../../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../../datasource';
 import language from '../../../../language/cloudwatch-logs-sql/definition';
 import { TRIGGER_SUGGEST } from '../../../../language/monarch/commands';
 import { registerLanguage, reRegisterCompletionProvider } from '../../../../language/monarch/register';
@@ -20,8 +20,8 @@ interface SQLCodeEditorProps {
 export const SQLQueryEditor = (props: SQLCodeEditorProps) => {
   const { query, datasource, onChange } = props;
 
-  const monacoRef = useRef<Monaco>();
-  const disposalRef = useRef<monacoType.IDisposable>();
+  const monacoRef = useRef<Monaco | undefined>(undefined);
+  const disposalRef = useRef<monacoType.IDisposable | undefined>(undefined);
 
   const onFocus = useCallback(async () => {
     disposalRef.current = await reRegisterCompletionProvider(

@@ -34,7 +34,7 @@ connection: {
 					// The app clientID
 					clientID: string
 				}
-        #HealthStatus: {
+				#HealthStatus: {
 					// When not healthy, requests will not be executed
 					healthy: bool
 					// When the health was checked last time
@@ -61,8 +61,6 @@ connection: {
 				status: {
 					// The generation of the spec last time reconciliation ran
 					observedGeneration?: int
-					// Connection state
-					state: "connected" | "disconnected"
 					// The connection health status
 					health: #HealthStatus
 				}
@@ -70,4 +68,3 @@ connection: {
 		}
 	}
 }
-

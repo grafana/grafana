@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/trace/noop"
 )
 
@@ -62,7 +63,7 @@ func TestFolderConversions(t *testing.T) {
 		},
 	}
 
-	fs := ProvideUnifiedStore(nil, fake, tracer)
+	fs := ProvideUnifiedStore(nil, fake, tracer, setting.NewCfg())
 
 	converted, err := fs.UnstructuredToLegacyFolder(context.Background(), input)
 	require.NoError(t, err)
@@ -102,9 +103,7 @@ func TestFolderListConversions(t *testing.T) {
 			"creationTimestamp": "2022-12-02T02:02:02Z",
 			"generation": 1,
 			"labels": {
-			  "grafana.app/deprecatedInternalID": "4",
-			  "grafana.app/fullpath": "somefullpath",
-			  "grafana.app/fullpathUIDs": "somefullpathuids"
+			  "grafana.app/deprecatedInternalID": "4"
 			},
 			"name": "foldername1",
 			"namespace": "default",
@@ -270,7 +269,7 @@ func TestFolderListConversions(t *testing.T) {
 		},
 	}
 
-	fs := ProvideUnifiedStore(nil, fake, tracer)
+	fs := ProvideUnifiedStore(nil, fake, tracer, setting.NewCfg())
 
 	converted, err := fs.UnstructuredToLegacyFolderList(context.Background(), input)
 	require.NoError(t, err)

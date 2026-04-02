@@ -5,19 +5,18 @@ import {
   getDefaultTimeRange,
   isDateTime,
   rangeUtil,
-  RawTimeRange,
-  TimeRange,
+  type RawTimeRange,
+  type TimeRange,
   toUtc,
-  IntervalValues,
+  type IntervalValues,
   AppEvents,
   dateTimeForTimeZone,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
-import { config } from 'app/core/config';
-import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
+import { AutoRefreshInterval, contextSrv, type ContextSrv } from 'app/core/services/context_srv';
 import {
   getCopiedTimeRange,
   getShiftedTimeRange,
@@ -31,10 +30,10 @@ import {
   CopyTimeEvent,
   PasteTimeEvent,
   ShiftTimeEvent,
-  ShiftTimeEventDirection,
+  type ShiftTimeEventDirection,
   ZoomOutEvent,
 } from '../../../types/events';
-import { TimeModel } from '../state/TimeModel';
+import { type TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
 export class TimeSrv {

@@ -305,8 +305,8 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		writeInt(0)
 	}
 
-	for _, setting := range rule.NotificationSettings {
-		binary.LittleEndian.PutUint64(tmp, uint64(setting.Fingerprint(nil)))
+	if rule.NotificationSettings != nil {
+		binary.LittleEndian.PutUint64(tmp, uint64(rule.NotificationSettings.Fingerprint(nil)))
 		writeBytes(tmp)
 	}
 

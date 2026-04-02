@@ -15,20 +15,26 @@
 import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
-import { TraceKeyValuePair } from '@grafana/data';
+import { type TraceKeyValuePair } from '@grafana/data';
 
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import { TraceResponse, Trace, TraceSpan, TraceProcess } from '../types/trace';
+import { type TraceResponse, type Trace, type TraceSpan, type TraceProcess } from '../types/trace';
 // @ts-ignore
-import TreeNode from '../utils/TreeNode';
+import type TreeNode from '../utils/TreeNode';
 import { getConfigValue } from '../utils/config/get-config';
+import { getServiceDisplayName } from '../utils/service-name';
 
 import { getTraceName } from './trace-viewer';
 
+function asTagArray(tags: unknown): TraceKeyValuePair[] {
+  return Array.isArray(tags) ? tags : [];
+}
+
 // exported for tests
 export function deduplicateTags(tags: TraceKeyValuePair[]) {
+  const list = asTagArray(tags);
   const warningsHash: Map<string, string> = new Map<string, string>();
-  const dedupedTags: TraceKeyValuePair[] = tags.reduce<TraceKeyValuePair[]>((uniqueTags, tag) => {
+  const dedupedTags: TraceKeyValuePair[] = list.reduce<TraceKeyValuePair[]>((uniqueTags, tag) => {
     if (!uniqueTags.some((t) => t.key === tag.key && t.value === tag.value)) {
       uniqueTags.push(tag);
     } else {
@@ -42,7 +48,7 @@ export function deduplicateTags(tags: TraceKeyValuePair[]) {
 
 // exported for tests
 export function orderTags(tags: TraceKeyValuePair[], topPrefixes?: string[]) {
-  const orderedTags: TraceKeyValuePair[] = tags?.slice() ?? [];
+  const orderedTags: TraceKeyValuePair[] = asTagArray(tags).slice();
   const tp = (topPrefixes || []).map((p: string) => p.toLowerCase());
 
   orderedTags.sort((a, b) => {
@@ -146,14 +152,14 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     if (!span) {
       return;
     }
-    const { serviceName } = span.process;
-    svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
+    const svcKey = getServiceDisplayName(span.process);
+    svcCounts[svcKey] = (svcCounts[svcKey] || 0) + 1;
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
     span.childSpanCount = node.children.length;
     span.warnings = span.warnings || [];
-    span.tags = span.tags || [];
+    span.tags = asTagArray(span.tags);
     span.references = span.references || [];
 
     span.childSpanIds = node.children

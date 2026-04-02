@@ -5,12 +5,11 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 type typeInfo struct {
@@ -73,19 +72,6 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	return resource
 }
 
-func NewResourceInfoFromBatchItem(i *authzextv1.BatchCheckItem) ResourceInfo {
-	typ, relations := getTypeAndRelations(i.GetGroup(), i.GetResource())
-	return newResource(
-		typ,
-		i.GetGroup(),
-		i.GetResource(),
-		i.GetName(),
-		i.GetFolder(),
-		i.GetSubresource(),
-		relations,
-	)
-}
-
 func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {
 	typ, relations := getTypeAndRelations(r.GetGroup(), r.GetResource())
 	return newResource(
@@ -97,6 +83,33 @@ func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {
 		r.GetSubresource(),
 		relations,
 	)
+}
+
+func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInfo {
+	typ, relations := getTypeAndRelations(item.GetGroup(), item.GetResource())
+
+	resource := newResource(
+		typ,
+		item.GetGroup(),
+		item.GetResource(),
+		item.GetName(),
+		item.GetFolder(),
+		item.GetSubresource(),
+		relations,
+	)
+
+	// Special case for creating folders and resources in the root folder
+	if item.GetVerb() == utils.VerbCreate {
+		if resource.IsFolderResource() && resource.name == "" {
+			resource.name = accesscontrol.GeneralFolderUID
+		} else if resource.HasFolderSupport() && resource.folder == "" {
+			resource.folder = accesscontrol.GeneralFolderUID
+		}
+
+		return resource
+	}
+
+	return resource
 }
 
 func getTypeAndRelations(group, resource string) (string, []string) {
@@ -139,7 +152,9 @@ func (r ResourceInfo) GroupResourceIdent() string {
 }
 
 func (r ResourceInfo) ResourceIdent() string {
-	if r.name == "" {
+	// Treat "*" the same as "". Wildcard access ("can access all resources of this type")
+	// is handled at the group-resource level.
+	if r.name == "" || r.name == "*" {
 		return ""
 	}
 

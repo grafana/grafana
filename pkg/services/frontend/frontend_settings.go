@@ -47,4 +47,6 @@ type FSFrontendSettings struct {
 	CSPReportOnlyEnabled             bool              `json:"cspReportOnlyEnabled,omitempty"`
 	Http2Enabled                     bool              `json:"http2Enabled,omitempty"`
 	ReportingStaticContext           map[string]string `json:"reportingStaticContext,omitempty"`
+
+	LoginError string `json:"loginError,omitempty"`
 }

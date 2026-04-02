@@ -5,20 +5,19 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
-  CoreApp,
-  DataFrame,
+  type CoreApp,
+  type DataFrame,
   DataTransformerID,
-  FieldConfigSource,
-  SelectableValue,
-  TimeZone,
+  type FieldConfigSource,
+  type SelectableValue,
+  type TimeZone,
   transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
 

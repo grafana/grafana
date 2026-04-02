@@ -1,7 +1,13 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
+import {
+  type ActionModel,
+  type Field,
+  type GrafanaTheme2,
+  type LinkModel,
+  type ThemeSpacingTokens,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 
@@ -11,8 +17,8 @@ import { Button } from '../Button/Button';
 import { DataLinkButton } from '../DataLinks/DataLinkButton';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
-import { ResponsiveProp } from '../Layout/utils/responsiveness';
-import { AdHocFilterItem } from '../Table/TableNG/types';
+import { type ResponsiveProp } from '../Layout/utils/responsiveness';
+import { type AdHocFilterItem } from '../Table/TableNG/types';
 
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
@@ -127,25 +133,19 @@ export const VizTooltipFooter = ({
               variant="secondary"
               size="sm"
               onClick={filterByGroupedLabels.onFilterForGroupedLabels}
+              data-testid={selectors.components.VizTooltipFooter.buttons.apply}
             >
-              <Trans
-                i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter"
-                data-testid={selectors.components.VizTooltipFooter.buttons.apply}
-              >
-                Apply as filter
-              </Trans>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter">Filter on this value</Trans>
             </Button>
             <Button
               icon="filter"
               variant="secondary"
               size="sm"
               onClick={filterByGroupedLabels.onFilterOutGroupedLabels}
+              data-testid={selectors.components.VizTooltipFooter.buttons.applyInverse}
             >
-              <Trans
-                i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter"
-                data-testid={selectors.components.VizTooltipFooter.buttons.applyInverse}
-              >
-                Apply as inverse filter
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter">
+                Filter out this value
               </Trans>
             </Button>
           </Stack>

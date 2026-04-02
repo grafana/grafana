@@ -3,16 +3,14 @@ import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
-import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO, type DashboardMeta } from 'app/types/dashboard';
 
 import { defaultScopesServices, ScopesContextProvider } from '../../ScopesContextProvider';
-
-import { getMock } from './mocks';
 
 const getDashboardDTO: (
   overrideDashboard: Partial<DashboardDataDTO>,
@@ -168,8 +166,6 @@ const panelPlugin = getPanelPlugin({
   skipDataQuery: true,
 });
 
-config.panels['table'] = panelPlugin.meta;
-
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(panelPlugin),
   getPanelPluginFromCache: () => undefined,
@@ -208,7 +204,6 @@ export async function renderDashboard(
 export async function resetScenes(spies: jest.SpyInstance[] = []) {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
-  getMock.mockClear();
   spies.forEach((spy) => spy.mockClear());
   cleanup();
 }

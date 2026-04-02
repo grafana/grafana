@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,10 +15,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/exp/maps"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
@@ -26,7 +27,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -96,7 +97,6 @@ type DashboardServiceImpl struct {
 	publicDashboardService publicdashboards.ServiceWrapper
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
-	dual                   dualwrite.Service
 
 	dashboardPermissionsReady chan struct{}
 }
@@ -178,12 +178,6 @@ func (dr *DashboardServiceImpl) executeCleanupWithLock(ctx context.Context) erro
 func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context, batchSize int64, timeout time.Duration) error {
 	ctx, span := tracer.Start(ctx, "dashboards.service.cleanupK8sDashboardResources")
 	defer span.End()
-
-	readingFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, dr.dual)
-	if readingFromLegacy {
-		// Legacy does its own cleanup
-		return nil
-	}
 
 	// Create a timeout context to ensure we complete before the lock expires
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -414,7 +408,7 @@ func ProvideDashboardServiceImpl(
 	quotaService quota.Service,
 	orgService org.Service,
 	publicDashboardService publicdashboards.ServiceWrapper,
-	dual dualwrite.Service,
+	_ dualwrite.Service,
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 	k8sClient dashboardclient.K8sHandlerWithFallback,
@@ -435,7 +429,6 @@ func ProvideDashboardServiceImpl(
 		publicDashboardService:    publicDashboardService,
 		serverLockService:         serverLockService,
 		kvstore:                   kvstore,
-		dual:                      dual,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -1377,8 +1370,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
 	isNested := obj.GetFolder() != ""
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+	if isNested {
 		// Don't set any permissions for nested dashboards
 		return nil
 	}
@@ -1563,7 +1555,7 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 	defer span.End()
 
 	filteredDashboards := make([]*dashboards.DashboardRef, 0)
-	folderUIDs := make([]string, 0)
+	folderUIDs := make([]string, 0, len(userDashboards))
 	for _, dashboard := range userDashboards {
 		folderUIDs = append(folderUIDs, dashboard.FolderUID)
 	}
@@ -1756,7 +1748,7 @@ func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 }
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
-	hitList := make([]*model.Hit, 0)
+	hitList := make([]*model.Hit, 0, len(res))
 
 	for _, item := range res {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
@@ -1909,7 +1901,7 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 		query.UID = result.UID
 	}
 
-	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, "")
+	out, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, query.K8sGetAPIVersion, "")
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
@@ -2327,7 +2319,32 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	if err != nil {
 		return nil, err
 	}
-	return dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+
+	dash, err := dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+	if err != nil {
+		return nil, err
+	}
+
+	// The requested version
+	gv, _ := schema.ParseGroupVersion(item.GetAPIVersion())
+	if gv.Version != "" {
+		dash.APIVersion = gv.Version
+	}
+
+	// Use the old payload if we could not convert to the the requested version
+	conversion, ok, _ := unstructured.NestedMap(item.Object, "status", "conversion")
+	if ok && conversion != nil {
+		failed, _, _ := unstructured.NestedBool(conversion, "failed")
+		if failed {
+			dash.APIVersion, _, _ = unstructured.NestedString(conversion, "storedVersion")
+			body, ok, _ := unstructured.NestedMap(conversion, "source")
+			if ok {
+				dash.Data = simplejson.NewFromAny(body)
+			}
+		}
+	}
+
+	return dash, nil
 }
 
 func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *unstructured.Unstructured, orgID int64, users map[string]*user.User) (*dashboards.Dashboard, error) {
@@ -2474,5 +2491,5 @@ func getFolderUIDs(hits []dashboardv0.DashboardHit) []string {
 			folderSet[hit.Folder] = true
 		}
 	}
-	return maps.Keys(folderSet)
+	return slices.Collect(maps.Keys(folderSet))
 }

@@ -20,6 +20,11 @@ func NewAnnotationstatusOperatorState() *AnnotationstatusOperatorState {
 	return &AnnotationstatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for AnnotationstatusOperatorState.
+func (AnnotationstatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.AnnotationstatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type AnnotationStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewAnnotationStatus() *AnnotationStatus {
 	return &AnnotationStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for AnnotationStatus.
+func (AnnotationStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.AnnotationStatus"
+}
+
 // +k8s:openapi-gen=true
 type AnnotationStatusOperatorStateState string
 
@@ -42,3 +52,8 @@ const (
 	AnnotationStatusOperatorStateStateInProgress AnnotationStatusOperatorStateState = "in_progress"
 	AnnotationStatusOperatorStateStateFailed     AnnotationStatusOperatorStateState = "failed"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for AnnotationStatusOperatorStateState.
+func (AnnotationStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.AnnotationStatusOperatorStateState"
+}

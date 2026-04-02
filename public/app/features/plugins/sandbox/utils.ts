@@ -2,10 +2,10 @@ import { isNearMembraneProxy } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
 
-import { LogContext } from '@grafana/faro-web-sdk';
+import { type LogContext } from '@grafana/faro-web-sdk';
 import { createMonitoringLogger } from '@grafana/runtime';
 
-import { SandboxedPluginObject } from './types';
+import { type SandboxedPluginObject } from './types';
 
 export function isSandboxedPluginObject(value: unknown): value is SandboxedPluginObject {
   return !!value && typeof value === 'object' && value?.hasOwnProperty('plugin');
@@ -96,18 +96,19 @@ export function unboxNearMembraneProxies(structure: unknown): unknown {
 function isTransferable(structure: unknown): structure is Transferable {
   // We should probably add all of the transferable types here.
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects
+  // Note: Some of these APIs are not available in all browsers (e.g., MediaSourceHandle,
+  // AudioData, VideoFrame are not in Firefox), so we check for their existence first.
   return (
     structure instanceof ArrayBuffer ||
-    structure instanceof OffscreenCanvas ||
+    (typeof OffscreenCanvas !== 'undefined' && structure instanceof OffscreenCanvas) ||
     structure instanceof ImageBitmap ||
     structure instanceof MessagePort ||
-    structure instanceof MediaSourceHandle ||
+    (typeof MediaSourceHandle !== 'undefined' && structure instanceof MediaSourceHandle) ||
     structure instanceof ReadableStream ||
     structure instanceof WritableStream ||
     structure instanceof TransformStream ||
-    structure instanceof AudioData ||
-    structure instanceof VideoFrame ||
-    structure instanceof RTCDataChannel ||
-    structure instanceof ArrayBuffer
+    (typeof AudioData !== 'undefined' && structure instanceof AudioData) ||
+    (typeof VideoFrame !== 'undefined' && structure instanceof VideoFrame) ||
+    structure instanceof RTCDataChannel
   );
 }

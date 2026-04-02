@@ -3,31 +3,32 @@ import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
   filterFieldConfigOverrides,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isStandardFieldProp,
-  PanelPluginMeta,
+  type PanelPluginMeta,
   restoreCustomOverrideRules,
-  SelectableValue,
+  type SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
-  DeepPartial,
-  SceneComponentProps,
+  type DeepPartial,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
 import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Text } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
-import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
+import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -41,7 +42,6 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
-  editPreviewRef?: SceneObjectRef<VizPanel>;
 }
 
 interface PluginOptionsCache {
@@ -54,6 +54,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
   onToggleVizPicker = () => {
     const newState = !this.state.isVizPickerOpen;
+
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
       open: newState,
@@ -73,6 +74,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       plugin_id: pluginId,
       from_suggestions: options.fromSuggestions ?? false,
     });
+
+    vizSuggestionsTracker.record(
+      panel.state.key!,
+      options.suggestionMetadata
+        ? { pluginId: options.pluginId, isNewPanel: this.state.isNewPanel ?? false, ...options.suggestionMetadata }
+        : undefined
+    );
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {
@@ -100,7 +108,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     if (options.fieldConfig) {
       const fieldConfigWithOverrides = {
-        ...options.fieldConfig,
+        defaults: {
+          ...newFieldConfig.defaults,
+          custom: options.fieldConfig.defaults?.custom ?? {},
+        },
         overrides: newFieldConfig.overrides,
       };
       panel.onFieldConfigChange(fieldConfigWithOverrides, true);
@@ -138,10 +149,8 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 }
 
 function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPane>) {
-  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz, editPreviewRef } =
-    model.useState();
+  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz } = model.useState();
   const panel = panelRef.resolve();
-  const editPreview = editPreviewRef?.resolve() ?? panel; // if something goes wrong, at least update the panel.
   const { pluginId } = panel.useState();
   const { data } = sceneGraph.getData(panel).useState();
   const styles = useStyles2(getStyles);
@@ -151,14 +160,15 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
   const onlyOverrides = listMode === OptionFilter.Overrides;
   const isScrollingLayout = useScrollReflowLimit();
 
+  const { value: listedPlugins = [] } = useListedPanelPluginMetas();
   const pluginMeta: PanelPluginMeta = useMemo(() => {
-    let meta = getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0];
+    let meta = listedPlugins.find((p) => p.id === pluginId);
     if (!meta) {
       const notFound = getPanelPluginNotFound(`Panel plugin not found (${pluginId})`, true);
       meta = notFound.meta;
     }
     return meta;
-  }, [pluginId]);
+  }, [pluginId, listedPlugins]);
 
   return (
     <>
@@ -198,6 +208,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
                   onClick={() => {
                     model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
                   }}
+                  aria-pressed={onlyOverrides}
                 />
               )}
               <Button
@@ -232,12 +243,12 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
       {isVizPickerOpen && (
         <PanelVizTypePicker
           panel={panel}
-          editPreview={editPreview}
           onChange={model.onChangePanel}
           onClose={model.onToggleVizPicker}
           data={data}
           showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
           isNewPanel={isNewPanel}
+          hasPickedViz={hasPickedViz}
         />
       )}
     </>

@@ -1,19 +1,22 @@
-import { useEffect, useRef } from 'react';
+import { createElement, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import {
-  DeleteRepositoryFilesWithPathApiResponse,
-  GetRepositoryFilesWithPathApiResponse,
-  RepositoryView,
+  type DeleteRepositoryFilesWithPathApiResponse,
+  type GetRepositoryFilesWithPathApiResponse,
+  type RepositoryView,
 } from 'app/api/clients/provisioning/v0alpha1';
-import { Resource } from 'app/features/apiserver/types';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { type Resource } from 'app/features/apiserver/types';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
-import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';
 
+import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
 type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
@@ -116,12 +119,25 @@ export function useProvisionedRequestHandler<T>({
         setLastBranch(repository?.name, selectedBranch || repository?.branch);
       }
 
-      // Success message
-      const message = successMessage || getContextualSuccessMessage(info);
-      getAppEvents().publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [message],
-      });
+      // Only show success alert for write workflow (not branch workflow,
+      // which navigates to a preview page with its own PR banner)
+      if (workflow !== 'branch') {
+        const branch = ref || selectedBranch || repository?.branch;
+        const repoURL = urls?.repositoryURL || repository?.url;
+
+        if (branch) {
+          // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
+          // and notifyApp supports a React component for rendering the branch name as a clickable link.
+          const component = createElement(PushSuccessMessage, { branch, repositoryURL: repoURL });
+          dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+        } else {
+          const message = successMessage || t('provisioned-request.saved-success', 'Changes saved successfully');
+          getAppEvents().publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [message],
+          });
+        }
+      }
 
       // Branch workflow
       if (workflow === 'branch' && handlers.onBranchSuccess && ref && path) {
@@ -152,19 +168,6 @@ export function useProvisionedRequestHandler<T>({
     selectedBranch,
     setLastBranch,
   ]);
-}
-
-function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
-  const { resourceType } = info;
-
-  switch (resourceType) {
-    case 'dashboard':
-      return t('provisioned-resource-request-handler-dashboard', 'Dashboard saved successfully');
-    case 'folder':
-      return t('provisioned-resource-request-handler-folder', 'Folder created successfully');
-    default:
-      return t('provisioned-resource-request-handler', 'Resource saved successfully');
-  }
 }
 
 export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };

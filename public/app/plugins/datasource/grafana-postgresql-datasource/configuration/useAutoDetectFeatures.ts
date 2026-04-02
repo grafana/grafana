@@ -1,23 +1,23 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { type Dispatch, type SetStateAction, useState } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
-  SelectableValue,
+  type DataSourcePluginOptionsEditorProps,
+  type DataSourceSettings,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginOption,
 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type ComboboxOption } from '@grafana/ui';
 
 import { PostgresDatasource } from '../datasource';
-import { PostgresOptions, PostgresTLSModes, SecureJsonData } from '../types';
+import { type PostgresOptions, PostgresTLSModes, type SecureJsonData } from '../types';
 
 import { postgresVersions } from './ConfigurationEditor';
 
 type Options = {
   props: DataSourcePluginOptionsEditorProps<PostgresOptions, SecureJsonData>;
-  setVersionOptions: Dispatch<SetStateAction<Array<SelectableValue<number>>>>;
+  setVersionOptions: Dispatch<SetStateAction<Array<ComboboxOption<number>>>>;
 };
 
 export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
@@ -29,7 +29,7 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
       if (!saved) {
         // We need to save the datasource before we can get the version so we can query the database with the options we have.
         const result = await getBackendSrv().put<{ datasource: DataSourceSettings }>(
-          `/api/datasources/${options.id}`,
+          `/api/datasources/uid/${options.uid}`,
           options
         );
 

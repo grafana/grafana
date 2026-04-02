@@ -1,9 +1,9 @@
-import { TimeRange, PluginType } from '@grafana/data';
+import { type TimeRange, PluginType } from '@grafana/data';
 
-import { DB, SQLQuery, SQLSelectableValue, ValidationResults } from '../types';
+import { type DB, type SQLQuery, type SQLSelectableValue, type ValidationResults } from '../types';
 
-import { DatasetSelectorProps } from './DatasetSelector';
-import { TableSelectorProps } from './TableSelector';
+import { type DatasetSelectorProps } from './DatasetSelector';
+import { type TableSelectorProps } from './TableSelector';
 
 export const buildMockDB = (): DB => ({
   datasets: jest.fn(() => Promise.resolve(['dataset1', 'dataset2'])),
@@ -12,7 +12,6 @@ export const buildMockDB = (): DB => ({
   validateQuery: jest.fn((_query: SQLQuery, _range?: TimeRange) =>
     Promise.resolve<ValidationResults>({ query: { refId: '123' }, error: '', isError: false, isValid: true })
   ),
-  dsID: jest.fn(() => 1234),
   functions: jest.fn(() => []),
   getEditorLanguageDefinition: jest.fn(() => ({ id: '4567' })),
   toRawSql: (_query: SQLQuery) => '',

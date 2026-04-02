@@ -7,7 +7,8 @@ import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui'
 import { DeleteProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/DeleteProvisionedDashboardDrawer';
 
 import { useDeleteDashboardsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DeletedDashboardsInfo } from '../../browse-dashboards/components/DeletedDashboardsInfo';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
   dashboard: DashboardScene;
@@ -78,13 +79,7 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
         <>
           {config.featureToggles.restoreDashboards && (
             <>
-              <Text element="p">
-                <Trans i18nKey="dashboard-settings.delete-modal-restore-dashboards-text">
-                  This action will delete the dashboard. Deleted dashboards will be kept in the history for up to 12
-                  months and can be restored by your organization administrator during that time. The history is limited
-                  to 1000 dashboards—older ones will be removed sooner if the limit is reached.
-                </Trans>
-              </Text>
+              <DeletedDashboardsInfo target="dashboard" />
               <Space v={1} />
             </>
           )}
@@ -98,7 +93,6 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
       onConfirm={onConfirm}
       onDismiss={onClose}
       title={t('dashboard-settings.delete-modal.title', 'Delete')}
-      icon="trash-alt"
       confirmText={t('dashboard-settings.delete-modal.delete-button', 'Delete')}
       confirmationText={t('dashboard-settings.delete-modal.confirmation-text', 'Delete')}
     />
@@ -113,7 +107,6 @@ function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModal
         'dashboard-scene.provisioned-delete-modal.title-cannot-delete-provisioned-dashboard',
         'Cannot delete provisioned dashboard'
       )}
-      icon="trash-alt"
       onDismiss={onClose}
     >
       <p>

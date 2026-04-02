@@ -40,12 +40,13 @@ func NewSearchOptions(
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
-			Root:                   root,
-			FileThreshold:          int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			IndexCacheTTL:          cfg.IndexCacheTTL,             // How long to keep the index cache in memory
-			BuildVersion:           cfg.BuildVersion,
-			OwnsIndex:              ownsIndexFn,
-			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
+			Root:                     root,
+			FileThreshold:            int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+			IndexCacheTTL:            cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			BuildVersion:             cfg.BuildVersion,
+			OwnsIndex:                ownsIndexFn,
+			IndexMinUpdateInterval:   cfg.IndexMinUpdateInterval,
+			SelectableFieldsForKinds: resource.SelectableFields(),
 		}, indexMetrics)
 
 		if err != nil {
@@ -53,20 +54,23 @@ func NewSearchOptions(
 		}
 
 		return resource.SearchOptions{
-			Backend:                bleve,
-			Resources:              docs,
-			InitWorkerThreads:      cfg.IndexWorkers,
-			IndexRebuildWorkers:    cfg.IndexRebuildWorkers,
-			InitMinCount:           cfg.IndexMinCount,
-			DashboardIndexMaxAge:   cfg.IndexRebuildInterval,
-			MaxIndexAge:            cfg.MaxFileIndexAge,
-			MinBuildVersion:        minVersion,
-			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
+			Backend:                   bleve,
+			Resources:                 docs,
+			InitWorkerThreads:         cfg.IndexWorkers,
+			IndexRebuildWorkers:       cfg.IndexRebuildWorkers,
+			InitMinCount:              cfg.IndexMinCount,
+			DashboardIndexMaxAge:      cfg.IndexRebuildInterval,
+			MaxIndexAge:               cfg.MaxFileIndexAge,
+			MinBuildVersion:           minVersion,
+			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
+			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
+			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
 		}, nil
 	}
 	return resource.SearchOptions{
 		// it is used for search after write and throttles index updates
-		IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
-		MaxIndexAge:            cfg.MaxFileIndexAge,
+		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
+		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
+		MaxIndexAge:               cfg.MaxFileIndexAge,
 	}, nil
 }

@@ -1,9 +1,9 @@
 import { config } from '@grafana/runtime';
 import { CustomVariable, GroupByVariable } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type LibraryPanel } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';

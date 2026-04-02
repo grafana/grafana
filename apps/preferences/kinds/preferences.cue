@@ -35,9 +35,6 @@ preferencesV1alpha1: {
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference
 
-			// Cookie preferences
-			cookiePreferences?: #CookiePreferences
-
 			// Navigation preferences
 			navbar?: #NavbarPreference
 		}
@@ -47,14 +44,8 @@ preferencesV1alpha1: {
 			homeTab?: string
 		}
 
-		#CookiePreferences: {
-			analytics?: {}
-			performance?: {}
-			functional?: {}
-		}
-
 		#NavbarPreference: {
 			bookmarkUrls: [...string]
-		} 
+		}
 	}
 }

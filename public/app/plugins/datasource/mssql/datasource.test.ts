@@ -4,21 +4,21 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import {
   dataFrameToJSON,
   getDefaultTimeRange,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  MetricFindValue,
+  type MetricFindValue,
   createDataFrame,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
-import { SQLQuery } from '@grafana/sql';
+import { type SQLQuery } from '@grafana/sql';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 
 import { MssqlDatasource } from './datasource';
-import { MssqlOptions } from './types';
+import { type MssqlOptions } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -31,7 +31,6 @@ jest.mock('uuid', () => ({
 }));
 
 const instanceSettings = {
-  id: 1,
   uid: 'mssql-datasource',
   type: 'mssql',
   name: 'MSSQL',

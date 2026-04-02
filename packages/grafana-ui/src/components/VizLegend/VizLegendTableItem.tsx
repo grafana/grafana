@@ -2,14 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { hoverColor } from '../../themes/mixins';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem } from './types';
+import { type VizLegendItem } from './types';
 
 export interface Props {
   key?: React.Key;
@@ -69,7 +69,7 @@ export const LegendTableItem = ({
 
   return (
     <tr className={cx(styles.row, className)}>
-      <td className={styles.labelCell}>
+      <td>
         <span className={styles.itemWrapper}>
           <VizLegendSeriesIcon
             color={item.color}
@@ -77,26 +77,24 @@ export const LegendTableItem = ({
             readonly={readonly}
             lineStyle={item.lineStyle}
           />
-          <div className={styles.labelCellInner}>
-            <button
-              disabled={readonly}
-              type="button"
-              title={item.label}
-              onBlur={onMouseOut}
-              onFocus={onMouseOver}
-              onMouseOver={onMouseOver}
-              onMouseOut={onMouseOut}
-              onClick={!readonly ? onClick : undefined}
-              className={cx(styles.label, item.disabled && styles.labelDisabled)}
-            >
-              {item.label}{' '}
-              {item.yAxis === 2 && (
-                <span className={styles.yAxisLabel}>
-                  <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
-                </span>
-              )}
-            </button>
-          </div>
+          <button
+            disabled={readonly}
+            type="button"
+            title={item.label}
+            onBlur={onMouseOut}
+            onFocus={onMouseOver}
+            onMouseOver={onMouseOver}
+            onMouseOut={onMouseOut}
+            onClick={!readonly ? onClick : undefined}
+            className={cx(styles.label, item.disabled && styles.labelDisabled)}
+          >
+            {item.label}{' '}
+            {item.yAxis === 2 && (
+              <span className={styles.yAxisLabel}>
+                <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
+              </span>
+            )}
+          </button>
         </span>
       </td>
       {item.getDisplayValues &&
@@ -130,28 +128,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: rowHoverBg,
       },
     }),
-    labelCell: css({
-      label: 'LegendLabelCell',
-      maxWidth: 0,
-      width: '100%',
-      minWidth: theme.spacing(16),
-    }),
-    labelCellInner: css({
-      label: 'LegendLabelCellInner',
-      display: 'block',
-      flex: 1,
-      minWidth: 0,
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      paddingRight: theme.spacing(3),
-      scrollbarWidth: 'none',
-      msOverflowStyle: 'none',
-      maskImage: `linear-gradient(to right, black calc(100% - ${theme.spacing(3)}), transparent 100%)`,
-      WebkitMaskImage: `linear-gradient(to right, black calc(100% - ${theme.spacing(3)}), transparent 100%)`,
-      '&::-webkit-scrollbar': {
-        display: 'none',
-      },
-    }),
     label: css({
       label: 'LegendLabel',
       whiteSpace: 'nowrap',
@@ -159,6 +135,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       fontSize: 'inherit',
       padding: 0,
+      maxWidth: '600px',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
       userSelect: 'text',
     }),
     labelDisabled: css({
@@ -169,6 +148,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       whiteSpace: 'nowrap',
       alignItems: 'center',
+      gap: theme.spacing(1),
     }),
     value: css({
       textAlign: 'right',

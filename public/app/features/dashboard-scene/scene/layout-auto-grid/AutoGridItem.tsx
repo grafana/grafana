@@ -6,19 +6,19 @@ import {
   MultiValueVariable,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
-  VariableValueSingle,
-  VizPanel,
+  type VariableValueSingle,
+  type VizPanel,
 } from '@grafana/scenes';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { DashboardStateChangedEvent } from '../../edit-pane/shared';
+import { DashboardStateChangedEvent, RepeatsUpdatedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
-import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 import { getOptions } from './AutoGridItemEditor';
 import { AutoGridItemRenderer } from './AutoGridItemRenderer';
@@ -147,6 +147,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
     this.setState({ repeatedPanels, repeatedConditionalRendering });
     this._prevRepeatValues = values;
+    this.publishEvent(new RepeatsUpdatedEvent(this), true);
   }
 
   public getPanelCount() {

@@ -1,13 +1,13 @@
-import { from, map, Observable, Unsubscribable } from 'rxjs';
+import { from, map, type Observable, type Unsubscribable } from 'rxjs';
 
-import { AlertState, AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
+import { AlertState, type AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneDataLayerBase,
-  SceneDataLayerProvider,
-  SceneDataLayerProviderState,
+  type SceneDataLayerProvider,
+  type SceneDataLayerProviderState,
   sceneGraph,
-  SceneTimeRangeLike,
+  type SceneTimeRangeLike,
 } from '@grafana/scenes';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -20,8 +20,8 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
-import { RuleNamespace } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RuleNamespace } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -62,7 +62,7 @@ export class AlertStatesDataLayer
 
   private async runWithTimeRange(timeRange: SceneTimeRangeLike) {
     const dashboard = getDashboardSceneFor(this);
-    const { uid, id } = dashboard.state;
+    const { uid } = dashboard.state;
 
     if (this.querySub) {
       this.querySub.unsubscribe();
@@ -108,7 +108,7 @@ export class AlertStatesDataLayer
                   state,
                   id: Object.keys(panelIdToAlertState).length,
                   panelId,
-                  dashboardId: id!,
+                  dashboardUID: uid,
                 };
               } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
                 panelIdToAlertState[panelId].state = AlertState.Alerting;

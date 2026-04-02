@@ -34,21 +34,20 @@ var (
 	_ rest.Updater              = (*LegacyStore)(nil)
 )
 
-var resource = iamv0alpha1.TeamResourceInfo
+var teamResource = iamv0alpha1.TeamResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, tracer}
 }
 
 type LegacyStore struct {
-	store               legacy.LegacyIdentityStore
-	ac                  claims.AccessClient
-	enableAuthnMutation bool
-	tracer              trace.Tracer
+	store  legacy.LegacyIdentityStore
+	ac     claims.AccessClient
+	tracer trace.Tracer
 }
 
 func (s *LegacyStore) New() runtime.Object {
-	return resource.NewFunc()
+	return teamResource.NewFunc()
 }
 
 func (s *LegacyStore) Destroy() {}
@@ -59,29 +58,25 @@ func (s *LegacyStore) NamespaceScoped() bool {
 }
 
 func (s *LegacyStore) GetSingularName() string {
-	return resource.GetSingularName()
+	return teamResource.GetSingularName()
 }
 
 func (s *LegacyStore) NewList() runtime.Object {
-	return resource.NewListFunc()
+	return teamResource.NewListFunc()
 }
 
 func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
+	return teamResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	return nil, apierrors.NewMethodNotSupported(teamResource.GroupResource(), "delete")
 }
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "team.Delete")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -119,10 +114,6 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "team.Update")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -173,7 +164,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	defer span.End()
 
 	res, err := common.List(
-		ctx, resource, s.ac, common.PaginationFromListOptions(options),
+		ctx, teamResource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.Team], error) {
 			found, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
 				Pagination: p,
@@ -228,10 +219,10 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		Pagination: common.Pagination{Limit: 1},
 	})
 	if found == nil || err != nil {
-		return nil, resource.NewNotFound(name)
+		return nil, teamResource.NewNotFound(name)
 	}
 	if len(found.Teams) < 1 {
-		return nil, resource.NewNotFound(name)
+		return nil, teamResource.NewNotFound(name)
 	}
 
 	obj := toTeamObject(found.Teams[0], ns)
@@ -241,10 +232,6 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	ctx, span := s.tracer.Start(ctx, "team.Create")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {

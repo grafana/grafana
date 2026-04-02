@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
+import { type PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
@@ -24,11 +25,11 @@ import {
 } from 'app/features/alerting/unified/Analytics';
 import { templatesApi } from 'app/features/alerting/unified/api/templateApi';
 import {
-  NotificationTemplate,
+  type NotificationTemplate,
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
+import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
@@ -73,7 +74,13 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
           size="md"
           onClose={handleClose}
         >
-          <TemplateSelector onSelect={onSelect} onClose={handleClose} option={option} valueInForm={valueInForm} />
+          <TemplateSelector
+            onSelect={onSelect}
+            onClose={handleClose}
+            option={option}
+            valueInForm={valueInForm}
+            filterKind="grafana"
+          />
         </Drawer>
       )}
     </>
@@ -120,9 +127,10 @@ interface TemplateSelectorProps {
   onClose: () => void;
   option: NotificationChannelOption;
   valueInForm: string;
+  filterKind?: TemplateGroupTemplateKind;
 }
 
-function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
+export function TemplateSelector({ onSelect, onClose, option, valueInForm, filterKind }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
   const valueInFormIsCustom = Boolean(valueInForm) && !matchesOnlyOneTemplate(valueInForm);
   const [template, setTemplate] = useState<SelectableValue<Template> | undefined>(undefined);
@@ -171,12 +179,20 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     setTemplateOption(option);
   };
 
+  // Filter templates by kind
+  const filteredData = useMemo(() => {
+    if (!filterKind) {
+      return data;
+    }
+    return (data ?? []).filter((template) => template.kind === filterKind);
+  }, [data, filterKind]);
+
   const options = useMemo(() => {
-    if (!defaultTemplates || !data || isLoading || error) {
+    if (!defaultTemplates || !filteredData || isLoading || error) {
       return [];
     }
-    return getTemplateOptions(data, defaultTemplates);
-  }, [data, defaultTemplates, isLoading, error]);
+    return getTemplateOptions(filteredData, defaultTemplates);
+  }, [filteredData, defaultTemplates, isLoading, error]);
 
   const defaultTemplateValue = useMemo(() => {
     if (!options.length || !Boolean(valueInForm) || !matchesOnlyOneTemplate(valueInForm)) {
@@ -328,6 +344,7 @@ interface WrapWithTemplateSelectionProps extends PropsWithChildren {
   onSelectTemplate: (template: string) => void;
   option: NotificationChannelOption;
   name: string;
+  readOnly?: boolean;
 }
 export function WrapWithTemplateSelection({
   useTemplates,
@@ -335,21 +352,24 @@ export function WrapWithTemplateSelection({
   option,
   name,
   children,
+  readOnly = false,
 }: WrapWithTemplateSelectionProps) {
   const styles = useStyles2(getStyles);
   const { getValues } = useFormContext();
   const value = getValues(name) ?? '';
+  const showTemplatePicker = useTemplates && !readOnly;
   // if the placeholder does not contain a template, we don't need to show the template picker
   if (!option.placeholder.includes('{{ template ') || typeof value !== 'string') {
     return <>{children}</>;
   }
+
   // Otherwise, we can use templates on this field
   // if the value is empty, we only show the template picker
   if (!value) {
     return (
       <div className={styles.inputContainer}>
         <Stack direction="row" gap={1} alignItems="center">
-          {useTemplates && (
+          {showTemplatePicker && (
             <TemplatesPicker onSelect={onSelectTemplate} option={option} valueInForm={getValues(name) ?? ''} />
           )}
         </Stack>
@@ -362,19 +382,19 @@ export function WrapWithTemplateSelection({
       <div className={styles.inputContainer}>
         <Stack direction="row" gap={1} alignItems="center">
           <Text variant="bodySmall">{`Template: ${getTemplateName(value)}`}</Text>
-          {useTemplates && (
+          {showTemplatePicker && (
             <TemplatesPicker onSelect={onSelectTemplate} option={option} valueInForm={getValues(name) ?? ''} />
           )}
         </Stack>
       </div>
     );
   }
-  // custom template  field
+  // custom template field
   return (
     <div className={styles.inputContainer}>
       <Stack direction="row" gap={1} alignItems="center">
         {children}
-        {useTemplates && (
+        {showTemplatePicker && (
           <TemplatesPicker onSelect={onSelectTemplate} option={option} valueInForm={getValues(name) ?? ''} />
         )}
       </Stack>

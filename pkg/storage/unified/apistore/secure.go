@@ -3,11 +3,17 @@ package apistore
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
+
+// This prefix is used when modeling datasources from legacy SQL + secrets
+// We must not use the same name when saving in unified storage
+// If we try to save a secure value with this name, it will error
+const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = "lds-sv-"
 
 // prepareSecureValues will create any new secure values and register changes inside the provided objectForStorage
 // any call to this function MUST be followed by a call to info.finish(ctx, nil, store) to ensure that the secure values are cleaned up
@@ -62,21 +68,24 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				delete(previous, k)
 			}
 			if val.Remove {
-				if before.Name == "" {
-					return fmt.Errorf("cannot remove secure value '%s', it did not exist in the previous value", k)
-				}
 				delete(secure, k)
+				if before.Name == "" {
+					continue // no-op
+				}
 				v.hasChanged = true
 				continue
 			}
 			if !val.Create.IsZero() {
-				n, err := store.CreateInline(ctx, v.ref, val.Create)
+				n, err := store.CreateInline(ctx, v.ref, val.Create, val.Description)
 				if err != nil {
 					return err
 				}
 				v.createdSecureValues = append(v.createdSecureValues, n)
 				v.hasChanged = true
 				secure[k] = common.InlineSecureValue{Name: n}
+
+				// Avoid exposing a raw secret in the kubectl metadata
+				obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "")
 				continue
 			}
 			return fmt.Errorf("invalid secure value state: %s", k)
@@ -87,6 +96,10 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 			// This can happen when explicitly shifting from an inline value to a shared secret
 			v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
 			v.hasChanged = true
+		}
+
+		if strings.HasPrefix(val.Name, LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX) {
+			return fmt.Errorf("unable to save secure value reference with legacy datasource prefix")
 		}
 
 		delete(previous, k)

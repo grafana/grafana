@@ -3,13 +3,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 
-import { CoreApp, PluginMeta, PluginType } from '@grafana/data';
+import { CoreApp, type PluginMeta, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
-import { PromQueryEditorProps } from '../../components/types';
+import { type PromQueryEditorProps } from '../../components/types';
 import { PrometheusDatasource } from '../../datasource';
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import { PromQuery } from '../../types';
+import { type PromQuery } from '../../types';
 import { QueryEditorMode } from '../shared/types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
@@ -30,6 +31,10 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: jest.fn(),
   };
 });
+
+jest.mock('@grafana/assistant', () => ({
+  QueryWithAssistantButton: () => <div data-testid="query-with-assistant-button" />,
+}));
 
 const defaultQuery = {
   refId: 'A',
@@ -61,7 +66,6 @@ const defaultMeta: PluginMeta = {
 const getDefaultDatasource = (jsonDataOverrides = {}) =>
   new PrometheusDatasource(
     {
-      id: 1,
       uid: '',
       type: 'prometheus',
       name: 'prom-test',
@@ -83,6 +87,36 @@ const defaultProps = {
 };
 
 describe('PromQueryEditorSelector', () => {
+  beforeEach(() => {
+    config.featureToggles.queryWithAssistant = true;
+  });
+
+  it('shows the assistant button when feature toggle is enabled and app is Explore', async () => {
+    renderWithProps({}, { app: CoreApp.Explore });
+    expect(await screen.findByTestId('query-with-assistant-button')).toBeInTheDocument();
+  });
+
+  it('shows the assistant button when feature toggle is enabled and app is Dashboard', async () => {
+    renderWithProps({}, { app: CoreApp.Dashboard });
+    expect(await screen.findByTestId('query-with-assistant-button')).toBeInTheDocument();
+  });
+
+  it('shows the assistant button when feature toggle is enabled and app is PanelEditor', async () => {
+    renderWithProps({}, { app: CoreApp.PanelEditor });
+    expect(await screen.findByTestId('query-with-assistant-button')).toBeInTheDocument();
+  });
+
+  it('does not show the assistant button for UnifiedAlerting', async () => {
+    renderWithProps({}, { app: CoreApp.UnifiedAlerting });
+    expect(screen.queryByTestId('query-with-assistant-button')).not.toBeInTheDocument();
+  });
+
+  it('does not show the assistant button when feature toggle is disabled', async () => {
+    config.featureToggles.queryWithAssistant = false;
+    renderWithProps({}, { app: CoreApp.Explore });
+    expect(screen.queryByTestId('query-with-assistant-button')).not.toBeInTheDocument();
+  });
+
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
     render(<PromQueryEditorSelector {...defaultProps} />);

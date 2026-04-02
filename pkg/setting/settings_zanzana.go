@@ -12,6 +12,21 @@ const (
 	ZanzanaModeEmbedded ZanzanaMode = "embedded"
 )
 
+// ZanzanaPrimaryEngine controls which engine is on the hot path when the shadow
+// client is active (i.e. the Zanzana feature flag is enabled but
+// ZanzanaNoLegacyClient is not). The other engine runs in the background for
+// comparison only.
+type ZanzanaPrimaryEngine string
+
+const (
+	// ZanzanaPrimaryEngineRBAC uses legacy RBAC as the primary engine and runs
+	// Zanzana checks in the background (default – preserves existing behaviour).
+	ZanzanaPrimaryEngineRBAC ZanzanaPrimaryEngine = "rbac"
+	// ZanzanaPrimaryEngineZanzana uses Zanzana as the primary engine and runs
+	// legacy RBAC checks in the background.
+	ZanzanaPrimaryEngineZanzana ZanzanaPrimaryEngine = "zanzana"
+)
+
 type ZanzanaClientSettings struct {
 	// Mode can either be embedded or client.
 	Mode ZanzanaMode
@@ -29,9 +44,79 @@ type ZanzanaClientSettings struct {
 	TokenExchangeURL string
 	// Namespace to use for the token.
 	TokenNamespace string
+	// PrimaryEngine selects which engine is on the hot path when the shadow
+	// client is active. Accepted values: "rbac" (default) and "zanzana".
+	PrimaryEngine ZanzanaPrimaryEngine
+}
+
+type ZanzanaReconcilerMode string
+
+const (
+	ZanzanaReconcilerModeLegacy   ZanzanaReconcilerMode = "legacy"
+	ZanzanaReconcilerModeMT       ZanzanaReconcilerMode = "mt"
+	ZanzanaReconcilerModeDisabled ZanzanaReconcilerMode = "disabled"
+)
+
+type ZanzanaReconcilerSettings struct {
+	// Mode selects which reconciler to run: "legacy", "mt", or "disabled".
+	Mode ZanzanaReconcilerMode
+
+	// --- MT reconciler settings (only used when Mode == "mt") ---
+
+	// URL of the folder apiserver (standalone mode only, not needed for embedded).
+	FolderAPIServerURL string
+	// URL of the IAM apiserver (standalone mode only, not needed for embedded).
+	IAMAPIServerURL string
+	// Skip TLS verification when connecting to apiservers.
+	TLSInsecure bool
+	// Number of worker goroutines.
+	Workers int
+	// Interval between reconciliation cycles.
+	Interval time.Duration
+	// Batch size for writing tuples to Zanzana.
+	WriteBatchSize int
+	// Page size when reading tuples from Zanzana during reconciliation.
+	ZanzanaReadPageSize int
+	// Size of the buffered work queue for namespaces.
+	QueueSize int
+
+	// --- HA leader election (standalone mode in K8s) ---
+
+	// LeaderElectionEnabled enables Kubernetes lease-based leader election so
+	// only one replica runs the reconciler loop at a time.
+	LeaderElectionEnabled bool
+	// LeaderElectionLeaseName is the name of the Kubernetes Lease object used
+	// for leader election. Default: "zanzana-mt-reconciler".
+	LeaderElectionLeaseName string
+	// LeaderElectionNamespace is the namespace in which the Lease object is created.
+	LeaderElectionNamespace string
+	// LeaderElectionIdentity is the unique identity of this instance used in the Lease object.
+	LeaderElectionIdentity string
+	// LeaseDuration is how long a lease is held before it can be acquired by
+	// another candidate. Default: 15s.
+	LeaseDuration time.Duration
+	// RenewDeadline is the duration the leader retries refreshing leadership
+	// before giving up. Default: 10s.
+	RenewDeadline time.Duration
+	// RetryPeriod is the interval between leader election retries. Default: 2s.
+	RetryPeriod time.Duration
+}
+
+type ZanzanaStoreType string
+
+const (
+	ZanzanaStoreTypeSQL  ZanzanaStoreType = "sql"
+	ZanzanaStoreTypeGRPC ZanzanaStoreType = "grpc"
+)
+
+type ZanzanaGRPCStoreSettings struct {
+	Addr        string
+	TLSCertPath string
+	TLSKeyPath  string
 }
 
 type ZanzanaServerSettings struct {
+	StoreType ZanzanaStoreType
 	// OpenFGA http server address which allows to connect with fga cli.
 	// Can only be used in dev mode.
 	OpenFGAHttpAddr string
@@ -50,6 +135,8 @@ type ZanzanaServerSettings struct {
 	SigningKeysURL string
 	// Allow insecure connections to the server for development purposes.
 	AllowInsecure bool
+	// Page size for Read queries in reconciler. Default is 100.
+	ReadPageSize int32
 }
 
 type OpenFgaServerSettings struct {
@@ -134,6 +221,8 @@ type OpenFgaServerSettings struct {
 	MaxAuthorizationModelSizeInBytes int
 	// Size of the authorization model cache
 	AuthorizationModelCacheSize int
+	// Size of the typesystem cache (controls how many resolved typesystems are kept in memory)
+	TypesystemCacheSize int
 	// Offset for changelog horizon
 	ChangelogHorizonOffset int
 }
@@ -186,6 +275,10 @@ type OpenFgaCacheSettings struct {
 	SharedIteratorTTL time.Duration
 }
 
+const (
+	defaultReadPageSize = 100
+)
+
 func (cfg *Cfg) readZanzanaSettings() {
 	zc := ZanzanaClientSettings{}
 	clientSec := cfg.SectionWithEnvOverrides("zanzana.client")
@@ -216,17 +309,26 @@ func (cfg *Cfg) readZanzanaSettings() {
 		zc.TokenExchangeURL = tokenExchangeURL
 	}
 
+	zc.PrimaryEngine = ZanzanaPrimaryEngine(clientSec.Key("primary_engine").MustString(string(ZanzanaPrimaryEngineRBAC)))
+	validEngines := []ZanzanaPrimaryEngine{ZanzanaPrimaryEngineRBAC, ZanzanaPrimaryEngineZanzana}
+	if !slices.Contains(validEngines, zc.PrimaryEngine) {
+		cfg.Logger.Warn("Invalid zanzana primary_engine", "expected", validEngines, "got", zc.PrimaryEngine)
+		zc.PrimaryEngine = ZanzanaPrimaryEngineRBAC
+	}
+
 	cfg.ZanzanaClient = zc
 
 	zs := ZanzanaServerSettings{}
 	serverSec := cfg.SectionWithEnvOverrides("zanzana.server")
 
-	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("127.0.0.1:8080")
+	zs.StoreType = ZanzanaStoreType(serverSec.Key("store_type").MustString(string(ZanzanaStoreTypeSQL)))
+	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("")
 	zs.ListObjectsDeadline = serverSec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	zs.ListObjectsMaxResults = uint32(serverSec.Key("list_objects_max_results").MustUint(1000))
 	zs.UseStreamedListObjects = serverSec.Key("use_streamed_list_objects").MustBool(false)
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
+	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))
@@ -293,7 +395,37 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.OpenFgaServerSettings.RequestTimeout = openfgaSec.Key("request_timeout").MustDuration(0)
 	zs.OpenFgaServerSettings.MaxAuthorizationModelSizeInBytes = openfgaSec.Key("max_authorization_model_size_in_bytes").MustInt(0)
 	zs.OpenFgaServerSettings.AuthorizationModelCacheSize = openfgaSec.Key("authorization_model_cache_size").MustInt(0)
+	zs.OpenFgaServerSettings.TypesystemCacheSize = openfgaSec.Key("typesystem_cache_size").MustInt(0)
 	zs.OpenFgaServerSettings.ChangelogHorizonOffset = openfgaSec.Key("changelog_horizon_offset").MustInt(0)
 
 	cfg.ZanzanaServer = zs
+
+	// Reconciler settings
+	reconcilerSec := cfg.SectionWithEnvOverrides("zanzana.reconciler")
+	zr := ZanzanaReconcilerSettings{}
+	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString("legacy"))
+	zr.FolderAPIServerURL = reconcilerSec.Key("folder_apiserver_url").MustString("")
+	zr.IAMAPIServerURL = reconcilerSec.Key("iam_apiserver_url").MustString("")
+	zr.TLSInsecure = reconcilerSec.Key("tls_insecure").MustBool(false)
+	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
+	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
+	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
+	zr.ZanzanaReadPageSize = reconcilerSec.Key("zanzana_read_page_size").MustInt(1000)
+	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
+	zr.LeaderElectionEnabled = reconcilerSec.Key("leader_election_enabled").MustBool(false)
+	zr.LeaderElectionLeaseName = reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler")
+	zr.LeaderElectionNamespace = reconcilerSec.Key("leader_election_namespace").MustString("")
+	zr.LeaderElectionIdentity = reconcilerSec.Key("leader_election_identity").MustString("")
+	zr.LeaseDuration = reconcilerSec.Key("lease_duration").MustDuration(15 * time.Second)
+	zr.RenewDeadline = reconcilerSec.Key("renew_deadline").MustDuration(10 * time.Second)
+	zr.RetryPeriod = reconcilerSec.Key("retry_period").MustDuration(2 * time.Second)
+	cfg.ZanzanaReconciler = zr
+
+	// gRPC store settings
+	grpcStoreSec := cfg.SectionWithEnvOverrides("zanzana.store.grpc")
+	cfg.ZanzanaGRPCStore = ZanzanaGRPCStoreSettings{
+		Addr:        grpcStoreSec.Key("address").MustString(""),
+		TLSCertPath: grpcStoreSec.Key("tls_cert_path").MustString(""),
+		TLSKeyPath:  grpcStoreSec.Key("tls_key_path").MustString(""),
+	}
 }

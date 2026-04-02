@@ -1,18 +1,19 @@
 import { findByText, render, screen } from '@testing-library/react';
-import userEvent, { UserEvent } from '@testing-library/user-event';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  GrafanaConfig,
-  PluginMetaInfo,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type GrafanaConfig,
+  type PluginMetaInfo,
   PluginType,
   locationUtil,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';
 
-import { DataSourcePicker, DataSourcePickerProps } from './DataSourcePicker';
+import { DataSourcePicker, type DataSourcePickerProps } from './DataSourcePicker';
 import * as utils from './utils';
 
 const pluginMetaInfo: PluginMetaInfo = {
@@ -34,7 +35,6 @@ function createDS(name: string, id: number, builtIn: boolean): DataSourceInstanc
     name: name,
     uid: name + 'uid',
     meta: createPluginMeta(name, builtIn),
-    id,
     access: 'direct',
     jsonData: {},
     type: '',
@@ -86,6 +86,7 @@ jest.mock('../../hooks', () => {
 
 beforeAll(() => {
   window.HTMLElement.prototype.scrollIntoView = jest.fn();
+  mockBoundingClientRect();
 });
 
 const getListMock = jest.fn();

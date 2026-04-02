@@ -1,28 +1,28 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { Fragment, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { Fragment, type ReactNode, useCallback, useEffect, useMemo } from 'react';
 import {
-  HeaderGroup,
-  PluginHook,
-  Row,
-  SortingRule,
-  TableOptions,
+  type HeaderGroup,
+  type PluginHook,
+  type Row,
+  type SortingRule,
+  type TableOptions,
   useExpanded,
   usePagination,
   useSortBy,
   useTable,
 } from 'react-table';
 
-import { GrafanaTheme2, IconName, isTruthy } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isTruthy } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { Pagination } from '../Pagination/Pagination';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { PopoverContent } from '../Tooltip/types';
+import { type PopoverContent } from '../Tooltip/types';
 
-import { Column } from './types';
+import { type Column } from './types';
 import { EXPANDER_CELL_ID, getColumns } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -157,6 +157,10 @@ interface BaseProps<TableData extends object> {
    * Disable the ability to remove sorting on columns (none -> asc -> desc -> asc)
    */
   disableSortRemove?: boolean;
+  /**
+   * Will automatically reset to the first page if the `data` prop is changed
+   */
+  autoResetPage?: boolean;
 }
 
 interface WithExpandableRow<TableData extends object> extends BaseProps<TableData> {
@@ -181,10 +185,9 @@ type Props<TableData extends object> = WithExpandableRow<TableData> | WithoutExp
  * The InteractiveTable is used to display and select data efficiently. It allows for the display and modification of detailed information.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-interactivetable--docs
- *
- * @alpha
  */
 export function InteractiveTable<TableData extends object>({
+  autoResetPage,
   className,
   columns,
   data,
@@ -223,6 +226,7 @@ export function InteractiveTable<TableData extends object>({
       columns: tableColumns,
       data,
       autoResetExpanded: false,
+      autoResetPage: !!autoResetPage, // If undefined, we want to treat this as false to prevent page reset by default
       autoResetSortBy: false,
       disableMultiSort: true,
       // If fetchData is provided, we disable client-side sorting

@@ -1,4 +1,4 @@
-import { GrafanaLiveSrv, config, getBackendSrv, getGrafanaLiveSrv, setGrafanaLiveSrv } from '@grafana/runtime';
+import { type GrafanaLiveSrv, config, getBackendSrv, getGrafanaLiveSrv, setGrafanaLiveSrv } from '@grafana/runtime';
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 
 import { contextSrv } from '../../core/services/context_srv';
@@ -10,7 +10,7 @@ import { GrafanaLiveService } from './live';
 export function initGrafanaLive() {
   const centrifugeServiceDeps = {
     appUrl: `${window.location.origin}${config.appSubUrl}`,
-    orgId: contextSrv.user.orgId,
+    namespace: config.liveNamespaced ? config.namespace : `${contextSrv.user.orgId}`,
     orgRole: contextSrv.user.orgRole,
     liveEnabled: config.liveEnabled,
     dataStreamSubscriberReadiness: liveTimer.ok.asObservable(),

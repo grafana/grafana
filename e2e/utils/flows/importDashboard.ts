@@ -1,7 +1,7 @@
 import { e2e } from '../index';
 import { fromBaseUrl, getDashboardUid } from '../support/url';
 
-import { DeleteDashboardConfig } from '.';
+import { type DeleteDashboardConfig } from '.';
 
 type Panel = {
   title: string;
@@ -42,7 +42,9 @@ export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: num
         });
       });
 
-      expect(dashboardToImport.uid).to.equal(uid);
+      if (dashboardToImport.uid !== '') {
+        expect(dashboardToImport.uid).to.equal(uid);
+      }
     });
 
   if (!skipPanelValidation) {

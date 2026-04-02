@@ -209,7 +209,7 @@
           "path": "public/plugins/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": [
         "azure",
@@ -220,7 +220,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -546,117 +546,6 @@
     "angularDetected": false
   },
   {
-    "name": "Datagrid",
-    "type": "panel",
-    "id": "datagrid",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/datagrid/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/datagrid/img/icn-table-panel.svg",
-        "large": "public/plugins/datagrid/img/icn-table-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/datagrid/",
-    "category": "",
-    "state": "beta",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Elasticsearch",
-    "type": "datasource",
-    "id": "elasticsearch",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Open source logging \u0026 analytics database",
-      "links": [
-        {
-          "name": "Learn more",
-          "url": "https://grafana.com/docs/features/datasources/elasticsearch/"
-        },
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/elasticsearch/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/elasticsearch/img/elasticsearch.svg",
-        "large": "public/plugins/elasticsearch/img/elasticsearch.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": [
-        "elasticsearch",
-        "datasource",
-        "database",
-        "logs",
-        "nosql",
-        "traces"
-      ]
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/elasticsearch/",
-    "category": "logging",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Flame Graph",
     "type": "panel",
     "id": "flamegraph",
@@ -880,12 +769,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -934,7 +823,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -947,7 +836,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1000,12 +889,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1217,12 +1106,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1325,12 +1214,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.4.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1375,12 +1264,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.4.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1425,12 +1314,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.4.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1575,12 +1464,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1629,7 +1518,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1639,7 +1528,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1734,12 +1623,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=11.6.0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -2042,12 +1931,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -2092,12 +1981,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -2445,12 +2334,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "12.3.0-pre",
+      "version": "12.4.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=10.3.0-0",
+      "grafanaDependency": "\u003e=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {

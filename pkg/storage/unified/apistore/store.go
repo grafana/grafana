@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
@@ -57,6 +59,8 @@ type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.Resourc
 
 // Optional settings that apply to a single resource
 type StorageOptions struct {
+	Scheme *runtime.Scheme
+
 	// ????: should we constrain this to only dashboards for now?
 	// Not yet clear if this is a good general solution, or just a stop-gap
 	LargeObjectSupport LargeObjectSupport
@@ -92,6 +96,11 @@ type Storage struct {
 	getKey         func(string) (*resourcepb.ResourceKey, error)
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
+
+	// Lazily initialized because GetRestConfig blocks until the API server is
+	// fully started (eventualRestConfigProvider), while NewStorage is called
+	// during API group installation — before the server is ready.
+	getDynClient func(ctx context.Context) (dynamic.Interface, error)
 
 	versioner storage.Versioner
 
@@ -140,6 +149,31 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 
 		opts: opts,
+	}
+
+	if opts.EnableFolderSupport && configProvider != nil {
+		var (
+			initOnce sync.Once
+			client   dynamic.Interface
+			initErr  error
+		)
+		s.getDynClient = func(ctx context.Context) (dynamic.Interface, error) {
+			initOnce.Do(func() {
+				cfg, err := configProvider.GetRestConfig(ctx)
+				if err != nil {
+					initErr = fmt.Errorf("failed to get REST config: %w", err)
+					return
+				}
+				client, initErr = dynamic.NewForConfig(cfg)
+				if initErr != nil {
+					initErr = fmt.Errorf("failed to create dynamic client: %w", initErr)
+				}
+			})
+			return client, initErr
+		}
+	} else if opts.EnableFolderSupport {
+		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
+			"resource", config.GroupResource.String())
 	}
 
 	if opts.RequireDeprecatedInternalID {
@@ -720,6 +754,15 @@ func (s *Storage) GuaranteedUpdate(
 		return nil
 	}
 
+	return nil
+}
+
+// Added in k8s 1.35
+// See: https://github.com/kubernetes/kubernetes/blob/v1.35.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L668
+func (s *Storage) EnableResourceSizeEstimation(getKeys storage.KeysFunc) error {
+	if getKeys == nil {
+		return errors.New("KeysFunc cannot be nil")
+	}
 	return nil
 }
 

@@ -1,17 +1,19 @@
 import { css, cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
+import { LinkEdit } from '../settings/links/LinkAddEditableElement';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
 
@@ -57,23 +59,26 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const outlineRename = useOutlineRename(editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
-  const visibleChildren = useMemo(() => {
-    const children = editableElement.getOutlineChildren?.(isEditing) ?? [];
-    return isEditing
-      ? children
-      : children.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
-  }, [editableElement, isEditing]);
+  const outlineChildren = editableElement.getOutlineChildren?.(isEditing) ?? [];
+  const visibleChildren = isEditing
+    ? outlineChildren
+    : outlineChildren.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
 
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // Only select via clicking outline never deselect
     if (!isSelected) {
-      onSelect?.(e);
+      if (sceneObject instanceof LinkEdit || sceneObject instanceof DashboardLinksSet) {
+        // Select directly via editPane.selectObject because link objects are not
+        // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
+        editPane.selectObject(sceneObject, key!);
+      } else {
+        onSelect?.(e);
+      }
     }
 
     editableElement.scrollIntoView?.();
-    DashboardInteractions.outlineItemClicked({ index, depth });
+    DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
   };
 
   const onToggleCollapse = (evt: React.MouseEvent) => {
@@ -258,7 +263,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     nodeButtonClone: css({
       color: theme.colors.text.secondary,
-      cursor: 'not-allowed',
     }),
     outlineInput: css({
       border: `1px solid ${theme.components.input.borderColor}`,

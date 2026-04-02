@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { HTMLProps } from 'react';
+import { type HTMLProps } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -29,6 +29,8 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   tooltip?: string;
   /** When true, the tab will be disabled and not clickable */
   disabled?: boolean;
+  /** When provided, used instead of label for the data-testid. Useful for locale-stable e2e selectors. */
+  'data-testid'?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       truncate,
       tooltip,
       disabled,
+      'data-testid': testId,
       ...otherProps
     },
     ref
@@ -74,7 +77,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
 
     const commonProps = {
       className: linkClass,
-      'data-testid': selectors.components.Tab.title(label),
+      'data-testid': testId ?? selectors.components.Tab.title(label),
       ...otherProps,
       onClick: disabled ? undefined : onChangeTab,
       role: 'tab',

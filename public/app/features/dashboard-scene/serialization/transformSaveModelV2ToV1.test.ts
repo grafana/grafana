@@ -1,38 +1,17 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 
+import { getFilesRecursively } from './serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
-
-// Helper function to recursively get all files from a directory
-function getFilesRecursively(dir: string, baseDir: string = dir): Array<{ filePath: string; relativePath: string }> {
-  const files: Array<{ filePath: string; relativePath: string }> = [];
-  const entries = readdirSync(dir);
-
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry);
-    const stat = statSync(fullPath);
-
-    if (stat.isDirectory()) {
-      files.push(...getFilesRecursively(fullPath, baseDir));
-    } else if (entry.endsWith('.json')) {
-      files.push({
-        filePath: fullPath,
-        relativePath: path.relative(baseDir, fullPath),
-      });
-    }
-  }
-
-  return files;
-}
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
@@ -172,6 +151,14 @@ describe('V2 to V1 Dashboard Transformation Comparison', () => {
     'testdata',
     'output'
   );
+
+  beforeAll(() => {
+    if (!existsSync(outputDir)) {
+      throw new Error(
+        `Golden files not found at ${outputDir}. Run "make generate-golden-files" from apps/dashboard/ to generate them.`
+      );
+    }
+  });
 
   // Get v2beta1 input files
   const v2beta1Inputs = getFilesRecursively(inputDir).filter(({ relativePath }) => {

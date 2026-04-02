@@ -1,12 +1,14 @@
-import { FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
+import { useMemo } from 'react';
+
+import { colorManipulator, FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
+import { type RadialShape, type RadialGaugeDimensions, type GradientStop } from './types';
 
 export interface RadialBarProps {
-  angle: number;
   angleRange: number;
   dimensions: RadialGaugeDimensions;
   fieldDisplay: FieldDisplay;
@@ -15,11 +17,12 @@ export interface RadialBarProps {
   endpointMarker?: 'point' | 'glow';
   shape: RadialShape;
   startAngle: number;
+  startValueAngle: number;
+  endValueAngle: number;
   glowFilter?: string;
   endpointMarkerGlowFilter?: string;
 }
 export function RadialBar({
-  angle,
   angleRange,
   dimensions,
   fieldDisplay,
@@ -28,26 +31,47 @@ export function RadialBar({
   endpointMarker,
   shape,
   startAngle,
+  startValueAngle,
+  endValueAngle,
   glowFilter,
   endpointMarkerGlowFilter,
 }: RadialBarProps) {
   const theme = useTheme2();
   const colorProps = gradient ? { gradient } : { color: fieldDisplay.display.color ?? FALLBACK_COLOR };
+  const trackColor = useMemo(
+    () => colorManipulator.onBackground(theme.colors.action.hover, theme.colors.background.primary).toHexString(),
+    [theme]
+  );
+
   return (
     <>
-      {/** Track */}
+      {/** Track before value */}
+      {startValueAngle !== 0 && (
+        <RadialArcPath
+          arcLengthDeg={startValueAngle}
+          fieldDisplay={fieldDisplay}
+          color={trackColor}
+          dimensions={dimensions}
+          roundedBars={roundedBars}
+          shape={shape}
+          startAngle={startAngle}
+          data-testid={selectors.components.Panels.Visualization.Gauge.Track}
+        />
+      )}
+      {/** Track after value */}
       <RadialArcPath
-        arcLengthDeg={angleRange - angle}
+        arcLengthDeg={angleRange - endValueAngle - startValueAngle}
         fieldDisplay={fieldDisplay}
-        color={theme.colors.action.hover}
+        color={trackColor}
         dimensions={dimensions}
         roundedBars={roundedBars}
         shape={shape}
-        startAngle={startAngle + angle}
+        startAngle={startAngle + startValueAngle + endValueAngle}
+        data-testid={selectors.components.Panels.Visualization.Gauge.Track}
       />
       {/** The colored bar */}
       <RadialArcPath
-        arcLengthDeg={angle}
+        arcLengthDeg={endValueAngle}
         barEndcaps={shape === 'circle' && roundedBars}
         dimensions={dimensions}
         endpointMarker={roundedBars ? endpointMarker : undefined}
@@ -56,7 +80,8 @@ export function RadialBar({
         glowFilter={glowFilter}
         roundedBars={roundedBars}
         shape={shape}
-        startAngle={startAngle}
+        startAngle={startAngle + startValueAngle}
+        data-testid={selectors.components.Panels.Visualization.Gauge.Bar}
         {...colorProps}
       />
     </>

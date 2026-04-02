@@ -11,6 +11,8 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -60,14 +62,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
-		if !prefs.Cookies("analytics") {
-			settings.GoogleAnalytics4Id = ""
-			settings.GoogleAnalyticsId = ""
-		}
 	}
 
 	// Locale is used for some number and date/time formatting, whereas language is used just for
@@ -128,6 +122,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		appSubURL = ""
 		settings.AppSubUrl = ""
 	}
+	ofClient := openfeature.NewDefaultClient()
+	renderBindingSupported, _ := ofClient.BooleanValue(c.Req.Context(), featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(c.Req.Context()))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
@@ -197,11 +193,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
+		RenderBindingSupported:              renderBindingSupported,
 	}
 
 	if hs.Cfg.CSPEnabled {
 		data.CSPEnabled = true
-		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
+		hosts := middleware.CSPHostLists{FormActionAdditionalHosts: hs.Cfg.FormActionAdditionalHosts}
+		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, hosts, c.RequestNonce)
 	}
 	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 	if err != nil {
@@ -220,6 +218,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
+	data.NavTree.RemoveEmptyAdminSections()
 	data.NavTree.Sort()
 
 	return &data, nil

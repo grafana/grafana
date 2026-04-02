@@ -8,10 +8,10 @@ import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanag
 import { getMockConfig, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery, mockAlertmanagerAlert } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
-import { Folder } from '../../../types/rule-form';
+import { type Folder } from '../../../types/rule-form';
 import * as dataSource from '../../../utils/datasource';
 import {
-  AlertManagerDataSource,
+  type AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
@@ -108,9 +108,8 @@ const folder: Folder = {
 };
 
 describe('NotificationPreview', () => {
-  jest.retryTimes(2);
-
   it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
+    mockHasEditPermission(false); // Grant read permissions
     mockOneAlertManager();
     mockPreviewApiResponse(server, [
       mockAlertmanagerAlert({
@@ -136,6 +135,7 @@ describe('NotificationPreview', () => {
   });
 
   it('should render notification preview with alert manager sections, when having more than one alert manager configured to receive alerts', async () => {
+    mockHasEditPermission(false); // Grant read permissions
     // two alert managers configured  to receive alerts
     mockTwoAlertManagers();
     mockPreviewApiResponse(server, [

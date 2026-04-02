@@ -20,6 +20,7 @@ import (
 
 var appManifestData = app.ManifestData{
 	AppName:          "iam",
+	AppDisplayName:   "iam",
 	Group:            "iam.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
@@ -30,20 +31,13 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "GlobalRole",
 					Plural:     "GlobalRoles",
-					Scope:      "Namespaced",
+					Scope:      "Cluster",
 					Conversion: false,
 				},
 
 				{
 					Kind:       "GlobalRoleBinding",
 					Plural:     "GlobalRoleBindings",
-					Scope:      "Namespaced",
-					Conversion: false,
-				},
-
-				{
-					Kind:       "CoreRole",
-					Plural:     "CoreRoles",
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
@@ -74,19 +68,16 @@ var appManifestData = app.ManifestData{
 					Plural:     "Users",
 					Scope:      "Namespaced",
 					Conversion: false,
-				},
-
-				{
-					Kind:       "Team",
-					Plural:     "Teams",
-					Scope:      "Namespaced",
-					Conversion: false,
+					SelectableFields: []string{
+						"spec.email",
+						"spec.login",
+					},
 					Routes: map[string]spec3.PathProps{
-						"/groups": {
+						"/teams": {
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
 
-									OperationId: "getGroups",
+									OperationId: "getUserTeams",
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -113,7 +104,130 @@ var appManifestData = app.ManifestData{
 																						Schema: &spec.Schema{
 																							SchemaProps: spec.SchemaProps{
 
-																								Ref: spec.MustCreateRef("#/components/schemas/getGroupsExternalGroupMapping"),
+																								Ref: spec.MustCreateRef("#/components/schemas/getUserTeamsUserTeam"),
+																							}},
+																					},
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"items",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+					},
+				},
+
+				{
+					Kind:       "Team",
+					Plural:     "Teams",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Routes: map[string]spec3.PathProps{
+						"/groups": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "getTeamGroups",
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"items": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"array"},
+																					Items: &spec.SchemaOrArray{
+																						Schema: &spec.Schema{
+																							SchemaProps: spec.SchemaProps{
+
+																								Ref: spec.MustCreateRef("#/components/schemas/getTeamGroupsExternalGroupMapping"),
+																							}},
+																					},
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"items",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+						"/members": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "getTeamMembers",
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"items": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"array"},
+																					Items: &spec.SchemaOrArray{
+																						Schema: &spec.Schema{
+																							SchemaProps: spec.SchemaProps{
+
+																								Ref: spec.MustCreateRef("#/components/schemas/getTeamMembersTeamUser"),
 																							}},
 																					},
 																				},
@@ -147,6 +261,18 @@ var appManifestData = app.ManifestData{
 					Plural:     "TeamBindings",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.teamRef.name",
+						"spec.subject.name",
+						"spec.external",
+					},
+				},
+
+				{
+					Kind:       "TeamLBACRule",
+					Plural:     "TeamLBACRules",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
 
 				{
@@ -161,6 +287,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "ExternalGroupMappings",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.teamRef.name",
+						"spec.externalGroupId",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -410,6 +540,18 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"accessControl": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+								},
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -418,6 +560,11 @@ var appManifestData = app.ManifestData{
 								"externalUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
+									},
+								},
+								"memberCount": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
 									},
 								},
 								"name": {
@@ -449,6 +596,18 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"accessControl": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+								},
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -525,13 +684,13 @@ func RemoteManifest() app.Manifest {
 var kindVersionToGoType = map[string]resource.Kind{
 	"GlobalRole/v0alpha1":           v0alpha1.GlobalRoleKind(),
 	"GlobalRoleBinding/v0alpha1":    v0alpha1.GlobalRoleBindingKind(),
-	"CoreRole/v0alpha1":             v0alpha1.CoreRoleKind(),
 	"Role/v0alpha1":                 v0alpha1.RoleKind(),
 	"RoleBinding/v0alpha1":          v0alpha1.RoleBindingKind(),
 	"ResourcePermission/v0alpha1":   v0alpha1.ResourcePermissionKind(),
 	"User/v0alpha1":                 v0alpha1.UserKind(),
 	"Team/v0alpha1":                 v0alpha1.TeamKind(),
 	"TeamBinding/v0alpha1":          v0alpha1.TeamBindingKind(),
+	"TeamLBACRule/v0alpha1":         v0alpha1.TeamLBACRuleKind(),
 	"ServiceAccount/v0alpha1":       v0alpha1.ServiceAccountKind(),
 	"ExternalGroupMapping/v0alpha1": v0alpha1.ExternalGroupMappingKind(),
 }
@@ -544,10 +703,14 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1|Team|groups|GET": v0alpha1.GetGroups{},
+	"v0alpha1|User|teams|GET": v0alpha1.GetUserTeamsResponse{},
 
-	"v0alpha1||<namespace>/searchTeams|GET": v0alpha1.GetSearchTeams{},
-	"v0alpha1||<namespace>/searchUsers|GET": v0alpha1.GetSearchUsers{},
+	"v0alpha1|Team|groups|GET": v0alpha1.GetTeamGroupsResponse{},
+
+	"v0alpha1|Team|members|GET": v0alpha1.GetTeamMembersResponse{},
+
+	"v0alpha1||<namespace>/searchTeams|GET": v0alpha1.GetSearchTeamsResponse{},
+	"v0alpha1||<namespace>/searchUsers|GET": v0alpha1.GetSearchUsersResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

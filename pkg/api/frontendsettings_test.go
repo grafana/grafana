@@ -7,11 +7,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -20,22 +23,28 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	pluginassets2 "github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -80,7 +89,8 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	var pluginsAssets = passets
 	if pluginsAssets == nil {
 		sig := signature.ProvideService(pluginsCfg, statickey.New())
-		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, sig, pluginStore)
+		calc := modulehash.NewCalculator(pluginsCfg, registry.NewInMemory(), pluginsCDN, sig)
+		pluginsAssets = pluginassets.ProvideService(calc)
 	}
 
 	hs := &HTTPServer{
@@ -105,6 +115,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		managedPluginsService: managedplugins.NewNoop(),
 		tracer:                tracing.InitializeTracerForTest(),
 		DataSourcesService:    &datafakes.FakeDataSourceService{},
+
+		dsGuardian:              guardian.ProvideGuardian(),
+		publicDashboardsService: &publicdashboards.FakePublicDashboardService{},
 	}
 
 	m := web.New()
@@ -238,6 +251,66 @@ func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.
 	}
 }
 
+func TestIntegrationHTTPServer_GetFrontendSettings_cachingDefaultTTLMs(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type cachingSettings struct {
+		Enabled           bool  `json:"enabled"`
+		CleanCacheEnabled bool  `json:"cleanCacheEnabled"`
+		DefaultTTLMs      int64 `json:"defaultTTLMs"`
+	}
+	type settings struct {
+		Caching cachingSettings `json:"caching"`
+	}
+
+	tests := []struct {
+		desc       string
+		setEnv     func(*testing.T)
+		expectedMs int64
+	}{
+		{
+			desc: "default TTL is 5 minutes (300000ms) when not overridden",
+			setEnv: func(t *testing.T) {
+				t.Setenv("GF_CACHING_TTL", "")
+			},
+			expectedMs: 300000, // 5 * time.Minute
+		},
+		{
+			desc: "TTL from GF_CACHING_TTL env override",
+			setEnv: func(t *testing.T) {
+				t.Setenv("GF_CACHING_TTL", "10m")
+			},
+			expectedMs: 600000, // 10 minutes in ms
+		},
+		{
+			desc: "TTL parses duration string 1m",
+			setEnv: func(t *testing.T) {
+				t.Setenv("GF_CACHING_TTL", "1m")
+			},
+			expectedMs: 60000, // 1 minute in ms
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			if test.setEnv != nil {
+				test.setEnv(t)
+			}
+			cfg := setting.NewCfg()
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil, nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+
+			recorder := httptest.NewRecorder()
+			m.ServeHTTP(recorder, req)
+			var got settings
+			err := json.Unmarshal(recorder.Body.Bytes(), &got)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.Equal(t, test.expectedMs, got.Caching.DefaultTTLMs, "caching.defaultTTLMs")
+		})
+	}
+}
+
 func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -266,7 +339,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -304,7 +378,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -341,8 +416,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							Angular: plugins.AngularMeta{Detected: true},
-							FS:      &pluginfakes.FakePluginFS{},
+							Angular:         plugins.AngularMeta{Detected: true},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyFetch,
 						},
 					},
 				}
@@ -379,6 +455,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -391,7 +468,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			pluginAssets: newPluginAssetsWithConfig(&config.PluginManagementCfg{
 				PluginSettings: map[string]map[string]string{
 					"test-app": {
-						pluginassets.CreatePluginVersionCfgKey: pluginassets.CreatePluginVersionScriptSupportEnabled,
+						pluginassets2.CreatePluginVersionCfgKey: pluginassets2.CreatePluginVersionScriptSupportEnabled,
 					},
 				},
 			}),
@@ -424,6 +501,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 							FS: &pluginfakes.FakePluginFS{TypeFunc: func() plugins.FSType {
 								return plugins.FSTypeCDN
 							}},
+							LoadingStrategy: plugins.LoadingStrategyFetch,
 						},
 					},
 				}
@@ -552,7 +630,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -602,7 +681,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -642,7 +722,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -687,9 +768,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
 						reqContext := &contextmodel.ReqContext{
-							Context:                    web.FromContext(ctx),
-							SignedInUser:               test.signedInUser,
-							PublicDashboardAccessToken: "test-token",
+							Context:      web.FromContext(ctx),
+							SignedInUser: test.signedInUser,
 						}
 						ctx = context.WithValue(ctx, ctxkey.Key{}, reqContext)
 						*reqContext.Req = *reqContext.Req.WithContext(ctx)
@@ -714,6 +794,94 @@ func newPluginAssets() func() *pluginassets.Service {
 
 func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
 	return func() *pluginassets.Service {
-		return pluginassets.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), signature.ProvideService(pCfg, statickey.New()), &pluginstore.FakePluginStore{})
+		cdn := pluginscdn.ProvideService(pCfg)
+		calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), cdn, signature.ProvideService(pCfg, statickey.New()))
+		return pluginassets.ProvideService(calc)
 	}
+}
+
+func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFiltering(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	enabledPlugins := []string{"prometheus", "loki", "mysql"}
+
+	pluginList := make([]pluginstore.Plugin, len(enabledPlugins))
+	pluginSettingsList := make(map[string]*pluginsettings.DTO, len(enabledPlugins))
+	for i, name := range enabledPlugins {
+		pluginList[i] = pluginstore.Plugin{
+			Module:          fmt.Sprintf("/%s/module.js", name),
+			JSONData:        plugins.JSONData{ID: name, Info: plugins.Info{Version: "1.0.0"}, Type: plugins.TypeDataSource},
+			FS:              &pluginfakes.FakePluginFS{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
+		}
+		pluginSettingsList[name] = &pluginsettings.DTO{ID: int64(i + 1), OrgID: 1, PluginID: name, PluginVersion: "1.0.0", Enabled: true}
+	}
+
+	pluginStore := &pluginstore.FakePluginStore{PluginList: pluginList}
+	pluginSettings := &pluginsettings.FakePluginSettings{Plugins: pluginSettingsList}
+
+	cfg := setting.NewCfg()
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), pluginStore, pluginSettings, nil)
+
+	hs.DataSourcesService = &datafakes.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{
+			{UID: "ds-uid-1", Name: "Prom", Type: "prometheus", OrgID: 1, JsonData: simplejson.New()},
+			{UID: "ds-uid-2", Name: "Loki", Type: "loki", OrgID: 1, JsonData: simplejson.New()},
+			{UID: "ds-uid-3", Name: "MySQL", Type: "mysql", OrgID: 1, JsonData: simplejson.New()},
+		},
+	}
+
+	testDashboard := simplejson.New()
+	testDashboard.Set("title", "Test Community Dashboard")
+	testDashboard.Set("uid", "test-uid")
+	testDashboard.Set("panels", []any{
+		map[string]any{"id": 1, "datasource": map[string]any{"uid": "ds-uid-1"}},
+		map[string]any{"id": 2, "datasource": map[string]any{"uid": "ds-uid-2"}},
+	})
+
+	dash := dashboards.NewDashboardFromJson(testDashboard)
+	dash.OrgID = 1
+
+	mockPubDashService := &publicdashboards.FakePublicDashboardService{}
+	mockPubDashService.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, "test-token").Return(nil, dash, nil)
+	hs.publicDashboardsService = mockPubDashService
+
+	m.UseMiddleware(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			reqContext := &contextmodel.ReqContext{
+				Context:                    web.FromContext(ctx),
+				SignedInUser:               &user.SignedInUser{OrgID: 1},
+				PublicDashboardAccessToken: "test-token",
+			}
+			ctx = context.WithValue(ctx, ctxkey.Key{}, reqContext)
+			*reqContext.Req = *reqContext.Req.WithContext(ctx)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+	recorder := httptest.NewRecorder()
+
+	m.ServeHTTP(recorder, req)
+
+	type settings struct {
+		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
+	}
+
+	var got settings
+	err := json.Unmarshal(recorder.Body.Bytes(), &got)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	names := make([]string, 0)
+	for name := range got.Datasources {
+		// skip default data sources: -- Grafana --, -- Mixed --, -- Dashboard --
+		if strings.HasPrefix(name, "--") && strings.HasSuffix(name, "--") {
+			continue
+		}
+		names = append(names, name)
+	}
+
+	require.ElementsMatch(t, []string{"Prom", "Loki"}, names)
 }

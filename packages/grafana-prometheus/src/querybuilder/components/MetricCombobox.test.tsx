@@ -3,15 +3,15 @@ import userEvent from '@testing-library/user-event';
 
 import '@testing-library/jest-dom';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { getMockTimeRange } from '../../test/mocks/datasource';
-import { PromOptions } from '../../types';
+import { type PromOptions } from '../../types';
 
-import { MetricCombobox, MetricComboboxProps } from './MetricCombobox';
+import { MetricCombobox, type MetricComboboxProps } from './MetricCombobox';
 
 describe('MetricCombobox', () => {
   beforeAll(() => {
@@ -31,7 +31,6 @@ describe('MetricCombobox', () => {
 
   const instanceSettings = {
     url: 'proxied',
-    id: 1,
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET' },

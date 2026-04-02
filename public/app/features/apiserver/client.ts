@@ -1,27 +1,27 @@
-import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
+import { type Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
-import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
+import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
 import { config, getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getAPINamespace } from '../../api/utils';
 
 import {
-  ListOptions,
-  ListOptionsFieldSelector,
-  ListOptionsLabelSelector,
-  MetaStatus,
-  Resource,
-  ResourceForCreate,
-  ResourceList,
-  ResourceClient,
-  ObjectMeta,
-  WatchOptions,
-  K8sAPIGroupList,
+  type ListOptions,
+  type ListOptionsFieldSelector,
+  type ListOptionsLabelSelector,
+  type MetaStatus,
+  type Resource,
+  type ResourceForCreate,
+  type ResourceList,
+  type ResourceClient,
+  type ObjectMeta,
+  type WatchOptions,
+  type K8sAPIGroupList,
   AnnoKeySavedFromUI,
-  ResourceEvent,
-  ResourceClientWriteParams,
-  GroupVersionResource,
+  type ResourceEvent,
+  type ResourceClientWriteParams,
+  type GroupVersionResource,
 } from './types';
 
 export class ScopedResourceClient<T = object, S = object, K = string> implements ResourceClient<T, S, K> {
@@ -57,12 +57,26 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       return getGrafanaLiveSrv()
         .getStream<ResourceEvent<T, S, K>>({
           scope: LiveChannelScope.Watch,
-          namespace: this.gvr.group,
-          path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid}`,
+          stream: this.gvr.group,
+          path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid || 'anonymous'}`,
+          data: params?.resourceVersion ? { resourceVersion: params.resourceVersion } : undefined,
         })
         .pipe(
+          map((event) => {
+            if (isLiveChannelStatusEvent(event) && event.error) {
+              throw event.error;
+            }
+            return event;
+          }),
           filter((event) => isLiveChannelMessageEvent(event)),
-          map((event) => event.message)
+          map((event) => event.message),
+          // No RxJS retry here — centrifuge handles transient reconnection
+          // at the protocol level. Non-temporary errors (e.g. permission denied)
+          // should surface immediately rather than being retried.
+          catchError((error) => {
+            console.error('Live channel watch stream error:', error);
+            throw error;
+          })
         );
     }
 
@@ -74,7 +88,13 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
         method: 'GET',
       })
       .pipe(
-        filter((response) => response.ok && response.data instanceof Uint8Array),
+        map((response) => {
+          if (!response.ok) {
+            throw new Error(`Watch request failed with status ${response.status}: ${response.statusText}`);
+          }
+          return response;
+        }),
+        filter((response) => response.data instanceof Uint8Array),
         map((response) => {
           const text = decoder.decode(response.data);
           return text.split('\n');

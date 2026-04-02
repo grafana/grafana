@@ -5,6 +5,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/prometheus/client_golang/prometheus"
+
 	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -15,11 +17,11 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller    = (*AdvisorAppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider = (*AdvisorAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller    = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider = (*AppInstaller)(nil)
 )
 
-type AdvisorAppInstaller struct {
+type AppInstaller struct {
 	*advisorapp.AdvisorAppInstaller
 }
 
@@ -29,17 +31,18 @@ func ProvideAppInstaller(
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
 	orgService org.Service,
-) (*AdvisorAppInstaller, error) {
+	registerer prometheus.Registerer,
+) (*AppInstaller, error) {
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
 
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
-	i, err := advisorapp.ProvideAppInstaller(authorizer, checkRegistry, cfg, orgService)
+	i, err := advisorapp.ProvideAppInstaller(authorizer, checkRegistry, cfg, orgService, registerer)
 	if err != nil {
 		return nil, err
 	}
-	return &AdvisorAppInstaller{
+	return &AppInstaller{
 		AdvisorAppInstaller: i,
 	}, nil
 }

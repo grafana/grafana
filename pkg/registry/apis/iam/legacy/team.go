@@ -52,7 +52,7 @@ func (s *legacySQLStore) GetTeamInternalID(
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +123,9 @@ func (r listTeamsQuery) Validate() error {
 
 // ListTeams implements LegacyIdentityStore.
 func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
 	// for continue
 	query.Pagination.Limit += 1
 	query.OrgID = ns.OrgID
@@ -130,7 +133,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sqlConn, err := s.sql(ctx)
+	sqlConn, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -157,10 +160,15 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	for rows.Next() {
 		t := team.Team{}
 		var externalUID sql.NullString
+		var email sql.NullString
 		var isProvisioned sql.NullBool
-		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &externalUID, &isProvisioned, &t.Created, &t.Updated)
+		err = rows.Scan(&t.ID, &t.UID, &t.Name, &email, &externalUID, &isProvisioned, &t.Created, &t.Updated)
 		if err != nil {
 			return res, err
+		}
+
+		if email.Valid {
+			t.Email = email.String
 		}
 
 		if externalUID.Valid {
@@ -234,7 +242,7 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +322,7 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 
 	cmd.Updated = legacysql.NewDBTime(now)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -385,7 +393,7 @@ func (r deleteTeamQuery) Validate() error {
 }
 
 func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamCommand) error {
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
 	}

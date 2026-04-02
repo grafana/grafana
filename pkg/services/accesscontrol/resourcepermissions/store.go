@@ -88,6 +88,31 @@ func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd 
 	return err
 }
 
+func (s *store) GetPermissionIDByRoleName(ctx context.Context, orgID int64, roleName string) (int64, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionIDByRoleName")
+	defer span.End()
+
+	var permissionID int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.SQL(`
+			SELECT p.id 
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			WHERE r.name = ? AND r.org_id = ?
+			LIMIT 1
+		`, roleName, orgID).Get(&permissionID)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return fmt.Errorf("permission not found for role")
+		}
+		return nil
+	})
+
+	return permissionID, err
+}
+
 func (s *store) SetUserResourcePermission(
 	ctx context.Context, orgID int64, usr accesscontrol.User,
 	cmd SetResourcePermissionCommand,
@@ -408,7 +433,10 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	where += `) AND p.action IN (?` + strings.Repeat(",?", len(query.Actions)-1) + `)`
 
 	if query.OnlyManaged {
-		where += `AND r.name LIKE 'managed:%'`
+		where += ` AND r.name LIKE 'managed:%'`
+	} else if query.ExcludeManaged {
+		//Exclude managed roles to only fetch provisioned permissions (custom:*, fixed:*, etc.)
+		where += ` AND r.name NOT LIKE 'managed:%'`
 	}
 
 	for _, a := range query.Actions {
@@ -437,14 +465,27 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		args = append(args, saFilter.Args...)
 	}
 
-	teamFilter, err := accesscontrol.Filter(query.User, "t.id", "teams:id:", accesscontrol.ActionTeamsRead)
-	if err != nil {
-		return nil, err
+	var teamFilter *accesscontrol.SQLFilter
+	if !query.ExcludeManaged {
+		filter, err := accesscontrol.Filter(
+			query.User,
+			"t.id",
+			"teams:id:",
+			accesscontrol.ActionTeamsRead,
+		)
+		if err != nil {
+			return nil, err
+		}
+		teamFilter = &filter
 	}
 
-	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
+	team := teamSelect + teamFrom + where
 	args = append(args, args[:initialLength]...)
-	args = append(args, teamFilter.Args...)
+
+	if teamFilter != nil {
+		team += " AND " + teamFilter.Where
+		args = append(args, teamFilter.Args...)
+	}
 
 	builtin := builtinSelect + builtinFrom + where
 	args = append(args, args[:initialLength]...)
@@ -707,6 +748,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 		p.Created = time.Now()
 		p.Updated = time.Now()
 		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		p.DatasourceType = cmd.DatasourceType
 		permissions = append(permissions, p)
 	}
 
@@ -787,22 +829,37 @@ func (s *InMemoryActionSets) ResolveActionSet(actionSet string) []string {
 }
 
 func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
-	var expandedPermissions []accesscontrol.Permission
+	// Count output size to avoid repeated reallocations when expanding action sets.
+	var n int
 	for _, permission := range permissions {
 		resolvedActions := s.ResolveActionSet(permission.Action)
 		if len(resolvedActions) == 0 {
-			expandedPermissions = append(expandedPermissions, permission)
+			n++
+			continue
+		}
+		for _, action := range resolvedActions {
+			if actionMatcher(action) {
+				n++
+			}
+		}
+	}
+
+	// here we know the size of the output, so we can allocate the array once
+	out := make([]accesscontrol.Permission, 0, n)
+	for _, permission := range permissions {
+		resolvedActions := s.ResolveActionSet(permission.Action)
+		if len(resolvedActions) == 0 {
+			out = append(out, permission)
 			continue
 		}
 		for _, action := range resolvedActions {
 			if !actionMatcher(action) {
 				continue
 			}
-			permission.Action = action
-			expandedPermissions = append(expandedPermissions, permission)
+			out = append(out, accesscontrol.Permission{Action: action, Scope: permission.Scope})
 		}
 	}
-	return expandedPermissions
+	return out
 }
 
 func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {

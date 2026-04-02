@@ -10,7 +10,7 @@ jest.mock('@grafana/runtime', () => ({
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 
-import { BackendSrv } from '@grafana/runtime';
+import { type BackendSrv } from '@grafana/runtime';
 
 import { InfluxVersion } from '../../../types';
 
@@ -23,7 +23,7 @@ describe('UrlAndAuthenticationSection', () => {
 
   const defaultProps = createTestProps({
     options: {
-      id: 1234,
+      uid: 'abc',
       jsonData: {
         url: 'http://localhost:8086',
         product: '',
@@ -55,7 +55,7 @@ describe('UrlAndAuthenticationSection', () => {
             return null;
           },
         },
-        url: '/api/datasources/proxy/1234/ping',
+        url: '/api/datasources/proxy/uid/abc/ping',
       })
     );
   };

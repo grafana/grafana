@@ -20,6 +20,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,7 +51,7 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default", // org ID of 1 is special and translates to default
 		},
 	}
@@ -60,8 +62,30 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default", // org ID of 1 is special and translates to default
+		},
+	}
+	validIDTokenClaimsWithRenderService = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "render:0",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.ExtendedJWTModule,
+			Namespace:       "default",
+		},
+	}
+	validIDTokenClaimsWithAnonymous = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "anonymous:0",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.ExtendedJWTModule,
+			Namespace:       "default",
 		},
 	}
 	validIDTokenClaimsWithStackSet = idTokenClaims{
@@ -71,7 +95,7 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "stacks-1234",
 		},
 	}
@@ -82,8 +106,53 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "stack-1234",
+		},
+	}
+	validAccessTokenClaimsWithActor = accessTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "access-policy:this-uid",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace:            "default",
+			DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+			Actor: &authnlib.ActorClaims{
+				Subject: "user:2",
+				IDTokenClaims: authnlib.IDTokenClaims{
+					Identifier: "abc123uid",
+					Type:       claims.TypeUser,
+				},
+			},
+		},
+	}
+	// validAccessTokenClaimsWithActorChain simulates a multi-hop OBO chain:
+	// MT Query → MT Datasource (intermediate service) → HG Instance (this instance).
+	// The user is the innermost actor; the intermediate service is the first-level actor.
+	validAccessTokenClaimsWithActorChain = accessTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "access-policy:this-uid",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace:            "default",
+			DelegatedPermissions: []string{"dashboards:create", "folders:read"},
+			Actor: &authnlib.ActorClaims{
+				Subject: "access-policy:intermediate-service",
+				IDTokenClaims: authnlib.IDTokenClaims{
+					Type: claims.TypeAccessPolicy,
+				},
+				Actor: &authnlib.ActorClaims{
+					Subject: "user:2",
+					IDTokenClaims: authnlib.IDTokenClaims{
+						Identifier: "abc123uid",
+						Type:       claims.TypeUser,
+					},
+				},
+			},
 		},
 	}
 	validAccessTokenClaimsWildcard = accessTokenClaims{
@@ -123,18 +192,18 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "org-2",
 		},
 	}
 	invalidSubjectIDTokenClaims = idTokenClaims{
 		Claims: jwt.Claims{
-			Subject:  "anonymous:2",
+			Subject:  "api-key:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default",
 		},
 	}
@@ -248,11 +317,57 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}, AllowedActions: []string{"folders:read"}, K8s: []string{}}},
+			},
+		},
+		{
+			name:        "should authenticate as user via OBO (access token with Actor, no ID token)",
+			accessToken: &validAccessTokenClaimsWithActor,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "2",
+				UID:               "abc123uid",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWithActor,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions:    []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						K8sRestrictedActions: []string{},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as user via multi-hop OBO (access token with nested Actor chain, no ID token)",
+			accessToken: &validAccessTokenClaimsWithActorChain,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "2",
+				UID:               "abc123uid",
+				Type:              claims.TypeUser,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaimsWithActorChain,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions:    []string{"dashboards:create", "folders:read"},
+						K8sRestrictedActions: []string{},
+					},
+				},
 			},
 		},
 		{
@@ -267,7 +382,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				Namespace:         "*",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
@@ -286,13 +401,13 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaims,
 				IDTokenClaims:     &validIDTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"}, K8sRestrictedActions: []string{},
 					},
 				},
 			},
@@ -309,13 +424,66 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaims,
 				IDTokenClaims:     &validIDTokenClaimsWithServiceAccount,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"}, K8sRestrictedActions: []string{},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as render service",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithRenderService,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "0",
+				Type:              claims.TypeRenderService,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithRenderService,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				OrgRoles:          map[int64]org.RoleType{1: org.RoleAdmin},
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: false,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"}, K8sRestrictedActions: []string{},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as anonymous",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithAnonymous,
+			orgID:       1,
+			cfg: &setting.Cfg{
+				Anonymous: setting.AnonymousSettings{
+					OrgRole: string(org.RoleEditor),
+				},
+			},
+			want: &authn.Identity{
+				ID:                "0",
+				Type:              claims.TypeAnonymous,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithAnonymous,
+				Namespace:         "default",
+				OrgRoles:          map[int64]org.RoleType{1: org.RoleEditor},
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: false,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"}, K8sRestrictedActions: []string{},
 					},
 				},
 			},
@@ -332,11 +500,12 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}},
 				},
 			},
 		},
@@ -360,11 +529,12 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}},
 				},
 			},
 		},
@@ -388,7 +558,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
@@ -444,11 +614,12 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}},
 				},
 			},
 		},
@@ -487,21 +658,126 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			orgID:   1,
 			wantErr: errExtJWTInvalidSubject,
 		},
+		{
+			name: "should return error when OBO access token has disallowed namespace",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "access-policy:this-uid",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "org-99",
+					Actor: &authnlib.ActorClaims{
+						Subject: "user:2",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTDisallowedNamespaceClaim,
+		},
+		{
+			name: "should return error when OBO access token subject is unparseable",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "garbage",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "default",
+					Actor: &authnlib.ActorClaims{
+						Subject: "user:2",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTInvalidSubject,
+		},
+		{
+			name: "should return error when OBO access token subject is not access-policy",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "user:99",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "default",
+					Actor: &authnlib.ActorClaims{
+						Subject: "user:2",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTInvalid,
+		},
+		{
+			name: "should return error when OBO actor has empty subject",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "access-policy:this-uid",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "default",
+					Actor: &authnlib.ActorClaims{
+						Subject: "",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTInvalid,
+		},
+		{
+			name: "should return error when OBO actor subject is unparseable",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "access-policy:this-uid",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "default",
+					Actor: &authnlib.ActorClaims{
+						Subject: "not-a-valid-type-id",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTInvalid,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			env := setupTestCtx(tc.cfg)
 
+			signedAccessToken := generateToken(t, *tc.accessToken, pk, jose.ES256)
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
-					"X-Access-Token": {generateToken(t, *tc.accessToken, pk, jose.ES256)},
+					"X-Access-Token": {signedAccessToken},
 				},
 			}
 
 			env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.accessToken}
 			if tc.idToken != nil {
-				env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.accessToken}
 				env.s.idTokenVerifier = &mockIDVerifier{Claims: *tc.idToken}
 				validHTTPReq.Header.Add(ExtJWTAuthorizationHeaderName, generateIDToken(t, *tc.idToken, pk, jose.ES256))
 			}
@@ -515,10 +791,44 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				assert.Nil(t, id)
 			} else {
 				require.NoError(t, err)
+				tc.want.AccessToken = signedAccessToken
 				assert.EqualValues(t, tc.want, id, fmt.Sprintf("%+v", id))
 			}
 		})
 	}
+}
+
+// TestExtendedJWT_authenticateAsUserViaOBO_defensive calls authenticateAsUserViaOBO
+// directly to exercise error branches that are unreachable through Authenticate.
+// When IsOnBehalfOfUser (authlib) is working correctly these scenarios are impossible:
+// getIdentityActor only returns non-nil for TypeUser/TypeServiceAccount actors, so
+// an actor with a disallowed type (e.g. TypeAPIKey) never enters the OBO path.
+// These tests exist purely as a safety net against future changes in the authlib contract.
+func TestExtendedJWT_authenticateAsUserViaOBO_defensive(t *testing.T) {
+	env := setupTestCtx(nil)
+
+	t.Run("should return error when OBO actor identity type is disallowed", func(t *testing.T) {
+		token := accessTokenClaims{
+			Claims: jwt.Claims{
+				Subject:  "access-policy:this-uid",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+			},
+			Rest: authnlib.AccessTokenClaims{
+				Namespace: "default",
+				Actor: &authnlib.ActorClaims{
+					Subject: "api-key:42",
+					IDTokenClaims: authnlib.IDTokenClaims{
+						Type: claims.TypeAPIKey,
+					},
+				},
+			},
+		}
+
+		id, err := env.s.authenticateAsUserViaOBO(token, "signed-token")
+		assert.ErrorIs(t, err, errExtJWTInvalidSubject)
+		assert.Nil(t, id)
+	})
 }
 
 // https://datatracker.ietf.org/doc/html/rfc9068#name-data-structure

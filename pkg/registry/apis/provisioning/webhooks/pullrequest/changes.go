@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -142,6 +142,7 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		// for testability and decoupling
 		urlBuilder, err := url.Parse(baseURL)
 		if err != nil {
+			logger.Warn("Error parsing baseURL", "err", err)
 			info.Error = err.Error()
 			return info
 		}

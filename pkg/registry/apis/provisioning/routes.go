@@ -13,6 +13,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -52,7 +53,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceStats"),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.ResourceStats{}.OpenAPIModelName()),
 																},
 															},
 														},
@@ -100,7 +101,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryViewList"),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.RepositoryViewList{}.OpenAPIModelName()),
 																},
 															},
 														},
@@ -148,10 +149,24 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: check if lister could list too many repositories or resources
-	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.store)
+	ns := u.GetNamespace()
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, ns)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	ctx = request.WithNamespace(ctx, ns)
+
+	// TODO: check if lister could list too many repositories or resources
+	all, err := b.repoLister.List(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	quotaStatus, err := b.quotaGetter.GetQuotaStatus(ctx, ns)
+	if err != nil {
+		errhttp.Write(ctx, fmt.Errorf("failed to get quota status: %w", err), w)
 		return
 	}
 
@@ -160,6 +175,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 		AllowImageRendering:      b.allowImageRendering,
+		MaxRepositories:          quotaStatus.MaxRepositories,
 	}
 
 	for i, val := range all {

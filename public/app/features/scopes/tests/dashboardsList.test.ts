@@ -1,11 +1,14 @@
 import { screen, waitFor } from '@testing-library/react';
 
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { MOCK_SUB_SCOPE_MIMIR_ITEMS } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
-import { ScopesApiClient } from '../ScopesApiClient';
-import { ScopesService } from '../ScopesService';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
-import { ScopeNavigation } from '../dashboards/types';
+import { type ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesService } from '../ScopesService';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopeNavigation } from '../dashboards/types';
 
 import {
   clearNotFound,
@@ -35,25 +38,24 @@ import {
   dashboardWithRootFolder,
   dashboardWithRootFolderAndOtherFolder,
   dashboardWithTwoFolders,
-  getDatasource,
-  getInstanceSettings,
-  getMock,
   navigationWithSubScope,
   navigationWithSubScope2,
   navigationWithSubScopeDifferent,
   navigationWithSubScopeAndGroups,
-  subScopeMimirItems,
-} from './utils/mocks';
+} from './utils/mockData';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('Dashboards list', () => {
   let fetchDashboardsSpy: jest.SpyInstance;
@@ -539,7 +541,7 @@ describe('Dashboards list', () => {
 
     it('Loads subScope items when folder is expanded', async () => {
       const mockNavigations = [navigationWithSubScope];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -553,7 +555,7 @@ describe('Dashboards list', () => {
 
       // Wait for async fetchSubScopeItems to complete
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
       await jest.runOnlyPendingTimersAsync();
 
@@ -571,7 +573,7 @@ describe('Dashboards list', () => {
 
     it('Shows loading state while fetching subScope items', async () => {
       const mockNavigations = [navigationWithSubScope];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -585,13 +587,13 @@ describe('Dashboards list', () => {
 
       // Verify fetch was called (loading happens asynchronously)
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
     });
 
     it('Multiple subScope folders with same subScope load same content', async () => {
       const mockNavigations = [navigationWithSubScope, navigationWithSubScope2];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValue(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValue(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -606,7 +608,7 @@ describe('Dashboards list', () => {
 
       // Wait for fetch to complete
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
       await jest.runOnlyPendingTimersAsync();
 
@@ -653,7 +655,7 @@ describe('Dashboards list', () => {
       await jest.runOnlyPendingTimersAsync();
 
       // Verify fetch was called
-      expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+      expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
 
       // Verify no content appears (error handled gracefully)
       expectDashboardNotInDocument('mimir-item-1');
@@ -676,7 +678,7 @@ describe('Dashboards list', () => {
 
     it('Filters search works with loaded subScope content', async () => {
       const mockNavigations = [navigationWithSubScope];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -690,7 +692,7 @@ describe('Dashboards list', () => {
 
       // Wait for fetch to complete
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
       await jest.runOnlyPendingTimersAsync();
 
@@ -715,7 +717,7 @@ describe('Dashboards list', () => {
 
     it('Does not fetch subScope items if folder is already loaded', async () => {
       const mockNavigations = [navigationWithSubScope];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -729,7 +731,7 @@ describe('Dashboards list', () => {
 
       // Wait for fetch to complete
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
       await jest.runOnlyPendingTimersAsync();
 

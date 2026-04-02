@@ -4,7 +4,7 @@ import { Button } from '@grafana/ui';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) => {
   return (

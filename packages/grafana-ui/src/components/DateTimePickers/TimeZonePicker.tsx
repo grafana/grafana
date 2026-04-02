@@ -2,12 +2,12 @@ import { toLower, isEmpty, isString } from 'lodash';
 import { useMemo, useCallback } from 'react';
 
 import {
-  SelectableValue,
+  type SelectableValue,
   getTimeZoneInfo,
-  TimeZoneInfo,
+  type TimeZoneInfo,
   getTimeZoneGroups,
-  GroupedTimeZones,
-  TimeZone,
+  type GroupedTimeZones,
+  type TimeZone,
   InternalTimeZones,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -16,7 +16,7 @@ import { Select } from '../Select/Select';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
-import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZonePicker/TimeZoneOption';
+import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -45,7 +45,7 @@ export const TimeZonePicker = (props: Props) => {
     disabled = false,
     inputId,
     menuShouldPortal = true,
-    openMenuOnFocus = true,
+    openMenuOnFocus = false,
   } = props;
   const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);

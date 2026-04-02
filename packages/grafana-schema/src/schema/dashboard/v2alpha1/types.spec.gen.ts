@@ -216,6 +216,8 @@ export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
 export interface MatcherConfig {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string;
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	scope?: MatcherScope;
 	// The matcher options. This is specific to the matcher implementation.
 	options?: any;
 }
@@ -223,6 +225,10 @@ export interface MatcherConfig {
 export const defaultMatcherConfig = (): MatcherConfig => ({
 	id: "",
 });
+
+export type MatcherScope = "series" | "nested" | "annotation" | "exemplar";
+
+export const defaultMatcherScope = (): MatcherScope => ("series");
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
@@ -300,7 +306,7 @@ export interface FieldConfig {
 	description?: string;
 	// An explicit path to the field in the datasource.  When the frame meta includes a path,
 	// This will default to `${frame.meta.path}/${field.name}
-	//
+	// 
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
 	path?: string;
@@ -309,7 +315,7 @@ export interface FieldConfig {
 	// True if data source field supports ad-hoc filters
 	filterable?: boolean;
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -343,6 +349,11 @@ export interface FieldConfig {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: Record<string, any>;
+	// Calculate min max per field
+	fieldMinMax?: boolean;
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode;
 }
 
 export const defaultFieldConfig = (): FieldConfig => ({
@@ -605,6 +616,11 @@ export const defaultActionVariable = (): ActionVariable => ({
 
 // Action variable type
 export const ActionVariableType = "string";
+
+// How null values should be handled
+export type NullValueMode = "null" | "connected" | "null as zero";
+
+export const defaultNullValueMode = (): NullValueMode => ("null");
 
 export interface DynamicConfigValue {
 	id: string;
@@ -1142,6 +1158,8 @@ export interface VariableOption {
 	text: string | string[];
 	// Value of the option
 	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
 }
 
 export const defaultVariableOption = (): VariableOption => ({
@@ -1353,7 +1371,7 @@ export interface CustomVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
-  valuesFormat?: "csv" | "json";
+	valuesFormat?: "csv" | "json";
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1366,7 +1384,6 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	hide: "dontHide",
 	skipUrlSync: false,
 	allowCustomValue: true,
-  valuesFormat: undefined,
 });
 
 // Group variable kind
@@ -1426,6 +1443,8 @@ export interface AdhocVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	enableGroupBy?: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1436,6 +1455,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	hide: "dontHide",
 	skipUrlSync: false,
 	allowCustomValue: true,
+	enableGroupBy: false,
 });
 
 // Define the AdHocFilterWithLabels type
@@ -1551,3 +1571,4 @@ export const defaultSpec = (): Spec => ({
 	title: "",
 	variables: [],
 });
+

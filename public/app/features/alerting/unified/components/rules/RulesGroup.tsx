@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
+import { type CombinedRuleGroup, type CombinedRuleNamespace, type RulesSource } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
@@ -13,7 +13,7 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
-import { isFederatedRuleGroup, isPluginProvidedRule, rulerRuleType } from '../../utils/rules';
+import { isFederatedRuleGroup, isPluginProvidedRule, isUngroupedRuleGroup, rulerRuleType } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -164,11 +164,16 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   }
 
   // ungrouped rules are rules that are in the "default" group name
-  const groupName = isListView ? (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
-  ) : (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
-  );
+  let groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />;
+  if (isListView) {
+    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />;
+  } else if (isUngroupedRuleGroup(group.name)) {
+    const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
+    const groupDisplayName = t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', {
+      ruleName: firstRuleName,
+    });
+    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={groupDisplayName} />;
+  }
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">

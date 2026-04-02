@@ -37,6 +37,20 @@ type ldapTestCase struct {
 	expectDisable       bool
 }
 
+func TestLDAP_AuthenticateProxy_Disabled(t *testing.T) {
+	c := ProvideLDAP(
+		setting.NewCfg(),
+		&service.LDAPFakeService{ExpectedEnabled: false},
+		&usertest.FakeUserService{},
+		&authinfotest.FakeService{},
+		tracing.InitializeTracerForTest(),
+	)
+
+	identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, "test", nil)
+	assert.NoError(t, err)
+	assert.Nil(t, identity)
+}
+
 func TestLDAP_AuthenticateProxy(t *testing.T) {
 	tests := []ldapTestCase{
 		{
@@ -103,6 +117,20 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 			assert.Equal(t, tt.expectDisable, tt.disableCalled)
 		})
 	}
+}
+
+func TestLDAP_AuthenticatePassword_Disabled(t *testing.T) {
+	c := ProvideLDAP(
+		setting.NewCfg(),
+		&service.LDAPFakeService{ExpectedEnabled: false},
+		&usertest.FakeUserService{},
+		&authinfotest.FakeService{},
+		tracing.InitializeTracerForTest(),
+	)
+
+	identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, "test", "password")
+	assert.NoError(t, err)
+	assert.Nil(t, identity)
 }
 
 func TestLDAP_AuthenticatePassword(t *testing.T) {
@@ -199,7 +227,7 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 
 	c := ProvideLDAP(
 		setting.NewCfg(),
-		&service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr},
+		&service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr, ExpectedEnabled: true},
 		userService,
 		authInfoService,
 		tracing.InitializeTracerForTest(),

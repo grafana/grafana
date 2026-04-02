@@ -6,19 +6,19 @@ import (
 	"path"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -35,7 +35,8 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 		},
 	})
 
-	client := common.NewTemplateGroupClient(t, helper.Org1.Admin)
+	client, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
@@ -57,27 +58,27 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	response := alertingApi.ConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
 	require.Equal(t, "success", response.Status)
 
-	templates, err := client.List(context.Background(), metav1.ListOptions{})
+	templates, err := client.List(context.Background(), apis.DefaultNamespace, resource.ListOptions{})
 
 	require.NoError(t, err)
 	require.Len(t, templates.Items, 3)
 
-	require.Equal(t, v0alpha1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
+	require.Equal(t, v1beta1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
 	require.Equal(t, "imported", templates.Items[1].Spec.Title)
 	require.Equal(t, "template", templates.Items[2].Spec.Title)
 
 	t.Run("should be correct kind", func(t *testing.T) {
 		assert.Equal(t,
-			v0alpha1.TemplateGroupSpec{
+			v1beta1.TemplateGroupSpec{
 				Title:   "imported",
 				Content: amConfig.TemplateFiles["imported"],
-				Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+				Kind:    v1beta1.TemplateGroupTemplateKindMimir,
 			}, templates.Items[1].Spec)
 		assert.Equal(t,
-			v0alpha1.TemplateGroupSpec{
+			v1beta1.TemplateGroupSpec{
 				Title:   "template",
 				Content: amConfig.TemplateFiles["template"],
-				Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+				Kind:    v1beta1.TemplateGroupTemplateKindMimir,
 			}, templates.Items[2].Spec)
 	})
 
@@ -90,40 +91,40 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	t.Run("should not be able to update", func(t *testing.T) {
 		tpl := templates.Items[1]
 		tpl.Spec.Content = "new content"
-		_, err := client.Update(context.Background(), &tpl, metav1.UpdateOptions{})
+		_, err := client.Update(context.Background(), &tpl, resource.UpdateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
 	})
 
 	t.Run("should not be able to delete", func(t *testing.T) {
-		err := client.Delete(context.Background(), templates.Items[1].Name, metav1.DeleteOptions{})
+		err := client.Delete(context.Background(), templates.Items[1].GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
 	})
 
 	t.Run("should not conflict with Grafana kind", func(t *testing.T) {
-		tpl := v0alpha1.TemplateGroup{
+		tpl := v1beta1.TemplateGroup{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
 			Spec: templates.Items[1].Spec,
 		}
-		tpl.Spec.Kind = v0alpha1.TemplateGroupTemplateKindGrafana
+		tpl.Spec.Kind = v1beta1.TemplateGroupTemplateKindGrafana
 
-		created, err := client.Create(context.Background(), &tpl, metav1.CreateOptions{})
+		created, err := client.Create(context.Background(), &tpl, resource.CreateOptions{})
 		require.NoError(t, err)
 
 		assert.NotEqual(t, templates.Items[1].Name, created.Name)
 	})
 
 	t.Run("sort by kind and then name", func(t *testing.T) {
-		templates, err := client.List(context.Background(), metav1.ListOptions{})
+		templates, err := client.List(context.Background(), apis.DefaultNamespace, resource.ListOptions{})
 
 		require.NoError(t, err)
 		require.Len(t, templates.Items, 4)
-		assert.Equal(t, v0alpha1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
+		assert.Equal(t, v1beta1.DefaultTemplateTitle, templates.Items[0].Spec.Title)
 		assert.Equal(t, "imported", templates.Items[1].Spec.Title)
-		assert.Equal(t, v0alpha1.TemplateGroupTemplateKindGrafana, templates.Items[1].Spec.Kind)
+		assert.Equal(t, v1beta1.TemplateGroupTemplateKindGrafana, templates.Items[1].Spec.Kind)
 		assert.Equal(t, "imported", templates.Items[2].Spec.Title)
-		assert.Equal(t, v0alpha1.TemplateGroupTemplateKindMimir, templates.Items[2].Spec.Kind)
+		assert.Equal(t, v1beta1.TemplateGroupTemplateKindMimir, templates.Items[2].Spec.Kind)
 		assert.Equal(t, "template", templates.Items[3].Spec.Title)
 	})
 }

@@ -9,29 +9,33 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type GetUsage struct {
+type GetUsageResponse struct {
 	metav1.TypeMeta `json:",inline"`
 	GetUsageBody    `json:",inline"`
 }
 
-func NewGetUsage() *GetUsage {
-	return &GetUsage{}
+func NewGetUsageResponse() *GetUsageResponse {
+	return &GetUsageResponse{}
 }
 
 func (t *GetUsageBody) DeepCopyInto(dst *GetUsageBody) {
 	_ = resource.CopyObjectInto(dst, t)
 }
 
-func (o *GetUsage) DeepCopyObject() runtime.Object {
-	dst := NewGetUsage()
+func (o *GetUsageResponse) DeepCopyObject() runtime.Object {
+	dst := NewGetUsageResponse()
 	o.DeepCopyInto(dst)
 	return dst
 }
 
-func (o *GetUsage) DeepCopyInto(dst *GetUsage) {
+func (o *GetUsageResponse) DeepCopyInto(dst *GetUsageResponse) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.GetUsageBody.DeepCopyInto(&dst.GetUsageBody)
 }
 
-var _ runtime.Object = NewGetUsage()
+func (GetUsageResponse) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.quotas.pkg.apis.quotas.v0alpha1.GetUsageResponse"
+}
+
+var _ runtime.Object = NewGetUsageResponse()

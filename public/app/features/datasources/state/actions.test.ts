@@ -1,21 +1,21 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
-import { DataSourceSrv, FetchError } from '@grafana/runtime';
+import { type AppPluginMeta, type DataSourceSettings, type PluginMetaInfo, PluginType } from '@grafana/data';
+import { type DataSourceSrv, type FetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { ThunkResult, ThunkDispatch } from 'app/types/store';
+import { type getBackendSrv } from 'app/core/services/backend_srv';
+import { type ThunkResult, type ThunkDispatch } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
-import { GenericDataSourcePlugin } from '../types';
+import { type GenericDataSourcePlugin } from '../types';
 
 import {
-  InitDataSourceSettingDependencies,
+  type InitDataSourceSettingDependencies,
   testDataSource,
-  TestDataSourceDependencies,
+  type TestDataSourceDependencies,
   initDataSourceSettings,
   loadDataSource,
   addDataSource,
@@ -89,7 +89,7 @@ describe('loadDataSource()', () => {
     const dispatch = jest.fn();
     const getState = jest.fn();
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     const dataSource = await loadDataSource(dataSourceMock.uid)(dispatch, getState, undefined);
 
@@ -110,7 +110,7 @@ describe('loadDataSource()', () => {
     delete win.location;
     win.location = {} as Location;
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     // Fetch the datasource by ID
     const dataSource = await loadDataSource(id.toString())(dispatch, getState, undefined);
@@ -132,7 +132,7 @@ describe('loadDataSource()', () => {
     delete win.location;
     win.location = {} as Location;
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     // Fetch the datasource by ID
     await loadDataSource(id.toString())(dispatch, getState, undefined);

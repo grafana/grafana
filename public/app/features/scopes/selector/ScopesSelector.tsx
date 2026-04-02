@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, ErrorBoundary, ErrorWithStack, Spinner, Text, useStyles2 } from '@grafana/ui';
@@ -12,7 +12,7 @@ import { getModKey } from 'app/core/utils/browser';
 import { useScopesServices } from '../ScopesContextProvider';
 
 import { ScopesInput } from './ScopesInput';
-import { ScopesSelectorServiceState } from './ScopesSelectorService';
+import { type ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
 
 export const ScopesSelector = () => {
@@ -56,17 +56,7 @@ export const ScopesSelector = () => {
   } = selectorServiceState;
   const { scopesService, scopesSelectorService } = services;
   const { readOnly, loading } = scopes.state;
-  const {
-    open,
-    removeAllScopes,
-    closeAndApply,
-    closeAndReset,
-    filterNode,
-    selectScope,
-    deselectScope,
-    getRecentScopes,
-    toggleExpandedNode,
-  } = scopesSelectorService;
+  const { open, removeAllScopes, closeAndApply, closeAndReset, getRecentScopes } = scopesSelectorService;
 
   const recentScopes = getRecentScopes();
 
@@ -109,13 +99,9 @@ export const ScopesSelector = () => {
                         <ScopesTree
                           tree={tree}
                           loadingNodeName={loadingNodeName}
-                          filterNode={filterNode}
                           recentScopes={recentScopes}
                           selectedScopes={selectedScopes}
                           scopeNodes={nodes}
-                          selectScope={selectScope}
-                          deselectScope={deselectScope}
-                          toggleExpandedNode={toggleExpandedNode}
                           onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => {
                             scopesSelectorService.changeScopes(scopeIds, parentNodeId, scopeNodeId);
                             scopesSelectorService.closeAndReset();

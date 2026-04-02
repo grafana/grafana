@@ -1,33 +1,35 @@
 import {
   Centrifuge,
-  ConnectedContext,
-  ConnectingContext,
-  DisconnectedContext,
-  ServerPublicationContext,
+  type ConnectedContext,
+  type ConnectingContext,
+  type DisconnectedContext,
+  type ErrorContext,
+  type ServerPublicationContext,
   State,
 } from 'centrifuge';
-import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
+import { BehaviorSubject, type Observable, share, startWith } from 'rxjs';
 
 import {
-  DataQueryError,
-  DataQueryResponse,
-  LiveChannelAddress,
+  type DataQueryError,
+  type DataQueryResponse,
+  type LiveChannelAddress,
   LiveChannelConnectionState,
-  LiveChannelId,
+  type LiveChannelId,
   toLiveChannelId,
 } from '@grafana/data';
 import {
-  FetchResponse,
-  GrafanaLiveSrv,
-  LiveDataStreamOptions,
-  LivePublishOptions,
-  LiveQueryDataOptions,
+  type FetchResponse,
+  type GrafanaLiveSrv,
+  type LiveDataStreamOptions,
+  type LivePublishOptions,
+  type LiveQueryDataOptions,
   StreamingFrameAction,
-  StreamingFrameOptions,
-  BackendDataSourceResponse,
+  type StreamingFrameOptions,
+  type BackendDataSourceResponse,
+  getBackendSrv,
 } from '@grafana/runtime';
 
-import { StreamingResponseData } from '../data/utils';
+import { type StreamingResponseData } from '../data/utils';
 
 import { LiveDataStream } from './LiveDataStream';
 import { CentrifugeLiveChannel } from './channel';
@@ -35,7 +37,7 @@ import { CentrifugeLiveChannel } from './channel';
 export type CentrifugeSrvDeps = {
   grafanaAuthToken: string | null;
   appUrl: string;
-  orgId: number;
+  namespace: string; // k8s namespace
   orgRole: string;
   liveEnabled: boolean;
   dataStreamSubscriberReadiness: Observable<boolean>;
@@ -71,6 +73,7 @@ export class CentrifugeService implements CentrifugeSrv {
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
   private readonly dataStreamSubscriberReadiness: Observable<boolean>;
+  private lastAuthCheck = 0;
 
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
@@ -106,6 +109,7 @@ export class CentrifugeService implements CentrifugeSrv {
     this.centrifuge.on('connecting', this.onDisconnect);
     this.centrifuge.on('disconnected', this.onDisconnect);
     this.centrifuge.on('publication', this.onServerSideMessage);
+    this.centrifuge.on('error', this.onError);
   }
 
   //----------------------------------------------------------
@@ -124,12 +128,33 @@ export class CentrifugeService implements CentrifugeSrv {
     console.log('Publication from server-side channel', context);
   };
 
+  private onError = (context: ErrorContext) => {
+    /**
+     * This is a workaround to handle the case where the authentication token
+     * has expired, but we still try to reconnect inside a page with Grafana Live enabled.
+     * See: https://github.com/grafana/grafana/issues/72792
+     */
+    if (context.type === 'transport' && context.error?.code === 2) {
+      const now = Date.now();
+      // Check every 5 seconds to avoid hammering the
+      // API if there is a case like this
+      if (now - this.lastAuthCheck > 5000) {
+        this.lastAuthCheck = now;
+        getBackendSrv()
+          .get('/api/login/ping')
+          .catch(() => {
+            // Just swallow this error - it's non-critical
+          });
+      }
+    }
+  };
+
   /**
    * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
    * channel will be returned with an error state indicated in its status
    */
   private getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
-    const id = `${this.deps.orgId}/${addr.scope}/${addr.namespace}/${addr.path}`;
+    const id = `${this.deps.namespace}/${addr.scope}/${addr.stream}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;

@@ -1,41 +1,47 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
+import {
+  DataFrameType,
+  type DataSourceApi,
+  type GrafanaTheme2,
+  hasLogsLabelTypesSupport,
+  store,
+  type TimeRange,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { ControlledCollapse, useStyles2 } from '@grafana/ui';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
-import { LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
-import { LogLineDetailsHeader } from './LogLineDetailsHeader';
+import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
-  focusLogLine?: (log: LogListModel) => void;
   log: LogListModel;
   logs: LogListModel[];
+  search?: string;
   timeRange: TimeRange;
   timeZone: string;
 }
 
 export const LogLineDetailsComponent = memo(
-  ({ focusLogLine, log, logs, timeRange, timeZone }: LogLineDetailsComponentProps) => {
+  ({ log, logs, search = '', timeRange, timeZone }: LogLineDetailsComponentProps) => {
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
-    const [search, setSearch] = useState('');
-    const inputRef = useRef('');
+
+    const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     const styles = useStyles2(getStyles);
 
     const extensionLinks = useAttributesExtensionLinks(log, timeRange);
@@ -51,12 +57,15 @@ export const LogLineDetailsComponent = memo(
       };
     }, [log.entryFieldIndex, log.fields]);
 
-    const fieldsWithoutLinks =
-      log.dataFrame.meta?.type === DataFrameType.LogLines
-        ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-          []
-        : // for other frames, do not show the log message unless there is a link attached
-          log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
+    const fieldsWithoutLinks = useMemo(
+      () =>
+        log.dataFrame.meta?.type === DataFrameType.LogLines
+          ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
+            []
+          : // for other frames, do not show the log message unless there is a link attached
+            log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
+      [log.dataFrame.meta?.type, log.entryFieldIndex, log.fields]
+    );
 
     const labelsWithLinks: LabelWithLinks[] = useMemo(
       () =>
@@ -72,10 +81,22 @@ export const LogLineDetailsComponent = memo(
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
-    const groupedLabels = useMemo(
-      () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
-      [labelsWithLinks, log]
-    );
+    const groupedLabels = useMemo(() => {
+      if (!ds) {
+        return labelsWithLinks.length > 0
+          ? {
+              '': labelsWithLinks,
+            }
+          : {};
+      }
+      return groupBy(labelsWithLinks, (label) => {
+        if (hasLogsLabelTypesSupport(ds)) {
+          return ds.getLabelDisplayTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? '';
+        }
+        return getLabelTypeFromRow(label.key, log, true) ?? '';
+      });
+    }, [ds, labelsWithLinks, log]);
+
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
     const logLineOpen = logOptionsStorageKey
@@ -107,13 +128,6 @@ export const LogLineDetailsComponent = memo(
       [logOptionsStorageKey, noInteractions]
     );
 
-    const handleSearch = useCallback((newSearch: string) => {
-      inputRef.current = newSearch;
-      startTransition(() => {
-        setSearch(inputRef.current);
-      });
-    }, []);
-
     const noDetails =
       !fieldsWithLinks.links.length &&
       !fieldsWithLinks.linksFromVariableMap.length &&
@@ -140,71 +154,58 @@ export const LogLineDetailsComponent = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+      getDataSourceSrv()
+        .get(log.datasourceUid)
+        .then(setDs)
+        .catch(() => setDs(null));
+    }, [log.datasourceUid]);
+
+    // Wait for ds to be resolved to DataSourceApi or null on error
+    if (ds === undefined) {
+      return null;
+    }
+
     return (
-      <>
-        <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
-        <div className={styles.componentWrapper}>
+      <div className={styles.componentWrapper}>
+        <ControlledCollapse
+          className={styles.collapsable}
+          label={t('logs.log-line-details.log-line-section', 'Log line')}
+          isOpen={logLineOpen}
+          onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
+        >
+          <LogLineDetailsLog log={log} syntaxHighlighting={syntaxHighlighting ?? true} />
+        </ControlledCollapse>
+        {displayedFields.length > 0 && setDisplayedFields && (
+          <ControlledCollapse
+            label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
+            isOpen={displayedFieldsOpen}
+            onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}
+          >
+            <LogLineDetailsDisplayedFields />
+          </ControlledCollapse>
+        )}
+        {allLinks.length > 0 && (
           <ControlledCollapse
             className={styles.collapsable}
-            label={t('logs.log-line-details.log-line-section', 'Log line')}
-            isOpen={logLineOpen}
-            onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
+            label={t('logs.log-line-details.links-section', 'Links')}
+            isOpen={linksOpen}
+            onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
           >
-            <LogLineDetailsLog log={log} syntaxHighlighting={syntaxHighlighting ?? true} />
+            <LogLineDetailsLinks log={log} logs={logs} fields={allLinks} search={search} />
           </ControlledCollapse>
-          {displayedFields.length > 0 && setDisplayedFields && (
-            <ControlledCollapse
-              label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
-              isOpen={displayedFieldsOpen}
-              onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}
-            >
-              <LogLineDetailsDisplayedFields />
-            </ControlledCollapse>
-          )}
-          {allLinks.length > 0 && (
-            <ControlledCollapse
-              className={styles.collapsable}
-              label={t('logs.log-line-details.links-section', 'Links')}
-              isOpen={linksOpen}
-              onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
-            >
-              <LogLineDetailsLinks log={log} logs={logs} fields={allLinks} search={search} />
-            </ControlledCollapse>
-          )}
-          {trace && (
-            <ControlledCollapse
-              label={t('logs.log-line-details.trace-section', 'Trace')}
-              isOpen={traceOpen}
-              onToggle={(isOpen: boolean) => handleToggle('traceOpen', isOpen)}
-            >
-              <LogLineDetailsTrace timeRange={timeRange} timeZone={timeZone} traceRef={trace} />
-            </ControlledCollapse>
-          )}
-          {labelGroups.map((group) =>
-            group === '' ? (
-              <ControlledCollapse
-                className={styles.collapsable}
-                key={'fields'}
-                label={t('logs.log-line-details.fields-section', 'Fields')}
-                isOpen={fieldsOpen}
-                onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
-              >
-                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
-                <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
-              </ControlledCollapse>
-            ) : (
-              <ControlledCollapse
-                className={styles.collapsable}
-                key={group}
-                label={group}
-                isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
-                onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
-              >
-                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
-              </ControlledCollapse>
-            )
-          )}
-          {!labelGroups.length && fieldsWithoutLinks.length > 0 && (
+        )}
+        {trace && (
+          <ControlledCollapse
+            label={t('logs.log-line-details.trace-section', 'Trace')}
+            isOpen={traceOpen}
+            onToggle={(isOpen: boolean) => handleToggle('traceOpen', isOpen)}
+          >
+            <LogLineDetailsTrace timeRange={timeRange} timeZone={timeZone} traceRef={trace} />
+          </ControlledCollapse>
+        )}
+        {labelGroups.map((group) =>
+          group === '' ? (
             <ControlledCollapse
               className={styles.collapsable}
               key={'fields'}
@@ -212,12 +213,38 @@ export const LogLineDetailsComponent = memo(
               isOpen={fieldsOpen}
               onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
             >
+              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
               <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
             </ControlledCollapse>
-          )}
-          {noDetails && <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>}
-        </div>
-      </>
+          ) : (
+            <ControlledCollapse
+              className={styles.collapsable}
+              key={group}
+              label={group}
+              isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
+              onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
+            >
+              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
+            </ControlledCollapse>
+          )
+        )}
+        {!labelGroups.length && fieldsWithoutLinks.length > 0 && (
+          <ControlledCollapse
+            className={styles.collapsable}
+            key={'fields'}
+            label={t('logs.log-line-details.fields-section', 'Fields')}
+            isOpen={fieldsOpen}
+            onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
+          >
+            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
+          </ControlledCollapse>
+        )}
+        {noDetails && (
+          <Box marginTop={1} paddingLeft={0.5}>
+            <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
+          </Box>
+        )}
+      </div>
     );
   }
 );

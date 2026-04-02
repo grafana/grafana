@@ -1,30 +1,31 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import * as React from 'react';
-import { TableInstance, useTable } from 'react-table';
+import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import { type TableInstance, useTable } from 'react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
-import { GrafanaTheme2, isTruthy } from '@grafana/data';
+import { type GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
+import { canSelectItems } from '../permissions';
 import {
-  DashboardsTreeCellProps,
-  DashboardsTreeColumn,
-  DashboardsTreeItem,
-  SelectionState,
-  BrowseDashboardsPermissions,
+  type BrowseDashboardsPermissions,
+  type DashboardsTreeCellProps,
+  type DashboardsTreeColumn,
+  type DashboardsTreeItem,
+  type SelectionState,
 } from '../types';
+import { makeRowID } from '../utils/dashboards';
 
 import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
-import { makeRowID, canSelectItems } from './utils';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];

@@ -1,5 +1,5 @@
 import type { DrilldownsApplicability } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -7,9 +7,9 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   VizPanel,
-  VizPanelState,
+  type VizPanelState,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
@@ -164,7 +164,8 @@ describe('getDrilldownApplicability', () => {
     const payload = getApplicability.mock.calls[0][0];
     expect(payload.groupByKeys).toEqual(['region', 'instance']);
     expect(payload.filters).toEqual([]);
-    expect(payload.queries).toBe(queryRunner.state.data?.request?.targets);
+    // Falls back to queryRunner.state.queries when request.targets is undefined
+    expect(payload.queries).toBe(queryRunner.state.queries);
     expect(payload.timeRange).toBeDefined();
     expect(result).toBe(applicability);
   });

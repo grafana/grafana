@@ -1,4 +1,4 @@
-import { RoleDto } from 'app/api/clients/legacy';
+import { type RoleDto } from 'app/api/clients/legacy';
 
 /**
  * UserPermission is a map storing permissions in a form of
@@ -176,6 +176,10 @@ export enum AccessControlAction {
 
   // Migration Assistant
   MigrationAssistantMigrate = 'migrationassistant:migrate',
+
+  // Saved Queries
+  QueriesRead = 'queries:read',
+  QueriesWrite = 'queries:write',
 }
 
 export interface Role extends RoleDto {

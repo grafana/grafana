@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import { MergeExclusive } from 'type-fest';
+import { type MergeExclusive } from 'type-fest';
 
-import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type DataSourceRulesSourceIdentifier, type RuleHealth } from 'app/types/unified-alerting';
+import { type PromAlertingRuleState, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { PromRulesResponse, prometheusApi, usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
+import { type PromRulesResponse, prometheusApi, usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
@@ -45,6 +45,7 @@ interface GrafanaPromApiFilter {
   contactPoint?: string;
   title?: string;
   searchGroupName?: string;
+  searchFolder?: string;
   type?: 'alerting' | 'recording';
   dashboardUid?: string;
 }

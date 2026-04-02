@@ -1,7 +1,7 @@
 import { ToolbarButtonRow } from '@grafana/ui';
 
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 import { ManagedDashboardNavBarBadge } from '../ManagedDashboardNavBarBadge';
 
 import { OpenSnapshotOriginButton } from './actions/OpenSnapshotOriginButton';
@@ -20,6 +20,7 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const canEdit = Boolean(meta.canEdit);
   const canStar = Boolean(meta.canStar);
   const isSnapshot = Boolean(meta.isSnapshot);
+  const isEmbedded = Boolean(meta.isEmbedded);
   const isShowingDashboard = !hasEditView && !isViewingPanel && !isEditingPanel;
 
   const elements = renderActionElements(
@@ -48,7 +49,7 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
         key: 'open-snapshot-origin-button',
         component: OpenSnapshotOriginButton,
         group: 'actions',
-        condition: isSnapshot && !isEditingDashboard,
+        condition: isSnapshot && !isEditingDashboard && !isEmbedded,
       },
     ],
     dashboard

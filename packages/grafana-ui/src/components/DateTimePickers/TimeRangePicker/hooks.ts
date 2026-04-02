@@ -1,13 +1,13 @@
-import { RefObject, useEffect, useState } from 'react';
+import { type RefObject, useEffect, useState } from 'react';
 
-import { TimeOption } from '@grafana/data';
+import { type TimeOption } from '@grafana/data';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
 const CAUGHT_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter', 'Tab'];
 
 /** @internal */
 export interface UseListFocusProps {
-  localRef: RefObject<HTMLUListElement>;
+  localRef: RefObject<HTMLUListElement | null>;
   options: TimeOption[];
 }
 

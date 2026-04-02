@@ -1,7 +1,13 @@
 import { testWithFeatureToggles } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
-import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
+import {
+  type GrafanaNotificationSettings,
+  PromAlertingRuleState,
+  type PromRuleGroupDTO,
+  PromRuleType,
+} from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromRecordingRule } from '../../mocks';
 import { RuleHealth } from '../../search/rulesSearchParser';
@@ -9,6 +15,7 @@ import { pluginMeta, pluginMetaToPluginConfig } from '../../testSetup/plugins';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
+import { ruleUsesDefaultPolicy } from '../../utils/rules';
 import { getFilter } from '../../utils/search';
 
 import { getGrafanaFilter, hasGrafanaClientSideFilters } from './grafanaFilter';
@@ -140,6 +147,50 @@ describe('grafana-managed rules', () => {
       const { frontendFilter: frontendFilter2 } = getGrafanaFilter(getFilter({ dashboardUid: 'dashboard-b' }));
       expect(frontendFilter2.ruleMatches(ruleDashboardA)).toBe(false);
       expect(frontendFilter2.ruleMatches(ruleDashboardB)).toBe(true);
+    });
+
+    it('should filter by policy routing', () => {
+      const ruleWithPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule with Policy',
+        notificationSettings: { policy: 'team-a-policy' },
+      });
+      const ruleWithDifferentPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule with Different Policy',
+        notificationSettings: { policy: 'team-b-policy' },
+      });
+      const ruleWithContactPoint = mockGrafanaPromAlertingRule({
+        name: 'Rule with Contact Point',
+        notificationSettings: { receiver: 'slack' },
+      });
+
+      const { frontendFilter } = getGrafanaFilter(getFilter({ policy: 'team-a-policy' }));
+      expect(frontendFilter.ruleMatches(ruleWithPolicy)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithDifferentPolicy)).toBe(false);
+      expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
+    });
+
+    it('should match rules using the default policy when filtering by user-defined', () => {
+      const ruleWithNoSettings = mockGrafanaPromAlertingRule({
+        name: 'Rule with no notification settings',
+      });
+      const ruleWithContactPoint = mockGrafanaPromAlertingRule({
+        name: 'Rule with Contact Point',
+        notificationSettings: { receiver: 'slack' },
+      });
+      const ruleWithExplicitPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule with Explicit Policy',
+        notificationSettings: { policy: 'team-a-policy' },
+      });
+      const ruleWithExplicitUserDefinedPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule explicitly set to user-defined policy',
+        notificationSettings: { policy: USER_DEFINED_TREE_NAME },
+      });
+
+      const { frontendFilter } = getGrafanaFilter(getFilter({ policy: USER_DEFINED_TREE_NAME }));
+      expect(frontendFilter.ruleMatches(ruleWithNoSettings)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithExplicitUserDefinedPolicy)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
+      expect(frontendFilter.ruleMatches(ruleWithExplicitPolicy)).toBe(false);
     });
 
     describe('dataSourceNames filter', () => {
@@ -431,7 +482,7 @@ describe('grafana-managed rules', () => {
 
       it('should include plugins in backend filter and skip frontend filtering', () => {
         // Set up test plugin as installed
-        config.apps[SupportedPlugin.Slo] = pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]);
+        setAppPluginMetas({ [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]) });
 
         const regularRule = mockGrafanaPromAlertingRule({
           name: 'High CPU Usage',
@@ -454,6 +505,25 @@ describe('grafana-managed rules', () => {
         // Frontend filter should pass through all rules (no filtering)
         expect(frontendFilter.ruleMatches(regularRule)).toBe(true);
         expect(frontendFilter.ruleMatches(pluginRule)).toBe(true);
+      });
+
+      it('should include searchFolder in backend filter when namespace is provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ namespace: 'my-folder' }));
+
+        expect(backendFilter.searchFolder).toBe('my-folder');
+      });
+
+      it('should skip namespace filtering on frontend when backend filtering is enabled', () => {
+        const group: PromRuleGroupDTO = {
+          name: 'Test Group',
+          file: 'production/alerts',
+          rules: [],
+          interval: 60,
+        };
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
+        // Should return true because namespace filter is null (handled by backend)
+        expect(frontendFilter.groupMatches(group)).toBe(true);
       });
     });
 
@@ -535,6 +605,12 @@ describe('grafana-managed rules', () => {
         const { backendFilter } = getGrafanaFilter(getFilter({ groupName: 'my-group' }));
 
         expect(backendFilter.searchGroupName).toBeUndefined();
+      });
+
+      it('should not include searchFolder in backend filter', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ namespace: 'my-folder' }));
+
+        expect(backendFilter.searchFolder).toBeUndefined();
       });
 
       it('should perform groupName filtering on frontend', () => {
@@ -706,8 +782,8 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter.groupMatches(group)).toBe(true);
       });
 
-      it('should still apply always-frontend filters (namespace)', () => {
-        // Namespace filter should still work
+      it('should skip namespace filtering on frontend', () => {
+        // Namespace filter should be handled by backend
         const group: PromRuleGroupDTO = {
           name: 'Test Group',
           file: 'production/alerts',
@@ -719,7 +795,7 @@ describe('grafana-managed rules', () => {
         expect(nsFilter.groupMatches(group)).toBe(true);
 
         const { frontendFilter: nsFilter2 } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
-        expect(nsFilter2.groupMatches(group)).toBe(false);
+        expect(nsFilter2.groupMatches(group)).toBe(true);
       });
 
       it('should skip dataSourceNames filtering on frontend (handled by backend)', () => {
@@ -773,6 +849,10 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
       });
+
+      it('should return true for policy filter (always client-side)', () => {
+        expect(hasGrafanaClientSideFilters(getFilter({ policy: 'my-policy' }))).toBe(true);
+      });
     });
 
     describe('when alertingUIUseBackendFilters is enabled', () => {
@@ -807,8 +887,8 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(false);
       });
 
-      it('should return true for client-side only filters', () => {
-        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+      it('should return false for namespace filter (handled by backend)', () => {
+        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(false);
       });
 
       it('should return false for plugins filter (handled by backend when feature toggle is enabled)', () => {
@@ -819,6 +899,10 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ ruleState: PromAlertingRuleState.Firing }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
+      });
+
+      it('should return true for policy filter (always client-side, even when backend filters are on)', () => {
+        expect(hasGrafanaClientSideFilters(getFilter({ policy: 'my-policy' }))).toBe(true);
       });
     });
 
@@ -862,8 +946,8 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
 
-        // Should return true for: always-frontend filters only (namespace)
-        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+        // Should return false for: namespace (handled by backend)
+        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(false);
 
         // plugins is backend-handled when both feature toggles are enabled
         expect(hasGrafanaClientSideFilters(getFilter({ plugins: 'hide' }))).toBe(false);
@@ -873,5 +957,27 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(false);
       });
     });
+  });
+});
+
+describe('ruleUsesDefaultPolicy', () => {
+  it('should return true when notificationSettings is undefined', () => {
+    expect(ruleUsesDefaultPolicy(undefined)).toBe(true);
+  });
+
+  it('should return true when notificationSettings has no receiver and no policy', () => {
+    expect(ruleUsesDefaultPolicy({} as GrafanaNotificationSettings)).toBe(true);
+  });
+
+  it('should return true when policy is explicitly set to USER_DEFINED_TREE_NAME', () => {
+    expect(ruleUsesDefaultPolicy({ policy: USER_DEFINED_TREE_NAME })).toBe(true);
+  });
+
+  it('should return false when a receiver is set', () => {
+    expect(ruleUsesDefaultPolicy({ receiver: 'slack' })).toBe(false);
+  });
+
+  it('should return false when a non-default policy is set', () => {
+    expect(ruleUsesDefaultPolicy({ policy: 'team-a-policy' })).toBe(false);
   });
 });

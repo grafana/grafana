@@ -1,25 +1,28 @@
-import { ReactElement, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  MultiValueVariable,
+  type SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import {
-  ConditionalRenderingVariableKind,
-  ConditionalRenderingVariableSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Box, Combobox, ComboboxOption, Field, Input, Stack } from '@grafana/ui';
+  type ConditionalRenderingVariableKind,
+  type ConditionalRenderingVariableSpec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Box, Combobox, type ComboboxOption, Field, Input, Stack } from '@grafana/ui';
+import { ALL_VARIABLE_TEXT } from 'app/features/variables/constants';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
-import { ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
+import { type ConditionalRenderingConditionsSerializerRegistryItem } from './serializers';
 import { checkGroup, getObject, getObjectType } from './utils';
 
 type VariableConditionValueOperator = '=' | '!=' | '=~' | '!~';
@@ -97,13 +100,20 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
     }
 
     const variableValue = variable.getValue() ?? '';
+    const comparisonValue = this.state.value.toString();
+
+    // Check if "All" is selected in a multi-value variable with includeAll option
+    const isAllSelected =
+      variable instanceof MultiValueVariable &&
+      variable.hasAllValue() &&
+      comparisonValue.toLowerCase() === ALL_VARIABLE_TEXT.toLowerCase();
 
     let hit: boolean;
 
     if (this.state.operator === '=' || this.state.operator === '!=') {
       hit = Array.isArray(variableValue)
-        ? variableValue.includes(this.state.value.toString())
-        : variableValue === this.state.value.toString();
+        ? variableValue.includes(comparisonValue) || isAllSelected
+        : variableValue === comparisonValue || isAllSelected;
     } else {
       try {
         const regex = new RegExp(this.state.value);
@@ -264,11 +274,13 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
       isObjectSupported={true}
       model={model}
       title={t('dashboard.conditional-rendering.conditions.variable.label', 'Template variable')}
+      ruleId="variable"
     >
       <Stack direction="column" gap={0.5}>
         <Stack direction="row" gap={0.5} grow={1}>
           <Box flex={1}>
             <Combobox
+              data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.variableSelection}
               placeholder={t('dashboard.conditional-rendering.conditions.variable.name', 'Name')}
               options={variableNames}
               value={variable}
@@ -309,6 +321,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
         <Field error={valueError} invalid={!!valueError} noMargin>
           <Input
+            data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.valueInput}
             placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
             value={newValue}
             onChange={(evt) => {

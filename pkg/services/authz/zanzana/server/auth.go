@@ -2,21 +2,20 @@ package server
 
 import (
 	"context"
+	"slices"
+
+	claims "github.com/grafana/authlib/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/exp/slices"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	claims "github.com/grafana/authlib/types"
 )
 
-func authorize(ctx context.Context, namespace string, ss setting.ZanzanaServerSettings) error {
+func authorize(ctx context.Context, namespace string, cfg setting.ZanzanaServerSettings) error {
 	logger := log.New("zanzana.server.auth")
-	if ss.AllowInsecure {
+	if cfg.AllowInsecure {
 		logger.Debug("AllowInsecure=true; skipping authorization check")
 		return nil
 	}

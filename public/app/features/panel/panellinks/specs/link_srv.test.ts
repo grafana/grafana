@@ -1,17 +1,17 @@
 import {
   DataLinkBuiltInVars,
   FieldType,
-  GrafanaConfig,
+  type GrafanaConfig,
   locationUtil,
   toDataFrame,
   VariableOrigin,
 } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
-import { DashboardLink } from '@grafana/schema';
-import { ContextSrv } from 'app/core/services/context_srv';
+import { type DashboardLink } from '@grafana/schema';
+import { type ContextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv, setTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TimeModel } from 'app/features/dashboard/state/TimeModel';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { type TimeModel } from 'app/features/dashboard/state/TimeModel';
+import { type TemplateSrv } from 'app/features/templating/template_srv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
 
@@ -503,13 +503,16 @@ describe('linkSrv', () => {
   });
 
   describe('getPanelLinksVariableSuggestions', () => {
-    it('then it should return template variables, json properties and built-ins', () => {
+    it('then it should return template variables, options properties and built-ins', () => {
       const templateSrvWithJsonValues = initTemplateSrv('key', [
         {
           type: 'custom',
           name: 'customServers',
           valuesFormat: 'json',
-          query: '[{"name":"web","ip":"192.168.0.100"},{"name":"ads","ip":"192.168.0.142"}]',
+          options: [
+            { text: 'web', value: 'web', properties: { name: 'web', ip: '192.168.0.100' } },
+            { text: 'ads', value: 'ads', properties: { name: 'ads', ip: '192.168.0.142' } },
+          ],
         },
       ]);
       setTemplateSrv(templateSrvWithJsonValues);

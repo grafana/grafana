@@ -1,12 +1,12 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
 import {
   test,
   expect,
-  E2ESelectorGroups,
-  CreateDataSourceArgs,
-  DataSourceSettings,
-  DataSourceConfigPage,
+  type E2ESelectorGroups,
+  type CreateDataSourceArgs,
+  type DataSourceSettings,
+  type DataSourceConfigPage,
 } from '@grafana/plugin-e2e';
 
 import { getResources } from '../utils/prometheus-helpers';

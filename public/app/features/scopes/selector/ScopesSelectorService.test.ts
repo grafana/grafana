@@ -1,12 +1,12 @@
-import { Scope, ScopeNode, Store } from '@grafana/data';
+import { type Scope, type ScopeNode, type Store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { ScopesApiClient } from '../ScopesApiClient';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
-import { ScopeNavigation } from '../dashboards/types';
+import { type ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopeNavigation } from '../dashboards/types';
 
 import { RECENT_SCOPES_KEY, ScopesSelectorService } from './ScopesSelectorService';
-import { RecentScope } from './types';
+import { type RecentScope } from './types';
 
 // Mock locationService
 jest.mock('@grafana/runtime', () => ({
@@ -137,6 +137,22 @@ describe('ScopesSelectorService', () => {
       await service.selectScope('test-scope-node');
       await service.deselectScope('test-scope-node');
       expect(service.state.selectedScopes).toEqual([]);
+    });
+
+    it('should not crash when selecting a scope while a previously selected scope node is not in the nodes cache', async () => {
+      // Simulate a state where a scope is applied with a scopeNodeId whose node isn't in the cache.
+      // This can happen e.g. when a scope was applied from a URL and the node hasn't been fetched yet.
+      apiClient.fetchScopeNode.mockResolvedValueOnce(undefined);
+      await service.changeScopes(['unknown-scope'], undefined, 'unknown-scope-node');
+
+      // Verify the precondition: scopeNodeId is set but its node is not in the cache
+      expect(service.state.selectedScopes[0].scopeNodeId).toBe('unknown-scope-node');
+      expect(service.state.nodes['unknown-scope-node']).toBeUndefined();
+
+      // Selecting another scope should not throw
+      // "Cannot read properties of undefined (reading 'spec')"
+      await expect(service.selectScope('test-scope-node')).resolves.not.toThrow();
+      expect(service.state.selectedScopes).toEqual([{ scopeId: 'test-scope', scopeNodeId: 'test-scope-node' }]);
     });
 
     it('should set recent scopes', async () => {
@@ -1139,6 +1155,58 @@ describe('ScopesSelectorService', () => {
       // Should redirect to the first one
       expect(locationService.push).toHaveBeenCalledWith('/d/first-dashboard');
       expect(locationService.push).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT redirect when redirects are disabled', async () => {
+      service.setRedirectEnabled(false);
+
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+            url: '/d/dashboard1',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      await service.changeScopes(['test-scope']);
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should redirect again after re-enabling redirects', async () => {
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: {
+            scope: 'test-scope',
+            url: '/d/dashboard1',
+          },
+          status: {
+            title: 'Dashboard 1',
+            groups: [],
+          },
+          metadata: {
+            name: 'dashboard1',
+          },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      // Disable, then re-enable — the flag should be toggleable back on.
+      service.setRedirectEnabled(false);
+      service.setRedirectEnabled(true);
+
+      await service.changeScopes(['test-scope']);
+
+      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
     });
 
     it('should redirect to redirectUrl when scope node has explicit redirectUrl', async () => {

@@ -31,6 +31,7 @@ const commonTestIgnores = [
   '**/*.mock.{ts,tsx}',
   '**/{test-helpers,testHelpers}.{ts,tsx}',
   '**/{spec,test-helpers}/**/*.{ts,tsx}',
+  'packages/grafana-test-utils/src/**/*.{ts,tsx}',
 ];
 
 const generatedFiles = ['**/*.gen.ts', '**/*_gen.ts'];
@@ -87,6 +88,14 @@ function withBaseRestrictedImportsConfig(config = {}) {
   return finalConfig;
 }
 
+const datavizDefaultImportsRestrictions = [
+  {
+    group: ['@emotion/css'],
+    importNames: ['cx'],
+    message: 'Do not use "cx" from @emotion/css. Instead, use `clsx` and compose together only strings.',
+  },
+];
+
 /**
  * @type {Array<import('eslint').Linter.Config>}
  */
@@ -117,6 +126,8 @@ module.exports = [
       'scripts/grafana-server/tmp',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
+      'apps/plugins/plugin/src/generated/meta/v0alpha1',
+      'apps/plugins/plugin/src/generated/plugin/v0alpha1',
     ],
   },
   ...grafanaConfig,
@@ -188,16 +199,15 @@ module.exports = [
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
-      'unicorn/no-empty-file': 'error',
-      'no-constant-condition': 'error',
-      'no-restricted-syntax': [
+      '@typescript-eslint/consistent-type-imports': [
         'error',
         {
-          // value regex is to filter out whitespace-only text nodes (e.g. new lines and spaces in the JSX)
-          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
-          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
+          fixStyle: 'inline-type-imports',
         },
       ],
+      'unicorn/no-empty-file': 'error',
+      'no-constant-condition': 'error',
+      '@grafana/no-plain-links': 'error',
     },
   },
 
@@ -351,6 +361,16 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/css-in-js-validation-unified',
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    files: ['public/app/features/alerting/unified/**/*.{ts,tsx}'],
+    rules: {
+      '@grafana/no-invalid-css-properties': 'error',
+    },
+  },
+  {
     // Sections of codebase that have all translation markup issues fixed
     name: 'grafana/i18n-overrides',
     plugins: {
@@ -432,8 +452,6 @@ module.exports = [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
       'public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}',
       'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
@@ -476,12 +494,40 @@ module.exports = [
 
   {
     // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            ...datavizDefaultImportsRestrictions,
+            {
+              group: ['@grafana/data'],
+              importNames: ['getFieldDisplayName'],
+              message:
+                'Using the method inside Table can have performance implications which are unnecessary. Instead, use the local `getDisplayName` from the table utils.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
+  {
+    // custom rule for Table to avoid performance regressions
     files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
           patterns: [
+            ...datavizDefaultImportsRestrictions,
+            {
+              group: ['@grafana/data'],
+              importNames: ['getFieldDisplayName'],
+              message:
+                'Using the method inside Table can have performance implications which are unnecessary. Instead, use the local `getDisplayName` from the table utils.',
+            },
             {
               group: ['**/themes/ThemeContext'],
               importNames: ['useStyles2', 'useTheme2'],
@@ -494,20 +540,14 @@ module.exports = [
     },
   },
 
-  // dataviz prefers to use `clsx` over `cx` to compose classes as a rule for performance reasons
+  // other dataviz panels which should just get our default set of restrictions
   {
     files: ['public/app/plugins/panel/state-timeline/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
-          patterns: [
-            {
-              group: ['@emotion/css'],
-              importNames: ['cx'],
-              message: 'Do not use "cx" from @emotion/css. Instead, use `clsx` and compose together only strings.',
-            },
-          ],
+          patterns: [...datavizDefaultImportsRestrictions],
         }),
       ],
     },
@@ -537,45 +577,35 @@ module.exports = [
     ],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'Identifier[name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
-        },
-        {
-          selector: 'MemberExpression[object.name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
-        },
-        {
-          selector:
-            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
-          message:
-            'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-        },
-        {
-          selector:
-            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Field"]) JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
-          message:
-            'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-        },
-        {
-          selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
-          message:
-            'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
-        },
-        {
-          // eslint-disable-next-line no-restricted-syntax
-          selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
-          // eslint-disable-next-line no-restricted-syntax
-          message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
-        },
-        {
-          selector:
-            "Property[key.name='a11y'][value.type='ObjectExpression'] Property[key.name='test'][value.value='off']",
-          message: 'Skipping a11y tests is not allowed. Please fix the component or story instead.',
-        },
-      ],
+      '@grafana/no-direct-local-storage-access': 'error',
+      '@grafana/require-no-margin': 'error',
+      '@grafana/no-locale-compare': 'error',
+      // eslint-disable-next-line @grafana/no-gf-form
+      '@grafana/no-gf-form': 'error',
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
+    },
+  },
+  {
+    files: [...commonTestIgnores],
+    ignores: [
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
+    rules: {
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
+    },
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+  },
+  {
+    files: [...enterpriseIgnores],
+    rules: {
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
     },
   },
   {

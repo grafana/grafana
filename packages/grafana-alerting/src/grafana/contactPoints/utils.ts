@@ -1,8 +1,24 @@
 import { countBy, isEmpty } from 'lodash';
 
-import { Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
-import { ContactPoint } from '../api/notifications/v0alpha1/types';
+import { type ContactPoint } from '../api/notifications/v1beta1/types';
+
+// Annotation key that indicates whether a contact point can be used in routes and rules
+const CAN_USE_ANNOTATION = 'grafana.com/canUse';
+
+/**
+ * Checks if a contact point can be used in routes and rules.
+ * Contact points that are imported from external sources (e.g., Prometheus Alertmanager)
+ * have the `grafana.com/canUse` annotation set to `false` and cannot be used.
+ *
+ * @param contactPoint - The ContactPoint object to check
+ * @returns `true` if the contact point can be used, `false` otherwise
+ */
+export function isUsableContactPoint(contactPoint: ContactPoint | Receiver): boolean {
+  const canUse = contactPoint.metadata?.annotations?.[CAN_USE_ANNOTATION];
+  return canUse === 'true';
+}
 
 /**
  * Generates a human-readable description of a ContactPoint by summarizing its integrations.

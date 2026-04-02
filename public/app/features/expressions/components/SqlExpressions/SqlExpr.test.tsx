@@ -1,8 +1,8 @@
 import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
-import { ExpressionQuery, ExpressionQueryType } from '../../types';
+import { type ExpressionQuery, ExpressionQueryType } from '../../types';
 
-import { SqlExpr, SqlExprProps } from './SqlExpr';
+import { SqlExpr, type SqlExprProps } from './SqlExpr';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -59,9 +59,17 @@ const mockBackendSrv = {
   }),
 };
 
+const mockDataSourceSrv = {
+  get: jest.fn().mockResolvedValue({
+    getRef: () => ({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
+  }),
+  getInstanceSettings: jest.fn().mockReturnValue({ uid: 'mock-ds-uid', type: 'mock-ds-type' }),
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => mockBackendSrv,
+  getDataSourceSrv: () => mockDataSourceSrv,
 }));
 
 // Note: Add more mocks if needed for other lazy components
@@ -124,6 +132,7 @@ describe('Schema Inspector feature toggle', () => {
     testWithFeatureToggles({ enable: ['queryService', 'grafanaAPIServerWithExperimentalAPIs'] });
 
     afterEach(() => {
+      localStorage.removeItem('grafana.sql-expression.schema-inspector-open');
       mockBackendSrv.post.mockResolvedValue({
         kind: 'SQLSchemaResponse',
         apiVersion: 'query.grafana.app/v0alpha1',

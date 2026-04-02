@@ -1,8 +1,25 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
-import { experimentalThemeDefinitions } from '@grafana/data/internal';
+import { createTheme, type GrafanaTheme2, type NewThemeOptions } from '@grafana/data';
+import { NewThemeOptionsSchema } from '@grafana/data/internal';
+import aubergine from '@grafana/data/themes/definitions/aubergine.json';
+import debug from '@grafana/data/themes/definitions/debug.json';
+import desertbloom from '@grafana/data/themes/definitions/desertbloom.json';
+import deuteranopia_protanopia_dark from '@grafana/data/themes/definitions/deuteranopia_protanopia_dark.json';
+import deuteranopia_protanopia_light from '@grafana/data/themes/definitions/deuteranopia_protanopia_light.json';
+import gildedgrove from '@grafana/data/themes/definitions/gildedgrove.json';
+import gloom from '@grafana/data/themes/definitions/gloom.json';
+import mars from '@grafana/data/themes/definitions/mars.json';
+import matrix from '@grafana/data/themes/definitions/matrix.json';
+import sapphiredusk from '@grafana/data/themes/definitions/sapphiredusk.json';
+import synthwave from '@grafana/data/themes/definitions/synthwave.json';
+import tritanopia_dark from '@grafana/data/themes/definitions/tritanopia_dark.json';
+import tritanopia_light from '@grafana/data/themes/definitions/tritanopia_light.json';
+import tron from '@grafana/data/themes/definitions/tron.json';
+import victorian from '@grafana/data/themes/definitions/victorian.json';
+import zen from '@grafana/data/themes/definitions/zen.json';
+import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
@@ -16,23 +33,51 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { ThemeProvider } from '../../core/utils/ConfigProvider';
 import { useDispatch, useSelector } from '../../types/store';
 
-import schema from './schema.generated.json';
-
 const themeMap: Record<string, NewThemeOptions> = {
   dark: {
     name: 'Dark',
+    id: 'dark',
     colors: {
       mode: 'dark',
     },
   },
   light: {
     name: 'Light',
+    id: 'light',
     colors: {
       mode: 'light',
     },
   },
-  ...experimentalThemeDefinitions,
 };
+
+const experimentalDefinitions: Record<string, unknown> = {
+  aubergine,
+  debug,
+  desertbloom,
+  deuteranopia_protanopia_dark,
+  deuteranopia_protanopia_light,
+  gildedgrove,
+  gloom,
+  mars,
+  matrix,
+  sapphiredusk,
+  synthwave,
+  tritanopia_dark,
+  tritanopia_light,
+  tron,
+  victorian,
+  zen,
+};
+
+// Add additional themes
+for (const [name, json] of Object.entries(experimentalDefinitions)) {
+  const result = NewThemeOptionsSchema.safeParse(json);
+  if (!result.success) {
+    console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
+  } else {
+    themeMap[result.data.id] = result.data;
+  }
+}
 
 const themeOptions = Object.entries(themeMap).map(([key, theme]) => ({
   label: theme.name,
@@ -59,16 +104,20 @@ export default function ThemePlayground() {
       const theme = createTheme(themeInput);
       setTheme(theme);
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification(`Failed to create theme: ${error}`)));
+      dispatch(notifyApp(createErrorNotification('Failed to create theme', `${error}`)));
     }
   };
 
   const onEditorBlur = (value: string) => {
     try {
-      const themeInput: NewThemeOptions = JSON.parse(value);
-      updateThemePreview(themeInput);
+      const themeInput = NewThemeOptionsSchema.safeParse(JSON.parse(value));
+      if (!themeInput.success) {
+        dispatch(notifyApp(createErrorNotification('Failed to parse theme', themeInput.error.issues[0].message)));
+      } else {
+        updateThemePreview(themeInput.data);
+      }
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification(`Failed to parse JSON: ${error}`)));
+      dispatch(notifyApp(createErrorNotification('Failed to parse JSON', `${error}`)));
     }
   };
 
@@ -115,7 +164,7 @@ export default function ThemePlayground() {
                   {
                     uri: 'theme-schema',
                     fileMatch: ['*'],
-                    schema,
+                    schema: themeJsonSchema,
                   },
                 ],
               });

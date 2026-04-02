@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -120,25 +119,22 @@ func (c *ExampleClient) Delete(ctx context.Context, identifier resource.Identifi
 }
 
 type GetFooRequest struct {
-	Params  GetFooRequestParams
 	Headers http.Header
 }
 
-func (c *ExampleClient) GetFoo(ctx context.Context, identifier resource.Identifier, request GetFooRequest) (*GetFoo, error) {
-	params := url.Values{}
+func (c *ExampleClient) GetFoo(ctx context.Context, identifier resource.Identifier, request GetFooRequest) (*GetFooResponse, error) {
 	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
 		Path:    "foo",
 		Verb:    "GET",
-		Query:   params,
 		Headers: request.Headers,
 	})
 	if err != nil {
 		return nil, err
 	}
-	cast := GetFoo{}
+	cast := GetFooResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetFoo: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetFooResponse: %w", err)
 	}
 	return &cast, nil
 }

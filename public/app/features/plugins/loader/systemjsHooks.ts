@@ -9,7 +9,7 @@ import { getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoC
 import { SystemJS } from './systemjs';
 // eslint-disable-next-line import/order
 import { sharedDependenciesMap } from './sharedDependencies';
-import { SystemJSWithLoaderHooks } from './types';
+import { type SystemJSWithLoaderHooks } from './types';
 import { buildImportMap, isHostedOnCDN } from './utils';
 
 export function initSystemJSHooks() {
@@ -21,7 +21,7 @@ export function initSystemJSHooks() {
 
   // This instructs SystemJS to load plugin assets using fetch and eval if it returns a truthy value, otherwise
   // it will load the plugin using a script tag. The logic that sets loadingStrategy comes from the backend.
-  // See: pkg/services/pluginsintegration/pluginassets/pluginassets.go
+  // Loading strategy is calculated during bootstrap in pkg/plugins/pluginassets/loadingstrategy.go
   systemJSPrototype.shouldFetch = function (url) {
     const pluginInfo = getPluginInfoFromCache(url);
     const jsTypeRegEx = /^[^#?]+\.(js)([?#].*)?$/;

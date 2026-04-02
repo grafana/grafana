@@ -161,7 +161,7 @@ Content-Type: application/json
     "cert_key":"",
     "certs_watch_interval": "0s",
     "domain":"mygraf.com",
-    "enable_gzip":"false",
+    "enable_gzip":"true",
     "enforce_domain":"false",
     "http_addr":"127.0.0.1",
     "http_port":"0000",
@@ -666,29 +666,21 @@ Content-Type: application/json
 
 ## Reload LDAP configuration
 
+{{% admonition type="warning" %}}
+Starting with Grafana 12.4.0, this endpoint is removed.
+{{% /admonition %}}
+
+This endpoint has been removed from the Admin API. Starting with Grafana 12.4.0, SSO settings automatically reload the LDAP settings from the database or from the .toml file.
+
 `POST /api/admin/ldap/reload`
-
-Reloads the LDAP configuration.
-
-Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
-
-**Example Request**:
-
-```http
-POST /api/admin/ldap/reload HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-```
 
 **Example Response**:
 
 ```http
-HTTP/1.1 200
+HTTP/1.1 410
 Content-Type: application/json
 
-{
-  "message": "LDAP config reloaded"
-}
+{"message":"This endpoint has been removed. LDAP configuration is now loaded from SSO settings."}
 ```
 
 ## Rotate data encryption keys

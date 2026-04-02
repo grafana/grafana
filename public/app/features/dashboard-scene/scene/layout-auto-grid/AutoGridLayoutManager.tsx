@@ -1,31 +1,37 @@
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import {
-  SceneComponentProps,
-  SceneObject,
+  type SceneComponentProps,
+  type SceneObject,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VizPanel,
-  SceneGridItemLike,
+  type SceneGridItemLike,
+  useSceneObjectState,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
   forceRenderChildren,
   getDashboardSceneFor,
   getGridItemKeyForPanelId,
   getVizPanelKeyForPanelId,
+  useDashboard,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
-import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type DashboardDropTarget } from '../types/DashboardDropTarget';
+import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
@@ -37,6 +43,10 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
   rowHeight: AutoGridRowHeight;
   columnWidth: AutoGridColumnWidth;
   fillScreen: boolean;
+  /** Whether this grid is currently a drop target */
+  isDropTarget?: boolean;
+  /** Position index where a placeholder should be shown for external drops */
+  dropPosition?: number | null;
 }
 
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
@@ -46,14 +56,18 @@ export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
-export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManagerState> implements DashboardLayoutGrid {
+export class AutoGridLayoutManager
+  extends SceneObjectBase<AutoGridLayoutManagerState>
+  implements DashboardLayoutGrid, DashboardDropTarget
+{
   public static Component = AutoGridLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
+  public readonly isDashboardDropTarget = true as const;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
-      return t('dashboard.auto-grid.name', 'Auto grid');
+      return t('dashboard.auto-grid.name', 'Auto');
     },
     get description() {
       return t('dashboard.auto-grid.description', 'Panels resize to fit and form uniform grids');
@@ -64,8 +78,8 @@ export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManager
     icon: 'apps',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeAutoGridLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeAutoGridLayout(this, isSnapshot);
   }
 
   public readonly descriptor = AutoGridLayoutManager.descriptor;
@@ -125,7 +139,18 @@ export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManager
   }
 
   public pastePanel() {
-    const panel = getAutoGridItemFromClipboard(getDashboardSceneFor(this));
+    let panel;
+
+    try {
+      panel = getAutoGridItemFromClipboard(getDashboardSceneFor(this));
+    } catch (error) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: error instanceof Error ? [error.message, String(error.cause)] : [String(error)],
+      });
+      return;
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       dashboardEditActions.edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
@@ -176,23 +201,23 @@ export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManager
     });
   }
 
-  public duplicate(): DashboardLayoutManager {
+  // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
     const children = this.state.layout.state.children;
     const clonedChildren: AutoGridItem[] = [];
 
     if (children.length) {
-      let panelId = dashboardSceneGraph.getNextPanelId(children[0].state.body);
+      const nextId = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(children[0].state.body);
 
       children.forEach((child) => {
         const clone = child.clone({
           key: undefined,
           body: child.state.body.clone({
-            key: getVizPanelKeyForPanelId(panelId),
+            key: getVizPanelKeyForPanelId(nextId()),
           }),
         });
 
         clonedChildren.push(clone);
-        panelId++;
       });
     }
 
@@ -359,9 +384,71 @@ export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManager
 
     this.state.layout.setState({ children: [...this.state.layout.state.children, gridItem] });
   }
+
+  public setIsDropTarget(isDropTarget: boolean): void {
+    this.setState({ isDropTarget });
+  }
+
+  public setDropPosition(position: number | null): void {
+    this.setState({ dropPosition: position });
+  }
+
+  public draggedGridItemOutside(gridItem: SceneGridItemLike): void {
+    if (gridItem instanceof AutoGridItem) {
+      this.state.layout.setState({
+        children: this.state.layout.state.children.filter((child) => child !== gridItem),
+      });
+    }
+    this.setState({ isDropTarget: false });
+  }
+
+  public draggedGridItemInside(gridItem: SceneGridItemLike, position?: number): void {
+    trackDropItemCrossLayout(gridItem);
+    let newGridItem: AutoGridItem;
+
+    if (gridItem instanceof AutoGridItem) {
+      gridItem.clearParent();
+      newGridItem = gridItem;
+    } else if (gridItem instanceof DashboardGridItem) {
+      if (!(gridItem.state.body instanceof VizPanel)) {
+        throw new Error('DashboardGridItem body is not a VizPanel');
+      }
+      const panel = gridItem.state.body;
+      panel.clearParent();
+
+      newGridItem = new AutoGridItem({
+        body: panel,
+        variableName: gridItem.state.variableName,
+      });
+    } else {
+      throw new Error('Grid item must be an AutoGridItem or DashboardGridItem');
+    }
+
+    const children = [...this.state.layout.state.children];
+
+    if (position !== undefined && position >= 0 && position <= children.length) {
+      // Insert at specific position
+      children.splice(position, 0, newGridItem);
+    } else {
+      // Append to end
+      children.push(newGridItem);
+    }
+
+    this.state.layout.setState({ children });
+    this.setState({ isDropTarget: false, dropPosition: null });
+  }
 }
 
 function AutoGridLayoutManagerRenderer({ model }: SceneComponentProps<AutoGridLayoutManager>) {
+  const dashboard = useDashboard(model);
+  const { children } = useSceneObjectState(model.state.layout, { shouldActivateOrKeepAlive: true });
+
+  if (model.parent === dashboard && children.length === 0) {
+    return (
+      <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.state.meta.canEdit} key="dashboard-empty-state" />
+    );
+  }
+
   return <model.state.layout.Component model={model.state.layout} />;
 }
 

@@ -1,13 +1,9 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
-
 import {
-  GetSnapshotResponseDto,
-  SnapshotDto,
+  type GetSnapshotResponseDto,
+  type SnapshotDto,
   useCancelSnapshotMutation,
   useCreateSnapshotMutation,
   useDeleteSessionMutation,
@@ -16,8 +12,12 @@ import {
   useGetShapshotListQuery,
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
-  useGetLocalPluginListQuery,
-} from '../api';
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { type AlertVariant, Box, Stack, Text } from '@grafana/ui';
+
+import { useGetLocalPluginListQuery } from '../api';
 import { maybeAPIError } from '../api/errors';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
@@ -27,7 +27,7 @@ import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
 import { CreatingSnapshotCTA } from './SnapshotCTAs';
 import { SupportedTypesDisclosure } from './SupportedTypesDisclosure';
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 import { useNotifySuccessful } from './useNotifyOnSuccess';
 
 /**

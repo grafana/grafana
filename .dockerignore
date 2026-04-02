@@ -5,6 +5,7 @@
 .vscode
 bin
 !bin/grafana-linux-k8s
+!bin/grafana-linux-k8s-debug
 data*
 dist
 docker
@@ -23,3 +24,7 @@ node_modules
 !.yarn/plugins
 !.yarn/versions
 !.yarn/cache
+devenv
+!devenv/frontend-service/build/grafana
+.nx
+scripts/grafana-server/tmp

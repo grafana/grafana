@@ -6,12 +6,12 @@ import { memo, createRef, useState, useEffect, type JSX } from 'react';
 
 import {
   rangeUtil,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   dateTimeFormat,
   timeZoneFormatUserFriendly,
-  TimeOption,
-  TimeRange,
-  TimeZone,
+  type TimeOption,
+  type TimeRange,
+  type TimeZone,
   dateMath,
   getTimeZoneInfo,
 } from '@grafana/data';
@@ -28,7 +28,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
-import { WeekStart } from './WeekStartPicker';
+import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
 
@@ -163,6 +163,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         icon="angle-double-left"
         type="button"
         iconSize="xl"
+        data-testid={selectors.components.TimePicker.moveBackwardButton}
         tooltip={
           moveBackwardTooltip ?? t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')
         }
@@ -223,6 +224,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         type="button"
         variant={variant}
         iconSize="xl"
+        data-testid={selectors.components.TimePicker.moveForwardButton}
         tooltip={
           moveForwardTooltip ?? t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')
         }
@@ -235,6 +237,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           onClick={onZoom}
           icon="search-minus"
           type="button"
+          data-testid={selectors.components.TimePicker.zoomOut}
           variant={variant}
         />
       </Tooltip>

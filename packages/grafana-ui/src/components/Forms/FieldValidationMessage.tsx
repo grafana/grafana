@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
@@ -27,7 +27,7 @@ export const FieldValidationMessage = ({
 
   return (
     <div role="alert" className={cssName}>
-      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-triangle" />
+      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-circle" />
       {children}
     </div>
   );

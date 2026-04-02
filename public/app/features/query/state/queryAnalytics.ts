@@ -1,5 +1,5 @@
-import { PanelData, LoadingState, DataSourceApi, urlUtil, CoreApp } from '@grafana/data';
-import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
+import { type PanelData, LoadingState, type DataSourceApi, urlUtil, CoreApp } from '@grafana/data';
+import { reportMetaAnalytics, MetaAnalyticsEventName, type DataRequestEventPayload } from '@grafana/runtime';
 
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
@@ -24,8 +24,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventName: MetaAnalyticsEventName.DataRequest,
       source: data.request.app,
       datasourceName: datasource.name,
-      datasourceId: datasource.id,
       datasourceUid: datasource.uid,
+      datasourceId: datasource.id, // temporary while we migrate to datasourceUid
       datasourceType: datasource.type,
       dataSize: 0,
       panelId: 0,

@@ -1,8 +1,8 @@
-import { ReactElement } from 'react';
-import { Validate, UseFormSetValue } from 'react-hook-form';
+import { type ReactElement } from 'react';
+import { type Validate, type UseFormSetValue } from 'react-hook-form';
 
-import { IconName, SelectableValue } from '@grafana/data';
-import { Settings } from 'app/types/settings';
+import { type IconName, type SelectableValue } from '@grafana/data';
+import { type Settings } from 'app/types/settings';
 export interface AuthProviderInfo {
   id: string;
   type: string;
@@ -64,6 +64,9 @@ export type SSOProviderSettingsBase = {
   loginPrompt?: string;
   // For Google
   validateHd?: boolean;
+  // For JWT ID token validation
+  validateIdToken?: boolean;
+  jwkSetUrl?: string;
 };
 
 // SSO data received from the API and sent to it

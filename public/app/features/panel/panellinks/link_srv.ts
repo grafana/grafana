@@ -1,28 +1,28 @@
 import { chain } from 'lodash';
 
 import {
-  DataFrame,
-  DataLink,
+  type DataFrame,
+  type DataLink,
   DataLinkBuiltInVars,
   deprecationWarning,
-  Field,
+  type Field,
   FieldType,
   getFieldDisplayName,
-  InterpolateFunction,
-  KeyValue,
-  LinkModel,
+  type InterpolateFunction,
+  type KeyValue,
+  type LinkModel,
   locationUtil,
-  ScopedVars,
+  type ScopedVars,
   textUtil,
-  TypedVariableModel,
+  type TypedVariableModel,
   urlUtil,
   VariableOrigin,
-  VariableSuggestion,
+  type VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { DashboardLink, VariableFormatID } from '@grafana/schema';
+import { type DashboardLink, VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
 
 const timeRangeVars = [
@@ -80,31 +80,27 @@ const buildLabelPath = (label: string) => {
   return label.includes('.') || label.trim().includes(' ') ? `["${label}"]` : `.${label}`;
 };
 
+const isRecordOrArray = (value: unknown): value is Record<string, unknown> | unknown[] =>
+  typeof value === 'object' && value !== null;
+
 const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
-  if (!('valuesFormat' in variable) || variable.valuesFormat !== 'json') {
+  if (!('options' in variable) || !variable.options?.[0]?.properties) {
     return [];
   }
 
-  function collectFieldPaths(option: Record<string, string>, currentPath: string) {
+  function collectFieldPaths(properties: Record<string, unknown> | unknown[], currentPath: string) {
     let paths: string[] = [];
-    for (const field in option) {
-      if (option.hasOwnProperty(field)) {
-        const newPath = `${currentPath}.${field}`;
-        const value = option[field];
-        if (typeof value === 'object' && value !== null) {
-          paths = [...paths, ...collectFieldPaths(value, newPath)];
-        }
-        paths.push(newPath);
+    for (const [field, value] of Object.entries(properties)) {
+      const newPath = `${currentPath}.${field}`;
+      if (isRecordOrArray(value)) {
+        paths = [...paths, ...collectFieldPaths(value, newPath)];
       }
+      paths.push(newPath);
     }
     return paths;
   }
 
-  try {
-    return collectFieldPaths(JSON.parse(variable.query)[0], variable.name);
-  } catch {
-    return [];
-  }
+  return collectFieldPaths(variable.options[0].properties, variable.name);
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
@@ -150,6 +146,12 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
       value: `${DataLinkBuiltInVars.fieldName}`,
       label: t('panel.get-field-vars.label.name', 'Name'),
       documentation: 'Field name of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Field,
+    },
+    {
+      value: `${DataLinkBuiltInVars.fieldDisplayName}`,
+      label: t('panel.get-field-vars.label.display-name', 'Display name'),
+      documentation: 'Display name of the field (includes overrides and transformations)',
       origin: VariableOrigin.Field,
     },
     ...labels.map((label) => ({

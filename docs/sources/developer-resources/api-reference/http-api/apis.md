@@ -14,16 +14,22 @@ labels:
     - enterprise
     - oss
     - cloud
-title: New API Structure
+title: API structure in Grafana
+menuTitle: API Structure
+weight: 01
 ---
 
-# Grafana's New API Structure
+# The API structure in Grafana
 
-## Overview
+{{< admonition type="note" >}}
+Available in Grafana 12 and later.
+{{< /admonition >}}
 
-Going forward, Grafana's HTTP API will follow a standardized API structure alongside consistent API versioning.
+The new Grafana HTTP APIs follow a standardized API structure alongside consistent API versioning.
 
-## API Path Structure
+## API structure
+
+### API path
 
 All Grafana APIs follow this standardized format:
 
@@ -33,7 +39,30 @@ All Grafana APIs follow this standardized format:
 
 Where the final `/<name>` segment is used for operations on individual resources (like Get, Update, Delete) and omitted for collection operations (like List, Create).
 
-## Understanding the Components
+### API response format
+
+All Grafana API responses follow this structure:
+
+```
+{
+  "kind": "<kind>",
+  "apiVersion": "<group>/<version>",
+  "metadata": {
+    "name": "<name>",
+    "namespace": "<namespace>",
+    "uid": "db323171-c78a-42fa-be98-16a3d799a779",
+    "resourceVersion": "1758777451428472",
+    "generation": 10,
+    "creationTimestamp": "2026-01-23T22:06:40Z",
+    "annotations": {}
+  },
+  "spec": {
+    // resource-specific fields
+  }
+}
+```
+
+## Understand the components
 
 ### Group (`<group>`)
 
@@ -83,13 +112,18 @@ Namespaces isolate resources within your Grafana instance. The format varies by 
 
 ### Resource (`<resource>`)
 
-Represents the core resource you want to interact with, such as:
+The resource type you want to interact with, such as:
 
 - `dashboards`
 - `playlists`
 - `folders`
 
-### Name (<name>)
+### Kind (`<kind>`)
+
+The kind identifies the resource type in API responses and corresponds to the singular form of the resource.
+For example, the `dashboards` resource has a kind of `Dashboard`.
+
+### Name (`<name>`)
 
 The `<name>` is the unique identifier for a specific instance of a resource within its namespace and resource type. `<name>` is distinct from the metadata.uid field. The URL path will always use the metadata.name.
 
@@ -98,7 +132,7 @@ For example, to get a dashboard defined as:
 ```
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "metadata": {
     "name": "production-overview", // This value IS used in the URL path
     "namespace": "default",
@@ -113,4 +147,51 @@ For example, to get a dashboard defined as:
 
 You would use the following API call:
 
-`GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/production-overview`
+`GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/production-overview`
+
+### Metadata
+
+The metadata section contains information about the resource instance.
+This section includes [name](#name-name) and [namespace](#namespace-namespace), which are described earlier in this document, along with the following fields:
+
+#### UID
+
+An internal identifier that can be ignored for most use cases. Use the `name` field as the unique identifier instead. This value is _not_ the same as the Grafana UID.
+
+#### ResourceVersion
+
+A value that changes whenever any part of the resource changes, including metadata or status.
+
+Use this field for:
+
+- Change detection
+- Optimistic concurrency control
+
+#### Generation
+
+A monotonically increasing number that increments only when the spec changes.
+Updates to metadata or status don't affect this value.
+
+#### CreationTimestamp
+
+The time the object was created, formatted as an RFC 3339 UTC timestamp (for example, `2026-01-23T22:06:40Z`).
+
+#### Annotations
+
+A map of key-value pairs.
+
+Common annotations include:
+
+- `grafana.app/createdBy` / `grafana.app/updatedBy`: Identifies who created or last updated the resource.
+  Format: `<user-type>:<uid>` (for example, user:u000000839)
+- `grafana.app/folder`: If the resource supports folders, contains the folder UID the object belongs to.
+- `grafana.app/updatedTimestamp`: Timestamp of the last update, formatted as RFC 3339 UTC
+  (for example, `2026-01-23T05:17:31Z`).
+
+#### Labels
+
+An optional map of key-value pairs for organizing and selecting resources.
+
+### Spec
+
+The spec field describes the desired state of the resource. Its structure is specific to the resource type and API version. Refer to the Swagger / OpenAPI documentation for the exact schema of each resource’s spec.

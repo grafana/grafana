@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type mockPluginPreinstall struct {
@@ -37,6 +37,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
+			log: log.New("test"),
 			availableUpdates: map[string]availableUpdate{
 				"test-ds": {
 					localVersion:     "0.9.0",
@@ -376,12 +377,17 @@ func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
 	t.Helper()
 	openfeatureTestMutex.Lock()
 
-	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
-		ProviderType: setting.StaticProviderType,
-		StaticFlags: map[string]bool{
-			featuremgmt.FlagPluginsAutoUpdate: flagValue,
-		},
-	})
+	flag := memprovider.InMemoryFlag{Key: featuremgmt.FlagPluginsAutoUpdate, Variants: map[string]any{"": flagValue}}
+
+	staticFlags := map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagPluginsAutoUpdate: flag,
+	}
+
+	// Create static provider with Grafana's standard flags
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(staticFlags)
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

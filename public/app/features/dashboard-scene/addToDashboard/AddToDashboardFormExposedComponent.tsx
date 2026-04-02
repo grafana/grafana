@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { AbsolutePathOptions, Props } from './AddToDashboardForm';
+import { type AbsolutePathOptions, type Props } from './AddToDashboardForm';
 
 // Lazy load the component
 const AddToDashboardFormLazy = lazy(() => import('./AddToDashboardForm'));
@@ -27,7 +27,7 @@ export const AddToDashboardFormExposedComponent = (props: Partial<Props<Absolute
       buildPanel={
         props.buildPanel ??
         (() => ({
-          type: 'timeseries',
+          type: 'timeseries', // TODO: should this be `getDefaultPluginId()`?
           title: t('dashboard-scene.add-to-dashboard-form-exposed.title.new-panel', 'New panel'),
           targets: [],
         }))

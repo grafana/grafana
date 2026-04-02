@@ -3,24 +3,25 @@ import { flatten, forOwn, groupBy, partition } from 'lodash';
 
 import {
   CoreApp,
-  DataFrame,
+  type DataFrame,
   DataFrameType,
-  DataLink,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataLink,
+  type DataQueryRequest,
+  type DataQueryResponse,
   DataTopic,
-  Field,
+  type Field,
   FieldType,
+  findCommonLabels,
   getDisplayProcessor,
   getFieldDisplayName,
-  Labels,
+  type Labels,
   sortDataFrame,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
-import { ExemplarTraceIdDestination, PromMetric, PromQuery, PromValue } from './types';
+import { type ExemplarTraceIdDestination, type PromMetric, type PromQuery, type PromValue } from './types';
 
 // handles case-insensitive Inf, +Inf, -Inf (with optional "inity" suffix)
 const INFINITY_SAMPLE_REGEX = /^[+-]?inf(?:inity)?$/i;
@@ -48,6 +49,19 @@ const isCumulativeHeatmapResult = (dataFrame: DataFrame, options: DataQueryReque
   return target?.format === 'heatmap';
 };
 
+// get each frame's (named) field's labels
+function getAllLabels(frames: DataFrame[]): Labels[] {
+  // for each frame, take all fields with matching __name__ label in a flat list of labels (instead of Labels[][])
+  return frames
+    .map((frame: DataFrame) =>
+      frame.fields
+        .filter((field: Field) => field.labels?.__name__ && field.labels?.__name__ === field.name)
+        .map((field: Field) => field.labels)
+    )
+    .flat()
+    .filter((labels?: Labels) => labels !== undefined);
+}
+
 // V2 result transformer used to transform query results from queries that were run through prometheus backend
 export function transformV2(
   response: DataQueryResponse,
@@ -62,8 +76,12 @@ export function transformV2(
     if (target && target.legendFormat === '__auto') {
       f.fields.forEach((field) => {
         if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
+          const framesWithSameRefId = response.data.filter((frame: DataFrame) => frame.refId === target.refId);
+          // don't ignore all labels when we have only one frame -> we don't know which are static
+          const commonLabels =
+            framesWithSameRefId.length === 1 ? {} : findCommonLabels(getAllLabels(framesWithSameRefId));
           const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
-          field.config.displayNameFromDS = getFieldDisplayName(fieldCopy, f, response.data);
+          field.config.displayNameFromDS = getFieldDisplayName(fieldCopy, f, response.data, commonLabels);
         }
       });
     }

@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { DirectionDimensionConfig, DirectionDimensionMode, ConnectionDirection } from '@grafana/schema';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { type DirectionDimensionConfig, DirectionDimensionMode, ConnectionDirection } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 
-import { ConnectionCoordinates } from '../../panelcfg.gen';
-import { ConnectionState } from '../../types';
+import { type ConnectionCoordinates } from '../../panelcfg.gen';
+import { type ConnectionState } from '../../types';
 import {
   calculateAngle,
   calculateCoordinates,

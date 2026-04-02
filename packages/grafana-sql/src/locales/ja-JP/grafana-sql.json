@@ -12,7 +12,7 @@
       "connection-limits": {
         "auto-max-idle": "自動最大アイドル",
         "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-max-idle": "アイドル接続プールの最大接続数。<i>最大オープン接続数</i>が0より大きく<i>最大アイドル接続数</i>より小さい場合、<i>最大アイドル接続数<i>は</i>最大オープン接続数</i>の制限に合わせて削減されます。0に設定すると、アイドル接続は保持されません。",
         "content-max-lifetime": "接続を再利用できる最大時間（秒）。0に設定すると、接続は永続的に再利用されます。",
         "content-max-open": "",
         "max-idle": "最大アイドル",
@@ -69,6 +69,12 @@
         "placeholder-select-format": "フォーマットを選択",
         "run-query": "クエリの実行"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "テキストフィールド",
+          "valueField": "値フィールド"
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "CTRL/CMD+Returnでクエリを実行",
         "tooltip-collapse": "エディターを折りたたむ",
@@ -76,7 +82,7 @@
         "tooltip-format-query": "クエリをフォーマット"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0>このクエリは実行時に<strong>{{bytes}}</strong>を処理します。",
         "validating-query": "クエリを検証中..."
       },
       "raw-editor": {

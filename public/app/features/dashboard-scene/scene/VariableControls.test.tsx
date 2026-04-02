@@ -1,11 +1,21 @@
 import { render, screen } from '@testing-library/react';
 
 import { VariableHide } from '@grafana/data';
-import { SceneGridLayout, SceneVariable, SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import {
+  CustomVariable,
+  LocalValueVariable,
+  SceneGridLayout,
+  type SceneVariable,
+  SceneVariableSet,
+  ScopesVariable,
+  TextBoxVariable,
+} from '@grafana/scenes';
 
 import { DashboardScene } from './DashboardScene';
-import { VariableControls } from './VariableControls';
+import { SectionVariableControls, VariableControls } from './VariableControls';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
 
 jest.mock('@grafana/runtime', () => {
   const runtime = jest.requireActual('@grafana/runtime');
@@ -21,13 +31,24 @@ jest.mock('@grafana/runtime', () => {
 });
 
 describe('VariableControls', () => {
-  it('should not render scopes variable', () => {
-    const variables = [new ScopesVariable({})];
+  it('should not show scopes variable label but should mount its component', () => {
+    const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
+    const variables = [scopesVariable];
     const dashboard = buildScene(variables);
     dashboard.activate();
 
     render(<VariableControls dashboard={dashboard} />);
+    expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
+  });
 
+  it('should not show scopes variable in edit mode but should mount its component', () => {
+    const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
+    const variables = [scopesVariable];
+    const dashboard = buildScene(variables);
+    dashboard.activate();
+    dashboard.setState({ isEditing: true });
+
+    render(<VariableControls dashboard={dashboard} />);
     expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
   });
 
@@ -45,19 +66,18 @@ describe('VariableControls', () => {
     expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
   });
 
-  it('should render regular hidden variables in edit mode', async () => {
-    const hiddenVariable = new TextBoxVariable({
-      name: 'HiddenVar',
-      hide: VariableHide.hideVariable,
-    });
-    const variables = [hiddenVariable];
+  it('should not render hidden variables in edit mode', async () => {
+    const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
+    const hiddenVariable = new TextBoxVariable({ name: 'HiddenVar', hide: VariableHide.hideVariable });
+    const variables = [scopesVariable, hiddenVariable];
     const dashboard = buildScene(variables);
     dashboard.activate();
 
     dashboard.setState({ isEditing: true });
     render(<VariableControls dashboard={dashboard} />);
 
-    expect(await screen.findByText('HiddenVar')).toBeInTheDocument();
+    expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
+    expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
   });
 
   it('should not render variables hidden in controls menu in edit mode', async () => {
@@ -68,6 +88,35 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(screen.queryByText('TextVarControls')).not.toBeInTheDocument();
+  });
+
+  it('should render visible variables in edit mode', async () => {
+    const dashboard = buildScene([new TextBoxVariable({ name: 'TextVarVisible', hide: VariableHide.dontHide })]);
+    dashboard.activate();
+
+    dashboard.setState({ isEditing: true });
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
+  });
+
+  it('should hide local repeat variables in section controls', () => {
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new LocalValueVariable({ name: 'custom0', value: 'glo3', text: 'glo3' }),
+        new CustomVariable({ name: 'custom0', query: 'sec1,sec2', value: ['sec1'], text: ['sec1'] }),
+      ],
+    });
+
+    const row = new RowItem({
+      repeatByVariable: 'custom0',
+      $variables: variableSet,
+      layout: AutoGridLayoutManager.createEmpty(),
+    });
+
+    render(<SectionVariableControls variableSet={row.state.$variables!} />);
+
+    expect(screen.queryAllByText('custom0')).toHaveLength(1);
   });
 });
 
