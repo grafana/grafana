@@ -52,13 +52,9 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 const defaultPollingInterval = 100 * time.Millisecond
 
 // newTenantDeleterGcomClient returns a GCOM client for tenant-deleter verification when
-// [unified_storage] tenant_deleter_gcom_api_token or [cloud_migration] gcom_api_token
-// and [grafana_com] api_url are configured.
+// [grafana_com] sso_api_token and api_url are configured.
 func newTenantDeleterGcomClient(cfg *setting.Cfg) gcom.Service {
-	token := strings.TrimSpace(cfg.TenantDeleterGcomAPIToken)
-	if token == "" {
-		token = strings.TrimSpace(cfg.CloudMigration.GcomAPIToken)
-	}
+	token := strings.TrimSpace(cfg.GrafanaComSSOAPIToken)
 	apiURL := strings.TrimSpace(cfg.GrafanaComAPIURL)
 	if token == "" || apiURL == "" {
 		return nil
