@@ -65,11 +65,11 @@ The process of creating a dashboard from a suggestion starts from the **Data sou
 
 The dashboards suggested can either have the data source provided or come from the Grafana Community, and they are labeled to indicate this:
 
-{{< figure src="screenshot-suggested-dashboards-v13.0.png" max-width="750px" alt="Suggested dashboards dialog box" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-suggested-dashboards-v13.0.png" max-width="750px" alt="Suggested dashboards dialog box" >}}
 
 Access the suggested dashboards for a data source by clicking the **Build a dashboard** drop-down list and selecting **From suggestions**:
 
-{{< figure src="screenshot-build-dashboard-dropdown-v13.0.png" max-width="750px" alt="Build a dashboard drop-down list with From suggestions selected" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-build-dashboard-dropdown-v13.0.png" max-width="750px" alt="Build a dashboard drop-down list with From suggestions selected" >}}
 
 The **From suggestions** option is only enabled if suggested dashboards are available for the data source.
 If there are no suggestions available, Grafana displays a warning, and you won't be able to select the option.
@@ -93,7 +93,7 @@ To build a dashboard from suggestions, follow these steps:
    - To find a specific dashboard, enter the name of the dashboard in the search bar.
    - If, after viewing the suggested dashboard, you find it doesn't meet your needs, go back and choose a different suggestion or start a new dashboard by clicking one of the options in the banner:
 
-   {{< figure src="screenshot-suggested-dashboards-banner-v13.0.png" alt="Suggested dashboards banner" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-suggested-dashboards-banner-v13.0.png" alt="Suggested dashboards banner" >}}
 
 1. Complete the rest of the dashboard configuration.
 1. Click **Save**.
@@ -107,13 +107,13 @@ In Grafana Cloud, you can customize a dashboard template or suggested dashboard 
 
 To use this option, hover the cursor over the template or suggestion that you want to use and click **Customize with Assistant**:
 
-{{< figure src="screenshot-customize-w-asst-buttons-v13.0.png" alt="Grafana Assistant helping create a dashboard from template or suggestion" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-customize-w-asst-buttons-v13.0.png" alt="Grafana Assistant helping create a dashboard from template or suggestion" >}}
 
 When you choose this option, a preconfigured prompt is entered into the Assistant chat to start the process:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dash-template-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a template" caption="A dashboard template being customized by Grafana Assistant" >}}
 
-{{< figure src="screenshot-suggested-dash-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a suggestion" caption="A suggested dashboard being customized by Grafana Assistant" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-suggested-dash-w-asst-v13.0.png" max-width="750px" alt="Grafana Assistant helping create a dashboard from a suggestion" caption="A suggested dashboard being customized by Grafana Assistant" >}}
 
 Grafana Assistant analyses the template or suggested dashboard, checks your available data sources, and guides the creation of a dashboard tailored to your environment.
 This lets you create a working, relevant dashboard from a template or suggestion without the need to manually map metrics and panels.
