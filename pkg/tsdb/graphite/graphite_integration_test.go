@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // Integration tests for the Graphite backend datasource.
@@ -58,7 +56,9 @@ func newIntegrationService(t *testing.T) (*Service, *datasourceInfo) {
 // TestIntegrationGraphiteHealthCheck verifies the Graphite server is reachable and
 // responds to a basic query (the same check the health check handler uses).
 func TestIntegrationGraphiteHealthCheck(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	svc, dsInfo := newIntegrationService(t)
 
 	req := &backend.QueryDataRequest{
@@ -97,7 +97,9 @@ func TestIntegrationGraphiteHealthCheck(t *testing.T) {
 // This is a regression guard for issue #20454, where a naming convention change caused
 // DisplayNameFromDS to be set to the refId (#A) instead of the actual metric name.
 func TestIntegrationGraphiteQuery(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	svc, dsInfo := newIntegrationService(t)
 
 	req := &backend.QueryDataRequest{
@@ -150,7 +152,9 @@ func TestIntegrationGraphiteQuery(t *testing.T) {
 // The backend/alert query path does not wrap targets in aliasSub() as the frontend does,
 // so without trimming the raw whitespace reaches carbonapi verbatim.
 func TestIntegrationGraphiteQueryTargetTrimming(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	svc, dsInfo := newIntegrationService(t)
 
 	tests := []struct {
@@ -205,7 +209,9 @@ func TestIntegrationGraphiteQueryTargetTrimming(t *testing.T) {
 // TestIntegrationGraphiteMetricsFind verifies that the /metrics/find resource endpoint
 // returns a valid response from the live Graphite server.
 func TestIntegrationGraphiteMetricsFind(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	url := graphiteURL(t)
 
 	svc := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-integration"))
@@ -215,21 +221,21 @@ func TestIntegrationGraphiteMetricsFind(t *testing.T) {
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
 	}
 
-	// Use a wildcard that should match at least the built-in carbon.* metrics
-	// available in graphite-statsd containers.
+	// "grafanatest" is seeded by the CI setup; ensure it exists when running locally.
+	query := "grafanatest"
 	req, err := svc.createRequest(context.Background(), dsInfo, URLParams{
 		SubPath:     "metrics/find",
 		Method:      http.MethodPost,
 		Body:        nil,
 		Headers:     map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-		QueryParams: map[string][]string{"query": {"*"}},
+		QueryParams: map[string][]string{"query": {query}},
 	})
 	require.NoError(t, err)
 
 	resp, err := dsInfo.HTTPClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode,
-		fmt.Sprintf("GET /metrics/find?query=* should return 200 from %s", url))
+		fmt.Sprintf("POST /metrics/find?query=%s should return 200 from %s", query, url))
 }

@@ -379,7 +379,42 @@ jobs:
         if: ${{ matrix.graphite.compose != '' && matrix.graphite.compose != null }}
         run: |
           docker compose -f ${{ matrix.graphite.compose }} up -d
-          timeout 90 bash -c 'until curl -sf http://localhost:8480/; do sleep 3; done'
+
+          # Wait for go-carbon's carbonserver HTTP to accept connections before
+          # carbonapi tries to connect to it on startup.
+          timeout 60 bash -c '
+            until curl -s -o /dev/null -w "%{http_code}" "http://localhost:8580/metrics/find?query=test&format=json" | grep -qE "^[0-9]{3}$"; do
+              sleep 2
+            done
+          '
+
+          # Seed the test metric directly over the carbon plaintext protocol.
+          # fake-carbonapi-data has a startup delay, so we seed early to give
+          # go-carbon's write loop maximum time to flush and index the file.
+          python3 -c "import socket,time; s=socket.socket(); s.connect(('localhost',2013)); s.sendall(b'grafanatest 42 '+str(int(time.time())).encode()+b'\n'); s.close()"
+          sleep 3
+
+          # Wait for carbonapi to be up (constantLine is evaluated locally, no backend needed).
+          timeout 90 bash -c '
+            until curl -sf "http://localhost:8480/render?target=constantLine(1)&format=json&from=-1min" > /dev/null; do
+              sleep 3
+            done
+          '
+
+          # Wait for go-carbon's index to contain the seeded metric, then wait for
+          # carbonapi to reflect it.  Query by name rather than wildcard — go-carbon
+          # returns 500 for query=* when top-level results are directory nodes only.
+          # Grep the body since carbonapi returns HTTP 200 with [] for unknown metrics.
+          timeout 90 bash -c '
+            until curl -sL "http://localhost:8580/metrics/find/?query=grafanatest&format=json" 2>/dev/null | grep -q "grafanatest"; do
+              sleep 2
+            done
+          '
+          timeout 90 bash -c '
+            until curl -s "http://localhost:8480/metrics/find?query=grafanatest&format=json" 2>/dev/null | grep -q "grafanatest"; do
+              sleep 2
+            done
+          '
 
       - name: Build and start bookingcom/carbonapi
         if: ${{ matrix.graphite.build == 'source' }}

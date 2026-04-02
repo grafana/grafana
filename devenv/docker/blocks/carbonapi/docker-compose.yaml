@@ -6,13 +6,10 @@ services:
     ports:
       - "2013:2003"   # carbon plaintext
       - "2014:2004"   # carbon pickle
+      - "8580:8080"   # carbonserver HTTP (exposed for CI health checks)
     volumes:
       - ./go-carbon.conf:/etc/go-carbon/go-carbon.conf
-    healthcheck:
-      test: ["CMD-SHELL", "echo 'test.metric 42' | nc -q1 localhost 2003 && echo ok"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      - ./storage-schemas.conf:/etc/go-carbon/storage-schemas.conf
 
   # carbonapi is the HTTP API layer (upstream of Booking's bookingcom/carbonapi fork).
   # It exposes the same /render, /metrics/find, /metrics/expand, /tags/* endpoints
@@ -27,8 +24,7 @@ services:
       - ./carbonapi.yaml:/etc/carbonapi/carbonapi.yaml
     command: ["-config", "/etc/carbonapi/carbonapi.yaml"]
     depends_on:
-      go-carbon:
-        condition: service_healthy
+      - go-carbon
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/render?target=constantLine(1)&format=json&from=-1min"]
       interval: 5s
@@ -39,8 +35,10 @@ services:
     image: grafana/fake-data-gen
     environment:
       FD_DATASOURCE: graphite
-      FD_PORT: 2013
+      FD_SERVER: go-carbon
+      FD_PORT: 2003
       FD_GRAPHITE_VERSION: 1.1
     depends_on:
-      go-carbon:
-        condition: service_healthy
+      - go-carbon
+    # Restart if connection to go-carbon fails on first attempt (TCP not ready yet).
+    restart: on-failure

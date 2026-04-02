@@ -1685,7 +1685,10 @@ describe('graphiteDatasource', () => {
 
         const data = await ctx.ds.metricFindQuery('apps.backend.*');
 
-        expect(postResourceMock).toHaveBeenCalledWith('metrics/find', expect.objectContaining({ query: 'apps.backend.*' }));
+        expect(postResourceMock).toHaveBeenCalledWith(
+          'metrics/find',
+          expect.objectContaining({ query: 'apps.backend.*' })
+        );
         expect(data).toEqual([
           { text: 'backend_01', expandable: false },
           { text: 'backend_02', expandable: true },
@@ -1700,7 +1703,10 @@ describe('graphiteDatasource', () => {
 
         const data = await ctx.ds.metricFindQuery('expand(apps.backend.*)');
 
-        expect(postResourceMock).toHaveBeenCalledWith('metrics/expand', expect.objectContaining({ query: 'apps.backend.*' }));
+        expect(postResourceMock).toHaveBeenCalledWith(
+          'metrics/expand',
+          expect.objectContaining({ query: 'apps.backend.*' })
+        );
         expect(data).toEqual([
           { text: 'apps.backend.backend_01', expandable: false },
           { text: 'apps.backend.backend_02', expandable: false },
@@ -1712,7 +1718,10 @@ describe('graphiteDatasource', () => {
 
         const data = await ctx.ds.metricFindQuery('tags(server=backend_01)');
 
-        expect(postResourceMock).toHaveBeenCalledWith('tags/autoComplete/tags', expect.objectContaining({ tagPrefix: undefined }));
+        expect(postResourceMock).toHaveBeenCalledWith(
+          'tags/autoComplete/tags',
+          expect.objectContaining({ tagPrefix: undefined })
+        );
         expect(data).toEqual([{ text: 'server' }, { text: 'region' }, { text: 'env' }]);
       });
 

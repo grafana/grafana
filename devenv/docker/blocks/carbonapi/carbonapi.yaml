@@ -2,17 +2,9 @@
 # See https://github.com/go-graphite/carbonapi/blob/main/cmd/carbonapi/carbonapi.example.yaml
 
 listen: ":8080"
-listenInternal: ":7081"
 
-# Report as Graphite 1.1.0 so Grafana uses the correct query features
-graphiteVersionForGrafana: "1.1.0"
-
-# Use the go-carbon backend (via carbonzipper protocol over HTTP)
-# The go-carbon service exposes a carbonserver on port 8080 internally
-backends:
-  - "http://go-carbon:8080"
-
-# carbonzipper / backend configuration
+# Use the go-carbon backend (via carbonserver HTTP)
+# backends must be inside upstreams for upstream carbonapi (unlike bookingcom fork)
 upstreams:
   graphite09compat: false
   buckets: 10
@@ -20,14 +12,16 @@ upstreams:
   keepAliveInterval: "30s"
   maxIdleConnsPerHost: 100
   timeouts:
-    find: "2s"
+    find: "10s"
     render: "10s"
     connect: "200ms"
+  backends:
+    - "http://go-carbon:8080"
 
 # Caching — keep short for dev so tests see fresh data
 cache:
   type: "mem"
-  size: 100
+  size_mb: 100
   defaultTimeoutSec: 10
 
 # Logging

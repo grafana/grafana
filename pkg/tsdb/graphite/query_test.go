@@ -842,7 +842,7 @@ func TestTargetSentToGraphite(t *testing.T) {
 			req := &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{
 					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 1, URL: server.URL},
-					OrgID: 1,
+					OrgID:                      1,
 				},
 				Queries: []backend.DataQuery{
 					{
@@ -869,23 +869,23 @@ func TestTargetSentToGraphite(t *testing.T) {
 //   - Frame Name is always empty — any change setting it to a refId would be caught here
 func TestDisplayNameFromDS(t *testing.T) {
 	tests := []struct {
-		name                    string
-		graphiteTarget          string
+		name                      string
+		graphiteTarget            string
 		expectedDisplayNameFromDS string
 	}{
 		{
-			name:                    "plain metric name flows to DisplayNameFromDS",
-			graphiteTarget:          "stats.counters.web.hits",
+			name:                      "plain metric name flows to DisplayNameFromDS",
+			graphiteTarget:            "stats.counters.web.hits",
 			expectedDisplayNameFromDS: "stats.counters.web.hits",
 		},
 		{
-			name:                    "alias-resolved name flows to DisplayNameFromDS",
-			graphiteTarget:          "Web Hits",
+			name:                      "alias-resolved name flows to DisplayNameFromDS",
+			graphiteTarget:            "Web Hits",
 			expectedDisplayNameFromDS: "Web Hits",
 		},
 		{
-			name:                    "aliasByNode-resolved name flows to DisplayNameFromDS",
-			graphiteTarget:          "hits",
+			name:                      "aliasByNode-resolved name flows to DisplayNameFromDS",
+			graphiteTarget:            "hits",
 			expectedDisplayNameFromDS: "hits",
 		},
 	}
@@ -905,7 +905,7 @@ func TestDisplayNameFromDS(t *testing.T) {
 			req := &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{
 					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 1, URL: server.URL},
-					OrgID: 1,
+					OrgID:                      1,
 				},
 				Queries: []backend.DataQuery{
 					{
