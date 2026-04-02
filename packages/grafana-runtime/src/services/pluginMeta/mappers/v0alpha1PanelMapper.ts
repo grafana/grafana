@@ -1,7 +1,7 @@
 import { type PanelPluginMeta, PluginType } from '@grafana/data';
 
 import type { PanelPluginMetas, PanelPluginMetasMapper, PluginMetasResponse } from '../types';
-import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
+import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 import { angularMapper, infoMapper, loadingStrategyMapper, signatureMapper, stateMapper } from './shared';
 
@@ -42,6 +42,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
   const angular = angularMapper(spec);
   const translations = spec.translations;
   const moduleHash = spec.module.hash;
+  const aliasIDs = spec.aliasIds;
 
   return {
     id,
@@ -60,6 +61,7 @@ function specMapper(spec: v0alpha1Spec): PanelPluginMeta {
     type,
     translations,
     moduleHash,
+    aliasIDs,
   };
 }
 

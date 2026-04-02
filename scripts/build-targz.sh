@@ -17,7 +17,12 @@ set -euo pipefail
 : "${GO:=go}"
 
 REPO_ROOT="$(pwd)"
-FILENAME="${TARGZ_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH}.tar.gz"
+# Match pkg/build/daggerbuild/packages.FileName: arm variants use arch labels like arm-6, arm-7.
+ARCH_LABEL="${ARCH}"
+if [ -n "${GOARM:-}" ]; then
+  ARCH_LABEL="${ARCH}-${GOARM}"
+fi
+FILENAME="${TARGZ_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.tar.gz"
 STAGING="${REPO_ROOT}/dist/.tar-staging"
 ROOT="grafana-${BUILD_VERSION}"
 DIR="${STAGING}/${ROOT}"

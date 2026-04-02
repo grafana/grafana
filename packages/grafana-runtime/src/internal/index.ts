@@ -26,7 +26,7 @@ export {
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
 
-export { UserStorage } from '../utils/userStorage';
+export { UserStorage, useUserStorage } from '../utils/userStorage';
 
 export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
 
@@ -62,3 +62,5 @@ export {
   setPanelPluginMetas,
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
+export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { logPluginMetaError, setPluginMetaLogger } from '../services/pluginMeta/logging';

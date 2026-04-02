@@ -18,6 +18,7 @@ import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
+import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
@@ -25,7 +26,8 @@ import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from 
 const DEFAULT_DATASOURCE = 'default';
 
 export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
-  const variableObjects = oldModel.templating.list
+  const variables = migrateGroupByVariablesV1(oldModel.templating.list);
+  const variableObjects = variables
     .map((v) => {
       try {
         return createSceneVariableFromVariableModel(v);
@@ -82,6 +84,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
+            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
           });
         }
         // for other variable types we are using the SnapshotVariable

@@ -88,7 +88,8 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $data: createPanelDataProvider(panel),
     titleItems,
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction:
+        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     subHeader: new VizPanelSubHeader({
       hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
@@ -147,7 +148,8 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     ],
     extendPanelContext: setDashboardPanelContext,
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction:
+        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: panel.spec.title,

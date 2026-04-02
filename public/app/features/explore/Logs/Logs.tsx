@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { capitalize, groupBy } from 'lodash';
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -242,6 +243,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
+  const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
+  const newLogContextEnabled = useBooleanFlagValue('newLogContext', false);
+  const logsPanelControlsEnabled = useBooleanFlagValue('logsPanelControls', true);
 
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
@@ -279,11 +283,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     ]
   );
 
-  const [displayedFields, setDisplayedFields] = useState<string[]>(
+  const [displayedFields, setDisplayedFields] = useState<string[]>(() =>
     getDefaultDisplayedFieldsFromExploreState(
       panelState?.logs,
       updatePanelState,
-      config.featureToggles.logsTablePanelNG ?? false
+      config.featureToggles.logsTablePanelNG ?? false // Use the old feature toggles on initial load, newer useBooleanFlagValue hooks can use default of first render
     )
   );
 
@@ -605,27 +609,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   let onCloseContext = useCallback(() => {
     setContextOpen(false);
     setContextRow(undefined);
-    if (!config.featureToggles.newLogContext) {
+    if (!newLogContextEnabled) {
       reportInteraction('grafana_explore_logs_log_context_closed', {
         datasourceType: contextRow?.datasourceType,
         logRowUid: contextRow?.uid,
       });
     }
     onCloseCallbackRef?.current();
-  }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallbackRef]);
+  }, [contextRow?.datasourceType, contextRow?.uid, newLogContextEnabled, onCloseCallbackRef]);
 
-  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
-    // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
-    setContextOpen(true);
-    setContextRow(row);
-    if (!config.featureToggles.newLogContext) {
-      reportInteraction('grafana_explore_logs_log_context_opened', {
-        datasourceType: row.datasourceType,
-        logRowUid: row.uid,
-      });
-    }
-    onCloseCallbackRef.current = onClose;
-  }, []);
+  const onOpenContext = useCallback(
+    (row: LogRowModel, onClose: () => void) => {
+      // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
+      setContextOpen(true);
+      setContextRow(row);
+      if (!newLogContextEnabled) {
+        reportInteraction('grafana_explore_logs_log_context_opened', {
+          datasourceType: row.datasourceType,
+          logRowUid: row.uid,
+        });
+      }
+      onCloseCallbackRef.current = onClose;
+    },
+    [newLogContextEnabled]
+  );
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
@@ -850,7 +857,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && getRowContext && contextRow && (
+      {(!newLogsPanelEnabled || !newLogContextEnabled) && getRowContext && contextRow && (
         <LogRowContextModal
           open={contextOpen}
           row={contextRow}
@@ -862,7 +869,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           timeZone={timeZone}
         />
       )}
-      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getRowContext && contextRow && (
+      {newLogsPanelEnabled && newLogContextEnabled && getRowContext && contextRow && (
         <LogLineContext
           open={contextOpen}
           log={contextRow}
@@ -903,159 +910,153 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       </div>
       <PanelChrome
         titleItems={[
-          config.featureToggles.logsExploreTableVisualisation ? (
-            visualisationType === 'logs' ? null : (
-              <PanelChrome.TitleItem title={t('explore.unthemed-logs.title-feedback', 'Feedback')} key="A">
-                <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
-              </PanelChrome.TitleItem>
-            )
-          ) : null,
+          visualisationType === 'logs' ? null : (
+            <PanelChrome.TitleItem title={t('explore.unthemed-logs.title-feedback', 'Feedback')} key="A">
+              <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
+            </PanelChrome.TitleItem>
+          ),
         ]}
         title={t('explore.unthemed-logs.title-logs', 'Logs')}
         actions={
           <>
-            {config.featureToggles.logsExploreTableVisualisation && (
-              <div className={styles.visualisationType}>
-                <RadioButtonGroup
-                  className={styles.visualisationTypeRadio}
-                  options={[
-                    {
-                      label: t('explore.unthemed-logs.label.logs', 'Logs'),
-                      value: 'logs',
-                      description: t(
-                        'explore.unthemed-logs.description.show-results-in-logs-visualisation',
-                        'Show results in logs visualisation'
-                      ),
-                    },
-                    {
-                      label: t('explore.unthemed-logs.label.table', 'Table'),
-                      value: 'table',
-                      description: t(
-                        'explore.unthemed-logs.description.show-results-in-table-visualisation',
-                        'Show results in table visualisation'
-                      ),
-                    },
-                  ]}
-                  size="sm"
-                  value={visualisationType}
-                  onChange={onChangeVisualisation}
-                />
-              </div>
-            )}
+            <div className={styles.visualisationType}>
+              <RadioButtonGroup
+                className={styles.visualisationTypeRadio}
+                options={[
+                  {
+                    label: t('explore.unthemed-logs.label.logs', 'Logs'),
+                    value: 'logs',
+                    description: t(
+                      'explore.unthemed-logs.description.show-results-in-logs-visualisation',
+                      'Show results in logs visualisation'
+                    ),
+                  },
+                  {
+                    label: t('explore.unthemed-logs.label.table', 'Table'),
+                    value: 'table',
+                    description: t(
+                      'explore.unthemed-logs.description.show-results-in-table-visualisation',
+                      'Show results in table visualisation'
+                    ),
+                  },
+                ]}
+                size="sm"
+                value={visualisationType}
+                onChange={onChangeVisualisation}
+              />
+            </div>
           </>
         }
         loadingState={loading ? LoadingState.Loading : LoadingState.Done}
       >
         <div className={styles.stickyNavigation}>
-          {visualisationType !== 'table' &&
-            !config.featureToggles.newLogsPanel &&
-            !config.featureToggles.logsPanelControls && (
-              <div className={styles.logOptions}>
-                <InlineFieldRow>
-                  <InlineField
-                    label={t('explore.unthemed-logs.label-time', 'Time')}
-                    className={styles.horizontalInlineLabel}
+          {visualisationType !== 'table' && !newLogsPanelEnabled && !logsPanelControlsEnabled && (
+            <div className={styles.logOptions}>
+              <InlineFieldRow>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-time', 'Time')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
+                  <InlineSwitch
+                    value={showTime}
+                    onChange={onChangeShowTime}
+                    className={styles.horizontalInlineSwitch}
                     transparent
-                  >
-                    <InlineSwitch
-                      value={showTime}
-                      onChange={onChangeShowTime}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`show-time_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField
-                    label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
-                    className={styles.horizontalInlineLabel}
+                    id={`show-time_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
+                  <InlineSwitch
+                    value={showLabels}
+                    onChange={onChangeLabels}
+                    className={styles.horizontalInlineSwitch}
                     transparent
-                  >
-                    <InlineSwitch
-                      value={showLabels}
-                      onChange={onChangeLabels}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`unique-labels_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField
-                    label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
-                    className={styles.horizontalInlineLabel}
+                    id={`unique-labels_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
+                  <InlineSwitch
+                    value={wrapLogMessage}
+                    onChange={onChangeWrapLogMessage}
+                    className={styles.horizontalInlineSwitch}
                     transparent
-                  >
-                    <InlineSwitch
-                      value={wrapLogMessage}
-                      onChange={onChangeWrapLogMessage}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`wrap-lines_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField
-                    label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
-                    className={styles.horizontalInlineLabel}
+                    id={`wrap-lines_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
+                  <InlineSwitch
+                    value={prettifyLogMessage}
+                    onChange={onChangePrettifyLogMessage}
+                    className={styles.horizontalInlineSwitch}
                     transparent
-                  >
-                    <InlineSwitch
-                      value={prettifyLogMessage}
-                      onChange={onChangePrettifyLogMessage}
-                      className={styles.horizontalInlineSwitch}
-                      transparent
-                      id={`prettify_${exploreId}`}
-                    />
-                  </InlineField>
-                  <InlineField
-                    label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
-                    className={styles.horizontalInlineLabel}
-                    transparent
-                  >
-                    <RadioButtonGroup
-                      options={DEDUP_OPTIONS.map((dedupType) => ({
-                        label: capitalize(dedupType),
-                        value: dedupType,
-                        description: LogsDedupDescription[dedupType],
-                      }))}
-                      value={dedupStrategy}
-                      onChange={onChangeDedup}
-                      className={styles.radioButtons}
-                    />
-                  </InlineField>
-                </InlineFieldRow>
+                    id={`prettify_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                >
+                  <RadioButtonGroup
+                    options={DEDUP_OPTIONS.map((dedupType) => ({
+                      label: capitalize(dedupType),
+                      value: dedupType,
+                      description: LogsDedupDescription[dedupType],
+                    }))}
+                    value={dedupStrategy}
+                    onChange={onChangeDedup}
+                    className={styles.radioButtons}
+                  />
+                </InlineField>
+              </InlineFieldRow>
 
-                <div>
-                  <InlineField
-                    label={t('explore.unthemed-logs.label-display-results', 'Display results')}
-                    className={styles.horizontalInlineLabel}
-                    transparent
-                    disabled={isFlipping || loading}
-                  >
-                    <RadioButtonGroup
-                      options={[
-                        {
-                          label: t('explore.unthemed-logs.label.newest-first', 'Newest first'),
-                          value: LogsSortOrder.Descending,
-                          description: t(
-                            'explore.unthemed-logs.description.show-results-newest-to-oldest',
-                            'Show results newest to oldest'
-                          ),
-                        },
-                        {
-                          label: t('explore.unthemed-logs.label.oldest-first', 'Oldest first'),
-                          value: LogsSortOrder.Ascending,
-                          description: t(
-                            'explore.unthemed-logs.description.show-results-oldest-to-newest',
-                            'Show results oldest to newest'
-                          ),
-                        },
-                      ]}
-                      value={logsSortOrder}
-                      onChange={onChangeLogsSortOrder}
-                      className={styles.radioButtons}
-                    />
-                  </InlineField>
-                </div>
+              <div>
+                <InlineField
+                  label={t('explore.unthemed-logs.label-display-results', 'Display results')}
+                  className={styles.horizontalInlineLabel}
+                  transparent
+                  disabled={isFlipping || loading}
+                >
+                  <RadioButtonGroup
+                    options={[
+                      {
+                        label: t('explore.unthemed-logs.label.newest-first', 'Newest first'),
+                        value: LogsSortOrder.Descending,
+                        description: t(
+                          'explore.unthemed-logs.description.show-results-newest-to-oldest',
+                          'Show results newest to oldest'
+                        ),
+                      },
+                      {
+                        label: t('explore.unthemed-logs.label.oldest-first', 'Oldest first'),
+                        value: LogsSortOrder.Ascending,
+                        description: t(
+                          'explore.unthemed-logs.description.show-results-oldest-to-newest',
+                          'Show results oldest to newest'
+                        ),
+                      },
+                    ]}
+                    value={logsSortOrder}
+                    onChange={onChangeLogsSortOrder}
+                    className={styles.radioButtons}
+                  />
+                </InlineField>
               </div>
-            )}
+            </div>
+          )}
           <div ref={topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
@@ -1069,33 +1070,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {!enableNewLogsTable &&
-            !config.featureToggles.logsPanelControls &&
-            visualisationType === 'table' &&
-            hasData && (
-              <div className={styles.logRows} data-testid="logRowsTable">
-                <LogsTableWrap
-                  logsSortOrder={logsSortOrder}
-                  range={props.range}
-                  splitOpen={splitOpen}
-                  timeZone={timeZone}
-                  // Width should be full width minus logs navigation and padding
-                  width={width - 80}
-                  logsFrames={props.logsFrames ?? []}
-                  onClickFilterLabel={onClickFilterLabel}
-                  onClickFilterOutLabel={onClickFilterOutLabel}
-                  panelState={panelState?.logs}
-                  updatePanelState={updatePanelState}
-                  datasourceType={props.datasourceType}
-                  displayedFields={displayedFields}
-                  exploreId={props.exploreId}
-                  absoluteRange={props.absoluteRange}
-                  logRows={props.logRows}
-                />
-              </div>
-            )}
+          {!enableNewLogsTable && !logsPanelControlsEnabled && visualisationType === 'table' && hasData && (
+            <div className={styles.logRows} data-testid="logRowsTable">
+              <LogsTableWrap
+                logsSortOrder={logsSortOrder}
+                range={props.range}
+                splitOpen={splitOpen}
+                timeZone={timeZone}
+                // Width should be full width minus logs navigation and padding
+                width={width - 80}
+                logsFrames={props.logsFrames ?? []}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                panelState={panelState?.logs}
+                updatePanelState={updatePanelState}
+                datasourceType={props.datasourceType}
+                displayedFields={displayedFields}
+                exploreId={props.exploreId}
+                absoluteRange={props.absoluteRange}
+                logRows={props.logRows}
+              />
+            </div>
+          )}
 
-          {enableNewLogsTable && visualisationType === 'table' && (
+          {enableNewLogsTable && visualisationType === 'table' && hasData && (
             <ExploreLogsTable
               eventBus={eventBus}
               data={panelData}
@@ -1150,9 +1148,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             />
           )}
 
-          {(!config.featureToggles.newLogsPanel || (visualisationType === 'table' && !enableNewLogsTable)) &&
-            config.featureToggles.logsPanelControls &&
-            !enableNewLogsTable &&
+          {(!newLogsPanelEnabled || (visualisationType === 'table' && !enableNewLogsTable)) &&
+            logsPanelControlsEnabled &&
+            (visualisationType === 'logs' || !enableNewLogsTable) &&
             hasData && (
               <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows
@@ -1207,64 +1205,61 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 />
               </div>
             )}
-          {!config.featureToggles.logsPanelControls &&
-            !config.featureToggles.newLogsPanel &&
-            visualisationType === 'logs' &&
-            hasData && (
-              <>
-                <div className={styles.scrollableLogRows} data-testid="logRows" ref={logsContainerRef}>
-                  <InfiniteScroll
-                    loading={loading}
-                    loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
-                    range={props.range}
+          {!logsPanelControlsEnabled && !newLogsPanelEnabled && visualisationType === 'logs' && hasData && (
+            <>
+              <div className={styles.scrollableLogRows} data-testid="logRows" ref={logsContainerRef}>
+                <InfiniteScroll
+                  loading={loading}
+                  loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
+                  range={props.range}
+                  timeZone={timeZone}
+                  rows={logRows}
+                  scrollElement={logsContainerRef.current}
+                  sortOrder={logsSortOrder}
+                  app={CoreApp.Explore}
+                >
+                  <LogRows
+                    pinnedLogs={pinnedLogs}
+                    logRows={logRows}
+                    deduplicatedRows={dedupedRows}
+                    dedupStrategy={dedupStrategy}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                    showContextToggle={showContextToggle}
+                    getRowContextQuery={getRowContextQuery}
+                    showLabels={showLabels}
+                    showTime={showTime}
+                    enableLogDetails={true}
+                    wrapLogMessage={wrapLogMessage}
+                    prettifyLogMessage={prettifyLogMessage}
                     timeZone={timeZone}
-                    rows={logRows}
-                    scrollElement={logsContainerRef.current}
-                    sortOrder={logsSortOrder}
+                    getFieldLinks={getFieldLinks}
+                    logsSortOrder={logsSortOrder}
+                    displayedFields={displayedFields}
+                    onClickShowField={showField}
+                    onClickHideField={hideField}
                     app={CoreApp.Explore}
-                  >
-                    <LogRows
-                      pinnedLogs={pinnedLogs}
-                      logRows={logRows}
-                      deduplicatedRows={dedupedRows}
-                      dedupStrategy={dedupStrategy}
-                      onClickFilterLabel={onClickFilterLabel}
-                      onClickFilterOutLabel={onClickFilterOutLabel}
-                      showContextToggle={showContextToggle}
-                      getRowContextQuery={getRowContextQuery}
-                      showLabels={showLabels}
-                      showTime={showTime}
-                      enableLogDetails={true}
-                      wrapLogMessage={wrapLogMessage}
-                      prettifyLogMessage={prettifyLogMessage}
-                      timeZone={timeZone}
-                      getFieldLinks={getFieldLinks}
-                      logsSortOrder={logsSortOrder}
-                      displayedFields={displayedFields}
-                      onClickShowField={showField}
-                      onClickHideField={hideField}
-                      app={CoreApp.Explore}
-                      onLogRowHover={onLogRowHover}
-                      onOpenContext={onOpenContext}
-                      onPermalinkClick={onPermalinkClick}
-                      permalinkedRowId={panelState?.logs?.id}
-                      scrollIntoView={scrollIntoView}
-                      isFilterLabelActive={props.isFilterLabelActive}
-                      scrollElement={logsContainerRef.current}
-                      onClickFilterString={props.onClickFilterString}
-                      onClickFilterOutString={props.onClickFilterOutString}
-                      onUnpinLine={onPinToContentOutlineClick}
-                      onPinLine={onPinToContentOutlineClick}
-                      pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                      renderPreview
-                      timeRange={props.range}
-                    />
-                  </InfiniteScroll>
-                </div>
-                <LogsNavigation logsSortOrder={logsSortOrder} scrollToTopLogs={scrollToTopLogs} />
-              </>
-            )}
-          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && (
+                    onLogRowHover={onLogRowHover}
+                    onOpenContext={onOpenContext}
+                    onPermalinkClick={onPermalinkClick}
+                    permalinkedRowId={panelState?.logs?.id}
+                    scrollIntoView={scrollIntoView}
+                    isFilterLabelActive={props.isFilterLabelActive}
+                    scrollElement={logsContainerRef.current}
+                    onClickFilterString={props.onClickFilterString}
+                    onClickFilterOutString={props.onClickFilterOutString}
+                    onUnpinLine={onPinToContentOutlineClick}
+                    onPinLine={onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                    renderPreview
+                    timeRange={props.range}
+                  />
+                </InfiniteScroll>
+              </div>
+              <LogsNavigation logsSortOrder={logsSortOrder} scrollToTopLogs={scrollToTopLogs} />
+            </>
+          )}
+          {newLogsPanelEnabled && visualisationType === 'logs' && (
             <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
               {logsContainerRef.current && hasData && (
                 <LogList
@@ -1311,27 +1306,27 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               )}
             </div>
           )}
-          {!loading && !hasData && !scanning && (
-            <div className={styles.noDataWrapper}>
-              <div className={styles.noData}>
-                <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
-                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
-                  <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
-                </Button>
-              </div>
-            </div>
-          )}
-          {scanning && (
-            <div className={styles.noDataWrapper}>
-              <div className={styles.noData}>
-                <span>{scanText}</span>
-                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickStopScan}>
-                  <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
+        {!loading && !hasData && !scanning && (
+          <div className={styles.noDataWrapper}>
+            <div className={styles.noData}>
+              <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
+              <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
+                <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
+              </Button>
+            </div>
+          </div>
+        )}
+        {scanning && (
+          <div className={styles.noDataWrapper}>
+            <div className={styles.noData}>
+              <span>{scanText}</span>
+              <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickStopScan}>
+                <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
+              </Button>
+            </div>
+          </div>
+        )}
       </PanelChrome>
     </>
   );

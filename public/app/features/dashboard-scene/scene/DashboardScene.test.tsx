@@ -682,11 +682,119 @@ describe('DashboardScene', () => {
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(false);
         });
 
-        it('Should not copy styles for non-timeseries panels', () => {
+        it('Should not copy styles for unsupported panel types', () => {
           const vizPanel = findVizPanelByKey(scene, 'panel-1')!;
           scene.copyPanelStyles(vizPanel);
 
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(false);
+        });
+
+        it('Should copy panel styles for trend panels', () => {
+          const trendPanel = new VizPanel({
+            title: 'Trend Panel',
+            key: `panel-trend-${Math.random()}`,
+            pluginId: 'trend',
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'fixed' },
+                custom: { lineWidth: 2, fillOpacity: 20 },
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(trendPanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('trend');
+          expect(stored.styles).toBeDefined();
+        });
+
+        it('Should copy panel styles for candlestick panels', () => {
+          const candlestickPanel = new VizPanel({
+            title: 'Candlestick Panel',
+            key: `panel-candlestick-${Math.random()}`,
+            pluginId: 'candlestick',
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'fixed' },
+                custom: { lineWidth: 2, fillOpacity: 5 },
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(candlestickPanel);
+
+          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('candlestick');
+          expect(stored.styles).toBeDefined();
+        });
+
+        it('Should paste styles from a trend panel into another trend panel', () => {
+          const trendPanel = new VizPanel({
+            title: 'Trend Panel',
+            key: `panel-trend-${Math.random()}`,
+            pluginId: 'trend',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          trendPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'trend',
+              styles: { fieldConfig: { defaults: { custom: { lineWidth: 3 } } } },
+            })
+          );
+
+          scene.pastePanelStyles(trendPanel);
+
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+        });
+
+        it('Should paste styles from a candlestick panel into another candlestick panel', () => {
+          const candlestickPanel = new VizPanel({
+            title: 'Candlestick Panel',
+            key: `panel-candlestick-${Math.random()}`,
+            pluginId: 'candlestick',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          candlestickPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'candlestick',
+              styles: { fieldConfig: { defaults: { custom: { fillOpacity: 30 } } } },
+            })
+          );
+
+          scene.pastePanelStyles(candlestickPanel);
+
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+        });
+
+        it('Should not paste styles from a trend panel into a timeseries panel', () => {
+          const timeseriesPanel = createTimeseriesPanel();
+          const mockOnFieldConfigChange = jest.fn();
+          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
+
+          store.set(
+            LS_STYLES_COPY_KEY,
+            JSON.stringify({
+              panelType: 'trend',
+              styles: { fieldConfig: { defaults: { custom: { lineWidth: 3 } } } },
+            })
+          );
+
+          scene.pastePanelStyles(timeseriesPanel);
+
+          expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
         });
 
         it('Should return false for hasPanelStylesToPaste when no styles copied', () => {
