@@ -21,7 +21,7 @@ import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
-import RulesFilter from './filter/RulesFilter';
+import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
