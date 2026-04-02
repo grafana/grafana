@@ -380,13 +380,8 @@ describe.each([
   });
 
   it('Should be able to delete an empty route', async () => {
-    setRoutingTree(
-      routeName,
-      createKubernetesRoutingTreeSpec({
-        name: routeName,
-        routes: [{}],
-      })
-    );
+    const tree = createKubernetesRoutingTreeSpec({ name: routeName, routes: [{}] });
+    setRoutingTree(routeName, routingTreeFromSpec(routeName, tree.spec));
 
     const { user } = renderPage();
 
