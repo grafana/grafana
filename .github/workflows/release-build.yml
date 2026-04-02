@@ -616,11 +616,15 @@ jobs:
   verify-packages:
     name: verify packages (linux-amd64)
     needs:
+      - build-deb-rpm
       - build-docker-alpine
+      - build-docker-ubuntu
     uses: ./.github/workflows/release-verify-packages.yml
     with:
       run-id: ${{ github.run_id }}
-      packages-artifact-name: artifacts-docker-linux-amd64
+      packages-artifact-name: artifacts-deb-rpm-linux-amd64
+      docker-artifact-name: artifacts-docker-linux-amd64
+      docker-ubuntu-artifact-name: artifacts-docker-ubuntu-linux-amd64
 
   build-windows:
     runs-on: ubuntu-x64-large
