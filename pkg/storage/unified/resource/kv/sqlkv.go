@@ -579,86 +579,22 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	for i, op := range ops {
 		keyPath := getKeyPath(section, op.Key)
 
+		var opErr error
 		switch op.Mode {
 		case BatchOpCreate:
-			if len(op.Value) == 0 {
-				rollback()
-				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
-			}
-			// Check key doesn't already exist
-			if exists, checkErr := k.keyExists(ctx, conn, qb, keyPath); checkErr != nil {
-				rollback()
-				return &BatchError{Err: checkErr, Index: i, Op: op}
-			} else if exists {
-				rollback()
-				return &BatchError{Err: ErrKeyAlreadyExists, Index: i, Op: op}
-			}
-			if insertErr := k.batchInsert(ctx, conn, qb, keyPath, op.Value, isDataSection); insertErr != nil {
-				rollback()
-				return &BatchError{Err: insertErr, Index: i, Op: op}
-			}
-
+			opErr = k.batchCreate(ctx, conn, qb, keyPath, op.Value, isDataSection)
 		case BatchOpUpdate:
-			if len(op.Value) == 0 {
-				rollback()
-				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
-			}
-			// Check key exists
-			if exists, checkErr := k.keyExists(ctx, conn, qb, keyPath); checkErr != nil {
-				rollback()
-				return &BatchError{Err: checkErr, Index: i, Op: op}
-			} else if !exists {
-				rollback()
-				return &BatchError{Err: ErrNotFound, Index: i, Op: op}
-			}
-			if updateErr := k.batchUpdate(ctx, conn, qb, keyPath, op.Value); updateErr != nil {
-				rollback()
-				return &BatchError{Err: updateErr, Index: i, Op: op}
-			}
-
+			opErr = k.batchUpdateOp(ctx, conn, qb, keyPath, op.Value)
 		case BatchOpPut:
-			if len(op.Value) == 0 {
-				rollback()
-				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
-			}
-			if isDataSection {
-				// DataSection: check exists → insert or update (resource_history has extra NOT NULL columns)
-				// TODO: clean up after compatibility mode is not needed anymore
-				exists, checkErr := k.keyExists(ctx, conn, qb, keyPath)
-				if checkErr != nil {
-					rollback()
-					return &BatchError{Err: checkErr, Index: i, Op: op}
-				}
-				if exists {
-					if updateErr := k.batchUpdate(ctx, conn, qb, keyPath, op.Value); updateErr != nil {
-						rollback()
-						return &BatchError{Err: updateErr, Index: i, Op: op}
-					}
-				} else {
-					if insertErr := k.batchInsert(ctx, conn, qb, keyPath, op.Value, true); insertErr != nil {
-						rollback()
-						return &BatchError{Err: insertErr, Index: i, Op: op}
-					}
-				}
-			} else {
-				// Events/PendingDelete: simple upsert
-				query, args := qb.buildUpsertQuery(keyPath, op.Value)
-				if _, execErr := conn.ExecContext(ctx, query, args...); execErr != nil {
-					rollback()
-					return &BatchError{Err: execErr, Index: i, Op: op}
-				}
-			}
-
+			opErr = k.batchPut(ctx, conn, qb, keyPath, op.Value, isDataSection)
 		case BatchOpDelete:
-			query, args := qb.buildDeleteQuery(keyPath)
-			if _, execErr := conn.ExecContext(ctx, query, args...); execErr != nil {
-				rollback()
-				return &BatchError{Err: execErr, Index: i, Op: op}
-			}
-
+			opErr = k.batchDeleteOp(ctx, conn, qb, keyPath)
 		default:
+			opErr = fmt.Errorf("unknown operation mode: %d", op.Mode)
+		}
+		if opErr != nil {
 			rollback()
-			return &BatchError{Err: fmt.Errorf("unknown operation mode: %d", op.Mode), Index: i, Op: op}
+			return &BatchError{Err: opErr, Index: i, Op: op}
 		}
 	}
 
@@ -670,6 +606,62 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	}
 
 	return nil
+}
+
+func (k *SqlKV) batchCreate(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
+	if len(value) == 0 {
+		return ErrEmptyValue
+	}
+	exists, err := k.keyExists(ctx, conn, qb, keyPath)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return ErrKeyAlreadyExists
+	}
+	return k.batchInsert(ctx, conn, qb, keyPath, value, isDataSection)
+}
+
+func (k *SqlKV) batchUpdateOp(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
+	if len(value) == 0 {
+		return ErrEmptyValue
+	}
+	exists, err := k.keyExists(ctx, conn, qb, keyPath)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return ErrNotFound
+	}
+	return k.batchUpdate(ctx, conn, qb, keyPath, value)
+}
+
+func (k *SqlKV) batchPut(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
+	if len(value) == 0 {
+		return ErrEmptyValue
+	}
+	if isDataSection {
+		// DataSection: check exists → insert or update (resource_history has extra NOT NULL columns)
+		// TODO: clean up after compatibility mode is not needed anymore
+		exists, err := k.keyExists(ctx, conn, qb, keyPath)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return k.batchUpdate(ctx, conn, qb, keyPath, value)
+		}
+		return k.batchInsert(ctx, conn, qb, keyPath, value, true)
+	}
+	// Events/PendingDelete: simple upsert
+	query, args := qb.buildUpsertQuery(keyPath, value)
+	_, err := conn.ExecContext(ctx, query, args...)
+	return err
+}
+
+func (k *SqlKV) batchDeleteOp(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string) error {
+	query, args := qb.buildDeleteQuery(keyPath)
+	_, err := conn.ExecContext(ctx, query, args...)
+	return err
 }
 
 // keyExists checks whether a key_path exists in the table.
