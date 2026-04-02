@@ -1,6 +1,6 @@
 /* eslint-disable @grafana/no-restricted-img-srcs */
 import type { PluginMetasResponse } from '../types';
-import type { Meta } from '../types/meta_object_gen';
+import type { Meta } from '../types/meta/meta_object_gen';
 
 export const clockPanelMetaOnPrem: Meta = structuredClone({
   kind: 'Meta',
@@ -1076,6 +1076,57 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
         },
         angular: {
           detected: false,
+        },
+      },
+      status: {},
+    },
+    {
+      kind: 'Meta',
+      apiVersion: 'plugins.grafana.app/v0alpha1',
+      metadata: {
+        name: 'debug',
+        namespace: 'default',
+      },
+      spec: {
+        aliasIds: ['debugX'],
+        pluginJson: {
+          id: 'debug',
+          type: 'panel',
+          name: 'Debug',
+          info: {
+            keywords: [],
+            logos: {
+              small: 'public/plugins/debug/img/icn-debug.svg',
+              large: 'public/plugins/debug/img/icn-debug.svg',
+            },
+            updated: '',
+            version: '',
+            author: {
+              name: 'Grafana Labs',
+              url: 'https://grafana.com',
+            },
+            description: 'Debug Panel for Grafana',
+            links: [
+              {
+                name: 'Raise issue',
+                url: 'https://github.com/grafana/grafana/issues/new',
+              },
+            ],
+          },
+          dependencies: {
+            grafanaDependency: '',
+            grafanaVersion: '*',
+          },
+          state: 'alpha',
+        },
+        class: 'core',
+        module: {
+          path: 'core:plugin/debug',
+          loadingStrategy: 'script',
+        },
+        baseURL: 'public/plugins/debug',
+        signature: {
+          status: 'internal',
         },
       },
       status: {},

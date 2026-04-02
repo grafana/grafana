@@ -9,16 +9,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
 // TestIntegrationProvisioning_RepositoryFieldSelector tests that fieldSelector
 // works correctly for Repository resources. This prevents regression where
 // fieldSelector=metadata.name=<name> was not working properly.
 func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := runGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Create multiple repositories for testing
@@ -104,9 +102,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 // works correctly for Job resources. This prevents regression where
 // fieldSelector=metadata.name=<name> was not working properly.
 func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := runGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Create a repository to trigger jobs
@@ -130,7 +126,7 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 	}
 
 	// Trigger first job
-	body1 := asJSON(job1Spec)
+	body1 := common.AsJSON(job1Spec)
 	result1 := helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").

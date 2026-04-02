@@ -40,7 +40,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 ## Requirements
 
-1. To use images in notifications, Grafana must be set up to use image rendering. You can either install the image rendering plugin or run it as a remote rendering service.
+1. To use images in notifications, Grafana OSS and Enterprise must be set up to use the [Grafana image renderer](https://github.com/grafana/grafana-image-renderer/) service.
 
 2. When a screenshot is taken, it is saved to the [data][paths] folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error is logged for each failed screenshot attempt.
 
@@ -64,7 +64,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 {{< /admonition >}}
 
-Having installed either the image rendering plugin, or set up Grafana to use a remote rendering service, set `capture` in `[unified_alerting.screenshots]` to `true`:
+Having set up Grafana to use the image renderer service, set `capture` in `[unified_alerting.screenshots]` to `true`:
 
     # Enable screenshots in notifications. You must have either installed the Grafana image rendering
     # plugin, or set up Grafana to use a remote rendering service.

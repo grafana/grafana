@@ -18,11 +18,11 @@ weight: 1000
 
 # Trace correlations
 
-You can use Grafana [correlations](/docs/grafana/<GRAFANA_VERSION>/administration/correlations/) to embed interactive correlation links in your trace view to jump from spans to related logs, metrics, profiles, or external systems. This guide explains how to configure and manage Trace correlations in Grafana.
+You can use Grafana [correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/) to embed interactive correlation links in your trace view to jump from spans to related logs, metrics, profiles, or external systems. This guide explains how to configure and manage Trace correlations in Grafana.
 
 ## What are trace correlations?
 
-Trace correlations let you define rules that inject context-sensitive links into your trace spans. When viewing traces in Explore or the Traces panel, users can click these links to navigate directly to relevant queries or URLs. Correlations are similar but more flexible to the [trace to logs, metrics, and profiles links you can configure for the Tempo data source](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source).
+Trace correlations let you define rules that inject context-sensitive links into your trace spans. When viewing traces in Explore or the Traces panel, users can click these links to navigate directly to relevant queries or URLs. Correlations are similar but more flexible to the [trace to logs, metrics, and profiles links you can configure for the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/).
 
 {{< figure src="/media/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 

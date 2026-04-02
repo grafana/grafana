@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { useDispatch } from 'app/types/store';
 
-import { cleanUpAction, CleanUpAction } from '../actions/cleanUp';
+import { cleanUpAction, type CleanUpAction } from '../actions/cleanUp';
 
 export function useCleanup(cleanupAction: CleanUpAction) {
   const dispatch = useDispatch();

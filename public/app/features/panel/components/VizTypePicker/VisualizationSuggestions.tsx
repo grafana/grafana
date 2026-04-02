@@ -1,32 +1,31 @@
 import { css } from '@emotion/css';
-import { Fragment, useState, useEffect, useCallback, useMemo } from 'react';
-import { useAsyncRetry, useMeasure } from 'react-use';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useAsyncRetry } from 'react-use';
 
 import {
-  GrafanaTheme2,
-  PanelData,
-  PanelModel,
-  PanelPluginMeta,
-  PanelPluginVisualizationSuggestion,
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelModel,
+  type PanelPluginMeta,
+  type PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
-import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
+import { type VizPanel } from '@grafana/scenes';
+import { Alert, Button, EmptySearchResult, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
-import { getAllPanelPluginMeta, filterPluginList } from '../../state/util';
-import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
+import { filterPluginList } from '../../state/util';
 import { panelsWithoutData } from '../../suggestions/consts';
 import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
-import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
+import { VisualizationCardGrid, type VisualizationCardGridGroup } from './VisualizationCardGrid';
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
-import { VizTypeChangeDetails } from './types';
+import { type VizTypeChangeDetails } from './types';
 
 export interface Props {
   onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
@@ -37,14 +36,14 @@ export interface Props {
 }
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
-  const [hasFetched, setHasFetched] = useState(false);
+  const hasFetchedRef = useRef(false);
   const structureRev = useStructureRev(data?.series ?? []);
 
   const { value, loading, error, retry } = useAsyncRetry(async () => {
-    await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
-    setHasFetched(true);
+    await new Promise((resolve) => setTimeout(resolve, hasFetchedRef.current ? 75 : 0));
+    hasFetchedRef.current = true;
     return await getAllSuggestions(data?.series);
-  }, [hasFetched, structureRev]);
+  }, [structureRev]);
 
   const filteredValue = useMemo(() => {
     if (!value || !searchQuery) {
@@ -75,8 +74,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
 
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
-  const [suggestionHash, setSuggestionHash] = useState<string | null>(null);
-  const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
@@ -85,33 +82,31 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     if (isUnconfiguredPanel) {
       return PANEL_STATES.UNCONFIGURED_PANEL;
     }
-
     if (isNewPanel) {
       return PANEL_STATES.NEW_PANEL;
     }
-
     return PANEL_STATES.EXISTING_PANEL;
   }, [isUnconfiguredPanel, isNewPanel]);
 
+  const { value: meta = [] } = useListedPanelPluginMetas();
   const suggestionsByVizType = useMemo(() => {
-    const meta = getAllPanelPluginMeta();
     const record: Record<string, PanelPluginMeta> = {};
     for (const m of meta) {
       record[m.id] = m;
     }
 
-    const result: Array<[PanelPluginMeta | undefined, PanelPluginVisualizationSuggestion[]]> = [];
+    const result: VisualizationCardGridGroup[] = [];
     let currentVizType: PanelPluginMeta | undefined = undefined;
     for (const suggestion of suggestions || []) {
       const vizType = record[suggestion.pluginId];
       if (!currentVizType || currentVizType.id !== vizType?.id) {
         currentVizType = vizType;
-        result.push([vizType, []]);
+        result.push({ meta: vizType, items: [] });
       }
-      result[result.length - 1][1].push(suggestion);
+      result[result.length - 1].items.push(suggestion);
     }
     return result;
-  }, [suggestions]);
+  }, [suggestions, meta]);
 
   const suggestionIndexMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -121,50 +116,32 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return map;
   }, [suggestions]);
 
-  const applySuggestion = useCallback(
-    (
-      suggestion: PanelPluginVisualizationSuggestion,
-      suggestionIndex: number,
-      isAutoSelected = false,
-      shouldCloseVizPicker = false
-    ) => {
-      if (shouldCloseVizPicker) {
-        VizSuggestionsInteractions.suggestionAccepted({
-          pluginId: suggestion.pluginId,
-          suggestionName: suggestion.name,
-          panelState,
-          suggestionIndex: suggestionIndex + 1,
-        });
-      } else {
-        VizSuggestionsInteractions.suggestionPreviewed({
-          pluginId: suggestion.pluginId,
-          suggestionName: suggestion.name,
-          panelState,
-          isAutoSelected,
-        });
-      }
-
-      setSuggestionHash(suggestion.hash);
+  const handleSuggestionClick = useCallback(
+    (suggestion: PanelPluginVisualizationSuggestion, suggestionIndex: number) => {
+      VizSuggestionsInteractions.suggestionApplied({
+        pluginId: suggestion.pluginId,
+        suggestionName: suggestion.name,
+        panelState,
+        suggestionIndex: suggestionIndex + 1,
+      });
 
       onChange({
         pluginId: suggestion.pluginId,
         options: suggestion.options,
         fieldConfig: suggestion.fieldConfig,
-        withModKey: !shouldCloseVizPicker,
+        withModKey: false,
         fromSuggestions: true,
+        suggestionMetadata: {
+          suggestionName: suggestion.name,
+          suggestionIndex: suggestionIndex + 1,
+        },
       });
     },
     [onChange, panelState]
   );
 
   useEffect(() => {
-    if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0) {
-      return;
-    }
-
-    // Only auto-apply the first suggestion for unconfigured panels.
-    // For existing panels, do not auto-select when navigating back to the suggestions tab.
-    if (!isUnconfiguredPanel) {
+    if (!isNewVizSuggestionsEnabled || !suggestions || suggestions.length === 0 || !isUnconfiguredPanel) {
       return;
     }
 
@@ -177,22 +154,20 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     // if the first suggestion has changed, we're going to change the currently selected suggestion and
     // set the firstCardHash to the new first suggestion's hash. We also choose the first suggestion if
     // the previously selected suggestion is no longer present in the list.
-    const newFirstCardHash = suggestions?.[0]?.hash ?? null;
-    if (firstCardHash !== newFirstCardHash || suggestions.every((s) => s.hash !== suggestionHash)) {
-      applySuggestion(suggestions[0], 0, true);
+    const newFirstCardHash = suggestions[0]?.hash ?? null;
+    if (firstCardHash !== newFirstCardHash) {
+      onChange({
+        pluginId: suggestions[0].pluginId,
+        options: suggestions[0].options,
+        fieldConfig: suggestions[0].fieldConfig,
+        withModKey: true,
+        fromSuggestions: true,
+      });
+
       setFirstCardHash(newFirstCardHash);
-      return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    suggestions,
-    suggestionHash,
-    firstCardHash,
-    isNewVizSuggestionsEnabled,
-    isNewPanel,
-    isUnconfiguredPanel,
-    applySuggestion,
-  ]);
+  }, [suggestions, firstCardHash, isNewVizSuggestionsEnabled, isUnconfiguredPanel]);
 
   if (loading || !data) {
     return (
@@ -216,6 +191,16 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return <NoDataPanelList searchQuery={searchQuery} panel={panel} onChange={onChange} />;
   }
 
+  if (suggestions && suggestions.length === 0 && searchQuery) {
+    return (
+      <EmptySearchResult>
+        <Trans i18nKey="panel.viz-type-picker.could-anything-matching-query">
+          Could not find anything matching your query
+        </Trans>
+      </EmptySearchResult>
+    );
+  }
+
   return (
     <>
       {hasLoadingErrors && (
@@ -232,78 +217,14 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
           </div>
         </Alert>
       )}
-      <div className={styles.grid}>
-        {isNewVizSuggestionsEnabled
-          ? suggestionsByVizType.map(([vizType, vizTypeSuggestions], groupIndex) => (
-              <Fragment key={vizType?.id || `unknown-viz-type-${groupIndex}`}>
-                <div className={styles.vizTypeHeader}>
-                  <Text variant="body" weight="medium">
-                    {vizType?.info && <img className={styles.vizTypeLogo} src={vizType.info.logos.small} alt="" />}
-                    {vizType?.name ||
-                      t('panel.visualization-suggestions.unknown-viz-type', 'Unknown visualization type')}
-                  </Text>
-                </div>
-                {vizTypeSuggestions?.map((suggestion, index) => {
-                  const isCardSelected = suggestionHash === suggestion.hash;
-                  const suggestionIndex = suggestionIndexMap.get(suggestion.hash) ?? -1;
-                  return (
-                    <div
-                      key={suggestion.hash}
-                      className={styles.cardContainer}
-                      tabIndex={0}
-                      role="button"
-                      aria-pressed={isCardSelected}
-                      onKeyDown={(ev) => {
-                        if (ev.key === 'Enter' || ev.key === ' ') {
-                          ev.preventDefault();
-                          applySuggestion(suggestion, suggestionIndex);
-                        }
-                      }}
-                      ref={index === 0 ? firstCardRef : undefined}
-                    >
-                      {isCardSelected && (
-                        <Button
-                          // rather than allow direct focus, we handle keyboard events in the card.
-                          tabIndex={-1}
-                          variant="primary"
-                          size={'md'}
-                          className={styles.applySuggestionButton}
-                          data-testid={selectors.components.VisualizationPreview.confirm(suggestion.name)}
-                          aria-label={t(
-                            'panel.visualization-suggestions.edit-aria-label',
-                            'Edit {{suggestionName}} visualization',
-                            { suggestionName: suggestion.name }
-                          )}
-                          onClick={() => applySuggestion(suggestion, suggestionIndex, false, true)}
-                        >
-                          {t('panel.visualization-suggestions.edit', 'Edit')}
-                        </Button>
-                      )}
-                      <VisualizationSuggestionCard
-                        data={data}
-                        suggestion={suggestion}
-                        width={width}
-                        isSelected={isCardSelected}
-                        onClick={() => applySuggestion(suggestion, suggestionIndex)}
-                      />
-                    </div>
-                  );
-                })}
-              </Fragment>
-            ))
-          : suggestions?.map((suggestion, index) => (
-              <div key={suggestion.hash} className={styles.cardContainer} ref={index === 0 ? firstCardRef : undefined}>
-                <VisualizationSuggestionCard
-                  key={index}
-                  data={data}
-                  suggestion={suggestion}
-                  width={width}
-                  tabIndex={index}
-                  onClick={() => applySuggestion(suggestion, index)}
-                />
-              </div>
-            ))}
-      </div>
+      <VisualizationCardGrid
+        groups={isNewVizSuggestionsEnabled ? suggestionsByVizType : undefined}
+        items={!isNewVizSuggestionsEnabled ? suggestions : undefined}
+        data={data!}
+        onItemClick={(item) => handleSuggestionClick(item, suggestionIndexMap.get(item.hash) ?? -1)}
+        getItemKey={(item) => item.hash}
+        selectedKey={firstCardHash ?? undefined}
+      />
     </>
   );
 }
@@ -316,10 +237,11 @@ interface NoDataPanelListProps {
 
 function NoDataPanelList({ searchQuery, panel, onChange }: NoDataPanelListProps) {
   const styles = useStyles2(getStyles);
+  const { value: meta = [] } = useListedPanelPluginMetas();
   const noDataPanels = useMemo(() => {
-    const panels = getAllPanelPluginMeta().filter((p) => panelsWithoutData.has(p.id));
+    const panels = meta.filter((p) => panelsWithoutData.has(p.id));
     return filterPluginList(panels, searchQuery ?? '', panel?.type);
-  }, [searchQuery, panel?.type]);
+  }, [searchQuery, panel?.type, meta]);
 
   return (
     <>
@@ -380,25 +302,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'space-between',
     }),
-    filterRow: css({
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      paddingBottom: '8px',
-    }),
-    infoText: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
-      fontStyle: 'italic',
-    }),
-    grid: css({
-      display: 'grid',
-      gridGap: theme.spacing(1),
-      gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_MULTI_COLUMN_SIZE}px, 1fr))`,
-      marginBottom: theme.spacing(1),
-      justifyContent: 'space-evenly',
-    }),
     emptyStateSection: css({
       display: 'flex',
       flexDirection: 'column',
@@ -428,33 +331,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       gap: theme.spacing(0.5),
       padding: theme.spacing(1, 2, 2),
-    }),
-    cardContainer: css({
-      position: 'relative',
-    }),
-    vizTypeHeader: css({
-      gridColumn: '1 / -1',
-      marginBottom: theme.spacing(0.5),
-      marginTop: theme.spacing(2),
-      '&:first-of-type': {
-        marginTop: 0,
-      },
-    }),
-    vizTypeLogo: css({
-      filter: 'grayscale(100%)',
-      maxHeight: `${theme.typography.body.lineHeight}em`,
-      width: `${theme.typography.body.lineHeight}em`,
-      alignItems: 'center',
-      display: 'inline-block',
-      marginRight: theme.spacing(1),
-    }),
-    applySuggestionButton: css({
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      zIndex: 10,
-      padding: theme.spacing(0, 2),
     }),
   };
 };

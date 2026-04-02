@@ -1,9 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
-import { DataSourceApi, DataSourceJsonData } from '@grafana/data';
+import {
+  type DataQueryError,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../constants';
 
@@ -22,7 +28,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 jest.mock('app/features/query/components/QueryErrorAlert', () => ({
-  QueryErrorAlert: () => null,
+  QueryErrorAlert: ({ error }: { error: DataQueryError }) => <div data-testid="query-error-alert">{error.message}</div>,
 }));
 
 interface TestQuery extends DataQuery {
@@ -95,7 +101,7 @@ describe('QueryEditorRenderer', () => {
       return (
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-          qrState={{ queries: [queryA, queryB], data: undefined, isLoading: false, queryError: undefined }}
+          qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
           panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
@@ -118,6 +124,11 @@ describe('QueryEditorRenderer', () => {
             pendingTransformation: null,
             setPendingTransformation: jest.fn(),
             finalizePendingTransformation: jest.fn(),
+            pendingSavedQuery: null,
+            setPendingSavedQuery: jest.fn(),
+            showVersionBanner: false,
+            selectedQueryRefIds: [],
+            selectedTransformationIds: [],
           }}
           actions={mockActions}
         >
@@ -133,5 +144,23 @@ describe('QueryEditorRenderer', () => {
 
     // Must show series-b, not the stale series-a value from query A's editor instance
     expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-b');
+  });
+
+  it('shows an error when the query has an error', () => {
+    renderWithQueryEditorProvider(<QueryEditorRenderer />, {
+      queries: [queryA, queryB],
+      selectedQuery: queryA,
+      uiStateOverrides: { selectedQueryDsData },
+      qrState: {
+        data: {
+          state: LoadingState.Error,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          errors: [{ message: 'Error!!', refId: queryA.refId }],
+        },
+      },
+    });
+
+    expect(screen.getByText('Error!!')).toBeInTheDocument();
   });
 });

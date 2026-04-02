@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
@@ -56,6 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     selected: css({
       color: theme.colors.text.primary,
       background: theme.colors.action.selected,
+      border: `1px solid ${theme.colors.action.selectedBorder}`,
 
       '&:hover': {
         background: theme.colors.action.focus,

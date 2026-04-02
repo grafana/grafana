@@ -1,11 +1,17 @@
 import { Subscription } from 'rxjs';
 
-import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, EventBusSrv } from '@grafana/data';
+import {
+  type AnnotationQuery,
+  DashboardCursorSync,
+  dateTimeFormat,
+  type DateTimeInput,
+  EventBusSrv,
+} from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
+import { behaviors, sceneGraph, type SceneObject, VizPanel } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
@@ -31,6 +37,10 @@ export class DashboardModelCompatibilityWrapper {
         }
       })
     );
+  }
+
+  public get id(): number | null {
+    return this._scene.state.id ?? null;
   }
 
   public get uid() {
@@ -154,7 +164,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   /**
-   * Mainly implemented to support Getting started panel's dissmis button.
+   * Mainly implemented to support Getting started panel's dismiss button.
    */
   public removePanel(panel: PanelModelCompatibilityWrapper) {
     const vizPanel = findVizPanelByKey(this._scene, getVizPanelKeyForPanelId(panel.id));
@@ -167,15 +177,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public canEditAnnotations(dashboardUID?: string) {
-    if (!this._scene.canEditDashboard()) {
-      return false;
-    }
-
-    if (dashboardUID) {
-      return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
-    }
-
-    return Boolean(this._scene.state.meta.annotationsPermissions?.organization.canEdit);
+    return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
   }
 
   public panelInitialized() {}

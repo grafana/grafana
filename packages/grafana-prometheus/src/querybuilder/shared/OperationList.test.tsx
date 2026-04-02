@@ -2,15 +2,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { getMockTimeRange } from '../../test/mocks/datasource';
-import { PromOptions } from '../../types';
+import { type PromOptions } from '../../types';
 import { addOperationInQueryBuilder } from '../testUtils';
-import { PromVisualQuery } from '../types';
+import { type PromVisualQuery } from '../types';
 
 import { OperationList } from './OperationList';
 import { promQueryModeller } from './modeller_instance';

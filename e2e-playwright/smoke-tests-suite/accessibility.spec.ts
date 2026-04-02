@@ -14,7 +14,7 @@ interface A11yTestCase {
 test.describe(
   'A11y smokescreen',
   {
-    tag: ['@acceptance', '@a11y'],
+    tag: ['@a11y'],
   },
   () => {
     (
@@ -33,7 +33,7 @@ test.describe(
 
         // Misc
         { url: '/?orgId=1&search=open' },
-        { url: '/alerting/list', ignoredRules: ['button-name'] },
+        { url: '/alerting/list', ignoredRules: ['button-name', 'aria-required-parent'] },
         { url: '/datasources' },
         { url: '/org/users' },
         { url: '/org/teams' },

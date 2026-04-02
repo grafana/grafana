@@ -35,30 +35,33 @@ Before you begin to set up Git Sync, ensure you have the following:
 - If you're [using webhooks or image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend), a public instance with external access
   - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
-Get acquainted with the following topics:
+Moreover, make sure you're not blocking any of the Grafana services IPs. For a list of IPs you need to add to your allowlist, refer to [Hosted Grafana source IPs](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana).
 
-- [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#supported-resources)
-- [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
+Finally, get acquainted with the following topics:
 
-For further details on how Git Sync operates refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts).
+- [Git Sync supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#supported-resources)
+- [Git Sync usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
+- For further details on how Git Sync operates, refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts)
 
 ## Enable required feature toggles
 
-In Grafana Cloud, Git Sync is being rolled out gradually. For more details refer to [Rolling release channels for Grafana Cloud](https://grafana.com/docs/rolling-release/).
+The `provisioning` feature toggle is enabled by default in Grafana Cloud and, starting in Grafana v13, for OSS and Enterprise as well. No manual configuration is required.
 
-To activate Git Sync in Grafana OSS/Enterprise, set the `provisioning` feature toggle to `true`:
+For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+### Enable Git providers
+
+If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure Git, GitLab or Bitbucket, or if you're using Grafana OSS v12.4.0 and want to set up Git Sync with pure Git, add them to your configuration file:
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
-1. Add this value:
+1. Add the available providers:
 
    ```ini
-   [feature_toggles]
-   provisioning = true
+   [provisioning]
+   repository_types = "git|github|bitbucket|gitlab|local"
    ```
 
 1. Save the changes to the file and restart Grafana.
-
-For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
 ## Create a GitHub App
 
@@ -80,6 +83,7 @@ To create the GitHub App, follow these steps:
    - Homepage URL: For example, your Grafana Cloud instance URL
 1. Scroll down to the **Webhook** section and uncheck the **Active** box
 1. In the **Permissions** section, go to **Repository permissions** and set these parameters:
+   - **Administration**: Read-only permission (enables validation of branch protection rules against the configured branch when users can push directly to it; may be used in the future to check other repository settings and make the setup process smoother)
    - **Contents**: Read and write permission
    - **Metadata**: Read-only permission
    - **Pull requests**: Read and write permission

@@ -1,7 +1,7 @@
-import { Field, formattedValueToString, SelectableValue } from '@grafana/data';
+import { type Field, formattedValueToString, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { FilterOperator, TableRow } from '../types';
+import { FilterOperator, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
@@ -11,12 +11,13 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
 
   const set: Record<string, string> = {};
 
-  for (let index = 0; index < rows.length; index++) {
-    const row = rows[index];
+  for (const row of rows) {
+    if (row.__depth > 0) {
+      continue;
+    }
     const fieldValue = row[getDisplayName(field)];
     const value = field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
-
-    set[value || '(Blanks)'] = value;
+    set[value || t('grafana-ui.table.filter.blanks', '(Blanks)')] = value;
   }
 
   return set;

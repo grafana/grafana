@@ -8,15 +8,16 @@ import {
 import { t } from '@grafana/i18n';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { InsertNullsEditor } from '../timeseries/InsertNullsEditor';
 import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
-import { NullEditorSettings } from '../timeseries/config';
+import { type NullEditorSettings } from '../timeseries/config';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { defaultFieldConfig, defaultOptions, FieldConfig, Options } from './panelcfg.gen';
+import { defaultFieldConfig, defaultOptions, type FieldConfig, type Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
@@ -154,8 +155,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         },
       });
 
-    commonOptionsBuilder.addLegendOptions(builder, false);
+    commonOptionsBuilder.addLegendOptions(builder, false, true);
     commonOptionsBuilder.addTooltipOptions(builder);
+    addAnnotationOptions(builder);
   })
   .setSuggestionsSupplier(
     showDefaultSuggestion((ds) => {

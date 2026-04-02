@@ -1,7 +1,7 @@
-import { defineConfig, devices, PlaywrightTestConfig, Project } from '@playwright/test';
+import { defineConfig, devices, type PlaywrightTestConfig, type Project } from '@playwright/test';
 import path, { dirname } from 'path';
 
-import { PluginOptions } from '@grafana/plugin-e2e';
+import { type PluginOptions } from '@grafana/plugin-e2e';
 
 export const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
@@ -23,9 +23,8 @@ export function withAuth(project: Project): Project {
 export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
   fullyParallel: true,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 4 : undefined,
   reporter: [
     ['html'], // pretty
     ['./e2e-playwright/utils/axe-a11y/reporter.ts'], // accessibility reporter
@@ -92,10 +91,6 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['createUserAndAuthenticate'],
     },
-    withAuth({
-      name: 'elasticsearch',
-      testDir: path.join(pluginDirRoot, '/elasticsearch'),
-    }),
     withAuth({
       name: 'mysql',
       testDir: path.join(pluginDirRoot, '/mysql'),

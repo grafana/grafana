@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type DataFrame, type DataFrameJSON, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { trackUseCentralHistoryExpandRow } from '../../../Analytics';
@@ -15,13 +15,13 @@ import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { parse } from '../../../utils/rule-id';
 import { MetaText } from '../../MetaText';
-import { AnnotationValue } from '../../rule-viewer/tabs/Details';
+import { AnnotationValue } from '../../rule-viewer/Details';
 import { ErrorMessageRow } from '../state-history/ErrorMessageRow';
 import { LogTimelineViewer } from '../state-history/LogTimelineViewer';
 import { useFrameSubset } from '../state-history/LokiStateHistory';
-import { LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
+import { type LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
-import { EventState, FilterType, LIMIT_EVENTS } from './EventListSceneObject';
+import { EventState, type FilterType, LIMIT_EVENTS } from './EventListSceneObject';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { logRecordsToDataFrameForState } from './utils';
 

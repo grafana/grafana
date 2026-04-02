@@ -1,6 +1,6 @@
 import { PluginSignatureType, PluginType } from '@grafana/data';
 
-import { RemotePlugin } from '../types';
+import { type RemotePlugin } from '../types';
 
 // Copied from /api/gnet/plugins/alexanderzobnin-zabbix-app
 export default {
@@ -52,4 +52,7 @@ export default {
     },
   },
   angularDetected: false,
+  managed: {
+    enabled: true,
+  },
 } as RemotePlugin;

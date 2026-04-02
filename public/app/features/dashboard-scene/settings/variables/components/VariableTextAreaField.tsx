@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useId } from '@react-aria/utils';
-import { FormEvent, PropsWithChildren, ReactElement, ReactNode } from 'react';
+import { type FormEvent, type PropsWithChildren, type ReactElement, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Field, TextArea, useStyles2 } from '@grafana/ui';
 
 interface VariableTextAreaFieldProps {

@@ -53,12 +53,12 @@ func enableSettingsOverridesToggle(t *testing.T) {
 		Variants:       map[string]any{"on": true, "off": false},
 	}
 
-	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
-		ProviderType: setting.StaticProviderType,
-		StaticFlags: map[string]memprovider.InMemoryFlag{
-			featuremgmt.FlagFrontendServiceUseSettingsService: flag,
-		},
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFrontendServiceUseSettingsService: flag,
 	})
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
@@ -74,7 +74,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			Raw:         ini.Empty(),
 			HTTPPort:    "1234",
 			CSPEnabled:  true,
-			CSPTemplate: "default-src 'self'",
+			CSPTemplate: "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
 			AppURL:      "https://grafana.example.com",
 		}
 
@@ -98,7 +98,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.True(t, capturedConfig.CSPEnabled)
-		assert.Equal(t, capturedConfig.CSPTemplate, "default-src 'self'")
+		assert.Equal(t, capturedConfig.CSPTemplate, "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS")
 		assert.Equal(t, capturedConfig.AppURL, "https://grafana.example.com")
 	})
 
@@ -108,7 +108,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			Raw:         ini.Empty(),
 			HTTPPort:    "1234",
 			CSPEnabled:  true,
-			CSPTemplate: "default-src 'self'",
+			CSPTemplate: "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
 			AppURL:      "https://grafana.example.com",
 		}
 
@@ -138,8 +138,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		// Create mock settings service that returns CSP overrides
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{
-				{Section: "security", Key: "content_security_policy", Value: "true"},
-				{Section: "security", Key: "content_security_policy_template", Value: "script-src 'self'"},
+				{Section: "security", Key: "allow_embedding_hosts", Value: "wiki.example.com foo.example.com"},
 			},
 		}
 
@@ -148,7 +147,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			Raw:         ini.Empty(),
 			HTTPPort:    "1234",
 			CSPEnabled:  true,
-			CSPTemplate: "default-src 'self'",
+			CSPTemplate: "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
 			AppURL:      "https://grafana.example.com",
 		}
 
@@ -175,8 +174,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, recorder.Code)
 
 		// Verify CSP overrides were applied
-		assert.True(t, capturedConfig.CSPEnabled)
-		assert.Equal(t, "script-src 'self'", capturedConfig.CSPTemplate)
+		assert.Equal(t, []string{"wiki.example.com", "foo.example.com"}, capturedConfig.AllowEmbeddingHosts)
 
 		// Verify other settings remain at base values (not overridden)
 		assert.Equal(t, "https://grafana.example.com", capturedConfig.AppURL)
@@ -201,7 +199,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			Raw:         ini.Empty(),
 			HTTPPort:    "1234",
 			CSPEnabled:  true,
-			CSPTemplate: "default-src 'self'",
+			CSPTemplate: "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
 			AppURL:      "https://base.example.com",
 		}
 
@@ -230,7 +228,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		// Verify base config was used (no overrides)
 		assert.Equal(t, "https://base.example.com", capturedConfig.AppURL)
 		assert.True(t, capturedConfig.CSPEnabled)
-		assert.Equal(t, "default-src 'self'", capturedConfig.CSPTemplate)
+		assert.Equal(t, "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS", capturedConfig.CSPTemplate)
 
 		// Verify settings service was called
 		assert.True(t, mockSettingsService.called)
@@ -279,7 +277,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			Raw:         ini.Empty(),
 			HTTPPort:    "1234",
 			CSPEnabled:  true,
-			CSPTemplate: "default-src 'self'",
+			CSPTemplate: "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
 			AppURL:      "https://grafana.example.com",
 		}
 
@@ -308,7 +306,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		// Base config should be used unchanged
 		assert.True(t, capturedConfig.CSPEnabled)
-		assert.Equal(t, "default-src 'self'", capturedConfig.CSPTemplate)
+		assert.Equal(t, "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS", capturedConfig.CSPTemplate)
 	})
 }
 

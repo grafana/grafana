@@ -1,7 +1,7 @@
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultAutoGridLayoutSpec,
-  AutoGridLayoutItemKind,
+  type AutoGridLayoutItemKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -9,13 +9,13 @@ import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import {
   AUTO_GRID_DEFAULT_COLUMN_WIDTH,
   AUTO_GRID_DEFAULT_ROW_HEIGHT,
-  AutoGridColumnWidth,
-  AutoGridRowHeight,
+  type AutoGridColumnWidth,
+  type AutoGridRowHeight,
   getAutoRowsTemplate,
   getTemplateColumnsTemplate,
   AutoGridLayoutManager,
 } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
 import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
@@ -107,7 +107,7 @@ export function deserializeAutoGridLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): AutoGridLayoutManager {
   if (layout.kind !== 'AutoGridLayout') {
     throw new Error('Invalid layout kind');
@@ -154,7 +154,7 @@ function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
 export function deserializeAutoGridItem(
   item: AutoGridLayoutItemKind,
   elements: DashboardV2Spec['elements'],
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): AutoGridItem {
   const panel = elements[item.spec.element.name];
   if (!panel) {

@@ -2,32 +2,41 @@ import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataSourceApi,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataSourceApi,
   dateTime,
   FieldType,
-  PanelData,
+  type PanelData,
+  type PanelPluginMeta,
   standardTransformersRegistry,
-  StandardVariableQuery,
+  type StandardVariableQuery,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { MultiValueVariable, sceneGraph, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
-import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import {
+  CustomVariable,
+  type MultiValueVariable,
+  sceneGraph,
+  SceneGridLayout,
+  type SceneGridRow,
+  VizPanel,
+} from '@grafana/scenes';
+import { type Dashboard, LoadingState, type Panel, type RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { getReduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { type RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
@@ -136,9 +145,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    panels: {
-      text: { skipDataQuery: true },
-    },
     featureToggles: {
       dataTrails: false,
     },
@@ -165,29 +171,64 @@ jest.mock('@grafana/scenes', () => ({
   },
 }));
 
+beforeEach(() => {
+  setPanelPluginMetas({ text: { skipDataQuery: true } as PanelPluginMeta });
+});
+
+afterEach(() => {
+  setPanelPluginMetas({});
+});
+
 describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with custom settings', () => {
+    const dashboardWithCustomSettings = {
+      ...dashboard_to_load1,
+      title: 'My custom title',
+      description: 'My custom description',
+      tags: ['tag1', 'tag2'],
+      timezone: 'America/New_York',
+      weekStart: 'monday',
+      graphTooltip: 1,
+      editable: false,
+      refresh: '5m',
+      timepicker: {
+        ...dashboard_to_load1.timepicker,
+        refresh_intervals: ['5m', '15m', '30m', '1h'],
+        hidden: true,
+      },
+      links: [{ ...NEW_LINK, title: 'Link 1' }],
+    };
+
     it('Should transform back to persisted model', () => {
-      const dashboardWithCustomSettings = {
-        ...dashboard_to_load1,
-        title: 'My custom title',
-        description: 'My custom description',
-        tags: ['tag1', 'tag2'],
-        timezone: 'America/New_York',
-        weekStart: 'monday',
-        graphTooltip: 1,
-        editable: false,
-        refresh: '5m',
-        timepicker: {
-          ...dashboard_to_load1.timepicker,
-          refresh_intervals: ['5m', '15m', '30m', '1h'],
-          hidden: true,
-        },
-        links: [{ ...NEW_LINK, title: 'Link 1' }],
-      };
       const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
+      expect(saveModel).toMatchSnapshot();
+    });
+
+    it('Should not transform back links that are registered by a datasource', () => {
+      const scene = transformSaveModelToScene({
+        dashboard: {
+          ...dashboardWithCustomSettings,
+          links: [
+            { ...NEW_LINK, title: 'Link 1' },
+
+            // This link should not be part of the JSON model, as it was registered by (and managed by) a datasource plugin
+            {
+              ...NEW_LINK,
+              title: 'Link 2',
+              origin: { type: 'datasource', group: 'loki' },
+            },
+          ],
+        } as DashboardDataDTO,
+        meta: {},
+      });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      // Links with origin (datasource-registered) must not be persisted
+      expect(saveModel.links).toHaveLength(1);
+      expect(saveModel.links![0].title).toBe('Link 1');
+      expect(saveModel.links![0]).not.toHaveProperty('origin');
       expect(saveModel).toMatchSnapshot();
     });
   });
@@ -198,6 +239,88 @@ describe('transformSceneToSaveModel', () => {
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
+    });
+    it('Should not transform back variables registered by a datasource', () => {
+      const scene = transformSaveModelToScene({
+        dashboard: {
+          ...dashboard_to_load1,
+          templating: {
+            list: [
+              ...dashboard_to_load1.templating.list,
+              {
+                current: {
+                  selected: true,
+                  text: ['a'],
+                  value: ['a'],
+                },
+                hide: 0,
+                includeAll: true,
+                multi: true,
+                name: 'customVar',
+                options: [
+                  {
+                    selected: false,
+                    text: 'All',
+                    value: '$__all',
+                  },
+                  {
+                    selected: true,
+                    text: 'a',
+                    value: 'a',
+                  },
+                  {
+                    selected: false,
+                    text: 'b',
+                    value: 'b',
+                  },
+                  {
+                    selected: false,
+                    text: 'c',
+                    value: 'c',
+                  },
+                ],
+                query: 'a, b, c',
+                skipUrlSync: false,
+                type: 'custom',
+
+                // This marks that the variable was registered by a datasource
+                origin: {
+                  type: 'datasource',
+                  group: 'loki',
+                },
+              },
+            ],
+          },
+        } as DashboardDataDTO,
+        meta: {},
+      });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel).toMatchSnapshot();
+    });
+
+    it('Should omit variables with origin when serializing to save model', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
+      const variablesSet = scene.state.$variables!;
+      const variables = variablesSet.state.variables;
+      const persistedVar = variables[0];
+      const dsVar = new CustomVariable({
+        name: 'fromDatasource',
+        label: 'From DS',
+        query: 'x,y',
+        value: 'x',
+        text: 'x',
+        skipUrlSync: false,
+        hide: 0,
+        origin: { type: 'datasource', group: 'loki' },
+      });
+      variablesSet.setState({ variables: [persistedVar, dsVar] });
+
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.templating?.list?.length).toBe(1);
+      expect(saveModel.templating?.list?.[0].name).toBe(persistedVar.state.name);
+      expect(saveModel.templating?.list?.[0]).not.toHaveProperty('origin');
     });
   });
 

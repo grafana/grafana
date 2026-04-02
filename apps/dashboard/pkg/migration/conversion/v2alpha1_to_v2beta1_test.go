@@ -192,6 +192,106 @@ func TestV2alpha1ToV2beta1(t *testing.T) {
 				assert.Equal(t, "/(.*)/", *tagsMapping.Regex)
 			},
 		},
+		{
+			name: "dashboard with matcher config conversion (transformation filter and field override)",
+			createV2alpha1: func() *dashv2alpha1.Dashboard {
+				scopeSeries := dashv2alpha1.DashboardMatcherScopeSeries
+				scopeNested := dashv2alpha1.DashboardMatcherScopeNested
+				filterMatcher := &dashv2alpha1.DashboardMatcherConfig{
+					Id:      "byName",
+					Scope:   &scopeSeries,
+					Options: map[string]interface{}{"include": ".*"},
+				}
+				return &dashv2alpha1.Dashboard{
+					Spec: dashv2alpha1.DashboardSpec{
+						Title: "Test Dashboard",
+						Elements: map[string]dashv2alpha1.DashboardElement{
+							"panel-with-matchers": {
+								PanelKind: &dashv2alpha1.DashboardPanelKind{
+									Kind: "Panel",
+									Spec: dashv2alpha1.DashboardPanelSpec{
+										Id:    1,
+										Title: "Panel with matchers",
+										Data: dashv2alpha1.DashboardQueryGroupKind{
+											Kind: "QueryGroup",
+											Spec: dashv2alpha1.DashboardQueryGroupSpec{
+												Queries: []dashv2alpha1.DashboardPanelQueryKind{},
+												Transformations: []dashv2alpha1.DashboardTransformationKind{
+													{
+														Kind: "filterByValue",
+														Spec: dashv2alpha1.DashboardDataTransformerConfig{
+															Id:      "filterByValue",
+															Filter:  nil, // exercises convertMatcherConfigPtr nil path
+															Options: map[string]interface{}{},
+														},
+													},
+													{
+														Kind: "groupBy",
+														Spec: dashv2alpha1.DashboardDataTransformerConfig{
+															Id:      "groupBy",
+															Filter:  filterMatcher, // exercises convertMatcherConfigPtr non-nil path (transformation)
+															Options: map[string]interface{}{"include": ".*"},
+														},
+													},
+												},
+												QueryOptions: *dashv2alpha1.NewDashboardQueryOptionsSpec(),
+											},
+										},
+										VizConfig: dashv2alpha1.DashboardVizConfigKind{
+											Kind: "timeseries",
+											Spec: dashv2alpha1.DashboardVizConfigSpec{
+												PluginVersion: "1.0",
+												Options:       map[string]interface{}{},
+												FieldConfig: dashv2alpha1.DashboardFieldConfigSource{
+													Defaults: *dashv2alpha1.NewDashboardFieldConfig(),
+													Overrides: []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{
+														{
+															Matcher: dashv2alpha1.DashboardMatcherConfig{
+																Id:      "byName",
+																Scope:   &scopeNested,
+																Options: map[string]interface{}{"name": "Field1"},
+															},
+															Properties: []dashv2alpha1.DashboardDynamicConfigValue{},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2beta1: func(t *testing.T, v2beta1 *dashv2beta1.Dashboard) {
+				require.Contains(t, v2beta1.Spec.Elements, "panel-with-matchers")
+				el := v2beta1.Spec.Elements["panel-with-matchers"]
+				require.NotNil(t, el.PanelKind, "PanelKind should not be nil")
+
+				// Transformation with nil Filter: converted Filter should be nil
+				transformations := el.PanelKind.Spec.Data.Spec.Transformations
+				require.Len(t, transformations, 2)
+				assert.Nil(t, transformations[0].Spec.Filter, "first transformation Filter should be nil")
+
+				// Transformation with non-nil Filter: converted Filter should match
+				require.NotNil(t, transformations[1].Spec.Filter, "second transformation Filter should not be nil")
+				assert.Equal(t, "groupBy", transformations[1].Kind)
+				assert.Equal(t, "byName", transformations[1].Spec.Filter.Id)
+				require.NotNil(t, transformations[1].Spec.Filter.Scope)
+				assert.Equal(t, dashv2beta1.DashboardMatcherScopeSeries, *transformations[1].Spec.Filter.Scope)
+				assert.Equal(t, map[string]interface{}{"include": ".*"}, transformations[1].Spec.Filter.Options)
+
+				// Field config override Matcher: converted via convertMatcherConfigPtr (field override path)
+				fc := el.PanelKind.Spec.VizConfig.Spec.FieldConfig
+				require.Len(t, fc.Overrides, 1)
+				overrideMatcher := fc.Overrides[0].Matcher
+				assert.Equal(t, "byName", overrideMatcher.Id)
+				require.NotNil(t, overrideMatcher.Scope)
+				assert.Equal(t, dashv2beta1.DashboardMatcherScopeNested, *overrideMatcher.Scope)
+				assert.Equal(t, map[string]interface{}{"name": "Field1"}, overrideMatcher.Options)
+			},
+		},
 	}
 
 	for _, tc := range testCases {

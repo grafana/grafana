@@ -6,11 +6,11 @@ import { byRole, byTestId } from 'testing-library-selector';
 
 import { grafanaAlertNotifiers } from 'app/features/alerting/unified/mockGrafanaNotifiers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
+import { type NotifierDTO } from 'app/features/alerting/unified/types/alerting';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 
 type TestChannelValues = {
   __id: string;

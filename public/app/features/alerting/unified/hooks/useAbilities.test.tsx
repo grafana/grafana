@@ -1,13 +1,16 @@
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 import { getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';
 import { AlertmanagerProvider } from '../state/AlertmanagerContext';
@@ -142,6 +145,86 @@ describe('alertmanager abilities', () => {
     expect(result.current[1]).toStrictEqual([true, false]);
     expect(result.current[2]).toStrictEqual([true, true]);
   });
+});
+
+describe('notification policy abilities — K8s-scoped permissions', () => {
+  const setupGrafanaAlertmanager = () =>
+    setupDataSources(
+      mockDataSource<AlertManagerDataSourceJsonData>({
+        name: GRAFANA_RULES_SOURCE_NAME,
+        type: DataSourceType.Alertmanager,
+      })
+    );
+
+  const renderAbility = (action: AlertmanagerAction) =>
+    renderHook(() => useAlertmanagerAbility(action), {
+      wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
+    });
+
+  it('ViewNotificationPolicyTree: allows access with only ActionAlertingManagedRoutesRead', () => {
+    setupGrafanaAlertmanager();
+    grantUserPermissions([AccessControlAction.ActionAlertingManagedRoutesRead]);
+
+    const { result } = renderAbility(AlertmanagerAction.ViewNotificationPolicyTree);
+    const [supported, allowed] = result.current;
+
+    expect(supported).toBe(true);
+    expect(allowed).toBe(true);
+  });
+
+  it('CreateNotificationPolicy: allows access with only ActionAlertingManagedRoutesCreate', () => {
+    setupGrafanaAlertmanager();
+    grantUserPermissions([AccessControlAction.ActionAlertingManagedRoutesCreate]);
+
+    const { result } = renderAbility(AlertmanagerAction.CreateNotificationPolicy);
+    const [supported, allowed] = result.current;
+
+    expect(supported).toBe(true);
+    expect(allowed).toBe(true);
+  });
+
+  it('UpdateNotificationPolicyTree: allows access with only ActionAlertingManagedRoutesWrite', () => {
+    setupGrafanaAlertmanager();
+    grantUserPermissions([AccessControlAction.ActionAlertingManagedRoutesWrite]);
+
+    const { result } = renderAbility(AlertmanagerAction.UpdateNotificationPolicyTree);
+    const [supported, allowed] = result.current;
+
+    expect(supported).toBe(true);
+    expect(allowed).toBe(true);
+  });
+
+  it('DeleteNotificationPolicy: allows access with only ActionAlertingManagedRoutesDelete', () => {
+    setupGrafanaAlertmanager();
+    grantUserPermissions([AccessControlAction.ActionAlertingManagedRoutesDelete]);
+
+    const { result } = renderAbility(AlertmanagerAction.DeleteNotificationPolicy);
+    const [supported, allowed] = result.current;
+
+    expect(supported).toBe(true);
+    expect(allowed).toBe(true);
+  });
+
+  it.each([
+    [AlertmanagerAction.ViewNotificationPolicyTree, AccessControlAction.AlertingNotificationsRead],
+    [AlertmanagerAction.ViewNotificationPolicyTree, AccessControlAction.AlertingRoutesRead],
+    // For write actions, alert.notifications.routes:write (not alert.notifications:write) is the
+    // correct standalone permission — it must be included in PERMISSIONS_NOTIFICATION_POLICIES to
+    // make the Grafana alertmanager available in getAlertManagerDataSourcesByPermission.
+    [AlertmanagerAction.CreateNotificationPolicy, AccessControlAction.AlertingRoutesWrite],
+    [AlertmanagerAction.UpdateNotificationPolicyTree, AccessControlAction.AlertingRoutesWrite],
+    [AlertmanagerAction.DeleteNotificationPolicy, AccessControlAction.AlertingRoutesWrite],
+  ] as const)(
+    '%s is still allowed with legacy permission %s',
+    (action: AlertmanagerAction, permission: AccessControlAction) => {
+      setupGrafanaAlertmanager();
+      grantUserPermissions([permission]);
+
+      const { result } = renderAbility(action);
+      const [, allowed] = result.current;
+      expect(allowed).toBe(true);
+    }
+  );
 });
 
 setupMswServer();

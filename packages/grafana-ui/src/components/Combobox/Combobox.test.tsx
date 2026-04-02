@@ -5,7 +5,7 @@ import React from 'react';
 import { Field } from '../Forms/Field';
 
 import { Combobox } from './Combobox';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
 
 // Mock data for the Combobox options
@@ -328,6 +328,16 @@ describe('Combobox', () => {
       const newWidth = getComputedStyle(inputWrapper).width;
 
       expect(initialWidth).toBe(newWidth);
+    });
+
+    it('should show "No options found" when filtering returns no results', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" minWidth={2} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'zzz');
+
+      expect(screen.getByText('No options found.')).toBeInTheDocument();
     });
   });
 

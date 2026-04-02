@@ -1,5 +1,5 @@
-import { RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
+import { type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { MatcherOperator, ROUTES_META_SYMBOL, type Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { KnownProvenance } from '../../types/knownProvenance';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
@@ -8,6 +8,7 @@ import {
   createKubernetesRoutingTreeSpec,
   isRouteProvisioned,
   k8sSubRouteToRoute,
+  parseAmConfigRoute,
   routeToK8sSubRoute,
 } from './useNotificationPolicyRoute';
 
@@ -30,6 +31,8 @@ test('k8sSubRouteToRoute', () => {
     ],
   };
 
+  const rootMetadata = { name: 'test-name', annotations: { 'grafana.com/access/canWrite': 'true' } };
+
   const expected: Route = {
     name: 'test-name',
     continue: false,
@@ -49,11 +52,13 @@ test('k8sSubRouteToRoute', () => {
         matchers: undefined,
         object_matchers: [['label2', MatcherOperator.notEqual, 'value2']],
         routes: undefined,
+        [ROUTES_META_SYMBOL]: { name: 'test-name', metadata: rootMetadata },
       },
     ],
+    [ROUTES_META_SYMBOL]: { name: 'test-name', metadata: rootMetadata },
   };
 
-  expect(k8sSubRouteToRoute(input, 'test-name')).toStrictEqual(expected);
+  expect(k8sSubRouteToRoute(input, 'test-name', rootMetadata)).toStrictEqual(expected);
 });
 
 test('routeToK8sSubRoute', () => {
@@ -207,5 +212,48 @@ describe('isRouteProvisioned', () => {
     };
 
     expect(isRouteProvisioned(route)).toBeTruthy();
+  });
+});
+
+describe('parseAmConfigRoute', () => {
+  it('adds ROUTES_META_SYMBOL with provenance from the route', () => {
+    const route: Route = { receiver: 'test-receiver', provenance: KnownProvenance.File };
+
+    const result = parseAmConfigRoute(route);
+
+    expect(result[ROUTES_META_SYMBOL]).toEqual({ provenance: KnownProvenance.File });
+    expect(result.receiver).toBe('test-receiver');
+  });
+
+  it('returns a stable reference when called multiple times with the same route object', () => {
+    const route: Route = { receiver: 'test-receiver', provenance: KnownProvenance.File };
+
+    const result1 = parseAmConfigRoute(route);
+    const result2 = parseAmConfigRoute(route);
+
+    expect(result1).toBe(result2);
+  });
+
+  it('returns stable references for multiple distinct route objects without cache eviction', () => {
+    // With maxSize: 1, calls for routeB would evict routeA's cache entry, causing
+    // parseAmConfigRoute(routeA) to return a new reference on the next call. This instability
+    // triggered infinite re-renders in useAlertmanagerNotificationRoutingPreview when two or
+    // more external Alertmanagers were configured.
+    const routeA: Route = { receiver: 'receiver-A' };
+    const routeB: Route = { receiver: 'receiver-B' };
+    const routeC: Route = { receiver: 'receiver-C' };
+
+    const resultA1 = parseAmConfigRoute(routeA);
+    const resultB1 = parseAmConfigRoute(routeB);
+    const resultC1 = parseAmConfigRoute(routeC);
+
+    // Interleave calls in a different order to simulate multiple AMs calling selectFromResult
+    const resultB2 = parseAmConfigRoute(routeB);
+    const resultA2 = parseAmConfigRoute(routeA);
+    const resultC2 = parseAmConfigRoute(routeC);
+
+    expect(resultA1).toBe(resultA2);
+    expect(resultB1).toBe(resultB2);
+    expect(resultC1).toBe(resultC2);
   });
 });

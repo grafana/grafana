@@ -93,3 +93,50 @@ func TestParseFolderID(t *testing.T) {
 		})
 	}
 }
+
+func TestFolder_Equal(t *testing.T) {
+	folder := Folder{
+		Title: "My Team", ID: "my-team-abc", Path: "my-team/",
+		MetadataHash: "abc123", ParentID: "root",
+	}
+	matching := Folder{Title: "My Team", ID: "other-id", Path: "my-team/", MetadataHash: "abc123", ParentID: "root"}
+
+	t.Run("equal when comparable fields match", func(t *testing.T) {
+		assert.True(t, folder.Equal(matching))
+	})
+
+	t.Run("not equal when title differs", func(t *testing.T) {
+		other := matching
+		other.Title = "Other"
+		assert.False(t, folder.Equal(other))
+	})
+
+	t.Run("not equal when path differs", func(t *testing.T) {
+		other := matching
+		other.Path = "old-team/"
+		assert.False(t, folder.Equal(other))
+	})
+
+	t.Run("not equal when checksum differs", func(t *testing.T) {
+		other := matching
+		other.MetadataHash = "old-hash"
+		assert.False(t, folder.Equal(other))
+	})
+
+	t.Run("not equal when parent differs", func(t *testing.T) {
+		other := matching
+		other.ParentID = "other-parent"
+		assert.False(t, folder.Equal(other))
+	})
+
+	t.Run("ignores ID field", func(t *testing.T) {
+		assert.True(t, folder.Equal(matching), "ID differs but Equal should ignore it")
+	})
+
+	t.Run("IgnoreParent skips parent comparison", func(t *testing.T) {
+		other := matching
+		other.ParentID = "different-parent"
+		assert.False(t, folder.Equal(other))
+		assert.True(t, folder.Equal(other, IgnoreParent()))
+	})
+}
