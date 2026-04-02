@@ -195,6 +195,8 @@ export class CentrifugeService implements CentrifugeSrv {
 
   private async initChannel(channel: CentrifugeLiveChannel): Promise<void> {
     if (this.centrifuge.state !== State.Connected) {
+      // Wait for centrifuge to connect, but bail out after the timeout
+      // so the channel can fall back to polling instead of hanging forever.
       await Promise.race([
         this.connectionBlocker,
         new Promise<never>((_, reject) =>
