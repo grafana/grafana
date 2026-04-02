@@ -22,7 +22,9 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
-      const titleInput = page.locator('[aria-label="dashboard-options Title field property editor"] input');
+      const titleInput = dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Title'))
+        .locator('input');
       await expect(titleInput).toHaveValue('Annotation filtering');
       await titleInput.fill('New dashboard title');
       await expect(titleInput).toHaveValue('New dashboard title');
