@@ -68,6 +68,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -81,6 +82,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
@@ -257,6 +259,7 @@ export function transformSaveModelSchemaV2ToScene(
           uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
+        new DefaultControlsBehavior(),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,
@@ -304,7 +307,8 @@ function getVariables(
 
 function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariables: VariableKind[] = []) {
   const isDefined = (v: SceneVariable | null): v is SceneVariable => Boolean(v);
-  const variableObjects = (dashboard.variables ?? [])
+  const variables = migrateGroupByVariablesV2(dashboard.variables ?? []);
+  const variableObjects = variables
     .map((v) => {
       try {
         return createSceneVariableFromVariableModel(v);

@@ -4364,6 +4364,17 @@
       "title": "You haven't created any dashboards yet",
       "title-folder": "This folder doesn't have any dashboards yet"
     },
+    "filters": {
+      "all-teams": "All teams",
+      "owner-aria-label": "Owner filter",
+      "owner-limit-warning": "Listing only first {{limit}} teams out of {{totalCount}}.",
+      "owner-limit-warning-icon": "Owner filter limit warning",
+      "owner-load-error-icon": "Owner filter load error",
+      "owner-load-error-prefix": "Failed to load teams because of error:",
+      "owner-loading": "Loading teams...",
+      "owner-no-options": "No teams found",
+      "owner-placeholder": "Filter by owner"
+    },
     "folder-actions-button": {
       "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
@@ -5628,6 +5639,8 @@
         "title": "Variables"
       },
       "variable": {
+        "change-type": "Change",
+        "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
           "change-value": "Change variable value",
@@ -6523,6 +6536,9 @@
       },
       "name": {
         "action": "Change variable name"
+      },
+      "type": {
+        "action": "Change variable type"
       }
     },
     "version-history-comparison": {
@@ -6603,8 +6619,8 @@
   "dashboard-library": {
     "card": {
       "community-badge": "Community",
-      "customize-with-assistant-button": "Customize with assistant",
-      "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
+      "customize-with-assistant-button": "Customize with Assistant",
+      "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available ",
@@ -6847,6 +6863,10 @@
       "constant-options": "Constant options",
       "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "Delete",
+      "aria-label-edit": "Edit"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -15387,8 +15407,7 @@
       "bar": "Bar chart",
       "bar-stacked": "Bar chart - stacked",
       "bar-stacked-percent": "Bar chart - stacked by percentage",
-      "line": "Line chart",
-      "line-smooth": "Line chart - smooth"
+      "line": "Line chart"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",

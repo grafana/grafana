@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Entregue para <2>{{name}}</2>",
-      "no-grouping": "Sem agrupamento"
+      "delivered-to-disabled": "",
+      "no-grouping": "Sem agrupamento",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "O Grafana Incident não está instalado ou não está configurado corretamente",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Declarar incidente"
     },
     "delete-rule-modal": {
@@ -2244,7 +2247,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3577,8 +3582,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Detalhes da instância",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Você não tem instâncias de alerta em estado pendente ou sendo disparadas no intervalo de tempo selecionado.",
@@ -4265,6 +4272,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
       "new-folder-owner-selector-checkbox": "Atribuir um proprietário à pasta",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Você selecionou recursos provisionados e não provisionados. Não éo possível processá-los juntos. Selecione apenas um dos tipos de recurso e tente novamente.",
       "selected-mix-resources-modal-title": "Tipos de recursos mistos selecionados"
     },
@@ -4428,6 +4436,20 @@
       "error": "Não foi possível carregar os painéis visualizados recentemente.",
       "retry": "Tentar novamente",
       "title": "Vistos recentemente"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5609,6 +5631,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Aplicar",
           "change-value": "Alterar valor da variável",
@@ -6504,6 +6528,9 @@
       },
       "name": {
         "action": "Alterar nome da variável"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10326,6 +10353,8 @@
     "sidebar": {
       "close": "Fechar",
       "dock": "Fixar",
+      "hide": "",
+      "show": "",
       "undock": "Liberar"
     },
     "slider": {
@@ -12962,12 +12991,14 @@
       "not-saved": "O restante dos usuários do Grafana na sua organização ainda verá a versão atual salva na ramificação padrão configurada até que esta ramificação seja mesclada",
       "open-in-repo-button": "Abrir em {{repoType}}",
       "open-pull-request-in-repo": "Abrir solicitação de pull no {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "Visualizar em {{repoType}} para ver as alterações mais recentes.",
       "view-pull-request-in-repo": "Ver solicitação de pull no {{repoType}}"
     },
     "title-created-branch-in-repo": "Um novo recurso foi criado em uma ramificação em {{repoType}}.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Este recurso é carregado a partir da ramificação que você acabou de criar em {{repoType}} e só é visível para você"
+    "title-loaded-pull-request-in-repo": "Este recurso é carregado a partir da ramificação que você acabou de criar em {{repoType}} e só é visível para você",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15364,8 +15395,7 @@
       "bar": "Gráfico de barras",
       "bar-stacked": "Gráfico de barras: empilhado",
       "bar-stacked-percent": "Gráfico de barras: empilhado por porcentagem",
-      "line": "Gráfico de linhas",
-      "line-smooth": "Gráfico de linhas: suave"
+      "line": "Gráfico de linhas"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Adicionar fuso horário",
