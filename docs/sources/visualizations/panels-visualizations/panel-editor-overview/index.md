@@ -84,7 +84,7 @@ For more information about individual visualizations, refer to [Visualizations o
 Panel styles is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `vizPresets` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to use this feature.
 {{< /admonition >}}
 
-While visualization suggestions help you choose _which_ panel type to use, Panel styles help you decide _how_ that panel looks. The **Panel styles** section of the panel editor sidebar contains pre-configured presets for the currently selected visualization. It appears once you've selected a visualization and the panel has data.
+While visualization suggestions help you choose _which_ panel type to use, panel styles help you decide _how_ that panel should look. The **Panel styles** section of the panel editor sidebar contains preconfigured options for the currently selected visualization. It appears after you've selected a visualization and the panel has data.
 
 Each preset is displayed as a live preview card that shows how it changes the visualization. Clicking a preset applies a combination of display options and field configuration to the panel - for example, switching a time series panel from a line chart with a gradient fill to a stacked bar chart, or changing a stat panel's color scheme and graph mode.
 
