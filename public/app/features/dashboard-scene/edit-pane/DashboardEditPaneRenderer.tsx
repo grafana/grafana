@@ -40,7 +40,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
-  const selectedObject = editPane.getSelectedObject();
+  const selectedObject = editPane.getSelection();
   const isNewElement = false; // selection?.isNewElement() ?? false;
   // the layout element that was selected when opening the 'add' pane
   // used when adding new panel from the sidebar

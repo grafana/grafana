@@ -42,6 +42,54 @@ setPluginImportUtils({
 });
 
 describe('DashboardEditPane', () => {
+  describe('Selection', () => {
+    it('Can select dashboard', () => {
+      const scene = buildTestScene();
+      scene.state.editPane.state.selectionContext.onSelect({ id: scene.state.key! }, {});
+      expect(scene.state.editPane.getSelection()).toBe(scene);
+    });
+
+    it('single panel and multi panel selection', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+      const panel1 = scene.onCreateNewPanel();
+
+      expect(editPane.getSelection()).toBe(panel1);
+
+      // Selecting same object should clear selection
+      editPane.selectObject(panel1);
+
+      expect(editPane.getSelection()).toBeUndefined();
+
+      const panel2 = scene.onCreateNewPanel();
+      editPane.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
+
+      expect(editPane.state.selectionContext.selected).toHaveLength(2);
+
+      // Selecting one that is already selected should remove it
+      editPane.state.selectionContext.onSelect({ id: panel2.state.key! }, { multi: true });
+
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
+      expect(editPane.getSelection()).toBe(panel1);
+    });
+
+    it('Clear selection should select dashboard when docked', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel = scene.onCreateNewPanel();
+      editPane.clearSelection();
+
+      expect(editPane.getSelection()).toBeUndefined();
+
+      editPane.setState({ isDocked: true });
+      editPane.selectObject(panel);
+      editPane.clearSelection();
+
+      expect(editPane.getSelection()).toBe(scene);
+    });
+  });
+
   it('Handles edit action events that adds objects', () => {
     const scene = buildTestScene();
     const editPane = scene.state.editPane;
@@ -113,7 +161,7 @@ describe('DashboardEditPane', () => {
     activateFullSceneTree(dashboard);
 
     const editPane = dashboard.state.editPane;
-    editPane.selectObject(variable, variable.state.key!, { force: true });
+    editPane.selectObject(variable, { force: true });
 
     const changedVariable = new ConstantVariable({ name: 'service' });
     dashboardEditActions.changeVariableType({

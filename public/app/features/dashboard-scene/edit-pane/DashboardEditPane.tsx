@@ -163,7 +163,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     if (action.movedObject) {
-      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
+      this.selectObject(action.movedObject, { force: true });
     }
 
     if (action.removedObject) {
@@ -185,7 +185,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     if (action.movedObject) {
-      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
+      this.selectObject(action.movedObject, { force: true });
     }
 
     if (action.removedObject && !action.addedObject) {
@@ -243,42 +243,36 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       }
     }
 
-    this.selectObject(obj, obj.state.key!, options);
+    this.selectObject(obj, options);
   }
 
-  public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+  public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
     if (multi) {
       if (hasItem) {
-        this.setState({
-          selectionContext: {
-            ...this.state.selectionContext,
-            selected: this.state.selectionContext.selected.filter((i) => i.id !== id),
-          },
-        });
+        this.updateSelection(this.state.selectionContext.selected.filter((i) => i.id !== id));
       } else {
-        this.setState({
-          selectionContext: {
-            ...this.state.selectionContext,
-            selected: [...this.state.selectionContext.selected, { id }],
-          },
-          openPane: 'element',
-        });
+        this.updateSelection([...this.state.selectionContext.selected, { id }]);
       }
     } else {
       if (hasItem) {
-        this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] }, openPane: undefined });
+        this.updateSelection([]);
       } else {
-        this.setState({
-          selectionContext: { ...this.state.selectionContext, selected: [{ id }] },
-          openPane: 'element',
-        });
+        this.updateSelection([{ id }]);
       }
     }
   }
 
-  public getSelectedObject(): SceneObject | undefined {
+  private updateSelection(selected: ElementSelectionContextItem[]) {
+    this.setState({
+      selectionContext: { ...this.state.selectionContext, selected },
+      openPane: selected.length === 0 ? undefined : 'element',
+    });
+  }
+
+  public getSelection(): SceneObject | undefined {
     if (this.state.selectionContext.selected.length === 0) {
       return undefined;
     }
@@ -295,19 +289,17 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       return;
     }
 
-    this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] }, openPane: undefined });
-
     // If we are docked then clearing selection should select dashboard itself
     // Unless the user explicitly closes pane
     if (this.state.isDocked && !force) {
       const dashboard = getDashboardSceneFor(this);
-      if (obj !== dashboard) {
-        this.selectObject(dashboard, dashboard.state.key!);
+      if (this.getSelection() !== dashboard) {
+        this.selectObject(dashboard);
       }
       return;
     }
 
-    // this.updateSelection(undefined, []);
+    this.updateSelection([]);
   }
 
   public openPane(openPane: DashboardSidebarPaneName) {
@@ -333,7 +325,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
-    this.selectObject(obj, obj.state.key!);
+    this.selectObject(obj);
     //this.state.selection?.markAsNewElement();
   }
 
