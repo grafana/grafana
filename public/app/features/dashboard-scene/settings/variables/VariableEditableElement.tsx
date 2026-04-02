@@ -125,7 +125,11 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public renderActions() {
-    return <ChangeVariableTypeButton variable={this.variable} />;
+    return (
+      <Stack grow={1}>
+        <ChangeVariableTypeButton variable={this.variable} />
+      </Stack>
+    );
   }
 
   public onDuplicate() {
