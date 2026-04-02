@@ -457,8 +457,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-keybindings.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-links-without-slug.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-live-streaming.spec.ts @grafana/dashboards-squad
-/e2e-playwright/dashboards-suite/dashboard-public-create.spec.ts @grafana/grafana-operator-experience-squad
-/e2e-playwright/dashboards-suite/dashboard-public-templating.spec.ts @grafana/grafana-operator-experience-squad
 /e2e-playwright/dashboards-suite/dashboard-share-externally-create.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-share-internally.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-share-snapshot-create.spec.ts @grafana/sharing-squad
@@ -479,7 +477,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/repeating-a-panel-vertically.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/repeating-an-empty-row.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/set-options-from-ui.spec.ts @grafana/dashboards-squad
-/e2e-playwright/dashboards-suite/snapshot-create.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/templating-dashboard-links-and-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/textbox-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
@@ -874,6 +871,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-frontend-navigation
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
+public/app/core/hooks/useSystemThemeWatcher* @grafana/grafana-frontend-platform
 /public/app/core/icons/ @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/log_events.ts @grafana/dashboards-squad
@@ -1071,6 +1069,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 
 /scripts/benchmark-access-control.sh @grafana/access-squad
+/scripts/build-deb.sh @grafana/grafana-backend-services-squad
+/scripts/build-rpm.sh @grafana/grafana-backend-services-squad
 /scripts/build-targz.sh @grafana/grafana-backend-services-squad
 /scripts/check-breaking-changes.sh @grafana/grafana-frontend-platform
 /scripts/ci-* @grafana/grafana-developer-enablement-squad
@@ -1246,6 +1246,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/setup-grafana-bench/ @Proximyst
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
 /.github/actions/change-detection @grafana/grafana-developer-enablement-squad
+/.github/actions/setup-fpm @grafana/grafana-backend-services-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
 /.github/actions/yarn-install/action.yml @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-developer-enablement-squad

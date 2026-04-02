@@ -14,15 +14,15 @@ import (
 )
 
 func TestParseGroupVersionSetting(t *testing.T) {
-	gv, err := parseGroupVersionSetting("dashboard.grafana.app/v1")
+	gv, err := ParseGroupVersionSetting("dashboard.grafana.app/v1")
 	require.NoError(t, err)
 	require.Equal(t, "dashboard.grafana.app", gv.Group)
 	require.Equal(t, "v1", gv.Version)
 
-	_, err = parseGroupVersionSetting("novslash")
+	_, err = ParseGroupVersionSetting("novslash")
 	require.Error(t, err)
 
-	_, err = parseGroupVersionSetting("/v1")
+	_, err = ParseGroupVersionSetting("/v1")
 	require.Error(t, err)
 }
 
@@ -37,7 +37,7 @@ func TestApplyPreferredForGroup_ReordersVersions(t *testing.T) {
 	rc := serverstorage.NewResourceConfig()
 	rc.EnableVersions(gvAlpha, gvStable)
 
-	require.NoError(t, applyPreferredForGroup(log.NewNopLogger(), scheme, rc, gvStable))
+	require.NoError(t, ApplyPreferredForGroup(log.NewNopLogger(), scheme, rc, gvStable))
 
 	pvs := scheme.PrioritizedVersionsForGroup("test.example")
 	require.Len(t, pvs, 2)
@@ -57,7 +57,7 @@ func TestApplyPreferredForGroup_SkipsWhenDisabled(t *testing.T) {
 	rc.EnableVersions(gvAlpha)
 	rc.DisableVersions(gvStable)
 
-	require.NoError(t, applyPreferredForGroup(log.NewNopLogger(), scheme, rc, gvStable))
+	require.NoError(t, ApplyPreferredForGroup(log.NewNopLogger(), scheme, rc, gvStable))
 
 	pvs := scheme.PrioritizedVersionsForGroup("test.example")
 	require.Len(t, pvs, 2)
