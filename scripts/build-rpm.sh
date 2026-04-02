@@ -100,6 +100,7 @@ fpm \
   --name="${TARGZ_PACKAGE_NAME}" \
   --rpm-posttrans="${SRC}/packaging/rpm/control/posttrans" \
   --rpm-digest=sha256 \
+  --rpm-compression zstd \
   .
 
 echo "created dist/${FILENAME}"
