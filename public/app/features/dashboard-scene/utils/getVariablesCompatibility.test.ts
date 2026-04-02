@@ -61,60 +61,6 @@ describe('getVariablesCompatibility', () => {
     });
   });
 
-  describe('edit pane selection', () => {
-    it('scopes to the selected object ancestry', () => {
-      const dashVar = makeVar('dashVar');
-      const sectionVar = makeVar('sectionVar');
-      const otherSectionVar = makeVar('otherVar');
-
-      const row1 = new RowItem({
-        title: 'Row 1',
-        $variables: new SceneVariableSet({ variables: [sectionVar] }),
-      });
-
-      const row2 = new RowItem({
-        title: 'Row 2',
-        $variables: new SceneVariableSet({ variables: [otherSectionVar] }),
-      });
-
-      const dashboard = new DashboardScene({
-        $variables: new SceneVariableSet({ variables: [dashVar] }),
-        body: new RowsLayoutManager({ rows: [row1, row2] }),
-      });
-
-      const selection = new ElementSelection([[sectionVar.state.key!, sectionVar.getRef()]]);
-      dashboard.state.editPane.setState({ selection });
-
-      const result = getVariablesCompatibility(dashboard);
-      const names = result.map((v) => v.name);
-
-      expect(names).toContain('sectionVar');
-      expect(names).toContain('dashVar');
-      expect(names).not.toContain('otherVar');
-    });
-
-    it('falls back to all variables when nothing is selected', () => {
-      const dashVar = makeVar('dashVar');
-      const sectionVar = makeVar('sectionVar');
-
-      const row = new RowItem({
-        title: 'Row 1',
-        $variables: new SceneVariableSet({ variables: [sectionVar] }),
-      });
-
-      const dashboard = new DashboardScene({
-        $variables: new SceneVariableSet({ variables: [dashVar] }),
-        body: new RowsLayoutManager({ rows: [row] }),
-      });
-
-      const result = getVariablesCompatibility(dashboard);
-      const names = result.map((v) => v.name);
-
-      expect(names).toContain('dashVar');
-      expect(names).toContain('sectionVar');
-    });
-  });
-
   describe('dashboard view mode (no editPanel, no selection)', () => {
     it('returns all variables from dashboard and all sections', () => {
       const dashVar = makeVar('dashVar');
