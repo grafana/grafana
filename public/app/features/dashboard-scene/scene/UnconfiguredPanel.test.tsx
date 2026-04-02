@@ -28,6 +28,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   locationService: {
     partial: jest.fn(),
+    getLocation: jest.fn().mockReturnValue({ pathname: '/d/test', search: '' }),
     getHistory: jest.fn().mockReturnValue({ listen: jest.fn() }),
   },
 }));
@@ -94,8 +95,9 @@ const mockFindVizPanelByKey: jest.Mock = require('../utils/utils').findVizPanelB
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 const defaultProps = { id: 1 } as PanelProps;
+let deactivateScene: undefined | (() => void);
 
-/** Creates a DashboardScene and assigns it to window.__grafanaSceneContext. */
+/** Creates and activates a DashboardScene for tests. */
 function buildDashboard({ isEditing = false } = {}) {
   const dashboard = new DashboardScene({
     title: 'Test dashboard',
@@ -103,7 +105,8 @@ function buildDashboard({ isEditing = false } = {}) {
     body: DefaultGridLayoutManager.createEmpty(),
     isEditing,
   });
-  (window as Window & { __grafanaSceneContext?: unknown }).__grafanaSceneContext = dashboard;
+  deactivateScene?.();
+  deactivateScene = dashboard.activate();
   return dashboard;
 }
 
@@ -124,16 +127,19 @@ beforeEach(() => {
   mockGetVizSuggestionForQuery.mockResolvedValue(undefined);
   mockApplyQueryToPanel.mockResolvedValue(undefined);
   mockFindVizPanelByKey.mockReturnValue(new VizPanel({ key: 'panel-1', pluginId: '__unconfigured-panel' }));
-  mockSceneGraphGetTimeRange.mockReturnValue({ state: { value: getDefaultTimeRange() } });
+  mockSceneGraphGetTimeRange.mockReturnValue({
+    state: { value: getDefaultTimeRange(), weekStart: undefined },
+    subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+  });
 
   config.featureToggles.newVizSuggestions = false;
   config.featureToggles.newUnconfiguredPanel = true;
   contextSrv.isSignedIn = true;
-  (window as Window & { __grafanaSceneContext?: unknown }).__grafanaSceneContext = null;
 });
 
 afterEach(() => {
-  delete (window as Window & { __grafanaSceneContext?: unknown }).__grafanaSceneContext;
+  deactivateScene?.();
+  deactivateScene = undefined;
   config.featureToggles.newVizSuggestions = false;
   config.featureToggles.newUnconfiguredPanel = false;
   contextSrv.isSignedIn = false;
