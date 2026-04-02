@@ -510,7 +510,9 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	emptySearchResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
-	emptyStatsResponse := &resourcepb.ResourceStatsResponse{}
+	emptyStatsResponse := &resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
+	}
 	folderSearchMock := resource.NewMockResourceClient(t)
 	folderSearchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(emptySearchResponse, nil).Maybe()
 	folderSearchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(emptyStatsResponse, nil).Maybe()
