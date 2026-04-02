@@ -7,9 +7,9 @@ import { type DashboardLink } from '@grafana/schema';
 import { Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
+import { DataLayerControlEditWrapper } from '../DashboardDataLayerControls';
 import { DashboardLinkRenderer } from '../DashboardLinkRenderer';
 import { type DashboardScene } from '../DashboardScene';
-import { DataLayerControl } from '../DataLayerControl';
 import { VariableValueSelectWrapper } from '../VariableControls';
 
 interface DashboardControlsMenuProps {
@@ -61,7 +61,7 @@ export function DashboardControlsMenu({
         {annotations.length > 0 &&
           annotations.map((layer) => (
             <div key={layer.state.key}>
-              <DataLayerControl layer={layer} inMenu />
+              <DataLayerControlEditWrapper layer={layer} inMenu />
             </div>
           ))}
 
@@ -76,6 +76,7 @@ export function DashboardControlsMenu({
                   dashboardUID={dashboardUID}
                   inMenu
                   linkIndex={fullLinks.indexOf(link)}
+                  dashboard={dashboard}
                 />
               </div>
             ))}

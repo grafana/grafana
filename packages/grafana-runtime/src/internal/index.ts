@@ -52,3 +52,5 @@ export {
   setPanelPluginMetas,
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
+export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { logPluginMetaError, setPluginMetaLogger } from '../services/pluginMeta/logging';

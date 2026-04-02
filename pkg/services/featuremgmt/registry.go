@@ -627,10 +627,10 @@ var (
 		{
 			Name:         "dashboardDefaultLayoutSelector",
 			Description:  "Enables default layout selector in dashboard settings",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardAssistantPopover",
@@ -2808,6 +2808,14 @@ var (
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 			HideFromDocs: true,
+		},
+		{
+			Name:         "enableDatasourceMetaApiPluginLoading",
+			Description:  "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
 		},
 	}
 )

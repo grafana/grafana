@@ -410,7 +410,7 @@ export interface FeatureToggles {
   dashboardNewLayouts?: boolean;
   /**
   * Enables default layout selector in dashboard settings
-  * @default false
+  * @default true
   */
   dashboardDefaultLayoutSelector?: boolean;
   /**
@@ -1770,4 +1770,9 @@ export interface FeatureToggles {
   * @default false
   */
   clearPreviousFieldValues?: boolean;
+  /**
+  * Enables loading datasource plugins from the MetaAPI instead of bootData settings
+  * @default false
+  */
+  enableDatasourceMetaApiPluginLoading?: boolean;
 }

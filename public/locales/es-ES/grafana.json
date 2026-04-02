@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Entregado a <2>{{name}}</2>",
-      "no-grouping": "Sin agrupación"
+      "delivered-to-disabled": "",
+      "no-grouping": "Sin agrupación",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident no está instalado o no está configurado correctamente",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Declarar incidente"
     },
     "delete-rule-modal": {
@@ -2244,7 +2247,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3577,8 +3582,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Detalles de la instancia",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "No tienes instancias de alerta en estado de activación o pendientes para el intervalo de tiempo seleccionado.",
@@ -4265,6 +4272,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta.",
       "new-folder-owner-selector-checkbox": "Asignar un propietario a la carpeta",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Has seleccionado recursos aprovisionados y no aprovisionados. No se pueden procesar juntos. Selecciona solo recursos aprovisionados o solo recursos no aprovisionados e inténtalo de nuevo.",
       "selected-mix-resources-modal-title": "Tipos de recursos mixtos seleccionados"
     },
@@ -4428,6 +4436,20 @@
       "error": "No se han podido cargar los dashboards vistos recientemente.",
       "retry": "Reintentar",
       "title": "Vistos recientemente"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5609,6 +5631,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Aplicar",
           "change-value": "Cambiar valor de variable",
@@ -6504,6 +6528,9 @@
       },
       "name": {
         "action": "Cambiar nombre de variable"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10326,6 +10353,8 @@
     "sidebar": {
       "close": "Cerrar",
       "dock": "Acoplar",
+      "hide": "",
+      "show": "",
       "undock": "Desacoplar"
     },
     "slider": {
@@ -12962,12 +12991,14 @@
       "not-saved": "El resto de usuarios de Grafana de tu organización seguirán viendo la versión actual guardada en la rama predeterminada configurada hasta que se fusione esta rama",
       "open-in-repo-button": "Abrir en {{repoType}}",
       "open-pull-request-in-repo": "Abrir solicitud de extracción en {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "Consúltalo en {{repoType}} para ver los últimos cambios.",
       "view-pull-request-in-repo": "Ver solicitud de extracción en {{repoType}}"
     },
     "title-created-branch-in-repo": "Se ha creado un nuevo recurso en una rama en {{repoType}}.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Este recurso se carga desde la rama que acabas de crear en {{repoType}} y solo es visible para ti"
+    "title-loaded-pull-request-in-repo": "Este recurso se carga desde la rama que acabas de crear en {{repoType}} y solo es visible para ti",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15364,8 +15395,7 @@
       "bar": "Gráfico de barras",
       "bar-stacked": "Gráfico de barras: apilado",
       "bar-stacked-percent": "Gráfico de barras: apilado por porcentaje",
-      "line": "Gráfico de líneas",
-      "line-smooth": "Gráfico de líneas: suave"
+      "line": "Gráfico de líneas"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Añadir zona horaria",
