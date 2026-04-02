@@ -1009,63 +1009,6 @@ func (dr *DashboardServiceImpl) searchExistingProvisionedData(
 	return matchingFolders, resources, nil
 }
 
-// maybeResetProvisioning will check for duplicated provisioned dashboards in the database. These duplications
-// happen when multiple provisioned dashboards of the same title are found, or multiple provisioned
-// folders are found. In this case, provisioned resources are deleted, allowing the provisioning
-// process to start from scratch after this function returns.
-func (dr *DashboardServiceImpl) maybeResetProvisioning(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) {
-	if skipReason := canBeAutomaticallyCleanedUp(configs); skipReason != "" {
-		dr.log.Info("not eligible for automated cleanup", "reason", skipReason)
-		return
-	}
-
-	folderTitle := configs[0].Folder
-	provisionedNames := map[string]bool{}
-	for _, c := range configs {
-		provisionedNames[c.Name] = true
-	}
-
-	for _, orgID := range orgs {
-		ctx, user := identity.WithServiceIdentity(ctx, orgID)
-		provFolders, resources, err := dr.searchExistingProvisionedData(ctx, orgID, folderTitle)
-		if err != nil {
-			dr.log.Error("failed to search for provisioned data for cleanup", "org", orgID, "error", err)
-			continue
-		}
-
-		steps, err := cleanupSteps(provFolders, resources, provisionedNames)
-		if err != nil {
-			dr.log.Warn("not possible to perform automated duplicate cleanup", "org", orgID, "error", err)
-			continue
-		}
-
-		for _, step := range steps {
-			var err error
-
-			switch step.Type {
-			case searchstore.TypeDashboard:
-				err = dr.deleteDashboard(ctx, 0, step.UID, orgID, false)
-			case searchstore.TypeFolder:
-				err = dr.folderService.Delete(ctx, &folder.DeleteFolderCommand{
-					OrgID:        orgID,
-					SignedInUser: user,
-					UID:          step.UID,
-				})
-			}
-
-			if err == nil {
-				dr.log.Info("deleted duplicated provisioned resource",
-					"type", step.Type, "uid", step.UID,
-				)
-			} else {
-				dr.log.Error("failed to delete duplicated provisioned resource",
-					"type", step.Type, "uid", step.UID, "error", err,
-				)
-			}
-		}
-	}
-}
-
 func (dr *DashboardServiceImpl) ValidateDashboardRefreshInterval(minRefreshInterval string, targetRefreshInterval string) error {
 	if minRefreshInterval == "" {
 		return nil
