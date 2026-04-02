@@ -40,11 +40,9 @@ import (
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -58,6 +56,33 @@ func (r rcp) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	return &clientrest.Config{
 		Host: r.Host,
 	}, nil
+}
+
+type folderResult struct {
+	uid       string
+	parentUID string
+}
+
+func buildFolderSearchResponse(results ...folderResult) *resourcepb.ResourceSearchResponse {
+	if len(results) == 0 {
+		return &resourcepb.ResourceSearchResponse{TotalHits: 0}
+	}
+	rows := make([]*resourcepb.ResourceTableRow, len(results))
+	for i, r := range results {
+		rows[i] = &resourcepb.ResourceTableRow{
+			Key:   &resourcepb.ResourceKey{Name: r.uid, Resource: "folders"},
+			Cells: [][]byte{[]byte(r.parentUID)},
+		}
+	}
+	return &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: rows,
+		},
+		TotalHits: int64(len(results)),
+	}
 }
 
 func compareFoldersNormalizeTime(t *testing.T, expected, actual *folder.Folder) {
@@ -219,8 +244,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
-	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService(), nil)
+	searchMock := resource.NewMockResourceClient(t)
+	k8sCli := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, userService, searchMock)
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService, tracer, cfg)
 
 	ctx := context.Background()
@@ -453,13 +478,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by ID and uid is an empty string should return folder by id", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
-					{
-						IsFolder: true,
-						ID:       fooFolder.ID, // nolint:staticcheck
-						UID:      fooFolder.UID,
-					},
-				}, nil).Twice() // Called twice due to total count call
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(folderResult{uid: fooFolder.UID}), nil).Once()
 				id := int64(123)
 				emptyString := ""
 				query := &folder.GetFolderQuery{
@@ -475,7 +494,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by non existing ID should return not found error", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Twice() // Called twice due to total count call
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
 				id := int64(111111)
 				query := &folder.GetFolderQuery{
 					ID:           &id,
@@ -489,19 +508,10 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by Title and nil parentID should return top-level folder", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
-					{ // This result will be ignored, because it has FolderUID set, but we're searching for nil parentID.
-						IsFolder:  true,
-						ID:        notFooFolder.ID, // nolint:staticcheck
-						UID:       notFooFolder.UID,
-						FolderUID: notFooFolder.ParentUID,
-					},
-					{
-						IsFolder: true,
-						ID:       fooFolder.ID, // nolint:staticcheck
-						UID:      fooFolder.UID,
-					},
-				}, nil).Twice() // Called twice due to total count call
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(
+					folderResult{uid: notFooFolder.UID, parentUID: notFooFolder.ParentUID},
+					folderResult{uid: fooFolder.UID},
+				), nil).Once()
 				title := "foo"
 				query := &folder.GetFolderQuery{
 					Title:        &title,
@@ -515,14 +525,9 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by Title and non-nil parentID should return inner folder", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
-					{ // Not ignored this time, compared to previous test.
-						IsFolder:  true,
-						ID:        notFooFolder.ID, // nolint:staticcheck
-						UID:       notFooFolder.UID,
-						FolderUID: notFooFolder.ParentUID,
-					},
-				}, nil).Twice() // Called twice due to total count call
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(
+					folderResult{uid: notFooFolder.UID, parentUID: notFooFolder.ParentUID},
+				), nil).Once()
 				title := "foo"
 				parentUID := "test"
 				query := &folder.GetFolderQuery{
@@ -538,7 +543,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When get folder by non existing Title should return not found error", func(t *testing.T) {
-				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Twice() // Called twice due to total count call
+				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
 				title := "does not exists"
 				query := &folder.GetFolderQuery{
 					Title:        &title,

@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -51,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -1513,7 +1513,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		}
 
 		if hit.Field != nil && query.Sort.Name != "" {
-			fieldName, _, err := legacysearcher.ParseSortName(query.Sort.Name)
+			fieldName, _, err := sort.ParseSortName(query.Sort.Name)
 			if err != nil {
 				return nil, err
 			}
@@ -2043,7 +2043,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	if query.Sort.Name != "" {
-		sortName, isDesc, err := legacysearcher.ParseSortName(query.Sort.Name)
+		sortName, isDesc, err := sort.ParseSortName(query.Sort.Name)
 		if err != nil {
 			return dashboardv0.SearchResults{}, err
 		}
