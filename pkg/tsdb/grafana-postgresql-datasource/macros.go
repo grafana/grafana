@@ -15,17 +15,132 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
-var (
-	reBlockComment = regexp.MustCompile(`(?s)/\*.*?\*/`)
-	reLineComment  = regexp.MustCompile(`--[^\n]*`)
-)
+// isDollarTagChar reports whether b is valid inside a PostgreSQL dollar-quote tag
+// (letters and digits only; underscore is also allowed per identifier rules).
+func isDollarTagChar(b byte) bool {
+	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || b == '_'
+}
 
 // stripSQLComments removes SQL line comments (--) and block comments (/* */)
-// from the query string.
+// from the query string. It is quote-aware: comment sequences inside single-quoted
+// string literals, double-quoted identifiers, and dollar-quoted strings are
+// preserved verbatim.
 func stripSQLComments(sql string) string {
-	sql = reBlockComment.ReplaceAllString(sql, "")
-	sql = reLineComment.ReplaceAllString(sql, "")
-	return sql
+	var out strings.Builder
+	out.Grow(len(sql))
+	i := 0
+	n := len(sql)
+	for i < n {
+		switch {
+		case sql[i] == '$':
+			// Try to detect a PostgreSQL dollar-quoted string: $$...$$ or $tag$...$tag$.
+			// Tags follow identifier rules ([A-Za-z_][A-Za-z0-9_]*) or are empty.
+			// Grafana macros ($__name(...)) are distinguished by ending with '(' not '$'.
+			j := i + 1
+			if j < n && sql[j] == '$' {
+				// Empty-tag dollar-quote: $$...$$
+				closing := "$$"
+				out.WriteString(closing)
+				i = j + 1
+				for i < n {
+					if strings.HasPrefix(sql[i:], closing) {
+						out.WriteString(closing)
+						i += len(closing)
+						break
+					}
+					out.WriteByte(sql[i])
+					i++
+				}
+			} else if j < n && (isDollarTagChar(sql[j]) && !(sql[j] >= '0' && sql[j] <= '9')) {
+				// Possible non-empty tag: must start with letter or underscore.
+				k := j + 1
+				for k < n && isDollarTagChar(sql[k]) {
+					k++
+				}
+				if k < n && sql[k] == '$' {
+					// Confirmed dollar-quote with tag, e.g. $tag$...$tag$
+					closing := sql[i : k+1]
+					out.WriteString(closing)
+					i = k + 1
+					for i < n {
+						if strings.HasPrefix(sql[i:], closing) {
+							out.WriteString(closing)
+							i += len(closing)
+							break
+						}
+						out.WriteByte(sql[i])
+						i++
+					}
+				} else {
+					// Not a dollar-quote (e.g. a Grafana macro $__timeFrom()).
+					out.WriteByte(sql[i])
+					i++
+				}
+			} else {
+				// Not a dollar-quote (e.g. $1 positional parameter).
+				out.WriteByte(sql[i])
+				i++
+			}
+		case sql[i] == '\'':
+			// Single-quoted string literal. Pass verbatim; '' is the escape sequence.
+			out.WriteByte(sql[i])
+			i++
+			for i < n {
+				if sql[i] == '\'' {
+					out.WriteByte(sql[i])
+					i++
+					if i < n && sql[i] == '\'' {
+						// Doubled-quote escape: '' inside a string literal.
+						out.WriteByte(sql[i])
+						i++
+					} else {
+						break
+					}
+				} else {
+					out.WriteByte(sql[i])
+					i++
+				}
+			}
+		case sql[i] == '"':
+			// Double-quoted identifier. Pass verbatim; "" is the escape sequence.
+			out.WriteByte(sql[i])
+			i++
+			for i < n {
+				if sql[i] == '"' {
+					out.WriteByte(sql[i])
+					i++
+					if i < n && sql[i] == '"' {
+						out.WriteByte(sql[i])
+						i++
+					} else {
+						break
+					}
+				} else {
+					out.WriteByte(sql[i])
+					i++
+				}
+			}
+		case i+1 < n && sql[i] == '/' && sql[i+1] == '*':
+			// Block comment: skip to closing */.
+			i += 2
+			for i+1 < n {
+				if sql[i] == '*' && sql[i+1] == '/' {
+					i += 2
+					break
+				}
+				i++
+			}
+		case i+1 < n && sql[i] == '-' && sql[i+1] == '-':
+			// Line comment: skip to end of line (newline is preserved).
+			for i < n && sql[i] != '\n' {
+				i++
+			}
+		default:
+			out.WriteByte(sql[i])
+			i++
+		}
+	}
+	return out.String()
 }
 
 type postgresMacroEngine struct {
