@@ -206,7 +206,7 @@ How the editor handles index selection depends on your data source configuration
 
 The ES|QL code editor provides:
 
-- **Code suggestions** -- Auto-complete for ES|QL commands, functions, and field names
+- **Code suggestions** -- Auto-complete for ES|QL commands and functions
 - **Error highlighting** -- Syntax errors are highlighted in the editor and error messages from Elasticsearch are displayed directly
 - **Syntax highlighting** -- ES|QL keywords, operators, and values are color-coded for readability
 
