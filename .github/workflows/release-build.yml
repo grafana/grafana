@@ -684,7 +684,6 @@ jobs:
 
   publish-targz:
     name: Upload targz / ${{ matrix.target }}
-    continue-on-error: ${{ matrix.allow-failure == true }}
     strategy:
       fail-fast: false
       matrix:
@@ -717,7 +716,6 @@ jobs:
 
   publish-deb-rpm:
     name: Upload deb/rpm / ${{ matrix.target }}
-    continue-on-error: ${{ matrix.allow-failure == true }}
     strategy:
       fail-fast: false
       matrix:
