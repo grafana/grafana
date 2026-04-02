@@ -1130,7 +1130,13 @@ describe('DashboardScene', () => {
           expect(stored.panelType).toBe('heatmap');
           expect(stored.styles.fieldConfig.defaults.custom.scaleDistribution).toEqual({ type: 'linear' });
           expect(stored.styles.fieldConfig.defaults.custom.hideFrom).toBeUndefined();
-          expect(stored.styles.options.color).toEqual({ scheme: 'Oranges', fill: 'dark-orange', reverse: false, exponent: 0.5, steps: 64 });
+          expect(stored.styles.options.color).toEqual({
+            scheme: 'Oranges',
+            fill: 'dark-orange',
+            reverse: false,
+            exponent: 0.5,
+            steps: 64,
+          });
           expect(stored.styles.options.cellGap).toBe(2);
           expect(stored.styles.options.selectionMode).toBe('x');
           expect(stored.styles.options.calculate).toBeUndefined();
@@ -1146,9 +1152,7 @@ describe('DashboardScene', () => {
           target.onFieldConfigChange = jest.fn();
 
           scene.pastePanelStyles(target);
-          expect(mockOnOptionsChange).toHaveBeenCalledWith(
-            expect.objectContaining({ cellGap: 2, selectionMode: 'x' })
-          );
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ cellGap: 2, selectionMode: 'x' }));
         });
 
         it('Should copy and paste styles for state timeline panels', () => {
