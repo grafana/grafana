@@ -216,20 +216,28 @@ jobs:
           - name: linux-amd64
             os: linux
             arch: amd64
+            deb: true
+            rpm: true
           - name: linux-arm64
             os: linux
             arch: arm64
+            deb: true
+            rpm: true
           - name: linux-s390x
             os: linux
             arch: s390x
+            deb: true
+            rpm: true
           - name: linux-armv6
             os: linux
             arch: arm
             arm: '6'
+            deb: true
           - name: linux-armv7
             os: linux
             arch: arm
             arm: '7'
+            deb: true
           - name: linux-riscv64
             os: linux
             arch: riscv64
@@ -269,10 +277,28 @@ jobs:
           BUILD_NUMBER: ${{ github.run_id }}
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
         run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
-      - name: Generate tar.gz checksums
+      - name: Build deb
+        if: matrix.deb
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Build rpm
+        if: matrix.rpm
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Generate checksums
         run: |
           set -euo pipefail
-          for f in dist/*.tar.gz; do
+          for f in dist/*.tar.gz dist/*.deb dist/*.rpm; do
             [ -e "$f" ] || continue
             sha256sum "$f" > "${f}.sha256"
           done
@@ -280,7 +306,7 @@ jobs:
         run: |
           listfile="artifacts-list-targz-${{ matrix.name }}.txt"
           : > "$listfile"
-          for f in dist/*.tar.gz; do
+          for f in dist/*.tar.gz dist/*.deb dist/*.rpm; do
             [ -e "$f" ] || continue
             echo "$f" >> "$listfile"
             echo "${f}.sha256" >> "$listfile"
@@ -335,15 +361,13 @@ jobs:
       matrix:
         include:
           - name: linux-amd64
-            artifacts: deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu
+            artifacts: docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu
           - name: linux-arm64
-            artifacts: deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
+            artifacts: docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
           - name: linux-s390x
-            artifacts: deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
+            artifacts: docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
           - name: linux-armv7
-            artifacts: deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
-          - name: linux-armv6
-            artifacts: deb:grafana:linux/arm/v6
+            artifacts: docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
           - name: windows-amd64
             artifacts: zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
           - name: windows-arm64
@@ -435,7 +459,6 @@ jobs:
           - target: linux-amd64
           - target: linux-arm64
           - target: linux-s390x
-          - target: linux-armv6
           - target: linux-armv7
           - target: windows-amd64
           - target: windows-arm64
@@ -494,7 +517,6 @@ jobs:
           - target: linux-amd64
           - target: linux-arm64
           - target: linux-s390x
-          - target: linux-armv6
           - target: linux-armv7
           - target: windows-amd64
           - target: windows-arm64
