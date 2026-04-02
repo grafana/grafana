@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type TraceKeyValuePair } from '@grafana/data';
+import { TraceKeyValuePair } from '@grafana/data';
 
-import { type TraceResponse } from '../types/trace';
+import { TraceResponse } from '../types/trace';
 
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
 
