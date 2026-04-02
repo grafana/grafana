@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +17,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var logger = log.New("iam.user.status")
@@ -62,46 +64,64 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		return nil, false, err
 	}
 
-	// Update lastSeenAt in the legacy store
+	// Resolve the incoming object to extract the lastSeenAt value from the request
+	oldObj, err := s.legacy.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	updatedUser, ok := newObj.(*iamv0alpha1.User)
+	if !ok {
+		return nil, false, fmt.Errorf("expected User but got %T", newObj)
+	}
+
+	lastSeenAt := time.Unix(updatedUser.Status.LastSeenAt, 0).UTC()
+
+	// Update lastSeenAt in the legacy store with the value from the request
 	err = s.store.UpdateLastSeenAt(ctx, ns, legacy.UpdateUserLastSeenAtCommand{
-		UID: name,
+		UID:        name,
+		LastSeenAt: legacysql.NewDBTime(lastSeenAt),
 	})
 	if err != nil {
 		return nil, false, err
 	}
 
-	getter := func(getter rest.Getter) (*iamv0alpha1.User, error) {
-		obj, err := getter.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		val, ok := obj.(*iamv0alpha1.User)
-		if !ok {
-			return nil, fmt.Errorf("expected User but got %T", obj)
-		}
-		return val, nil
-	}
-
-	legacyObj, err := getter(s.legacy)
+	// Re-fetch from legacy to get the authoritative state after the update
+	legacyObj, err := s.legacy.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
-
-	unified, err := getter(s.status)
-	if err != nil {
-		logger.Warn("unable to read unified status", "error", err)
-		return legacyObj, false, nil
+	legacyUser, ok := legacyObj.(*iamv0alpha1.User)
+	if !ok {
+		return nil, false, fmt.Errorf("expected User but got %T", legacyObj)
 	}
 
-	// Use the same status from legacy in unified
-	unified.Status = legacyObj.Status
+	// Sync the status to unified store
+	unifiedObj, err := s.status.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		logger.Warn("unable to read unified status", "error", err)
+		return legacyUser, false, nil
+	}
+	unified, ok := unifiedObj.(*iamv0alpha1.User)
+	if !ok {
+		logger.Warn("unexpected type from unified status", "type", fmt.Sprintf("%T", unifiedObj))
+		return legacyUser, false, nil
+	}
+
+	// FIXME: merge correctly instead of overwriting the whole status. This will cause issues if there are other fields in the status that are not managed by legacy store.
+	unified.Status = legacyUser.Status
 
 	_, _, err = s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(unified), createValidation, updateValidation, false, options)
 	if err != nil {
 		logger.Warn("error updating unified status", "error", err)
 	}
 
-	return legacyObj, false, nil
+	return legacyUser, false, nil
 }
 
 // GetResetFields implements rest.ResetFieldsStrategy.

@@ -541,7 +541,7 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 }
 
 func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should update lastSeenAt via status subresource", func(t *testing.T) {
+	t.Run("should update lastSeenAt via status subresource with the provided value", func(t *testing.T) {
 		ctx := context.Background()
 
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -563,48 +563,45 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		status := fetched.Object["status"].(map[string]interface{})
-		initialLastSeenAt, ok := status["lastSeenAt"]
-		require.True(t, ok, "expected status.lastSeenAt to be present")
+		initialLastSeenAt := toInt64(t, status["lastSeenAt"])
 
-		// The initial lastSeenAt should be well in the past (10 years ago)
-		initialLastSeenAtInt, ok := initialLastSeenAt.(int64)
-		if !ok {
-			// JSON numbers may come back as float64 from unstructured
-			initialLastSeenAtFloat, ok := initialLastSeenAt.(float64)
-			require.True(t, ok, "expected lastSeenAt to be a number, got %T", initialLastSeenAt)
-			initialLastSeenAtInt = int64(initialLastSeenAtFloat)
-		}
-		initialTime := time.Unix(initialLastSeenAtInt, 0)
+		initialTime := time.Unix(initialLastSeenAt, 0)
 		require.True(t, initialTime.Before(time.Now().Add(-1*time.Hour)),
 			"expected initial lastSeenAt to be in the past, got %v", initialTime)
 
-		beforeUpdate := time.Now().Add(-1 * time.Second)
+		// Use a specific timestamp — the API should store exactly this value, not time.Now()
+		wantLastSeenAt := time.Date(2025, 3, 15, 12, 30, 0, 0, time.UTC).Unix()
 
-		// Update status subresource — this should trigger the lastSeenAt update in the legacy store
+		// Update status subresource with the chosen timestamp
 		statusObj := fetched.DeepCopy()
 		statusMap := statusObj.Object["status"].(map[string]interface{})
-		statusMap["lastSeenAt"] = time.Now().Unix()
+		statusMap["lastSeenAt"] = wantLastSeenAt
 		statusObj.Object["status"] = statusMap
 
 		updated, err := userClient.Resource.UpdateStatus(ctx, statusObj, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updated)
 
-		// Fetch the user again to verify lastSeenAt was updated
+		// Fetch the user and verify the exact value was persisted
 		fetchedAfter, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		statusAfter := fetchedAfter.Object["status"].(map[string]interface{})
-		updatedLastSeenAt, ok := statusAfter["lastSeenAt"]
-		require.True(t, ok, "expected status.lastSeenAt after update")
-
-		updatedLastSeenAtInt, ok := updatedLastSeenAt.(int64)
-		if !ok {
-			updatedLastSeenAtFloat, ok := updatedLastSeenAt.(float64)
-			require.True(t, ok, "expected lastSeenAt to be a number after update, got %T", updatedLastSeenAt)
-			updatedLastSeenAtInt = int64(updatedLastSeenAtFloat)
-		}
-		updatedTime := time.Unix(updatedLastSeenAtInt, 0)
-		require.True(t, updatedTime.After(beforeUpdate),
-			"expected lastSeenAt to be updated to recent time, got %v (before update: %v)", updatedTime, beforeUpdate)
+		gotLastSeenAt := toInt64(t, statusAfter["lastSeenAt"])
+		require.Equal(t, wantLastSeenAt, gotLastSeenAt,
+			"lastSeenAt should match the value provided in the status update")
 	})
+}
+
+// toInt64 converts a value from unstructured JSON (which may be float64 or int64) to int64.
+func toInt64(t *testing.T, v interface{}) int64 {
+	t.Helper()
+	switch n := v.(type) {
+	case int64:
+		return n
+	case float64:
+		return int64(n)
+	default:
+		t.Fatalf("expected numeric type, got %T", v)
+		return 0
+	}
 }

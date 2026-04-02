@@ -810,8 +810,6 @@ func (r updateUserLastSeenAtQuery) Validate() error {
 
 // UpdateLastSeenAt implements LegacyIdentityStore.
 func (s *legacySQLStore) UpdateLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserLastSeenAtCommand) error {
-	cmd.LastSeenAt = legacysql.NewDBTime(time.Now().UTC())
-
 	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
