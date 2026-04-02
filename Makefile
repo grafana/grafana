@@ -377,6 +377,7 @@ build: build-go build-js ## Build backend and frontend.
 
 # Packaging variables (artifact / file naming).
 TARGZ_PACKAGE_NAME ?= grafana
+FPM_LICENSE        ?= AGPLv3
 ARCH_LABEL         := $(if $(ARM),$(ARCH)-$(ARM),$(ARCH))
 TARGZ_FILE         := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).tar.gz
 DEB_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).deb
@@ -428,6 +429,7 @@ $(DEB_FILE): $(TARGZ_FILE)
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
 	OS="$(OS)" \
 	ARCH="$(ARCH)" \
+	FPM_LICENSE="$(FPM_LICENSE)" \
 	$(if $(ARM),GOARM="$(ARM)") \
 	bash scripts/build-deb.sh
 
@@ -441,6 +443,7 @@ $(RPM_FILE): $(TARGZ_FILE)
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
 	OS="$(OS)" \
 	ARCH="$(ARCH)" \
+	FPM_LICENSE="$(FPM_LICENSE)" \
 	$(if $(ARM),GOARM="$(ARM)") \
 	bash scripts/build-rpm.sh
 

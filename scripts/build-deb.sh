@@ -100,7 +100,7 @@ fpm \
   --depends=adduser \
   --architecture="${PKG_ARCH}" \
   --description=Grafana \
-  --license=AGPLv3 \
+  --license="${FPM_LICENSE:-AGPLv3}" \
   --name="${TARGZ_PACKAGE_NAME}" \
   --deb-no-default-config-files \
   --deb-compression zst \

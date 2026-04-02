@@ -96,7 +96,7 @@ fpm \
   --depends=/sbin/service \
   --architecture="${PKG_ARCH}" \
   --description=Grafana \
-  --license=AGPLv3 \
+  --license="${FPM_LICENSE:-AGPLv3}" \
   --name="${TARGZ_PACKAGE_NAME}" \
   --rpm-posttrans="${SRC}/packaging/rpm/control/posttrans" \
   --rpm-digest=sha256 \
