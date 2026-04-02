@@ -202,7 +202,7 @@ jobs:
 
   build-targz:
     name: targz / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-large-io
     needs:
       - setup
       - build-frontend
