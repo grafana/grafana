@@ -909,11 +909,6 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 		return err
 	}
 
-	orgIDs := make([]int64, 0, len(orgs))
-	for _, org := range orgs {
-		orgIDs = append(orgIDs, org.ID)
-	}
-
 	currentNames := make([]string, 0, len(cmd.Config))
 	for _, cfg := range cmd.Config {
 		currentNames = append(currentNames, cfg.Name)
@@ -949,64 +944,6 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 		}
 	}
 	return nil
-}
-
-// searchExistingProvisionedData fetches provisioned data for the purposes of
-// duplication cleanup. Returns the set of folder UIDs for folders with the
-// given title, and the set of resources contained in those folders.
-func (dr *DashboardServiceImpl) searchExistingProvisionedData(
-	ctx context.Context, orgID int64, folderTitle string,
-) ([]string, []dashboards.DashboardSearchProjection, error) {
-	ctx, user := identity.WithServiceIdentity(ctx, orgID)
-	cmd := folder.SearchFoldersQuery{
-		OrgID:           orgID,
-		SignedInUser:    user,
-		Title:           folderTitle,
-		TitleExactMatch: true,
-	}
-
-	searchResults, err := dr.folderService.SearchFolders(ctx, cmd)
-	if err != nil {
-		return nil, nil, fmt.Errorf("checking if provisioning reset is required: %w", err)
-	}
-
-	var matchingFolders []string //nolint:prealloc
-	for _, result := range searchResults {
-		f, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID:        orgID,
-			UID:          &result.UID,
-			SignedInUser: user,
-		})
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// We are only interested in folders at the top-level of the folder hierarchy.
-		// Cleanup is not performed for provisioned folders that were moved to
-		// a different location.
-		if f.ParentUID != "" {
-			continue
-		}
-
-		matchingFolders = append(matchingFolders, f.UID)
-	}
-
-	if len(matchingFolders) == 0 {
-		// If there are no folders with the same title as the provisioned folder we
-		// are looking for, there is nothing to be cleaned up.
-		return nil, nil, nil
-	}
-
-	resources, err := dr.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
-		OrgId:        orgID,
-		SignedInUser: user,
-		FolderUIDs:   matchingFolders,
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return matchingFolders, resources, nil
 }
 
 func (dr *DashboardServiceImpl) ValidateDashboardRefreshInterval(minRefreshInterval string, targetRefreshInterval string) error {
