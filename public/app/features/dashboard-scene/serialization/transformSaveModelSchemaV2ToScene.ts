@@ -522,7 +522,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.spec.defaultValue
