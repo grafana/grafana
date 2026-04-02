@@ -96,4 +96,4 @@ Panel styles merge their settings with the panel's existing defaults as follows:
  
  You can further customize the panel after applying a style.
 
-Panel styles are available for time series, stat, gauge, bar gauge, and bar chart panels. Plugin authors can add Panel styles support to their own panel plugins.
+Panel styles are available for the following visualizations: time series, stat, gauge, bar gauge, and bar chart panels. However, plugin authors can add panel styles support to their own panel plugins as well.
