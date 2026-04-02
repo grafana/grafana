@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -14,13 +13,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/dskit/concurrency"
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -252,76 +249,6 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 	ctx, span := s.tracer.Start(ctx, "folder.GetChildren")
 	defer span.End()
 	return s.getChildrenFromApiServer(ctx, q)
-}
-
-func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.getRootFolders")
-	defer span.End()
-	permissions := q.SignedInUser.GetPermissions()
-	var folderPermissions []string
-	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		folderPermissions = permissions[dashboards.ActionFoldersWrite]
-	} else {
-		folderPermissions = permissions[dashboards.ActionFoldersRead]
-	}
-
-	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
-		return nil, nil
-	}
-
-	q.FolderUIDs = make([]string, 0, len(folderPermissions))
-	for _, p := range folderPermissions {
-		if p == dashboards.ScopeFoldersAll {
-			// no need to query for folders with permissions
-			// the user has permission to access all folders
-			q.FolderUIDs = nil
-			break
-		}
-		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
-			if !slices.Contains(q.FolderUIDs, folderUid) {
-				q.FolderUIDs = append(q.FolderUIDs, folderUid)
-			}
-		}
-	}
-
-	children, err := s.store.GetChildren(ctx, *q)
-	if err != nil {
-		return nil, err
-	}
-
-	childrenUIDs := make([]string, 0, len(children))
-	for _, f := range children {
-		childrenUIDs = append(childrenUIDs, f.UID)
-	}
-
-	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, q.OrgID, childrenUIDs)
-	if err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-	}
-
-	if err := concurrency.ForEachJob(ctx, len(children), runtime.NumCPU(), func(ctx context.Context, i int) error {
-		f := children[i]
-		// fetch folder from dashboard store
-		dashFolder, ok := dashFolders[f.UID]
-		if !ok {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "orgID", q.OrgID, "uid", f.UID)
-		}
-		// always expose the dashboard store sequential ID
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		f.ID = dashFolder.ID
-
-		return nil
-	}); err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to assign folder sequential ID: %w", err)
-	}
-
-	// add "shared with me" folder on the 1st page
-	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
-	}
-
-	return children, nil
 }
 
 // GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
