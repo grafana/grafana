@@ -118,7 +118,11 @@ const RefreshPickerComponent = memo((props: Props) => {
         onClick={onRefresh}
         variant={variant}
         icon={isLoading ? 'spinner' : 'sync'}
-        style={width ? { width } : undefined}
+        style={{
+          ...(width ? { width } : undefined),
+          flexShrink: 0,
+          minWidth: 'max-content',
+        }}
         data-testid={selectors.components.RefreshPicker.runButtonV2}
       >
         {text}
