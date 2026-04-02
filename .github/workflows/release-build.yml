@@ -307,7 +307,7 @@ jobs:
 
   build-deb-rpm:
     name: deb / rpm / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     needs:
       - setup
       - build-targz
@@ -359,10 +359,11 @@ jobs:
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
           RPM: ${{ matrix.rpm }}
         run: |
+          for TARGZ in dist/*.tar.gz; do break; done
           if [[ "$RPM" == "true" ]]; then
-            make -j2 build-deb build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+            make -j2 build-deb build-rpm -o "$TARGZ" BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
           else
-            make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+            make build-deb -o "$TARGZ" BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
           fi
       - name: Generate checksums
         run: |
@@ -404,7 +405,7 @@ jobs:
 
   build-docker-alpine:
     name: docker (alpine) / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     needs:
       - setup
       - build-targz
@@ -452,7 +453,9 @@ jobs:
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
           ARCH_TAG: ${{ matrix.arch-tag }}
         run: |
+          for TARGZ in dist/*.tar.gz; do break; done
           make build-docker \
+            -o "$TARGZ" \
             BUILD_VERSION="$BUILD_VERSION" \
             BUILD_NUMBER="$BUILD_NUMBER" \
             DOCKER_TAG="grafana/grafana-image-tags:${BUILD_VERSION}-${ARCH_TAG}"
@@ -496,7 +499,7 @@ jobs:
 
   build-docker-ubuntu:
     name: docker (ubuntu) / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     needs:
       - setup
       - build-targz
@@ -544,7 +547,9 @@ jobs:
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
           ARCH_TAG: ${{ matrix.arch-tag }}
         run: |
+          for TARGZ in dist/*.tar.gz; do break; done
           make build-docker-ubuntu \
+            -o "$TARGZ" \
             BUILD_VERSION="$BUILD_VERSION" \
             BUILD_NUMBER="$BUILD_NUMBER" \
             DOCKER_TAG="grafana/grafana-image-tags:${BUILD_VERSION}-ubuntu-${ARCH_TAG}"
@@ -664,8 +669,8 @@ jobs:
           path: upload/artifacts-${{ matrix.name }}
           retention-days: 1
 
-  publish-targz-artifacts:
-    name: Upload targz artifact / ${{ matrix.target }}
+  publish-targz:
+    name: Upload targz / ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
@@ -688,44 +693,16 @@ jobs:
       - build-targz
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-packages-${{ matrix.target }}
+      pattern: |
+        artifacts-packages-${{ matrix.target }}
+        artifacts-list-packages-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
       runs-on: ubuntu-x64-small
 
-  publish-targz-artifact-lists:
-    name: Upload targz artifact list / ${{ matrix.target }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: linux-amd64
-          - target: linux-arm64
-          - target: linux-s390x
-          - target: linux-armv6
-          - target: linux-armv7
-          - target: linux-riscv64
-          - target: windows-amd64
-          - target: windows-arm64
-          - target: darwin-amd64
-          - target: darwin-arm64
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build-targz
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-list-packages-${{ matrix.target }}
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
-      environment: prod
-      runs-on: ubuntu-x64-small
-
-  publish-deb-rpm-artifacts:
-    name: Upload deb/rpm artifact / ${{ matrix.target }}
+  publish-deb-rpm:
+    name: Upload deb/rpm / ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
@@ -744,40 +721,16 @@ jobs:
       - build-deb-rpm
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-deb-rpm-${{ matrix.target }}
+      pattern: |
+        artifacts-deb-rpm-${{ matrix.target }}
+        artifacts-list-deb-rpm-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
       runs-on: ubuntu-x64-small
 
-  publish-deb-rpm-artifact-lists:
-    name: Upload deb/rpm artifact list / ${{ matrix.target }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: linux-amd64
-          - target: linux-arm64
-          - target: linux-s390x
-          - target: linux-armv6
-          - target: linux-armv7
-          - target: linux-riscv64
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build-deb-rpm
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-list-deb-rpm-${{ matrix.target }}
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
-      environment: prod
-      runs-on: ubuntu-x64-small
-
-  publish-docker-alpine-artifacts:
-    name: Upload docker (alpine) artifact / ${{ matrix.target }}
+  publish-docker-alpine:
+    name: Upload docker (alpine) / ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
@@ -794,38 +747,16 @@ jobs:
       - build-docker-alpine
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-docker-${{ matrix.target }}
+      pattern: |
+        artifacts-docker-${{ matrix.target }}
+        artifacts-list-docker-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
       runs-on: ubuntu-x64-small
 
-  publish-docker-alpine-artifact-lists:
-    name: Upload docker (alpine) artifact list / ${{ matrix.target }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: linux-amd64
-          - target: linux-arm64
-          - target: linux-s390x
-          - target: linux-armv7
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build-docker-alpine
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-list-docker-${{ matrix.target }}
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
-      environment: prod
-      runs-on: ubuntu-x64-small
-
-  publish-docker-ubuntu-artifacts:
-    name: Upload docker (ubuntu) artifact / ${{ matrix.target }}
+  publish-docker-ubuntu:
+    name: Upload docker (ubuntu) / ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
@@ -842,38 +773,16 @@ jobs:
       - build-docker-ubuntu
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-docker-ubuntu-${{ matrix.target }}
+      pattern: |
+        artifacts-docker-ubuntu-${{ matrix.target }}
+        artifacts-list-docker-ubuntu-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
       runs-on: ubuntu-x64-small
 
-  publish-docker-ubuntu-artifact-lists:
-    name: Upload docker (ubuntu) artifact list / ${{ matrix.target }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: linux-amd64
-          - target: linux-arm64
-          - target: linux-s390x
-          - target: linux-armv7
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build-docker-ubuntu
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-list-docker-ubuntu-${{ matrix.target }}
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
-      environment: prod
-      runs-on: ubuntu-x64-small
-
-  publish-windows-artifacts:
-    name: Upload windows artifact / ${{ matrix.target }}
+  publish-windows:
+    name: Upload windows / ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
@@ -888,29 +797,9 @@ jobs:
       - build-windows
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-${{ matrix.target }}
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
-      environment: prod
-      runs-on: ubuntu-x64-small
-
-  publish-windows-artifact-lists:
-    name: Upload windows artifact list / ${{ matrix.target }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: windows-amd64
-          - target: windows-arm64
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build-windows
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-list-${{ matrix.target }}
+      pattern: |
+        artifacts-${{ matrix.target }}
+        artifacts-list-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod

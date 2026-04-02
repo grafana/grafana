@@ -379,8 +379,10 @@ build: build-go build-js ## Build backend and frontend.
 TARGZ_PACKAGE_NAME ?= grafana
 FPM_LICENSE        ?= AGPLv3
 ARCH_LABEL         := $(if $(ARM),$(ARCH)-$(ARM),$(ARCH))
+# armv6 debs use a -rpi suffix to match daggerbuild behavior (grafana-rpi, grafana-enterprise-rpi).
+DEB_PACKAGE_NAME   := $(if $(filter 6,$(ARM)),$(TARGZ_PACKAGE_NAME)-rpi,$(TARGZ_PACKAGE_NAME))
 TARGZ_FILE         := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).tar.gz
-DEB_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).deb
+DEB_FILE           := dist/$(DEB_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).deb
 RPM_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).rpm
 DOCKER_FILE        := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).docker.tar.gz
 DOCKER_UBUNTU_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).ubuntu.docker.tar.gz
