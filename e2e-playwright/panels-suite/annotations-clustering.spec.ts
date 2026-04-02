@@ -13,7 +13,7 @@ const DASHBOARD_UID = 'ad7p5pjk';
 
 const MANY_ANNOTATIONS_COUNTS = {
   frame1: {
-    count: 223,
+    count: 224,
     widths: {
       '1000': 1,
       '2600': 6,
@@ -24,6 +24,13 @@ const MANY_ANNOTATIONS_COUNTS = {
     widths: {
       '1000': 2,
       '2600': 15,
+    },
+  },
+  frame3: {
+    count: 2,
+    widths: {
+      '1000': 2,
+      '2600': 2,
     },
   },
 };
@@ -68,14 +75,18 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering disabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.count + MANY_ANNOTATIONS_COUNTS.frame2.count
+        MANY_ANNOTATIONS_COUNTS.frame1.count +
+          MANY_ANNOTATIONS_COUNTS.frame2.count +
+          MANY_ANNOTATIONS_COUNTS.frame3.count
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering disabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.count + MANY_ANNOTATIONS_COUNTS.frame2.count
+        MANY_ANNOTATIONS_COUNTS.frame1.count +
+          MANY_ANNOTATIONS_COUNTS.frame2.count +
+          MANY_ANNOTATIONS_COUNTS.frame3.count
       );
 
       await assertAnnotationCount(dashboardPage, selectors, 'Alert annos links', ALERT_ANNOTATIONS_COUNTS.frame1.count);
@@ -85,14 +96,18 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering enabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['1000'] + MANY_ANNOTATIONS_COUNTS.frame2.widths['1000']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['1000'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['1000'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['1000']
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering enabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['1000'] + MANY_ANNOTATIONS_COUNTS.frame2.widths['1000']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['1000'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['1000'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['1000']
       );
 
       await assertAnnotationCount(
@@ -120,7 +135,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
   });
   test.describe('width: 2600', () => {
     test.use({ viewport: { width: 2600, height: 1440 } });
-    test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
+    test('Clustering status', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams(),
@@ -131,14 +146,18 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering disabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.count + MANY_ANNOTATIONS_COUNTS.frame2.count
+        MANY_ANNOTATIONS_COUNTS.frame1.count +
+          MANY_ANNOTATIONS_COUNTS.frame2.count +
+          MANY_ANNOTATIONS_COUNTS.frame3.count
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering disabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.count + MANY_ANNOTATIONS_COUNTS.frame2.count
+        MANY_ANNOTATIONS_COUNTS.frame1.count +
+          MANY_ANNOTATIONS_COUNTS.frame2.count +
+          MANY_ANNOTATIONS_COUNTS.frame3.count
       );
 
       await assertAnnotationCount(dashboardPage, selectors, 'Alert annos links', ALERT_ANNOTATIONS_COUNTS.frame1.count);
@@ -148,14 +167,18 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering enabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['2600'] + MANY_ANNOTATIONS_COUNTS.frame2.widths['2600']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['2600'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['2600'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['2600']
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering enabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['2600'] + MANY_ANNOTATIONS_COUNTS.frame2.widths['2600']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['2600'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['2600'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['2600']
       );
 
       await assertAnnotationCount(
