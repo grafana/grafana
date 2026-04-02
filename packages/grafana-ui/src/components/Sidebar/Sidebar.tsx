@@ -213,6 +213,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       width: '280px',
       flexGrow: 1,
       paddingBottom: theme.spacing(2),
+      overflowY: 'auto',
     }),
     openPaneRight: css({
       borderRight: `1px solid ${theme.colors.border.weak}`,

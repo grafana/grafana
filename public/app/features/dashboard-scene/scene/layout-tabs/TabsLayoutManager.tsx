@@ -232,10 +232,6 @@ export class TabsLayoutManager
     this.addNewTab(tab);
   }
 
-  public shouldUngroup(): boolean {
-    return this.state.tabs.length === 1;
-  }
-
   public convertAllGridLayouts(gridLayoutType: GridLayoutType) {
     for (const tab of this.state.tabs) {
       switch (gridLayoutType) {

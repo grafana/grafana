@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Übermittelt an <2>{{name}}</2>",
-      "no-grouping": "Keine Gruppierung"
+      "delivered-to-disabled": "",
+      "no-grouping": "Keine Gruppierung",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident ist nicht installiert oder nicht korrekt konfiguriert",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Vorfall angeben"
     },
     "delete-rule-modal": {
@@ -2244,7 +2247,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3577,8 +3582,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Instanzdetails",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Sie haben für den ausgewählten Zeitbereich keine Warnungsinstanzen im Status Auslösen oder Ausstehend.",
@@ -4265,6 +4272,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Ordnername ist erforderlich.",
       "new-folder-owner-selector-checkbox": "Ordner einen Eigentümer zuweisen",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Sie haben sowohl bereitgestellte als auch nicht bereitgestellte Ressourcen ausgewählt. Diese können nicht zusammen verarbeitet werden. Bitte wählen Sie nur bereitgestellte Ressourcen oder nur nicht bereitgestellte Ressourcen aus und versuchen Sie es dann erneut.",
       "selected-mix-resources-modal-title": "Gemischte Ressourcentypen ausgewählt"
     },
@@ -4428,6 +4436,20 @@
       "error": "Zuletzt angesehene Dashboards konnten nicht geladen werden.",
       "retry": "Erneut versuchen",
       "title": "Zuletzt angesehen"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5609,6 +5631,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Anwenden",
           "change-value": "Variablenwert ändern",
@@ -6504,6 +6528,9 @@
       },
       "name": {
         "action": "Variablennamen ändern"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10326,6 +10353,8 @@
     "sidebar": {
       "close": "Schließen",
       "dock": "Ankoppeln",
+      "hide": "",
+      "show": "",
       "undock": "Abkoppeln"
     },
     "slider": {
@@ -12962,12 +12991,14 @@
       "not-saved": "Die übrigen Nutzer von Grafana in Ihrem Unternehmen sehen weiterhin die aktuelle Version, die im konfigurierten Standard-Branch gespeichert ist, bis dieser Branch zusammengeführt wird",
       "open-in-repo-button": "Öffnen in {{repoType}}",
       "open-pull-request-in-repo": "Pull-Request öffnen in {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "Zeigen Sie es in {{repoType}} an, um die letzten Änderungen zu sehen.",
       "view-pull-request-in-repo": "Pull-Request anzeigen in {{repoType}}"
     },
     "title-created-branch-in-repo": "Eine neue Ressource wurde in einem Branch in {{repoType}} erstellt.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Diese Ressource wird aus dem Branch geladen, den Sie gerade in {{repoType}} erstellt haben, und ist nur für Sie sichtbar"
+    "title-loaded-pull-request-in-repo": "Diese Ressource wird aus dem Branch geladen, den Sie gerade in {{repoType}} erstellt haben, und ist nur für Sie sichtbar",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15364,8 +15395,7 @@
       "bar": "Balkendiagramm",
       "bar-stacked": "Balkendiagramm – gestapelt",
       "bar-stacked-percent": "Balkendiagramm – gestapelt nach Prozentsatz",
-      "line": "Liniendiagramm",
-      "line-smooth": "Liniendiagramm – geglättet"
+      "line": "Liniendiagramm"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Zeitzone hinzufügen",

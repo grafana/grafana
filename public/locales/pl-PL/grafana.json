@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Dostarczono do: <2>{{name}}</2>",
-      "no-grouping": "Brak grupowania"
+      "delivered-to-disabled": "",
+      "no-grouping": "Brak grupowania",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1074,6 +1076,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Narzędzie Grafana Incident nie jest zainstalowane lub nie zostało poprawnie skonfigurowane",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Zadeklaruj incydent"
     },
     "delete-rule-modal": {
@@ -2264,7 +2267,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3615,8 +3620,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Szczegóły instancji",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "W wybranym zakresie czasu nie ma żadnych instancji alertów w stanie uruchomienia lub oczekiwania.",
@@ -4309,6 +4316,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Wymagana jest nazwa folderu.",
       "new-folder-owner-selector-checkbox": "Przypisz właściciela do folderu",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Wybrano zarówno zasoby udostępnione, jak i nieudostępnione. Nie można ich przetwarzać razem. Wybierz tylko zasoby udostępnione lub tylko zasoby nieudostępnione i spróbuj ponownie.",
       "selected-mix-resources-modal-title": "Wybrano mieszane typy zasobów"
     },
@@ -4482,6 +4490,20 @@
       "error": "Nie udało się załadować ostatnio wyświetlanych pulpitów.",
       "retry": "Ponów próbę",
       "title": "Ostatnio wyświetlane"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5669,6 +5691,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Zastosuj",
           "change-value": "Zmień wartość zmiennej",
@@ -6566,6 +6590,9 @@
       },
       "name": {
         "action": "Zmień nazwę zmiennej"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10436,6 +10463,8 @@
     "sidebar": {
       "close": "Zamknij",
       "dock": "Zadokuj",
+      "hide": "",
+      "show": "",
       "undock": "Odepnij"
     },
     "slider": {
@@ -13094,12 +13123,14 @@
       "not-saved": "Pozostali użytkownicy Grafany w Twojej organizacji nadal będą widzieć bieżącą wersję zapisaną w skonfigurowanej gałęzi domyślnej, dopóki ta gałąź nie zostanie scalona",
       "open-in-repo-button": "Otwórz w repozytorium {{repoType}}",
       "open-pull-request-in-repo": "Otwórz żądanie pull w repozytorium {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "Wyświetl w repozytorium {{repoType}}, aby zobaczyć najnowsze zmiany.",
       "view-pull-request-in-repo": "Wyświetl żądanie pull w repozytorium {{repoType}}"
     },
     "title-created-branch-in-repo": "Utworzono nowy zasób w gałęzi w repozytorium {{repoType}}.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Ten zasób został wczytany z gałęzi, która właśnie została przez ciebie utworzona w repozytorium {{repoType}}, i jest widoczny tylko dla ciebie"
+    "title-loaded-pull-request-in-repo": "Ten zasób został wczytany z gałęzi, która właśnie została przez ciebie utworzona w repozytorium {{repoType}}, i jest widoczny tylko dla ciebie",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15540,8 +15571,7 @@
       "bar": "Wykres słupkowy",
       "bar-stacked": "Wykres słupkowy – skumulowany",
       "bar-stacked-percent": "Wykres słupkowy – skumulowany procentowo",
-      "line": "Wykres liniowy",
-      "line-smooth": "Wykres liniowy – gładki"
+      "line": "Wykres liniowy"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Dodaj strefę czasową",

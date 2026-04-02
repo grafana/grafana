@@ -22,7 +22,7 @@ import {
   LocalValueVariable,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -1826,6 +1826,241 @@ describe('DashboardScene', () => {
       const result = scene.getExpressionCounts(saveModel);
 
       expect(result).toEqual({ sql: 1 });
+    });
+  });
+
+  describe('setDefaultVariables', () => {
+    it('should prepend default variables to existing variables', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+
+      const defaultVariables = [
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'defaultVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[];
+
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+      scene.setDefaultVariables(defaultVariables);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      expect(variables.length).toBe(existingVarCount + 1);
+      expect(variables[0].state.name).toBe('defaultVar');
+    });
+
+    it('should replace previous defaults on subsequent calls', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'varFromDs1',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      // Second call should replace, not append
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'varFromDs2',
+            current: { text: 'x', value: 'x' },
+            query: 'x,y,z',
+            origin: { type: 'datasource' as const, group: 'loki' },
+          },
+        },
+      ] as VariableKind[]);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      // Only 1 default + existing user vars (not 2 defaults)
+      expect(variables.length).toBe(existingVarCount + 1);
+      expect(variables[0].state.name).toBe('varFromDs2');
+    });
+  });
+
+  describe('setDefaultLinks', () => {
+    it('should prepend default links to existing links', () => {
+      const scene = buildTestScene();
+      const existingLinkCount = scene.state.links.length;
+
+      const defaultLinks = [
+        {
+          title: 'Default Link',
+          url: 'http://example.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'prometheus' },
+        },
+      ];
+
+      scene.setDefaultLinks(defaultLinks);
+
+      expect(scene.state.links.length).toBe(existingLinkCount + 1);
+      expect(scene.state.links[0].title).toBe('Default Link');
+    });
+
+    it('should preserve user links when no default links are provided', () => {
+      const scene = buildTestScene();
+      const originalLinkTitles = scene.state.links.map((l) => l.title);
+
+      scene.setDefaultLinks([]);
+
+      const linkTitles = scene.state.links.map((l) => l.title);
+      expect(linkTitles).toEqual(originalLinkTitles);
+    });
+
+    it('should replace previous defaults on subsequent calls', () => {
+      const scene = buildTestScene();
+      const existingLinkCount = scene.state.links.length;
+
+      scene.setDefaultLinks([
+        {
+          title: 'Link from DS1',
+          url: 'http://ds1.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'prometheus' },
+        },
+      ]);
+
+      // Second call should replace, not append
+      scene.setDefaultLinks([
+        {
+          title: 'Link from DS2',
+          url: 'http://ds2.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'loki' },
+        },
+      ]);
+
+      // Only 1 default + existing user links (not 2 defaults)
+      expect(scene.state.links.length).toBe(existingLinkCount + 1);
+      expect(scene.state.links[0].title).toBe('Link from DS2');
+    });
+  });
+
+  describe('clearDefaultControls', () => {
+    it('should remove only origin-bearing variables and links', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+
+      // Add default variables (with origin)
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'dsVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      // Add default links (with origin)
+      scene.setDefaultLinks([
+        {
+          title: 'DS Link',
+          url: 'http://example.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'prometheus' },
+        },
+      ]);
+
+      const userDefinedVarCount = sceneGraph.getVariables(scene).state.variables.filter((v) => !v.state.origin).length;
+      const userDefinedLinkCount = scene.state.links.filter((l) => !l.origin).length;
+
+      scene.clearDefaultControls();
+
+      const remainingVars = sceneGraph.getVariables(scene).state.variables;
+      const remainingLinks = scene.state.links;
+
+      expect(remainingVars.length).toBe(userDefinedVarCount);
+      expect(remainingLinks.length).toBe(userDefinedLinkCount);
+      expect(remainingVars.every((v) => !v.state.origin)).toBe(true);
+      expect(remainingLinks.every((l) => !l.origin)).toBe(true);
+    });
+
+    it('should prevent accumulation when called before re-adding defaults', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+      const existingLinkCount = scene.state.links.length;
+
+      const defaultVars = [
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'dsVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[];
+
+      const defaultLinks = [
+        {
+          title: 'DS Link',
+          url: 'http://example.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'prometheus' },
+        },
+      ];
+
+      // First load
+      scene.setDefaultVariables(defaultVars);
+      scene.setDefaultLinks(defaultLinks);
+
+      // Simulate re-navigation: clear then reload
+      scene.clearDefaultControls();
+      scene.setDefaultVariables(defaultVars);
+      scene.setDefaultLinks(defaultLinks);
+
+      expect(sceneGraph.getVariables(scene).state.variables.length).toBe(existingVarCount + 1);
+      expect(scene.state.links.length).toBe(existingLinkCount + 1);
     });
   });
 });

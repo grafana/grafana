@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 
 import type { PanelPluginMetas, PanelPluginMetasMapper, PluginMetasResponse } from '../types';
-import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
+import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 import { angularMapper, loadingStrategyMapper } from './shared';
 
