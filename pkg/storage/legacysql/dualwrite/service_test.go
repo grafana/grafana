@@ -199,13 +199,13 @@ func TestService(t *testing.T) {
 			name string
 			cfg  setting.Cfg
 
-			isStatic bool
+			isStorageService bool
 			error    string
 		}
 
 		for _, tc := range []testCase{{
 			name:     "both mode5",
-			isStatic: true,
+			isStorageService: true,
 			cfg: setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
@@ -217,7 +217,7 @@ func TestService(t *testing.T) {
 				},
 			}}, {
 			name:     "empty config",
-			isStatic: true,
+			isStorageService: true,
 			cfg:      setting.Cfg{},
 		}} {
 			t.Run(tc.name, func(t *testing.T) {
@@ -234,8 +234,8 @@ func TestService(t *testing.T) {
 				}
 				require.NoError(t, err)
 
-				_, isStatic := svc.(*staticService)
-				require.Equal(t, tc.isStatic, isStatic)
+				_, isStorageService := svc.(*storageService)
+				require.Equal(t, tc.isStorageService, isStorageService)
 			})
 		}
 	})
@@ -253,8 +253,8 @@ func TestProvideService(t *testing.T) {
 		svc, err := ProvideService(nil, NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
 		require.NoError(t, err)
 		require.NotNil(t, svc)
-		_, isStatic := svc.(*staticService)
-		require.True(t, isStatic)
+		_, isStorageService := svc.(*storageService)
+		require.True(t, isStorageService)
 	})
 
 	t.Run("ShouldManage always returns false", func(t *testing.T) {
@@ -319,9 +319,9 @@ func TestServiceMetrics_NullStatusReader(t *testing.T) {
 		},
 	}
 
-	t.Run("staticService increments statusReaderNull when reader is nil", func(t *testing.T) {
+	t.Run("storageService increments statusReaderNull when reader is nil", func(t *testing.T) {
 		metrics := newTestDualWriterMetrics()
-		svc := &staticService{cfg: cfg, metrics: metrics}
+		svc := &storageService{cfg: cfg, metrics: metrics}
 		mode := svc.getStorageMode(context.Background(), gr)
 		require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode)
 		require.Equal(t, float64(1), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
@@ -338,9 +338,9 @@ func TestServiceMetrics_StatusReaderError(t *testing.T) {
 		},
 	}
 
-	t.Run("staticService increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
+	t.Run("storageService increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
 		metrics := newTestDualWriterMetrics()
-		svc := &staticService{
+		svc := &storageService{
 			cfg:          cfg,
 			statusReader: &failingStatusReader{mode: unifiedmigrations.StorageModeDualWrite, err: errors.New("db down")},
 			metrics:      metrics,
@@ -356,7 +356,7 @@ func TestServiceMetrics_HappyPath(t *testing.T) {
 	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
 	metrics := newTestDualWriterMetrics()
 
-	svc := &staticService{
+	svc := &storageService{
 		cfg:          &setting.Cfg{},
 		statusReader: NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeUnified),
 		metrics:      metrics,

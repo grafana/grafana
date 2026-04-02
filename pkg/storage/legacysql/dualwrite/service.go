@@ -72,11 +72,11 @@ func NewFakeConfig() *setting.Cfg {
 	}
 }
 
-func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
+func ProvideServiceForTests(cfg *setting.Cfg) Service {
 	if cfg == nil {
 		cfg = &setting.Cfg{}
 	}
-	return &staticService{cfg: cfg, metrics: provideDualWriterMetrics(prometheus.NewRegistry())}
+	return &storageService{cfg: cfg, metrics: provideDualWriterMetrics(prometheus.NewRegistry())}
 }
 
 func ProvideService(
@@ -96,5 +96,5 @@ func ProvideService(
 	}
 
 	metrics := provideDualWriterMetrics(reg)
-	return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
+	return &storageService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
 }
