@@ -24,7 +24,7 @@ weight: 01
 Resource history is available on all stable (GA) API versions (for example, `v1`, `v2`). Alpha or beta versions may not support it.
 {{< /admonition >}}
 
-Grafana's new APIs track version history for resources. You can retrieve the history of any resource by using the standard List endpoint with specific query parameters. This page documents how to list resource history, using dashboards as an example. The same pattern applies to any resource.
+The new Grafana APIs track version history for resources. You can retrieve the history of any resource by using the standard List endpoint with specific query parameters. This page documents how to list resource history, using dashboards as an example. The same pattern applies to any resource.
 
 To learn more about the API structure, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
 
