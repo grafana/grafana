@@ -174,7 +174,7 @@ enable = alertingCentralAlertHistory
 
 ### Annotations with Loki
 
-You can use annotations (stored in Grafana's database) as the primary backend and write to Loki for external storage and advanced querying.
+You can use annotations (stored in the Grafana database) as the primary backend and write to Loki for external storage and advanced querying.
 
 Start with the setup steps from [Loki](#configure-loki-for-alert-state). Then, adjust your Grafana configuration as follows:
 
