@@ -1,10 +1,10 @@
 import { type Subscription } from 'rxjs';
 
-import { sceneGraph, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
+import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { loadDefaultControlsShared$, loadDefaultLinks$, loadDefaultVariables$ } from '../utils/dashboardControls';
 import { getDsRefsFromScene } from '../utils/dashboardDsRefs';
+import { getDashboardSceneFor } from '../utils/utils';
 
 export class DefaultControlsBehavior extends SceneObjectBase<SceneObjectState> {
   private _variablesSub?: Subscription;
@@ -16,15 +16,14 @@ export class DefaultControlsBehavior extends SceneObjectBase<SceneObjectState> {
   }
 
   private _onActivate() {
-    const dashboard = sceneGraph.getAncestor(this, DashboardScene);
-    dashboard.setState({ defaultVariablesLoading: true, defaultLinksLoading: true });
-
+    const dashboard = getDashboardSceneFor(this);
     const refs = getDsRefsFromScene(dashboard);
 
     if (refs.length === 0) {
-      dashboard.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
       return;
     }
+
+    dashboard.setState({ defaultVariablesLoading: true, defaultLinksLoading: true });
 
     this._cleanup();
 
