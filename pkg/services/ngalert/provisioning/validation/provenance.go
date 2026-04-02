@@ -41,14 +41,14 @@ func NewPermissionAwareValidator(ac accesscontrol.AccessControl) ProvenanceStatu
 			user, err := identity.GetRequester(ctx)
 			if err != nil {
 				// Treat missing/invalid requester as a deterministic authorization failure
-				return MakeErrProvenanceChangeNotAllowed(from, to, "missing requester")
+				return MakeErrProvenanceChangeNotAllowedWithReason(from, to, "missing requester")
 			}
 			ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningSetStatus))
 			if err != nil {
 				return err
 			}
 			if !ok {
-				return MakeErrProvenanceChangeNotAllowed(from, to, "missing permission")
+				return MakeErrProvenanceChangeNotAllowedWithReason(from, to, "missing permission")
 			}
 		}
 		return nil
@@ -63,7 +63,7 @@ func ValidateProvenanceRelaxed(_ context.Context, from, to models.Provenance) er
 		return nil
 	}
 	if to == models.ProvenanceNone { // allow any transition to none unless it's from "none" either
-		return MakeErrProvenanceChangeNotAllowed(from, to, "transition is not allowed")
+		return MakeErrProvenanceChangeNotAllowedWithReason(from, to, "transition is not allowed")
 	}
 	return nil
 }

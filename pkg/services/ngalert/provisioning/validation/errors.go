@@ -12,7 +12,24 @@ var (
 	)
 )
 
-func MakeErrProvenanceChangeNotAllowed(from, to models.Provenance, reason string) error {
+func MakeErrProvenanceChangeNotAllowed(from, to models.Provenance) error {
+	if to == "" {
+		to = "none"
+	}
+	if from == "" {
+		from = "none"
+	}
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"TargetProvenance": to,
+			"SourceProvenance": from,
+			"Reason":           "-",
+		},
+	}
+	return ErrProvenanceChangeNotAllowed.Build(data)
+}
+
+func MakeErrProvenanceChangeNotAllowedWithReason(from, to models.Provenance, reason string) error {
 	if to == "" {
 		to = "none"
 	}
