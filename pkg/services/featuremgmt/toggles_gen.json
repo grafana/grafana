@@ -1816,13 +1816,16 @@
     {
       "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-04-16T14:52:47Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2024-04-16T14:52:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -2233,7 +2236,7 @@
       "spec": {
         "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2484,13 +2487,16 @@
     {
       "metadata": {
         "name": "infinityRunQueriesInParallel",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-03-14T12:54:04Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2025-03-14T12:54:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables running Infinity queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -2564,13 +2570,16 @@
     {
       "metadata": {
         "name": "jaegerEnableGrpcEndpoint",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-10-31T18:19:16Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2025-10-31T18:19:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3320,13 +3329,16 @@
     {
       "metadata": {
         "name": "logQLScope",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-11-11T11:53:24Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2024-11-11T11:53:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into loki queries.",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3405,39 +3417,48 @@
     {
       "metadata": {
         "name": "lokiExperimentalStreaming",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-06-19T10:03:51Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2023-06-19T10:03:51Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Support new streaming approach for loki (prototype, needs special loki build)",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "lokiLabelNamesQueryApi",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-12-13T14:31:41Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2024-12-13T14:31:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Defaults to using the Loki `/labels` API instead of `/series`",
         "stage": "GA",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "lokiLogsDataplane",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-07-13T07:58:00Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2023-07-13T07:58:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Changes logs responses from Loki to be compliant with the dataplane specification.",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3472,13 +3493,16 @@
     {
       "metadata": {
         "name": "lokiRunQueriesInParallel",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-09-19T09:34:01Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2023-09-19T09:34:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables running Loki queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3818,13 +3842,16 @@
     {
       "metadata": {
         "name": "opentsdbBackendMigration",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-04T08:11:33Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2025-12-04T08:11:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Run queries through the data source backend",
         "stage": "GA",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4163,13 +4190,16 @@
     {
       "metadata": {
         "name": "prometheusSpecialCharsInLabelValues",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-12-18T21:31:08Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2024-12-18T21:31:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Adds support for quotes and special characters in label values for Prometheus queries",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "expression": "false"
       }
@@ -4396,13 +4426,16 @@
     {
       "metadata": {
         "name": "queryWithAssistant",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the Query with Assistant button in the query editor",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "expression": "false"
       }
@@ -4906,13 +4939,16 @@
     {
       "metadata": {
         "name": "streamingForwardTeamHeadersTempo",
-        "resourceVersion": "1774573687389",
-        "creationTimestamp": "2026-03-27T01:08:07Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2026-03-27T01:08:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
