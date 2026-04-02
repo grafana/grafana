@@ -27,6 +27,9 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(
               name="times"
               size="md"
               aria-label={removeButtonLabel}
+              onMouseDown={(e) => {
+                e.preventDefault();
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove();

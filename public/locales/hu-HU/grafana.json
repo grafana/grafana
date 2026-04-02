@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Kézbesítve ide: <2>{{name}}</2>",
-      "no-grouping": "Nincs csoportosítás"
+      "delivered-to-disabled": "",
+      "no-grouping": "Nincs csoportosítás",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "A Grafana Incident telepítése vagy konfigurációja nem megfelelő",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Incidens deklarálása"
     },
     "delete-rule-modal": {
@@ -2244,7 +2247,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3577,8 +3582,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Példány részletei",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Nincsenek aktív vagy függő állapotú riasztáspéldányok a kiválasztott időtartományban.",
@@ -4265,6 +4272,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "A mappa nevének megadása kötelező.",
       "new-folder-owner-selector-checkbox": "Tulajdonos hozzárendelése a mappához",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Kiépített és nem kiépített erőforrásokat is kijelölt. Ezeket nem lehet egyszerre feldolgozni. Kérjük, válasszon csak kiépített vagy csak nem kiépített erőforrásokat, majd próbálja újra.",
       "selected-mix-resources-modal-title": "Vegyes erőforrástípusok lettek kiválasztva"
     },
@@ -4428,6 +4436,20 @@
       "error": "A legutóbb megtekintett irányítópultokat nem sikerült betölteni.",
       "retry": "Újra",
       "title": "Legutóbb megtekintve"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5609,6 +5631,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Alkalmaz",
           "change-value": "Változóérték módosítása",
@@ -6504,6 +6528,9 @@
       },
       "name": {
         "action": "Változónév módosítása"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10326,6 +10353,8 @@
     "sidebar": {
       "close": "Bezárás",
       "dock": "Dokkolás",
+      "hide": "",
+      "show": "",
       "undock": "Dokkolás feloldása"
     },
     "slider": {
@@ -12962,12 +12991,14 @@
       "not-saved": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is a konfigurált alapértelmezett ágba mentett aktuális verziót fogja látni",
       "open-in-repo-button": "Megnyitás itt: {{repoType}}",
       "open-pull-request-in-repo": "Összefésülési kérelem megnyitása itt: {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "A legújabb változások megtekintéséhez nyissa meg a(z) {{repoType}} adattárban.",
       "view-pull-request-in-repo": "Összefésülési kérelem megtekintése itt: {{repoType}}"
     },
     "title-created-branch-in-repo": "Új erőforrás lett létrehozva egy ágban itt: {{repoType}}.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Ez az erőforrás a(z) {{repoType}} adattárban az imént létrehozott ágból töltődik be, és csak Ön láthatja"
+    "title-loaded-pull-request-in-repo": "Ez az erőforrás a(z) {{repoType}} adattárban az imént létrehozott ágból töltődik be, és csak Ön láthatja",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15364,8 +15395,7 @@
       "bar": "Sávdiagram",
       "bar-stacked": "Sávdiagram – halmozott",
       "bar-stacked-percent": "Sávdiagram – százalék szerint halmozott",
-      "line": "Vonaldiagram",
-      "line-smooth": "Vonaldiagram – sima"
+      "line": "Vonaldiagram"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Időzóna hozzáadása",

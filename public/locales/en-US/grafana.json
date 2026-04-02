@@ -4364,6 +4364,17 @@
       "title": "You haven't created any dashboards yet",
       "title-folder": "This folder doesn't have any dashboards yet"
     },
+    "filters": {
+      "all-teams": "All teams",
+      "owner-aria-label": "Owner filter",
+      "owner-limit-warning": "Listing only first {{limit}} teams out of {{totalCount}}.",
+      "owner-limit-warning-icon": "Owner filter limit warning",
+      "owner-load-error-icon": "Owner filter load error",
+      "owner-load-error-prefix": "Failed to load teams because of error:",
+      "owner-loading": "Loading teams...",
+      "owner-no-options": "No teams found",
+      "owner-placeholder": "Filter by owner"
+    },
     "folder-actions-button": {
       "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
@@ -5436,9 +5447,6 @@
         "title": {
           "proceed-to-external-site": "Proceed to external site?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "View as Scene"
       }
     },
     "dashboard-links-menu": {
@@ -5985,12 +5993,20 @@
       "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
     },
     "new-panel": {
+      "aria-label": "Unconfigured panel. Tab to see configuration options.",
       "configure-button": "Configure",
       "configure-button-menu": "Toggle menu",
+      "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
-      "missing-config": "Missing panel configuration"
+      "menu-use-saved-query": "Use saved query",
+      "missing-config": "Missing panel configuration",
+      "no-visualization": "No visualization configured",
+      "saved-query-apply-error": "Failed to apply saved query",
+      "saved-query-apply-error-detail": "An error occurred while applying the saved query. Please try again.",
+      "saved-query-no-suggestion": "No visualization found",
+      "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type."
     },
     "new-panel-title": "New panel",
     "on-create-new-row": {
@@ -6769,6 +6785,11 @@
         "change-annotation-panel-filter": "Change annotation panel filter"
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "Delete annotation query",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete annotation query"
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6855,6 +6876,10 @@
       "constant-options": "Constant options",
       "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "Delete",
+      "aria-label-edit": "Edit"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -7185,6 +7210,12 @@
       "remove-link": "Remove link",
       "update-link": "Update link"
     },
+    "link-editable-element": {
+      "delete-confirm": "Delete link",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete link",
+      "unnamed": "Unnamed link"
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7503,6 +7534,7 @@
     "sharing": {
       "save-before-share": {
         "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+        "text-no-save": "You have unsaved changes. You don’t have permission to save. Discard changes and share the original?",
         "title": "Unsaved changes"
       }
     },
@@ -7636,6 +7668,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "Delete variable",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete variable"
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
@@ -7665,6 +7702,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Are you sure you want to delete: {{variable}}?",
       "confirmText-delete-variable": "Delete variable",
+      "drag-handle-label": "Reorder variable {{variableName}}",
       "title-delete-variable": "Delete variable",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
@@ -8234,6 +8272,7 @@
       "label-preview": "Preview"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "Reorder value mapping row",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Duplicate value mapping",
       "duplicate-value-mapping-tooltip-duplicate": "Duplicate",
       "placeholder-exact-value-to-match": "Exact value to match",
@@ -10052,6 +10091,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
+      "drag-handle-label": "Reorder data link {{title}}",
       "edit-link": "Edit link",
       "one-click": "One click",
       "one-click-enabled": "One click enabled",
@@ -12596,7 +12636,7 @@
       "name-required": "Name is required",
       "save": "Save",
       "table-delete": "Delete playlist item",
-      "table-drag": "Drag and drop to reorder",
+      "table-drag": "Reorder playlist item",
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
@@ -15577,6 +15617,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Click to edit",
+      "drag-handle-label": "Reorder enum mapping row",
       "remove-enum-row-aria-label-delete-enum-row": "Delete enum row",
       "remove-enum-row-tooltip-delete": "Delete"
     },
@@ -16490,6 +16531,7 @@
       "variable": "Variable"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "Reorder variable {{variableName}}",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
     },

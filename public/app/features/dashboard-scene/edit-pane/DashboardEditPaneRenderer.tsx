@@ -284,7 +284,6 @@ function getStyles(theme: GrafanaTheme2, isEditing: boolean | undefined) {
       gap: theme.spacing(2),
       paddingTop: theme.spacing(1),
       paddingBottom: theme.spacing(2),
-      background: theme.colors.action.selected,
       borderBottom: `1px solid ${theme.colors.border.medium}`,
       borderTopLeftRadius: theme.shape.radius.default,
       borderTopRightRadius: theme.shape.radius.default,
