@@ -51,12 +51,12 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
 
   const actions: JSX.Element[] = [];
 
-  if (showManagePermissions) {
+  if (showManagePermissions && routeMeta?.name) {
     actions.push(
       <ManagePermissions
         key="manage-permissions"
         resource={ROUTES_RESOURCE_TYPE}
-        resourceId={routeMeta?.name ?? ''}
+        resourceId={routeMeta.name}
         resourceName={route.name}
         renderButton={({ onClick }) => (
           <Button icon="unlock" variant="secondary" size="sm" data-testid="manage-permissions-action" onClick={onClick}>

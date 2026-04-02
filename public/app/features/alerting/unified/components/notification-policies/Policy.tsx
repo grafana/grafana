@@ -449,10 +449,10 @@ const Policy = (props: PolicyComponentProps) => {
         )}
       </div>
       {showExportDrawer && <GrafanaPoliciesExporter routeName={currentRoute.name} onClose={toggleShowExportDrawer} />}
-      {showPermissionsDrawer && (
+      {showPermissionsDrawer && routeMeta?.name && (
         <ManagePermissionsDrawer
           resource={ROUTES_RESOURCE_TYPE}
-          resourceId={routeMeta?.name ?? ''}
+          resourceId={routeMeta.name}
           resourceName={currentRoute.name}
           onClose={() => setShowPermissionsDrawer(false)}
         />

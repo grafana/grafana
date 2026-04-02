@@ -54,6 +54,10 @@ describe('ActionButtons', () => {
     grantAllAbilities();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should show manage permissions button when route has canAdmin annotation', () => {
     const route = makeRoute({
       [K8sAnnotations.AccessAdmin]: 'true',
