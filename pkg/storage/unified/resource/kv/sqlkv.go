@@ -679,23 +679,35 @@ func (k *SqlKV) keyExists(ctx context.Context, conn dbtx, qb *queryBuilder, keyP
 }
 
 // batchInsert inserts a new row. For DataSection it includes the extra NOT NULL columns with defaults.
+// Uses plain INSERT (no upsert) so the DB's unique constraint rejects concurrent duplicates.
 func (k *SqlKV) batchInsert(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
+	var query string
+	var args []interface{}
 	if isDataSection {
-		query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
-		_, err := conn.ExecContext(ctx, query, args...)
-		return err
+		query, args = qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
+	} else {
+		query, args = qb.buildInsertQuery(keyPath, value)
 	}
-	// Events/PendingDelete: simple insert via upsert (no conflict expected since caller checked)
-	query, args := qb.buildUpsertQuery(keyPath, value)
 	_, err := conn.ExecContext(ctx, query, args...)
 	return err
 }
 
 // batchUpdate updates the value for an existing key_path.
+// Checks RowsAffected to detect concurrent deletes between the existence check and the UPDATE.
 func (k *SqlKV) batchUpdate(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
 	query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
-	_, err := conn.ExecContext(ctx, query, args...)
-	return err
+	result, err := conn.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
