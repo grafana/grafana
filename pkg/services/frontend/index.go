@@ -133,11 +133,13 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
 		Settings:                   fsSettings,
 		RenderBindingSupported:     renderBindingSupported,
-		BootScript:                 p.bootScript,
 	}
 
-	if p.bootScript == "" && inlinedBootScript {
-		p.log.Error("Feature flag inlinedBootScript is enabled but boot.js is empty - grafanaBootData will not be populated.")
+	if inlinedBootScript {
+		data.BootScript = p.bootScript
+		if p.bootScript == "" {
+			p.log.Error("Feature flag inlinedBootScript is enabled but boot.js is empty — frontend will not boot")
+		}
 	}
 
 	// TODO -- reevaluate with mt authnz

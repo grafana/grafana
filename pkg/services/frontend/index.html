@@ -175,7 +175,11 @@
       }
     </script>
 
-    [[if eq .BootScript ""]]
+    [[if .BootScript]]
+    <script nonce="[[.Nonce]]">
+      [[.BootScript]]
+    </script>
+    [[else]]
     <script nonce="[[.Nonce]]">
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
@@ -437,10 +441,6 @@
           window.__grafana_load_failed(err);
         });
       })();
-    </script>
-    [[else]]
-    <script nonce="[[.Nonce]]">
-      [[.BootScript]]
     </script>
     [[end]]
 
