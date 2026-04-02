@@ -154,11 +154,6 @@ export class RowItem
       return;
     }
 
-    if (this.getParentLayout().shouldUngroup()) {
-      this.onDelete();
-      return;
-    }
-
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: t('dashboard.rows-layout.delete-row-title', 'Delete row?'),

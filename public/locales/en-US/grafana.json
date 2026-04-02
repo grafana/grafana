@@ -6780,6 +6780,11 @@
         "change-annotation-panel-filter": "Change annotation panel filter"
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "Delete annotation query",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete annotation query"
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7199,6 +7204,12 @@
       "add-link": "Add link",
       "remove-link": "Remove link",
       "update-link": "Update link"
+    },
+    "link-editable-element": {
+      "delete-confirm": "Delete link",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete link",
+      "unnamed": "Unnamed link"
     },
     "link-list": {
       "create-drag-end-handler": {
@@ -7651,6 +7662,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "Delete variable",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete variable"
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
@@ -7680,6 +7696,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Are you sure you want to delete: {{variable}}?",
       "confirmText-delete-variable": "Delete variable",
+      "drag-handle-label": "Reorder variable {{variableName}}",
       "title-delete-variable": "Delete variable",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
@@ -8249,6 +8266,7 @@
       "label-preview": "Preview"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "Reorder value mapping row",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Duplicate value mapping",
       "duplicate-value-mapping-tooltip-duplicate": "Duplicate",
       "placeholder-exact-value-to-match": "Exact value to match",
@@ -10067,6 +10085,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
+      "drag-handle-label": "Reorder data link {{title}}",
       "edit-link": "Edit link",
       "one-click": "One click",
       "one-click-enabled": "One click enabled",
@@ -12611,7 +12630,7 @@
       "name-required": "Name is required",
       "save": "Save",
       "table-delete": "Delete playlist item",
-      "table-drag": "Drag and drop to reorder",
+      "table-drag": "Reorder playlist item",
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
@@ -15592,6 +15611,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Click to edit",
+      "drag-handle-label": "Reorder enum mapping row",
       "remove-enum-row-aria-label-delete-enum-row": "Delete enum row",
       "remove-enum-row-tooltip-delete": "Delete"
     },
@@ -16505,6 +16525,7 @@
       "variable": "Variable"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "Reorder variable {{variableName}}",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
     },

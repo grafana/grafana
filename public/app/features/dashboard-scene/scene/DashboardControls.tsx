@@ -199,13 +199,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
               </div>
             </div>
           </div>
-          {renderHiddenVariables(dashboard)}
+          <RenderHiddenVariables dashboard={dashboard} />
         </>
       );
     }
 
     // To still have spacing when no controls are rendered
-    return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
+    return (
+      <Box padding={1}>
+        <RenderHiddenVariables dashboard={dashboard} />
+      </Box>
+    );
   }
 
   // When dashboardAdHocAndGroupByWrapper is enabled, use the new layout with topRow
@@ -379,7 +383,7 @@ function DashboardControlActions({
   );
 }
 
-function renderHiddenVariables(dashboard: DashboardScene) {
+function RenderHiddenVariables({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard).useState();
   const renderAsHiddenVariables = variables.filter((v) => v.UNSAFE_renderAsHidden);
   if (renderAsHiddenVariables && renderAsHiddenVariables.length > 0) {
