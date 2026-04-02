@@ -534,7 +534,3 @@ export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
   return !!changes.diffCount;
 }
-
-export function isDashboardNewLayoutsEnabled(): boolean {
-  return !!config.featureToggles.dashboardNewLayouts;
-}
