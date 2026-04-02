@@ -42,6 +42,56 @@ func buildDataImportRows(count int) []DataImportRow {
 	return rows
 }
 
+func TestDataImportBatchStatementCount(t *testing.T) {
+	tests := []struct {
+		name     string
+		rowCount int
+		maxRows  int
+		expected int
+	}{
+		{
+			name:     "zero rows",
+			rowCount: 0,
+			maxRows:  dataImportBatchDefaultMaxRows,
+			expected: 0,
+		},
+		{
+			name:     "non positive max rows",
+			rowCount: 3,
+			maxRows:  0,
+			expected: 0,
+		},
+		{
+			name:     "single statement",
+			rowCount: 8,
+			maxRows:  8,
+			expected: 1,
+		},
+		{
+			name:     "multiple statements",
+			rowCount: 9,
+			maxRows:  8,
+			expected: 2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, dataImportBatchStatementCount(tc.rowCount, tc.maxRows))
+		})
+	}
+}
+
+func TestDataImportBatchPayloadBytes(t *testing.T) {
+	rows := []DataImportRow{
+		{Value: []byte("abc")},
+		{Value: []byte("de")},
+		{Value: nil},
+	}
+
+	require.Equal(t, 5, dataImportBatchPayloadBytes(rows))
+}
+
 func TestSQLKVInsertDataImportBatchTransactionSelection(t *testing.T) {
 	tests := []struct {
 		name           string
