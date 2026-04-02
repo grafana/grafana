@@ -704,16 +704,6 @@ export interface FeatureToggles {
   */
   alertingNavigationV2?: boolean;
   /**
-  * Enables saved searches for alert rules list
-  * @default false
-  */
-  alertingSavedSearches?: boolean;
-  /**
-  * Enables saved searches for the Alert Activity page
-  * @default false
-  */
-  alertingTriageSavedSearches?: boolean;
-  /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   * @default false
   */
@@ -779,11 +769,6 @@ export interface FeatureToggles {
   * @default true
   */
   prometheusAzureOverrideAudience?: boolean;
-  /**
-  * Enable the new alerting search experience
-  * @default false
-  */
-  alertingFilterV2?: boolean;
   /**
   * Enable grafana dataplane aggregator
   * @default false
@@ -1147,7 +1132,7 @@ export interface FeatureToggles {
   pluginsAutoUpdate?: boolean;
   /**
   * Enables the alerting list view v2 preview toggle
-  * @default false
+  * @default true
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**

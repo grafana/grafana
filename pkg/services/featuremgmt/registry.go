@@ -1082,7 +1082,7 @@ var (
 		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 			Expression:   "false",
@@ -1103,22 +1103,7 @@ var (
 			FrontendOnly: false,
 			Expression:   "true",
 		},
-		{
-			Name:         "alertingSavedSearches",
-			Description:  "Enables saved searches for alert rules list",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "alertingTriageSavedSearches",
-			Description:  "Enables saved searches for the Alert Activity page",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
+
 		{
 			Name:         "alertingDisableSendAlertsExternal",
 			Description:  "Disables the ability to send alerts to an external Alertmanager datasource.",
@@ -1223,14 +1208,7 @@ var (
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
 		},
-		{
-			Name:         "alertingFilterV2",
-			Description:  "Enable the new alerting search experience",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
+
 		{
 			Name:            "dataplaneAggregator",
 			Description:     "Enable grafana dataplane aggregator",
@@ -1805,9 +1783,9 @@ var (
 			Name:         "alertingListViewV2PreviewToggle",
 			Description:  "Enables the alerting list view v2 preview toggle",
 			FrontendOnly: true,
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "alertRuleUseFiredAtForStartsAt",
