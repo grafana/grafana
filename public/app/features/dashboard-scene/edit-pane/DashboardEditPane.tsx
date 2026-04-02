@@ -182,15 +182,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     action.perform();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    if (action.selectedObjectOnPerform) {
-      this.selectObject(action.selectedObjectOnPerform, action.selectedObjectOnPerform.state.key!, { force: true });
-    }
-
     if (action.addedObject) {
       this.newObjectAddedToCanvas(action.addedObject);
     }
 
-    if (!action.selectedObjectOnPerform && action.movedObject) {
+    if (action.movedObject) {
       this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
