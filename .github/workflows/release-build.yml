@@ -144,6 +144,7 @@ jobs:
     name: build backend / ${{ matrix.name }}
     runs-on: ubuntu-x64-large
     needs: [setup]
+    continue-on-error: ${{ matrix.allow-failure == true }}
     permissions:
       contents: read
     strategy:
@@ -167,9 +168,11 @@ jobs:
             os: linux
             arch: arm
             arm: '7'
+          # riscv64 is not an officially supported architecture; failures are allowed.
           - name: linux-riscv64
             os: linux
             arch: riscv64
+            allow-failure: true
           - name: windows-amd64
             os: windows
             arch: amd64
@@ -205,6 +208,7 @@ jobs:
   build-targz:
     name: targz / ${{ matrix.name }}
     runs-on: ubuntu-x64-large-io
+    continue-on-error: ${{ matrix.allow-failure == true }}
     needs:
       - setup
       - build-frontend
@@ -232,9 +236,11 @@ jobs:
             os: linux
             arch: arm
             arm: '7'
+          # riscv64 is not an officially supported architecture; failures are allowed.
           - name: linux-riscv64
             os: linux
             arch: riscv64
+            allow-failure: true
           - name: windows-amd64
             os: windows
             arch: amd64
@@ -308,6 +314,7 @@ jobs:
   build-deb-rpm:
     name: deb / rpm / ${{ matrix.name }}
     runs-on: ubuntu-x64-large
+    continue-on-error: ${{ matrix.allow-failure == true }}
     needs:
       - setup
       - build-targz
@@ -337,10 +344,12 @@ jobs:
             os: linux
             arch: arm
             arm: '7'
+          # riscv64 is not an officially supported architecture; failures are allowed.
           - name: linux-riscv64
             os: linux
             arch: riscv64
             rpm: true
+            allow-failure: true
     steps:
       - uses: actions/checkout@v6
         with:
@@ -444,6 +453,8 @@ jobs:
         uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
         with:
           image: docker.io/tonistiigi/binfmt:qemu-v10.2.1-65
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
       - name: Build docker image (alpine)
         env:
           GOOS: ${{ matrix.os }}
@@ -538,6 +549,8 @@ jobs:
         uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
         with:
           image: docker.io/tonistiigi/binfmt:qemu-v10.2.1-65
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
       - name: Build docker image (ubuntu)
         env:
           GOOS: ${{ matrix.os }}
@@ -671,6 +684,7 @@ jobs:
 
   publish-targz:
     name: Upload targz / ${{ matrix.target }}
+    continue-on-error: ${{ matrix.allow-failure == true }}
     strategy:
       fail-fast: false
       matrix:
@@ -680,7 +694,9 @@ jobs:
           - target: linux-s390x
           - target: linux-armv6
           - target: linux-armv7
+          # riscv64 is not an officially supported architecture; failures are allowed.
           - target: linux-riscv64
+            allow-failure: true
           - target: windows-amd64
           - target: windows-arm64
           - target: darwin-amd64
@@ -693,9 +709,7 @@ jobs:
       - build-targz
     with:
       bucket: grafana-prerelease
-      pattern: |
-        artifacts-packages-${{ matrix.target }}
-        artifacts-list-packages-${{ matrix.target }}
+      pattern: artifacts-*packages-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
@@ -703,6 +717,7 @@ jobs:
 
   publish-deb-rpm:
     name: Upload deb/rpm / ${{ matrix.target }}
+    continue-on-error: ${{ matrix.allow-failure == true }}
     strategy:
       fail-fast: false
       matrix:
@@ -712,7 +727,9 @@ jobs:
           - target: linux-s390x
           - target: linux-armv6
           - target: linux-armv7
+          # riscv64 is not an officially supported architecture; failures are allowed.
           - target: linux-riscv64
+            allow-failure: true
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
     permissions:
       id-token: write
@@ -721,9 +738,7 @@ jobs:
       - build-deb-rpm
     with:
       bucket: grafana-prerelease
-      pattern: |
-        artifacts-deb-rpm-${{ matrix.target }}
-        artifacts-list-deb-rpm-${{ matrix.target }}
+      pattern: artifacts-*deb-rpm-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
@@ -747,9 +762,7 @@ jobs:
       - build-docker-alpine
     with:
       bucket: grafana-prerelease
-      pattern: |
-        artifacts-docker-${{ matrix.target }}
-        artifacts-list-docker-${{ matrix.target }}
+      pattern: artifacts-*docker-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
@@ -773,9 +786,7 @@ jobs:
       - build-docker-ubuntu
     with:
       bucket: grafana-prerelease
-      pattern: |
-        artifacts-docker-ubuntu-${{ matrix.target }}
-        artifacts-list-docker-ubuntu-${{ matrix.target }}
+      pattern: artifacts-*docker-ubuntu-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
@@ -797,9 +808,7 @@ jobs:
       - build-windows
     with:
       bucket: grafana-prerelease
-      pattern: |
-        artifacts-${{ matrix.target }}
-        artifacts-list-${{ matrix.target }}
+      pattern: artifacts-*${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
