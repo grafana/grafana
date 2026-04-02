@@ -221,7 +221,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-15,tempoAlerting,experimental,@grafana/data-sources-plugins,false,false,false
 2025-04-16,pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
-2025-04-22,alertingListViewV2PreviewToggle,GA,@grafana/alerting-squad,false,false,true
+2025-04-22,alertingListViewV2PreviewToggle,preview,@grafana/alerting-squad,false,false,true
 2025-04-22,alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 2025-04-24,alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 2026-02-18,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false

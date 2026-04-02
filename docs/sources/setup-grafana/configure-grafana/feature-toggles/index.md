@@ -66,7 +66,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingImportYAMLUI`                | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                      | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown` | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
-| `alertingListViewV2PreviewToggle`     | Enables the alerting list view v2 preview toggle                                                                                                              | Yes                |
 | `restoreDashboards`                   | Enables restore deleted dashboards feature                                                                                                                    | Yes                |
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
@@ -102,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
+| `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |

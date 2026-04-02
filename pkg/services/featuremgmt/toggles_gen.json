@@ -434,15 +434,15 @@
     {
       "metadata": {
         "name": "alertingListViewV2PreviewToggle",
-        "resourceVersion": "1775146921633",
+        "resourceVersion": "1775152842792",
         "creationTimestamp": "2025-04-22T08:50:34Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-02 16:22:01.633252 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-02 18:00:42.792501 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the alerting list view v2 preview toggle",
-        "stage": "GA",
+        "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "true"
