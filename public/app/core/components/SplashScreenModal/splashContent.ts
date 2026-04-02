@@ -2,6 +2,10 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 
+import assistantHeroImage from './images/assistant-hero.png';
+import gitSyncImage from './images/git-sync.png';
+import libraryOfThingsImage from './images/library-of-things.png';
+
 export interface SplashFeature {
   id: string;
   icon: IconName;
@@ -38,7 +42,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         ],
         ctaText: t('splash-screen.assistant.cta', 'Show me'),
         ctaUrl: '/a/grafana-assistant-app',
-        heroImageUrl: 'public/img/splash/assistant-hero.png',
+        heroImageUrl: assistantHeroImage,
       },
       {
         id: 'dynamic-dashboards',
@@ -54,7 +58,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         ],
         ctaText: t('splash-screen.dynamic-dashboards.cta', 'Show me'),
         ctaUrl: '/dashboards',
-        heroImageUrl: 'public/img/splash/assistant-hero.png',
+        heroImageUrl: assistantHeroImage,
       },
       {
         id: 'git-sync',
@@ -70,7 +74,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         ],
         ctaText: t('splash-screen.git-sync.cta', 'Show me'),
         ctaUrl: '/admin/provisioning',
-        heroImageUrl: 'public/img/splash/git-sync.png',
+        heroImageUrl: gitSyncImage,
       },
       {
         id: 'library-of-things',
@@ -87,7 +91,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         ],
         ctaText: t('splash-screen.library-of-things.cta', 'Show me'),
         ctaUrl: '/explore',
-        heroImageUrl: 'public/img/splash/library-of-things.png',
+        heroImageUrl: libraryOfThingsImage,
       },
     ],
   };
