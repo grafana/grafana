@@ -16,62 +16,52 @@ import (
 )
 
 func TestNewPermissionAwareValidator(t *testing.T) {
-	nonNone := []models.Provenance{
+	// provenance values that can be freely set/unset (excluding converted_prometheus)
+	settable := []models.Provenance{
 		models.ProvenanceAPI,
 		models.ProvenanceFile,
-		models.ProvenanceConvertedPrometheus,
 	}
 
 	ctxWithUser := identity.WithRequester(context.Background(), &user.SignedInUser{})
 	ctxNoUser := context.Background()
 
+	vDenied := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: false})
+	vAllowed := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: true})
+
 	t.Run("None to None is always allowed", func(t *testing.T) {
-		v := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: false})
-		require.NoError(t, v(ctxWithUser, models.ProvenanceNone, models.ProvenanceNone))
-		require.NoError(t, v(ctxNoUser, models.ProvenanceNone, models.ProvenanceNone))
+		require.NoError(t, vDenied(ctxWithUser, models.ProvenanceNone, models.ProvenanceNone))
+		require.NoError(t, vDenied(ctxNoUser, models.ProvenanceNone, models.ProvenanceNone))
 	})
 
-	t.Run("non-None to None is always allowed", func(t *testing.T) {
-		v := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: false})
-		for _, from := range nonNone {
-			require.NoError(t, v(ctxWithUser, from, models.ProvenanceNone),
-				"transition %s -> None should be allowed", from)
-			require.NoError(t, v(ctxNoUser, from, models.ProvenanceNone),
-				"transition %s -> None should be allowed without user in ctx", from)
+	t.Run("any transition involving converted_prometheus is always blocked", func(t *testing.T) {
+		all := append(settable, models.ProvenanceNone, models.ProvenanceConvertedPrometheus)
+		for _, p := range all {
+			require.Error(t, vAllowed(ctxWithUser, models.ProvenanceConvertedPrometheus, p),
+				"transition converted_prometheus -> %s should be blocked", p)
+			require.Error(t, vAllowed(ctxWithUser, p, models.ProvenanceConvertedPrometheus),
+				"transition %s -> converted_prometheus should be blocked", p)
 		}
 	})
 
-	t.Run("non-None to non-None is always allowed", func(t *testing.T) {
-		v := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: false})
-		for _, from := range nonNone {
-			for _, to := range nonNone {
-				require.NoError(t, v(ctxWithUser, from, to),
-					"transition %s -> %s should be allowed", from, to)
+	t.Run("all other transitions require permission", func(t *testing.T) {
+		type transition struct{ from, to models.Provenance }
+		var transitions []transition
+		for _, from := range append(settable, models.ProvenanceNone) {
+			for _, to := range append(settable, models.ProvenanceNone) {
+				if from == models.ProvenanceNone && to == models.ProvenanceNone {
+					continue // already covered above
+				}
+				transitions = append(transitions, transition{from, to})
 			}
 		}
-	})
 
-	t.Run("None to non-None is blocked without permission", func(t *testing.T) {
-		v := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: false})
-		for _, to := range nonNone {
-			err := v(ctxWithUser, models.ProvenanceNone, to)
-			require.Error(t, err, "transition None -> %s should be blocked without permission", to)
-		}
-	})
-
-	t.Run("None to non-None is allowed with permission", func(t *testing.T) {
-		v := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: true})
-		for _, to := range nonNone {
-			require.NoError(t, v(ctxWithUser, models.ProvenanceNone, to),
-				"transition None -> %s should be allowed with permission", to)
-		}
-	})
-
-	t.Run("None to non-None returns error when no user in context", func(t *testing.T) {
-		v := NewPermissionAwareValidator(actest.FakeAccessControl{ExpectedEvaluate: true})
-		for _, to := range nonNone {
-			err := v(ctxNoUser, models.ProvenanceNone, to)
-			require.Error(t, err, "transition None -> %s should error when no user in ctx", to)
+		for _, tr := range transitions {
+			require.Error(t, vDenied(ctxWithUser, tr.from, tr.to),
+				"transition %s -> %s should be blocked without permission", tr.from, tr.to)
+			require.NoError(t, vAllowed(ctxWithUser, tr.from, tr.to),
+				"transition %s -> %s should be allowed with permission", tr.from, tr.to)
+			require.Error(t, vAllowed(ctxNoUser, tr.from, tr.to),
+				"transition %s -> %s should error when no user in ctx", tr.from, tr.to)
 		}
 	})
 }

@@ -32,24 +32,35 @@ func CanUpdateProvenanceInRuleGroup(storedProvenance, provenance models.Provenan
 
 type ProvenanceStatusTransitionValidator = func(ctx context.Context, from, to models.Provenance) error
 
-// NewPermissionAwareValidator returns a ProvenanceStatusTransitionValidator that gates only
-// None → non-None transitions on the SetProvisioningStatus permission. All other
-// transitions (non-None → anything, any → None) are allowed unconditionally.
+// NewPermissionAwareValidator
+// returns a ProvenanceStatusTransitionValidator that requires user to have the SetProvisioningStatus permission unless the provenance is None and is not changed
 func NewPermissionAwareValidator(ac accesscontrol.AccessControl) ProvenanceStatusTransitionValidator {
 	return func(ctx context.Context, from, to models.Provenance) error {
-		if from == models.ProvenanceNone && to != models.ProvenanceNone {
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				// Treat missing/invalid requester as a deterministic authorization failure
-				return MakeErrProvenanceChangeNotAllowedWithReason(from, to, "missing requester")
-			}
-			ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningSetStatus))
-			if err != nil {
-				return err
-			}
-			if !ok {
-				return MakeErrProvenanceChangeNotAllowedWithReason(from, to, "missing permission")
-			}
+		// converted_prometheus is a special case that comes from imported resources. We should not allow users set or unset it.
+		if from == models.ProvenanceConvertedPrometheus || to == models.ProvenanceConvertedPrometheus {
+			return MakeErrProvenanceChangeNotAllowedWithReason(from, to, "cannot change provenance from or to 'converted_prometheus'")
+		}
+		// only none to none does not require permissions check
+		if from == models.ProvenanceNone && to == models.ProvenanceNone {
+			return nil
+		}
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			// Treat missing/invalid requester as a deterministic authorization failure
+			return MakeErrProvenanceChangeNotAllowedWithReason(from, to, "missing requester")
+		}
+		ok, err := ac.Evaluate(ctx, user,
+			accesscontrol.EvalAny(
+				accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningWrite),
+				accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsProvisioningWrite),
+				accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningSetStatus),
+			),
+		)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return MakeErrProvenanceChangeNotAllowedWithReason(from, to, "missing permission")
 		}
 		return nil
 	}
