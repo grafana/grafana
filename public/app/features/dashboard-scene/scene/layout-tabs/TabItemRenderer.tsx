@@ -24,7 +24,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const { currentTabSlug, isDropTarget: isParentDropTarget } = parentLayout.useState();
   const titleInterpolated = interpolateSectionTitle(model, title);
 
-  const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
+  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
