@@ -152,6 +152,17 @@ func (qb *queryBuilder) buildBatchDeleteQuery(keyPaths []string) (string, []inte
 	return query, args
 }
 
+// buildCheckKeyExistsQuery generates a lightweight existence check for a key
+func (qb *queryBuilder) buildCheckKeyExistsQuery(keyPath string) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"SELECT 1 FROM %s WHERE %s = %s LIMIT 1",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"),
+		qb.dialect.Placeholder(1),
+	)
+	return query, []interface{}{keyPath}
+}
+
 // buildInsertDatastoreQuery generates INSERT for datastore section for use in non-backwards compatible mode (without rvmanager)
 // Includes all required fields with empty string defaults for group, resource, namespace, name, folder, and 0 for action
 func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, guid string) (string, []interface{}) {
