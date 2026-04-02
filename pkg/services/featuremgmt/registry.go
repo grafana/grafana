@@ -200,14 +200,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "logsExploreTableVisualisation",
-			Description:  "A table visualisation for logs in Explore",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -324,6 +316,13 @@ var (
 		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "sseExpressionErrorIsolation",
+			Description: "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
@@ -870,10 +869,10 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStageGeneralAvailability,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
-			Expression:   "true",
+			Expression:   "false",
 		},
 		{
 			Name:         "sqlExpressionsColumnAutoComplete",
@@ -1020,6 +1019,14 @@ var (
 			Name:         "newSavedQueriesExperience",
 			Description:  "Enables the new Saved queries (query library) modal experience",
 			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "newUnconfiguredPanel",
+			Description:  "Enables the new unconfigured panel experience",
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
 			Expression:   "false",
@@ -1783,7 +1790,7 @@ var (
 			Name:        "tempoAlerting",
 			Description: "Enables creating alerts from Tempo data source",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -2454,7 +2461,7 @@ var (
 		{
 			Name:         "queryEditorNext",
 			Description:  "Enables next generation query editor experience",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
 			Expression:   "false",
@@ -2784,6 +2791,31 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "tracesDrilldownTimeSeeker",
+			Description:  "Enables the time seeker in traces drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "clearPreviousFieldValues",
+			Description:  "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "enableDatasourceMetaApiPluginLoading",
+			Description:  "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
 		},
 	}
 )

@@ -127,7 +127,11 @@ export async function saveDashboard(
     await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
   }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+
+  // wait for the toast
   await expect(page.getByText('Dashboard saved')).toBeVisible();
+  // close toast, we do this to prevent any incorrect assertion when several saves occur fast. i.e. the 1st toast is still visible but the 2nd save has not occurred yet
+  await page.getByRole('button', { name: 'Close alert' }).click();
 }
 
 export async function checkRepeatedPanelTitles(

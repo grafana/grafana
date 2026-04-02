@@ -406,6 +406,7 @@ build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Bu
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
 	OS="$(OS)" \
 	ARCH="$(ARCH)" \
+	$(if $(ARM),GOARM="$(ARM)") \
 	GO="$(GO)" \
 	bash scripts/build-targz.sh
 
@@ -421,10 +422,6 @@ run-go: ## Build and run web server immediately.
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
-
-.PHONY: run-bra
-run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(bra) run
 
 .PHONY: frontend-service-check
 frontend-service-check:

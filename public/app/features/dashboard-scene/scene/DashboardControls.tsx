@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,8 +20,10 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
+import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -196,13 +199,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
               </div>
             </div>
           </div>
-          {renderHiddenVariables(dashboard)}
+          <RenderHiddenVariables dashboard={dashboard} />
         </>
       );
     }
 
     // To still have spacing when no controls are rendered
-    return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
+    return (
+      <Box padding={1}>
+        <RenderHiddenVariables dashboard={dashboard} />
+      </Box>
+    );
   }
 
   // When dashboardAdHocAndGroupByWrapper is enabled, use the new layout with topRow
@@ -233,11 +240,13 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
             )}
-            {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
-              <div className={styles.fixedControls}>
-                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
-              </div>
-            )}
+            {(config.featureToggles.dashboardFiltersOverview ||
+              config.featureToggles.dashboardUnifiedDrilldownControls) &&
+              !config.featureToggles.dashboardNewLayouts && (
+                <div className={styles.fixedControls}>
+                  <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+                </div>
+              )}
           </div>
         </div>
         {!hideVariableControls && (
@@ -248,6 +257,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         )}
         {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
         {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+        <DefaultControlsLoadingSkeleton
+          dashboard={dashboard}
+          hideVariableControls={hideVariableControls}
+          hideLinksControls={hideLinksControls}
+        />
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
         {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
       </div>
@@ -272,11 +286,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
-        {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
-            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
-          </div>
-        )}
+        {(config.featureToggles.dashboardFiltersOverview || config.featureToggles.dashboardUnifiedDrilldownControls) &&
+          !config.featureToggles.dashboardNewLayouts && (
+            <div className={styles.fixedControls}>
+              <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+            </div>
+          )}
       </div>
       {config.featureToggles.scopeFilters && !editPanel && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
@@ -289,6 +304,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+      <DefaultControlsLoadingSkeleton
+        dashboard={dashboard}
+        hideVariableControls={hideVariableControls}
+        hideLinksControls={hideLinksControls}
+      />
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
@@ -304,8 +324,14 @@ function DashboardControlActions({
 }) {
   const { isEditing, editPanel, uid, meta, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
 
   if (editPanel) {
+    return null;
+  }
+
+  if (kioskMode === KioskMode.Full) {
     return null;
   }
 
@@ -357,7 +383,7 @@ function DashboardControlActions({
   );
 }
 
-function renderHiddenVariables(dashboard: DashboardScene) {
+function RenderHiddenVariables({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard).useState();
   const renderAsHiddenVariables = variables.filter((v) => v.UNSAFE_renderAsHidden);
   if (renderAsHiddenVariables && renderAsHiddenVariables.length > 0) {
@@ -371,6 +397,38 @@ function renderHiddenVariables(dashboard: DashboardScene) {
   }
   return null;
 }
+
+function DefaultControlsLoadingSkeleton({
+  dashboard,
+  hideVariableControls,
+  hideLinksControls,
+}: {
+  dashboard: DashboardScene;
+  hideVariableControls?: boolean;
+  hideLinksControls?: boolean;
+}) {
+  const { defaultVariablesLoading, defaultLinksLoading } = dashboard.useState();
+  const styles = useStyles2(getSkeletonStyles);
+
+  const showVariablesSkeleton = defaultVariablesLoading && !hideVariableControls;
+  const showLinksSkeleton = defaultLinksLoading && !hideLinksControls;
+
+  if (!showVariablesSkeleton && !showLinksSkeleton) {
+    return null;
+  }
+
+  return <Skeleton width={60} height={32} containerClassName={styles.skeletonContainer} />;
+}
+
+const getSkeletonStyles = (theme: GrafanaTheme2) => ({
+  skeletonContainer: css({
+    display: 'inline-flex',
+    lineHeight: 1,
+    verticalAlign: 'middle',
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
+  }),
+});
 
 function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
   return {

@@ -180,6 +180,51 @@ func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, 
 	return query, []interface{}{guid, keyPath, value, "", "", "", "", 0, ""}
 }
 
+// buildInsertDatastoreBatchQuery generates a multi-row INSERT for datastore import rows.
+func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (string, []interface{}) {
+	if len(rows) == 0 {
+		return "", nil
+	}
+
+	valueRows := make([]string, 0, len(rows))
+	args := make([]interface{}, 0, len(rows)*9)
+	argIdx := 1
+
+	for _, row := range rows {
+		valueRows = append(valueRows, fmt.Sprintf(
+			"(%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+			qb.dialect.Placeholder(argIdx),
+			qb.dialect.Placeholder(argIdx+1),
+			qb.dialect.Placeholder(argIdx+2),
+			qb.dialect.Placeholder(argIdx+3),
+			qb.dialect.Placeholder(argIdx+4),
+			qb.dialect.Placeholder(argIdx+5),
+			qb.dialect.Placeholder(argIdx+6),
+			qb.dialect.Placeholder(argIdx+7),
+			qb.dialect.Placeholder(argIdx+8),
+		))
+		args = append(args, row.GUID, row.KeyPath, row.Value, "", "", "", "", 0, "")
+		argIdx += 9
+	}
+
+	query := fmt.Sprintf(
+		"INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES %s",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("guid"),
+		qb.dialect.QuoteIdent("key_path"),
+		qb.dialect.QuoteIdent("value"),
+		qb.dialect.QuoteIdent("group"),
+		qb.dialect.QuoteIdent("resource"),
+		qb.dialect.QuoteIdent("namespace"),
+		qb.dialect.QuoteIdent("name"),
+		qb.dialect.QuoteIdent("action"),
+		qb.dialect.QuoteIdent("folder"),
+		strings.Join(valueRows, ", "),
+	)
+
+	return query, args
+}
+
 // buildInsertDatastoreBackwardCompatQuery generates INSERT for backward-compatible mode
 // Inserts guid, value, and placeholder values for NOT NULL columns - these will be updated by applyBackwardsCompatibleChanges()
 func (qb *queryBuilder) buildInsertDatastoreBackwardCompatQuery(value []byte, guid, group, resource, namespace, name, folder string, action int64) (string, []interface{}) {

@@ -14,7 +14,7 @@ import {
   partitionVariablesByEditability,
 } from './DashboardVariablesList';
 
-jest.mock('../../settings/variables/VariableAddEditableElement', () => ({
+jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
   openAddVariablePane: jest.fn(),
 }));
 
