@@ -337,7 +337,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID:        baseReceiver.UID,
 			callerProvenance: models.ProvenanceNone,
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
+			expectedErr:      validation.MakeErrProvenanceChangeNotAllowedWithReason(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
 		},
 		{
 			name:             "delete provisioning provenance fails when caller is a different type", // TODO: This should fail once we move from lenient to strict validation.
@@ -783,7 +783,7 @@ func TestReceiverService_Update(t *testing.T) {
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceNone)),
 			existing:    util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
+			expectedErr: validation.MakeErrProvenanceChangeNotAllowedWithReason(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
 		},
 		{
 			name:     "changing provenance from one type to another fails", // TODO: This should fail once we move from lenient to strict validation.
