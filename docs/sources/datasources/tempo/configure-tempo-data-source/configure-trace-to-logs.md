@@ -174,22 +174,24 @@ The following example shows the `tracesToLogsV2` configuration block for a Tempo
 ```yaml
 apiVersion: 1
 
-datasources:
-  - name: Tempo
-    type: tempo
-    url: http://tempo:3200
-    jsonData:
-      tracesToLogsV2:
-        datasourceUid: '<LOKI_DATASOURCE_UID>'
-        spanStartTimeShift: '-2s'
-        spanEndTimeShift: '2s'
-        filterByTraceID: true
-        filterBySpanID: false
-        tags:
-          - key: service.name
-            value: service_name
-          - key: namespace
-          - key: pod
+datasources:  
+  - name: Tempo  
+    type: tempo  
+    url: http://tempo:3200  
+    jsonData:  
+      tracesToLogsV2:  
+        datasourceUid: '<LOKI_DATASOURCE_UID>'  
+        spanStartTimeShift: '-1m'  
+        spanEndTimeShift: '1m'  
+        filterByTraceID: true  
+        filterBySpanID: false  
+        customQuery: true  
+        query: '{service_name="${__span.tags["service.name"]}", namespace="${__span.tags["namespace"]}"} | logfmt | trace_id="${__trace.traceId}"'  
+        tags:  
+          - key: service.name  
+            value: service_name  
+          - key: namespace  
+          - key: job  
 ```
 
 Replace _`<LOKI_DATASOURCE_UID>`_ with the `uid` of your Loki data source.
