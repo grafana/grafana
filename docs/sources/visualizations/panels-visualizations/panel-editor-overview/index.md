@@ -73,3 +73,21 @@ The data section contains tabs where you enter queries, transform your data, and
 ## Panel display options
 
 The display options section contains tabs where you configure almost every aspect of your data visualization.
+
+When you first open the panel editor, Grafana analyzes your query results and suggests visualizations that suit the shape of the data. You can select a suggested visualization or click **All visualizations** to browse the full list of available panel types. Once you've selected a visualization, the display options section provides further configuration, including Panel styles and visualization-specific settings.
+
+For more information about individual visualizations, refer to [Visualizations options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/).
+
+### Panel styles
+
+{{< admonition type="note" >}}
+Panel styles is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `vizPresets` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to use this feature.
+{{< /admonition >}}
+
+While visualization suggestions help you choose _which_ panel type to use, Panel styles help you decide _how_ that panel looks. The **Panel styles** section of the panel editor sidebar contains pre-configured presets for the currently selected visualization. It appears once you've selected a visualization and the panel has data.
+
+Each preset is displayed as a live preview card that shows how it changes the visualization. Clicking a preset applies a combination of display options and field configuration to the panel - for example, switching a time series panel from a line chart with a gradient fill to a stacked bar chart, or changing a stat panel's color scheme and graph mode.
+
+Presets merge their settings with the panel's existing defaults, so only the fields the preset defines are changed. Presets can modify thresholds and color settings - any preset that modifies thresholds displays a badge on the preview card. However, presets don't affect any field overrides you've configured; your existing overrides are preserved when you apply a preset. You can further customize the panel after applying a preset.
+
+Panel styles are available for time series, stat, gauge, bar gauge, and bar chart panels. Plugin authors can add Panel styles support to their own panel plugins.
