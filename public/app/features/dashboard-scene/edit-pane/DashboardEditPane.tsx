@@ -298,7 +298,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       return;
     }
 
-    this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] } });
+    this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] }, openPane: undefined });
     // // If we are docked then clearing selection should select dashboard itself
     // // Unless the user explicitly closes pane
     // if (this.state.isDocked && !force) {
