@@ -75,8 +75,6 @@ type ZanzanaReconcilerSettings struct {
 	Interval time.Duration
 	// Batch size for writing tuples to Zanzana.
 	WriteBatchSize int
-	// Page size when reading tuples from Zanzana during reconciliation.
-	ZanzanaReadPageSize int
 	// Size of the buffered work queue for namespaces.
 	QueueSize int
 
@@ -410,7 +408,6 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
-	zr.ZanzanaReadPageSize = reconcilerSec.Key("zanzana_read_page_size").MustInt(1000)
 	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
 	zr.LeaderElectionEnabled = reconcilerSec.Key("leader_election_enabled").MustBool(false)
 	zr.LeaderElectionLeaseName = reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler")
