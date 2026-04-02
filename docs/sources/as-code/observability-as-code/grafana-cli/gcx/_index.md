@@ -16,7 +16,7 @@ weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/grafanagcx
 ---
 
-# Grafana Cloud CLI overview
+# Overview of the `gcx` Grafana CLI
 
 {{< admonition type="caution" >}}
 
@@ -38,6 +38,8 @@ It provides the following benefits:
 - **GitOps**: Pull resources to files, version in Git, or push back with full round-trip fidelity.
 - **Observability as code:** `gcx` can scaffold Go projects, import existing dashboards, lint with Rego rules, or live-reload development servers.
 - **Multi-environment:** Use named contexts to switch between development, staging, and production environments.
+
+## Learn more
 
 Refer to the [`clx` repository](https://github.com/grafana/gcx) in GitHub for more information on:
 
