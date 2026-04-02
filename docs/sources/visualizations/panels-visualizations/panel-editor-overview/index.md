@@ -86,7 +86,7 @@ Panel styles is currently in [public preview](https://grafana.com/docs/release-l
 
 While visualization suggestions help you choose _which_ panel type to use, panel styles help you decide _how_ that panel should look. The **Panel styles** section of the panel editor sidebar contains preconfigured options for the currently selected visualization. It appears after you've selected a visualization and the panel has data.
 
-Each style is displayed as a live preview card that shows how it changes the visualization. Clicking a style applies a combination of display options and field configuration to the panel—for example, switching a time series panel from a line chart with a gradient fill to a stacked bar chart, or changing a stat panel's color scheme and graph mode.
+Each style is displayed as a live preview card that shows how it changes the visualization. Clicking a style applies a combination of display options and field configuration to the panel. For example, changing a style might switch a time series visualization from a line chart with a gradient fill to a stacked bar chart, or update the color scheme and graph mode of a stat visualization.
 
 Panel styles merge their settings with the panel's existing defaults as follows:
 
