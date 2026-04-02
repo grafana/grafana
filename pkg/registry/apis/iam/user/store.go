@@ -185,7 +185,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		}
 	}
 
-	query.ID = getDeprecatedInternalIDFromLabels(options)
+	query.ID = getDeprecatedInternalIDFromLabelSelectors(options)
 
 	res, err := common.List(
 		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
@@ -299,7 +299,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	return &iamUser, nil
 }
 
-func getDeprecatedInternalIDFromLabels(options *internalversion.ListOptions) int64 {
+func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOptions) int64 {
 	if options.LabelSelector == nil {
 		return 0
 	}
