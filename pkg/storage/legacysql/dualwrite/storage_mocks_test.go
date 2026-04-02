@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func newStaticStorage(gr schema.GroupResource, mode grafanarest.DualWriterMode, legacy grafanarest.Storage, unified grafanarest.Storage) (grafanarest.Storage, error) {
+func newStorage(gr schema.GroupResource, mode grafanarest.DualWriterMode, legacy grafanarest.Storage, unified grafanarest.Storage) (grafanarest.Storage, error) {
 	cfg := NewFakeConfig()
 	cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{DualWriterMode: mode}
 	return ProvideServiceForTests(cfg).NewStorage(gr, legacy, unified)

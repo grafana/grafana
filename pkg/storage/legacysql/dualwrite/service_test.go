@@ -57,7 +57,7 @@ func TestService(t *testing.T) {
 			{rest.Mode4, "unified"},
 			{rest.Mode5, "unified"},
 		} {
-			storage, err := newStaticStorage(gr, tt.mode, ls, us)
+			storage, err := newStorage(gr, tt.mode, ls, us)
 			require.NoError(t, err, "Mode%d", tt.mode)
 			_, isDual := storage.(*dualWriter)
 			switch tt.wantType {
@@ -200,11 +200,11 @@ func TestService(t *testing.T) {
 			cfg  setting.Cfg
 
 			isStorageService bool
-			error    string
+			error            string
 		}
 
 		for _, tc := range []testCase{{
-			name:     "both mode5",
+			name:             "both mode5",
 			isStorageService: true,
 			cfg: setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -216,9 +216,9 @@ func TestService(t *testing.T) {
 					},
 				},
 			}}, {
-			name:     "empty config",
+			name:             "empty config",
 			isStorageService: true,
-			cfg:      setting.Cfg{},
+			cfg:              setting.Cfg{},
 		}} {
 			t.Run(tc.name, func(t *testing.T) {
 				// Build a fake MigrationStatusReader that matches the config-based modes.
