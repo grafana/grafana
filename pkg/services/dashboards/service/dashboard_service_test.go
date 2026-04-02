@@ -17,7 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -940,7 +941,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 	fakeStore.On("UnprovisionDashboard", mock.Anything, int64(1)).Return(nil).Once()
 	k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 	dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": dashboardv0.APIVERSION,
+		"apiVersion": dashboardV1.APIVERSION,
 		"kind":       "Dashboard",
 		"metadata": map[string]any{
 			"name":        "uid",
@@ -2224,9 +2225,9 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 
 				// Create test object
 				key := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
-				obj := &dashboardv0.Dashboard{
+				obj := &dashboardV0.Dashboard{
 					TypeMeta: metav1.TypeMeta{
-						APIVersion: "dashboard.grafana.app/v0alpha1",
+						APIVersion: dashboardV0.APIVERSION,
 					},
 				}
 				meta, err := utils.MetaAccessor(obj)
@@ -2559,8 +2560,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 func createTestUnstructuredDashboard(uid, title string, resourceVersion string) unstructured.Unstructured {
 	return unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardV0.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardV0.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name":              uid,
 				"deletionTimestamp": "2023-01-01T00:00:00Z",
