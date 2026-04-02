@@ -914,10 +914,6 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 		orgIDs = append(orgIDs, org.ID)
 	}
 
-	if err := dr.DeleteDuplicateProvisionedDashboards(ctx, orgIDs, cmd.Config); err != nil {
-		dr.log.Error("Failed to delete duplicate provisioned dashboards", "error", err)
-	}
-
 	currentNames := make([]string, 0, len(cmd.Config))
 	for _, cfg := range cmd.Config {
 		currentNames = append(currentNames, cfg.Name)
@@ -1068,41 +1064,6 @@ func (dr *DashboardServiceImpl) maybeResetProvisioning(ctx context.Context, orgs
 			}
 		}
 	}
-}
-
-func (dr *DashboardServiceImpl) DeleteDuplicateProvisionedDashboards(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) error {
-	// Start from scratch if duplications that cannot be fixed by the logic
-	// below are found in the database.
-	dr.maybeResetProvisioning(ctx, orgs, configs)
-
-	// cleanup duplicate provisioned dashboards (i.e., with the same name and external_id).
-	// Note: only works in modes 1-3. This logic can be removed once mode5 is
-	// enabled everywhere.
-	duplicates, err := dr.dashboardStore.GetDuplicateProvisionedDashboards(ctx)
-	if err != nil {
-		return err
-	}
-
-	type provisioningKey struct {
-		name       string
-		externalID string
-	}
-
-	groups := make(map[provisioningKey][]*dashboards.DashboardProvisioningSearchResults)
-	for _, dash := range duplicates {
-		key := provisioningKey{
-			name:       dash.Provisioner,
-			externalID: dash.ExternalID,
-		}
-		if _, exists := groups[key]; exists {
-			if err = dr.deleteDashboard(ctx, dash.ID, dash.UID, dash.OrgID, false); err != nil {
-				dr.log.Error("Failed to delete duplicate provisioned dashboard", "error", err, "dashboardUID", dash.UID, "dashboardID", dash.ID)
-			}
-		}
-		groups[key] = append(groups[key], dash)
-	}
-
-	return nil
 }
 
 func (dr *DashboardServiceImpl) ValidateDashboardRefreshInterval(minRefreshInterval string, targetRefreshInterval string) error {

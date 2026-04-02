@@ -300,56 +300,6 @@ func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, n
 	return dashes, nil
 }
 
-func (d *dashboardStore) GetDuplicateProvisionedDashboards(ctx context.Context) ([]*dashboards.DashboardProvisioningSearchResults, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.GetDuplicateProvisionedDashboards")
-	defer span.End()
-
-	dashes := []*dashboards.DashboardProvisioningSearchResults{}
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		type duplicateGroup struct {
-			Name       string `xorm:"name"`
-			ExternalID string `xorm:"external_id"`
-			CheckSum   string `xorm:"check_sum"`
-		}
-
-		duplicateGroups := []duplicateGroup{}
-		err := sess.SQL(`
-			SELECT dp.name, dp.external_id
-			FROM dashboard_provisioning dp
-			INNER JOIN dashboard d ON d.id = dp.dashboard_id
-			GROUP BY dp.name, dp.external_id, dp.check_sum 
-			HAVING COUNT(*) > 1
-		`).Find(&duplicateGroups)
-
-		if err != nil {
-			return err
-		}
-
-		if len(duplicateGroups) == 0 {
-			return nil
-		}
-
-		for _, group := range duplicateGroups {
-			var groupDashes []*dashboards.DashboardProvisioningSearchResults
-			err := sess.Table(`dashboard`).
-				Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
-				Where(`dashboard_provisioning.name = ? AND dashboard_provisioning.external_id = ?`, group.Name, group.ExternalID).
-				Find(&groupDashes)
-			if err != nil {
-				return err
-			}
-			dashes = append(dashes, groupDashes...)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return dashes, nil
-}
-
 func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
