@@ -515,21 +515,6 @@ func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *n
 	return nil
 }
 
-// mockEmailHandlerWithTimeout blocks until the timeout has expired.
-type mockEmailHandlerWithTimeout struct {
-	mockEmailHandler
-	timeout time.Duration
-}
-
-func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *notifications.SendEmailCommandSync) error {
-	select {
-	case <-time.After(e.timeout):
-		return e.mockEmailHandler.sendEmailCommandHandlerSync(ctx, cmd)
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-}
-
 // alertmanagerConfig has the config for all the notification channels
 // that we want to test. It is recommended to use different URL for each
 // channel and have 1 route per channel.
@@ -1998,10 +1983,11 @@ func saveAndApplyAlertmanagerConfiguration(t *testing.T, env *server.TestEnv, or
 	err := json.Unmarshal([]byte(rawConfig), &config)
 	require.NoError(t, err)
 
+
+
 	err = notifier.EncryptReceiverConfigs(config.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
-	require.NoError(t, err)
 
 	cfgToSave, err := json.Marshal(&config)
 	require.NoError(t, err)
