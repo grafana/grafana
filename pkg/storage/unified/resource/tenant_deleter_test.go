@@ -86,7 +86,14 @@ func newTestTenantDeleter(t *testing.T, dryRun bool) (*TenantDeleter, *dataStore
 		DryRun:   dryRun,
 		Interval: time.Hour,
 		Log:      log.NewNopLogger(),
-		Gcom:     &testGcomVerifier{},
+		Gcom: &testGcomVerifier{
+			getInstance: func(ctx context.Context, requestID, instanceID string) (gcom.Instance, error) {
+				if instanceID == "1" {
+					return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
+				}
+				return gcom.Instance{}, gcom.ErrInstanceNotFound
+			},
+		},
 	}
 	td := NewTenantDeleter(ds, pds, cfg)
 	return td, ds, pds
@@ -313,7 +320,14 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 		DryRun:   false,
 		Interval: time.Hour,
 		Log:      log.NewNopLogger(),
-		Gcom:     &testGcomVerifier{},
+		Gcom: &testGcomVerifier{
+			getInstance: func(ctx context.Context, requestID, instanceID string) (gcom.Instance, error) {
+				if instanceID == "1" {
+					return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
+				}
+				return gcom.Instance{}, gcom.ErrInstanceNotFound
+			},
+		},
 	}
 	td := NewTenantDeleter(ds, pds, cfg)
 
@@ -466,6 +480,45 @@ func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
+// TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus verifies local deletion when
+// GCOM returns HTTP 200 with status "deleted".
+func TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus(t *testing.T) {
+	kv := setupBadgerKV(t)
+	ds := newDataStore(kv)
+	pds := newPendingDeleteStore(kv)
+	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
+		DryRun:   false,
+		Interval: time.Hour,
+		Log:      log.NewNopLogger(),
+		Gcom: &testGcomVerifier{
+			getInstance: func(_ context.Context, _, instanceID string) (gcom.Instance, error) {
+				require.Equal(t, "1", instanceID)
+				return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
+			},
+		},
+	})
+
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	td.runDeletionPass(t.Context())
+
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
+	prefix := listKey.Prefix()
+	var count int
+	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	}) {
+		require.NoError(t, err)
+		count++
+	}
+	assert.Equal(t, 0, count)
+
+	_, err := pds.Get(t.Context(), testStacksNS1)
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
 // TestRunDeletionPass_SkipsWhenGcomInstanceStillExists verifies that local data is
 // not removed while GCOM still returns the stack instance.
 func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
@@ -479,7 +532,7 @@ func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
 		Gcom: &testGcomVerifier{
 			getInstance: func(_ context.Context, _, instanceID string) (gcom.Instance, error) {
 				require.Equal(t, "1", instanceID)
-				return gcom.Instance{ID: 42, Slug: "active-stack"}, nil
+				return gcom.Instance{ID: 42, Slug: "active-stack", Status: "active"}, nil
 			},
 		},
 	})

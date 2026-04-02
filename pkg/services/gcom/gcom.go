@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -17,8 +18,8 @@ const LogPrefix = "gcom.service"
 var ErrTokenNotFound = errors.New("gcom: token not found")
 
 // ErrInstanceNotFound is returned by GetInstanceByID when GCOM has no instance
-// with the given ID (HTTP 404). Callers can use errors.Is to treat a deleted
-// stack as distinct from transport or permission errors.
+// with the given ID (HTTP 404). A deleted stack may instead return HTTP 200 with
+// an Instance whose Status is "deleted" (see Instance.DeletedInGCOM).
 var ErrInstanceNotFound = errors.New("gcom: instance not found")
 
 type Service interface {
@@ -32,6 +33,12 @@ type Instance struct {
 	RegionSlug  string `json:"regionSlug"`
 	ClusterSlug string `json:"clusterSlug"`
 	OrgId       int    `json:"orgId"`
+	Status      string `json:"status"`
+}
+
+// DeletedInGCOM reports true when Status is "deleted" (e.g. HTTP 200 for a removed stack).
+func (i Instance) DeletedInGCOM() bool {
+	return strings.EqualFold(strings.TrimSpace(i.Status), "deleted")
 }
 
 type Plugin struct {

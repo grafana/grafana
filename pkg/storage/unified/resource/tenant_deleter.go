@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"errors"
 	"math/rand/v2"
 	"strconv"
 	"time"
@@ -19,8 +18,9 @@ type TenantDeleterConfig struct {
 	DryRun   bool
 	Interval time.Duration
 	Log      log.Logger
-	// Gcom, when non-nil, is used to confirm the stack no longer exists in GCOM
-	// before local tenant data is removed (GetInstanceByID must return ErrInstanceNotFound).
+	// Gcom, when non-nil, is used to confirm the stack is removed in GCOM before local
+	// tenant data is deleted: GetInstanceByID returns ErrInstanceNotFound, or HTTP 200
+	// with Instance.Status "deleted".
 	Gcom gcom.Service
 }
 
@@ -146,9 +146,8 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 	}
 }
 
-// gcomAllowsTenantDeletion returns true when GCOM is not configured, or when
-// the stack instance is not found in GCOM (removed). If the instance still
-// exists, or GCOM returns an unexpected error, it returns false and logs.
+// gcomAllowsTenantDeletion returns true when GCOM is not configured, when the stack is
+// absent in GCOM (ErrInstanceNotFound), or when GCOM returns 200 with Status "deleted".
 func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantName string) bool {
 	if td.gcom == nil {
 		return true
@@ -163,13 +162,14 @@ func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantNam
 	instanceID := strconv.FormatInt(info.StackID, 10)
 
 	reqID := tracing.TraceIDFromContext(ctx, false)
-	_, err = td.gcom.GetInstanceByID(ctx, reqID, instanceID)
+	inst, err := td.gcom.GetInstanceByID(ctx, reqID, instanceID)
 	if err == nil {
-		td.log.Warn("tenant still exists in GCOM; skipping local data deletion", "tenant", tenantName, "gcom_instance_id", instanceID)
+		if inst.Status == "deleted" {
+			return true
+		}
+		td.log.Warn("stack still active in GCOM; skipping local data deletion",
+			"tenant", tenantName, "gcom_instance_id", instanceID, "gcom_status", inst.Status)
 		return false
-	}
-	if errors.Is(err, gcom.ErrInstanceNotFound) {
-		return true
 	}
 	td.log.Error("GCOM instance check failed; skipping local data deletion", "tenant", tenantName, "gcom_instance_id", instanceID, "err", err)
 	return false
