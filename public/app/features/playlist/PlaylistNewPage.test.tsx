@@ -65,6 +65,7 @@ describe('PlaylistNewPage', () => {
       expect(locationService.getLocation().pathname).toEqual('/');
 
       await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), 'A new name');
+      await userEvent.clear(screen.getByRole('textbox', { name: 'Interval' }));
       await userEvent.type(screen.getByRole('textbox', { name: 'Interval' }), '10m');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(1));
