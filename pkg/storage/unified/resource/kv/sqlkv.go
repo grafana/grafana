@@ -197,7 +197,10 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 			end = len(rows)
 		}
 
-		query, args := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		if err != nil {
+			return fmt.Errorf("failed to build data import batch query: %w", err)
+		}
 		if _, err = conn.ExecContext(ctx, query, args...); err != nil {
 			sqlKVLog.Error("sqlkv bulk import insert failed",
 				"error", err,
@@ -475,14 +478,9 @@ func (w *sqlWriteCloser) Close() error {
 		return fmt.Errorf("failed to parse key for GUID: %w", err)
 	}
 
-	var action int64
-	switch dataKey.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
+	action, err := LegacyActionValue(dataKey.Action)
+	if err != nil {
+		return err
 	}
 
 	query, args := qb.buildInsertDatastoreBackwardCompatQuery(value, dataKey.GUID, dataKey.Group, dataKey.Resource, dataKey.Namespace, dataKey.Name, dataKey.Folder, action)

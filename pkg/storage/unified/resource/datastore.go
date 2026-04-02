@@ -876,14 +876,9 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
 	}
 
-	var action int64
-	switch key.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
+	action, err := kvpkg.LegacyActionValue(key.Action)
+	if err != nil {
+		return err
 	}
 
 	switch key.Action {

@@ -2057,14 +2057,11 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				Value:   req.Value,
 			}
 			if rvManagerDB != nil {
-				var legacyAction int64
-				switch action {
-				case DataActionCreated:
-					legacyAction = 1
-				case DataActionUpdated:
-					legacyAction = 2
-				case DataActionDeleted:
-					legacyAction = 3
+				legacyAction, err := kv.LegacyActionValue(action)
+				if err != nil {
+					rollback()
+					rsp.Error = AsErrorResult(fmt.Errorf("failed to map legacy action: %w", err))
+					return rsp
 				}
 				importRow.Legacy = &kv.DataImportLegacyFields{
 					Group:           dataKey.Group,

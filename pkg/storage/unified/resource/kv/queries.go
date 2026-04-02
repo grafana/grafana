@@ -182,9 +182,9 @@ func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, 
 
 // buildInsertDatastoreBatchQuery generates a multi-row INSERT for datastore import rows.
 // Rows with Legacy set also write the temporary compatibility columns needed by sql/backend.
-func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (string, []interface{}) {
+func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (string, []interface{}, error) {
 	if len(rows) == 0 {
-		return "", nil
+		return "", nil, nil
 	}
 
 	withLegacy := rows[0].Legacy != nil
@@ -196,7 +196,11 @@ func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (st
 	args := make([]interface{}, 0, len(rows)*argsPerRow)
 	argIdx := 1
 
-	for _, row := range rows {
+	for i, row := range rows {
+		if (row.Legacy != nil) != withLegacy {
+			return "", nil, fmt.Errorf("mixed legacy import rows in batch at index %d", i)
+		}
+
 		if withLegacy {
 			legacy := row.Legacy
 			valueRows = append(valueRows, fmt.Sprintf(
@@ -270,7 +274,7 @@ func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (st
 			strings.Join(valueRows, ", "),
 		)
 
-		return query, args
+		return query, args, nil
 	}
 
 	query := fmt.Sprintf(
@@ -288,7 +292,7 @@ func (qb *queryBuilder) buildInsertDatastoreBatchQuery(rows []DataImportRow) (st
 		strings.Join(valueRows, ", "),
 	)
 
-	return query, args
+	return query, args, nil
 }
 
 // buildInsertDatastoreBackwardCompatQuery generates INSERT for backward-compatible mode
