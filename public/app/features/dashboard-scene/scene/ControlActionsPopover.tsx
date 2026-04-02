@@ -7,10 +7,12 @@ import { t } from '@grafana/i18n';
 import { IconButton, Portal, useStyles2 } from '@grafana/ui';
 
 export function ControlActionsPopover({
+  isEditable,
   content,
   children,
 }: {
-  content: React.ReactNode | null;
+  isEditable: boolean;
+  content: React.ReactNode;
   children: React.JSX.Element;
 }) {
   const styles = useStyles2(getStyles);
@@ -27,7 +29,7 @@ export function ControlActionsPopover({
   const hover = useHover(context, { handleClose: safePolygon() });
   const { getReferenceProps, getFloatingProps } = useInteractions([hover]);
 
-  if (!content) {
+  if (!isEditable) {
     return children;
   }
 
@@ -46,11 +48,9 @@ export function ControlActionsPopover({
 }
 
 export function ControlEditActions({
-  isEditable,
   onClickEdit,
   onClickDelete,
 }: {
-  isEditable?: boolean;
   onClickEdit: () => void;
   onClickDelete: () => void;
 }) {
@@ -70,10 +70,6 @@ export function ControlEditActions({
     },
     [onClickDelete]
   );
-
-  if (!isEditable) {
-    return null;
-  }
 
   return (
     <div className={styles.hoverActions}>

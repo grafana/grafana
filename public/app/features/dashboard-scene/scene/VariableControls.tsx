@@ -98,14 +98,8 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   }, [variable]);
 
   const editActions = useMemo(
-    () => (
-      <ControlEditActions
-        isEditable={isSelectable}
-        onClickEdit={onClickEditVariable}
-        onClickDelete={onClickDeleteVariable}
-      />
-    ),
-    [onClickDeleteVariable, onClickEditVariable, isSelectable]
+    () => <ControlEditActions onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />,
+    [onClickDeleteVariable, onClickEditVariable]
   );
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
@@ -120,7 +114,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   // For switch variables in menu, we want to show the switch on the left and the label on the right
   if (inMenu && sceneUtils.isSwitchVariable(variable)) {
     return (
-      <ControlActionsPopover content={editActions}>
+      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
         <div
           className={cx(
             styles.switchMenuContainer,
@@ -144,7 +138,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
 
   if (inMenu) {
     return (
-      <ControlActionsPopover content={editActions}>
+      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
         <div
           className={cx(
             styles.verticalContainer,
@@ -165,7 +159,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   }
 
   return (
-    <ControlActionsPopover content={editActions}>
+    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
       <div
         className={cx(
           styles.container,

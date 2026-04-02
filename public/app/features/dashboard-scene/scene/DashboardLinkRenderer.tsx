@@ -42,10 +42,8 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   }, [dashboard, linkIndex]);
 
   const editActions = useMemo(
-    () => (
-      <ControlEditActions isEditable={isSelectable} onClickEdit={onClickEditLink} onClickDelete={onClickDeleteLink} />
-    ),
-    [onClickDeleteLink, onClickEditLink, isSelectable]
+    () => <ControlEditActions onClickEdit={onClickEditLink} onClickDelete={onClickDeleteLink} />,
+    [onClickEditLink, onClickDeleteLink]
   );
 
   let content: React.ReactNode;
@@ -82,7 +80,7 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   );
 
   return (
-    <ControlActionsPopover content={editActions}>
+    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
       <div className={containerClassName} data-testid={selectors.components.DashboardLinks.container}>
         {content}
       </div>

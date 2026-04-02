@@ -61,14 +61,12 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
   }, [layer]);
 
   const editActions = useMemo(
-    () => (
-      <ControlEditActions isEditable={isSelectable} onClickEdit={onClickEditLayer} onClickDelete={onClickDeleteLayer} />
-    ),
-    [isSelectable, onClickDeleteLayer, onClickEditLayer]
+    () => <ControlEditActions onClickEdit={onClickEditLayer} onClickDelete={onClickDeleteLayer} />,
+    [onClickEditLayer, onClickDeleteLayer]
   );
 
   return (
-    <ControlActionsPopover key={layer.state.key} content={editActions}>
+    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
       <div className={styles.container}>
         <DataLayerControl layer={layer} inMenu={inMenu} />
       </div>
