@@ -345,7 +345,10 @@ describe('AutoGridItem repeat + conditional rendering', () => {
       renderHidden: false,
     });
 
-    const { gridItem, hideVar, regionVar } = setupDashboardWithAutoGridItem({ repeatByValues: true, conditionalGroup: group });
+    const { gridItem, hideVar, regionVar } = setupDashboardWithAutoGridItem({
+      repeatByValues: true,
+      conditionalGroup: group,
+    });
 
     const force = () => {
       gridItem.state.conditionalRendering?.forceCheck();
