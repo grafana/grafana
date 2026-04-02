@@ -841,6 +841,7 @@ export const versionedComponents = {
   },
   QueryEditorRows: {
     rows: {
+      '13.0.0': 'data-testid Query editor row',
       [MIN_GRAFANA_VERSION]: 'Query editor row',
     },
   },
@@ -849,6 +850,7 @@ export const versionedComponents = {
       '10.4.0': (title: string) => `data-testid ${title}`,
     },
     title: {
+      '13.0.0': (refId: string) => `data-testid Query editor row title ${refId}`,
       [MIN_GRAFANA_VERSION]: (refId: string) => `Query editor row title ${refId}`,
     },
     container: {
