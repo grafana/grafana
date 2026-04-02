@@ -353,7 +353,7 @@ skip_org_role_sync = false
 
 #### Org roles mapping
 
-The field `org_mapping` accepts a space separated list of `"<ExternalName>:<OrgIdOrName>:<Role>"` mappings.
+The field `org_mapping` accepts a space or comma separated list of `"<ExternalName>:<OrgIdOrName>:<Role>"` mappings.
 
 It is possible to replace `ExternalName` or `OrgIdOrName` with a `*` as a match any.
 
