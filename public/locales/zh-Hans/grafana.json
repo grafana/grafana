@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "已发送至 <2>{{name}}</2>",
-      "no-grouping": "无分组"
+      "delivered-to-disabled": "",
+      "no-grouping": "无分组",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1059,6 +1061,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident 未安装或未正确配置",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "声明事件"
     },
     "delete-rule-modal": {
@@ -2234,7 +2237,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3558,8 +3563,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "实例详情",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "在所选时间范围内，您没有处于触发或待处理状态的警报实例。",
@@ -4243,6 +4250,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "文件夹名称是必需项。",
       "new-folder-owner-selector-checkbox": "为文件夹分配所有者",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",
       "selected-mix-resources-modal-title": "已选择混合资源类型"
     },
@@ -4401,6 +4409,20 @@
       "error": "无法加载近期查看的数据面板。",
       "retry": "重试",
       "title": "近期查看"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5579,6 +5601,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "应用",
           "change-value": "更改变量值",
@@ -6473,6 +6497,9 @@
       },
       "name": {
         "action": "更改变量名称"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10271,6 +10298,8 @@
     "sidebar": {
       "close": "关闭",
       "dock": "停靠",
+      "hide": "",
+      "show": "",
       "undock": "取消停靠"
     },
     "slider": {
@@ -12896,12 +12925,14 @@
       "not-saved": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到保存到已配置默认分支的当前版本",
       "open-in-repo-button": "在 {{repoType}} 中打开",
       "open-pull-request-in-repo": "在以下位置打开拉取请求：{{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "在中查看 {{repoType}}，以查看最新更改。",
       "view-pull-request-in-repo": "在以下位置查看拉取请求：{{repoType}}"
     },
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中创建新资源。",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "此资源从您刚刚在 {{repoType}} 中创建的分支加载，并且仅对您可见"
+    "title-loaded-pull-request-in-repo": "此资源从您刚刚在 {{repoType}} 中创建的分支加载，并且仅对您可见",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15276,8 +15307,7 @@
       "bar": "条形图",
       "bar-stacked": "条形图 - 堆叠",
       "bar-stacked-percent": "条形图 - 按百分比堆叠",
-      "line": "折线图",
-      "line-smooth": "折线图 - 平滑"
+      "line": "折线图"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "添加时区",
