@@ -37,6 +37,14 @@ describe('triage queries service combined filter', () => {
     expect(query).toContain('service_name="payments"');
   });
 
+  it('keeps service alias expansion when sidebar filter value came from service_name', () => {
+    const query = summaryChartQuery('service="auth",alertname="login-errors"').expr;
+
+    expect(query).toContain('alertname="login-errors",service="auth"');
+    expect(query).toContain('alertname="login-errors",service_name="auth"');
+    expect(query).toContain(' or ');
+  });
+
   it('expands cluster key to cluster OR cluster_name', () => {
     const query = summaryChartQuery('cluster="prod-a"').expr;
 
