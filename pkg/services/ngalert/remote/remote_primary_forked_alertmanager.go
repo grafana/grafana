@@ -30,7 +30,6 @@ func NewRemotePrimaryFactory(
 	cfg AlertmanagerConfig,
 	store kvstore.KVStore,
 	crypto Crypto,
-	autogenFn AutogenFn,
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
 	features featuremgmt.FeatureToggles,
@@ -47,7 +46,7 @@ func NewRemotePrimaryFactory(
 			cfg.OrgID = orgID
 			cfg.PromoteConfig = true
 			l := log.New("ngalert.forked-alertmanager.remote-primary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenFn, m, t, features)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, m, t, features)
 			if err != nil {
 				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 				return internalAM, nil
@@ -68,43 +67,18 @@ func newRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertm
 }
 
 // ApplyConfig will send the configuration to the remote Alertmanager on startup.
-func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
-		return fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
+func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config alertingNotify.NotificationsConfiguration) (bool, error) {
+	applied, err := fam.remote.ApplyConfig(ctx, config)
+	if err != nil {
+		return false, fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
 	}
 
-	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
+	if _, err := fam.internal.ApplyConfig(ctx, config); err != nil {
 		// An error in the internal Alertmanager shouldn't make the whole operation fail.
 		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
 		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
 	}
-	return nil
-}
-
-func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	if err := fam.remote.SaveAndApplyConfig(ctx, config); err != nil {
-		return err
-	}
-
-	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
-		// An error in the internal Alertmanager shouldn't make the whole operation fail.
-		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
-		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
-	}
-	return nil
-}
-
-func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
-		return fmt.Errorf("failed to send the default configuration to the remote Alertmanager: %w", err)
-	}
-
-	if err := fam.internal.SaveAndApplyDefaultConfig(ctx); err != nil {
-		// An error in the internal Alertmanager shouldn't make the whole operation fail.
-		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
-		fam.log.Error("Error applying the default configuration to the internal Alertmanager", "err", err)
-	}
-	return nil
+	return applied, nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
@@ -170,10 +144,6 @@ func (fam *RemotePrimaryForkedAlertmanager) PutAlerts(ctx context.Context, alert
 
 func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error) {
 	return fam.remote.GetReceivers(ctx)
-}
-
-func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	return fam.remote.TestReceivers(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {

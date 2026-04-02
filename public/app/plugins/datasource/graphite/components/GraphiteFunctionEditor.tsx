@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { Fragment, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, InlineLabel, useStyles2 } from '@grafana/ui';
 
-import { FuncInstance } from '../gfunc';
+import { type FuncInstance } from '../gfunc';
 import { actions } from '../state/actions';
 import { useDispatch } from '../state/context';
 
 import { FunctionEditor } from './FunctionEditor';
-import { EditableParam, FunctionParamEditor } from './FunctionParamEditor';
+import { type EditableParam, FunctionParamEditor } from './FunctionParamEditor';
 import { mapFuncInstanceToParams } from './helpers';
 
 export type FunctionEditorProps = {

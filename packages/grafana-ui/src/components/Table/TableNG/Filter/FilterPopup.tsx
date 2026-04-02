@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { Dispatch, memo, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Dispatch, memo, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -12,7 +12,7 @@ import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
-import { FilterOperator, FilterType, TableRow } from '../types';
+import { type FilterOperator, type FilterType, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
@@ -30,6 +30,7 @@ interface Props {
   operator: SelectableValue<FilterOperator>;
   setOperator: (item: SelectableValue<FilterOperator>) => void;
   buttonElement: HTMLButtonElement | null;
+  parentIndex?: number;
 }
 
 export const FilterPopup = memo(
@@ -45,6 +46,7 @@ export const FilterPopup = memo(
     operator,
     setOperator,
     buttonElement,
+    parentIndex,
   }: Props) => {
     const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
     const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -54,6 +56,10 @@ export const FilterPopup = memo(
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const operators = Object.values(operatorSelectableValues());
+    const filterKey = useMemo(
+      () => (typeof parentIndex === 'number' ? `${name}-${parentIndex}` : name),
+      [name, parentIndex]
+    );
 
     // focus the input on mount. autoFocus prop doesn't work on FilterInput, maybe due to the forwarded ref
     useEffect(() => {
@@ -83,26 +89,26 @@ export const FilterPopup = memo(
 
         setFilter((filter: FilterType) => ({
           ...filter,
-          [name]: { filtered: values, filteredSet, searchFilter, operator },
+          [filterKey]: { filtered: values, filteredSet, searchFilter, operator, displayName: name, parentIndex },
         }));
       } else {
         setFilter((filter: FilterType) => {
           const newFilter = { ...filter };
-          delete newFilter[name];
+          delete newFilter[filterKey];
           return newFilter;
         });
       }
       onClose();
-    }, [name, operator, searchFilter, setFilter, values, onClose]);
+    }, [filterKey, operator, parentIndex, searchFilter, setFilter, values, name, onClose]);
 
     const onClearFilter = useCallback(() => {
       setFilter((filter: FilterType) => {
         const newFilter = { ...filter };
-        delete newFilter[name];
+        delete newFilter[filterKey];
         return newFilter;
       });
       onClose();
-    }, [name, setFilter, onClose]);
+    }, [filterKey, setFilter, onClose]);
 
     // we can't directly use ClickOutsideWrapper here because the click and keyup
     // events are complex and need to be handled with care to avoid conflicts
@@ -113,7 +119,6 @@ export const FilterPopup = memo(
           return;
         }
         if (event.target instanceof Node && !domNode.contains(event.target)) {
-          console.log('closing from outside click');
           onClose();
         }
       };

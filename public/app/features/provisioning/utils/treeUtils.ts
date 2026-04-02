@@ -1,7 +1,7 @@
-import { IconName } from '@grafana/ui';
-import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type IconName } from '@grafana/ui';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FileDetails, FlatTreeItem, ItemType, SyncStatus, TreeItem } from '../types';
+import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath } from './folderMetadata';
 

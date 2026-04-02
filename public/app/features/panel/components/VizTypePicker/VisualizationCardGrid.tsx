@@ -1,8 +1,13 @@
 import { css } from '@emotion/css';
-import { Fragment, useMemo } from 'react';
+import { Fragment, type ReactNode, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelPluginMeta,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
@@ -20,10 +25,24 @@ export interface Props {
   data: PanelData;
   onItemClick: (item: PanelPluginVisualizationSuggestion, index: number) => void;
   getItemKey: (item: PanelPluginVisualizationSuggestion) => string;
+  selectedKey?: string;
+  minColumnWidth?: number;
+  maxCardWidth?: number;
+  getBadge?: (item: PanelPluginVisualizationSuggestion) => ReactNode;
 }
 
-export function VisualizationCardGrid({ items, groups, data, onItemClick, getItemKey }: Props) {
-  const styles = useStyles2(getStyles);
+export function VisualizationCardGrid({
+  items,
+  groups,
+  data,
+  onItemClick,
+  getItemKey,
+  selectedKey,
+  minColumnWidth,
+  maxCardWidth,
+  getBadge,
+}: Props) {
+  const styles = useStyles2(getStyles, minColumnWidth, maxCardWidth);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
 
   const itemIndexMap = useMemo(() => {
@@ -48,6 +67,7 @@ export function VisualizationCardGrid({ items, groups, data, onItemClick, getIte
   const renderCard = (item: PanelPluginVisualizationSuggestion, isFirst: boolean) => {
     const itemKey = getItemKey(item);
     const itemIndex = itemIndexMap.get(itemKey) ?? -1;
+    const badge = getBadge?.(item);
 
     return (
       <div
@@ -67,8 +87,10 @@ export function VisualizationCardGrid({ items, groups, data, onItemClick, getIte
           data={data}
           suggestion={item}
           width={width}
+          isSelected={getItemKey(item) === selectedKey}
           onClick={() => onItemClick(item, itemIndex)}
         />
+        {badge}
       </div>
     );
   };
@@ -95,16 +117,18 @@ export function VisualizationCardGrid({ items, groups, data, onItemClick, getIte
   return <div className={styles.grid}>{items?.map((item, index) => renderCard(item, index === 0))}</div>;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, minColumnWidth = MIN_MULTI_COLUMN_SIZE, maxCardWidth?: number) => ({
   grid: css({
     display: 'grid',
     gridGap: theme.spacing(1),
-    gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_MULTI_COLUMN_SIZE}px, 1fr))`,
+    gridTemplateColumns: `repeat(auto-fill, minmax(${minColumnWidth}px, 1fr))`,
     marginBottom: theme.spacing(1),
-    justifyContent: 'space-evenly',
   }),
   cardContainer: css({
     position: 'relative',
+    width: '100%',
+    maxWidth: maxCardWidth,
+    justifySelf: 'start',
   }),
   vizTypeHeader: css({
     gridColumn: '1 / -1',

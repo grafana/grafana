@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/exp/maps"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,7 +27,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -97,7 +97,6 @@ type DashboardServiceImpl struct {
 	publicDashboardService publicdashboards.ServiceWrapper
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
-	dual                   dualwrite.Service
 
 	dashboardPermissionsReady chan struct{}
 }
@@ -179,12 +178,6 @@ func (dr *DashboardServiceImpl) executeCleanupWithLock(ctx context.Context) erro
 func (dr *DashboardServiceImpl) cleanupK8sDashboardResources(ctx context.Context, batchSize int64, timeout time.Duration) error {
 	ctx, span := tracer.Start(ctx, "dashboards.service.cleanupK8sDashboardResources")
 	defer span.End()
-
-	readingFromLegacy := dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, dr.dual)
-	if readingFromLegacy {
-		// Legacy does its own cleanup
-		return nil
-	}
 
 	// Create a timeout context to ensure we complete before the lock expires
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -415,7 +408,7 @@ func ProvideDashboardServiceImpl(
 	quotaService quota.Service,
 	orgService org.Service,
 	publicDashboardService publicdashboards.ServiceWrapper,
-	dual dualwrite.Service,
+	_ dualwrite.Service,
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 	k8sClient dashboardclient.K8sHandlerWithFallback,
@@ -436,7 +429,6 @@ func ProvideDashboardServiceImpl(
 		publicDashboardService:    publicDashboardService,
 		serverLockService:         serverLockService,
 		kvstore:                   kvstore,
-		dual:                      dual,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -917,15 +909,6 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 		return err
 	}
 
-	orgIDs := make([]int64, 0, len(orgs))
-	for _, org := range orgs {
-		orgIDs = append(orgIDs, org.ID)
-	}
-
-	if err := dr.DeleteDuplicateProvisionedDashboards(ctx, orgIDs, cmd.Config); err != nil {
-		dr.log.Error("Failed to delete duplicate provisioned dashboards", "error", err)
-	}
-
 	currentNames := make([]string, 0, len(cmd.Config))
 	for _, cfg := range cmd.Config {
 		currentNames = append(currentNames, cfg.Name)
@@ -960,156 +943,6 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 			}
 		}
 	}
-	return nil
-}
-
-// searchExistingProvisionedData fetches provisioned data for the purposes of
-// duplication cleanup. Returns the set of folder UIDs for folders with the
-// given title, and the set of resources contained in those folders.
-func (dr *DashboardServiceImpl) searchExistingProvisionedData(
-	ctx context.Context, orgID int64, folderTitle string,
-) ([]string, []dashboards.DashboardSearchProjection, error) {
-	ctx, user := identity.WithServiceIdentity(ctx, orgID)
-	cmd := folder.SearchFoldersQuery{
-		OrgID:           orgID,
-		SignedInUser:    user,
-		Title:           folderTitle,
-		TitleExactMatch: true,
-	}
-
-	searchResults, err := dr.folderService.SearchFolders(ctx, cmd)
-	if err != nil {
-		return nil, nil, fmt.Errorf("checking if provisioning reset is required: %w", err)
-	}
-
-	var matchingFolders []string //nolint:prealloc
-	for _, result := range searchResults {
-		f, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID:        orgID,
-			UID:          &result.UID,
-			SignedInUser: user,
-		})
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// We are only interested in folders at the top-level of the folder hierarchy.
-		// Cleanup is not performed for provisioned folders that were moved to
-		// a different location.
-		if f.ParentUID != "" {
-			continue
-		}
-
-		matchingFolders = append(matchingFolders, f.UID)
-	}
-
-	if len(matchingFolders) == 0 {
-		// If there are no folders with the same title as the provisioned folder we
-		// are looking for, there is nothing to be cleaned up.
-		return nil, nil, nil
-	}
-
-	resources, err := dr.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
-		OrgId:        orgID,
-		SignedInUser: user,
-		FolderUIDs:   matchingFolders,
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return matchingFolders, resources, nil
-}
-
-// maybeResetProvisioning will check for duplicated provisioned dashboards in the database. These duplications
-// happen when multiple provisioned dashboards of the same title are found, or multiple provisioned
-// folders are found. In this case, provisioned resources are deleted, allowing the provisioning
-// process to start from scratch after this function returns.
-func (dr *DashboardServiceImpl) maybeResetProvisioning(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) {
-	if skipReason := canBeAutomaticallyCleanedUp(configs); skipReason != "" {
-		dr.log.Info("not eligible for automated cleanup", "reason", skipReason)
-		return
-	}
-
-	folderTitle := configs[0].Folder
-	provisionedNames := map[string]bool{}
-	for _, c := range configs {
-		provisionedNames[c.Name] = true
-	}
-
-	for _, orgID := range orgs {
-		ctx, user := identity.WithServiceIdentity(ctx, orgID)
-		provFolders, resources, err := dr.searchExistingProvisionedData(ctx, orgID, folderTitle)
-		if err != nil {
-			dr.log.Error("failed to search for provisioned data for cleanup", "org", orgID, "error", err)
-			continue
-		}
-
-		steps, err := cleanupSteps(provFolders, resources, provisionedNames)
-		if err != nil {
-			dr.log.Warn("not possible to perform automated duplicate cleanup", "org", orgID, "error", err)
-			continue
-		}
-
-		for _, step := range steps {
-			var err error
-
-			switch step.Type {
-			case searchstore.TypeDashboard:
-				err = dr.deleteDashboard(ctx, 0, step.UID, orgID, false)
-			case searchstore.TypeFolder:
-				err = dr.folderService.Delete(ctx, &folder.DeleteFolderCommand{
-					OrgID:        orgID,
-					SignedInUser: user,
-					UID:          step.UID,
-				})
-			}
-
-			if err == nil {
-				dr.log.Info("deleted duplicated provisioned resource",
-					"type", step.Type, "uid", step.UID,
-				)
-			} else {
-				dr.log.Error("failed to delete duplicated provisioned resource",
-					"type", step.Type, "uid", step.UID, "error", err,
-				)
-			}
-		}
-	}
-}
-
-func (dr *DashboardServiceImpl) DeleteDuplicateProvisionedDashboards(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) error {
-	// Start from scratch if duplications that cannot be fixed by the logic
-	// below are found in the database.
-	dr.maybeResetProvisioning(ctx, orgs, configs)
-
-	// cleanup duplicate provisioned dashboards (i.e., with the same name and external_id).
-	// Note: only works in modes 1-3. This logic can be removed once mode5 is
-	// enabled everywhere.
-	duplicates, err := dr.dashboardStore.GetDuplicateProvisionedDashboards(ctx)
-	if err != nil {
-		return err
-	}
-
-	type provisioningKey struct {
-		name       string
-		externalID string
-	}
-
-	groups := make(map[provisioningKey][]*dashboards.DashboardProvisioningSearchResults)
-	for _, dash := range duplicates {
-		key := provisioningKey{
-			name:       dash.Provisioner,
-			externalID: dash.ExternalID,
-		}
-		if _, exists := groups[key]; exists {
-			if err = dr.deleteDashboard(ctx, dash.ID, dash.UID, dash.OrgID, false); err != nil {
-				dr.log.Error("Failed to delete duplicate provisioned dashboard", "error", err, "dashboardUID", dash.UID, "dashboardID", dash.ID)
-			}
-		}
-		groups[key] = append(groups[key], dash)
-	}
-
 	return nil
 }
 
@@ -1378,8 +1211,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}
 	permissions := []accesscontrol.SetResourcePermissionCommand{}
 	isNested := obj.GetFolder() != ""
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
+	if isNested {
 		// Don't set any permissions for nested dashboards
 		return nil
 	}
@@ -1910,7 +1742,7 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 		query.UID = result.UID
 	}
 
-	out, err := dr.k8sclient.Get(ctx, query.UID, query.OrgID, v1.GetOptions{}, "")
+	out, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, query.K8sGetAPIVersion, "")
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
@@ -2500,5 +2332,5 @@ func getFolderUIDs(hits []dashboardv0.DashboardHit) []string {
 			folderSet[hit.Folder] = true
 		}
 	}
-	return maps.Keys(folderSet)
+	return slices.Collect(maps.Keys(folderSet))
 }

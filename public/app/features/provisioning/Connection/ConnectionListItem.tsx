@@ -1,10 +1,10 @@
 import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
-import { RepoType } from '../Wizard/types';
+import { type RepoType } from '../Wizard/types';
 import { CONNECTIONS_URL } from '../constants';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';

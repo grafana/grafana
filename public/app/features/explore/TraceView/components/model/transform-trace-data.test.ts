@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceResponse } from '../types/trace';
+import { type TraceKeyValuePair } from '@grafana/data';
+
+import { type TraceResponse } from '../types/trace';
 
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
 
@@ -36,6 +38,12 @@ describe('orderTags()', () => {
       { key: 'b.ip', value: '8.8.4.4' },
     ]);
   });
+
+  it('treats non-array tags as empty', () => {
+    expect(orderTags('not-an-array' as unknown as TraceKeyValuePair[])).toEqual([]);
+    expect(orderTags(undefined as unknown as TraceKeyValuePair[])).toEqual([]);
+    expect(orderTags({ key: 'k' } as unknown as TraceKeyValuePair[])).toEqual([]);
+  });
 });
 
 describe('deduplicateTags()', () => {
@@ -53,6 +61,13 @@ describe('deduplicateTags()', () => {
       { key: 'a.ip', value: '8.8.8.8' },
     ]);
     expect(tagsInfo.warnings).toEqual(['Duplicate tag "b.ip:8.8.4.4"']);
+  });
+
+  it('returns empty result for non-array tags', () => {
+    expect(deduplicateTags('x' as unknown as TraceKeyValuePair[])).toEqual({
+      dedupedTags: [],
+      warnings: [],
+    });
   });
 });
 

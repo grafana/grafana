@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { useStyles2, Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
+
+import { trackRenameInitiated } from '../../tracking';
 
 interface EditableQueryNameProps {
   query: DataQuery;
@@ -24,6 +26,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   );
 
   const onEditQuery = () => {
+    trackRenameInitiated();
     setIsEditing(true);
     setValidationError(null);
   };

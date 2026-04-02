@@ -1,4 +1,4 @@
-import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
+import { AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import classicConditionDarkImage from 'app/features/expressions/images/dark/classicCondition.svg';
 import mathDarkImage from 'app/features/expressions/images/dark/math.svg';
@@ -28,6 +28,16 @@ export enum SidebarSize {
 }
 
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
+export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
+export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-next.v2-preference';
+
+export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
+  return {
+    background: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+    border: theme.isDark ? '#314158' : theme.colors.border.medium,
+    accent: theme.isDark ? '#FF9830' : '#C47B20',
+  };
+}
 
 export const QUERY_EDITOR_COLORS = {
   query: '#FF8904',
@@ -48,6 +58,7 @@ export function getQueryEditorColors(theme: GrafanaTheme2) {
     card: {
       activeBg: theme.isDark ? '#314158' : 'oklch(92.9% 0.013 255.508)',
       hoverBg: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
+      bg: theme.colors.background.primary,
     },
   };
 }
@@ -219,3 +230,9 @@ export const EXPRESSION_IMAGE_MAP: Record<ExpressionQueryType, { dark: string; l
   [ExpressionQueryType.classic]: { dark: classicConditionDarkImage, light: classicConditionLightImage },
   [ExpressionQueryType.threshold]: { dark: thresholdDarkImage, light: thresholdLightImage },
 };
+
+export const PENDING_CARD_ID = {
+  expression: 'pending-expression',
+  savedQuery: 'pending-saved-query',
+  transformation: 'pending-transformation',
+} as const;

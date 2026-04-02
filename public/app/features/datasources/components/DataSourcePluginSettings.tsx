@@ -1,9 +1,9 @@
 import { createElement, memo } from 'react';
 
-import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+import { type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
 import { writableProxy } from 'app/features/plugins/extensions/utils';
 
-import { GenericDataSourcePlugin } from '../types';
+import { type GenericDataSourcePlugin } from '../types';
 
 export interface Props {
   plugin: GenericDataSourcePlugin;

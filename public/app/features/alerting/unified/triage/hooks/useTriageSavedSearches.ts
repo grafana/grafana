@@ -1,12 +1,12 @@
-import { SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
+import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import {
-  UseGenericSavedSearchesResult,
+  type UseGenericSavedSearchesResult,
   createAppliedTracker,
   createAutoApplyTracker,
   createStorageLoader,
   useGenericSavedSearches,
 } from '../../hooks/useGenericSavedSearches';
-import { getTriagePredefinedSearches } from '../triagePredefinedSearches';
+import { TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID, getTriagePredefinedSearches } from '../triagePredefinedSearches';
 
 import { createPredefinedOverridesLoader } from './useTriagePredefinedOverrides';
 
@@ -51,7 +51,11 @@ export async function loadDefaultTriageSavedSearch(): Promise<SavedSearch | null
   }
 
   const savedSearches = await loadSavedSearches();
-  return savedSearches.find((s) => s.isDefault) ?? null;
+  const fromUser = savedSearches.find((s) => s.isDefault);
+  if (fromUser) {
+    return fromUser;
+  }
+  return getTriagePredefinedSearches().find((s) => s.id === TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID) ?? null;
 }
 
 export const trackTriageSavedSearchApplied = createAppliedTracker({ page: 'triage' });

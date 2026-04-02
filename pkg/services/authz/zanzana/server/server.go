@@ -18,8 +18,8 @@ import (
 
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/clientauth"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
-	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,12 +62,7 @@ type Server struct {
 	metrics *metrics
 }
 
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (*Server, error) {
-	store, err := zStore.NewEmbeddedStore(cfg, db, logger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start zanzana: %w", err)
-	}
-
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider) (*Server, error) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
@@ -77,12 +71,7 @@ func NewEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, logger log.Logger, tra
 	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig)
 }
 
-func NewZanzanaServer(cfg *setting.Cfg, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
-	store, err := zStore.NewStore(cfg, logger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initilize zanana store: %w", err)
-	}
-
+func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
 	openfgaServer, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
@@ -178,17 +167,44 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	var mtReconciler zanzana.MTReconciler
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		reconcilerLogger := log.New("zanzana.mt-reconciler")
+
+		var leaderElector reconciler.LeaderElector
+		if cfg.ZanzanaReconciler.LeaderElectionEnabled {
+			restCfg, err := clientrest.InClusterConfig()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get in-cluster config for leader election: %w", err)
+			}
+			leaderElector, err = reconciler.NewKubernetesLeaderElector(
+				restCfg,
+				cfg.ZanzanaReconciler.LeaderElectionLeaseName,
+				cfg.ZanzanaReconciler.LeaderElectionNamespace,
+				cfg.ZanzanaReconciler.LeaderElectionIdentity,
+				cfg.ZanzanaReconciler.LeaseDuration,
+				cfg.ZanzanaReconciler.RenewDeadline,
+				cfg.ZanzanaReconciler.RetryPeriod,
+				reconcilerLogger,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create leader elector: %w", err)
+			}
+		} else {
+			leaderElector = reconciler.NewNoopLeaderElector()
+		}
+
 		mtReconciler = reconciler.NewReconciler(
 			s,
 			clientFactory,
 			reconciler.Config{
-				Workers:        cfg.ZanzanaReconciler.Workers,
-				Interval:       cfg.ZanzanaReconciler.Interval,
-				WriteBatchSize: cfg.ZanzanaReconciler.WriteBatchSize,
-				QueueSize:      cfg.ZanzanaReconciler.QueueSize,
+				Workers:             cfg.ZanzanaReconciler.Workers,
+				Interval:            cfg.ZanzanaReconciler.Interval,
+				WriteBatchSize:      cfg.ZanzanaReconciler.WriteBatchSize,
+				ZanzanaReadPageSize: int(cfg.ZanzanaServer.ReadPageSize),
+				QueueSize:           cfg.ZanzanaReconciler.QueueSize,
 			},
 			reconcilerLogger,
 			tracer,
+			reg,
+			leaderElector,
 		)
 	} else {
 		mtReconciler = reconciler.NewNoopReconciler()
@@ -248,6 +264,19 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 				Object: common.NewGroupResourceIdent(
 					dashboardV2beta1.DashboardResourceInfo.GroupResource().Group,
 					dashboardV2beta1.DashboardResourceInfo.GroupResource().Resource,
+					"",
+				),
+			},
+		)
+
+		contextuals = append(
+			contextuals,
+			&openfgav1.TupleKey{
+				User:     subject,
+				Relation: common.RelationSetView,
+				Object: common.NewGroupResourceIdent(
+					folders.FolderResourceInfo.GroupResource().Group,
+					folders.FolderResourceInfo.GroupResource().Resource,
 					"",
 				),
 			},

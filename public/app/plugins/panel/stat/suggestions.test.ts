@@ -1,4 +1,4 @@
-import { createDataFrame, Field, FieldType, getPanelDataSummary } from '@grafana/data';
+import { createDataFrame, type Field, FieldType, getPanelDataSummary } from '@grafana/data';
 
 import { statSuggestionsSupplier } from './suggestions';
 
@@ -98,6 +98,18 @@ describe('State panel suggestions', () => {
         dataframes: [
           createDataFrame({
             fields: [{ name: 'value', type: FieldType.number, values: [10, 20, 30, 40, 50] }],
+          }),
+        ],
+      },
+      {
+        description: 'tabular data with high row count',
+        aggregated: true,
+        dataframes: [
+          createDataFrame({
+            fields: [
+              { name: 'name', type: FieldType.string, values: Array.from({ length: 51 }, (_, i) => `item_${i}`) },
+              { name: 'value', type: FieldType.number, values: Array.from({ length: 51 }, (_, i) => i * 10) },
+            ],
           }),
         ],
       },

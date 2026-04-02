@@ -4,7 +4,7 @@ import (
 	"context"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -16,6 +16,8 @@ type DashboardQuery struct {
 	OrgID int64
 	UID   string // to select a single dashboard
 	Limit int
+
+	DeprecatedInternalID int64 // to select a single dashboard
 
 	// MaxRows is used internally by the iterator to fetch data in batches
 	// When set, the SQL query will include LIMIT MaxRows

@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import AccordianReferences, { AccordianReferencesProps } from './AccordianReferences';
+import AccordianReferences, { type AccordianReferencesProps } from './AccordianReferences';
 
 const traceID = 'trace1';
 const references = [

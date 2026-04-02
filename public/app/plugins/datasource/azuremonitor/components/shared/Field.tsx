@@ -1,6 +1,6 @@
 import { EditorField } from '@grafana/plugin-ui';
 import { InlineField } from '@grafana/ui';
-import { InlineFieldProps } from '@grafana/ui/internal';
+import { type InlineFieldProps } from '@grafana/ui/internal';
 
 interface Props extends InlineFieldProps {
   label: string;

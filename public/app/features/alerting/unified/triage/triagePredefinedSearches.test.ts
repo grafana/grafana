@@ -1,5 +1,6 @@
 import { extractFilterObjects } from './scene/triageSavedSearchUtils';
 import {
+  TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID,
   TRIAGE_PREDEFINED_SEARCH_ID_PREFIX,
   getTriagePredefinedSearches,
   isTriagePredefinedSearchId,
@@ -12,7 +13,7 @@ describe('triagePredefinedSearches', () => {
         expect(search.id).toMatch(new RegExp(`^${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}`));
         expect(typeof search.name).toBe('string');
         expect(search.name.length).toBeGreaterThan(0);
-        expect(search.isDefault).toBe(false);
+        expect(typeof search.isDefault).toBe('boolean');
         expect(typeof search.query).toBe('string');
         expect(search.query.length).toBeGreaterThan(0);
       }
@@ -49,6 +50,19 @@ describe('triagePredefinedSearches', () => {
       const params = new URLSearchParams(third.query);
       expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
       expect(params.has('var-filters')).toBe(false);
+    });
+
+    it('default predefined search is folder-firing (firing, grouped by folder)', () => {
+      expect(TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID).toBe('triage-predefined-folder-firing');
+      const searches = getTriagePredefinedSearches();
+      const defaultSearch = searches.find((s) => s.id === TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID);
+      expect(defaultSearch).toBeDefined();
+      expect(defaultSearch!.isDefault).toBe(true);
+      const params = new URLSearchParams(defaultSearch!.query);
+      expect(params.getAll('var-groupBy')).toEqual(['grafana_folder']);
+      const filters = extractFilterObjects(defaultSearch!.query);
+      expect(filters).toHaveLength(1);
+      expect(filters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
     });
   });
 

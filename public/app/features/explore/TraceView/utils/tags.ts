@@ -12,7 +12,7 @@ import {
   SPAN_NAME,
   SERVICE_NAME,
 } from '../components/constants/span';
-import { Trace } from '../components/types/trace';
+import { type Trace } from '../components/types/trace';
 
 export const getTraceServiceNames = (trace: Trace) => {
   const serviceNames = trace.spans.map((span) => {

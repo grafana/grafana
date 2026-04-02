@@ -1,11 +1,11 @@
 import { BehaviorSubject } from 'rxjs';
 
-import { ScopeSpecFilter } from '@grafana/data';
-import { LocationService } from '@grafana/runtime';
+import { type ScopeSpecFilter } from '@grafana/data';
+import { type LocationService } from '@grafana/runtime';
 
 import { ScopesService } from './ScopesService';
-import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
-import { ScopesSelectorService } from './selector/ScopesSelectorService';
+import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
+import { type ScopesSelectorService } from './selector/ScopesSelectorService';
 
 jest.mock('./selector/ScopesSelectorService');
 jest.mock('./dashboards/ScopesDashboardsService');

@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react';
 import {
   FieldType,
   LoadingState,
-  PanelData,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -55,7 +55,7 @@ describe('VisualizationSuggestionCard', () => {
   it('should render a panel renderer card when no imgSrc is provided', () => {
     render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} />);
 
-    expect(screen.getByRole('button', { name: 'Time series' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Time series')).toBeInTheDocument();
     expect(screen.getByTestId('panel-renderer')).toBeInTheDocument();
   });
 
@@ -88,6 +88,25 @@ describe('VisualizationSuggestionCard', () => {
 
     render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={200} />);
 
-    expect(screen.getByRole('button', { name: 'Time series' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Time series')).toBeInTheDocument();
+  });
+
+  it('should render successfully when isSelected is true', () => {
+    render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} isSelected={true} />);
+
+    const button = screen.getByLabelText('Time series');
+    expect(button).toBeInTheDocument();
+    expect(button).toBeVisible();
+  });
+
+  it('should render successfully when isSelected is omitted', () => {
+    const { container: withoutProp } = render(
+      <VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} />
+    );
+    const { container: withFalseProp } = render(
+      <VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} isSelected={false} />
+    );
+
+    expect(withoutProp.innerHTML).toBe(withFalseProp.innerHTML);
   });
 });

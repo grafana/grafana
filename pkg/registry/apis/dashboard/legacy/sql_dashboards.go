@@ -20,7 +20,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	dashboardOG "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -154,12 +154,30 @@ func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql
 	return helper.DB.GetSqlxSession().Query(ctx, query, args...)
 }
 
+func getLegacyIDSelector(labels []*resourcepb.Requirement) int64 {
+	if len(labels) != 1 {
+		return 0
+	}
+	q := labels[0]
+	if q.Key == utils.LabelKeyDeprecatedInternalID &&
+		q.Operator == "=" &&
+		len(q.Values) == 1 {
+		i, _ := strconv.ParseInt(labels[0].Values[0], 10, 64)
+		return i
+	}
+	return 0
+}
+
 func (a *dashboardSqlAccess) getRows(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
 	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.getRows")
 	defer span.End()
 
 	if len(query.Labels) > 0 {
-		return nil, fmt.Errorf("labels not yet supported")
+		query.DeprecatedInternalID = getLegacyIDSelector(query.Labels)
+		if query.DeprecatedInternalID == 0 {
+			return nil, fmt.Errorf("labels not yet supported")
+		}
+
 		// if query.Requirements.Folder != nil {
 		// 	args = append(args, *query.Requirements.Folder)
 		// 	sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=?$%d", sqlcmd, len(args))
@@ -455,6 +473,9 @@ func (r *rowsWrapper) Next() bool {
 	var err error
 
 	// breaks after first readable value
+	defer func() {
+		r.err = errors.Join(r.err, r.rows.Err())
+	}()
 	for r.rows.Next() {
 		r.count++
 

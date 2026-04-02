@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -14,7 +14,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     divider: css({
       height: 1,
       backgroundColor: theme.colors.border.weak,
-      margin: theme.spacing(0.5, 0),
+      margin: theme.spacing(1, 0),
     }),
   };
 };

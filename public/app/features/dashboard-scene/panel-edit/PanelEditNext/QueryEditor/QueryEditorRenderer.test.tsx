@@ -1,9 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
-import { DataQueryError, DataSourceApi, DataSourceJsonData, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import {
+  type DataQueryError,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../constants';
 
@@ -95,7 +101,7 @@ describe('QueryEditorRenderer', () => {
       return (
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-          qrState={{ queries: [queryA, queryB], data: undefined, isLoading: false, queryError: undefined }}
+          qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
           panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
@@ -118,6 +124,11 @@ describe('QueryEditorRenderer', () => {
             pendingTransformation: null,
             setPendingTransformation: jest.fn(),
             finalizePendingTransformation: jest.fn(),
+            pendingSavedQuery: null,
+            setPendingSavedQuery: jest.fn(),
+            showVersionBanner: false,
+            selectedQueryRefIds: [],
+            selectedTransformationIds: [],
           }}
           actions={mockActions}
         >

@@ -82,9 +82,7 @@ describe('FixFolderMetadataDrawer', () => {
 
     const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
-    await screen.findByRole('button', { name: /fix folder ids/i });
-
-    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+    await user.click(await screen.findByRole('button', { name: /fix folder ids/i }));
 
     await waitFor(() => {
       expect(capturedBody).toEqual(
@@ -92,6 +90,41 @@ describe('FixFolderMetadataDrawer', () => {
           action: 'fixFolderMetadata',
           fixFolderMetadata: expect.objectContaining({
             ref: 'main',
+          }),
+        })
+      );
+    });
+  });
+
+  it('defaults to a generated branch name when write workflow is not available', async () => {
+    server.use(
+      http.get(`${BASE}/settings`, () =>
+        HttpResponse.json({
+          ...defaultSettings,
+          items: [{ ...defaultSettings.items[0], workflows: ['branch'] }],
+        })
+      )
+    );
+
+    let capturedBody: unknown;
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json(jobResponse);
+      }),
+      http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [jobResponse] }))
+    );
+
+    const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+
+    await user.click(await screen.findByRole('button', { name: /fix folder ids/i }));
+
+    await waitFor(() => {
+      expect(capturedBody).toEqual(
+        expect.objectContaining({
+          action: 'fixFolderMetadata',
+          fixFolderMetadata: expect.objectContaining({
+            ref: expect.stringMatching(/^fix-folder-ids\//),
           }),
         })
       );
@@ -110,10 +143,13 @@ describe('FixFolderMetadataDrawer', () => {
 
     const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
+    // Click opens the Combobox menu, whose stateReducer clears the input.
+    // We must wait for that render before typing, otherwise the new text
+    // appends to the previous value (e.g. "mainfeature-branch").
     const branchInput = await screen.findByRole('combobox', { name: /branch/i });
-    await user.clear(branchInput);
-    await user.type(branchInput, 'feature-branch');
-    await user.keyboard('{Enter}');
+    await user.click(branchInput);
+    await waitFor(() => expect(branchInput).toHaveValue(''));
+    await user.keyboard('feature-branch{Enter}');
 
     await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
 
@@ -138,8 +174,7 @@ describe('FixFolderMetadataDrawer', () => {
 
     const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
-    await screen.findByRole('button', { name: /fix folder ids/i });
-    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+    await user.click(await screen.findByRole('button', { name: /fix folder ids/i }));
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByText(/error fixing folder metadata/i)).toBeInTheDocument();
@@ -154,8 +189,7 @@ describe('FixFolderMetadataDrawer', () => {
     const onDismiss = jest.fn();
     const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={onDismiss} />);
 
-    await screen.findByRole('button', { name: /fix folder ids/i });
-    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+    await user.click(await screen.findByRole('button', { name: /fix folder ids/i }));
 
     // The drawer should remain open showing job status, not auto-dismiss
     expect(onDismiss).not.toHaveBeenCalled();
@@ -201,7 +235,6 @@ describe('FixFolderMetadataDrawer', () => {
 
     render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
-    await screen.findByRole('button', { name: /fix folder ids/i });
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /fix folder ids/i })).toBeDisabled();
     });

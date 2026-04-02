@@ -1,4 +1,4 @@
-import { RefObject, useCallback } from 'react';
+import { type RefObject, useCallback } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
@@ -7,6 +7,7 @@ import { Actions } from '../../Actions';
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
+import { ExperimentalFeedbackButton } from './ExperimentalFeedbackButton';
 import { PluginActions } from './PluginActions';
 import { QueryActionsMenu } from './QueryActionsMenu';
 import { SaveButton } from './SaveButton';
@@ -76,6 +77,7 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
           duplicate: 0,
         }}
       />
+      <ExperimentalFeedbackButton />
       {cardType === QueryEditorType.Transformation ? <TransformationActionButtons /> : <QueryActionsMenu />}
     </Stack>
   );

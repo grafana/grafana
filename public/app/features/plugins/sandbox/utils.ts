@@ -2,10 +2,10 @@ import { isNearMembraneProxy } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
 
-import { LogContext } from '@grafana/faro-web-sdk';
+import { type LogContext } from '@grafana/faro-web-sdk';
 import { createMonitoringLogger } from '@grafana/runtime';
 
-import { SandboxedPluginObject } from './types';
+import { type SandboxedPluginObject } from './types';
 
 export function isSandboxedPluginObject(value: unknown): value is SandboxedPluginObject {
   return !!value && typeof value === 'object' && value?.hasOwnProperty('plugin');

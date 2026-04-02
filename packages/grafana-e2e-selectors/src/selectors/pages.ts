@@ -1,4 +1,4 @@
-import { VersionedSelectorGroup } from '../types';
+import { type VersionedSelectorGroup } from '../types';
 
 import { MIN_GRAFANA_VERSION } from './constants';
 
@@ -37,19 +37,6 @@ export const versionedPages = {
     },
     skip: {
       '10.2.3': 'data-testid Skip change password button',
-    },
-  },
-  PasswordlessLogin: {
-    url: {
-      [MIN_GRAFANA_VERSION]: '/login/passwordless/authenticate',
-    },
-    email: {
-      '10.2.3': 'data-testid Email input field',
-      [MIN_GRAFANA_VERSION]: 'Email input field',
-    },
-    submit: {
-      '10.2.3': 'data-testid PasswordlessLogin button',
-      [MIN_GRAFANA_VERSION]: 'PasswordlessLogin button',
     },
   },
   Home: {
@@ -192,6 +179,21 @@ export const versionedPages = {
       },
       addButton: {
         '12.4.0': 'data-testid Dashboard Sidebar new button',
+      },
+      conditionalRendering: {
+        variable: {
+          valueInput: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Variable value input',
+          },
+          variableSelection: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Variable variable selection',
+          },
+        },
+        timeRange: {
+          select: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Time range select',
+          },
+        },
       },
     },
     DashNav: {
@@ -621,6 +623,9 @@ export const versionedPages = {
             modeToggle: {
               '11.0.0': 'data-testid ad-hoc filters variable mode toggle',
             },
+            enableGroupByToggle: {
+              '13.0.0': 'data-testid ad-hoc filters variable enable group by toggle',
+            },
           },
           SwitchVariable: {
             valuePairTypeSelect: {
@@ -657,8 +662,14 @@ export const versionedPages = {
       },
     },
     Annotations: {
+      tooltip: {
+        '10.0.0': 'annotation-marker',
+      },
       marker: {
         '10.0.0': 'data-testid annotation-marker',
+      },
+      clusterTooltip: {
+        '13.0.0': 'data-testid annotation-cluster-tooltip',
       },
     },
     Rows: {

@@ -5,7 +5,7 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '@grafana/ui';
