@@ -1,9 +1,10 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
-import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
+import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
@@ -11,7 +12,7 @@ import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-import { findCreateActions } from './utils';
+import { GROUP_DISPLAY, ITEM_DISPLAY, findCreateActionGroups } from './utils';
 
 export interface Props {}
 
@@ -19,13 +20,15 @@ export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
-  const createActions = useMemo(() => {
-    const createActions = findCreateActions(navBarTree);
+  const theme = useTheme2();
+
+  const actionGroups = useMemo(() => {
+    const groups = findCreateActionGroups(navBarTree);
 
     if (config.featureToggles.dashboardTemplates) {
       const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
       if (testDataSources.length > 0) {
-        createActions.splice(1, 0, {
+        const templateItem: NavModelItem = {
           id: 'browse-template-dashboard',
           text: t('navigation.quick-add.new-template-dashboard-button', 'Dashboard from template'),
           url: '/dashboards?templateDashboards=true&source=quickAdd',
@@ -40,17 +43,20 @@ export const QuickAdd = ({}: Props) => {
                   contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
                 });
           },
-        });
+        };
+
+        const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
+        if (dashboardGroup) {
+          dashboardGroup.items.push(templateItem);
+        }
       }
     }
 
-    return createActions;
+    return groups;
   }, [isAnalyticsFrameworkEnabled, navBarTree]);
-  const showQuickAdd = createActions.length > 0;
 
-  if (!showQuickAdd) {
-    return null;
-  }
+  const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
+
   const handleVisibleChange = () => {
     if (!isOpen) {
       reportInteraction('grafana_create_new_button_menu_opened', {
@@ -60,23 +66,37 @@ export const QuickAdd = ({}: Props) => {
     setIsOpen(!isOpen);
   };
 
-  const MenuActions = () => {
-    return (
-      <Menu>
-        {createActions.map((createAction, index) => (
-          <Menu.Item
-            key={index}
-            url={createAction.url}
-            label={createAction.text}
-            onClick={() => {
-              reportInteraction('grafana_menu_item_clicked', { url: createAction.url, from: 'quickadd' });
-              createAction.onClick?.();
-            }}
-          />
-        ))}
-      </Menu>
-    );
-  };
+  const MenuActions = () => (
+    <Menu>
+      {actionGroups.map((group, groupIdx) => {
+        const groupDisplay = GROUP_DISPLAY[group.parentId];
+        const iconColor = groupDisplay?.iconColor(theme);
+        return (
+          <Fragment key={group.parentId}>
+            {groupIdx > 0 && <Menu.Divider />}
+            <Menu.Group label={groupDisplay?.label() ?? group.parentText}>
+              {group.items.map((item) => {
+                const itemDisplay = item.id ? ITEM_DISPLAY[item.id] : undefined;
+                return (
+                  <Menu.Item
+                    key={item.id}
+                    url={item.url}
+                    label={itemDisplay?.label() ?? item.text}
+                    icon={itemDisplay?.icon}
+                    iconColor={iconColor}
+                    onClick={() => {
+                      reportInteraction('grafana_menu_item_clicked', { url: item.url, from: 'quickadd' });
+                      item.onClick?.();
+                    }}
+                  />
+                );
+              })}
+            </Menu.Group>
+          </Fragment>
+        );
+      })}
+    </Menu>
+  );
 
   return showQuickAdd ? (
     <>

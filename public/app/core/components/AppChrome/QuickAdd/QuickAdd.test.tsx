@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -22,27 +22,27 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-const setup = () => {
-  const navBarTree: NavModelItem[] = [
+function setup(navBarTreeOverride?: NavModelItem[]) {
+  const navBarTree: NavModelItem[] = navBarTreeOverride ?? [
     {
-      text: 'Section 1',
-      id: 'section1',
-      url: 'section1',
+      text: 'Dashboards',
+      id: 'dashboards/browse',
+      url: '/dashboards',
       children: [
-        { text: 'New child 1', id: 'child1', url: '#', isCreateAction: true },
-        { text: 'Child2', id: 'child2', url: 'section1/child2' },
+        { text: 'New dashboard', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true },
+        { text: 'Import dashboard', id: 'dashboards/import', url: '/dashboard/import', isCreateAction: true },
       ],
     },
     {
-      text: 'Section 2',
-      id: 'section2',
-      url: 'section2',
-      children: [{ text: 'New child 3', id: 'child3', url: 'section2/child3', isCreateAction: true }],
+      text: 'Alerting',
+      id: 'alerting',
+      url: '/alerting',
+      children: [{ text: 'Create alert rule', id: 'alert', url: '/alerting/new', isCreateAction: true }],
     },
   ];
   const store = configureStore({ navBarTree });
   return render(<QuickAdd />, { store });
-};
+}
 
 describe('QuickAdd', () => {
   beforeAll(() => {
@@ -61,48 +61,83 @@ describe('QuickAdd', () => {
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
   });
 
-  it('shows isCreateAction options when clicked', async () => {
+  it('renders grouped menu items with correct labels', async () => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
-    expect(screen.getByRole('menuitem', { name: 'New child 1' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'New child 3' })).toBeInTheDocument();
+
+    const dashboardGroup = screen.getByRole('group', { name: 'New dashboard' });
+    expect(within(dashboardGroup).getByRole('menuitem', { name: 'Blank' })).toBeInTheDocument();
+    expect(within(dashboardGroup).getByRole('menuitem', { name: 'Import' })).toBeInTheDocument();
+
+    const alertGroup = screen.getByRole('group', { name: 'New alert rule' });
+    expect(within(alertGroup).getByRole('menuitem', { name: 'Create' })).toBeInTheDocument();
+  });
+
+  it('renders both groups inside the menu', async () => {
+    setup();
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    const menu = screen.getByRole('menu');
+    expect(within(menu).getAllByRole('group')).toHaveLength(2);
   });
 
   it('reports interaction when a menu item is clicked', async () => {
+    // jsdom doesn't support navigation; suppress the expected error
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'New child 1' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Blank' }));
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_menu_item_clicked', {
-      url: '#',
+      url: '/dashboard/new',
       from: 'quickadd',
     });
+    consoleSpy.mockRestore();
   });
 
-  describe('Dashboard from template button', () => {
+  it('falls back to nav item text for unknown item IDs', async () => {
+    setup([
+      {
+        text: 'Custom Section',
+        id: 'custom',
+        url: '/custom',
+        children: [{ text: 'Custom action', id: 'custom/action', url: '/custom/new', isCreateAction: true }],
+      },
+    ]);
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    expect(screen.getByRole('menuitem', { name: 'Custom action' })).toBeInTheDocument();
+  });
+
+  describe('From template button', () => {
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
     });
 
-    it('shows a `Dashboard from template` button when the feature flag is enabled', async () => {
+    it('shows when the feature flag is enabled', async () => {
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.getByRole('menuitem', { name: 'Dashboard from template' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'From template' })).toBeInTheDocument();
     });
 
-    it('does not show a `Dashboard from template` button when the feature flag is disabled', async () => {
+    it('is hidden when the feature flag is disabled', async () => {
       config.featureToggles.dashboardTemplates = false;
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.queryByRole('menuitem', { name: 'Dashboard from template' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'From template' })).not.toBeInTheDocument();
     });
 
-    it('redirects the user to the dashboard from template page when the button is clicked', async () => {
+    it('links to the template dashboards page', async () => {
       setup();
-
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      const link = screen.getByRole('menuitem', { name: 'Dashboard from template' });
+      const link = screen.getByRole('menuitem', { name: 'From template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
+    });
+
+    it('is placed in the dashboard group', async () => {
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+
+      const dashboardGroup = screen.getByRole('group', { name: 'New dashboard' });
+      expect(within(dashboardGroup).getByRole('menuitem', { name: 'From template' })).toBeInTheDocument();
     });
   });
 });
