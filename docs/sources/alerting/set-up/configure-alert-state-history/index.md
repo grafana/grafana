@@ -67,6 +67,31 @@ The following steps describe a basic configuration:
    enable = alertingCentralAlertHistory
    ```
 
+   For Loki deployments with separate read and write endpoints, use `loki_remote_read_url` and `loki_remote_write_url` instead of `loki_remote_url`:
+
+   ```toml
+   [unified_alerting.state_history]
+   enabled = true
+   backend = loki
+
+   loki_remote_read_url = http://loki-read:3100
+   loki_remote_write_url = http://loki-write:3100
+   ```
+
+   For multi-tenant or authenticated Loki deployments, you can also configure:
+
+   ```toml
+   [unified_alerting.state_history]
+   # Optional tenant ID for multi-tenant Loki
+   loki_tenant_id = <TENANT_ID>
+
+   # Optional basic authentication credentials
+   loki_basic_auth_username = <USERNAME>
+   loki_basic_auth_password = <PASSWORD>
+   ```
+
+   For a full list of configuration options, refer to [`[unified_alerting.state_history]`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#unified_alertingstate_history).
+
 1. **Configure the Loki data source in Grafana**
 
    Add the [Loki data source](/docs/grafana/<GRAFANA_VERSION>/datasources/loki/) to Grafana.
@@ -108,9 +133,11 @@ The following steps describe a basic configuration:
 
    # (Optional) Metric name for the alert state metric. Default is "GRAFANA_ALERTS".
    # prometheus_metric_name = GRAFANA_ALERTS
-   # (Optional)  Timeout for writing alert state data to the target data source. Default is 10s.
+   # (Optional) Timeout for writing alert state data to the target data source. Default is 10s.
    # prometheus_write_timeout = 10s
    ```
+
+   For a full list of configuration options, refer to [`[unified_alerting.state_history]`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#unified_alertingstate_history).
 
 You can then use **Grafana Explore** to query the alert state metric. For details, refer to [Alerting Meta monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor/).
 
@@ -203,4 +230,14 @@ prometheus_target_datasource_uid = <DATA_SOURCE_UID>
 
 [feature_toggles]
 enable = alertingCentralAlertHistory
+```
+
+## Add external labels to state history records
+
+You can attach extra labels to all outbound state history records or log streams using the `[unified_alerting.state_history.external_labels]` section. This is useful for distinguishing state history data from different Grafana instances when writing to a shared Loki or Prometheus backend.
+
+```toml
+[unified_alerting.state_history.external_labels]
+cluster = us-east-1
+environment = production
 ```
