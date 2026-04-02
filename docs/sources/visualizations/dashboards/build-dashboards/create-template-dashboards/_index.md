@@ -67,6 +67,10 @@ The dashboards suggested can either have the data source provided or come from t
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-suggested-dashboards-v13.0.png" max-width="750px" alt="Suggested dashboards dialog box" >}}
 
+For Prometheus data sources, Grafana compares the metrics of your data source against those of the suggested dashboard to assess how much you might need to update the dashboard to make it useful. Using that analysis, Grafana assigns the dashboard a compatibility score:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-compatibility-scores-v13.0.png" max-width="750px" alt="Suggested dashboards dialog box" >}}
+
 Access the suggested dashboards for a data source by clicking the **Build a dashboard** drop-down list and selecting **From suggestions**:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-build-dashboard-dropdown-v13.0.png" max-width="750px" alt="Build a dashboard drop-down list with From suggestions selected" >}}
