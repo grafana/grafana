@@ -108,7 +108,7 @@ require (
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
 	github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686 // @grafana/data-sources-plugins
-	github.com/grafana/schemads v0.0.6 // @grafana/data-sources
+	github.com/grafana/schemads v0.0.7 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
@@ -675,7 +675,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	golang.org/x/crypto v0.49.0 // indirect
-	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
+	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
 	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260209163413-e7419c687ee4 // indirect
