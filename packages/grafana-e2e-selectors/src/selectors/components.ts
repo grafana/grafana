@@ -636,6 +636,7 @@ export const versionedComponents = {
         [MIN_GRAFANA_VERSION]: 'Panel editor option pane select',
       },
       fieldLabel: {
+        '13.0.0': (type: string) => `data-testid ${type} field property editor`,
         [MIN_GRAFANA_VERSION]: (type: string) => `${type} field property editor`,
       },
       fieldInput: {
@@ -762,11 +763,13 @@ export const versionedComponents = {
   PanelInspector: {
     Data: {
       content: {
+        '13.0.0': 'data-testid Panel inspector Data content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Data content',
       },
     },
     Stats: {
       content: {
+        '13.0.0': 'data-testid Panel inspector Stats content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Stats content',
       },
     },
@@ -778,9 +781,11 @@ export const versionedComponents = {
     },
     Query: {
       content: {
+        '13.0.0': 'data-testid Panel inspector Query content',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Query content',
       },
       refreshButton: {
+        '13.0.0': 'data-testid Panel inspector Query refresh button',
         [MIN_GRAFANA_VERSION]: 'Panel inspector Query refresh button',
       },
       jsonObjectKeys: {
@@ -804,9 +809,11 @@ export const versionedComponents = {
   },
   QueryTab: {
     content: {
+      '13.0.0': 'data-testid Query editor tab content',
       [MIN_GRAFANA_VERSION]: 'Query editor tab content',
     },
     queryInspectorButton: {
+      '13.0.0': 'data-testid Query inspector button',
       [MIN_GRAFANA_VERSION]: 'Query inspector button',
     },
     queryHistoryButton: {
