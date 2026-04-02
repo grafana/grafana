@@ -655,7 +655,7 @@ export interface FeatureToggles {
   newSavedQueriesExperience?: boolean;
   /**
   * Enables the new unconfigured panel experience
-  * @default false
+  * @default true
   */
   newUnconfiguredPanel?: boolean;
   /**

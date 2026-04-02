@@ -1026,10 +1026,10 @@ var (
 		{
 			Name:         "newUnconfiguredPanel",
 			Description:  "Enables the new unconfigured panel experience",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLibrary",
