@@ -21,7 +21,7 @@ permissions:
 
 # Builds the following artifacts:
 #
-# targz:grafana:* (via make build-packages + pre-seeded dist for Dagger)
+# targz:grafana:* (via make build-targz + pre-seeded dist for Dagger)
 # deb / rpm / docker / zip / msi (Dagger, consuming prebuilt targz from dist when present)
 #
 # One shared frontend artifact is reused for every targz matrix cell (OSS), so assets-manifest.json matches all
@@ -278,7 +278,7 @@ jobs:
           GOARM: ${{ matrix.arm }}
           BUILD_NUMBER: ${{ github.run_id }}
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
-        run: make build-packages BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
       - uses: ./.github/actions/setup-fpm
         if: matrix.deb || matrix.rpm
       - name: Build deb and rpm
@@ -308,7 +308,7 @@ jobs:
           done
       - name: Write artifact list
         run: |
-          listfile="artifacts-list-targz-${{ matrix.name }}.txt"
+          listfile="artifacts-list-packages-${{ matrix.name }}.txt"
           : > "$listfile"
           for f in dist/*.tar.gz dist/*.deb dist/*.rpm; do
             [ -e "$f" ] || continue
@@ -318,19 +318,19 @@ jobs:
       - name: Stage targz artifacts for upload
         run: |
           set -euo pipefail
-          mkdir -p "upload/artifacts-list-targz-${{ matrix.name }}"
-          cp "artifacts-list-targz-${{ matrix.name }}.txt" "upload/artifacts-list-targz-${{ matrix.name }}/"
-          mkdir -p "upload/artifacts-targz-${{ matrix.name }}"
-          cp -R dist/. "upload/artifacts-targz-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-list-packages-${{ matrix.name }}"
+          cp "artifacts-list-packages-${{ matrix.name }}.txt" "upload/artifacts-list-packages-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-packages-${{ matrix.name }}"
+          cp -R dist/. "upload/artifacts-packages-${{ matrix.name }}/"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: artifacts-list-targz-${{ matrix.name }}
-          path: upload/artifacts-list-targz-${{ matrix.name }}
+          name: artifacts-list-packages-${{ matrix.name }}
+          path: upload/artifacts-list-packages-${{ matrix.name }}
           retention-days: 1
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: artifacts-targz-${{ matrix.name }}
-          path: upload/artifacts-targz-${{ matrix.name }}
+          name: artifacts-packages-${{ matrix.name }}
+          path: upload/artifacts-packages-${{ matrix.name }}
           retention-days: 1
 
   verify-targz:
@@ -340,7 +340,7 @@ jobs:
     uses: ./.github/workflows/release-verify.yml
     with:
       run-id: ${{ github.run_id }}
-      targz-artifact-name: artifacts-targz-linux-amd64
+      targz-artifact-name: artifacts-packages-linux-amd64
 
   verify-packages:
     name: verify packages (linux-amd64)
@@ -384,7 +384,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
-          name: artifacts-targz-${{ matrix.name }}
+          name: artifacts-packages-${{ matrix.name }}
           path: dist
       - name: Set up QEMU
         uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
@@ -448,7 +448,7 @@ jobs:
       - build-docker
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-targz-${{ matrix.target }}
+      pattern: artifacts-packages-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
@@ -506,7 +506,7 @@ jobs:
       - build-docker
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-list-targz-${{ matrix.target }}
+      pattern: artifacts-list-packages-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
