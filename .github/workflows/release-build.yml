@@ -200,9 +200,9 @@ jobs:
           path: bin/${{ matrix.os }}/${{ matrix.arch }}
           retention-days: 1
 
-  build-targz:
-    name: targz / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large
+  build-packages:
+    name: packages / ${{ matrix.name }}
+    runs-on: ubuntu-x64-large-io
     needs:
       - setup
       - build-frontend
@@ -216,23 +216,33 @@ jobs:
           - name: linux-amd64
             os: linux
             arch: amd64
+            deb: true
+            rpm: true
           - name: linux-arm64
             os: linux
             arch: arm64
+            deb: true
+            rpm: true
           - name: linux-s390x
             os: linux
             arch: s390x
+            deb: true
+            rpm: true
           - name: linux-armv6
             os: linux
             arch: arm
             arm: '6'
+            deb: true
           - name: linux-armv7
             os: linux
             arch: arm
             arm: '7'
+            deb: true
           - name: linux-riscv64
             os: linux
             arch: riscv64
+            deb: true
+            rpm: true
           - name: windows-amd64
             os: windows
             arch: amd64
@@ -269,18 +279,35 @@ jobs:
           BUILD_NUMBER: ${{ github.run_id }}
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
         run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
-      - name: Generate tar.gz checksums
+      - uses: ./.github/actions/setup-fpm
+        if: matrix.deb || matrix.rpm
+      - name: Build deb and rpm
+        if: matrix.deb
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm }}
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+          RPM: ${{ matrix.rpm }}
+        run: |
+          if [[ "$RPM" == "true" ]]; then
+            make -j2 build-deb build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+          else
+            make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+          fi
+      - name: Generate checksums
         run: |
           set -euo pipefail
-          for f in dist/*.tar.gz; do
+          for f in dist/*.tar.gz dist/*.deb dist/*.rpm; do
             [ -e "$f" ] || continue
             sha256sum "$f" > "${f}.sha256"
           done
       - name: Write artifact list
         run: |
-          listfile="artifacts-list-targz-${{ matrix.name }}.txt"
+          listfile="artifacts-list-packages-${{ matrix.name }}.txt"
           : > "$listfile"
-          for f in dist/*.tar.gz; do
+          for f in dist/*.tar.gz dist/*.deb dist/*.rpm; do
             [ -e "$f" ] || continue
             echo "$f" >> "$listfile"
             echo "${f}.sha256" >> "$listfile"
@@ -288,62 +315,60 @@ jobs:
       - name: Stage targz artifacts for upload
         run: |
           set -euo pipefail
-          mkdir -p "upload/artifacts-list-targz-${{ matrix.name }}"
-          cp "artifacts-list-targz-${{ matrix.name }}.txt" "upload/artifacts-list-targz-${{ matrix.name }}/"
-          mkdir -p "upload/artifacts-targz-${{ matrix.name }}"
-          cp -R dist/. "upload/artifacts-targz-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-list-packages-${{ matrix.name }}"
+          cp "artifacts-list-packages-${{ matrix.name }}.txt" "upload/artifacts-list-packages-${{ matrix.name }}/"
+          mkdir -p "upload/artifacts-packages-${{ matrix.name }}"
+          cp -R dist/. "upload/artifacts-packages-${{ matrix.name }}/"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: artifacts-list-targz-${{ matrix.name }}
-          path: upload/artifacts-list-targz-${{ matrix.name }}
+          name: artifacts-list-packages-${{ matrix.name }}
+          path: upload/artifacts-list-packages-${{ matrix.name }}
           retention-days: 1
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: artifacts-targz-${{ matrix.name }}
-          path: upload/artifacts-targz-${{ matrix.name }}
+          name: artifacts-packages-${{ matrix.name }}
+          path: upload/artifacts-packages-${{ matrix.name }}
           retention-days: 1
 
   verify-targz:
     name: verify targz (linux-amd64)
     needs:
-      - build-targz
+      - build-packages
     uses: ./.github/workflows/release-verify.yml
     with:
       run-id: ${{ github.run_id }}
-      targz-artifact-name: artifacts-targz-linux-amd64
+      targz-artifact-name: artifacts-packages-linux-amd64
 
   verify-packages:
     name: verify packages (linux-amd64)
     needs:
-      - build-packages
+      - build-docker
     uses: ./.github/workflows/release-verify-packages.yml
     with:
       run-id: ${{ github.run_id }}
       packages-artifact-name: artifacts-linux-amd64
 
-  build-packages:
+  build-docker:
     runs-on: ubuntu-x64-large
     needs:
       - setup
-      - build-targz
+      - build-packages
     permissions:
       contents: read
       id-token: write
-    name: ${{ needs.setup.outputs.version }} / packages / ${{ matrix.name }}
+    name: ${{ needs.setup.outputs.version }} / docker / ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: linux-amd64
-            artifacts: deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu
+            artifacts: docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu
           - name: linux-arm64
-            artifacts: deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
+            artifacts: docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
           - name: linux-s390x
-            artifacts: deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
+            artifacts: docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
           - name: linux-armv7
-            artifacts: deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
-          - name: linux-armv6
-            artifacts: deb:grafana:linux/arm/v6
+            artifacts: docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
           - name: windows-amd64
             artifacts: zip:grafana:windows/amd64:nocgo,msi:grafana:windows/amd64:nocgo
           - name: windows-arm64
@@ -356,7 +381,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
-          name: artifacts-targz-${{ matrix.name }}
+          name: artifacts-packages-${{ matrix.name }}
           path: dist
       - name: Set up QEMU
         uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
@@ -416,11 +441,11 @@ jobs:
       id-token: write
     needs:
       - setup
-      - build-targz
       - build-packages
+      - build-docker
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-targz-${{ matrix.target }}
+      pattern: artifacts-packages-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
@@ -435,7 +460,6 @@ jobs:
           - target: linux-amd64
           - target: linux-arm64
           - target: linux-s390x
-          - target: linux-armv6
           - target: linux-armv7
           - target: windows-amd64
           - target: windows-arm64
@@ -444,8 +468,8 @@ jobs:
       id-token: write
     needs:
       - setup
-      - build-targz
       - build-packages
+      - build-docker
     with:
       bucket: grafana-prerelease
       pattern: artifacts-${{ matrix.target }}
@@ -475,11 +499,11 @@ jobs:
       id-token: write
     needs:
       - setup
-      - build-targz
       - build-packages
+      - build-docker
     with:
       bucket: grafana-prerelease
-      pattern: artifacts-list-targz-${{ matrix.target }}
+      pattern: artifacts-list-packages-${{ matrix.target }}
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
@@ -494,7 +518,6 @@ jobs:
           - target: linux-amd64
           - target: linux-arm64
           - target: linux-s390x
-          - target: linux-armv6
           - target: linux-armv7
           - target: windows-amd64
           - target: windows-arm64
@@ -503,8 +526,8 @@ jobs:
       id-token: write
     needs:
       - setup
-      - build-targz
       - build-packages
+      - build-docker
     with:
       bucket: grafana-prerelease
       pattern: artifacts-list-${{ matrix.target }}
@@ -522,7 +545,7 @@ jobs:
     needs:
       - setup
       - verify-targz
-      - build-packages
+      - build-docker
       - verify-packages
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2

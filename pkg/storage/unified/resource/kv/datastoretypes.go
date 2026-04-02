@@ -17,6 +17,22 @@ const (
 	DataActionDeleted DataAction = "deleted"
 )
 
+// LegacyActionValue maps the datastore action to the temporary integer encoding
+// still used by sql/backend compatibility columns.
+// Remove once sqlkv no longer needs to mirror those legacy columns.
+func LegacyActionValue(action DataAction) (int64, error) {
+	switch action {
+	case DataActionCreated:
+		return 1, nil
+	case DataActionUpdated:
+		return 2, nil
+	case DataActionDeleted:
+		return 3, nil
+	default:
+		return 0, fmt.Errorf("unknown data action: %q", action)
+	}
+}
+
 type DataKey struct {
 	Namespace       string
 	Group           string

@@ -410,7 +410,7 @@ export interface FeatureToggles {
   dashboardNewLayouts?: boolean;
   /**
   * Enables default layout selector in dashboard settings
-  * @default false
+  * @default true
   */
   dashboardDefaultLayoutSelector?: boolean;
   /**

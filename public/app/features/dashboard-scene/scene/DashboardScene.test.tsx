@@ -82,6 +82,12 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasEditPermissionInFolders: true,
+  },
+}));
+
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   ...jest.requireActual('app/features/playlist/PlaylistSrv'),
   playlistSrv: {
@@ -209,6 +215,8 @@ describe('DashboardScene', () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;
 
+        scene.setState({ meta: { ...scene.state.meta, canSave: true } });
+
         const publishSpy = jest.spyOn(appEvents, 'publish');
         const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
 
@@ -231,6 +239,31 @@ describe('DashboardScene', () => {
 
         overlay.state.onSaveSuccess!();
         expect(scene.state.isEditing).toBe(false);
+
+        publishSpy.mockRestore();
+        hasActualSaveChangesSpy.mockRestore();
+        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+      });
+
+      it('Should not show Save option in unsaved changes modal when user cannot save', () => {
+        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
+        config.featureToggles.dashboardNewLayouts = true;
+
+        scene.setState({ meta: { ...scene.state.meta, canSave: false } });
+
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
+
+        scene.setState({ title: 'Updated title' });
+        expect(scene.state.isDirty).toBe(true);
+        scene.exitEditMode({ skipConfirm: false });
+
+        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+        expect(modalCall).toBeDefined();
+
+        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+        expect(modalEvent.payload.altActionText).toBeUndefined();
+        expect(modalEvent.payload.onAltAction).toBeUndefined();
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
