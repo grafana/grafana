@@ -56,16 +56,14 @@ describe('Handles open/close splits and related events in UI and URL', () => {
 
   it('opens the split pane when split button is clicked', async () => {
     const { location } = setupExplore();
-    let initialHistoryLength = 0;
 
     await waitFor(() => {
       const editors = screen.getAllByText('loki Editor input:');
       expect(editors.length).toBe(1);
 
-      // Initializing Explore can replace or push based on URL normalization/feature state.
-      // Capture the baseline and assert relative history changes from this point.
-      initialHistoryLength = location.getHistory().length;
-      expect(initialHistoryLength).toBeGreaterThanOrEqual(1);
+      // initializing explore replaces the first history entry
+      expect(location.getHistory().length).toBe(1);
+      expect(location.getHistory().action).toBe('REPLACE');
     });
 
     // Wait for rendering the editor
@@ -75,7 +73,7 @@ describe('Handles open/close splits and related events in UI and URL', () => {
       const editors = screen.getAllByText('loki Editor input:');
       expect(editors.length).toBe(2);
       // a new entry is pushed to the history
-      expect(location.getHistory().length).toBe(initialHistoryLength + 1);
+      expect(location.getHistory().length).toBe(2);
     });
 
     act(() => {
@@ -87,7 +85,7 @@ describe('Handles open/close splits and related events in UI and URL', () => {
       expect(editors.length).toBe(1);
       // going back pops the history
       expect(location.getHistory().action).toBe('POP');
-      expect(location.getHistory().length).toBe(initialHistoryLength + 1);
+      expect(location.getHistory().length).toBe(2);
     });
 
     act(() => {
@@ -99,7 +97,7 @@ describe('Handles open/close splits and related events in UI and URL', () => {
       expect(editors.length).toBe(2);
       // going forward pops the history
       expect(location.getHistory().action).toBe('POP');
-      expect(location.getHistory().length).toBe(initialHistoryLength + 1);
+      expect(location.getHistory().length).toBe(2);
     });
   });
 
