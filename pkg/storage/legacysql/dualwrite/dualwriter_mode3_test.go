@@ -72,7 +72,7 @@ func TestMode3_Create(t *testing.T) {
 				tt.setupStorageFn(us.Mock, tt.input)
 			}
 
-			dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
@@ -143,7 +143,7 @@ func TestMode3_Get(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Get(context.Background(), name, &metav1.GetOptions{})
@@ -210,7 +210,7 @@ func TestMode3_List(t *testing.T) {
 				tt.setupStorageFn(us.Mock)
 			}
 
-			dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			res, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
@@ -281,7 +281,7 @@ func TestMode3_Delete(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Delete(context.Background(), name, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
@@ -350,7 +350,7 @@ func TestMode3_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(us.Mock)
 			}
 
-			dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: name}}, &metainternalversion.ListOptions{})
@@ -420,7 +420,7 @@ func TestMode3_Update(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
+			dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Update(context.Background(), name, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
