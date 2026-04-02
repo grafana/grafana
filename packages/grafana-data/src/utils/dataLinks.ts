@@ -1,6 +1,4 @@
-import { rangeUtil } from 'src';
-import { dateTime } from 'src/datetime/moment_wrapper';
-
+import { dateTime, rangeUtil } from '@grafana/data';
 import { isCustomVariableValue } from '@grafana/scenes';
 
 import { type ScopedVars } from '../types/ScopedVars';
@@ -63,7 +61,8 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const title = link.title ? link.title : internalLink.datasourceName;
   let exploreRange = range ? { ...range } : undefined;
   // the time range passed in is the default (from the source pane). if the correlation defined a custom one, override it
-  if (link.meta?.timeRange !== undefined) {
+  // todo - tweak this after its working
+  if (link.meta?.timeRange !== undefined && link.meta?.timeRange.field !== undefined) {
     let timeRangeField = link.meta.timeRange.field;
     if (timeRangeField !== undefined && !isCustomVariableValue(timeRangeField)) {
       timeRangeField = `\$\{${timeRangeField}\}`;
@@ -73,15 +72,15 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       link.meta.timeRange.field !== undefined ? interpolateObject(timeRangeField, scopedVars, replaceVariables) : 'now';
 
     try {
-      const interpolatedBaseTime = dateTime(interpolatedBaseTimeStr);
-      //const fromRange = link.meta.timeRange.range.from ?? '-24h';
-      //const toRange = link.meta.timeRange.range.to ?? '+24h';
+      const interpolatedBaseTime = dateTime(interpolatedBaseTimeStr, 'x');
 
       exploreRange = rangeUtil.relativeToTimeRange(
-        link.meta.timeRange.range ?? { from: '-24h', to: '24h' },
+        link.meta.timeRange.range ?? { from: 3600, to: -3600 },
         interpolatedBaseTime
       );
+      console.log('exploreRange', link.title, exploreRange);
     } catch (e) {
+      console.log('err', e);
       // silently fail if any part of this interpolation does not succeed
     }
   }
@@ -112,7 +111,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
             queries: [interpolatedQuery],
             panelsState: interpolatedPanelsState,
             correlationHelperData: interpolatedCorrelationData,
-            range,
+            range: exploreRange,
           });
         }
       : undefined,

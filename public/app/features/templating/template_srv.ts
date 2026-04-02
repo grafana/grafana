@@ -296,8 +296,6 @@ export class TemplateSrv implements BaseTemplateSrv {
 
     this.regex.lastIndex = 0;
 
-    console.log('wat', target, scopedVars);
-
     return this._replaceWithVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
       const value = this._evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
 
