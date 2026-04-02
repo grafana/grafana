@@ -2820,7 +2820,7 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:         "inlinedBootScript",
+			Name:         "compiledBootScript",
 			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,

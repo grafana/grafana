@@ -930,7 +930,7 @@ const (
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
 
-	// FlagInlinedBootScript
+	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-	FlagInlinedBootScript = "inlinedBootScript"
+	FlagCompiledBootScript = "compiledBootScript"
 )

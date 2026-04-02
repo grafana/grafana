@@ -121,7 +121,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
-	inlinedBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagInlinedBootScript, false, openfeature.TransactionContext(ctx))
+	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                   "Grafana",
@@ -135,10 +135,10 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		RenderBindingSupported:     renderBindingSupported,
 	}
 
-	if inlinedBootScript {
+	if compiledBootScript {
 		data.BootScript = p.bootScript
 		if p.bootScript == "" {
-			p.log.Error("Feature flag inlinedBootScript is enabled but boot.js is empty — frontend will not boot")
+			p.log.Error("compiledBootScript feature flag enabled but boot.js not found — falling back to inline boot script.")
 		}
 	}
 
