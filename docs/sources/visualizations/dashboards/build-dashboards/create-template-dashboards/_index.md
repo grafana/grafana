@@ -9,7 +9,6 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Create template and suggested dashboards
 title: Create dashboards from templates and suggestions
 description: Learn how to create dashboards from templates and suggestions.
 weight: 3
