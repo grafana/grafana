@@ -12,7 +12,8 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Install Grafana CLI
+title: Install the grafanactl CLI
+menuTitle: Install grafanactl
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/install-grafana-cli/
 aliases:

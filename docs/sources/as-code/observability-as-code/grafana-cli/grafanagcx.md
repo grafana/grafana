@@ -11,7 +11,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grafana Cloud CLI
+title: gcx CLI
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/grafanagcx
 ---
