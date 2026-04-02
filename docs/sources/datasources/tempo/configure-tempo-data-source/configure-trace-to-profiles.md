@@ -45,18 +45,7 @@ Refer to the [Provisioning](#provisioning) section for details.
 
 ## Provisioning
 
-You can provision the trace to profiles configuration using the `tracesToProfiles` block in your data source YAML file:
-
-```yaml
-jsonData:
-  tracesToProfiles:
-    datasourceUid: 'grafana-pyroscope-datasource'
-    tags: ['job', 'instance', 'pod', 'namespace']
-    profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
-    customQuery: true
-    query: 'method="$${__span.tags.method}"'
-```
-
+You can provision the trace to profiles configuration using the `tracesToProfiles` block in your data source YAML file.
 For the full provisioning YAML example including all Tempo settings, refer to [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/).
 
 ## Verify the integration
@@ -76,6 +65,6 @@ If the configuration fields are greyed out, your data source is provisioned. Ref
 
 ## Next steps
 
-- [Configure trace to logs correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/) — Navigate from spans to related logs in Loki.
-- [Configure trace to metrics correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-metrics/) — Link spans to metrics queries in Prometheus.
-- [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/) — Configure the Tempo data source using a YAML file.
+- [Configure trace to logs correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/): Navigate from spans to related logs in Loki.
+- [Configure trace to metrics correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-metrics/): Link spans to metrics queries in Prometheus.
+- [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/): Configure the Tempo data source using a YAML file.

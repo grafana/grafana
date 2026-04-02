@@ -116,6 +116,6 @@ You can choose one of three options:
 
 ## Next steps
 
-- [Configure the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/) — Return to connection, authentication, and streaming settings.
-- [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/) — Configure the Tempo data source using a YAML file.
-- [Service Graph and Service Graph view](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/) — Visualize service dependencies and monitor RED metrics.
+- [Configure the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/): Return to connection, authentication, and streaming settings.
+- [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/): Configure the Tempo data source using a YAML file.
+- [Service Graph and Service Graph view](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/): Visualize service dependencies and monitor RED metrics.

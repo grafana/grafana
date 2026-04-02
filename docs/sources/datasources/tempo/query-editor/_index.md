@@ -84,7 +84,7 @@ The **Service Graph** view answers a different question than trace search: inste
 
 Using the Service Graph view, you can:
 
-- Discover spans which are consistently erroring and the rates at which they occur.
+- Discover spans that consistently return errors and the rates at which they occur.
 - Get an overview of the overall rate of span calls throughout your services.
 - Determine how long the slowest queries in your service take to complete.
 - Examine all traces that contain spans of particular interest based on rate, error, and duration values (RED signals).

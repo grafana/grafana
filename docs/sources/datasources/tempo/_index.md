@@ -25,6 +25,9 @@ weight: 1400
 Grafana ships with built-in support for [Grafana Tempo](https://grafana.com/docs/tempo/<TEMPO_VERSION>/), a high-volume, minimal-dependency distributed tracing backend from Grafana Labs.
 Use the Tempo data source to search and visualize traces, correlate traces with logs, metrics, and profiles, and monitor service dependencies with the Service Graph.
 
+Want to learn more about traces and the other telemetry signals?
+Refer to [Understand your data](https://grafana.com/docs/grafana-cloud/telemetry-signals/).
+
 {{< admonition type="note" >}}
 **Grafana Cloud users:** Grafana Cloud includes [Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/), a pre-configured tracing data source backed by Tempo. You can use Grafana Cloud Traces to query traces without additional setup. Use the Tempo data source when you need to connect to a self-managed Tempo instance or require custom configuration such as trace correlations.
 {{< /admonition >}}
@@ -74,6 +77,6 @@ After you've connected Grafana to Tempo, you can configure correlations between 
 ## Related resources
 
 - [Introduction to tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/)
-- [Instrument for tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/getting-started/instrumentation/)
+- [Best practices for traces](https://grafana.com/docs/tempo/<TEMPO_VERSION>/set-up-for-tracing/instrument-send/best-practices/): Guidance on planning spans, attributes, and trace structure for effective tracing data.
 - [TraceQL query examples](query-editor/traceql-query-examples/)
-- [TraceQL query language](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/)
+- [TraceQL query language reference](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/)

@@ -86,9 +86,9 @@ This guide uses Loki, but Trace to logs also supports Elasticsearch, Splunk, Ope
 
    Choose labels with low cardinality.
    In Loki, every unique combination of label values creates a separate stream.
-   Labels that take on many distinct values — such as `pod`, `host`, `thread`, `duration`, `traceId`, or `spanId` — can create hundreds of thousands or even millions of streams, causing slow queries, high memory usage, and log loss at ingest.
+   Labels that take on many distinct values, such as `pod`, `host`, `thread`, `duration`, `traceId`, or `spanId`, can create hundreds of thousands or even millions of streams, causing slow queries, high memory usage, and log loss at ingest.
    The labels listed above (`service_name`, `namespace`, `cluster`) are good choices because they have a bounded, small set of values.
-   If you need to query high-cardinality values like trace IDs or pod names, store them as [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) instead — they are queryable without creating additional streams.
+   If you need to query high-cardinality values like trace IDs or Pod names, store them as [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) instead. They are queryable without creating additional streams.
    For more information, refer to [Cardinality](https://grafana.com/docs/loki/latest/get-started/labels/cardinality/).
 
    {{< admonition type="note" >}}
@@ -105,7 +105,7 @@ This guide uses Loki, but Trace to logs also supports Elasticsearch, Splunk, Ope
    Clicking **Logs for this span** filters by trace ID, not span ID, so results include all logs for the entire trace that contain a matching trace ID, not only logs emitted during that specific span.
    If your results look broader than expected, this is expected behavior.
    To narrow results to a specific span's activity, write a custom LogQL query that filters on span ID or span-specific attributes if your application logs them, for example `{service_name="my-service"} | json | spanId=""`.
-   For this feature to work at all, your application must inject trace IDs into log lines — for example, using OpenTelemetry SDK structured logging.
+   For this feature to work at all, your application must inject trace IDs into log lines, for example, using OpenTelemetry SDK structured logging.
    Without trace IDs in logs, the query falls back to a time-range filter.
 
 1. Optional: Enable **Use custom query** and write a LogQL expression to replace the auto-generated query.
@@ -164,40 +164,9 @@ For more details about derived field options, refer to [Derived fields](https://
 
 ## Provision trace to logs settings
 
-If your data sources are provisioned through configuration files or GitOps, the settings UI is read-only.
-
-To configure trace to logs in a provisioned environment, update your provisioning YAML file directly.
-Refer to [Provisioning data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources) for general provisioning instructions.
-
-The following example shows the `tracesToLogsV2` configuration block for a Tempo data source:
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Tempo
-    type: tempo
-    url: http://tempo:3200
-    jsonData:
-      tracesToLogsV2:
-        datasourceUid: '<LOKI_DATASOURCE_UID>'
-        spanStartTimeShift: '-1m'
-        spanEndTimeShift: '1m'
-        filterByTraceID: true
-        filterBySpanID: false
-        customQuery: true
-        query: '{service_name="${__span.tags["service.name"]}", namespace="${__span.tags["namespace"]}"} | logfmt | trace_id="${__trace.traceId}"'
-        tags:
-          - key: service.name
-            value: service_name
-          - key: namespace
-          - key: job
-```
-
-Replace _`<LOKI_DATASOURCE_UID>`_ with the `uid` of your Loki data source.
-
-If you want to test changes without modifying the provisioned data source, you can clone it by creating a new data source of the same type and copying the settings.
-Refer to [Clone a provisioned data source for Grafana Cloud](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/#clone-a-provisioned-data-source-for-grafana-cloud) for detailed steps.
+You can provision the trace to logs configuration using the `tracesToLogsV2` block in your data source YAML file.
+For the full provisioning YAML example including all Tempo settings, refer to [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/).
+For general provisioning instructions, refer to [Provisioning data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ## Example: NGINX service
 

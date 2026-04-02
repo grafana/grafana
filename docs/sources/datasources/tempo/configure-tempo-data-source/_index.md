@@ -82,7 +82,7 @@ To modify an existing Tempo data source:
 
 1. Select **Connections** in the main menu.
 1. Select **Data sources** to view a list of configured data sources.
-1. Select the Tempo data source you wish to modify.
+1. Select the Tempo data source you want to modify.
 1. Configure or update additional sections to add capabilities to your tracing data.
 1. After completing your updates, select **Save & test**.
 
@@ -152,8 +152,8 @@ To use streaming, you need to:
 Streaming is available in Grafana and Grafana Cloud.
 The Streaming section has two toggles:
 
-- **Search queries** — streams TraceQL search results as they arrive.
-- **Metrics queries** — streams TraceQL metrics query results as they arrive.
+- **Search queries**: Streams TraceQL search results as they arrive.
+- **Metrics queries**: Streams TraceQL metrics query results as they arrive.
 
 Enable one or both depending on which query types you use.
 
@@ -176,9 +176,9 @@ Grafana provides several ways to link traces to other telemetry signals. The fol
 
 The Tempo data source settings page includes three sections for linking from spans to other signals. Each corresponds to a section in the settings form:
 
-- [Trace to logs](configure-trace-to-logs/) — Navigate from spans to related logs in Loki or another log data source.
-- [Trace to metrics](configure-trace-to-metrics/) — Link spans to metrics queries in Prometheus or other metrics data sources.
-- [Trace to profiles](configure-trace-to-profiles/) — Link spans to profiling data in Grafana Pyroscope with embedded flame graphs.
+- [Trace to logs](configure-trace-to-logs/): Navigate from spans to related logs in Loki or another log data source.
+- [Trace to metrics](configure-trace-to-metrics/): Link spans to metrics queries in Prometheus or other metrics data sources.
+- [Trace to profiles](configure-trace-to-profiles/): Link spans to profiling data in Grafana Pyroscope with embedded flame graphs.
 
 For more flexible, rule-based correlations that can target any data source or external URL, use Grafana [Trace correlations](trace-correlations/). Trace correlations are configured under **Configuration > Correlations**, not in the Tempo data source settings.
 
@@ -189,8 +189,8 @@ To link _from_ logs or metrics _to_ traces (the reverse direction), refer to:
 
 ## Other settings
 
-- [Additional settings](additional-settings/) — Configure Service graph, node graph, search, TraceID query, span bar, and other settings.
-- [Provision the Tempo data source](provision/) — Configure the Tempo data source using a YAML file and clone provisioned data sources.
+- [Additional settings](additional-settings/): Configure Service graph, node graph, search, TraceID query, span bar, and other settings.
+- [Provision the Tempo data source](provision/): Configure the Tempo data source using a YAML file and clone provisioned data sources.
 
 ## Custom query variables
 

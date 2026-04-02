@@ -52,10 +52,10 @@ If you run a Service Graph query and see an empty result, refer to [Troubleshoot
 
 The metrics generator or Alloy inspects trace spans for parent-child relationships that represent a request, using [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/general/trace/). It writes the following metrics to your Prometheus backend:
 
-- `traces_service_graph_request_total` — total requests between two services (counter)
-- `traces_service_graph_request_failed_total` — failed requests between two services (counter)
-- `traces_service_graph_request_server_seconds` — response time as observed by the server (histogram)
-- `traces_service_graph_request_client_seconds` — response time as observed by the client (histogram)
+- `traces_service_graph_request_total`: Total requests between two services (counter).
+- `traces_service_graph_request_failed_total`: Failed requests between two services (counter).
+- `traces_service_graph_request_server_seconds`: Response time as observed by the server (histogram).
+- `traces_service_graph_request_client_seconds`: Response time as observed by the client (histogram).
 
 Grafana reads these metrics from the linked Prometheus data source to render the node graph and calculate request rates, error rates, and response times.
 
@@ -103,8 +103,8 @@ Refer to [TraceQL query examples](https://grafana.com/docs/grafana/<GRAFANA_VERS
 The Service Graph view displays a table of RED metrics (rate, error rate, duration) alongside the node graph.
 The table uses a different set of metrics from the node graph:
 
-- `traces_spanmetrics_calls_total` — rate and error rate columns
-- `traces_spanmetrics_duration_seconds_bucket` — duration column
+- `traces_spanmetrics_calls_total`: Rate and error rate columns.
+- `traces_spanmetrics_duration_seconds_bucket`: Duration column.
 
 These span metrics must be present in your linked Prometheus data source.
 Span metrics generation must be enabled in your Tempo or Alloy configuration. Refer to [Enable service graphs](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-from-traces/service_graphs/enable-service-graphs/) in the Tempo documentation.

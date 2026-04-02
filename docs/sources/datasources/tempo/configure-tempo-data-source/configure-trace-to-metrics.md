@@ -51,9 +51,9 @@ There are two ways to configure the trace to metrics feature:
 
 ![Trace to metrics settings in the Tempo data source](/media/docs/grafana/data-sources/tempo/tempo-data-source-trace-to-metrics.png)
 
-## Set up a simple configuration
+## Set up a basic configuration
 
-To use a simple configuration, follow these steps:
+To use a basic configuration, follow these steps:
 
 1. Select a metrics data source from the **Data source** drop-down.
 1. Optional: Change **Span start time shift** and **Span end time shift**. The placeholders show `-2m` (start) and `2m` (end), which are applied if you leave the fields empty.
@@ -110,25 +110,12 @@ The following table describes options for configuring the **Trace to metrics** s
 
 ## Provisioning
 
-You can provision the trace to metrics configuration using the `tracesToMetrics` block in your data source YAML file:
-
-```yaml
-jsonData:
-  tracesToMetrics:
-    datasourceUid: 'prom'
-    spanStartTimeShift: '-1h'
-    spanEndTimeShift: '1h'
-    tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
-    queries:
-      - name: 'Sample query'
-        query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
-```
-
+You can provision the trace to metrics configuration using the `tracesToMetrics` block in your data source YAML file.
 For the full provisioning YAML example including all Tempo settings, refer to [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/).
 
 ## Link from metrics to traces
 
-To navigate in the reverse direction — from a metric to its associated trace — configure exemplars in your Prometheus data source. Refer to [Exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/) for setup instructions.
+To navigate in the reverse direction, from a metric to its associated trace, configure exemplars in your Prometheus data source. Refer to [Exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/) for setup instructions.
 
 ## Troubleshooting
 
@@ -138,6 +125,6 @@ If the configuration fields are greyed out, your data source is provisioned. Ref
 
 ## Next steps
 
-- [Configure trace to logs correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/) — Navigate from spans to related logs in Loki.
-- [Configure trace to profiles correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-profiles/) — Link spans to profiling data in Grafana Pyroscope.
-- [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/) — Configure the Tempo data source using a YAML file.
+- [Configure trace to logs correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/): Navigate from spans to related logs in Loki.
+- [Configure trace to profiles correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-profiles/): Link spans to profiling data in Grafana Pyroscope.
+- [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/): Configure the Tempo data source using a YAML file.
