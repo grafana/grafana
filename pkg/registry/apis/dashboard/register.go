@@ -127,6 +127,7 @@ type DashboardsAPIBuilder struct {
 	dashboardActivityChannel live.DashboardActivityChannel
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
 	isStandalone             bool              // skips any handling including anything to do with legacy storage
+	preferredVersion         *schema.GroupVersion
 }
 
 func RegisterAPIService(
@@ -241,9 +242,17 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 	}
 }
 
+// SetPreferredVersion overrides the default version ordering so that the given
+// GroupVersion is returned first by GetGroupVersions. This makes it the
+// preferred version in API discovery.
+func (b *DashboardsAPIBuilder) SetPreferredVersion(gv schema.GroupVersion) {
+	b.preferredVersion = &gv
+}
+
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	var versions []schema.GroupVersion
 	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
-		return []schema.GroupVersion{
+		versions = []schema.GroupVersion{
 			dashv2.DashboardResourceInfo.GroupVersion(),
 			dashv2beta1.DashboardResourceInfo.GroupVersion(),
 			dashv2alpha1.DashboardResourceInfo.GroupVersion(),
@@ -251,16 +260,45 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 			dashv1.DashboardResourceInfo.GroupVersion(),
 			dashv1beta1.DashboardResourceInfo.GroupVersion(),
 		}
+	} else {
+		versions = []schema.GroupVersion{
+			dashv1.DashboardResourceInfo.GroupVersion(),
+			dashv1beta1.DashboardResourceInfo.GroupVersion(),
+			dashv0.DashboardResourceInfo.GroupVersion(),
+			dashv2.DashboardResourceInfo.GroupVersion(),
+			dashv2beta1.DashboardResourceInfo.GroupVersion(),
+			dashv2alpha1.DashboardResourceInfo.GroupVersion(),
+		}
 	}
 
-	return []schema.GroupVersion{
-		dashv1.DashboardResourceInfo.GroupVersion(),
-		dashv1beta1.DashboardResourceInfo.GroupVersion(),
-		dashv0.DashboardResourceInfo.GroupVersion(),
-		dashv2.DashboardResourceInfo.GroupVersion(),
-		dashv2beta1.DashboardResourceInfo.GroupVersion(),
-		dashv2alpha1.DashboardResourceInfo.GroupVersion(),
+	if b.preferredVersion == nil {
+		return versions
 	}
+
+	// Validate the preferred version is actually registered before reordering.
+	found := false
+	for _, v := range versions {
+		if v == *b.preferredVersion {
+			found = true
+			break
+		}
+	}
+	if !found {
+		logging.DefaultLogger.With("group", b.preferredVersion.Group, "version", b.preferredVersion.Version).
+			Info("preferred API version not registered, skipping")
+		return versions
+	}
+
+	// Reorder so the preferred version comes first, preserving relative order of the rest.
+	reordered := make([]schema.GroupVersion, 0, len(versions))
+	reordered = append(reordered, *b.preferredVersion)
+	for _, v := range versions {
+		if v == *b.preferredVersion {
+			continue
+		}
+		reordered = append(reordered, v)
+	}
+	return reordered
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
