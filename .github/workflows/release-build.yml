@@ -21,7 +21,7 @@ permissions:
 
 # Builds the following artifacts:
 #
-# targz:grafana:* (via make build-targz + pre-seeded dist for Dagger)
+# targz:grafana:* (via make build-packages + pre-seeded dist for Dagger)
 # deb / rpm / docker / zip / msi (Dagger, consuming prebuilt targz from dist when present)
 #
 # One shared frontend artifact is reused for every targz matrix cell (OSS), so assets-manifest.json matches all
@@ -200,8 +200,8 @@ jobs:
           path: bin/${{ matrix.os }}/${{ matrix.arch }}
           retention-days: 1
 
-  build-targz:
-    name: targz / ${{ matrix.name }}
+  build-packages:
+    name: packages / ${{ matrix.name }}
     runs-on: ubuntu-x64-large-io
     needs:
       - setup
@@ -278,10 +278,10 @@ jobs:
           GOARM: ${{ matrix.arm }}
           BUILD_NUMBER: ${{ github.run_id }}
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
-        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+        run: make build-packages BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
       - uses: ./.github/actions/setup-fpm
         if: matrix.deb || matrix.rpm
-      - name: Build deb
+      - name: Build deb and rpm
         if: matrix.deb
         env:
           GOOS: ${{ matrix.os }}
@@ -289,16 +289,16 @@ jobs:
           GOARM: ${{ matrix.arm }}
           BUILD_NUMBER: ${{ github.run_id }}
           BUILD_VERSION: ${{ needs.setup.outputs.version }}
-        run: make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
-      - name: Build rpm
-        if: matrix.rpm
-        env:
-          GOOS: ${{ matrix.os }}
-          GOARCH: ${{ matrix.arch }}
-          GOARM: ${{ matrix.arm }}
-          BUILD_NUMBER: ${{ github.run_id }}
-          BUILD_VERSION: ${{ needs.setup.outputs.version }}
-        run: make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+          RPM: ${{ matrix.rpm }}
+        run: |
+          if [[ "$RPM" == "true" ]]; then
+            make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER" &
+            DEB_PID=$!
+            make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+            wait $DEB_PID
+          else
+            make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+          fi
       - name: Generate checksums
         run: |
           set -euo pipefail
@@ -336,7 +336,7 @@ jobs:
   verify-targz:
     name: verify targz (linux-amd64)
     needs:
-      - build-targz
+      - build-packages
     uses: ./.github/workflows/release-verify.yml
     with:
       run-id: ${{ github.run_id }}
@@ -345,21 +345,21 @@ jobs:
   verify-packages:
     name: verify packages (linux-amd64)
     needs:
-      - build-packages
+      - build-docker
     uses: ./.github/workflows/release-verify-packages.yml
     with:
       run-id: ${{ github.run_id }}
       packages-artifact-name: artifacts-linux-amd64
 
-  build-packages:
+  build-docker:
     runs-on: ubuntu-x64-large
     needs:
       - setup
-      - build-targz
+      - build-packages
     permissions:
       contents: read
       id-token: write
-    name: ${{ needs.setup.outputs.version }} / packages / ${{ matrix.name }}
+    name: ${{ needs.setup.outputs.version }} / docker / ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
@@ -444,8 +444,8 @@ jobs:
       id-token: write
     needs:
       - setup
-      - build-targz
       - build-packages
+      - build-docker
     with:
       bucket: grafana-prerelease
       pattern: artifacts-targz-${{ matrix.target }}
@@ -471,8 +471,8 @@ jobs:
       id-token: write
     needs:
       - setup
-      - build-targz
       - build-packages
+      - build-docker
     with:
       bucket: grafana-prerelease
       pattern: artifacts-${{ matrix.target }}
@@ -502,8 +502,8 @@ jobs:
       id-token: write
     needs:
       - setup
-      - build-targz
       - build-packages
+      - build-docker
     with:
       bucket: grafana-prerelease
       pattern: artifacts-list-targz-${{ matrix.target }}
@@ -529,8 +529,8 @@ jobs:
       id-token: write
     needs:
       - setup
-      - build-targz
       - build-packages
+      - build-docker
     with:
       bucket: grafana-prerelease
       pattern: artifacts-list-${{ matrix.target }}
@@ -548,7 +548,7 @@ jobs:
     needs:
       - setup
       - verify-targz
-      - build-packages
+      - build-docker
       - verify-packages
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
