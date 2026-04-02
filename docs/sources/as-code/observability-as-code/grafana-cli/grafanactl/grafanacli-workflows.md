@@ -17,6 +17,7 @@ weight: 210
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/grafanacli-workflows/
 aliases:
   - ../../../observability-as-code/grafana-cli/grafanacli-workflows/ # /docs/grafana/next/observability-as-code/grafana-cli/grafanacli-workflows/
+  - ../../observability-as-code/grafana-cli/grafanacli-workflows/ # /docs/grafana/next/observability-as-code/grafana-cli/grafanacli-workflows/
 ---
 
 # Manage resources with `grafanactl`

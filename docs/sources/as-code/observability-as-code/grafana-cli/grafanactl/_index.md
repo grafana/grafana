@@ -20,6 +20,7 @@ aliases:
   - ../../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/
   - ../../../observability-as-code/grafana-cli/set-up-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/set-up-grafana-cli/
   - ../../observability-as-code/grafana-cli/set-up-grafana-cli/
+  - ../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/
 ---
 
 {{< admonition type="caution" >}}
