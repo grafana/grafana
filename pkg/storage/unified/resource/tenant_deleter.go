@@ -19,8 +19,7 @@ type TenantDeleterConfig struct {
 	Interval time.Duration
 	Log      log.Logger
 	// Gcom, when non-nil, is used to confirm the stack is removed in GCOM before local
-	// tenant data is deleted: GetInstanceByID returns ErrInstanceNotFound, or HTTP 200
-	// with Instance.Status "deleted".
+	// tenant data is deleted: GetInstanceByID returns Instance with Status "deleted".
 	Gcom gcom.Service
 }
 

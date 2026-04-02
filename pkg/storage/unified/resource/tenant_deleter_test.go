@@ -24,7 +24,7 @@ func (v *testGcomVerifier) GetInstanceByID(ctx context.Context, requestID, insta
 	if v.getInstance != nil {
 		return v.getInstance(ctx, requestID, instanceID)
 	}
-	return gcom.Instance{}, gcom.ErrInstanceNotFound
+	return gcom.Instance{}, fmt.Errorf("instance not found")
 }
 
 func (v *testGcomVerifier) GetPlugins(ctx context.Context, requestID string) (map[string]gcom.Plugin, error) {
@@ -91,7 +91,7 @@ func newTestTenantDeleter(t *testing.T, dryRun bool) (*TenantDeleter, *dataStore
 				if instanceID == "1" {
 					return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
 				}
-				return gcom.Instance{}, gcom.ErrInstanceNotFound
+				return gcom.Instance{}, fmt.Errorf("instance not found")
 			},
 		},
 	}
@@ -325,7 +325,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 				if instanceID == "1" {
 					return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
 				}
-				return gcom.Instance{}, gcom.ErrInstanceNotFound
+				return gcom.Instance{}, fmt.Errorf("instance not found")
 			},
 		},
 	}
@@ -611,7 +611,7 @@ func TestRunDeletionPass_SkipsWhenNamespaceHasNoStackID(t *testing.T) {
 		Gcom: &testGcomVerifier{
 			getInstance: func(_ context.Context, _, _ string) (gcom.Instance, error) {
 				called = true
-				return gcom.Instance{}, gcom.ErrInstanceNotFound
+				return gcom.Instance{}, fmt.Errorf("instance not found")
 			},
 		},
 	})

@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -16,11 +15,6 @@ import (
 const LogPrefix = "gcom.service"
 
 var ErrTokenNotFound = errors.New("gcom: token not found")
-
-// ErrInstanceNotFound is returned by GetInstanceByID when GCOM has no instance
-// with the given ID (HTTP 404). A deleted stack may instead return HTTP 200 with
-// an Instance whose Status is "deleted" (see Instance.DeletedInGCOM).
-var ErrInstanceNotFound = errors.New("gcom: instance not found")
 
 type Service interface {
 	GetInstanceByID(ctx context.Context, requestID string, instanceID string) (Instance, error)
@@ -34,11 +28,6 @@ type Instance struct {
 	ClusterSlug string `json:"clusterSlug"`
 	OrgId       int    `json:"orgId"`
 	Status      string `json:"status"`
-}
-
-// DeletedInGCOM reports true when Status is "deleted" (e.g. HTTP 200 for a removed stack).
-func (i Instance) DeletedInGCOM() bool {
-	return strings.EqualFold(strings.TrimSpace(i.Status), "deleted")
 }
 
 type Plugin struct {
@@ -95,9 +84,6 @@ func (client *GcomClient) GetInstanceByID(ctx context.Context, requestID string,
 		}
 	}()
 
-	if response.StatusCode == http.StatusNotFound {
-		return Instance{}, ErrInstanceNotFound
-	}
 	if response.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(response.Body)
 		return Instance{}, fmt.Errorf("unexpected response when fetching instance by id: code=%d body=%s", response.StatusCode, body)
