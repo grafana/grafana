@@ -627,10 +627,10 @@ var (
 		{
 			Name:         "dashboardDefaultLayoutSelector",
 			Description:  "Enables default layout selector in dashboard settings",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardAssistantPopover",
