@@ -5996,12 +5996,20 @@
       "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
     },
     "new-panel": {
+      "aria-label": "Unconfigured panel. Tab to see configuration options.",
       "configure-button": "Configure",
       "configure-button-menu": "Toggle menu",
+      "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
-      "missing-config": "Missing panel configuration"
+      "menu-use-saved-query": "Use saved query",
+      "missing-config": "Missing panel configuration",
+      "no-visualization": "No visualization configured",
+      "saved-query-apply-error": "Failed to apply saved query",
+      "saved-query-apply-error-detail": "An error occurred while applying the saved query. Please try again.",
+      "saved-query-no-suggestion": "No visualization found",
+      "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type."
     },
     "new-panel-title": "New panel",
     "on-create-new-row": {
