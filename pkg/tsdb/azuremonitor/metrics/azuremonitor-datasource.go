@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -255,31 +256,31 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 				continue
 			}
 			e.Logger.Debug("split non-batchable query", "refID", query.RefID, "numSubQueries", len(subQueries))
+			var subErrs []error
 			for i, subQuery := range subQueries {
 				azureQuery, err := e.buildQuery(subQuery, dsInfo)
 				if err != nil {
 					e.Logger.Debug("buildQuery error", "refID", query.RefID, "subQuery", i, "err", err)
-					errResp := backend.ErrorResponseWithErrorSource(err)
-					dr := result.Responses[query.RefID]
-					dr.Error = errResp.Error
-					dr.ErrorSource = errResp.ErrorSource
-					result.Responses[query.RefID] = dr
-					break
+					subErrs = append(subErrs, err)
+					continue
 				}
 				e.Logger.Debug("executing sub-query", "refID", query.RefID, "subQuery", i, "url", azureQuery.URL)
 				res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, armURL)
 				if err != nil {
 					e.Logger.Debug("executeQuery error", "refID", query.RefID, "subQuery", i, "err", err)
-					errResp := backend.ErrorResponseWithErrorSource(err)
-					dr := result.Responses[query.RefID]
-					dr.Error = errResp.Error
-					dr.ErrorSource = errResp.ErrorSource
-					result.Responses[query.RefID] = dr
-					break
+					subErrs = append(subErrs, err)
+					continue
 				}
 				e.Logger.Debug("sub-query result", "refID", query.RefID, "subQuery", i, "numFrames", len(res.Frames))
 				dr := result.Responses[query.RefID]
 				dr.Frames = append(dr.Frames, res.Frames...)
+				result.Responses[query.RefID] = dr
+			}
+			if len(subErrs) > 0 {
+				errResp := backend.ErrorResponseWithErrorSource(errors.Join(subErrs...))
+				dr := result.Responses[query.RefID]
+				dr.Error = errResp.Error
+				dr.ErrorSource = errResp.ErrorSource
 				result.Responses[query.RefID] = dr
 			}
 		} else {
