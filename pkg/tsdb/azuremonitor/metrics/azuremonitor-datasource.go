@@ -306,7 +306,10 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	// Distribute successful frames into per-RefID responses first, so that
 	// partial data from successful batches is never discarded by a failed batch.
 	azurePortalURL := dsInfo.Routes["Azure Portal"].URL
-	frames, _ := distributeBatchResults(batchResults, azurePortalURL, dsInfo.Settings.SubscriptionId)
+	frames, parseErr := distributeBatchResults(batchResults, azurePortalURL, dsInfo.Settings.SubscriptionId)
+	if parseErr != nil {
+		e.Logger.Warn("partial error distributing batch results", "err", parseErr)
+	}
 	for _, frame := range frames {
 		dr := result.Responses[frame.RefID]
 		dr.Frames = append(dr.Frames, frame)
