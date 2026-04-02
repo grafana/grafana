@@ -1,14 +1,15 @@
 import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Box, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
-import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Box, EmptyState, FilterInput, Icon, Stack } from '@grafana/ui';
+import { type Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
-import { UPGRADE_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
+
+import { QuotaLimitMessage } from './QuotaLimitMessage';
 
 interface Props {
   items: Repository[];
@@ -70,24 +71,10 @@ export function RepositoryList({ items }: Props) {
             {isRepoLimitHit && (
               <>
                 {' '}
-                {!!maxResourcesPerRepository ? (
-                  <>
-                    <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
-                      Your account is limited to {{ count: maxRepositories }} connected repositories
-                    </Trans>{' '}
-                    <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
-                      and {{ count: maxResourcesPerRepository }} synced resources per repository.
-                    </Trans>
-                  </>
-                ) : (
-                  <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
-                    Your account is limited to {{ count: maxRepositories }} connected repositories. To add more
-                    repositories,
-                  </Trans>
-                )}{' '}
-                <TextLink href={UPGRADE_URL} external>
-                  <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
-                </TextLink>
+                <QuotaLimitMessage
+                  maxRepositories={maxRepositories}
+                  maxResourcesPerRepository={maxResourcesPerRepository}
+                />
               </>
             )}
           </Alert>

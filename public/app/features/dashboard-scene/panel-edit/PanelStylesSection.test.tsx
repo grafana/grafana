@@ -1,19 +1,20 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
   FieldType,
   LoadingState,
-  PanelData,
-  PanelPlugin,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPlugin,
+  type PanelPluginVisualizationSuggestion,
+  ThresholdsMode,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { getPluginPresets } from 'app/features/panel/presets/getPresets';
 
 import { PanelStylesSection } from './PanelStylesSection';
@@ -51,21 +52,25 @@ jest.mock('app/features/panel/components/VizTypePicker/VisualizationCardGrid', (
     items,
     onItemClick,
     selectedKey,
+    getBadge,
   }: {
     items: PanelPluginVisualizationSuggestion[];
     onItemClick: (item: PanelPluginVisualizationSuggestion, index: number) => void;
     selectedKey?: string;
+    getBadge?: (item: PanelPluginVisualizationSuggestion) => React.ReactNode;
   }) => (
     <div>
       {items.map((item, index) => (
-        <button
-          key={item.hash}
-          data-testid={`preset-${item.hash}`}
-          data-selected={selectedKey === item.hash ? 'true' : 'false'}
-          onClick={() => onItemClick(item, index)}
-        >
-          {item.name}
-        </button>
+        <div key={item.hash} style={{ position: 'relative' }}>
+          <button
+            data-testid={`preset-${item.hash}`}
+            data-selected={selectedKey === item.hash ? 'true' : 'false'}
+            onClick={() => onItemClick(item, index)}
+          >
+            {item.name}
+          </button>
+          {getBadge?.(item)}
+        </div>
       ))}
     </div>
   ),
@@ -76,6 +81,26 @@ const mockSceneGraph = jest.mocked(sceneGraph);
 const mockReportInteraction = jest.mocked(reportInteraction);
 
 const fakePlugin = {} as PanelPlugin;
+
+const thresholdPreset: PanelPluginVisualizationSuggestion = {
+  pluginId: 'gauge',
+  name: 'Standard',
+  hash: 'threshold-hash',
+  options: {},
+  fieldConfig: {
+    defaults: {
+      thresholds: {
+        mode: ThresholdsMode.Percentage,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        steps: [
+          { value: null as unknown as number, color: 'green' },
+          { value: 80, color: 'red' },
+        ],
+      },
+    },
+    overrides: [],
+  },
+};
 
 const mockPresets: PanelPluginVisualizationSuggestion[] = [
   {
@@ -167,6 +192,22 @@ describe('PanelStylesSection', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders null when series exist but all frames have zero rows', () => {
+    setupDataMock({
+      ...mockData,
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [] },
+            { name: 'value', type: FieldType.number, values: [] },
+          ],
+        }),
+      ],
+    });
+    const { container } = render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('renders preset cards when presets and data are available', () => {
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     expect(screen.getByTestId('preset-default-hash')).toBeInTheDocument();
@@ -253,5 +294,33 @@ describe('PanelStylesSection', () => {
 
     expect(screen.getByTestId('preset-table-preset-hash')).toBeInTheDocument();
     expect(screen.queryByTestId('preset-smooth-hash')).not.toBeInTheDocument();
+  });
+
+  describe('threshold badge', () => {
+    it('renders a badge for presets that modify thresholds', () => {
+      mockGetPluginPresets.mockReturnValue([...mockPresets, thresholdPreset]);
+      render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
+
+      expect(screen.getByLabelText('This preset will modify thresholds')).toBeInTheDocument();
+    });
+
+    it('does not render a badge for presets that do not modify thresholds', () => {
+      mockGetPluginPresets.mockReturnValue(mockPresets);
+      render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
+
+      expect(screen.queryByLabelText('This preset will modify thresholds')).not.toBeInTheDocument();
+    });
+
+    it('renders one badge per threshold-modifying preset', () => {
+      const anotherThresholdPreset: PanelPluginVisualizationSuggestion = {
+        ...thresholdPreset,
+        name: 'Segmented',
+        hash: 'threshold-hash-2',
+      };
+      mockGetPluginPresets.mockReturnValue([...mockPresets, thresholdPreset, anotherThresholdPreset]);
+      render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
+
+      expect(screen.getAllByLabelText('This preset will modify thresholds')).toHaveLength(2);
+    });
   });
 });

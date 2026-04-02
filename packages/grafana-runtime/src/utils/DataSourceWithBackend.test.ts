@@ -1,16 +1,16 @@
 import { of } from 'rxjs';
-import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
+import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from 'src/services';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponseData,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponseData,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
   createDataFrame,
-  AdHocVariableFilter,
-  ScopedVars,
+  type AdHocVariableFilter,
+  type ScopedVars,
   getDefaultTimeRange,
 } from '@grafana/data';
 
@@ -18,7 +18,7 @@ import { config } from '../config';
 
 import {
   DataSourceWithBackend,
-  HealthCheckResult,
+  type HealthCheckResult,
   HealthStatus,
   isExpressionReference,
   standardStreamOptionsProvider,
@@ -70,6 +70,14 @@ jest.mock('../services', () => ({
   },
 }));
 jest.mock('./publicDashboardQueryHandler');
+
+const mockGetBooleanValue = jest.fn().mockReturnValue(false);
+jest.mock('../internal/openFeature', () => ({
+  ...jest.requireActual('../internal/openFeature'),
+  getFeatureFlagClient: () => ({
+    getBooleanValue: mockGetBooleanValue,
+  }),
+}));
 
 describe('DataSourceWithBackend', () => {
   beforeEach(async () => {
@@ -712,6 +720,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test("check public dashboard handler is executed when it's public dashboard scope", () => {
+      const oldValue = config.publicDashboardAccessToken;
       config.publicDashboardAccessToken = 'abc123';
       const { ds } = createMockDatasource();
 
@@ -727,6 +736,7 @@ describe('DataSourceWithBackend', () => {
 
       ds.query(request);
 
+      config.publicDashboardAccessToken = oldValue;
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });
@@ -737,6 +747,27 @@ describe('DataSourceWithBackend', () => {
 
       await ds.setValue('multiplier', '1');
       expect(await ds.getValue('multiplier')).toBe('1');
+    });
+  });
+
+  describe('buildResourcesDatasourceUrl', () => {
+    afterEach(() => {
+      mockGetBooleanValue.mockReset().mockReturnValue(false);
+    });
+
+    test('check that buildResourcesDatasourceUrl uses the new URL when feature flag is enabled', () => {
+      mockGetBooleanValue.mockReturnValue(true);
+      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.apiserver.useNewAPIsForDatasourceResources', false);
+      expect(url).toBe(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
+    });
+
+    test('check that buildResourcesDatasourceUrl uses the legacy URL when feature flag is disabled', () => {
+      mockGetBooleanValue.mockReturnValue(false);
+      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
   });
 });

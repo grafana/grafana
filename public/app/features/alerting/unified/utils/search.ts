@@ -1,4 +1,4 @@
-import { RulesFilter } from '../search/rulesSearchParser';
+import { type RulesFilter } from '../search/rulesSearchParser';
 
 export function getFilter(filter: Partial<RulesFilter>): RulesFilter {
   return {

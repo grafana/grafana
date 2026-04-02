@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
+import { type AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_COLORS, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from './constants';
-import { trackCardAction, CardActionSource } from './tracking';
+import { trackCardAction, type CardActionSource } from './tracking';
 
 export interface ActionItem {
   name: string;

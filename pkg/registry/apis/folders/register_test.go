@@ -10,13 +10,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -145,7 +144,6 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				namespacer:           func(_ int64) string { return "123" },
-				folderSvc:            foldertest.NewFakeService(),
 				storage:              us,
 				parents:              newParentsGetter(us, 2),
 				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
@@ -288,7 +286,6 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
 			}
@@ -481,7 +478,6 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
 				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
@@ -575,7 +571,6 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
-				folderSvc:  foldertest.NewFakeService(),
 				storage:    us,
 				searcher:   sm,
 				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
@@ -681,7 +676,6 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
 		namespacer: func(_ int64) string { return "123" },
-		folderSvc:  foldertest.NewFakeService(),
 		storage:    us,
 		searcher:   sm,
 		parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),

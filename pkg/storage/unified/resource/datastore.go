@@ -8,7 +8,6 @@ import (
 	"io"
 	"iter"
 	"math"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -59,6 +58,10 @@ type dataStore struct {
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 }
 
+type dataImportBatchWriter interface {
+	InsertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) error
+}
+
 func newDataStore(kv KV) *dataStore {
 	ds := &dataStore{
 		kv:    kv,
@@ -88,9 +91,6 @@ type GroupResource struct {
 
 // TODO transform this into Validate() method on DataKey once we pull that struct back here
 func validateDataKey(dataKey DataKey) error {
-	if dataKey.Namespace == "" {
-		return NewValidationError("namespace", dataKey.Namespace, ErrNamespaceRequired)
-	}
 	if dataKey.ResourceVersion <= 0 {
 		return NewValidationError("resourceVersion", fmt.Sprintf("%d", dataKey.ResourceVersion), ErrResourceVersionInvalid)
 	}
@@ -99,7 +99,7 @@ func validateDataKey(dataKey DataKey) error {
 	}
 
 	// Validate naming conventions for all required fields
-	if dataKey.Namespace != clusterScopeNamespace {
+	if dataKey.Namespace != "" {
 		if err := validation.IsValidNamespace(dataKey.Namespace); err != nil {
 			return NewValidationError("namespace", dataKey.Namespace, err[0])
 		}
@@ -138,10 +138,7 @@ type ListRequestKey struct {
 }
 
 func (k ListRequestKey) Validate() error {
-	if k.Namespace == "" && k.Name != "" {
-		return errors.New(ErrNameMustBeEmptyWhenNamespaceEmpty)
-	}
-	if k.Namespace != "" && k.Namespace != clusterScopeNamespace {
+	if k.Namespace != "" {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -158,7 +155,10 @@ func (k ListRequestKey) Validate() error {
 
 func (k ListRequestKey) Prefix() string {
 	if k.Namespace == "" {
-		return fmt.Sprintf("%s/%s/", k.Group, k.Resource)
+		if k.Name == "" {
+			return fmt.Sprintf("%s/%s/", k.Group, k.Resource)
+		}
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Name)
 	}
 	if k.Name == "" {
 		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Namespace)
@@ -176,10 +176,7 @@ type GetRequestKey struct {
 
 // Validate validates the get request key
 func (k GetRequestKey) Validate() error {
-	if k.Namespace == "" {
-		return errors.New(ErrNamespaceRequired)
-	}
-	if k.Namespace != clusterScopeNamespace {
+	if k.Namespace != "" {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -199,6 +196,9 @@ func (k GetRequestKey) Validate() error {
 
 // Prefix returns the prefix for getting a specific data object
 func (k GetRequestKey) Prefix() string {
+	if k.Namespace == "" {
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Name)
+	}
 	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
 }
 
@@ -243,8 +243,8 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	if err := key.Validate(); err != nil {
 		return DataKey{}, fmt.Errorf("invalid data key: %w", err)
 	}
-	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
-		return DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	if key.Group == "" || key.Resource == "" || key.Name == "" {
+		return DataKey{}, fmt.Errorf("group, resource or name is empty")
 	}
 	prefix := key.Prefix()
 	for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{
@@ -268,8 +268,8 @@ func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequest
 	if err := key.Validate(); err != nil {
 		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
 	}
-	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
-		return DataKey{}, DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	if key.Group == "" || key.Resource == "" || key.Name == "" {
+		return DataKey{}, DataKey{}, fmt.Errorf("group, resource or name is empty")
 	}
 	prefix := key.Prefix()
 	var latest, predecessor DataKey
@@ -551,6 +551,15 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 	return writer.Close()
 }
 
+func (d *dataStore) insertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) (bool, error) {
+	writer, ok := d.kv.(dataImportBatchWriter)
+	if !ok {
+		return false, nil
+	}
+
+	return true, writer.InsertDataImportBatch(ctx, rows)
+}
+
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	if err := validateDataKey(key); err != nil {
 		return fmt.Errorf("invalid data key: %w", err)
@@ -583,32 +592,17 @@ func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
 // ParseKey parses a string key into a DataKey struct
 func ParseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
-	if len(parts) != 5 {
-		return DataKey{}, fmt.Errorf("invalid key: %s", key)
-	}
-	rvActionFolderParts := strings.Split(parts[4], "~")
-	if len(rvActionFolderParts) != 3 {
-		return DataKey{}, fmt.Errorf("invalid key: %s", key)
-	}
-	rv, err := strconv.ParseInt(rvActionFolderParts[0], 10, 64)
+	dk, _, err := kvpkg.ParseDataKeyParts(parts)
 	if err != nil {
-		return DataKey{}, fmt.Errorf("invalid resource version '%s' in key %s: %w", rvActionFolderParts[0], key, err)
+		return DataKey{}, fmt.Errorf("invalid key: %s: %w", key, err)
 	}
-	return DataKey{
-		Group:           parts[0],
-		Resource:        parts[1],
-		Namespace:       parts[2],
-		Name:            parts[3],
-		ResourceVersion: rv,
-		Action:          kvpkg.DataAction(rvActionFolderParts[1]),
-		Folder:          rvActionFolderParts[2],
-	}, nil
+	return dk, nil
 }
 
 // GetResourceStats returns resource stats within the data store by first discovering
 // all group/resource combinations, then issuing targeted list operations for each one.
 // If namespace is provided, only keys matching that namespace are considered.
-func (d *dataStore) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (d *dataStore) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
 	// First, get all unique group/resource combinations in the store
 	groupResources, err := d.getGroupResources(ctx)
 	if err != nil {
@@ -619,7 +613,13 @@ func (d *dataStore) GetResourceStats(ctx context.Context, namespace string, minC
 
 	// Process each group/resource combination
 	for _, groupResource := range groupResources {
-		groupStats, err := d.processGroupResourceStats(ctx, groupResource, namespace, minCount)
+		if nsr.Group != "" && groupResource.Group != nsr.Group {
+			continue
+		}
+		if nsr.Resource != "" && groupResource.Resource != nsr.Resource {
+			continue
+		}
+		groupStats, err := d.processGroupResourceStats(ctx, groupResource, nsr.Namespace, minCount)
 		if err != nil {
 			return nil, fmt.Errorf("failed to process stats for %s/%s: %w", groupResource.Group, groupResource.Resource, err)
 		}
@@ -922,7 +922,13 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 
 		if err != nil {
 			if isRowAlreadyExistsError(err) {
-				return ErrResourceAlreadyExists
+				// This can only happen if a concurrent write was attempted: the validation in
+				// WriteEvent guarantees that we return early when the resource already exists
+				// before entering the transaction.
+				//
+				// TODO: mark this and optimistic locking errors as conflicts (409) so that they
+				// can be identified by callers.
+				return fmt.Errorf("conflict: concurrent creation detected")
 			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}

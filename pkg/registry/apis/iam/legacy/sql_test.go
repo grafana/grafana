@@ -182,6 +182,13 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 				{
+					Name: "users_id",
+					Data: listUsers(&ListUserQuery{
+						ID:         123,
+						Pagination: common.Pagination{Limit: 1},
+					}),
+				},
+				{
 					Name: "users_page_1",
 					Data: listUsers(&ListUserQuery{
 						Pagination: common.Pagination{Limit: 5},

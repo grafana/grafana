@@ -1,11 +1,11 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
+import { FieldType, type VisualizationSuggestion, type VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(s, {
@@ -17,6 +17,7 @@ const withDefaults = (s: VisualizationSuggestion<Options>): VisualizationSuggest
       overrides: [],
     },
     cardOptions: {
+      maxSeries: 6,
       previewModifier: (s) => {
         if (s.options?.reduceOptions?.values) {
           s.options.reduceOptions.limit = 1;
@@ -53,6 +54,10 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
       },
     });
   } else if (ds.hasFieldType(FieldType.number) && ds.hasFieldType(FieldType.time)) {
+    if (ds.frameCount > MAX_STATS) {
+      return;
+    }
+
     // aggregated suggestions for number fields
     suggestions.push(
       {
@@ -78,34 +83,59 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
     );
   } else if (ds.hasFieldType(FieldType.string) && ds.hasFieldType(FieldType.number) && ds.frameCount === 1) {
     if (ds.rowCountTotal > MAX_STATS) {
-      return;
+      // High row count — suggest aggregated stat
+      suggestions.push(
+        {
+          name: t('stat.suggestions.stat', 'Stat'),
+          options: {
+            reduceOptions: {
+              values: false,
+              calcs: ['lastNotNull'],
+            },
+          },
+        },
+        {
+          name: t('stat.suggestions.stat-color-background', 'Stat - color background'),
+          options: {
+            reduceOptions: {
+              values: false,
+              calcs: ['lastNotNull'],
+            },
+            graphMode: BigValueGraphMode.None,
+            colorMode: BigValueColorMode.Background,
+          },
+        }
+      );
+    } else {
+      // String and number field with low row count — show individual rows
+      shouldUseRawValues = true;
+      suggestions.push(
+        {
+          name: t('stat.suggestions.stat-discrete-values', 'Stat - discrete values'),
+          options: {
+            reduceOptions: {
+              values: true,
+              calcs: [],
+              fields: '/.*/',
+            },
+          },
+        },
+        {
+          name: t(
+            'stat.suggestions.stat-discrete-values-color-background',
+            'Stat - discrete values - color background'
+          ),
+          options: {
+            reduceOptions: {
+              values: true,
+              calcs: [],
+              fields: '/.*/',
+            },
+            colorMode: BigValueColorMode.Background,
+          },
+        }
+      );
     }
-
-    // String and number field with low row count show individual rows
-    shouldUseRawValues = true;
-    suggestions.push(
-      {
-        name: t('stat.suggestions.stat-discrete-values', 'Stat - discrete values'),
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-            fields: '/.*/',
-          },
-        },
-      },
-      {
-        name: t('stat.suggestions.stat-discrete-values-color-background', 'Stat - discrete values - color background'),
-        options: {
-          reduceOptions: {
-            values: true,
-            calcs: [],
-            fields: '/.*/',
-          },
-          colorMode: BigValueColorMode.Background,
-        },
-      }
-    );
   }
 
   return suggestions.map((s) => defaultNumericVizOptions(withDefaults(s), ds, shouldUseRawValues));

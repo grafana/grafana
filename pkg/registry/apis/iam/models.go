@@ -12,6 +12,7 @@ import (
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -59,6 +61,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamLBACApiInstaller             TeamLBACApiInstaller
 	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
 	resourcePermissionsStorage       resource.StorageBackend
+	mappers                          *resourcepermission.MappersRegistry
 	roleBindingsStorage              RoleBindingStorageBackend
 
 	// Required for resource permissions authorization
@@ -87,6 +90,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	userSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearch                        *TeamSearchHandler
+	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
 	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
@@ -110,7 +114,8 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	tracing tracing.Tracer
 
-	cfgProvider configprovider.ConfigProvider
+	cfgProvider    configprovider.ConfigProvider
+	settingService settingsvc.Service
 
 	apiConfig Config
 }

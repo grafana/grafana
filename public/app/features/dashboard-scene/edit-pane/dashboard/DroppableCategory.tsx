@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { Droppable } from '@hello-pangea/dnd';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
@@ -21,8 +21,8 @@ export function DroppableCategory({ droppableId, title, children }: DroppableCat
         <div ref={provided.innerRef} {...provided.droppableProps}>
           <OptionsPaneCategory id={droppableId} className={styles.category} title={title}>
             {children}
+            {provided.placeholder}
           </OptionsPaneCategory>
-          {provided.placeholder}
         </div>
       )}
     </Droppable>
