@@ -52,6 +52,7 @@ describe('Explore: handle datasource states', () => {
 
   it('handles datasource changes', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const expectedWarning = 'Virtualized log list: falling back to DOM for measurement';
     const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
     try {
       const { datasources } = setupExplore({ urlParams });
@@ -61,7 +62,8 @@ describe('Explore: handle datasource states', () => {
 
       await screen.findByText('elastic Editor input:');
       expect(datasources.elastic.query).not.toBeCalled();
-      expect(warnSpy).toHaveBeenCalledWith('Virtualized log list: falling back to DOM for measurement');
+      const unexpectedWarnings = warnSpy.mock.calls.filter(([message]) => message !== expectedWarning);
+      expect(unexpectedWarnings).toEqual([]);
     } finally {
       warnSpy.mockRestore();
     }
