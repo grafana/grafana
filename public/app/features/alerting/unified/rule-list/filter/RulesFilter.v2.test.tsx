@@ -12,7 +12,7 @@ import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { type RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
-import RulesFilter from './RulesFilter';
+import RulesFilter from './RulesFilter.v2';
 
 // Mock config for UserStorage (namespace and user must be set before UserStorage module loads)
 jest.mock('@grafana/runtime', () => ({
