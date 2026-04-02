@@ -5447,9 +5447,6 @@
         "title": {
           "proceed-to-external-site": "Proceed to external site?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "View as Scene"
       }
     },
     "dashboard-links-menu": {
