@@ -7,7 +7,6 @@ import (
 )
 
 type LegacyService interface {
-	GetFoldersLegacy(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
 }
 
 // The folder.Service is backed by calls forwarding to an apiserver

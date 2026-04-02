@@ -146,7 +146,7 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	f.Version = dashFolder.Version
 
 	if q.WithFullpath || q.WithFullpathUIDs {
-		f, err = s.setFullpath(ctx, f, false)
+		f, err = s.setFullpath(ctx, f)
 		if err != nil {
 			return nil, err
 		}
@@ -375,7 +375,7 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 	}
 
 	if q.UID == folder.SharedWithMeFolderUID {
-		return s.GetSharedWithMe(ctx, q, false)
+		return s.GetSharedWithMe(ctx, q)
 	}
 
 	if q.UID == "" {

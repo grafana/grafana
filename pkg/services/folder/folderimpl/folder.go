@@ -222,49 +222,13 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 	return s.getFoldersFromApiServer(ctx, q)
 }
 
-func (s *Service) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.GetFoldersLegacy")
-	defer span.End()
-	if q.SignedInUser == nil {
-		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
-	}
-
-	qry := folder.NewGetFoldersQuery(q)
-	permissions := q.SignedInUser.GetPermissions()
-	folderPermissions := permissions[dashboards.ActionFoldersRead]
-	qry.AncestorUIDs = make([]string, 0, len(folderPermissions))
-	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
-		return nil, nil
-	}
-	for _, p := range folderPermissions {
-		if p == dashboards.ScopeFoldersAll {
-			// no need to query for folders with permissions
-			// the user has permission to access all folders
-			qry.AncestorUIDs = nil
-			break
-		}
-		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
-			if !slices.Contains(qry.AncestorUIDs, folderUid) {
-				qry.AncestorUIDs = append(qry.AncestorUIDs, folderUid)
-			}
-		}
-	}
-
-	dashFolders, err := s.store.GetFolders(ctx, qry)
-	if err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
-	}
-
-	return dashFolders, nil
-}
-
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.Get")
 	defer span.End()
 	return s.getFromApiServer(ctx, q)
 }
 
-func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy bool) (*folder.Folder, error) {
+func (s *Service) setFullpath(ctx context.Context, f *folder.Folder) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.setFullpath")
 	defer span.End()
 
@@ -274,19 +238,10 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy
 
 	// Fetch the parent since the permissions for fetching the newly created folder
 	// are not yet present for the user--this requires a call to ClearUserPermissionCache
-	var parents []*folder.Folder
-	var err error
-	if forceLegacy {
-		parents, err = s.getParentsLegacy(ctx, folder.GetParentsQuery{
-			UID:   f.UID,
-			OrgID: f.OrgID,
-		})
-	} else {
-		parents, err = s.GetParents(ctx, folder.GetParentsQuery{
-			UID:   f.UID,
-			OrgID: f.OrgID,
-		})
-	}
+	parents, err := s.GetParents(ctx, folder.GetParentsQuery{
+		UID:   f.UID,
+		OrgID: f.OrgID,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -300,77 +255,6 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 	ctx, span := s.tracer.Start(ctx, "folder.GetChildren")
 	defer span.End()
 	return s.getChildrenFromApiServer(ctx, q)
-}
-
-func (s *Service) getChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.getChildrenLegacy")
-	defer span.End()
-	defer func(t time.Time) {
-		parent := q.UID
-		if q.UID != folder.SharedWithMeFolderUID {
-			parent = "folder"
-		}
-		s.metrics.foldersGetChildrenRequestsDuration.WithLabelValues(parent).Observe(time.Since(t).Seconds())
-	}(time.Now())
-
-	if q.SignedInUser == nil {
-		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
-	}
-
-	if q.UID == folder.SharedWithMeFolderUID {
-		return s.GetSharedWithMe(ctx, q, true)
-	}
-
-	if q.UID == "" {
-		return s.getRootFolders(ctx, q)
-	}
-
-	// we only need to check access to the folder
-	// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
-	folderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(q.UID)
-	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, folderScope)
-	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, folderScope)
-	}
-
-	hasAccess, err := s.accessControl.Evaluate(ctx, q.SignedInUser, evaluator)
-	if err != nil {
-		return nil, err
-	}
-	if !hasAccess {
-		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	children, err := s.store.GetChildren(ctx, *q)
-	if err != nil {
-		return nil, err
-	}
-
-	childrenUIDs := make([]string, 0, len(children))
-	for _, f := range children {
-		childrenUIDs = append(childrenUIDs, f.UID)
-	}
-
-	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, q.OrgID, childrenUIDs)
-	if err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-	}
-
-	for _, f := range children {
-		// fetch folder from dashboard store
-		dashFolder, ok := dashFolders[f.UID]
-		if !ok {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID)
-			continue
-		}
-
-		// always expose the dashboard store sequential ID
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		f.ID = dashFolder.ID
-	}
-
-	return children, nil
 }
 
 func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
@@ -444,21 +328,16 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 }
 
 // GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
-func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.FolderReference, error) {
+func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetSharedWithMe")
 	defer span.End()
 	start := time.Now()
-	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, q, forceLegacy)
+	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, q)
 	if err != nil {
 		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
 	}
-	var rootFolders []*folder.FolderReference
-	if forceLegacy {
-		rootFolders, err = s.getChildrenLegacy(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser, Permission: q.Permission})
-	} else {
-		rootFolders, err = s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser, Permission: q.Permission})
-	}
+	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser, Permission: q.Permission})
 	if err != nil {
 		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
@@ -469,7 +348,7 @@ func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuer
 	return dedupAvailableNonRootFolders, nil
 }
 
-func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.Folder, error) {
+func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.getAvailableNonRootFolders")
 	defer span.End()
 	permissions := q.SignedInUser.GetPermissions()
@@ -500,25 +379,13 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 		return nonRootFolders, nil
 	}
 
-	var dashFolders []*folder.Folder
-	var err error
-	if forceLegacy {
-		dashFolders, err = s.GetFoldersLegacy(ctx, folder.GetFoldersQuery{
-			UIDs:             folderUids,
-			OrgID:            q.OrgID,
-			SignedInUser:     q.SignedInUser,
-			OrderByTitle:     true,
-			WithFullpathUIDs: true,
-		})
-	} else {
-		dashFolders, err = s.GetFolders(ctx, folder.GetFoldersQuery{
-			UIDs:             folderUids,
-			OrgID:            q.OrgID,
-			SignedInUser:     q.SignedInUser,
-			OrderByTitle:     true,
-			WithFullpathUIDs: true,
-		})
-	}
+	dashFolders, err := s.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:             folderUids,
+		OrgID:            q.OrgID,
+		SignedInUser:     q.SignedInUser,
+		OrderByTitle:     true,
+		WithFullpathUIDs: true,
+	})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
 	}
@@ -580,18 +447,6 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 	ctx, span := s.tracer.Start(ctx, "folder.GetParents")
 	defer span.End()
 	return s.getParentsFromApiServer(ctx, q)
-}
-
-func (s *Service) getParentsLegacy(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.getParentsLegacy")
-	defer span.End()
-	if q.UID == accesscontrol.GeneralFolderUID {
-		return nil, nil
-	}
-	if q.UID == folder.SharedWithMeFolderUID {
-		return []*folder.Folder{&folder.SharedWithMeFolder}, nil
-	}
-	return s.store.GetParents(ctx, q)
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
