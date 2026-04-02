@@ -143,7 +143,15 @@ func dimensionFilterKey(query *types.AzureMonitorQuery) string {
 
 	parts := make([]string, 0, len(query.Dimensions))
 	for _, dim := range query.Dimensions {
-		parts = append(parts, types.ConstructFiltersString(dim))
+		// Sort filter values within each dimension so that ["vm1","vm2"] and
+		// ["vm2","vm1"] produce the same key and land in the same batch.
+		sorted := dim
+		if len(dim.Filters) > 1 {
+			sorted.Filters = make([]string, len(dim.Filters))
+			copy(sorted.Filters, dim.Filters)
+			sort.Strings(sorted.Filters)
+		}
+		parts = append(parts, types.ConstructFiltersString(sorted))
 	}
 	sort.Strings(parts)
 	return strings.Join(parts, " and ")

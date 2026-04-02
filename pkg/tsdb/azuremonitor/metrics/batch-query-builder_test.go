@@ -169,6 +169,22 @@ func TestDimensionFilterKey(t *testing.T) {
 		assert.Equal(t, "VMName eq 'vm1'", dimensionFilterKey(q))
 	})
 
+	t.Run("filter values within a dimension are sorted for stable key", func(t *testing.T) {
+		q1 := &types.AzureMonitorQuery{
+			Params: url.Values{},
+			Dimensions: []dataquery.AzureMetricDimension{
+				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm1", "vm2"}},
+			},
+		}
+		q2 := &types.AzureMonitorQuery{
+			Params: url.Values{},
+			Dimensions: []dataquery.AzureMetricDimension{
+				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm2", "vm1"}},
+			},
+		}
+		assert.Equal(t, dimensionFilterKey(q1), dimensionFilterKey(q2))
+	})
+
 	t.Run("multiple dimensions are sorted for stable key", func(t *testing.T) {
 		q1 := &types.AzureMonitorQuery{
 			Params: url.Values{},
