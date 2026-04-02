@@ -163,15 +163,6 @@
         // For the image-renderer to check support for render binding calls
         window.__grafanaRenderBindingSupported = true;
       [[end]]
-
-      // global config
-      window.grafanaBootData = {
-        _femt: true, // isFrontendService() needs this
-        assets: [[.Assets]],
-        navTree: [],
-        settings: [[.Settings]],
-        user: [[.DefaultUser]],
-      };
     </script>
 
     <script nonce="[[.Nonce]]">
@@ -302,7 +293,8 @@
           // Only redirect if there's no login error to avoid redirect loops.
           // Don't redirect for public dashboards
           const hasLoginError = rawBootData.settings?.loginError || window.grafanaBootData.settings.loginError;
-          if (rawBootData.autoLoginRedirectURL && !hasLoginError && !queryParams.has('disableAutoLogin') && !publicDashboardAccessToken) {
+          const isOnLoginPage = window.location.pathname.matches(/\/login\/?$/);
+          if (rawBootData.autoLoginRedirectURL && !hasLoginError && !queryParams.has('disableAutoLogin') && isOnLoginPage) {
             // Copied from context_srv.setRedirectToUrl
             const redirectPath = window.location.href.substring(window.location.origin.length)
             if (redirectPath !== "/login") {
@@ -359,6 +351,15 @@
         }
 
         async function initGrafana() {
+          // global config
+          window.grafanaBootData = {
+            _femt: true, // isFrontendService() needs this
+            assets: [[.Assets]],
+            navTree: [],
+            settings: [[.Settings]],
+            user: [[.DefaultUser]],
+          }
+
           // Preserve a mix of values from the initial boot data, and from the backend
           // - nav tree and user info come from the backend
           // - merge settings from both. FS settings contains less values
