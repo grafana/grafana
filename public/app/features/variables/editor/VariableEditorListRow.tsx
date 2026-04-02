@@ -105,7 +105,15 @@ export function VariableEditorListRow({
                 aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
               />
               <div {...provided.dragHandleProps} className={styles.dragHandle}>
-                <Icon name="draggabledots" size="lg" />
+                <Icon
+                  name="draggabledots"
+                  size="lg"
+                  title={t(
+                    'variables.variable-editor-list-row.drag-handle-label',
+                    'Reorder variable {{variableName}}',
+                    { variableName: variable.name }
+                  )}
+                />
               </div>
             </div>
           </td>

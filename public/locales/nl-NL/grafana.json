@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Geleverd aan <2>{{name}} </2>",
-      "no-grouping": "Niet gegroepeerd"
+      "delivered-to-disabled": "",
+      "no-grouping": "Niet gegroepeerd",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is niet geïnstalleerd of niet juist geconfigureerd",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Incident melden"
     },
     "delete-rule-modal": {
@@ -2244,7 +2247,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3577,8 +3582,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Instantiedetails",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "U heeft geen waarschuwingsinstanties in een actieve of in behandeling zijnde status voor het geselecteerde tijdsbereik.",
@@ -4265,6 +4272,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Mapnaam is vereist.",
       "new-folder-owner-selector-checkbox": "Een eigenaar aan de map toewijzen",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Je hebt zowel toegewezen als niet-toegewezen bronnen geselecteerd. Deze kunnen niet samen worden verwerkt. Selecteer alleen toegewezen bronnen of alleen niet-toegewezen bronnen en probeer het opnieuw.",
       "selected-mix-resources-modal-title": "Gemengde brontypes geselecteerd"
     },
@@ -4428,6 +4436,20 @@
       "error": "Recent bekeken dashboards konden niet worden geladen.",
       "retry": "Opnieuw proberen",
       "title": "Recent bekeken"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5609,6 +5631,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Toepassen",
           "change-value": "Variabele waarde wijzigen",
@@ -6504,6 +6528,9 @@
       },
       "name": {
         "action": "Naam variabele wijzigen"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10326,6 +10353,8 @@
     "sidebar": {
       "close": "Sluiten",
       "dock": "Vastzetten",
+      "hide": "",
+      "show": "",
       "undock": "Losmaken"
     },
     "slider": {
@@ -12962,12 +12991,14 @@
       "not-saved": "De rest van de Grafana-gebruikers in je organisatie ziet nog steeds de huidige versie die is opgeslagen in de geconfigureerde standaardtak totdat deze tak is samengevoegd",
       "open-in-repo-button": "Openen in {{repoType}}",
       "open-pull-request-in-repo": "Pull-verzoek openen in {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "Bekijk het in {{repoType}} om de laatste wijzigingen te zien.",
       "view-pull-request-in-repo": "Pull-verzoek bekijken in {{repoType}}"
     },
     "title-created-branch-in-repo": "Er is een nieuwe bron gemaakt in een tak in {{repoType}}.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Deze bron wordt geladen vanuit de tak die je zojuist hebt gemaakt in {{repoType}} en is alleen zichtbaar voor jou"
+    "title-loaded-pull-request-in-repo": "Deze bron wordt geladen vanuit de tak die je zojuist hebt gemaakt in {{repoType}} en is alleen zichtbaar voor jou",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15364,8 +15395,7 @@
       "bar": "Staafdiagram",
       "bar-stacked": "Staafdiagram - gestapeld",
       "bar-stacked-percent": "Staafdiagram - gestapeld op percentage",
-      "line": "Lijndiagram",
-      "line-smooth": "Lijndiagram - vloeiend"
+      "line": "Lijndiagram"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Tijdzone toevoegen",

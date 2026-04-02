@@ -3,9 +3,11 @@ package userk8s
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -248,7 +250,101 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 }
 
 func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	return errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.update", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		ctxLogger.Error("failed to get requester from context", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	orgID := requester.GetOrgID()
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(cmd.UserID, 10)
+	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		ctxLogger.Error("k8s user list failed", "namespace", namespace, "userID", cmd.UserID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	if len(list.Items) == 0 {
+		span.RecordError(user.ErrUserNotFound)
+		span.SetStatus(codes.Error, user.ErrUserNotFound.Error())
+		return user.ErrUserNotFound
+	}
+
+	if len(list.Items) > 1 {
+		ctxLogger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", cmd.UserID, "count", len(list.Items))
+		err := errors.New("multiple users found")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	var existing iamv0alpha1.User
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, &existing); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	if cmd.Name != "" {
+		existing.Spec.Title = cmd.Name
+	}
+	if cmd.Email != "" {
+		existing.Spec.Email = strings.ToLower(cmd.Email)
+	}
+	if cmd.Login != "" {
+		existing.Spec.Login = strings.ToLower(cmd.Login)
+	}
+	if cmd.IsDisabled != nil {
+		existing.Spec.Disabled = *cmd.IsDisabled
+	}
+	if cmd.EmailVerified != nil {
+		existing.Spec.EmailVerified = *cmd.EmailVerified
+	}
+	if cmd.IsGrafanaAdmin != nil {
+		existing.Spec.GrafanaAdmin = *cmd.IsGrafanaAdmin
+	}
+	if cmd.IsProvisioned != nil {
+		existing.Spec.Provisioned = *cmd.IsProvisioned
+	}
+
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&existing)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	_, err = client.Update(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.UpdateOptions{})
+	if err != nil {
+		ctxLogger.Error("k8s user update failed", "namespace", namespace, "orgID", orgID, "userID", cmd.UserID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
