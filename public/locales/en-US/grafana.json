@@ -14739,7 +14739,6 @@
     },
     "badge": "NEW FEATURE",
     "close": "Close",
-    "cta-new-tab": "(opens in new tab)",
     "explore": {
       "bullet-1": "Streamlined query building across all data sources",
       "bullet-2": "Side-by-side comparison of metrics, logs, and traces",
