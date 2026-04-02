@@ -196,8 +196,8 @@ func TestService(t *testing.T) {
 
 	t.Run("static", func(t *testing.T) {
 		type testCase struct {
-			name  string
-			cfg   setting.Cfg
+			name string
+			cfg  setting.Cfg
 
 			isStatic bool
 			error    string
