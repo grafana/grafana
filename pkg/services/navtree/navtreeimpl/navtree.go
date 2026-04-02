@@ -499,6 +499,8 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesWrite),
 	}
 
 	hasContactPointsAccess := hasAccess(ac.EvalAny(contactPointsPerms...))

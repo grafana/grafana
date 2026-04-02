@@ -1204,6 +1204,21 @@
     },
     {
       "metadata": {
+        "name": "clearPreviousFieldValues",
+        "resourceVersion": "1775070445977",
+        "creationTimestamp": "2026-04-01T19:07:25Z"
+      },
+      "spec": {
+        "description": "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-01-10T13:19:01Z"
@@ -3321,7 +3336,8 @@
       "metadata": {
         "name": "logsExploreTableVisualisation",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-07-12T13:52:42Z"
+        "creationTimestamp": "2023-07-12T13:52:42Z",
+        "deletionTimestamp": "2026-03-24T16:21:01Z"
       },
       "spec": {
         "description": "A table visualisation for logs in Explore",
@@ -3721,6 +3737,23 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "newUnconfiguredPanel",
+        "resourceVersion": "1775046318180",
+        "creationTimestamp": "2026-03-31T20:51:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 12:25:18.180841 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the new unconfigured panel experience",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -4235,12 +4268,15 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1775058514147",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 15:48:34.147548 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"
@@ -4774,17 +4810,14 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1774365185266",
-        "creationTimestamp": "2024-02-27T21:16:00Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-03-24 15:13:05.266575305 +0000 UTC"
-        }
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2024-02-27T21:16:00Z"
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "GA",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-datasources-core-services",
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -4798,6 +4831,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sseExpressionErrorIsolation",
+        "resourceVersion": "1774386001085",
+        "creationTimestamp": "2026-03-24T21:00:01Z"
+      },
+      "spec": {
+        "description": "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
       }
     },
@@ -4971,13 +5017,16 @@
     {
       "metadata": {
         "name": "tempoAlerting",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-15T13:36:36Z"
+        "resourceVersion": "1774957674648",
+        "creationTimestamp": "2025-07-15T13:36:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-31 11:47:54.648231 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables creating alerts from Tempo data source",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-traces-and-profiling",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -5022,6 +5071,20 @@
         "description": "Enables time pickers sync",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "tracesDrilldownTimeSeeker",
+        "resourceVersion": "1775047709831",
+        "creationTimestamp": "2026-04-01T12:48:29Z"
+      },
+      "spec": {
+        "description": "Enables the time seeker in traces drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
         "expression": "false"
       }
     },
