@@ -103,6 +103,10 @@ const (
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
+	// FlagChunkedQueryStreaming
+	// Allow requesting query results as chunked jsonl rather than single json blob
+	FlagChunkedQueryStreaming = "chunkedQueryStreaming"
+
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"

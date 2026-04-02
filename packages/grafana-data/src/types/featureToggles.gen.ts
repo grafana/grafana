@@ -179,6 +179,11 @@ export interface FeatureToggles {
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   /**
+  * Allow requesting query results as chunked jsonl rather than single json blob
+  * @default false
+  */
+  chunkedQueryStreaming?: boolean;
+  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
   * @default true
   */

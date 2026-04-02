@@ -88,6 +88,11 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		ctx = contextualMiddlewares(ctx)
 
 		if chunked.IsRequestingChunkedResponse(req.Header.Get("accept")) {
+			if !r.builder.cfg.EnableChunkedQueryStreaming {
+				responder.Error(fmt.Errorf("chunked query streaming is not enabled"))
+				return
+			}
+
 			if err = r.builder.client.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
 				Queries:       queries,
 				PluginContext: pluginCtx,

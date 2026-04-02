@@ -265,6 +265,13 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:        "chunkedQueryStreaming",
+			Description: "Allow requesting query results as chunked jsonl rather than single json blob",
+			Stage:       FeatureStageExperimental,
+			Expression:  "false",
+			Owner:       awsDatasourcesSquad,
+		},
+		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,

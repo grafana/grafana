@@ -37,10 +37,11 @@ var (
 )
 
 type DataSourceAPIBuilderConfig struct {
-	LoadQueryTypes         bool
-	UseDualWriter          bool
-	EnableResourceEndpoint bool
-	EnableHealthEndpoint   bool
+	LoadQueryTypes              bool
+	UseDualWriter               bool
+	EnableResourceEndpoint      bool
+	EnableHealthEndpoint        bool
+	EnableChunkedQueryStreaming bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -105,10 +106,11 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			DataSourceAPIBuilderConfig{
-				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
-				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
-				EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+				LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+				UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				EnableResourceEndpoint:      features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
+				EnableHealthEndpoint:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+				EnableChunkedQueryStreaming: features.IsEnabledGlobally(featuremgmt.FlagChunkedQueryStreaming),
 			},
 		)
 		if err != nil {
