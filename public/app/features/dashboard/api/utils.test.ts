@@ -149,4 +149,27 @@ describe('getDashboardsApiVersion', () => {
     config.featureToggles = toggles;
     expect(getDashboardsApiVersion(responseFormat as 'v1' | 'v2' | undefined)).toBe(expected);
   });
+
+  it('throws when requesting v2 without kubernetes dashboards', () => {
+    config.featureToggles = { kubernetesDashboards: false };
+    expect(() => getDashboardsApiVersion('v2')).toThrow('v2 is not supported');
+  });
+
+  it('throws when requesting v2 with legacy architecture', () => {
+    locationService.push('/test?scenes=false');
+    config.featureToggles = { kubernetesDashboards: true };
+    expect(() => getDashboardsApiVersion('v2')).toThrow('v2 is not supported for legacy');
+  });
+
+  describe('URL override scenes=false', () => {
+    beforeEach(() => locationService.push('/test?scenes=false'));
+
+    it.each([
+      [{ kubernetesDashboards: false }, 'legacy'],
+      [{ kubernetesDashboards: true }, 'v1'],
+    ])('with toggles %j returns %s', (toggles, expected) => {
+      config.featureToggles = toggles;
+      expect(getDashboardsApiVersion()).toBe(expected);
+    });
+  });
 });
