@@ -12,7 +12,7 @@ runs:
   steps:
     - uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64 # v1.299.0
       with:
-        ruby-version: '3.x'
+        ruby-version: '3.4.9'
         bundler-cache: false
     - name: Cache fpm gem
       id: cache-fpm
