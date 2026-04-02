@@ -597,7 +597,7 @@ To reset the notification policy tree to the default and unlock it for editing i
 ## Data source-managed resources
 
 {{< admonition type="caution" >}}
-Starting in February in Alerting, data source-managed alerts can not be created in new stacks in Grafana.
+Data source-managed alerts have been deprecated in Grafana and can not be created in new stacks.
 New Grafana stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
 
 Users will no longer be able to create alert rules in Mimir and Loki, and Cloud Alertmanager will not be available nor will Grafana provision the data source for it.
