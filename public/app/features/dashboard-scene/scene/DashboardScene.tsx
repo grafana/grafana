@@ -155,7 +155,6 @@ export interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
 }
 
-
 export interface DashboardSceneState extends SceneObjectState {
   /** @deprecated */
   id?: number | undefined;
