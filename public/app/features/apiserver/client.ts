@@ -193,6 +193,9 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     const listOpts = this.getWatchSelectors(params);
 
     return new Observable<ResourceEvent<T, S, K>>((subscriber) => {
+      // NOTE: starting empty means the first poll can't detect items deleted between
+      // the initial list() and polling start. Seeding from the RTKQ cache would fix
+      // this but requires threading initial state through watch() → createPollingFallback.
       let previousItems = new Map<string, Resource<T, S, K>>();
       let active = true;
       let firstPoll = true;
