@@ -541,6 +541,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     });
   }
 
+  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
+
   const body = new VizPanel(vizPanelState);
 
   return new DashboardGridItem({
