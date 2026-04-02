@@ -13,6 +13,7 @@ import {
   TextBoxVariable,
 } from '@grafana/scenes';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -20,6 +21,12 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasEditPermissionInFolders: false,
+  },
+}));
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
@@ -449,21 +456,65 @@ describe('DashboardControls', () => {
       expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
   });
+
+  describe('DashboardControlActions save button visibility', () => {
+    const originalFeatureToggles = { ...config.featureToggles };
+    const mockedContextSrv = jest.mocked(contextSrv);
+
+    beforeEach(() => {
+      config.featureToggles.dashboardNewLayouts = true;
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
+      mockedContextSrv.hasEditPermissionInFolders = false;
+    });
+
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+      jest.clearAllMocks();
+    });
+
+    it('should show save button when user has canSave permission and is editing', async () => {
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).toBeInTheDocument();
+    });
+
+    it('should show save button when user has folder edit permission and is editing', async () => {
+      mockedContextSrv.hasEditPermissionInFolders = true;
+      const controls = buildTestSceneWithEditable({ canSave: false, canEdit: true, isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByText('Save as copy')).toBeInTheDocument();
+    });
+
+    it('should not show save button when user lacks both canSave and folder edit permission', () => {
+      mockedContextSrv.hasEditPermissionInFolders = false;
+      const controls = buildTestSceneWithEditable({ canSave: false, canEdit: true, isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+      expect(screen.queryByText('Save as copy')).not.toBeInTheDocument();
+    });
+  });
 });
 
 function buildTestSceneWithEditable(options: {
-  editable: boolean;
+  editable?: boolean;
+  isEditing?: boolean;
   canEdit?: boolean;
+  canSave?: boolean;
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
 }): DashboardControls {
-  const { editable, canEdit = true, canMakeEditable = false, isSnapshot = false } = options;
+  const { editable = true, isEditing, canEdit = true, canSave, canMakeEditable = false, isSnapshot = false } = options;
 
   const dashboard = new DashboardScene({
     uid: 'test-uid',
     editable,
+    isEditing,
     meta: {
       canEdit,
+      canSave,
       canMakeEditable,
       isSnapshot,
     },

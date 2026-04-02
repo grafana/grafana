@@ -7537,6 +7537,7 @@
     "sharing": {
       "save-before-share": {
         "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+        "text-no-save": "You have unsaved changes. You don’t have permission to save. Discard changes and share the original?",
         "title": "Unsaved changes"
       }
     },
