@@ -2817,6 +2817,14 @@ var (
 			FrontendOnly: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "enableColorblindSafePanelOptions",
+			Description:  "Enables new colorblind safe palette and line fill patterns for panels",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
 	}
 )
 
