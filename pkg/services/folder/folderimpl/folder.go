@@ -4,26 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
-	"runtime"
 	"slices"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/dskit/concurrency"
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -42,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const FULLPATH_SEPARATOR = "/"
@@ -260,76 +253,6 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 	return s.getChildrenFromApiServer(ctx, q)
 }
 
-func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.getRootFolders")
-	defer span.End()
-	permissions := q.SignedInUser.GetPermissions()
-	var folderPermissions []string
-	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		folderPermissions = permissions[dashboards.ActionFoldersWrite]
-	} else {
-		folderPermissions = permissions[dashboards.ActionFoldersRead]
-	}
-
-	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
-		return nil, nil
-	}
-
-	q.FolderUIDs = make([]string, 0, len(folderPermissions))
-	for _, p := range folderPermissions {
-		if p == dashboards.ScopeFoldersAll {
-			// no need to query for folders with permissions
-			// the user has permission to access all folders
-			q.FolderUIDs = nil
-			break
-		}
-		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
-			if !slices.Contains(q.FolderUIDs, folderUid) {
-				q.FolderUIDs = append(q.FolderUIDs, folderUid)
-			}
-		}
-	}
-
-	children, err := s.store.GetChildren(ctx, *q)
-	if err != nil {
-		return nil, err
-	}
-
-	childrenUIDs := make([]string, 0, len(children))
-	for _, f := range children {
-		childrenUIDs = append(childrenUIDs, f.UID)
-	}
-
-	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, q.OrgID, childrenUIDs)
-	if err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-	}
-
-	if err := concurrency.ForEachJob(ctx, len(children), runtime.NumCPU(), func(ctx context.Context, i int) error {
-		f := children[i]
-		// fetch folder from dashboard store
-		dashFolder, ok := dashFolders[f.UID]
-		if !ok {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "orgID", q.OrgID, "uid", f.UID)
-		}
-		// always expose the dashboard store sequential ID
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
-		f.ID = dashFolder.ID
-
-		return nil
-	}); err != nil {
-		return nil, folder.ErrInternal.Errorf("failed to assign folder sequential ID: %w", err)
-	}
-
-	// add "shared with me" folder on the 1st page
-	if (q.Page == 0 || q.Page == 1) && len(q.FolderUIDs) != 0 {
-		children = append([]*folder.FolderReference{folder.SharedWithMeFolder.ToFolderReference()}, children...)
-	}
-
-	return children, nil
-}
-
 // GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
 func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuery, forceLegacy bool) ([]*folder.FolderReference, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetSharedWithMe")
@@ -462,28 +385,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 	return s.updateOnApiServer(ctx, cmd)
 }
 
-// prepareForUpdate updates an existing dashboard model from command into model for folder update
-func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int64, cmd *folder.UpdateFolderCommand) {
-	dashFolder.OrgID = orgId
-
-	title := dashFolder.Title
-	if cmd.NewTitle != nil && *cmd.NewTitle != "" {
-		title = *cmd.NewTitle
-	}
-	dashFolder.Title = strings.TrimSpace(title)
-	dashFolder.Data.Set("title", dashFolder.Title)
-
-	dashFolder.SetVersion(cmd.Version)
-	dashFolder.IsFolder = true
-
-	if userId == 0 {
-		userId = -1
-	}
-
-	dashFolder.UpdatedBy = userId
-	dashFolder.UpdateSlug()
-}
-
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	ctx, span := s.tracer.Start(ctx, "folder.Delete")
 	defer span.End()
@@ -507,233 +408,10 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	return s.moveOnApiServer(ctx, cmd)
 }
 
-func (s *Service) publishFolderFullPathUpdatedEvent(ctx context.Context, timestamp time.Time, orgID int64, folderUID string) error {
-	ctx, span := s.tracer.Start(ctx, "folder.publishFolderFullPathUpdatedEvent")
-	defer span.End()
-
-	descFolders, err := s.store.GetDescendants(ctx, orgID, folderUID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
-		return err
-	}
-	uids := make([]string, 0, len(descFolders)+1)
-	uids = append(uids, folderUID)
-	for _, f := range descFolders {
-		uids = append(uids, f.UID)
-	}
-	span.AddEvent("found folder descendants", trace.WithAttributes(
-		attribute.Int64("folders", int64(len(uids))),
-	))
-
-	if err := s.bus.Publish(ctx, &events.FolderFullPathUpdated{
-		Timestamp: timestamp,
-		UIDs:      uids,
-		OrgID:     orgID,
-	}); err != nil {
-		s.log.ErrorContext(ctx, "Failed to publish FolderFullPathUpdated event", "folderUID", folderUID, "orgID", orgID, "descendantsUIDs", uids, "error", err)
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) canMove(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.canMove")
-	defer span.End()
-	// Check that the user is allowed to move the folder to the destination folder
-	var evaluator accesscontrol.Evaluator
-	parentUID := cmd.NewParentUID
-	if parentUID != "" {
-		legacyEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
-		newEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
-		evaluator = accesscontrol.EvalAny(legacyEvaluator, newEvaluator)
-	} else {
-		// Evaluate folder creation permission when moving folder to the root level
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
-		parentUID = folder.GeneralFolderUID
-	}
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil {
-		return false, err
-	} else if !hasAccess {
-		return false, dashboards.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", parentUID)
-	}
-
-	// Check that the user would not be elevating their permissions by moving a folder to the destination folder
-	// This is needed for plugins, as different folders can have different plugin configs
-	// We do this by checking that there are no permissions that user has on the destination parent folder but not on the source folder
-	// We also need to look at the folder tree for the destination folder, as folder permissions are inherited
-	newFolderAndParentUIDs, err := s.getFolderAndParentUIDScopes(ctx, parentUID, cmd.OrgID)
-	if err != nil {
-		return false, err
-	}
-
-	permissions := cmd.SignedInUser.GetPermissions()
-	var evaluators []accesscontrol.Evaluator
-	currentFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID)
-	for action, scopes := range permissions {
-		for _, scope := range newFolderAndParentUIDs {
-			if slices.Contains(scopes, scope) {
-				evaluators = append(evaluators, accesscontrol.EvalPermission(action, currentFolderScope))
-				break
-			}
-		}
-	}
-
-	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, accesscontrol.EvalAll(evaluators...)); err != nil {
-		return false, err
-	} else if !hasAccess {
-		return false, dashboards.ErrFolderAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
-	}
-	return true, nil
-}
-
-func (s *Service) getFolderAndParentUIDScopes(ctx context.Context, folderUID string, orgID int64) ([]string, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.getFolderAndParentUIDScopes")
-	defer span.End()
-	folderAndParentUIDScopes := []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
-	if folderUID == folder.GeneralFolderUID {
-		return folderAndParentUIDScopes, nil
-	}
-	folderParents, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: folderUID, OrgID: orgID})
-	if err != nil {
-		return nil, err
-	}
-	for _, newParent := range folderParents {
-		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(newParent.UID)
-		folderAndParentUIDScopes = append(folderAndParentUIDScopes, scope)
-	}
-	return folderAndParentUIDScopes, nil
-}
-
-// nestedFolderDelete inspects the folder referenced by the cmd argument, deletes all the entries for
-// its descendant folders (folders which are nested within it either directly or indirectly) from
-// the folder store and returns the UIDs for all its descendants.
-func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) ([]string, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.nestedFolderDelete")
-	defer span.End()
-	descendantUIDs := []string{}
-	if cmd.SignedInUser == nil {
-		return descendantUIDs, folder.ErrBadRequest.Errorf("missing signed in user")
-	}
-
-	_, err := s.store.Get(ctx, folder.GetFolderQuery{
-		UID:          &cmd.UID,
-		OrgID:        cmd.OrgID,
-		SignedInUser: cmd.SignedInUser,
-	})
-	if err != nil {
-		return descendantUIDs, err
-	}
-
-	descendants, err := s.store.GetDescendants(ctx, cmd.OrgID, cmd.UID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
-		return descendantUIDs, err
-	}
-	descendants = folder.SortByPostorder(descendants)
-
-	for _, f := range descendants {
-		descendantUIDs = append(descendantUIDs, f.UID)
-	}
-	s.log.InfoContext(ctx, "deleting legacy folder descendants", "org_id", cmd.OrgID, "uid", cmd.UID, "descendantsUIDs", strings.Join(descendantUIDs, ","))
-
-	err = s.store.Delete(ctx, descendantUIDs, cmd.OrgID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "failed to delete legacy folder descendants", "org_id", cmd.OrgID, "parent_uid", cmd.UID, "descendantsUIDs", strings.Join(descendantUIDs, ","), "err", err)
-		return descendantUIDs, err
-	}
-	return descendantUIDs, nil
-}
-
 func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetDescendantCounts")
 	defer span.End()
 	return s.getDescendantCountsFromApiServer(ctx, q)
-}
-
-// buildSaveDashboardCommand is a simplified version on DashboardServiceImpl.buildSaveDashboardCommand
-// keeping only the meaningful functionality for folders
-func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.SaveDashboardCommand, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.buildSaveDashboardCommand")
-	defer span.End()
-
-	dash := dto.Dashboard
-
-	dash.OrgID = dto.OrgID
-	dash.Title = strings.TrimSpace(dash.Title)
-	dash.Data.Set("title", dash.Title)
-	dash.SetUID(strings.TrimSpace(dash.UID))
-
-	if dash.Title == "" {
-		return nil, dashboards.ErrDashboardTitleEmpty
-	}
-
-	if strings.EqualFold(dash.Title, dashboards.RootFolderName) {
-		return nil, dashboards.ErrDashboardFolderNameExists
-	}
-
-	if dash.FolderUID != "" {
-		if _, err := s.dashboardFolderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID); err != nil {
-			return nil, err
-		}
-	}
-
-	if !util.IsValidShortUID(dash.UID) {
-		return nil, dashboards.ErrDashboardInvalidUid
-	} else if util.IsShortUIDTooLong(dash.UID) {
-		return nil, dashboards.ErrDashboardUidTooLong
-	}
-
-	_, err := s.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
-	if err != nil {
-		return nil, err
-	}
-
-	var evaluator accesscontrol.Evaluator
-	// Check write permission for existing dashboards, create permission for new dashboards
-	if dash.ID == 0 {
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		parentUID := dash.FolderUID
-		if parentUID == "" {
-			parentUID = folder.GeneralFolderUID
-		}
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parentUID))
-	} else {
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.UID))
-	}
-
-	if hasAccess, err := s.accessControl.Evaluate(ctx, dto.User, evaluator); err != nil || !hasAccess {
-		if err != nil {
-			return nil, err
-		}
-		return nil, dashboards.ErrDashboardUpdateAccessDenied
-	}
-
-	var userID int64
-	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
-		userID = id
-	} else if !identity.IsServiceIdentity(ctx) {
-		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", dto.User.GetID())
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-	cmd := &dashboards.SaveDashboardCommand{
-		Dashboard: dash.Data,
-		Message:   dto.Message,
-		OrgID:     dto.OrgID,
-		Overwrite: dto.Overwrite,
-		UserID:    userID,
-		FolderID:  dash.FolderID, // nolint:staticcheck
-		FolderUID: dash.FolderUID,
-		IsFolder:  dash.IsFolder,
-		PluginID:  dash.PluginID,
-	}
-
-	if !dto.UpdatedAt.IsZero() {
-		cmd.UpdatedAt = dto.UpdatedAt
-	}
-
-	return cmd, nil
 }
 
 // SplitFullpath splits a string into an array of strings using the FULLPATH_SEPARATOR as the delimiter.
@@ -764,44 +442,6 @@ func SplitFullpath(s string) []string {
 	}
 
 	return result
-}
-
-func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	ctx, span := s.tracer.Start(ctx, "folder.nestedFolderCreate")
-	defer span.End()
-	if cmd.ParentUID != "" {
-		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID, cmd.UID); err != nil {
-			return nil, err
-		}
-	}
-	return s.store.Create(ctx, *cmd)
-}
-
-func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string, UID string) error {
-	ctx, span := s.tracer.Start(ctx, "folder.validateParent")
-	defer span.End()
-	ancestors, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: parentUID, OrgID: orgID})
-	if err != nil {
-		return fmt.Errorf("failed to get parents: %w", err)
-	}
-
-	if len(ancestors) >= s.maxNestedFolderDepth {
-		return folder.ErrMaximumDepthReached.Errorf("failed to validate parent folder")
-	}
-
-	// Create folder under itself is not allowed
-	if parentUID == UID {
-		return folder.ErrCircularReference.Errorf("circular reference detected")
-	}
-
-	// check there is no circular reference
-	for _, ancestor := range ancestors {
-		if ancestor.UID == UID {
-			return folder.ErrCircularReference.Errorf("circular reference detected")
-		}
-	}
-
-	return nil
 }
 
 func toFolderError(err error) error {
