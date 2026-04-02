@@ -249,9 +249,12 @@ func (cfg *Cfg) applyMigrationEnforcements() {
 	for resource, enabledByDefault := range MigratedUnifiedResources {
 		resourceCfg, ok := cfg.UnifiedStorage[resource]
 		if ok {
-			if !resourceCfg.EnableMigration {
+			if !resourceCfg.EnableMigration && !enabledByDefault {
 				cfg.Logger.Info("Resource migration disabled", "resource", resource)
 				continue
+			}
+			if !resourceCfg.EnableMigration && enabledByDefault {
+				cfg.Logger.Warn("Ignoring enableMigration=false for resource", "resource", resource)
 			}
 			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", resourceCfg)
 		} else if !enabledByDefault {

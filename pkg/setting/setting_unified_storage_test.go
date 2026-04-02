@@ -134,9 +134,10 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		value, exists := cfg.UnifiedStorage[DashboardResource]
 		assert.True(t, exists, "dashboards.dashboard.grafana.app should exist from env var")
-		// Note: enforceMigrationToUnifiedConfigs may override dualWriterMode to 5
-		// for migrated resources. We test the enableMigration was correctly parsed as false.
-		assert.Equal(t, false, value.EnableMigration)
+		// enableMigration=false is ignored for default-enabled migrated resources;
+		// mode 5 is enforced.
+		assert.Equal(t, rest.DualWriterMode(5), value.DualWriterMode)
+		assert.True(t, value.EnableMigration)
 	})
 
 	t.Run("env vars work for unknown resource names", func(t *testing.T) {
@@ -223,7 +224,7 @@ func TestApplyMigrationEnforcements(t *testing.T) {
 		}
 	})
 
-	t.Run("skips resources with migration explicitly disabled", func(t *testing.T) {
+	t.Run("ignores enableMigration=false for default-enabled migrated resources", func(t *testing.T) {
 		cfg := newCfg(t)
 		enableMigrations(cfg)
 		cfg.UnifiedStorage[DashboardResource] = UnifiedStorageConfig{
@@ -234,6 +235,21 @@ func TestApplyMigrationEnforcements(t *testing.T) {
 		cfg.applyMigrationEnforcements()
 
 		resourceCfg := cfg.UnifiedStorage[DashboardResource]
+		assert.Equal(t, rest.DualWriterMode(5), resourceCfg.DualWriterMode)
+		assert.True(t, resourceCfg.EnableMigration)
+	})
+
+	t.Run("skips resources with migration explicitly disabled when not enabled by default", func(t *testing.T) {
+		cfg := newCfg(t)
+		enableMigrations(cfg)
+		cfg.UnifiedStorage[ShortURLResource] = UnifiedStorageConfig{
+			DualWriterMode:  1,
+			EnableMigration: false,
+		}
+
+		cfg.applyMigrationEnforcements()
+
+		resourceCfg := cfg.UnifiedStorage[ShortURLResource]
 		assert.Equal(t, rest.DualWriterMode(1), resourceCfg.DualWriterMode)
 		assert.False(t, resourceCfg.EnableMigration)
 	})
