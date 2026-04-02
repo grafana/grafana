@@ -1,12 +1,9 @@
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 
 export interface SplashFeature {
   id: string;
   icon: IconName;
-  badge: { text: string; icon?: IconName };
-  accentColor: (theme: GrafanaTheme2) => string;
   title: string;
   subtitle: string;
   bullets: string[];
@@ -26,11 +23,12 @@ export function getSplashScreenConfig(): SplashScreenConfig {
     features: [
       {
         id: 'assistant',
-        icon: 'ai-sparkle',
-        badge: { text: t('splash-screen.assistant.badge', 'NOW IN OSS') },
-        accentColor: (theme) => theme.visualization.getColorByName('dark-purple'),
-        title: t('splash-screen.assistant.title', 'Use Grafana Assistant in Grafana OSS'),
-        subtitle: t('splash-screen.assistant.subtitle', 'Use AI to handle everything from config to query generation'),
+        icon: 'comment-alt-message',
+        title: t('splash-screen.assistant.title', 'Grafana Assistant is now available in OSS'),
+        subtitle: t(
+          'splash-screen.assistant.subtitle',
+          'Say no to lengthy config work and troubleshooting. Use the Assistant to be faster than ever.'
+        ),
         bullets: [
           t('splash-screen.assistant.bullet-1', 'Build complex dashboards in minutes'),
           t('splash-screen.assistant.bullet-2', 'Correlate metrics, logs and traces and gain insights in minutes'),
@@ -38,56 +36,59 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         ],
         ctaText: t('splash-screen.assistant.cta', 'Show me'),
         ctaUrl: '/a/grafana-assistant-app',
-        heroImageUrl: 'public/img/splash/assistant-hero.png',
-      },
-      {
-        id: 'dynamic-dashboards',
-        icon: 'apps',
-        badge: { text: t('splash-screen.dynamic-dashboards.badge', 'NEW IN G13') },
-        accentColor: (theme) => theme.colors.primary.text,
-        title: t('splash-screen.dynamic-dashboards.title', 'Make your dashboards more dynamic'),
-        subtitle: t('splash-screen.dynamic-dashboards.subtitle', 'Make your dashboards more impactful by making them more interactive'),
-        bullets: [
-          t('splash-screen.dynamic-dashboards.bullet-1', 'Split content into tabs for quick switching'),
-          t('splash-screen.dynamic-dashboards.bullet-2', 'Show or hide panels based on template variables and other conditions'),
-          t('splash-screen.dynamic-dashboards.bullet-3', 'Auto-arrange panels for an efficient layout'),
-        ],
-        ctaText: t('splash-screen.dynamic-dashboards.cta', 'Show me'),
-        ctaUrl: '/dashboards',
-        heroImageUrl: 'public/img/splash/assistant-hero.png',
+        heroImageUrl: 'https://placehold.co/600x700/2A1F4E/8B5CF6?text=Assistant',
       },
       {
         id: 'git-sync',
         icon: 'code-branch',
-        badge: { text: t('splash-screen.git-sync.badge', 'NEW IN G13') },
-        accentColor: (theme) => theme.colors.success.text,
-        title: t('splash-screen.git-sync.title','Sync your dashboards to Git'),
-        subtitle: t('splash-screen.git-sync.subtitle', 'Bring version control, collaboration, and reliability to your dashboards'),
+        title: t(
+          'splash-screen.git-sync.title',
+          'Connect Grafana to your preferred git repository and keep them always in sync'
+        ),
+        subtitle: t(
+          'splash-screen.git-sync.subtitle',
+          'Combine the benefit of managing dashboards as code with the simplicity of creating and editing them in Grafana UI.'
+        ),
         bullets: [
           t('splash-screen.git-sync.bullet-1', 'Store your dashboard configuration safely in any git repository'),
-          t('splash-screen.git-sync.bullet-2', 'Keep track of the changes - and who made them!'),
+          t('splash-screen.git-sync.bullet-2', 'Keep track of the changes — and who made them!'),
           t('splash-screen.git-sync.bullet-3', 'Works with many deployment scenarios'),
         ],
         ctaText: t('splash-screen.git-sync.cta', 'Show me'),
         ctaUrl: '/admin/provisioning',
-        heroImageUrl: 'public/img/splash/git-sync.png',
+        heroImageUrl: 'https://placehold.co/500x600/1A2E1A/4ADE80?text=Git+Sync',
       },
       {
-        id: 'library-of-things',
-        icon: 'compass',
-        badge: { text: t('splash-screen.library-of-things.badge', 'NEW IN G13') },
-        accentColor: (theme) => theme.visualization.getColorByName('dark-orange'),
-        title: t('splash-screen.library-of-things.title', 'Dashboard suggestions and templates'),
-        subtitle: t(
-          'splash-screen.library-of-things.subtitle', 'Use dashboard suggestions, templates, and saved queries get to a useful dashboard sooner'),
+        id: 'library',
+        icon: 'apps',
+        title: t('splash-screen.library.title', 'Dashboard creation with saved queries and templates'),
+        subtitle: t('splash-screen.library.subtitle', 'Now you can build faster with reusable assets'),
         bullets: [
-          t('splash-screen.library-of-things.bullet-1', 'Start with a community dashboard tailored to your data source'),
-          t('splash-screen.library-of-things.bullet-2', 'Start with a template and customize it to your needs'),
-          t('splash-screen.library-of-things.bullet-3', 'Start from proven designs instead of building from scratch'),
+          t('splash-screen.library.bullet-1', 'Saved queries is redesigned to make reusing queries easier'),
+          t('splash-screen.library.bullet-2', 'Gather inspiration from templates and customize them to your needs'),
+          t('splash-screen.library.bullet-3', 'Jump-start dashboard creation with suggestions tailored to your data'),
         ],
-        ctaText: t('splash-screen.library-of-things.cta', 'Show me'),
+        ctaText: t('splash-screen.library.cta', 'Show me'),
+        ctaUrl: '/dashboards',
+        heroImageUrl: 'https://placehold.co/550x650/1E293B/F59E0B?text=Templates',
+      },
+      {
+        // TODO: Replace with real 4th feature content once confirmed
+        id: 'explore',
+        icon: 'compass',
+        title: t('splash-screen.explore.title', 'Explore your data with a new experience'),
+        subtitle: t(
+          'splash-screen.explore.subtitle',
+          'A redesigned Explore makes it easier to query, visualize, and understand your data.'
+        ),
+        bullets: [
+          t('splash-screen.explore.bullet-1', 'Streamlined query building across all data sources'),
+          t('splash-screen.explore.bullet-2', 'Side-by-side comparison of metrics, logs, and traces'),
+          t('splash-screen.explore.bullet-3', 'Save and share your explorations with your team'),
+        ],
+        ctaText: t('splash-screen.explore.cta', 'Show me'),
         ctaUrl: '/explore',
-        heroImageUrl: 'public/img/splash/library-of-things.png',
+        heroImageUrl: 'https://placehold.co/480x580/0F172A/38BDF8?text=Explore',
       },
     ],
   };

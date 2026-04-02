@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
-import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
-import { Badge, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Badge, Icon, useStyles2 } from '@grafana/ui';
 
 import { type SplashFeature } from './splashContent';
 
@@ -12,22 +13,15 @@ interface SplashScreenSlideProps {
 }
 
 export function SplashScreenSlide({ feature, footer }: SplashScreenSlideProps) {
-  const theme = useTheme2();
-  const accentColor = feature.accentColor(theme);
-  const styles = useStyles2(getStyles, accentColor);
-  const { alpha, darken } = colorManipulator;
-  const gradient = `radial-gradient(ellipse at 80% 20%, ${alpha(accentColor, 0.51)} 0%, ${alpha(darken(accentColor, 0.3), 0.46)} 25%, ${alpha(darken(accentColor, 0.6), 0.4)} 40%, ${alpha(darken(accentColor, 0.85), 0.7)} 60%, rgba(23, 22, 38, 0.85) 75%, rgb(11, 15, 20) 100%)`;
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.slide}>
-      <div
-        className={styles.heroPanel}
-        style={{
-          background: `url(${feature.heroImageUrl}) center center / cover no-repeat, ${gradient}`,
-        }}
-      />
+      <div className={styles.heroPanel}>
+        <img src={feature.heroImageUrl} alt="" className={styles.heroImage} />
+      </div>
       <div className={styles.contentPanel}>
-        <Badge text={feature.badge.text} icon={feature.badge.icon} color="green" className={styles.badge} />
+        <Badge text={t('splash-screen.badge', 'NEW FEATURE')} color="green" className={styles.badge} />
         <h2 className={styles.title}>{feature.title}</h2>
         <div className={styles.body}>
           <div className={styles.iconBox}>
@@ -49,16 +43,24 @@ export function SplashScreenSlide({ feature, footer }: SplashScreenSlideProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, accentColor: string) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   slide: css({
     display: 'flex',
     height: '100%',
   }),
   heroPanel: css({
     flex: '0 0 45%',
-    background: 'rgb(11, 15, 20)',
+    backgroundColor: theme.colors.background.canvas,
     borderRadius: `${theme.shape.radius.lg} 0 0 ${theme.shape.radius.lg}`,
     overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+  heroImage: css({
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
   }),
   contentPanel: css({
     flex: '1 1 55%',
@@ -94,13 +96,13 @@ const getStyles = (theme: GrafanaTheme2, accentColor: string) => ({
     width: 40,
     height: 40,
     borderRadius: theme.shape.radius.default,
-    backgroundColor: colorManipulator.alpha(accentColor, 0.12),
+    backgroundColor: theme.colors.warning.transparent,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
   }),
   iconBoxIcon: css({
-    color: accentColor,
+    color: theme.colors.warning.text,
   }),
   bulletList: css({
     listStyle: 'none',
@@ -120,7 +122,7 @@ const getStyles = (theme: GrafanaTheme2, accentColor: string) => ({
     height: 6,
     minWidth: 6,
     borderRadius: theme.shape.radius.circle,
-    backgroundColor: accentColor,
+    backgroundColor: theme.colors.warning.text,
     // Vertically aligns the dot with the first line of text
     marginTop: theme.spacing(0.75),
   }),
