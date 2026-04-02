@@ -1770,4 +1770,9 @@ export interface FeatureToggles {
   * @default false
   */
   clearPreviousFieldValues?: boolean;
+  /**
+  * Enables loading datasource plugins from the MetaAPI instead of bootData settings
+  * @default false
+  */
+  enableDatasourceMetaApiPluginLoading?: boolean;
 }
