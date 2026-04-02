@@ -34,64 +34,60 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
     DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
   };
 
-  const titleSuffix = element.renderActions ? element.renderActions() : undefined;
-  const hasRightActions = onCopy || onDuplicate || onDelete || onConfirmDelete;
-
   return (
-    <Sidebar.PaneHeader title={elementInfo.typeName} titleSuffix={titleSuffix}>
-      {hasRightActions && (
-        <Stack direction="row" gap={1}>
-          {(onCopy || onDuplicate) && (
-            <Dropdown
-              overlay={
-                <Menu>
-                  {onCopy ? (
-                    <Menu.Item icon="copy" label={t('dashboard.layout.common.copy', 'Copy')} onClick={onCopy} />
-                  ) : null}
-                  {onDuplicate ? (
-                    <Menu.Item
-                      icon="file-copy-alt"
-                      label={t('dashboard.layout.common.duplicate', 'Duplicate')}
-                      onClick={onDuplicate}
-                    />
-                  ) : null}
-                  {pasteTarget && hasCopiedPanel ? (
-                    <Menu.Item
-                      icon="clipboard-alt"
-                      label={t('dashboard.layout.common.paste', 'Paste')}
-                      onClick={() => editPane.pastePanel(pasteTarget, 'editPaneHeader')}
-                      data-testid={selectors.components.EditPaneHeader.paste}
-                    />
-                  ) : null}
-                </Menu>
-              }
-            >
-              <Button
-                tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy/paste or duplicate')}
-                tooltipPlacement="bottom"
-                variant="secondary"
-                size="sm"
-                icon="copy"
-                data-testid={selectors.components.EditPaneHeader.copyDropdown}
-              >
-                <Icon name="angle-down" />
-              </Button>
-            </Dropdown>
-          )}
-
-          {(onDelete || onConfirmDelete) && (
+    <Sidebar.PaneHeader title={elementInfo.typeName}>
+      <Stack direction="row" gap={1} grow={1} justifyContent={'flex-end'}>
+        {element.renderActions && element.renderActions()}
+        {(onCopy || onDuplicate) && (
+          <Dropdown
+            overlay={
+              <Menu>
+                {onCopy ? (
+                  <Menu.Item icon="copy" label={t('dashboard.layout.common.copy', 'Copy')} onClick={onCopy} />
+                ) : null}
+                {onDuplicate ? (
+                  <Menu.Item
+                    icon="file-copy-alt"
+                    label={t('dashboard.layout.common.duplicate', 'Duplicate')}
+                    onClick={onDuplicate}
+                  />
+                ) : null}
+                {pasteTarget && hasCopiedPanel ? (
+                  <Menu.Item
+                    icon="clipboard-alt"
+                    label={t('dashboard.layout.common.paste', 'Paste')}
+                    onClick={() => editPane.pastePanel(pasteTarget, 'editPaneHeader')}
+                    data-testid={selectors.components.EditPaneHeader.paste}
+                  />
+                ) : null}
+              </Menu>
+            }
+          >
             <Button
-              onClick={onDeleteElement}
+              tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy/paste or duplicate')}
+              tooltipPlacement="bottom"
+              variant="secondary"
               size="sm"
-              variant="destructive"
-              fill="outline"
-              icon="trash-alt"
-              tooltip={t('dashboard.layout.common.delete', 'Delete')}
-              data-testid={selectors.components.EditPaneHeader.deleteButton}
-            />
-          )}
-        </Stack>
-      )}
+              icon="copy"
+              data-testid={selectors.components.EditPaneHeader.copyDropdown}
+            >
+              <Icon name="angle-down" />
+            </Button>
+          </Dropdown>
+        )}
+
+        {(onDelete || onConfirmDelete) && (
+          <Button
+            onClick={onDeleteElement}
+            size="sm"
+            variant="destructive"
+            fill="outline"
+            icon="trash-alt"
+            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            data-testid={selectors.components.EditPaneHeader.deleteButton}
+          />
+        )}
+      </Stack>
     </Sidebar.PaneHeader>
   );
 }

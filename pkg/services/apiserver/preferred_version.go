@@ -27,18 +27,21 @@ func applyPreferredAPIVersions(logger log.Logger, cfg *setting.Cfg, scheme *runt
 		if part == "" {
 			continue
 		}
-		gv, err := parseGroupVersionSetting(part)
+		gv, err := ParseGroupVersionSetting(part)
 		if err != nil {
 			return err
 		}
-		if err := applyPreferredForGroup(logger, scheme, apiResourceConfig, gv); err != nil {
+		if err := ApplyPreferredForGroup(logger, scheme, apiResourceConfig, gv); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func parseGroupVersionSetting(s string) (schema.GroupVersion, error) {
+// ParseGroupVersionSetting parses a "group/version" string (e.g.
+// "dashboard.grafana.app/v1") into a GroupVersion. It requires both
+// group and version to be present and non-empty.
+func ParseGroupVersionSetting(s string) (schema.GroupVersion, error) {
 	parts := strings.Split(s, "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return schema.GroupVersion{}, fmt.Errorf(
@@ -47,7 +50,11 @@ func parseGroupVersionSetting(s string) (schema.GroupVersion, error) {
 	return schema.GroupVersion{Group: parts[0], Version: parts[1]}, nil
 }
 
-func applyPreferredForGroup(logger log.Logger, scheme *runtime.Scheme, apiResourceConfig *serverstorage.ResourceConfig, preferred schema.GroupVersion) error {
+// ApplyPreferredForGroup reorders the scheme's version priority for a single
+// API group so that preferred comes first. It validates that the version is
+// registered in the scheme and (when apiResourceConfig is non-nil) enabled.
+// The function is a no-op when the version is unknown or disabled.
+func ApplyPreferredForGroup(logger log.Logger, scheme *runtime.Scheme, apiResourceConfig *serverstorage.ResourceConfig, preferred schema.GroupVersion) error {
 	group := preferred.Group
 	pvs := scheme.PrioritizedVersionsForGroup(group)
 	if len(pvs) == 0 {

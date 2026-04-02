@@ -82,6 +82,12 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasEditPermissionInFolders: true,
+  },
+}));
+
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   ...jest.requireActual('app/features/playlist/PlaylistSrv'),
   playlistSrv: {
@@ -209,6 +215,8 @@ describe('DashboardScene', () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;
 
+        scene.setState({ meta: { ...scene.state.meta, canSave: true } });
+
         const publishSpy = jest.spyOn(appEvents, 'publish');
         const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
 
@@ -231,6 +239,31 @@ describe('DashboardScene', () => {
 
         overlay.state.onSaveSuccess!();
         expect(scene.state.isEditing).toBe(false);
+
+        publishSpy.mockRestore();
+        hasActualSaveChangesSpy.mockRestore();
+        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+      });
+
+      it('Should not show Save option in unsaved changes modal when user cannot save', () => {
+        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
+        config.featureToggles.dashboardNewLayouts = true;
+
+        scene.setState({ meta: { ...scene.state.meta, canSave: false } });
+
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
+
+        scene.setState({ title: 'Updated title' });
+        expect(scene.state.isDirty).toBe(true);
+        scene.exitEditMode({ skipConfirm: false });
+
+        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+        expect(modalCall).toBeDefined();
+
+        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+        expect(modalEvent.payload.altActionText).toBeUndefined();
+        expect(modalEvent.payload.onAltAction).toBeUndefined();
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
@@ -731,6 +764,286 @@ describe('DashboardScene', () => {
           const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
           expect(stored.panelType).toBe('candlestick');
           expect(stored.styles).toBeDefined();
+        });
+
+        it('Should copy and paste styles for stat panels', () => {
+          const statPanel = new VizPanel({
+            title: 'Stat Panel',
+            key: `panel-stat-${Math.random()}`,
+            pluginId: 'stat',
+            options: {
+              orientation: 'horizontal',
+              textMode: 'value_and_name',
+              colorMode: 'background',
+              graphMode: 'none',
+              justifyMode: 'center',
+              showPercentChange: true,
+              percentChangeColorMode: 'inverted',
+              wideLayout: false,
+              text: { titleSize: 16, valueSize: 24 },
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'thresholds' },
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(statPanel);
+
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('stat');
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
+          expect(stored.styles.options.orientation).toBe('horizontal');
+          expect(stored.styles.options.colorMode).toBe('background');
+          expect(stored.styles.options.showPercentChange).toBe(true);
+          expect(stored.styles.options.text).toEqual({ titleSize: 16, valueSize: 24 });
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+
+          const target = new VizPanel({
+            title: 'Stat Panel 2',
+            key: `panel-stat2-${Math.random()}`,
+            pluginId: 'stat',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          target.onFieldConfigChange = mockOnFieldConfigChange;
+          target.onOptionsChange = mockOnOptionsChange;
+
+          scene.pastePanelStyles(target);
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({
+              colorMode: 'background',
+              showPercentChange: true,
+              text: { titleSize: 16, valueSize: 24 },
+            })
+          );
+        });
+
+        it('Should copy and paste styles for gauge panels', () => {
+          const gaugePanel = new VizPanel({
+            title: 'Gauge Panel',
+            key: `panel-gauge-${Math.random()}`,
+            pluginId: 'gauge',
+            options: {
+              orientation: 'horizontal',
+              shape: 'circle',
+              barShape: 'rounded',
+              barWidthFactor: 0.8,
+              effects: { barGlow: true, centerGlow: false, gradient: true },
+              segmentCount: 3,
+              showThresholdMarkers: false,
+              showThresholdLabels: true,
+              sparkline: false,
+              textMode: 'value',
+              text: { titleSize: 14, valueSize: 20 },
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'thresholds' },
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(gaugePanel);
+
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('gauge');
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
+          expect(stored.styles.options.shape).toBe('circle');
+          expect(stored.styles.options.barWidthFactor).toBe(0.8);
+          expect(stored.styles.options.effects).toEqual({ barGlow: true, centerGlow: false, gradient: true });
+          expect(stored.styles.options.showThresholdMarkers).toBe(false);
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+
+          const target = new VizPanel({
+            title: 'Gauge Panel 2',
+            key: `panel-gauge2-${Math.random()}`,
+            pluginId: 'gauge',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          target.onFieldConfigChange = mockOnFieldConfigChange;
+          target.onOptionsChange = mockOnOptionsChange;
+
+          scene.pastePanelStyles(target);
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({ shape: 'circle', barWidthFactor: 0.8, showThresholdMarkers: false })
+          );
+        });
+
+        it('Should copy and paste styles for bar gauge panels', () => {
+          const barGaugePanel = new VizPanel({
+            title: 'Bar Gauge Panel',
+            key: `panel-bargauge-${Math.random()}`,
+            pluginId: 'bargauge',
+            options: {
+              orientation: 'horizontal',
+              displayMode: 'gradient',
+              valueMode: 'color',
+              namePlacement: 'auto',
+              showUnfilled: false,
+              sizing: 'auto',
+              text: { titleSize: 14, valueSize: 20 },
+              legend: { showLegend: true, placement: 'bottom' },
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'thresholds' },
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(barGaugePanel);
+
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('bargauge');
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'thresholds' });
+          expect(stored.styles.options.displayMode).toBe('gradient');
+          expect(stored.styles.options.showUnfilled).toBe(false);
+          expect(stored.styles.options.text).toEqual({ titleSize: 14, valueSize: 20 });
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+
+          const target = new VizPanel({
+            title: 'Bar Gauge Panel 2',
+            key: `panel-bargauge2-${Math.random()}`,
+            pluginId: 'bargauge',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          target.onFieldConfigChange = mockOnFieldConfigChange;
+          target.onOptionsChange = mockOnOptionsChange;
+
+          scene.pastePanelStyles(target);
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({ displayMode: 'gradient', showUnfilled: false })
+          );
+        });
+
+        it('Should copy and paste styles for bar chart panels', () => {
+          const barChartPanel = new VizPanel({
+            title: 'Bar Chart Panel',
+            key: `panel-barchart-${Math.random()}`,
+            pluginId: 'barchart',
+            options: {
+              orientation: 'vertical',
+              showValue: 'auto',
+              stacking: 'none',
+              barWidth: 0.97,
+              barRadius: 0.1,
+              xTickLabelRotation: -45,
+              legend: { showLegend: true, placement: 'bottom' },
+              tooltip: { mode: 'single' },
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'palette-classic' },
+                custom: {
+                  lineWidth: 1,
+                  fillOpacity: 80,
+                  gradientMode: 'none',
+                  axisPlacement: 'auto',
+                  hideFrom: { tooltip: false, viz: false, legend: false }, // should NOT be captured
+                },
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(barChartPanel);
+
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('barchart');
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'palette-classic' });
+          expect(stored.styles.fieldConfig.defaults.custom.lineWidth).toBe(1);
+          expect(stored.styles.fieldConfig.defaults.custom.fillOpacity).toBe(80);
+          expect(stored.styles.fieldConfig.defaults.custom.axisPlacement).toBe('auto');
+          expect(stored.styles.fieldConfig.defaults.custom.hideFrom).toBeUndefined();
+          expect(stored.styles.options.orientation).toBe('vertical');
+          expect(stored.styles.options.barRadius).toBe(0.1);
+          expect(stored.styles.options.xTickLabelRotation).toBe(-45);
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+
+          const target = new VizPanel({
+            title: 'Bar Chart Panel 2',
+            key: `panel-barchart2-${Math.random()}`,
+            pluginId: 'barchart',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          target.onFieldConfigChange = mockOnFieldConfigChange;
+          target.onOptionsChange = mockOnOptionsChange;
+
+          scene.pastePanelStyles(target);
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({ orientation: 'vertical', barRadius: 0.1 })
+          );
+        });
+
+        it('Should copy and paste styles for pie chart panels', () => {
+          const pieChartPanel = new VizPanel({
+            title: 'Pie Chart Panel',
+            key: `panel-piechart-${Math.random()}`,
+            pluginId: 'piechart',
+            options: {
+              pieType: 'donut',
+              sort: 'desc',
+              displayLabels: ['percent', 'name'],
+              tooltip: { mode: 'single' },
+              legend: { showLegend: true, placement: 'right', values: ['percent'] },
+              reduceOptions: { calcs: ['mean'] }, // should NOT be captured
+            },
+            fieldConfig: {
+              defaults: {
+                color: { mode: 'palette-classic' },
+                custom: { hideFrom: { tooltip: false, viz: false, legend: false } }, // should NOT be captured
+              },
+              overrides: [],
+            },
+          });
+
+          scene.copyPanelStyles(pieChartPanel);
+
+          const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
+          expect(stored.panelType).toBe('piechart');
+          expect(stored.styles.fieldConfig.defaults.color).toEqual({ mode: 'palette-classic' });
+          expect(stored.styles.fieldConfig.defaults.custom?.hideFrom).toBeUndefined();
+          expect(stored.styles.options.pieType).toBe('donut');
+          expect(stored.styles.options.displayLabels).toEqual(['percent', 'name']);
+          expect(stored.styles.options.legend).toEqual({ showLegend: true, placement: 'right', values: ['percent'] });
+          expect(stored.styles.options.reduceOptions).toBeUndefined();
+
+          const target = new VizPanel({
+            title: 'Pie Chart Panel 2',
+            key: `panel-piechart2-${Math.random()}`,
+            pluginId: 'piechart',
+            fieldConfig: { defaults: {}, overrides: [] },
+          });
+          const mockOnFieldConfigChange = jest.fn();
+          const mockOnOptionsChange = jest.fn();
+          target.onFieldConfigChange = mockOnFieldConfigChange;
+          target.onOptionsChange = mockOnOptionsChange;
+
+          scene.pastePanelStyles(target);
+          expect(mockOnFieldConfigChange).toHaveBeenCalled();
+          expect(mockOnOptionsChange).toHaveBeenCalledWith(
+            expect.objectContaining({ pieType: 'donut', displayLabels: ['percent', 'name'] })
+          );
         });
 
         it('Should paste styles from a trend panel into another trend panel', () => {
