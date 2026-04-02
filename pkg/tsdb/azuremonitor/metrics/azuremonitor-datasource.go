@@ -254,14 +254,22 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 				azureQuery, err := e.buildQuery(subQuery, dsInfo)
 				if err != nil {
 					e.Logger.Debug("buildQuery error", "refID", query.RefID, "subQuery", i, "err", err)
-					result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+					errResp := backend.ErrorResponseWithErrorSource(err)
+					dr := result.Responses[query.RefID]
+					dr.Error = errResp.Error
+					dr.ErrorSource = errResp.ErrorSource
+					result.Responses[query.RefID] = dr
 					break
 				}
 				e.Logger.Debug("executing sub-query", "refID", query.RefID, "subQuery", i, "url", azureQuery.URL)
 				res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, armURL)
 				if err != nil {
 					e.Logger.Debug("executeQuery error", "refID", query.RefID, "subQuery", i, "err", err)
-					result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+					errResp := backend.ErrorResponseWithErrorSource(err)
+					dr := result.Responses[query.RefID]
+					dr.Error = errResp.Error
+					dr.ErrorSource = errResp.ErrorSource
+					result.Responses[query.RefID] = dr
 					break
 				}
 				e.Logger.Debug("sub-query result", "refID", query.RefID, "subQuery", i, "numFrames", len(res.Frames))
