@@ -117,11 +117,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
                 return;
               }
 
-              if (!isActive) {
-                onClearSelection?.();
-                return;
-              }
-
               onSelect?.(evt);
             }}
             label={titleInterpolated}

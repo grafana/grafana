@@ -265,6 +265,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    // Special logic for tabs when undocked, to prevent edit pane from showing when switching tabs
+    if (obj instanceof TabItem && !this.state.isDocked && !obj.isCurrentTab()) {
+      this.clearSelection();
+      return;
+    }
+
     if (!force) {
       if (multi) {
         if (this.state.selection?.hasValue(id)) {
