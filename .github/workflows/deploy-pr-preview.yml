@@ -29,7 +29,7 @@ jobs:
         [
           {
             "index_file": "content/docs/grafana/_index.md",
-            "relative_prefix": "/docs/grafana/latest/",
+            "relative_prefix": "/docs/grafana/next/",
             "repo": "grafana",
             "source_directory": "docs/sources",
             "website_directory": "content/docs/grafana/latest"
