@@ -32,7 +32,7 @@ jobs:
             "relative_prefix": "/docs/grafana/next/",
             "repo": "grafana",
             "source_directory": "docs/sources",
-            "website_directory": "content/docs/grafana/latest"
+            "website_directory": "content/docs/grafana/next"
           }
         ]
       title: ${{ github.event.pull_request.title }}
