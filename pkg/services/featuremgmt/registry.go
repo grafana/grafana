@@ -33,14 +33,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "publicDashboardsScene",
-			Description:  "Enables public dashboard rendering using scenes",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaOperatorExperienceSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "lokiExperimentalStreaming",
 			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
@@ -607,14 +599,6 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
-		},
-		{
-			Name:         "dashboardScene",
-			Description:  "Enables dashboard rendering using scenes for all roles",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardNewLayouts",

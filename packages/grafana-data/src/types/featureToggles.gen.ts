@@ -29,11 +29,6 @@ export interface FeatureToggles {
   */
   publicDashboardsEmailSharing?: boolean;
   /**
-  * Enables public dashboard rendering using scenes
-  * @default true
-  */
-  publicDashboardsScene?: boolean;
-  /**
   * Support new streaming approach for loki (prototype, needs special loki build)
   * @default false
   */
@@ -398,11 +393,6 @@ export interface FeatureToggles {
   * @default false
   */
   annotationsClustering?: boolean;
-  /**
-  * Enables dashboard rendering using scenes for all roles
-  * @default true
-  */
-  dashboardScene?: boolean;
   /**
   * Enables new dashboard layouts
   * @default false
