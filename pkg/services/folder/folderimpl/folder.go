@@ -43,10 +43,7 @@ import (
 
 const FULLPATH_SEPARATOR = "/"
 
-var (
-	_ folder.LegacyService = (*Service)(nil)
-	_ folder.Service       = (*Service)(nil)
-)
+var _ folder.Service = (*Service)(nil)
 
 type Service struct {
 	store                  folder.Store

@@ -40,10 +40,7 @@ func (s *FakeService) SetFolders(folders map[string]*folder.Folder) {
 	}
 }
 
-var (
-	_ folder.Service       = (*FakeService)(nil)
-	_ folder.LegacyService = (*FakeService)(nil)
-)
+var _ folder.Service = (*FakeService)(nil)
 
 func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	if s.ExpectedError != nil {

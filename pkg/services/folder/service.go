@@ -6,9 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
-type LegacyService interface {
-}
-
 // The folder.Service is backed by calls forwarding to an apiserver
 type Service interface {
 	RegisterService(service RegistryService) error
