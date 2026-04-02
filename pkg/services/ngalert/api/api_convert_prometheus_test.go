@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/alerting/definition"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -1931,32 +1932,29 @@ func TestGetWorkingFolderUID(t *testing.T) {
 	})
 }
 
-func TestGetProvenance(t *testing.T) {
-	t.Run("should return ProvenanceConvertedPrometheus when header is not present", func(t *testing.T) {
+func TestGetManagerProperties(t *testing.T) {
+	t.Run("should return ManagerKindClassicConvertedPrometheus when header is not present", func(t *testing.T) {
 		rc := createRequestCtx()
-		// Ensure the header is not present
 		rc.Req.Header.Del(disableProvenanceHeaderName)
 
-		provenance := getProvenance(rc)
-		require.Equal(t, models.ProvenanceConvertedPrometheus, provenance)
+		mp := getManagerProperties(rc)
+		require.Equal(t, utils.ManagerKindClassicConvertedPrometheus, mp.Kind) //nolint:staticcheck
 	})
 
-	t.Run("should return ProvenanceNone when header is present", func(t *testing.T) {
+	t.Run("should return empty manager when header is present", func(t *testing.T) {
 		rc := createRequestCtx()
-		// Set the disable provenance header
 		rc.Req.Header.Set(disableProvenanceHeaderName, "true")
 
-		provenance := getProvenance(rc)
-		require.Equal(t, models.ProvenanceNone, provenance)
+		mp := getManagerProperties(rc)
+		require.Equal(t, utils.ManagerKindUnknown, mp.Kind)
 	})
 
-	t.Run("should return ProvenanceNone when header is present with any value", func(t *testing.T) {
+	t.Run("should return empty manager when header is present with any value", func(t *testing.T) {
 		rc := createRequestCtx()
-		// Set the disable provenance header with an empty value
 		rc.Req.Header.Set(disableProvenanceHeaderName, "")
 
-		provenance := getProvenance(rc)
-		require.Equal(t, models.ProvenanceNone, provenance)
+		mp := getManagerProperties(rc)
+		require.Equal(t, utils.ManagerKindUnknown, mp.Kind)
 	})
 }
 
