@@ -135,9 +135,39 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 
 	t.Run("returns error for non-Success errorCode", func(t *testing.T) {
 		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "ResourceNotFound", 0)
-		_, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "ResourceNotFound")
+		assert.Empty(t, frames)
+	})
+
+	t.Run("partial metric error: returns frames for successful metrics and error for failed ones", func(t *testing.T) {
+		avg := 42.0
+		rv := batchResponseValue{
+			ResourceID: "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1",
+			Value: []batchMetric{
+				{
+					AzureMetricValue: aztypes.AzureMetricValue{
+						Name:       aztypes.AzureMetricName{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
+						Unit:       "Unspecified",
+						Timeseries: []aztypes.AzureMetricTimeseries{{Data: []aztypes.AzureMetricTimeseriesData{{TimeStamp: time.Now(), Average: &avg}}}},
+					},
+					ErrorCode: "Success",
+				},
+				{
+					AzureMetricValue: aztypes.AzureMetricValue{
+						Name: aztypes.AzureMetricName{Value: "Disk Read Bytes", LocalizedValue: "Disk Read Bytes"},
+						Unit: "Unspecified",
+					},
+					ErrorCode: "ResourceNotFound",
+				},
+			},
+		}
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "Disk Read Bytes")
+		assert.Len(t, frames, 1, "frame from successful metric should be preserved")
+		assert.Equal(t, "Percentage CPU", frames[0].Fields[1].Name)
 	})
 
 	t.Run("returns nil frames for empty value array", func(t *testing.T) {

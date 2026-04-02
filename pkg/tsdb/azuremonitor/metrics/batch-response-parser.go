@@ -58,10 +58,9 @@ func parseBatchResponse(result batchResult, azurePortalURL, subscription string)
 		}
 
 		f, err := framesFromBatchResponseValue(resourceValue, query, azurePortalURL, subscription)
+		frames = append(frames, f...)
 		if err != nil {
 			errs = append(errs, err)
-		} else {
-			frames = append(frames, f...)
 		}
 	}
 
@@ -76,10 +75,12 @@ func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types
 	resourceName := resourceIDParts[len(resourceIDParts)-1]
 
 	var frames data.Frames
+	var errs []error
 
 	for _, metric := range resourceValue.Value {
 		if metric.ErrorCode != "" && metric.ErrorCode != "Success" {
-			return nil, fmt.Errorf("metric %q for resource %q: %s", metric.Name.Value, resourceID, metric.ErrorCode)
+			errs = append(errs, fmt.Errorf("metric %q for resource %q: %s", metric.Name.Value, resourceID, metric.ErrorCode))
+			continue
 		}
 
 		for _, series := range metric.Timeseries {
@@ -140,12 +141,13 @@ func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types
 
 			queryURL, err := getQueryUrl(query, azurePortalURL, resourceID, resourceName)
 			if err != nil {
-				return nil, err
+				errs = append(errs, err)
+				continue
 			}
 			frameWithLink := loganalytics.AddConfigLinks(*frame, queryURL, nil)
 			frames = append(frames, &frameWithLink)
 		}
 	}
 
-	return frames, nil
+	return frames, errors.Join(errs...)
 }
