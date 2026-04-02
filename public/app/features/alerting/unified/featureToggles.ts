@@ -28,16 +28,6 @@ export const shouldUseFullyCompatibleBackendFilters = () =>
   config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
 
 /**
- * Saved searches feature - allows users to save and apply search queries on the Alert Rules page.
- */
-export const shouldUseSavedSearches = () => true;
-
-/**
- * Saved searches feature for Alert Activity (Triage) page.
- */
-export const shouldUseTriageSavedSearches = () => true;
-
-/**
  * Alerts Activity Banner - shows a promotional banner on the Rule List page
  * directing users to try the new Alerts Activity (triage) view.
  *
