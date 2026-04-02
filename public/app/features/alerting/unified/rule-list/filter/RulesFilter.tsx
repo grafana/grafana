@@ -1,21 +1,5 @@
-import { Suspense, lazy } from 'react';
+import RulesFilterV2, { type RulesFilterProps } from './RulesFilter.v2';
 
-import { type SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
-
-const RulesFilterV2 = lazy(() => import('./RulesFilter.v2'));
-
-export interface RulesFilterProps {
-  onClear?: () => void;
-  viewMode?: SupportedView;
-  onViewModeChange?: (viewMode: SupportedView) => void;
+export default function RulesFilter(props: RulesFilterProps) {
+  return <RulesFilterV2 {...props} />;
 }
-
-const RulesFilter = (props: RulesFilterProps) => {
-  return (
-    <Suspense>
-      <RulesFilterV2 {...props} />
-    </Suspense>
-  );
-};
-
-export default RulesFilter;

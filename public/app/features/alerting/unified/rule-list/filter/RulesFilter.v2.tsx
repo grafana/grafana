@@ -8,14 +8,18 @@ import { Box, FilterInput, Icon, Label, Stack, useStyles2 } from '@grafana/ui';
 
 import { trackAlertRuleFilterEvent, trackRulesSearchInputCleared } from '../../Analytics';
 import { PopupCard } from '../../components/HoverCard';
-import { RulesViewModeSelector } from '../../components/rules/Filter/RulesViewModeSelector';
+import { RulesViewModeSelector, type SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
 import { SavedSearches } from '../../components/saved-searches/SavedSearches';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
-import { type RulesFilterProps } from './RulesFilter';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
+
+export interface RulesFilterProps {
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
+}
 
 type SearchQueryForm = {
   query: string;
