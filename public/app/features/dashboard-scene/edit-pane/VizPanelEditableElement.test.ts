@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
