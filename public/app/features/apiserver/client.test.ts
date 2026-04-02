@@ -1,6 +1,6 @@
 import { Subject, throwError } from 'rxjs';
 
-import { type LiveChannelEvent, LiveChannelConnectionState, LiveChannelEventType } from '@grafana/data';
+import { type LiveChannelEvent, LiveChannelEventType } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -15,7 +15,6 @@ jest.mock('@grafana/runtime', () => ({
   getGrafanaLiveSrv: jest.fn(),
   config: {
     buildInfo: { versionString: 'test-version' },
-    liveEnabled: true,
   },
 }));
 
@@ -522,89 +521,5 @@ describe('ScopedResourceClient watch (polling fallback)', () => {
         fieldSelector: 'metadata.name=my-repo',
       })
     );
-  });
-
-  it('goes straight to polling when liveEnabled is false', async () => {
-    const { config } = jest.requireMock('@grafana/runtime');
-    config.liveEnabled = false;
-
-    getMock.mockResolvedValueOnce({
-      items: [{ metadata: { name: 'repo-a', resourceVersion: '1' }, spec: {} }],
-      metadata: {},
-    });
-
-    const events: Array<{ type: string; object: unknown }> = [];
-    client.watch().subscribe({
-      next: (event) => events.push(event),
-      error: () => {},
-    });
-
-    await jest.advanceTimersByTimeAsync(0);
-
-    // Polling started without even attempting the Live channel
-    expect(getStreamMock).not.toHaveBeenCalled();
-    expect(events).toEqual([
-      { type: 'ADDED', object: expect.objectContaining({ metadata: { name: 'repo-a', resourceVersion: '1' } }) },
-    ]);
-
-    config.liveEnabled = true;
-  });
-
-  it('falls back to polling when live channel hangs (proxy-blocked WebSocket)', async () => {
-    // Simulate a proxy-blocked WebSocket: getStream returns an Observable that
-    // emits an initial Pending status (no error) and then hangs forever.
-    const stream = new Subject<LiveChannelEvent>();
-    getStreamMock.mockReturnValue(stream.asObservable());
-
-    // Emit the initial Pending status (no error) — this is what the channel does
-    // synchronously in getStream() before the subscription is established.
-    // The watch pipe filters this out (not a message event), leaving silence.
-
-    const itemA = { metadata: { name: 'repo-a', resourceVersion: '1' }, spec: {} };
-    getMock.mockResolvedValueOnce({ items: [itemA], metadata: {} });
-
-    const events: Array<{ type: string; object: unknown }> = [];
-    client.watch().subscribe({
-      next: (event) => events.push(event),
-      error: () => {},
-    });
-
-    // Nothing happens yet — the stream is hanging
-    await jest.advanceTimersByTimeAsync(5000);
-    expect(events).toHaveLength(0);
-
-    // After the 10s timeout, the fallback kicks in
-    await jest.advanceTimersByTimeAsync(5000);
-    await jest.advanceTimersByTimeAsync(0); // flush poll microtasks
-
-    expect(events).toEqual([{ type: 'ADDED', object: itemA }]);
-  });
-
-  it('does NOT fall back to polling when the channel is connected but idle', async () => {
-    const stream = new Subject<LiveChannelEvent>();
-    getStreamMock.mockReturnValue(stream.asObservable());
-
-    const events: Array<{ type: string; object: unknown }> = [];
-    const subscription = client.watch().subscribe({
-      next: (event) => events.push(event),
-      error: () => {},
-    });
-
-    // Channel emits Connected status — this cancels the connection timeout.
-    stream.next({
-      type: LiveChannelEventType.Status,
-      id: 'test',
-      timestamp: Date.now(),
-      state: LiveChannelConnectionState.Connected,
-    } as LiveChannelEvent);
-
-    // Advance well past the timeout — should NOT trigger polling.
-    await jest.advanceTimersByTimeAsync(30_000);
-
-    // No polling requests were made (list was never called).
-    expect(getMock).not.toHaveBeenCalled();
-    expect(events).toHaveLength(0);
-
-    subscription.unsubscribe();
   });
 });

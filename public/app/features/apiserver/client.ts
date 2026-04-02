@@ -1,11 +1,6 @@
-import { type Subscription, Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
+import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
-import {
-  isLiveChannelMessageEvent,
-  isLiveChannelStatusEvent,
-  LiveChannelConnectionState,
-  LiveChannelScope,
-} from '@grafana/data';
+import { isLiveChannelMessageEvent, isLiveChannelStatusEvent, LiveChannelScope } from '@grafana/data';
 import { config, getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -53,76 +48,31 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
 
     // For now, watch over live only supports provisioning
     if (this.gvr.group === 'provisioning.grafana.app') {
-      // If Grafana Live is disabled (max_connections=0), skip the WebSocket
-      // path entirely — centrifuge never connects and the stream hangs forever.
-      if (!config.liveEnabled) {
-        return this.createPollingFallback(params, new Error('Grafana Live is disabled'));
-      }
-
       let query = '';
       if (requestParams.fieldSelector?.startsWith('metadata.name=')) {
         query = requestParams.fieldSelector.substring('metadata.name'.length);
       }
-      const liveStream = getGrafanaLiveSrv().getStream<ResourceEvent<T, S, K>>({
-        scope: LiveChannelScope.Watch,
-        stream: this.gvr.group,
-        path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid || 'anonymous'}`,
-        data: params?.resourceVersion ? { resourceVersion: params.resourceVersion } : undefined,
-      });
-
-      // Wrap the live stream with a connection timeout. If the channel
-      // doesn't move past the initial Pending state within the timeout
-      // (e.g. proxy blocking WebSocket upgrade), fall back to polling.
-      // Once connected, the timer is canceled and the stream runs
-      // indefinitely — idle-but-connected channels are NOT timed out.
-      return new Observable<ResourceEvent<T, S, K>>((subscriber) => {
-        let connected = false;
-        let pollSub: Subscription | null = null;
-
-        const connectionTimer = setTimeout(() => {
-          if (!connected) {
-            console.warn('Live channel connection timeout, falling back to polling');
-            liveSub.unsubscribe();
-            pollSub = this.createPollingFallback(params, new Error('Live channel connection timeout')).subscribe(
-              subscriber
-            );
-          }
-        }, ScopedResourceClient.LIVE_CHANNEL_TIMEOUT_MS);
-
-        const liveSub = liveStream
-          .pipe(
-            map((event) => {
-              if (isLiveChannelStatusEvent(event) && event.error) {
-                throw event.error;
-              }
-              // Any event beyond the initial Pending status proves the
-              // channel is alive — cancel the connection timeout.
-              const isPending = isLiveChannelStatusEvent(event) && event.state === LiveChannelConnectionState.Pending;
-              if (!isPending && !connected) {
-                connected = true;
-                clearTimeout(connectionTimer);
-              }
-              return event;
-            }),
-            filter((event) => isLiveChannelMessageEvent(event)),
-            map((event) => event.message)
-          )
-          .subscribe({
-            next: (value) => subscriber.next(value),
-            error: (error) => {
-              clearTimeout(connectionTimer);
-              console.warn('Live channel watch failed, falling back to polling:', error);
-              pollSub = this.createPollingFallback(params, error).subscribe(subscriber);
-            },
-            complete: () => subscriber.complete(),
-          });
-
-        return () => {
-          clearTimeout(connectionTimer);
-          liveSub.unsubscribe();
-          pollSub?.unsubscribe();
-        };
-      });
+      return getGrafanaLiveSrv()
+        .getStream<ResourceEvent<T, S, K>>({
+          scope: LiveChannelScope.Watch,
+          stream: this.gvr.group,
+          path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid || 'anonymous'}`,
+          data: params?.resourceVersion ? { resourceVersion: params.resourceVersion } : undefined,
+        })
+        .pipe(
+          map((event) => {
+            if (isLiveChannelStatusEvent(event) && event.error) {
+              throw event.error;
+            }
+            return event;
+          }),
+          filter((event) => isLiveChannelMessageEvent(event)),
+          map((event) => event.message),
+          catchError((error) => {
+            console.warn('Live channel watch failed, falling back to polling:', error);
+            return this.createPollingFallback(params, error);
+          })
+        );
     }
 
     const decoder = new TextDecoder();
@@ -205,7 +155,6 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
 
   private parseListOptionsSelector = parseListOptionsSelector;
 
-  private static LIVE_CHANNEL_TIMEOUT_MS = 10_000;
   private static POLLING_INTERVAL_MS = 5000;
   private static MAX_CONSECUTIVE_POLL_FAILURES = 5;
 
