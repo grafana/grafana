@@ -26,7 +26,7 @@ export {
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
 
-export { UserStorage } from '../utils/userStorage';
+export { UserStorage, useUserStorage } from '../utils/userStorage';
 
 export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
 
