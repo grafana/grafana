@@ -207,14 +207,7 @@ module.exports = [
       ],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
-      'no-restricted-syntax': [
-        'error',
-        {
-          // value regex is to filter out whitespace-only text nodes (e.g. new lines and spaces in the JSX)
-          selector: "JSXElement[openingElement.name.name='a'] > JSXText[value!=/^\\s*$/]",
-          message: 'No bare anchor nodes containing only text. Use `TextLink` instead.',
-        },
-      ],
+      '@grafana/no-plain-links': 'error',
     },
   },
 
@@ -584,50 +577,13 @@ module.exports = [
     ],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'Identifier[name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
-        },
-        {
-          selector: 'MemberExpression[object.name=localStorage]',
-          message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
-        },
-        {
-          selector:
-            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
-          message:
-            'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-        },
-        {
-          selector:
-            'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Field"]) JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
-          message:
-            'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-        },
-        {
-          selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
-          message:
-            'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
-        },
-        {
-          // eslint-disable-next-line no-restricted-syntax
-          selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
-          // eslint-disable-next-line no-restricted-syntax
-          message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
-        },
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
-          message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
-        },
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
-          message:
-            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
-        },
-      ],
+      '@grafana/no-direct-local-storage-access': 'error',
+      '@grafana/require-no-margin': 'error',
+      '@grafana/no-locale-compare': 'error',
+      // eslint-disable-next-line @grafana/no-gf-form
+      '@grafana/no-gf-form': 'error',
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
     },
   },
   {
@@ -638,37 +594,18 @@ module.exports = [
       ...enterpriseIgnores,
     ],
     rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
-          message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
-        },
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
-          message:
-            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
-        },
-      ],
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
+    },
+    plugins: {
+      '@grafana': grafanaPlugin,
     },
   },
   {
     files: [...enterpriseIgnores],
     rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
-          message:
-            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime/internal instead',
-        },
-        {
-          selector: 'MemberExpression[object.name="config"][property.name="panels"]',
-          message:
-            'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
-        },
-      ],
+      '@grafana/no-config-apps': 'error',
+      '@grafana/no-config-panels': 'error',
     },
   },
   {

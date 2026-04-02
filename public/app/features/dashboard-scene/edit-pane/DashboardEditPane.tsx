@@ -160,18 +160,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     action.undo();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    /**
-     * Some edit actions also require clearing selection or selecting new objects
-     */
-    if (action.selectedObjectOnUndo) {
-      this.selectObject(action.selectedObjectOnUndo, action.selectedObjectOnUndo.state.key!, { force: true });
-    }
-
     if (action.addedObject) {
       this.clearSelection();
     }
 
-    if (!action.selectedObjectOnUndo && action.movedObject) {
+    if (action.movedObject) {
       this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
@@ -189,19 +182,15 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     action.perform();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    if (action.selectedObjectOnPerform) {
-      this.selectObject(action.selectedObjectOnPerform, action.selectedObjectOnPerform.state.key!, { force: true });
-    }
-
     if (action.addedObject) {
       this.newObjectAddedToCanvas(action.addedObject);
     }
 
-    if (!action.selectedObjectOnPerform && action.movedObject) {
+    if (action.movedObject) {
       this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
-    if (action.removedObject) {
+    if (action.removedObject && !action.addedObject) {
       this.clearSelection();
     }
   }

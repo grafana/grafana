@@ -12,11 +12,54 @@ that use our design tokens instead of using CSS.
 
 #### When to use
 
-Use it whenever you would use custom CSS.
+Box should be used instead of class styles, so that we can take advantage of our design tokens.
+Use it for anything from adding a margin around a component to giving a border to a section.
 
 #### When not to use
 
 If you need layout styles, use the Stack or Grid components instead.
+
+### Spacing
+
+Margin and padding props are used to add space around or inside the box, respectively.
+There are 7 different props for margin: `margin`, `marginX`, `marginY`, `marginTop`, `marginRight`, `marginBottom`, and `marginLeft`.
+Similarly, there are 7 different props for padding: `padding`, `paddingX`, `paddingY`, `paddingTop`, `paddingRight`, `paddingBottom`, and `paddingLeft`.
+Possible values: `ThemeSpacingTokens (0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10)`
+
+### Visual look
+
+The style of the Box can be defined using 5 props:
+
+- `borderColor`, with possible values: `weak`, `medium`, `strong`, `error`, `success`, `warning`, `info`
+- `borderStyle`, with possible values: `solid`, `dashed`
+- `borderRadius`, with possible values: `default`, `pill`, `circle`
+- `backgroundColor`, with possible values: `canvas`, `primary`, `secondary`, `error`, `success`, `warning`, `info`
+- `boxShadow`, with possible values: `z1`, `z2`, `z3`
+
+### Display
+
+There are 4 different props related to how the content is displayed:
+
+- `display`, with possible values: `flex`, `block`, `inline`, `none`
+- `alignItems`, with possible values: `stretch`, `flex-start`, `flex-end`, `center`, `baseline`, `start`, `end`, `self-start`, `self-end`
+- `justifyContent`, with possible values: `flex-start`, `flex-end`, `center`, `space-between`, `space-around`, `space-evenly`, `start`, `end`, `left`, `right`
+- `gap`, with possible values: ThemeSpacingTokens (0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10)
+
+If you just need to create a Flex layout without any other styling to the box, please use the [Stack](/docs/layout-stack--docs) component instead.
+
+### Responsiveness
+
+All of the above props can be defined in a responsive way, meaning that different values will be set depending on the window size.
+
+To define any of them responsively, simply pass in an object with responsive breakpoints as keys. For instance, instead of defining margin in this way `margin={5}`
+define it like `margin={{ xs: 3, md: 5 }}`.
+This means that from the `xs` breakpoint up, margin is set to `3`, while from the `md` breakpoint up, it is set to `5`.
+
+The possible breakpoints in the theme can be found [here](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/themes/breakpoints.ts#L28).
+
+### Further Reading
+
+- [Storybook docs and props table](https://developers.grafana.com/ui/canary/index.html?path=/docs/general-layout-box--docs)
 
 ### How to add a prop to Box
 

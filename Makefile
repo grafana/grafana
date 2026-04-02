@@ -337,7 +337,7 @@ update-workspace: gen-go
 
 .PHONY: build-go
 build-go: pkg/services/preference/themes_generated.go
-	@echo "build go binaries ($(OS)/$(ARCH))"
+	@echo "compiling backend ($(OS)/$(ARCH))"
 	$(GO_BUILD_ENV) \
 	$(GO) build $(GO_BUILD_ARGS)
 	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
@@ -354,7 +354,7 @@ build-air: build-go
 
 .PHONY: build-js
 build-js: ## Build frontend assets.
-	@echo "build frontend"
+	@echo "building frontend"
 	yarn run build
 
 public/build:
@@ -375,8 +375,13 @@ build-plugin-go: ## Build decoupled plugins
 .PHONY: build
 build: build-go build-js ## Build backend and frontend.
 
-# Tar.gz packaging variables (artifact / file naming).
+# Packaging variables (artifact / file naming).
 TARGZ_PACKAGE_NAME ?= grafana
+FPM_LICENSE        ?= AGPLv3
+ARCH_LABEL         := $(if $(ARM),$(ARCH)-$(ARM),$(ARCH))
+TARGZ_FILE         := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).tar.gz
+DEB_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).deb
+RPM_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).rpm
 
 # Default catalog plugins under data/plugins-bundled. Stamp encodes OS/ARCH so cross-builds refresh.
 DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
@@ -384,6 +389,7 @@ DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
 $(DATA_PLUGINS_BUNDLED_STAMP): package.json \
 		scripts/download-catalog-plugins.sh \
 		scripts/catalog-plugins-defaults
+	@echo "bundling plugins ($(OS)/$(ARCH))"
 	@rm -rf data/plugins-bundled
 	@mkdir -p data/plugins-bundled
 	@bash scripts/download-catalog-plugins.sh \
@@ -400,7 +406,10 @@ data/plugins-bundled: $(DATA_PLUGINS_BUNDLED_STAMP)
 build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plugins into data/plugins-bundled (network; alias).
 
 .PHONY: build-targz
-build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
+build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
+
+$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build
+	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
@@ -409,6 +418,34 @@ build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Bu
 	$(if $(ARM),GOARM="$(ARM)") \
 	GO="$(GO)" \
 	bash scripts/build-targz.sh
+
+.PHONY: build-deb
+build-deb: $(DEB_FILE) ## Build a .deb package from a tar.gz (requires fpm)
+
+$(DEB_FILE): $(TARGZ_FILE)
+	@echo "building deb"
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	FPM_LICENSE="$(FPM_LICENSE)" \
+	$(if $(ARM),GOARM="$(ARM)") \
+	bash scripts/build-deb.sh
+
+.PHONY: build-rpm
+build-rpm: $(RPM_FILE) ## Build an .rpm package from a tar.gz (requires fpm)
+
+$(RPM_FILE): $(TARGZ_FILE)
+	@echo "building rpm"
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	FPM_LICENSE="$(FPM_LICENSE)" \
+	$(if $(ARM),GOARM="$(ARM)") \
+	bash scripts/build-rpm.sh
 
 .PHONY: run
 run: ## Build and run backend, and watch for changes. See .air.toml for configuration.

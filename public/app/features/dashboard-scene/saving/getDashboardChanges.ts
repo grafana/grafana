@@ -220,10 +220,10 @@ function applyVariableKindListChanges(
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
       !adHocVariableFiltersEqual(
-        config.featureToggles.adHocFilterDefaultValues
+        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
           ? variable.spec.filters.filter((f) => !f.origin)
           : variable.spec.filters,
-        config.featureToggles.adHocFilterDefaultValues
+        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
           ? original.spec.filters.filter((f) => !f.origin)
           : original.spec.filters
       )
@@ -233,7 +233,7 @@ function applyVariableKindListChanges(
 
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
-        if (config.featureToggles.adHocFilterDefaultValues) {
+        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
           const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
           const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
           variable.spec.filters = [...originFilters, ...originalRuntimeFilters];

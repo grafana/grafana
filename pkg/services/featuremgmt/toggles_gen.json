@@ -1204,6 +1204,21 @@
     },
     {
       "metadata": {
+        "name": "clearPreviousFieldValues",
+        "resourceVersion": "1775070445977",
+        "creationTimestamp": "2026-04-01T19:07:25Z"
+      },
+      "spec": {
+        "description": "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-01-10T13:19:01Z"
@@ -1372,15 +1387,18 @@
     {
       "metadata": {
         "name": "dashboardDefaultLayoutSelector",
-        "resourceVersion": "1773923636566",
-        "creationTimestamp": "2026-03-19T12:33:56Z"
+        "resourceVersion": "1775132912690",
+        "creationTimestamp": "2026-03-19T12:33:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 12:28:32.690679 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables default layout selector in dashboard settings",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1932,6 +1950,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "enableDatasourceMetaApiPluginLoading",
+        "resourceVersion": "1775045310507",
+        "creationTimestamp": "2026-04-01T12:08:30Z"
+      },
+      "spec": {
+        "description": "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -4253,12 +4285,15 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1775058514147",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 15:48:34.147548 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"
@@ -4792,17 +4827,14 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1774365185266",
-        "creationTimestamp": "2024-02-27T21:16:00Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-03-24 15:13:05.266575305 +0000 UTC"
-        }
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2024-02-27T21:16:00Z"
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "GA",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-datasources-core-services",
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
