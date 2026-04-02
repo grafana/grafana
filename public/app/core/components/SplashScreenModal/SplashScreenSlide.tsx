@@ -24,7 +24,7 @@ export function SplashScreenSlide({ feature, footer }: SplashScreenSlideProps) {
         <Badge text={t('splash-screen.badge', 'NEW FEATURE')} color="green" className={styles.badge} />
         <h2 className={styles.title}>{feature.title}</h2>
         <div className={styles.body}>
-          <div className={styles.iconBox}>
+          <div className={styles.iconBox} aria-hidden="true">
             <Icon name={feature.icon} size="xl" className={styles.iconBoxIcon} />
           </div>
           <p className={styles.subtitle}>{feature.subtitle}</p>

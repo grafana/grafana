@@ -57,6 +57,7 @@ export function SplashScreenModal() {
         size="md"
       >
         {activeFeature.ctaText}
+        <span className="sr-only">{t('splash-screen.cta-new-tab', '(opens in new tab)')}</span>
       </LinkButton>
     </>
   );
@@ -78,6 +79,13 @@ export function SplashScreenModal() {
           className={styles.closeButton}
         />
         <SplashScreenSlide feature={activeFeature} footer={footer} />
+        <div aria-live="polite" className="sr-only">
+          {t('splash-screen.slide-announcement', 'Slide {{current}} of {{total}}: {{title}}', {
+            current: activeIndex + 1,
+            total,
+            title: activeFeature.title,
+          })}
+        </div>
       </div>
     </ModalBase>
   );
