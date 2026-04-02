@@ -221,7 +221,11 @@ export class JsonExplorer {
   }
 
   isNumberArray() {
-    return this.json.length > 0 && this.json.length < 4 && (typeof this.json[0] === 'number' || typeof this.json[1] === 'number');
+    return (
+      this.json.length > 0 &&
+      this.json.length < 4 &&
+      (typeof this.json[0] === 'number' || typeof this.json[1] === 'number')
+    );
   }
 
   renderArray() {
