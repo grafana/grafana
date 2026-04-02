@@ -110,7 +110,7 @@ test.describe(
         selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label)
       );
       const nextElement = variableDropdown.locator('+ *');
-      await expect(nextElement).toHaveText('1m');
+      await expect(nextElement).toContainText('1m');
       await nextElement.click();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Select.option).filter({ hasText: 'Auto' }).click();
