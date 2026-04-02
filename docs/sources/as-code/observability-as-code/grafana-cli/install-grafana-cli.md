@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 title: Install Grafana CLI
-weight: 100
+weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/install-grafana-cli/
 aliases:
   - ../../../observability-as-code/grafana-cli/install-grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/install-grafana-cli/

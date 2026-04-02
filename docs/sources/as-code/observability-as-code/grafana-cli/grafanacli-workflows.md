@@ -12,7 +12,7 @@ labels:
     - enterprise
     - oss
 title: Manage resources with Grafana CLI
-weight: 300
+weight: 210
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/grafanacli-workflows/
 aliases:
   - ../../../observability-as-code/grafana-cli/grafanacli-workflows/ # /docs/grafana/next/observability-as-code/grafana-cli/grafanacli-workflows/
