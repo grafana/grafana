@@ -21,6 +21,49 @@ func isDollarTagChar(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || b == '_'
 }
 
+// consumeQuoted copies a single-quoted or double-quoted region (delimited by q)
+// from sql[i:] into out, handling ” (or "") doubled-quote escapes.
+// i must point at the opening quote. Returns the new position after the closing quote.
+func consumeQuoted(sql string, i, n int, q byte, out *strings.Builder) int {
+	out.WriteByte(q)
+	i++
+	for i < n {
+		if sql[i] == q {
+			out.WriteByte(sql[i])
+			i++
+			if i < n && sql[i] == q {
+				out.WriteByte(sql[i])
+				i++
+			} else {
+				break
+			}
+		} else {
+			out.WriteByte(sql[i])
+			i++
+		}
+	}
+	return i
+}
+
+// consumeDollarQuoted copies a dollar-quoted region from sql[i:] into out.
+// i must point at the start of the opening delimiter (e.g. "$$" or "$tag$").
+// closing is the full closing delimiter string. Returns the new position.
+func consumeDollarQuoted(sql string, i int, closing string, out *strings.Builder) int {
+	out.WriteString(closing)
+	i += len(closing)
+	n := len(sql)
+	for i < n {
+		if strings.HasPrefix(sql[i:], closing) {
+			out.WriteString(closing)
+			i += len(closing)
+			break
+		}
+		out.WriteByte(sql[i])
+		i++
+	}
+	return i
+}
+
 // stripSQLComments removes SQL line comments (--) and block comments (/* */)
 // from the query string. It is quote-aware: comment sequences inside single-quoted
 // string literals, double-quoted identifiers, and dollar-quoted strings are
@@ -38,39 +81,15 @@ func stripSQLComments(sql string) string {
 			// Grafana macros ($__name(...)) are distinguished by ending with '(' not '$'.
 			j := i + 1
 			if j < n && sql[j] == '$' {
-				// Empty-tag dollar-quote: $$...$$
-				closing := "$$"
-				out.WriteString(closing)
-				i = j + 1
-				for i < n {
-					if strings.HasPrefix(sql[i:], closing) {
-						out.WriteString(closing)
-						i += len(closing)
-						break
-					}
-					out.WriteByte(sql[i])
-					i++
-				}
-			} else if j < n && (isDollarTagChar(sql[j]) && !(sql[j] >= '0' && sql[j] <= '9')) {
+				i = consumeDollarQuoted(sql, i, "$$", &out)
+			} else if j < n && isDollarTagChar(sql[j]) && (sql[j] < '0' || sql[j] > '9') {
 				// Possible non-empty tag: must start with letter or underscore.
 				k := j + 1
 				for k < n && isDollarTagChar(sql[k]) {
 					k++
 				}
 				if k < n && sql[k] == '$' {
-					// Confirmed dollar-quote with tag, e.g. $tag$...$tag$
-					closing := sql[i : k+1]
-					out.WriteString(closing)
-					i = k + 1
-					for i < n {
-						if strings.HasPrefix(sql[i:], closing) {
-							out.WriteString(closing)
-							i += len(closing)
-							break
-						}
-						out.WriteByte(sql[i])
-						i++
-					}
+					i = consumeDollarQuoted(sql, i, sql[i:k+1], &out)
 				} else {
 					// Not a dollar-quote (e.g. a Grafana macro $__timeFrom()).
 					out.WriteByte(sql[i])
@@ -82,44 +101,9 @@ func stripSQLComments(sql string) string {
 				i++
 			}
 		case sql[i] == '\'':
-			// Single-quoted string literal. Pass verbatim; '' is the escape sequence.
-			out.WriteByte(sql[i])
-			i++
-			for i < n {
-				if sql[i] == '\'' {
-					out.WriteByte(sql[i])
-					i++
-					if i < n && sql[i] == '\'' {
-						// Doubled-quote escape: '' inside a string literal.
-						out.WriteByte(sql[i])
-						i++
-					} else {
-						break
-					}
-				} else {
-					out.WriteByte(sql[i])
-					i++
-				}
-			}
+			i = consumeQuoted(sql, i, n, '\'', &out)
 		case sql[i] == '"':
-			// Double-quoted identifier. Pass verbatim; "" is the escape sequence.
-			out.WriteByte(sql[i])
-			i++
-			for i < n {
-				if sql[i] == '"' {
-					out.WriteByte(sql[i])
-					i++
-					if i < n && sql[i] == '"' {
-						out.WriteByte(sql[i])
-						i++
-					} else {
-						break
-					}
-				} else {
-					out.WriteByte(sql[i])
-					i++
-				}
-			}
+			i = consumeQuoted(sql, i, n, '"', &out)
 		case i+1 < n && sql[i] == '/' && sql[i+1] == '*':
 			// Block comment: skip to closing */.
 			i += 2
