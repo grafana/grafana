@@ -192,7 +192,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 		SignedInUser:      c.SignedInUser,
 		HiddenUsers:       tapi.cfg.HiddenUsers,
 		SortOpts:          sortOpts,
-		WithAccessControl: true,
+		WithAccessControl: c.QueryBool("accesscontrol"),
 	}
 
 	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &query)

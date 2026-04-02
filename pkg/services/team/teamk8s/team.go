@@ -200,7 +200,7 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	sortParams := legacysort.ConvertToSortParams(query.SortOpts, iamteam.TeamSortFieldMapping)
+	sortParams := legacysort.ConvertToSortParams(query.SortOpts, iamteam.TeamSortFieldMapping())
 
 	namespace := s.namespaceMapper(query.OrgID)
 	restClient, err := s.getRESTClient(ctx)
@@ -242,7 +242,10 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 		return team.SearchTeamQueryResult{}, err
 	}
 
-	body, _ := result.Raw()
+	body, err := result.Raw()
+	if err != nil {
+		return team.SearchTeamQueryResult{}, err
+	}
 
 	var searchResp iamv0alpha1.GetSearchTeamsResponse
 	if err := json.Unmarshal(body, &searchResp); err != nil {
