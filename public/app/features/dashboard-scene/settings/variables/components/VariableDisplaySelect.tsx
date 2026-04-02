@@ -1,6 +1,6 @@
-import { PropsWithChildren, useMemo } from 'react';
+import { type PropsWithChildren, useMemo } from 'react';
 
-import { VariableType, VariableHide } from '@grafana/data';
+import { type VariableType, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field } from '@grafana/ui';
@@ -65,7 +65,6 @@ export function VariableDisplaySelect({
   }
 
   return (
-    // eslint-disable-next-line no-restricted-syntax
     <Field label={t('dashboard-scene.variable-display-select.label', 'Display')}>
       <Combobox
         data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect}

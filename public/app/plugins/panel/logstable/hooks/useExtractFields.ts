@@ -4,9 +4,9 @@ import { lastValueFrom } from 'rxjs';
 
 import {
   applyFieldOverrides,
-  DataFrame,
-  FieldConfigSource,
-  TimeZone,
+  type DataFrame,
+  type FieldConfigSource,
+  type TimeZone,
   transformDataFrame,
   useDataLinksContext,
 } from '@grafana/data';

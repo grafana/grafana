@@ -3,9 +3,9 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
+import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { FilterRow, GroupHeader } from './FiltersOverviewRow';
@@ -33,11 +33,12 @@ export const DashboardFiltersOverview = ({
   const styles = useStyles2(getStyles);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters } = useFiltersOverviewState({
-    adhocFilters,
-    groupByVariable,
-    searchQuery,
-  });
+  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters, hasGroupBy } =
+    useFiltersOverviewState({
+      adhocFilters,
+      groupByVariable,
+      searchQuery,
+    });
 
   const virtualizer = useVirtualizer({
     count: listItems.length,
@@ -128,7 +129,7 @@ export const DashboardFiltersOverview = ({
                     (state.isOriginByKey[keyValue] ?? false) &&
                     (state.singleValuesByKey[keyValue] ?? '') !== (state.defaultValuesByKey[keyValue] ?? '')
                   }
-                  hasGroupByVariable={Boolean(groupByVariable)}
+                  hasGroupByVariable={hasGroupBy}
                   operatorOptions={operatorConfig.options}
                   onOperatorChange={actions.setOperator}
                   onSingleValueChange={actions.setSingleValue}

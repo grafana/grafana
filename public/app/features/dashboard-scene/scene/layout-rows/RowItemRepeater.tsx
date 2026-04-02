@@ -2,11 +2,11 @@ import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
 import {
-  MultiValueVariable,
+  type MultiValueVariable,
   NewSceneObjectAddedEvent,
   SceneVariableSet,
   sceneGraph,
-  VariableValueSingle,
+  type VariableValueSingle,
 } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
@@ -16,8 +16,8 @@ import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableV
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
-import { RowItem } from './RowItem';
-import { RowsLayoutManager } from './RowsLayoutManager';
+import { type RowItem } from './RowItem';
+import { type RowsLayoutManager } from './RowsLayoutManager';
 
 export interface Props {
   row: RowItem;

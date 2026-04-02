@@ -1,5 +1,12 @@
-import { ReactNode } from 'react';
-import { CellProps, DefaultSortTypes, HeaderProps, IdType, Renderer, SortByFn } from 'react-table';
+import { type ReactNode } from 'react';
+import {
+  type CellProps,
+  type DefaultSortTypes,
+  type HeaderProps,
+  type IdType,
+  type Renderer,
+  type SortByFn,
+} from 'react-table';
 
 export interface Column<TableData extends object> {
   /**

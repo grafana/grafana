@@ -3,23 +3,24 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
   CoreApp,
-  DataFrame,
-  FieldConfigSource,
-  GrafanaTheme2,
+  type DataFrame,
+  type FieldConfigSource,
+  type GrafanaTheme2,
   LoadingState,
   LogsSortOrder,
-  PanelData,
-  PanelProps,
+  type PanelData,
+  type PanelProps,
 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import {
   DATAPLANE_SEVERITY_NAME,
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
-  LogsFrame,
+  type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
@@ -32,14 +33,14 @@ import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
 import { onSortOrderChange } from './options/onSortOrderChange';
-import { Options } from './options/types';
-import { Options as LogsTableOptions } from './panelcfg.gen';
+import { type Options } from './options/types';
+import { type Options as LogsTableOptions } from './panelcfg.gen';
 import { getInitialRowIndex } from './props/getInitialRowIndex';
 import {
-  BuildLinkToLogLine,
+  type BuildLinkToLogLine,
   isBuildLinkToLogLine,
   isOnLogsTableOptionsChange,
-  OnLogsTableOptionsChange,
+  type OnLogsTableOptionsChange,
 } from './types';
 
 interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
@@ -105,6 +106,32 @@ export const LogsTable = ({
       handleLogsTableOptionsChange({ ...options, ...prop });
     },
     [handleLogsTableOptionsChange, options]
+  );
+
+  const transformDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      return displayedFields.map((displayedField) => {
+        if (displayedField === bodyFieldName) {
+          return LOG_LINE_BODY_FIELD_NAME;
+        }
+
+        return displayedField;
+      });
+    },
+    [bodyFieldName]
+  );
+
+  const untransformDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      return displayedFields.map((displayedField) => {
+        if (displayedField === LOG_LINE_BODY_FIELD_NAME) {
+          return bodyFieldName;
+        }
+
+        return displayedField;
+      });
+    },
+    [bodyFieldName]
   );
 
   const handleTableOnFieldConfigChange = useCallback(
@@ -180,14 +207,16 @@ export const LogsTable = ({
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
-            displayedFields={getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName)}
+            displayedFields={untransformDisplayedFields(getDisplayedFields(options, timeFieldName, levelFieldName))}
             height={height}
             logsFrame={logsFrame}
             timeFieldName={timeFieldName}
             levelFieldName={levelFieldName}
             bodyFieldName={bodyFieldName}
             dataFrame={extractedFrame}
-            onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
+            onDisplayedFieldsChange={(displayedFields: string[]) =>
+              handleLogsTableOptionChange({ displayedFields: transformDisplayedFields(displayedFields) })
+            }
             onFieldSelectorWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
           />
 
@@ -225,6 +254,8 @@ export const LogsTable = ({
 const getStyles = (theme: GrafanaTheme2, height: number, width: number) => {
   return {
     wrapper: css({
+      // prevent overflow in the tiny suggestions preview
+      overflow: 'hidden',
       height,
       width,
     }),

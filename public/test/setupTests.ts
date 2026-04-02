@@ -38,6 +38,13 @@ jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => {
   return actual;
 });
 
+// Pre-resolve folder app API to v1beta1 so tests using MSW folder handlers (v1beta1 paths) do not hit discovery.
+jest.mock('@grafana/api-clients/rtkq/folder/v1beta1', () => {
+  const actual = jest.requireActual('@grafana/api-clients/rtkq/folder/v1beta1');
+  actual.folderAPIVersionResolver.set('v1beta1');
+  return actual;
+});
+
 // mock out the worker that detects changes in the dashboard
 // The mock is needed because JSDOM does not support workers and
 // the factory uses import.meta.url so we can't use it in CommonJS modules.

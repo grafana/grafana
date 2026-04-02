@@ -8,8 +8,8 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
-import { FormAmRoute } from '../../types/amroutes';
+import { type RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
+import { type FormAmRoute } from '../../types/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { AmRootRouteForm } from './EditDefaultPolicyForm';

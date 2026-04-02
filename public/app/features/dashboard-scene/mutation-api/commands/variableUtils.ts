@@ -4,7 +4,7 @@
  * Contains helpers used across add/remove/update variable commands.
  */
 
-import { sceneGraph, SceneVariableSet } from '@grafana/scenes';
+import { type sceneGraph, SceneVariableSet } from '@grafana/scenes';
 
 /**
  * Replace the dashboard's variable set with a new set containing the given variables.

@@ -1,33 +1,39 @@
 // Legacy Redux actions - will be removed when kubernetesDashboards feature is removed
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
 import {
-  Spec as DashboardV2Spec,
-  QueryVariableKind,
-  PanelQueryKind,
-  AnnotationQueryKind,
+  type Spec as DashboardV2Spec,
+  type QueryVariableKind,
+  type PanelQueryKind,
+  type AnnotationQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { browseDashboardsAPI, type ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { ThunkResult } from 'app/types/store';
+import { type ThunkResult } from 'app/types/store';
 
 import {
-  Input,
-  InputUsage,
-  LibraryElementExport,
-  LibraryPanel,
+  type Input,
+  type InputUsage,
+  type LibraryElementExport,
+  type LibraryPanel,
 } from '../../../dashboard/components/DashExportModal/DashboardExporter';
-import { DataSourceInput, ImportDashboardDTO, InputType, LibraryPanelInputState, DashboardJson } from '../../types';
+import {
+  type DataSourceInput,
+  type ImportDashboardDTO,
+  InputType,
+  LibraryPanelInputState,
+  type DashboardJson,
+} from '../../types';
 import { getLibraryPanelInputs } from '../utils/inputs';
 
 import {
   clearDashboard,
   fetchDashboard,
   fetchFailed,
-  ImportDashboardState,
+  type ImportDashboardState,
   setGcomDashboard,
   setInputs,
   setJsonDashboard,

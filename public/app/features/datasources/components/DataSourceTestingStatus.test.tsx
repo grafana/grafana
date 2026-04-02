@@ -4,16 +4,16 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import {
   PluginExtensionTypes,
-  PluginExtensionLink,
-  ComponentTypeWithExtensionMeta,
-  PluginExtensionDataSourceConfigStatusContext,
+  type PluginExtensionLink,
+  type ComponentTypeWithExtensionMeta,
+  type PluginExtensionDataSourceConfigStatusContext,
 } from '@grafana/data';
-import { setPluginLinksHook, UsePluginLinksOptions, setPluginComponentsHook, config } from '@grafana/runtime';
+import { setPluginLinksHook, type UsePluginLinksOptions, setPluginComponentsHook, config } from '@grafana/runtime';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
 
-import { DataSourceTestingStatus, Props } from './DataSourceTestingStatus';
+import { DataSourceTestingStatus, type Props } from './DataSourceTestingStatus';
 import { type SuggestedDashboardsLoaderChildProps } from './SuggestedDashboardsLoader';
 
 // Mock contextSrv

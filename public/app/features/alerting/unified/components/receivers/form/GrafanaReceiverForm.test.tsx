@@ -1,7 +1,7 @@
 import 'core-js/stable/structured-clone';
-import { MemoryHistoryBuildOptions } from 'history';
+import { type MemoryHistoryBuildOptions } from 'history';
 import { HttpResponse, delay, http } from 'msw';
-import { ComponentProps, ReactNode } from 'react';
+import { type ComponentProps, type ReactNode } from 'react';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
@@ -14,7 +14,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
@@ -126,7 +126,7 @@ describe('GrafanaReceiverForm', () => {
 
   it('handles nested secure fields correctly', async () => {
     const capturedRequests = captureRequests(
-      (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
+      (req) => req.url.includes('/v1beta1/namespaces/default/receivers') && req.method === 'POST'
     );
     const { user } = renderWithProvider(<GrafanaReceiverForm />);
     const { type, click } = user;
@@ -291,7 +291,7 @@ describe('GrafanaReceiverForm', () => {
         .build({ id: 'amazon-sns-id', name: contactPointName, metadata: { name: contactPointName } });
 
       const capture = captureRequests(
-        (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
+        (req) => req.url.includes(`/v1beta1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
       );
 
       const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
@@ -564,7 +564,7 @@ describe('GrafanaReceiverForm', () => {
         .build({ id: 'webhook-id', name: contactPointName, metadata: { name: contactPointName } });
 
       const capture = captureRequests(
-        (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
+        (req) => req.url.includes(`/v1beta1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
       );
 
       const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
@@ -761,7 +761,7 @@ describe('GrafanaReceiverForm', () => {
       // This proves the correct endpoint was called through UI side effects
       server.use(
         http.post<{ namespace: string; name: string }>(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           ({ params }) => {
             if (params.name !== '-') {
               return HttpResponse.json(
@@ -770,7 +770,7 @@ describe('GrafanaReceiverForm', () => {
               );
             }
             return HttpResponse.json({
-              apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+              apiVersion: 'notifications.alerting.grafana.app/v1beta1',
               kind: 'CreateReceiverIntegrationTest',
               status: 'success',
               duration: '150ms',
@@ -865,11 +865,11 @@ describe('GrafanaReceiverForm', () => {
       // Use a delayed handler to observe the loading state
       server.use(
         http.post<{ namespace: string; name: string }>(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           async () => {
             await delay(100);
             return HttpResponse.json({
-              apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+              apiVersion: 'notifications.alerting.grafana.app/v1beta1',
               kind: 'CreateReceiverIntegrationTest',
               status: 'success',
               duration: '150ms',
@@ -911,10 +911,10 @@ describe('GrafanaReceiverForm', () => {
       const errorMessage = 'Connection refused: unable to reach webhook endpoint';
       server.use(
         http.post<{ namespace: string; name: string }>(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           () => {
             return HttpResponse.json({
-              apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+              apiVersion: 'notifications.alerting.grafana.app/v1beta1',
               kind: 'CreateReceiverIntegrationTest',
               status: 'failure',
               duration: '50ms',
@@ -950,7 +950,7 @@ describe('GrafanaReceiverForm', () => {
     it('should display error message when K8s API returns HTTP error', async () => {
       server.use(
         http.post<{ namespace: string; name: string }>(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name/test',
           () => {
             return HttpResponse.json({ message: 'Internal server error: database connection failed' }, { status: 500 });
           }

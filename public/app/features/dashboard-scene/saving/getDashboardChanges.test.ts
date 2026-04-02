@@ -1,7 +1,7 @@
-import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
+import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Dashboard, VariableModel } from '@grafana/schema';
-import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard, type VariableModel } from '@grafana/schema';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { adHocVariableFiltersEqual, getRawDashboardChanges, getRawDashboardV2Changes } from './getDashboardChanges';
 
@@ -495,6 +495,42 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
         { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
         { key: 'env', operator: '=', value: 'prod' },
       ]);
+    });
+
+    it('should preserve origin filters and restore runtime filters when saveVariables is false', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'env', operator: '=', value: 'prod' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'staging' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, false, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+    });
+
+    it('should detect schema changes when origin filters are added', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when origin filters are removed', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+      const changed = makeDashboardWithAdhoc([]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
     });
   });
 

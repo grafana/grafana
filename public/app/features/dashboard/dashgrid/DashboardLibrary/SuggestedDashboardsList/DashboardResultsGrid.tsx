@@ -1,10 +1,10 @@
 import { Grid } from '@grafana/ui';
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { CompatibilityState } from '../CompatibilityBadge';
+import { type CompatibilityState } from '../CompatibilityBadge';
 import { DashboardCard } from '../DashboardCard';
 import { PAGE_SIZE } from '../constants';
-import { GnetDashboard, isGnetDashboard } from '../types';
+import { type GnetDashboard, isGnetDashboard } from '../types';
 import { getThumbnailUrl, getLogoUrl, buildDashboardDetails } from '../utils/communityDashboardHelpers';
 import { getProvisionedDashboardImageUrl } from '../utils/provisionedDashboardHelpers';
 
@@ -16,8 +16,9 @@ interface DashboardResultsGridProps {
   datasourceUid?: string;
   isCompatibilityAppEnabled: boolean | undefined;
   compatibilityMap: Map<number, CompatibilityState>;
-  onClickProvisionedDashboard: (dashboard: PluginDashboard) => void;
-  onClickCommunityDashboard: (dashboard: GnetDashboard) => void;
+  showAssistantButton?: boolean;
+  onClickProvisionedDashboard: (dashboard: PluginDashboard, customizeWithAssistant?: boolean) => void;
+  onClickCommunityDashboard: (dashboard: GnetDashboard, customizeWithAssistant?: boolean) => void;
   onCheckCompatibility: (dashboard: GnetDashboard, triggerMethod: 'manual' | 'auto_initial_load') => void;
 }
 
@@ -29,6 +30,7 @@ export const DashboardResultsGrid = ({
   datasourceUid,
   isCompatibilityAppEnabled,
   compatibilityMap,
+  showAssistantButton,
   onClickProvisionedDashboard,
   onClickCommunityDashboard,
   onCheckCompatibility,
@@ -44,8 +46,9 @@ export const DashboardResultsGrid = ({
           title={dashboard.title}
           imageUrl={imageUrl}
           dashboard={dashboard}
-          onClick={() => onClickProvisionedDashboard(dashboard)}
+          onClick={(customizeWithAssistant) => onClickProvisionedDashboard(dashboard, customizeWithAssistant)}
           kind="suggested_dashboard"
+          showAssistantButton={showAssistantButton}
           showDatasourceProvidedBadge
         />
       );
@@ -68,10 +71,11 @@ export const DashboardResultsGrid = ({
           title={dashboard.name}
           imageUrl={imageUrl}
           dashboard={dashboard}
-          onClick={() => onClickCommunityDashboard(dashboard)}
+          onClick={(customizeWithAssistant) => onClickCommunityDashboard(dashboard, customizeWithAssistant)}
           isLogo={isLogo}
           details={details}
           kind="suggested_dashboard"
+          showAssistantButton={showAssistantButton}
           showCommunityBadge
           showCompatibilityBadge={showCompatBadge}
           compatibilityState={compatibilityMap.get(dashboard.id)}

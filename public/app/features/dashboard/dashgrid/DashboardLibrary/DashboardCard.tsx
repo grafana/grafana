@@ -3,15 +3,15 @@ import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
-import { PluginDashboard } from 'app/types/plugins';
+import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { CompatibilityBadge, CompatibilityState } from './CompatibilityBadge';
-import { GnetDashboard } from './types';
+import { CompatibilityBadge, type CompatibilityState } from './CompatibilityBadge';
+import { type GnetDashboard } from './types';
 import { buildAssistantPrompt, buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
 
 interface Details {
@@ -78,7 +78,7 @@ function DashboardCardComponent({
     () =>
       createAssistantContextItem('structured', {
         hidden: false,
-        title: buildTemplateContextTitle(dashboard),
+        title: buildTemplateContextTitle(dashboard, kind),
         data: buildTemplateContextData(dashboard, kind),
       }),
     [dashboard, kind]
@@ -89,7 +89,7 @@ function DashboardCardComponent({
       openAssistant?.({
         origin: 'dashboard-library/use-dashboard',
         mode: 'dashboarding',
-        prompt: buildAssistantPrompt(),
+        prompt: buildAssistantPrompt(kind),
         context: [templateContext],
         autoSend: true,
       });
@@ -167,11 +167,11 @@ function DashboardCardComponent({
               icon="ai-sparkle"
               aria-label={t(
                 'dashboard-library.card.customize-with-assistant-button-label',
-                'Customize with assistant: {{title}}',
+                'Customize with Assistant: {{title}}',
                 { title }
               )}
             >
-              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with assistant</Trans>
+              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
             </Button>
           )}
         </div>

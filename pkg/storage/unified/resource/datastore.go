@@ -58,6 +58,10 @@ type dataStore struct {
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 }
 
+type dataImportBatchWriter interface {
+	InsertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) error
+}
+
 func newDataStore(kv KV) *dataStore {
 	ds := &dataStore{
 		kv:    kv,
@@ -547,6 +551,15 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 	return writer.Close()
 }
 
+func (d *dataStore) insertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) (bool, error) {
+	writer, ok := d.kv.(dataImportBatchWriter)
+	if !ok {
+		return false, nil
+	}
+
+	return true, writer.InsertDataImportBatch(ctx, rows)
+}
+
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	if err := validateDataKey(key); err != nil {
 		return fmt.Errorf("invalid data key: %w", err)
@@ -909,7 +922,13 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 
 		if err != nil {
 			if isRowAlreadyExistsError(err) {
-				return ErrResourceAlreadyExists
+				// This can only happen if a concurrent write was attempted: the validation in
+				// WriteEvent guarantees that we return early when the resource already exists
+				// before entering the transaction.
+				//
+				// TODO: mark this and optimistic locking errors as conflicts (409) so that they
+				// can be identified by callers.
+				return fmt.Errorf("conflict: concurrent creation detected")
 			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}

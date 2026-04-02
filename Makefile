@@ -16,7 +16,7 @@ GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
-# Backend build version and ldflags (aligned with pkg/build/daggerbuild/backend).
+# Backend build version and ldflags (release / packaging conventions).
 BUILD_NUMBER ?= local
 BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
 BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown"))
@@ -375,16 +375,38 @@ build-plugin-go: ## Build decoupled plugins
 .PHONY: build
 build: build-go build-js ## Build backend and frontend.
 
-# Tar.gz packaging variables (aligned with pkg/build/daggerbuild/packages)
+# Tar.gz packaging variables (artifact / file naming).
 TARGZ_PACKAGE_NAME ?= grafana
 
+# Default catalog plugins under data/plugins-bundled. Stamp encodes OS/ARCH so cross-builds refresh.
+DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
+
+$(DATA_PLUGINS_BUNDLED_STAMP): package.json \
+		scripts/download-catalog-plugins.sh \
+		scripts/catalog-plugins-defaults
+	@rm -rf data/plugins-bundled
+	@mkdir -p data/plugins-bundled
+	@bash scripts/download-catalog-plugins.sh \
+		--out data/plugins-bundled \
+		--grafana-version "$(BUILD_VERSION)" \
+		--os "$(OS)" \
+		--arch "$(ARCH)"
+	@touch $(DATA_PLUGINS_BUNDLED_STAMP)
+
+data/plugins-bundled: $(DATA_PLUGINS_BUNDLED_STAMP)
+	@:
+
+.PHONY: build-catalog-plugins-data
+build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plugins into data/plugins-bundled (network; alias).
+
 .PHONY: build-targz
-build-targz: | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (same layout as daggerbuild).
+build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
 	OS="$(OS)" \
 	ARCH="$(ARCH)" \
+	$(if $(ARM),GOARM="$(ARM)") \
 	GO="$(GO)" \
 	bash scripts/build-targz.sh
 
@@ -400,10 +422,6 @@ run-go: ## Build and run web server immediately.
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
-
-.PHONY: run-bra
-run-bra: ## [Deprecated] Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(bra) run
 
 .PHONY: frontend-service-check
 frontend-service-check:
