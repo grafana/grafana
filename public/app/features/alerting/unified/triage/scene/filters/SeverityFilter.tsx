@@ -156,10 +156,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   bar_low: css({
     background: theme.colors.success.text,
   }),
-  bar_medium: css({
+  bar_minor: css({
     background: theme.colors.warning.text,
   }),
-  bar_high: css({
+  bar_major: css({
     background: theme.colors.warning.main,
   }),
   bar_critical: css({

@@ -1,4 +1,4 @@
-export type SeverityLevel = 'low' | 'medium' | 'high' | 'critical';
+export type SeverityLevel = 'low' | 'minor' | 'major' | 'critical';
 
 export interface SeverityDefinition {
   level: SeverityLevel;
@@ -7,10 +7,10 @@ export interface SeverityDefinition {
 }
 
 export const SEVERITY_DEFINITIONS: SeverityDefinition[] = [
-  { level: 'low', values: ['low', 'info', 'notice'], bars: 1 },
-  { level: 'medium', values: ['medium', 'warning', 'warn', 'minor', 'moderate'], bars: 2 },
-  { level: 'high', values: ['high', 'major'], bars: 3 },
-  { level: 'critical', values: ['critical', 'crit', 'fatal'], bars: 4 },
+  { level: 'low', values: ['low', 'info', 'notice', 'SEV4'], bars: 1 },
+  { level: 'minor', values: ['minor', 'medium', 'warning', 'warn', 'moderate', 'SEV3'], bars: 2 },
+  { level: 'major', values: ['major', 'high', 'SEV2'], bars: 3 },
+  { level: 'critical', values: ['critical', 'crit', 'fatal', 'SEV1'], bars: 4 },
 ];
 
 export function severityFilterRegex(level: SeverityLevel): string {
