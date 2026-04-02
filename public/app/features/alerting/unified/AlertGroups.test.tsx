@@ -200,7 +200,7 @@ describe('AlertGroups', () => {
       })
     );
 
-    const { rerender } = render(
+    render(
       <AlertmanagerProvider accessType={'instance'}>
         <AlertGroups />
       </AlertmanagerProvider>,
@@ -210,12 +210,6 @@ describe('AlertGroups', () => {
     await waitFor(() => expect(requests.length).toBeGreaterThan(0));
     const url = new URL(requests[0].url);
     expect(url.searchParams.get('filter')).toBe('severity="critical"');
-
-    rerender(
-      <AlertmanagerProvider accessType={'instance'}>
-        <AlertGroups />
-      </AlertmanagerProvider>
-    );
   });
 
   it('sends receiver query param to the backend for single receiver selection', async () => {
