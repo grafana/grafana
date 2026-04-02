@@ -120,7 +120,7 @@ export interface FeatureToggles {
   disableSSEDataplane?: boolean;
   /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default false
+  * @default true
   */
   renderAuthJWT?: boolean;
   /**
@@ -138,11 +138,6 @@ export interface FeatureToggles {
   * @default false
   */
   faroSessionReplay?: boolean;
-  /**
-  * A table visualisation for logs in Explore
-  * @default true
-  */
-  logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
@@ -218,6 +213,11 @@ export interface FeatureToggles {
   * @default false
   */
   sseGroupByDatasource?: boolean;
+  /**
+  * Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
+  * @default false
+  */
+  sseExpressionErrorIsolation?: boolean;
   /**
   * Enables running Loki queries in parallel
   * @default false
@@ -409,6 +409,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables default layout selector in dashboard settings
+  * @default false
+  */
+  dashboardDefaultLayoutSelector?: boolean;
+  /**
   * Enables the assistant prompt popover on panel click in dashboard view mode
   * @default false
   */
@@ -555,7 +560,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default true
+  * @default false
   */
   sqlExpressions?: boolean;
   /**
@@ -648,6 +653,11 @@ export interface FeatureToggles {
   * @default false
   */
   newSavedQueriesExperience?: boolean;
+  /**
+  * Enables the new unconfigured panel experience
+  * @default false
+  */
+  newUnconfiguredPanel?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -1197,7 +1207,7 @@ export interface FeatureToggles {
   kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
-  * @default false
+  * @default true
   */
   restoreDashboards?: boolean;
   /**
@@ -1240,11 +1250,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
-  /**
-  * Enables the UI to see imported Alertmanager configuration
-  * @default false
-  */
-  alertingImportAlertmanagerUI?: boolean;
   /**
   * Disables the DMA feature in the UI
   * @default false
@@ -1382,7 +1387,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new visualization suggestions
-  * @default false
+  * @default true
   */
   newVizSuggestions?: boolean;
   /**
@@ -1397,14 +1402,9 @@ export interface FeatureToggles {
   vizPresets?: boolean;
   /**
   * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default false
+  * @default true
   */
   externalVizSuggestions?: boolean;
-  /**
-  * Limit the number of legend items by default, with an option to show all
-  * @default false
-  */
-  vizLegendSeriesLimit?: boolean;
   /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
@@ -1420,6 +1420,11 @@ export interface FeatureToggles {
   * @default false
   */
   heatmapRowsAxisOptions?: boolean;
+  /**
+  * Enable gradient color scheme option for the pie chart panel
+  * @default false
+  */
+  pieChartGradientColorScheme?: boolean;
   /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
@@ -1750,4 +1755,24 @@ export interface FeatureToggles {
   * @default false
   */
   queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables the query service to do query caching
+  * @default false
+  */
+  queryServiceQueryCaching?: boolean;
+  /**
+  * Enables the time seeker in traces drilldown
+  * @default false
+  */
+  tracesDrilldownTimeSeeker?: boolean;
+  /**
+  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
+  * @default false
+  */
+  clearPreviousFieldValues?: boolean;
+  /**
+  * Enables loading datasource plugins from the MetaAPI instead of bootData settings
+  * @default false
+  */
+  enableDatasourceMetaApiPluginLoading?: boolean;
 }

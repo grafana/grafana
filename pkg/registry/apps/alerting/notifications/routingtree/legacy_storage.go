@@ -31,10 +31,15 @@ type RouteService interface {
 	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p alerting_models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error)
 }
 
+type MetadataService interface {
+	AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*legacy_storage.ManagedRoute) (map[string]alerting_models.RoutePermissionSet, error)
+}
+
 type legacyStorage struct {
 	service        RouteService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	metadata       MetadataService
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -74,7 +79,12 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResources(orgId, managedRoutes, s.namespacer)
+
+	set, err := s.metadata.AccessControlMetadata(ctx, user, managedRoutes...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+	return ConvertToK8sResources(orgId, managedRoutes, s.namespacer, set)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -91,7 +101,16 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResource(info.OrgID, &managedRoute, s.namespacer)
+
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, &managedRoute)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+	var access *alerting_models.RoutePermissionSet
+	if a, ok := accesses[managedRoute.GetUID()]; ok {
+		access = &a
+	}
+	return ConvertToK8sResource(info.OrgID, &managedRoute, s.namespacer, access)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -126,7 +145,15 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	return ConvertToK8sResource(info.OrgID, created, s.namespacer)
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, created)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+	var access *alerting_models.RoutePermissionSet
+	if a, ok := accesses[created.GetUID()]; ok {
+		access = &a
+	}
+	return ConvertToK8sResource(info.OrgID, created, s.namespacer, access)
 }
 
 func (s *legacyStorage) Update(
@@ -175,7 +202,15 @@ func (s *legacyStorage) Update(
 		return nil, false, err
 	}
 
-	obj, err = ConvertToK8sResource(info.OrgID, updated, s.namespacer)
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, updated)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+	var access *alerting_models.RoutePermissionSet
+	if a, ok := accesses[updated.GetUID()]; ok {
+		access = &a
+	}
+	obj, err = ConvertToK8sResource(info.OrgID, updated, s.namespacer, access)
 	return obj, false, err
 }
 

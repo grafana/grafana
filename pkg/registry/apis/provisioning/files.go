@@ -33,15 +33,17 @@ type filesConnector struct {
 	parsers               resources.ParserFactory
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
+	folderAPIVersion      string
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
 		clients:               clients,
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
+		folderAPIVersion:      folderAPIVersion,
 	}
 }
 
@@ -168,12 +170,12 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	folderClient, err := clients.Folder(ctx)
+	folderClient, folderGVK, err := clients.Folder(ctx, c.folderAPIVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
 	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, c.folderMetadataEnabled)
 	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), nil
 }

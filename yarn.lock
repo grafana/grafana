@@ -1493,6 +1493,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@base2/pretty-print-object@npm:1.0.2":
+  version: 1.0.2
+  resolution: "@base2/pretty-print-object@npm:1.0.2"
+  checksum: 10/8a0c84c7d1ed7c92493238b9815be2eed412d70c13bc889ba6cc3ec6146b886121fe0fbbea01699a1681927c659a37a67b77a8971a009ad35556f064e131e335
+  languageName: node
+  linkType: hard
+
 "@bcoe/v8-coverage@npm:^0.2.3":
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3"
@@ -2466,62 +2473,48 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/core@npm:^1.7.4":
-  version: 1.7.4
-  resolution: "@floating-ui/core@npm:1.7.4"
-  dependencies:
-    "@floating-ui/utils": "npm:^0.2.10"
-  checksum: 10/b750f306a99be879f0bce879108c440d5b0a67303d3d8318e153687f6ed1af27908428e27cc955475253bd902b95452a3434bd4f0cf96e66e5b5d0db1aa8ea3c
-  languageName: node
-  linkType: hard
-
-"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.7.5":
+"@floating-ui/core@npm:^1.7.5":
   version: 1.7.5
-  resolution: "@floating-ui/dom@npm:1.7.5"
+  resolution: "@floating-ui/core@npm:1.7.5"
   dependencies:
-    "@floating-ui/core": "npm:^1.7.4"
-    "@floating-ui/utils": "npm:^0.2.10"
-  checksum: 10/2764990da82bd5cfe942211480aa82352926326008de93f5f3f19749cc8b171fe05b77526a2652605eadcbeab902c6506f18d60a4c43281f2651802047de100b
+    "@floating-ui/utils": "npm:^0.2.11"
+  checksum: 10/fecdc9b3ce93f02bf78a6114b93730a4cb9fa8234c62f9a949016186297a039c9f9cd3c5c81ff74b93ebddf0b32048c4af7a528afe7904b75423ed2e7491b888
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.1.2, @floating-ui/react-dom@npm:^2.1.6, @floating-ui/react-dom@npm:^2.1.7":
-  version: 2.1.7
-  resolution: "@floating-ui/react-dom@npm:2.1.7"
+"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.7.6":
+  version: 1.7.6
+  resolution: "@floating-ui/dom@npm:1.7.6"
   dependencies:
-    "@floating-ui/dom": "npm:^1.7.5"
+    "@floating-ui/core": "npm:^1.7.5"
+    "@floating-ui/utils": "npm:^0.2.11"
+  checksum: 10/84dff2ffdf85c8b92d7edafc543c55869abbeaeb3007fa983159467e050153b507a0f5fe8e84f88c3f28c35a82de9df9c20a6eef5560cbba3afae19141444ff2
+  languageName: node
+  linkType: hard
+
+"@floating-ui/react-dom@npm:^2.1.2, @floating-ui/react-dom@npm:^2.1.8":
+  version: 2.1.8
+  resolution: "@floating-ui/react-dom@npm:2.1.8"
+  dependencies:
+    "@floating-ui/dom": "npm:^1.7.6"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 10/870eb2109af3ab09ea0076eb8e0ad307da274978c3dfe28e83422136a7f85cac700f62c37663c75bc25b174d33457c0224d1944e80b9a7ca5ff7b28b8f77b7ab
+  checksum: 10/39c3e3e5538a111a3eadf1b9ca486d7dc17c7eb24b83a0ea9b4c189fa7dbe5abe01357388d8cf6a4badb2d3fec2b1090e10529537bde91acbcfe19b0a8d10f90
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.27.16":
-  version: 0.27.16
-  resolution: "@floating-ui/react@npm:0.27.16"
+"@floating-ui/react@npm:0.27.19":
+  version: 0.27.19
+  resolution: "@floating-ui/react@npm:0.27.19"
   dependencies:
-    "@floating-ui/react-dom": "npm:^2.1.6"
-    "@floating-ui/utils": "npm:^0.2.10"
+    "@floating-ui/react-dom": "npm:^2.1.8"
+    "@floating-ui/utils": "npm:^0.2.11"
     tabbable: "npm:^6.0.0"
   peerDependencies:
     react: ">=17.0.0"
     react-dom: ">=17.0.0"
-  checksum: 10/b9baedee124035323a8f74794ec782678faf52af1c88731ce7d2641b7e7c97748fda1e711a3c4db007a0153d93158d867f4726ee632d713d3de76ec4bdfd84e1
-  languageName: node
-  linkType: hard
-
-"@floating-ui/react@npm:0.27.18":
-  version: 0.27.18
-  resolution: "@floating-ui/react@npm:0.27.18"
-  dependencies:
-    "@floating-ui/react-dom": "npm:^2.1.7"
-    "@floating-ui/utils": "npm:^0.2.10"
-    tabbable: "npm:^6.0.0"
-  peerDependencies:
-    react: ">=17.0.0"
-    react-dom: ">=17.0.0"
-  checksum: 10/77f192d9a256b0ffb6de32d972872ddf0c44227eda12b2fbe33d5103dc7902de1d30c748f5f943bda7c79b9298415bbb71f197dd21ee9c2e84c24159eba81e0d
+  checksum: 10/4ebdc582544d0abf8f8011a6182af2ce4464e3a6a9a0fd4ff5facef161e73c6defa80240a7dc62f7cd2cbd5ecfb00b17c5dd5b10aa6e787cbc1ed963f323245c
   languageName: node
   linkType: hard
 
@@ -2539,10 +2532,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/utils@npm:^0.2.10, @floating-ui/utils@npm:^0.2.8":
-  version: 0.2.10
-  resolution: "@floating-ui/utils@npm:0.2.10"
-  checksum: 10/b635ea865a8be2484b608b7157f5abf9ed439f351011a74b7e988439e2898199a9a8b790f52291e05bdcf119088160dc782d98cff45cc98c5a271bc6f51327ae
+"@floating-ui/utils@npm:^0.2.11, @floating-ui/utils@npm:^0.2.8":
+  version: 0.2.11
+  resolution: "@floating-ui/utils@npm:0.2.11"
+  checksum: 10/72150138ba1c274d757a1da85233202fa9fdfd2272ec1fb0883eb0ffdf138863af81573049ed2c20b98adb4b7ae2236065541ce14037fe328955089831a678d5
   languageName: node
   linkType: hard
 
@@ -3689,11 +3682,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:3.4.7":
-  version: 3.4.7
-  resolution: "@grafana/plugin-e2e@npm:3.4.7"
+"@grafana/plugin-e2e@npm:^3.4.10":
+  version: 3.4.10
+  resolution: "@grafana/plugin-e2e@npm:3.4.10"
   dependencies:
-    "@grafana/e2e-selectors": "npm:13.0.0-22967232448"
+    "@grafana/e2e-selectors": "npm:13.0.0-23624974663"
     semver: "npm:^7.5.4"
     uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
@@ -3703,7 +3696,7 @@ __metadata:
   peerDependenciesMeta:
     "@axe-core/playwright":
       optional: true
-  checksum: 10/da5aa668882d7d827c94f837a21c4764c1417830b1759f8e17a75664e1df341b22167586ed52c8a715ea0365de1267e1f60d335bd3f469532566ad5515036f64
+  checksum: 10/9f2af03447eebcbcd99a0c2388d0df64dd7763db7d3df520ec7d3c8923b33fb2091109007bc9fab250725e12ac53470709dbef9d2069815687f0c6679322f66d
   languageName: node
   linkType: hard
 
@@ -3744,7 +3737,7 @@ __metadata:
   resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@floating-ui/react": "npm:0.27.18"
+    "@floating-ui/react": "npm:0.27.19"
     "@grafana/assistant": "npm:0.1.24"
     "@grafana/data": "npm:13.0.0-pre"
     "@grafana/e2e-selectors": "npm:13.0.0-pre"
@@ -3819,9 +3812,10 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^2.2.4"
     "@grafana/schema": "npm:13.0.0-pre"
     "@grafana/ui": "npm:13.0.0-pre"
-    "@openfeature/core": "npm:^1.9.0"
-    "@openfeature/ofrep-web-provider": "npm:^0.3.3"
-    "@openfeature/react-sdk": "npm:^1.2.0"
+    "@openfeature/core": "npm:^1.9.2"
+    "@openfeature/ofrep-web-provider": "npm:^0.3.6"
+    "@openfeature/react-sdk": "npm:^1.2.1"
+    "@openfeature/web-sdk": "npm:^1.7.3"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@rollup/plugin-terser": "npm:0.4.4"
     "@testing-library/dom": "npm:10.4.1"
@@ -3854,13 +3848,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.1.10--canary.1407.23746848504.0":
-  version: 7.1.10--canary.1407.23746848504.0
-  resolution: "@grafana/scenes-react@npm:7.1.10--canary.1407.23746848504.0"
+"@grafana/scenes-react@npm:7.3.4":
+  version: 7.3.4
+  resolution: "@grafana/scenes-react@npm:7.3.4"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.1.10--canary.1407.23746848504.0"
+    "@grafana/scenes": "npm:7.3.4"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3874,7 +3868,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/5725c7b4f382adc93fdd705c7f8d017612f1e0eda162304e6ec1c4a054921432f12fc804c074cb8eeea898abb3b74fb0d7aa2a200552f713b90e74dacfdd5b60
+  checksum: 10/9bdb2dc7a61037d42ae928e33780f9cbfb7de8a306432c5ae34b10ae50f8e64560608f714852beec4dfd05238883b2f146df053c21a25157701bf1ff11a16e0e
   languageName: node
   linkType: hard
 
@@ -3909,9 +3903,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.1.10--canary.1407.23746848504.0":
-  version: 7.1.10--canary.1407.23746848504.0
-  resolution: "@grafana/scenes@npm:7.1.10--canary.1407.23746848504.0"
+"@grafana/scenes@npm:7.3.4":
+  version: 7.3.4
+  resolution: "@grafana/scenes@npm:7.3.4"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -3936,7 +3930,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/5b66a075da611ca35b89d1885f38591297b00467bea7a5c18c097540de3433e1071136aa5dfdee21878367e1f32ff88deb89db024538d8670af5cdc4e902f3aa
+  checksum: 10/5b035c86024f94fa4de06d67230b8ee0affee4507d58bfe12c7f6cefaf1a53a0c4df8629c14a0592c043259704cc0c55d20ed0768c500e1eeb61f8871e7b9eeb
   languageName: node
   linkType: hard
 
@@ -3962,6 +3956,7 @@ __metadata:
   resolution: "@grafana/sql@workspace:packages/grafana-sql"
   dependencies:
     "@emotion/css": "npm:11.13.5"
+    "@grafana/assistant": "npm:^0.1.24"
     "@grafana/data": "npm:13.0.0-pre"
     "@grafana/e2e-selectors": "npm:13.0.0-pre"
     "@grafana/i18n": "npm:13.0.0-pre"
@@ -4046,7 +4041,7 @@ __metadata:
     "@emotion/react": "npm:11.14.0"
     "@emotion/serialize": "npm:1.3.3"
     "@faker-js/faker": "npm:^9.0.0"
-    "@floating-ui/react": "npm:0.27.16"
+    "@floating-ui/react": "npm:0.27.19"
     "@grafana/data": "npm:13.0.0-pre"
     "@grafana/e2e-selectors": "npm:13.0.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.2.4"
@@ -4147,6 +4142,7 @@ __metadata:
     react-data-grid: "grafana/react-data-grid#a10c748f40edc538425b458af4e471a8262ec4ed"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.8"
+    react-element-to-jsx-string: "npm:^17.0.1"
     react-highlight-words: "npm:0.21.0"
     react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^15.0.0"
@@ -6500,49 +6496,49 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfeature/core@npm:^1.9.0":
-  version: 1.9.1
-  resolution: "@openfeature/core@npm:1.9.1"
-  checksum: 10/6099e16b1b4cd6e3c45c05ab4acd44c9cb4ab501b676ab6f3e77f0be1b56abc7506c5629187381333a02975d315d831e0905582435b356d9676255e72a465899
+"@openfeature/core@npm:^1.9.2":
+  version: 1.9.2
+  resolution: "@openfeature/core@npm:1.9.2"
+  checksum: 10/935736b2a3d199fcf85068c40f87ea4db108a475982562851d016a36e00898a9ae37ba90fe4562c6952d1951c7dc9b0ee2d35dceaf3be489e0d27eff2c395663
   languageName: node
   linkType: hard
 
-"@openfeature/ofrep-core@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@openfeature/ofrep-core@npm:2.0.0"
+"@openfeature/ofrep-core@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "@openfeature/ofrep-core@npm:2.1.0"
   peerDependencies:
     "@openfeature/core": ^1.6.0
-  checksum: 10/598656fb35c517fec8abfc4cd8c5a9cb11d4c0f1698e6aa1dd1cf7c42ebb244a9e5be7c8f0fecdc0d2246747b1a51f7e2fe5b84e2f648b23cf40435d2e3dc176
+  checksum: 10/9a8dbb6def3040aecc3f51110742b9cc5a83faad633273db3425c61b4a6819e26f05aad6cdb02d89d1e8c73ec58f04077c02b613d5f9f106e20bc6eed22c8e73
   languageName: node
   linkType: hard
 
-"@openfeature/ofrep-web-provider@npm:^0.3.3":
-  version: 0.3.5
-  resolution: "@openfeature/ofrep-web-provider@npm:0.3.5"
+"@openfeature/ofrep-web-provider@npm:^0.3.3, @openfeature/ofrep-web-provider@npm:^0.3.6":
+  version: 0.3.6
+  resolution: "@openfeature/ofrep-web-provider@npm:0.3.6"
   dependencies:
-    "@openfeature/ofrep-core": "npm:^2.0.0"
+    "@openfeature/ofrep-core": "npm:^2.1.0"
   peerDependencies:
     "@openfeature/web-sdk": ^1.4.0
-  checksum: 10/699a9d2591e9d5834f02baa3d68972e52d37efed3866e2c06ad5deb071447c68fdd8afdc2e66e9808f7be162358a338f69cb7912fcb70320f7a7bc6abd00d3d6
+  checksum: 10/ffe9ef27a8f297f1a416f88b49b25810d19b05e70bea5e94858d077d34bff51c04971174ac74d17b7809e817812d4c66b013d27acd91bc555358a3d38892ff53
   languageName: node
   linkType: hard
 
-"@openfeature/react-sdk@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@openfeature/react-sdk@npm:1.2.0"
+"@openfeature/react-sdk@npm:^1.2.0, @openfeature/react-sdk@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "@openfeature/react-sdk@npm:1.2.1"
   peerDependencies:
     "@openfeature/web-sdk": ^1.5.0
     react: ">=16.8.0"
-  checksum: 10/56411b9e6fbf79e13b2cbe2f45a632ba933127cad9b0e59bc714646d95516b51173e9aadd51fb829f27aba1f29383f2a5cd4d3cd97ae49a673e3175453e30c6e
+  checksum: 10/a85242e8e57540b05bce91e8deaeccac5de8da3f2ff8246bdbfe03350397c614fc7248b6018264016644837d2b47c6e34695a8ac334880251ead03ec8428263c
   languageName: node
   linkType: hard
 
-"@openfeature/web-sdk@npm:^1.6.1":
-  version: 1.7.2
-  resolution: "@openfeature/web-sdk@npm:1.7.2"
+"@openfeature/web-sdk@npm:^1.6.1, @openfeature/web-sdk@npm:^1.7.3":
+  version: 1.7.3
+  resolution: "@openfeature/web-sdk@npm:1.7.3"
   peerDependencies:
-    "@openfeature/core": ^1.9.0
-  checksum: 10/3fc966d0523ca1941b44350d4c8a42c1b74cb035265d3574a2a6b16e87fa9edfb7211ec945b937399badad5de1e771c55ba7ce04d6eb02f265fc5a37e3af9395
+    "@openfeature/core": ^1.9.2
+  checksum: 10/0789b251e2354d898ba5d1b4548ab10eee3474b508e756722431d2b3d66916e5da9e7996a78f02e7cbc9e5534e891931c6fed2dac07f6f60bb42c2c3f6a0487b
   languageName: node
   linkType: hard
 
@@ -10277,7 +10273,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:6.6.4, @testing-library/jest-dom@npm:^6.1.2, @testing-library/jest-dom@npm:^6.6.3":
+"@testing-library/jest-dom@npm:6.6.4":
   version: 6.6.4
   resolution: "@testing-library/jest-dom@npm:6.6.4"
   dependencies:
@@ -10292,7 +10288,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:^6.9.1":
+"@testing-library/jest-dom@npm:^6.1.2, @testing-library/jest-dom@npm:^6.6.3, @testing-library/jest-dom@npm:^6.9.1":
   version: 6.9.1
   resolution: "@testing-library/jest-dom@npm:6.9.1"
   dependencies:
@@ -13908,11 +13904,11 @@ __metadata:
   linkType: hard
 
 "brace-expansion@npm:^5.0.2":
-  version: 5.0.2
-  resolution: "brace-expansion@npm:5.0.2"
+  version: 5.0.5
+  resolution: "brace-expansion@npm:5.0.5"
   dependencies:
     balanced-match: "npm:^4.0.2"
-  checksum: 10/18d382c0919c68f8bb56fbe4a9cb1181a0bf10e6786b5683e586493dfbb517bdcf972f4a3a8d560486627fd9c9c6ecef0a2b8fd454eb6082780307ffd5586251
+  checksum: 10/f259b2ddf04489da9512ad637ba6b4ef2d77abd4445d20f7f1714585f153435200a53fa6a2e4a5ee974df14ddad4cd16421f6f803e96e8b452bd48598878d0ee
   languageName: node
   linkType: hard
 
@@ -20068,7 +20064,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.27.16"
+    "@floating-ui/react": "npm:0.27.19"
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
@@ -20090,12 +20086,12 @@ __metadata:
     "@grafana/llm": "npm:1.0.3"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:3.4.7"
+    "@grafana/plugin-e2e": "npm:^3.4.10"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.1.10--canary.1407.23746848504.0"
-    "@grafana/scenes-react": "npm:7.1.10--canary.1407.23746848504.0"
+    "@grafana/scenes": "npm:7.3.4"
+    "@grafana/scenes-react": "npm:7.3.4"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -21983,6 +21979,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-plain-object@npm:5.0.0, is-plain-object@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "is-plain-object@npm:5.0.0"
+  checksum: 10/e32d27061eef62c0847d303125440a38660517e586f2f3db7c9d179ae5b6674ab0f469d519b2e25c147a1a3bc87156d0d5f4d8821e0ce4a9ee7fe1fcf11ce45c
+  languageName: node
+  linkType: hard
+
 "is-plain-object@npm:^2.0.4":
   version: 2.0.4
   resolution: "is-plain-object@npm:2.0.4"
@@ -21996,13 +21999,6 @@ __metadata:
   version: 3.0.1
   resolution: "is-plain-object@npm:3.0.1"
   checksum: 10/d13fe75db350d4ac669595cdfe0242ae87fcecddf2bca858d2dd443a6ed6eb1f69951fac8c2fa85b16106c6b0d7738fea86c2aca2ecee7fd61de15c1574f2cc5
-  languageName: node
-  linkType: hard
-
-"is-plain-object@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "is-plain-object@npm:5.0.0"
-  checksum: 10/e32d27061eef62c0847d303125440a38660517e586f2f3db7c9d179ae5b6674ab0f469d519b2e25c147a1a3bc87156d0d5f4d8821e0ce4a9ee7fe1fcf11ce45c
   languageName: node
   linkType: hard
 
@@ -28784,6 +28780,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-element-to-jsx-string@npm:^17.0.1":
+  version: 17.0.1
+  resolution: "react-element-to-jsx-string@npm:17.0.1"
+  dependencies:
+    "@base2/pretty-print-object": "npm:1.0.2"
+    is-plain-object: "npm:5.0.0"
+  peerDependencies:
+    react: ^19.0.0
+    react-dom: ^19.0.0
+    react-is: ^19.0.0
+  checksum: 10/d5d611f55d3bb8a29dcc253cdf78d6b7eed6ad76466dccfb8d866988bbf7007d2ba3471b4b251bcb4f806331c6d71eb493497dd8bc016270abec4a51a3d3f247
+  languageName: node
+  linkType: hard
+
 "react-fast-compare@npm:^3.0.1":
   version: 3.2.0
   resolution: "react-fast-compare@npm:3.2.0"
@@ -30505,14 +30515,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sax@npm:>=0.6.0":
-  version: 1.4.1
-  resolution: "sax@npm:1.4.1"
-  checksum: 10/b1c784b545019187b53a0c28edb4f6314951c971e2963a69739c6ce222bfbc767e54d320e689352daba79b7d5e06d22b5d7113b99336219d6e93718e2f99d335
-  languageName: node
-  linkType: hard
-
-"sax@npm:^1.5.0":
+"sax@npm:>=0.6.0, sax@npm:^1.5.0":
   version: 1.5.0
   resolution: "sax@npm:1.5.0"
   checksum: 10/9012ff37dda7a7ac5da45db2143b04036103e8bef8d586c3023afd5df6caf0ebd7f38017eee344ad2e2247eded7d38e9c42cf291d8dd91781352900ac0fd2d9f

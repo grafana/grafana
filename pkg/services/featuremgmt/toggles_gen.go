@@ -119,6 +119,10 @@ const (
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
 
+	// FlagSseExpressionErrorIsolation
+	// Isolate expression build errors to the broken expression&#39;s refID instead of failing the entire pipeline
+	FlagSseExpressionErrorIsolation = "sseExpressionErrorIsolation"
+
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
@@ -674,10 +678,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagAlertingImportAlertmanagerUI
-	// Enables the UI to see imported Alertmanager configuration
-	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
-
 	// FlagAlertingDisableDMAinUI
 	// Disables the DMA feature in the UI
 	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
@@ -925,4 +925,8 @@ const (
 	// FlagQueryFetchConfigFromSettingsService
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
+
+	// FlagQueryServiceQueryCaching
+	// Enables the query service to do query caching
+	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
 )

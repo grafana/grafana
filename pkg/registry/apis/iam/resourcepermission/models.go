@@ -72,12 +72,14 @@ type rbacAssignmentCreate struct {
 	SubjectID        any    // int64 for user/team, string for builtin_role
 	AssignmentTable  string // "user_role", "team_role", or "builtin_role"
 	AssignmentColumn string // "user_id", "team_id", or "role"
+	DatasourceType   string // e.g. "loki"
 }
 
 func (g *rbacAssignmentCreate) permission() accesscontrol.Permission {
 	p := accesscontrol.Permission{
-		Action: g.Action,
-		Scope:  g.Scope,
+		Action:         g.Action,
+		Scope:          g.Scope,
+		DatasourceType: g.DatasourceType,
 	}
 	p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(p.Scope)
 	return p
@@ -93,6 +95,7 @@ type rbacAssignment struct {
 	SubjectUID       string    `xorm:"subject_uid"`
 	SubjectType      string    `xorm:"subject_type"` // 'user', 'team', or 'builtin_role'
 	IsServiceAccount bool      `xorm:"is_service_account"`
+	DatasourceType   string    `xorm:"datasource_type"`
 }
 
 // newV0ResourcePermission creates a new v0alpha1.ResourcePermission from the given groupResourceName and permission specs.
@@ -143,14 +146,14 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 		specs               = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
 	)
 
-	grn, err := s.ParseScope(assignments[0].Scope)
+	grn, err := s.ParseScope(assignments[0].Scope, assignments[0].DatasourceType)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, assign := range assignments {
 		// Ensure all assignments belong to the same resource
-		parsedGrn, err := s.ParseScope(assign.Scope)
+		parsedGrn, err := s.ParseScope(assign.Scope, assign.DatasourceType)
 		if err != nil {
 			return nil, err
 		}
@@ -236,8 +239,9 @@ func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
 }
 
 // ParseScope parses a scope string (e.g. folders:uid:1) into a groupResourceName (e.g. {folder.grafana.app, folders, fold1}).
-func (s *ResourcePermSqlBackend) ParseScope(scope string) (*groupResourceName, error) {
-	return s.mappers.ParseScope(scope)
+// If the scope is a datasource scope, the datasourceType is used to resolve the concrete group.
+func (s *ResourcePermSqlBackend) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
+	return s.mappers.ParseScope(scope, datasourceType)
 }
 
 // splitResourceName splits a resource name in the format <group>-<resource>-<name>

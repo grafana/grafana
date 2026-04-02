@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Delivered to <2>{{name}}</2>",
-      "no-grouping": "No grouping"
+      "delivered-to-disabled": "Delivered to {{name}}",
+      "no-grouping": "No grouping",
+      "view-contact-point-no-permission": "You do not have permission to view contact points"
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
+      "content-you-do-not-have-permission-to-access-incident": "You do not have permission to access Incident",
       "label-declare-incident": "Declare incident"
     },
     "delete-rule-modal": {
@@ -2250,7 +2253,9 @@
       "menu-analyze": "Analyze alert notification",
       "menu-copy-link": "Copy link",
       "menu-silence": "Silence notifications",
+      "menu-silence-no-permission": "You do not have permission to create silences",
       "menu-view-contact-point": "View contact point",
+      "menu-view-contact-point-no-permission": "You do not have permission to view contact points",
       "menu-view-rule": "View alert rule",
       "menu-view-rule-n": "View alert rule ({{n}})",
       "more-details-heading": "More details",
@@ -2591,6 +2596,9 @@
       "reset-aria": "Reset to default policy",
       "view-policies": "View policies",
       "view-policies-aria": "View notification policies"
+    },
+    "policyFilter": {
+      "label": "Notification policy"
     },
     "preview-rule": {
       "body-preview-is-not-available": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
@@ -3012,7 +3020,7 @@
     },
     "rule-list-v2": {
       "import-to-gma": "Import alert rules",
-      "import-to-gma-tool": "Import to GMA"
+      "import-to-gma-tool": "Import to Grafana Alerting"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
@@ -3107,6 +3115,7 @@
     "rules-filter": {
       "clear-filters": "Clear filters",
       "configured-alert-rules": "Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are stored and evaluated in the data source itself.",
+      "contact-point-disabled-tooltip": "Contact point filtering is not available while a notification policy filter is active.",
       "contact-point-tooltip": "Filters alert rules which route directly to the selected contact point. Alert rules routed to notification policies will not be displayed.",
       "contact-point-tooltip-title": "Contact point filter help",
       "dashboard": "Dashboard",
@@ -3131,7 +3140,11 @@
       "placeholder-data-sources": "Select data sources",
       "placeholder-group-search": "Search group",
       "placeholder-labels": "Select labels",
+      "placeholder-policy": "Select policy",
       "plugin-rules": "Plugin rules",
+      "policy-disabled-tooltip": "Notification policy filtering is not available while a contact point filter is active.",
+      "policy-tooltip": "Filters alert rules which route to the selected notification policy tree. Alert rules using direct contact point routing will not be displayed.",
+      "policy-tooltip-title": "Notification policy filter help",
       "rule-source": {
         "datasource": "Data source managed",
         "grafana": "Grafana managed"
@@ -3212,6 +3225,7 @@
       "title-group": "Group",
       "title-health": "Health",
       "title-labels": "Labels",
+      "title-policy": "Policy",
       "title-rule": "Rule",
       "title-state": "State",
       "title-type": "Type"
@@ -3562,14 +3576,16 @@
       "expand-all": "Expand all",
       "expand-sidebar": "Expand sidebar",
       "filter-labels": "Filter labels",
-      "filter-labels-placeholder": "Filter",
+      "filter-labels-placeholder": "Search labels",
       "group-row": {
         "no-label": "No {{label}}"
       },
       "instance-details-drawer": {
         "declare-incident": "Declare incident",
+        "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
-        "silence-button": "Silence"
+        "silence-button": "Silence",
+        "silence-no-permission": "You do not have permission to create silences"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -4256,6 +4272,7 @@
       "new-folder-as-team-folder-label": "Team",
       "new-folder-name-required-phrase": "Folder name is required.",
       "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
+      "rename-provisioned-folder": "Rename provisioned folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -4419,6 +4436,20 @@
       "error": "Recently viewed dashboards couldn’t be loaded.",
       "retry": "Retry",
       "title": "Recently viewed"
+    },
+    "rename-folder": {
+      "read-only-message": "To rename this folder, please update the folder in your repository directly."
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "Cancel",
+      "button-rename": "Rename",
+      "button-renaming": "Renaming...",
+      "commit": "Rename folder",
+      "error-saving": "Failed to rename folder",
+      "label-folder-name": "Folder name",
+      "missing-info": "Missing required fields",
+      "success-message": "Folder renamed successfully",
+      "title-required": "Folder name is required"
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
@@ -5600,6 +5631,8 @@
         "title": "Variables"
       },
       "variable": {
+        "change-type": "Change",
+        "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
           "change-value": "Change variable value",
@@ -5653,10 +5686,16 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "auto-grid": "Auto grid",
+      "auto-grid-description": "Panels resize to fit and form uniform grids",
+      "custom-grid": "Custom grid",
+      "custom-grid-description": "Position and size each panel individually",
       "description": "Add a panel to visualize your data",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
+      "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "select-layout-header": "Select layout",
       "title": "New dashboard"
     },
     "errors": {
@@ -6489,6 +6528,9 @@
       },
       "name": {
         "action": "Change variable name"
+      },
+      "type": {
+        "action": "Change variable type"
       }
     },
     "version-history-comparison": {
@@ -6569,8 +6611,8 @@
   "dashboard-library": {
     "card": {
       "community-badge": "Community",
-      "customize-with-assistant-button": "Customize with assistant",
-      "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
+      "customize-with-assistant-button": "Customize with Assistant",
+      "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available ",
@@ -6934,8 +6976,8 @@
     },
     "default-value-editor": {
       "aria-label": "Default value",
-      "description": "Values that are pre-selected by default.",
-      "label": "Default value",
+      "description": "Group by dimensions that are pre-selected by default.",
+      "label": "Default group by",
       "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
@@ -6980,6 +7022,12 @@
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {
+      "default_grid_options": {
+        "label": {
+          "auto": "Auto grid",
+          "custom": "Custom grid"
+        }
+      },
       "editable_options": {
         "label": {
           "editable": "Editable",
@@ -7731,6 +7779,8 @@
     "general": {
       "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list. Use the format '5s' for seconds, '1m' for minutes, '1h' for hours, and '1d' for days (e.g.: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
       "auto-refresh-label": "Auto refresh",
+      "default-grid-description": "Select layout type to be used for new rows and tabs",
+      "default-grid-label": "Default grid",
       "description-label": "Description",
       "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
       "editable-label": "Editable",
@@ -10303,6 +10353,8 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "hide": "Hide",
+      "show": "Show",
       "undock": "Undock"
     },
     "slider": {
@@ -12939,12 +12991,14 @@
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "update-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
       "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-deleted-resource-in-branch": "A resource has been deleted in a branch in {{repoType}}.",
-    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you",
+    "title-updated-resource-in-branch": "A resource has been updated in a branch in {{repoType}}."
   },
   "provisioning": {
     "bitbucket": {
@@ -12973,8 +13027,8 @@
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "error-quota-exceeded-message": "This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
-      "error-quota-exceeded-message-onprem": "This repository contains {{resourceCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
+      "error-quota-exceeded-message": "This repository folder contains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
+      "error-quota-exceeded-message-onprem": "This repository folder contains {{fileCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
       "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
@@ -12990,6 +13044,10 @@
       "unmanaged-resources-label": "Unmanaged resources",
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
+    },
+    "cloud-info-box": {
+      "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
+      "title": "You can also use Git Sync on Grafana Cloud"
     },
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
@@ -14670,9 +14728,46 @@
     "select-aria-label": "Sort"
   },
   "splash-screen": {
-    "body": "Splash screen content will go here.",
-    "get-started": "Get started",
-    "title": "Welcome to Grafana"
+    "aria-label": "What's new in Grafana",
+    "assistant": {
+      "bullet-1": "Build complex dashboards in minutes",
+      "bullet-2": "Correlate metrics, logs and traces and gain insights in minutes",
+      "bullet-3": "Onboard new team members in a week instead of a month",
+      "cta": "Show me",
+      "subtitle": "Say no to lengthy config work and troubleshooting. Use the Assistant to be faster than ever.",
+      "title": "Grafana Assistant is now available in OSS"
+    },
+    "badge": "NEW FEATURE",
+    "close": "Close",
+    "explore": {
+      "bullet-1": "Streamlined query building across all data sources",
+      "bullet-2": "Side-by-side comparison of metrics, logs, and traces",
+      "bullet-3": "Save and share your explorations with your team",
+      "cta": "Show me",
+      "subtitle": "A redesigned Explore makes it easier to query, visualize, and understand your data.",
+      "title": "Explore your data with a new experience"
+    },
+    "git-sync": {
+      "bullet-1": "Store your dashboard configuration safely in any git repository",
+      "bullet-2": "Keep track of the changes — and who made them!",
+      "bullet-3": "Works with many deployment scenarios",
+      "cta": "Show me",
+      "subtitle": "Combine the benefit of managing dashboards as code with the simplicity of creating and editing them in Grafana UI.",
+      "title": "Connect Grafana to your preferred git repository and keep them always in sync"
+    },
+    "library": {
+      "bullet-1": "Saved queries is redesigned to make reusing queries easier",
+      "bullet-2": "Gather inspiration from templates and customize them to your needs",
+      "bullet-3": "Jump-start dashboard creation with suggestions tailored to your data",
+      "cta": "Show me",
+      "subtitle": "Now you can build faster with reusable assets",
+      "title": "Dashboard creation with saved queries and templates"
+    },
+    "nav": {
+      "go-to": "Go to slide {{number}}",
+      "next": "Next",
+      "prev": "Previous"
+    }
   },
   "sql-expressions": {
     "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
@@ -15300,8 +15395,7 @@
       "bar": "Bar chart",
       "bar-stacked": "Bar chart - stacked",
       "bar-stacked-percent": "Bar chart - stacked by percentage",
-      "line": "Line chart",
-      "line-smooth": "Line chart - smooth"
+      "line": "Line chart"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",

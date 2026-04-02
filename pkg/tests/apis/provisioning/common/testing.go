@@ -37,7 +37,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -908,6 +908,13 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 	}
 }
 
+// WithFolderAPIVersion sets the provisioning folder API version (e.g. "v1" or "v1beta1").
+func WithFolderAPIVersion(version string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningFolderAPIVersion = version
+	}
+}
+
 // WithoutExportFeatureFlag disables the provisioningExport feature flag.
 func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 	// Remove provisioningExport from the enabled feature toggles
@@ -1451,7 +1458,7 @@ func (c *FilesClient) RequireValidFolderMetadata(t *testing.T, ctx context.Conte
 	require.NoError(t, err, "%s: _folder.json should be readable via the files endpoint", folderMetadataPath)
 
 	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion, "%s: unexpected apiVersion", folderMetadataPath)
+	require.Equal(t, "folder.grafana.app/v1", apiVersion, "%s: unexpected apiVersion", folderMetadataPath)
 	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
 	require.Equal(t, "Folder", kind, "%s: unexpected kind", folderMetadataPath)
 
