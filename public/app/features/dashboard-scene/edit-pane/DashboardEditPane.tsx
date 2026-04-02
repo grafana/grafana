@@ -274,14 +274,16 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
             ...this.state.selectionContext,
             selected: [...this.state.selectionContext.selected, { id }],
           },
+          openPane: 'element',
         });
       }
     } else {
       if (hasItem) {
-        this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] } });
+        this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] }, openPane: undefined });
       } else {
         this.setState({
           selectionContext: { ...this.state.selectionContext, selected: [{ id }] },
+          openPane: 'element',
         });
       }
     }
