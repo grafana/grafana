@@ -6,6 +6,7 @@ import { type SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineLabel } from '../Forms/InlineLabel';
+import { getLabelFromValue } from '../Select/utils';
 
 import { SegmentSelect } from './SegmentSelect';
 import { getSegmentStyles } from './styles';
@@ -43,8 +44,7 @@ export function Segment<T>({
   const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
-    const label = typeof value === 'object' && value !== null ? value.label : value;
-    const labelAsString = label != null ? String(label) : undefined;
+    const label = getLabelFromValue(value);
 
     return (
       <Label
@@ -61,7 +61,7 @@ export function Segment<T>({
                 className
               )}
             >
-              {labelAsString || placeholder}
+              {label || placeholder}
             </InlineLabel>
           )
         }
