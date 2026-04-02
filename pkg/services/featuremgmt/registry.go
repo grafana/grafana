@@ -1085,7 +1085,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingAlertListPanelEnhancements",
