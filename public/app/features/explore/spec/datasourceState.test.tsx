@@ -51,13 +51,19 @@ describe('Explore: handle datasource states', () => {
   });
 
   it('handles datasource changes', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
-    const { datasources } = setupExplore({ urlParams });
-    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-    await waitForExplore();
-    await changeDatasource('elastic');
+    try {
+      const { datasources } = setupExplore({ urlParams });
+      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+      await waitForExplore();
+      await changeDatasource('elastic');
 
-    await screen.findByText('elastic Editor input:');
-    expect(datasources.elastic.query).not.toBeCalled();
+      await screen.findByText('elastic Editor input:');
+      expect(datasources.elastic.query).not.toBeCalled();
+      expect(warnSpy).toHaveBeenCalledWith('Virtualized log list: falling back to DOM for measurement');
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
