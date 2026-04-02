@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import { config, ThemeChangedEvent } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
