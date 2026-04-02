@@ -805,7 +805,7 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, 
 		return cached, nil
 	}
 
-	basicRole, err := s.store.GetBasicRoles(ctx, ns, store.BasicRoleQuery{UserID: userIdentifiers.ID})
+	basicRole, err := s.store.GetBasicRoles(context.WithoutCancel(ctx), ns, store.BasicRoleQuery{UserID: userIdentifiers.ID})
 	if err != nil {
 		return store.BasicRole{}, fmt.Errorf("could not get basic roles: %w", err)
 	}
