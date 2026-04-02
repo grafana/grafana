@@ -510,7 +510,7 @@
     }
   },
   "packages/grafana-sql/src/components/visual-query-builder/Preview.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -964,12 +964,12 @@
     }
   },
   "public/app/core/components/ForgottenPassword/ChangePassword.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/core/components/ForgottenPassword/ForgottenPassword.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -985,17 +985,17 @@
     }
   },
   "public/app/core/components/Login/LoginForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/core/components/OptionsUI/NumberInput.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1010,7 +1010,7 @@
     }
   },
   "public/app/core/components/Page/EditableTitle.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1025,12 +1025,12 @@
     }
   },
   "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 6
     },
     "react-prefer-function-component/react-prefer-function-component": {
@@ -1041,12 +1041,12 @@
     }
   },
   "public/app/core/components/Signup/SignupPage.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 6
     }
   },
   "public/app/core/components/Signup/VerifyEmail.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1164,7 +1164,7 @@
     }
   },
   "public/app/features/actions/ActionEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 7
     }
   },
@@ -1182,12 +1182,12 @@
     }
   },
   "public/app/features/admin/AdminEditOrgPage.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/admin/UserCreatePage.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -1197,27 +1197,27 @@
     }
   },
   "public/app/features/admin/UserOrgs.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/features/admin/ldap/LdapDrawer.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 23
     }
   },
   "public/app/features/admin/ldap/LdapGroupMapping.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
   "public/app/features/admin/ldap/LdapPage.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/admin/ldap/LdapSettingsPage.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 5
     }
   },
@@ -1275,17 +1275,17 @@
     }
   },
   "public/app/features/alerting/unified/components/alert-groups/MatcherFilter.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/contact-points/components/ContactPointsFilter.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1295,22 +1295,22 @@
     }
   },
   "public/app/features/alerting/unified/components/import-to-gma/NamespaceAndGroupFilter.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 5
     }
   },
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeRange.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/notification-policies/EditNotificationPolicyForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 13
     }
   },
@@ -1320,17 +1320,17 @@
     }
   },
   "public/app/features/alerting/unified/components/receivers/form/CloudCommonChannelSettings.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/receivers/form/GrafanaCommonChannelSettings.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/receivers/form/fields/OptionField.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -1351,7 +1351,7 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/AlertRuleNameInput.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
@@ -1361,7 +1361,7 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/CloudEvaluationBehavior.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -1371,12 +1371,12 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/FolderSelector.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -1404,22 +1404,22 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/ActiveTimingFields.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/RouteTimings.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/CloudDataSourceSelector.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -1434,22 +1434,22 @@
     }
   },
   "public/app/features/alerting/unified/components/rules/state-history/StateHistory.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/silences/MatchersField.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 5
     }
   },
   "public/app/features/alerting/unified/components/silences/SilencePeriod.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -1457,7 +1457,7 @@
     }
   },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 5
     }
   },
@@ -1564,17 +1564,17 @@
     }
   },
   "public/app/features/auth-config/FieldRenderer.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 5
     }
   },
   "public/app/features/auth-config/ProviderConfigForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/auth-config/components/ServerDiscoveryModal.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1584,7 +1584,7 @@
     }
   },
   "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -1595,12 +1595,12 @@
     }
   },
   "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/features/correlations/Forms/ConfigureCorrelationTargetForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -1608,12 +1608,12 @@
     }
   },
   "public/app/features/correlations/Forms/QueryEditorField.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/correlations/Forms/TransformationEditorRow.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -1623,7 +1623,7 @@
     }
   },
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -1633,7 +1633,7 @@
     }
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
@@ -1651,7 +1651,7 @@
     }
   },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1679,7 +1679,7 @@
     }
   },
   "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManagerEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -1689,12 +1689,12 @@
     }
   },
   "public/app/features/dashboard-scene/scene/layout-default/row-actions/RowOptionsForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/features/dashboard-scene/scene/layout-rows/RowItemEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     },
     "react-hooks/rules-of-hooks": {
@@ -1702,7 +1702,7 @@
     }
   },
   "public/app/features/dashboard-scene/scene/layout-tabs/TabItemEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     },
     "react-hooks/rules-of-hooks": {
@@ -1738,17 +1738,17 @@
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableHideSelect.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
@@ -1756,22 +1756,22 @@
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/ConfigEmailSharing.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/EmailListConfiguration.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/dashboard-scene/sharing/ShareButton/share-snapshot/UpsertSnapshot.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -1779,17 +1779,17 @@
     "@grafana/no-gf-form": {
       "count": 1
     },
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
   "public/app/features/dashboard-scene/sharing/ShareSnapshotTab.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
   "public/app/features/dashboard-scene/sharing/panel-share/SharePanelPreview.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
@@ -1812,7 +1812,7 @@
     "@grafana/no-locale-compare": {
       "count": 1
     },
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 6
     }
   },
@@ -1853,17 +1853,17 @@
     }
   },
   "public/app/features/dashboard/components/DashboardSettings/AutoRefreshIntervals.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/dashboard/components/DashboardSettings/GeneralSettings.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 6
     }
   },
   "public/app/features/dashboard/components/DashboardSettings/TimePickerSettings.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 5
     }
   },
@@ -1873,7 +1873,7 @@
     }
   },
   "public/app/features/dashboard/components/HelpWizard/HelpWizard.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
@@ -1883,7 +1883,7 @@
     }
   },
   "public/app/features/dashboard/components/PanelEditor/DynamicConfigValueEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1891,7 +1891,7 @@
     "@grafana/no-aria-label-selectors": {
       "count": 1
     },
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
@@ -1915,7 +1915,7 @@
     "@grafana/no-aria-label-selectors": {
       "count": 1
     },
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -1933,7 +1933,7 @@
     }
   },
   "public/app/features/dashboard/components/RowOptions/RowOptionsForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -1943,7 +1943,7 @@
     }
   },
   "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -1958,12 +1958,12 @@
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareExport.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
@@ -1971,22 +1971,22 @@
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareLink.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
   "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
   "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/EmailSharingConfiguration.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     },
     "react-prefer-function-component/react-prefer-function-component": {
@@ -2017,7 +2017,7 @@
     }
   },
   "public/app/features/dashboard/components/TransformationsEditor/TransformationFilter.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -2218,12 +2218,12 @@
     }
   },
   "public/app/features/dimensions/editors/FileUploader.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/dimensions/editors/FolderPickerTab.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -2246,7 +2246,7 @@
     }
   },
   "public/app/features/dimensions/editors/URLPickerTab.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -2266,12 +2266,12 @@
     }
   },
   "public/app/features/explore/CorrelationHelper.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/features/explore/CorrelationTransformationAddModal.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -2286,7 +2286,7 @@
     }
   },
   "public/app/features/explore/Logs/LogsColumnSearch.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -2296,7 +2296,7 @@
     }
   },
   "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -2425,7 +2425,7 @@
     }
   },
   "public/app/features/inspector/InspectDataOptions.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -2457,12 +2457,12 @@
     }
   },
   "public/app/features/invites/SignupInvited.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
   "public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -2487,7 +2487,7 @@
     }
   },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -2497,7 +2497,7 @@
     }
   },
   "public/app/features/migrate-to-cloud/onprem/EmptyState/CallToAction/ConnectModal.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -2512,17 +2512,17 @@
     }
   },
   "public/app/features/org/NewOrgPage.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/org/OrgProfile.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/features/org/UserInviteForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -2540,12 +2540,12 @@
     "@grafana/no-aria-label-selectors": {
       "count": 2
     },
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
   "public/app/features/playlist/ShareModal.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
@@ -2565,7 +2565,7 @@
     }
   },
   "public/app/features/plugins/admin/pages/Browse.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -2611,12 +2611,12 @@
     }
   },
   "public/app/features/profile/ChangePasswordForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
   "public/app/features/profile/UserProfileEditForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
@@ -2719,12 +2719,12 @@
     }
   },
   "public/app/features/serviceaccounts/ServiceAccountCreatePage.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
   "public/app/features/serviceaccounts/components/CreateTokenModal.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -2737,7 +2737,7 @@
     "@grafana/no-locale-compare": {
       "count": 1
     },
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -2986,7 +2986,7 @@
     }
   },
   "public/app/features/variables/query/QueryVariableRefreshSelect.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3091,7 +3091,7 @@
     }
   },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/BasicLogsToggle.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3101,17 +3101,17 @@
     }
   },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/CurrentUserFallbackCredentials.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/DefaultSubscription.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/AzureCheatSheet.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3121,12 +3121,12 @@
     }
   },
   "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/Filters.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
   "public/app/plugins/datasource/azuremonitor/components/VariableEditor/VariableEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 7
     }
   },
@@ -3159,7 +3159,7 @@
     }
   },
   "public/app/plugins/datasource/cloud-monitoring/components/Fields.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3190,12 +3190,12 @@
     }
   },
   "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
   "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/SecureSocksProxySettingsNewStyling.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3203,7 +3203,7 @@
     "@grafana/no-gf-form": {
       "count": 1
     },
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3233,7 +3233,7 @@
     }
   },
   "public/app/plugins/datasource/dashboard/DashboardQueryEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 4
     }
   },
@@ -3243,7 +3243,7 @@
     }
   },
   "public/app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/EditorField.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3287,7 +3287,7 @@
     }
   },
   "public/app/plugins/datasource/grafana/components/AnnotationQueryEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 5
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -3303,7 +3303,7 @@
     }
   },
   "public/app/plugins/datasource/grafana/components/TimeRegionEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 6
     }
   },
@@ -3321,7 +3321,7 @@
     }
   },
   "public/app/plugins/datasource/graphite/configuration/ConfigEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     },
     "react-prefer-function-component/react-prefer-function-component": {
@@ -3398,7 +3398,7 @@
     }
   },
   "public/app/plugins/datasource/influxdb/components/editor/config/ConfigEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -3409,7 +3409,7 @@
     }
   },
   "public/app/plugins/datasource/influxdb/components/editor/config/InfluxSQLConfig.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
@@ -3506,7 +3506,7 @@
     "@grafana/no-gf-form": {
       "count": 4
     },
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 9
     }
   },
@@ -3531,22 +3531,22 @@
     }
   },
   "public/app/plugins/datasource/mssql/azureauth/AzureCredentialsForm.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 10
     }
   },
   "public/app/plugins/datasource/mssql/configuration/ConfigurationEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 11
     }
   },
   "public/app/plugins/datasource/mssql/configuration/Kerberos.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 8
     }
   },
   "public/app/plugins/datasource/opentsdb/components/OpenTsdbDetails.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 3
     }
   },
@@ -3561,7 +3561,7 @@
     }
   },
   "public/app/plugins/datasource/parca/QueryEditor/QueryOptions.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3697,7 +3697,7 @@
     }
   },
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3707,7 +3707,7 @@
     }
   },
   "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
@@ -3736,7 +3736,7 @@
     }
   },
   "public/app/plugins/panel/debug/StateView.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 1
     }
   },
@@ -3769,7 +3769,7 @@
     }
   },
   "public/app/plugins/panel/geomap/editor/StyleEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 14
     },
     "@typescript-eslint/consistent-type-assertions": {
@@ -3914,12 +3914,12 @@
     }
   },
   "public/app/plugins/panel/timeseries/plugins/annotations2-cluster/AnnotationEditor2.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     }
   },
   "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationEditor2.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
@@ -3937,7 +3937,7 @@
     }
   },
   "public/app/plugins/panel/xychart/SeriesEditor.tsx": {
-    "@grafana/require-no-margin-on-field": {
+    "@grafana/require-no-margin": {
       "count": 5
     },
     "@typescript-eslint/consistent-type-assertions": {

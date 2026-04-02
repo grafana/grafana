@@ -578,8 +578,7 @@ module.exports = [
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
       '@grafana/no-direct-local-storage-access': 'error',
-      '@grafana/require-no-margin-on-card': 'error',
-      '@grafana/require-no-margin-on-field': 'error',
+      '@grafana/require-no-margin': 'error',
       '@grafana/no-locale-compare': 'error',
       // eslint-disable-next-line @grafana/no-gf-form
       '@grafana/no-gf-form': 'error',

@@ -18,18 +18,13 @@ module.exports = createNoRestrictedSyntax(
     message: 'Direct usage of localStorage is not allowed. import store from @grafana/data instead',
   },
   {
-    name: 'require-no-margin-on-card',
-    selector:
-      'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
-    message:
-      'Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
-  },
-  {
-    name: 'require-no-margin-on-field',
-    selector:
+    name: 'require-no-margin',
+    selector: [
       'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Field"]) JSXOpeningElement[name.name="Field"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+      'Program:has(ImportDeclaration[source.value="@grafana/ui"] ImportSpecifier[imported.name="Card"]) JSXOpeningElement[name.name="Card"]:not(:has(JSXAttribute[name.name="noMargin"]))',
+    ].join(', '),
     message:
-      'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
+      'Add noMargin prop this component to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
   },
   {
     name: 'no-locale-compare',
