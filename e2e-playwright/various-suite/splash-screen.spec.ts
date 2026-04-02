@@ -10,6 +10,8 @@ test.use({
   },
 });
 
+const STORAGE_API_URL = '/apis/userstorage.grafana.app/';
+
 async function clearSplashStorage(page: Page) {
   const storageInfo = await page.evaluate(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,7 +55,7 @@ test.describe(
     test('shows splash screen on first visit and persists dismissal across reload', async ({ page }) => {
       await page.goto('/');
 
-      const modal = page.getByRole('dialog');
+      const modal = page.getByRole('dialog', { name: "What's new in Grafana" });
       await expect(modal).toBeVisible();
 
       const closeButton = modal.getByRole('button', { name: 'Close' });
@@ -61,7 +63,7 @@ test.describe(
 
       await expect(modal).toBeHidden();
 
-      await page.reload();
+      await Promise.all([page.waitForResponse((response) => response.url().includes(STORAGE_API_URL)), page.reload()]);
 
       await expect(modal).toBeHidden();
     });
