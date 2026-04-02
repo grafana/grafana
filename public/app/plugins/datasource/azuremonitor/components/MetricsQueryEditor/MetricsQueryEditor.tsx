@@ -85,7 +85,7 @@ const MetricsQueryEditor = ({
       return '';
     }
     if (batchAPIEnabled) {
-      return 'You can select items of the same resource type across any subscription. To select resources of a different resource type, please first uncheck your current selection.';
+      return 'You can select items of the same resource type across subscriptions and regions. Resources in different subscriptions or regions are queried in separate requests and may fail independently. To select resources of a different resource type, please first uncheck your current selection.';
     }
     const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
     return supportMultipleResource(selectedRowSample.metricNamespace)

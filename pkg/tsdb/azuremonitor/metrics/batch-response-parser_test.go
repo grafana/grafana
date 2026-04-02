@@ -68,21 +68,21 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 		rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1",
 			"microsoft.compute/virtualmachines", "westus2", "Success", 42.0)
 
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "My Sub")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.NoError(t, err)
 		require.Len(t, frames, 1)
 	})
 
 	t.Run("frame has correct RefID", func(t *testing.T) {
 		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "Success", 1.0)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.NoError(t, err)
 		assert.Equal(t, "A", frames[0].RefID)
 	})
 
 	t.Run("frame has time and value fields", func(t *testing.T) {
 		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "Success", 55.5)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.NoError(t, err)
 		require.Len(t, frames[0].Fields, 2)
 		assert.Equal(t, data.TimeSeriesTimeFieldName, frames[0].Fields[0].Name)
@@ -92,14 +92,14 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 	t.Run("resourceName label is set from last path segment", func(t *testing.T) {
 		rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/myVM",
 			"ns", "westus2", "Success", 1.0)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.NoError(t, err)
 		assert.Equal(t, "myVM", frames[0].Fields[1].Labels["resourceName"])
 	})
 
 	t.Run("unit is mapped to Grafana unit", func(t *testing.T) {
 		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "Success", 1.0)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.NoError(t, err)
 		require.NotNil(t, frames[0].Fields[1].Config)
 		assert.Equal(t, "percent", frames[0].Fields[1].Config.Unit)
@@ -126,7 +126,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 				ErrorCode: "Success",
 			}},
 		}
-		frames, err := framesFromBatchResponseValue(rv, qMax, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, qMax, "https://portal.azure.com")
 		require.NoError(t, err)
 		val, ok := frames[0].Fields[1].ConcreteAt(0)
 		require.True(t, ok)
@@ -135,7 +135,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 
 	t.Run("returns error for non-Success errorCode", func(t *testing.T) {
 		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "ResourceNotFound", 0)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "ResourceNotFound")
 		assert.Empty(t, frames)
@@ -163,7 +163,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 				},
 			},
 		}
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "Disk Read Bytes")
 		assert.Len(t, frames, 1, "frame from successful metric should be preserved")
@@ -172,7 +172,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 
 	t.Run("returns nil frames for empty value array", func(t *testing.T) {
 		rv := batchResponseValue{ResourceID: "/sub/rg/vm1"}
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.NoError(t, err)
 		assert.Empty(t, frames)
 	})
@@ -194,7 +194,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 				ErrorCode: "Success",
 			}},
 		}
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
 		require.NoError(t, err)
 		assert.Equal(t, "myvm", frames[0].Fields[1].Labels["VMName"])
 	})
@@ -226,7 +226,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com", "")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 	})
 
@@ -241,7 +241,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com", "")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 	})
 
@@ -255,7 +255,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com", "")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
 		assert.Empty(t, frames)
 	})
 
@@ -273,7 +273,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com", "")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
 		assert.Len(t, framesForRefID(frames, "A"), 2)
 	})
 
@@ -286,7 +286,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		_, err := parseBatchResponse(result, "https://portal.azure.com", "")
+		_, err := parseBatchResponse(result, "https://portal.azure.com")
 		assert.Error(t, err)
 	})
 }
@@ -314,7 +314,7 @@ func TestDistributeBatchResults(t *testing.T) {
 				}},
 			},
 		}
-		frames, err := distributeBatchResults(results, "https://portal.azure.com", "")
+		frames, err := distributeBatchResults(results, "https://portal.azure.com")
 		assert.NoError(t, err)
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 		assert.Len(t, framesForRefID(frames, "B"), 1)
@@ -328,7 +328,7 @@ func TestDistributeBatchResults(t *testing.T) {
 				Err:   batchErr,
 			},
 		}
-		_, err := distributeBatchResults(results, "https://portal.azure.com", "")
+		_, err := distributeBatchResults(results, "https://portal.azure.com")
 		assert.Error(t, err)
 	})
 
@@ -345,7 +345,7 @@ func TestDistributeBatchResults(t *testing.T) {
 				}},
 			},
 		}
-		frames, err := distributeBatchResults(results, "https://portal.azure.com", "")
+		frames, err := distributeBatchResults(results, "https://portal.azure.com")
 		assert.Error(t, err)
 		assert.Len(t, framesForRefID(frames, "B"), 1)
 	})
@@ -368,13 +368,13 @@ func TestDistributeBatchResults(t *testing.T) {
 				}},
 			},
 		}
-		frames, err := distributeBatchResults(results, "https://portal.azure.com", "")
+		frames, err := distributeBatchResults(results, "https://portal.azure.com")
 		assert.NoError(t, err)
 		assert.Len(t, framesForRefID(frames, "A"), 2)
 	})
 
 	t.Run("empty results returns nil frames and no error", func(t *testing.T) {
-		frames, err := distributeBatchResults(nil, "https://portal.azure.com", "")
+		frames, err := distributeBatchResults(nil, "https://portal.azure.com")
 		assert.NoError(t, err)
 		assert.Empty(t, frames)
 	})

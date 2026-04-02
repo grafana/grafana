@@ -15,7 +15,7 @@ import (
 // data.Frames slice. Each frame carries its RefID. Errors from failed batches
 // or resource-level failures are joined and returned alongside any frames that
 // did succeed.
-func distributeBatchResults(results []batchResult, azurePortalURL, subscription string) (data.Frames, error) {
+func distributeBatchResults(results []batchResult, azurePortalURL string) (data.Frames, error) {
 	var frames data.Frames
 	var errs []error
 
@@ -25,7 +25,7 @@ func distributeBatchResults(results []batchResult, azurePortalURL, subscription 
 			continue
 		}
 
-		f, err := parseBatchResponse(result, azurePortalURL, subscription)
+		f, err := parseBatchResponse(result, azurePortalURL)
 		frames = append(frames, f...)
 		if err != nil {
 			errs = append(errs, err)
@@ -38,7 +38,7 @@ func distributeBatchResults(results []batchResult, azurePortalURL, subscription 
 // parseBatchResponse converts a successful batch result into a flat data.Frames
 // slice. Each frame carries its RefID. Resource-level errors are joined and
 // returned alongside any frames that did succeed.
-func parseBatchResponse(result batchResult, azurePortalURL, subscription string) (data.Frames, error) {
+func parseBatchResponse(result batchResult, azurePortalURL string) (data.Frames, error) {
 	var frames data.Frames
 	var errs []error
 
@@ -57,7 +57,7 @@ func parseBatchResponse(result batchResult, azurePortalURL, subscription string)
 			continue
 		}
 
-		f, err := framesFromBatchResponseValue(resourceValue, query, azurePortalURL, subscription)
+		f, err := framesFromBatchResponseValue(resourceValue, query, azurePortalURL)
 		frames = append(frames, f...)
 		if err != nil {
 			errs = append(errs, err)
@@ -69,9 +69,11 @@ func parseBatchResponse(result batchResult, azurePortalURL, subscription string)
 
 // framesFromBatchResponseValue converts a single resource's batch response entry
 // into data.Frames, mirroring the logic of parseResponse for the ARM API.
-func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types.AzureMonitorQuery, azurePortalURL, subscription string) (data.Frames, error) {
+func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types.AzureMonitorQuery, azurePortalURL string) (data.Frames, error) {
 	resourceID := resourceValue.ResourceID
-	resourceIDParts := strings.Split(resourceID, "/")
+	// Trim any trailing slash before extracting the last path segment to avoid
+	// an empty resourceName when the API returns an ID ending with "/".
+	resourceIDParts := strings.Split(strings.TrimRight(resourceID, "/"), "/")
 	resourceName := resourceIDParts[len(resourceIDParts)-1]
 
 	var frames data.Frames
@@ -111,7 +113,9 @@ func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types
 					Resourceregion: resourceValue.ResourceRegion,
 					Value:          []types.AzureMetricValue{metric.AzureMetricValue},
 				}
-				displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, subscription)
+				// Use query.Subscription so that {{subscription}} resolves to the
+			// per-resource subscription rather than the datasource default.
+			displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, query.Subscription)
 				if dataField.Config != nil {
 					dataField.Config.DisplayName = displayName
 				} else {

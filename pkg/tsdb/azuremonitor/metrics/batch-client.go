@@ -18,6 +18,13 @@ import (
 
 const batchAPIVersion = "2023-10-01"
 
+// maxConcurrentBatches limits how many Metrics Batch API requests run in parallel.
+const maxConcurrentBatches = 10
+
+// maxBatchResponseBodyBytes caps how much of a batch response body is read into
+// memory, guarding against unexpectedly large or malicious responses.
+const maxBatchResponseBodyBytes = 32 * 1024 * 1024 // 32 MB
+
 // batchRequestBody is the JSON body sent in a Metrics Batch API POST request.
 type batchRequestBody struct {
 	ResourceIDs []string `json:"resourceids"`
@@ -61,7 +68,7 @@ func buildBatchURL(batch Batch) string {
 	}
 
 	return fmt.Sprintf("https://%s/subscriptions/%s/metrics:getBatch?%s",
-		endpoint, batch.Key.Subscription, params.Encode())
+		endpoint, url.PathEscape(batch.Key.Subscription), params.Encode())
 }
 
 // batchResponse is the top-level JSON response from the Metrics Batch API.
@@ -107,7 +114,7 @@ func executeBatchRequest(ctx context.Context, batch Batch, cli *http.Client) (*b
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBatchResponseBodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read batch response body: %w", err)
 	}
@@ -124,15 +131,18 @@ func executeBatchRequest(ctx context.Context, batch Batch, cli *http.Client) (*b
 	return &result, nil
 }
 
-// executeBatchRequests runs all batch requests in parallel and returns one
-// batchResult per input batch, preserving input order.
+// executeBatchRequests runs all batch requests in parallel (up to maxConcurrentBatches
+// at a time) and returns one batchResult per input batch, preserving input order.
 func executeBatchRequests(ctx context.Context, batches []Batch, cli *http.Client) []batchResult {
 	results := make([]batchResult, len(batches))
+	sem := make(chan struct{}, maxConcurrentBatches)
 	var wg sync.WaitGroup
 	for i, batch := range batches {
 		wg.Add(1)
+		sem <- struct{}{}
 		go func(idx int, b Batch) {
 			defer wg.Done()
+			defer func() { <-sem }()
 			resp, err := executeBatchRequest(ctx, b, cli)
 			results[idx] = batchResult{Batch: b, Response: resp, Err: err}
 		}(i, batch)

@@ -23,13 +23,11 @@ export const BatchAPIToggle = (props: Props) => {
       )}
       label={t('components.batch-api-toggle.label-enable-batch-api', 'Enable Batch API')}
     >
-      <div>
-        <Switch
-          aria-label={t('components.batch-api-toggle.aria-label-enable-batch-api', 'Batch API')}
-          onChange={onChange}
-          value={options.batchAPIEnabled ?? false}
-        />
-      </div>
+      <Switch
+        aria-label={t('components.batch-api-toggle.aria-label-enable-batch-api', 'Batch API')}
+        onChange={onChange}
+        value={options.batchAPIEnabled ?? false}
+      />
     </Field>
   );
 };

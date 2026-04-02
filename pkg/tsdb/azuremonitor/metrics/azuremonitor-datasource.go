@@ -208,8 +208,7 @@ func splitQueryByResource(query backend.DataQuery) ([]backend.DataQuery, error) 
 
 // isBatchableQuery reports whether a backend query can be sent to the Metrics
 // Batch API. Queries that use a custom namespace (custom metrics, Application
-// Insights custom telemetry) or that appear to use Guest OS metrics must fall
-// back to the legacy ARM metrics endpoint.
+// Insights custom telemetry) must fall back to the legacy ARM metrics endpoint.
 func isBatchableQuery(query backend.DataQuery) bool {
 	var model dataquery.AzureMonitorQuery
 	if err := json.Unmarshal(query.JSON, &model); err != nil {
@@ -236,12 +235,12 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 
 	// Use the dedicated data-plane client for batch requests so that requests to
 	// *.metrics.monitor.azure.com carry a token scoped to that audience rather
-	// than the ARM audience. Fall back to the ARM client if the service is absent
-	// (e.g. in tests or customized-cloud setups that predate this route).
-	batchClient := client
-	if svc, ok := dsInfo.Services["Azure Monitor Batch Metrics"]; ok {
-		batchClient = svc.HTTPClient
+	// than the ARM audience.
+	svc, ok := dsInfo.Services["Azure Monitor Batch Metrics"]
+	if !ok {
+		return nil, fmt.Errorf("batch API requires the %q service to be configured; ensure the datasource has a data-plane route for metrics.monitor.azure.com", "Azure Monitor Batch Metrics")
 	}
+	batchClient := svc.HTTPClient
 
 	// Separate batchable from non-batchable (custom namespace / Guest OS) queries.
 	// Non-batchable queries are executed individually via the legacy ARM endpoint.
@@ -312,7 +311,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	// Distribute successful frames into per-RefID responses first, so that
 	// partial data from successful batches is never discarded by a failed batch.
 	azurePortalURL := dsInfo.Routes["Azure Portal"].URL
-	frames, parseErr := distributeBatchResults(batchResults, azurePortalURL, dsInfo.Settings.SubscriptionId)
+	frames, parseErr := distributeBatchResults(batchResults, azurePortalURL)
 	if parseErr != nil {
 		e.Logger.Warn("partial error distributing batch results", "err", parseErr)
 	}

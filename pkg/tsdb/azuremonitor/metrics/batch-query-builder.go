@@ -69,6 +69,12 @@ const maxBatchSize = 50
 // Batch represents a single POST request to the Metrics Batch API.
 // It contains at most maxBatchSize resource IDs and the original queries
 // needed to map response values back to their RefIDs.
+//
+// Invariant: every resource ID in ResourceIDs is owned by at least one query
+// in Queries (i.e. present as a key in query.Resources). This is established
+// by createBatches and relied upon by parseBatchResponse to route frames back
+// to the correct RefID. Constructing a Batch outside createBatches must
+// preserve this invariant to avoid silently dropping frames.
 type Batch struct {
 	Key         batchGroupKey
 	ResourceIDs []string
