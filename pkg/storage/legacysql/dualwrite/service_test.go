@@ -109,7 +109,7 @@ func TestService(t *testing.T) {
 			{rest.Mode4, "unified"},
 			{rest.Mode5, "unified"},
 		} {
-			storage, err := NewStaticStorage(gr, tt.mode, ls, us)
+			storage, err := newStaticStorage(gr, tt.mode, ls, us)
 			require.NoError(t, err, "Mode%d", tt.mode)
 			_, isDual := storage.(*dualWriter)
 			switch tt.wantType {
