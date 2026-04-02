@@ -77,7 +77,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-12,annotationsClustering,experimental,@grafana/dataviz-squad,false,false,true
 2023-11-13,dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 2024-10-23,dashboardNewLayouts,preview,@grafana/dashboards-squad,false,false,false
-2026-03-19,dashboardDefaultLayoutSelector,experimental,@grafana/dashboards-squad,false,false,true
+2026-03-19,dashboardDefaultLayoutSelector,GA,@grafana/dashboards-squad,false,false,true
 2026-03-10,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 2025-10-10,unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
