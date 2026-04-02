@@ -1737,6 +1737,16 @@
       "count": 4
     }
   },
+  "public/app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect.tsx": {
+    "@grafana/require-no-margin-on-field": {
+      "count": 1
+    }
+  },
+  "public/app/features/dashboard-scene/settings/variables/components/VariableHideSelect.tsx": {
+    "@grafana/require-no-margin-on-field": {
+      "count": 1
+    }
+  },
   "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx": {
     "@grafana/require-no-margin-on-field": {
       "count": 1
@@ -3901,6 +3911,11 @@
   "public/app/plugins/panel/timeseries/plugins/AnnotationsPlugin2.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
+    }
+  },
+  "public/app/plugins/panel/timeseries/plugins/annotations2-cluster/AnnotationEditor2.tsx": {
+    "@grafana/require-no-margin-on-field": {
+      "count": 2
     }
   },
   "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationEditor2.tsx": {

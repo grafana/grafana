@@ -38,7 +38,6 @@ export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<P
   }
 
   return (
-    // eslint-disable-next-line @grafana/require-no-margin-on-field
     <Field label={t('dashboard-scene.variable-hide-select.label', 'Hide')}>
       <RadioButtonGroup options={HIDE_OPTIONS} onChange={onChange} value={value} />
     </Field>
