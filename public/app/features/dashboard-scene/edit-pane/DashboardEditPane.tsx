@@ -289,6 +289,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
   }
 
+  public getSelectedObject(): SceneObject | undefined {
+    if (this.state.selectionContext.selected.length === 0) {
+      return undefined;
+    }
+
+    return sceneGraph.findByKey(this, this.state.selectionContext.selected[0].id);
+  }
+
   /**
    * @param force If force = true it will clear selection even when docked
    * @returns
@@ -299,16 +307,16 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     this.setState({ selectionContext: { ...this.state.selectionContext, selected: [] }, openPane: undefined });
-    // // If we are docked then clearing selection should select dashboard itself
-    // // Unless the user explicitly closes pane
-    // if (this.state.isDocked && !force) {
-    //   const obj = this.state.selection?.getFirstObject();
-    //   const dashboard = getDashboardSceneFor(this);
-    //   if (obj !== dashboard) {
-    //     this.selectObject(dashboard, dashboard.state.key!);
-    //   }
-    //   return;
-    // }
+
+    // If we are docked then clearing selection should select dashboard itself
+    // Unless the user explicitly closes pane
+    if (this.state.isDocked && !force) {
+      const dashboard = getDashboardSceneFor(this);
+      if (obj !== dashboard) {
+        this.selectObject(dashboard, dashboard.state.key!);
+      }
+      return;
+    }
 
     // this.updateSelection(undefined, []);
   }
@@ -338,12 +346,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
     //this.state.selection?.markAsNewElement();
-  }
-
-  public getSelectedObject(): SceneObject | undefined {
-    const selected = this.state.selectionContext.selected[0];
-    const obj = sceneGraph.findObject(this, (obj) => obj.state.key === selected?.id);
-    return obj ?? undefined;
   }
 
   public addNewPanel(targetElement?: SceneObject) {

@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, type SceneObject, type SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, type SceneObject, sceneUtils, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -24,7 +24,7 @@ import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
-import { getEditableElementFor } from './shared';
+import { getEditableElementForSelection } from './shared';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -35,7 +35,7 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { openPane, selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
@@ -44,13 +44,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const isNewElement = false; // selection?.isNewElement() ?? false;
   // the layout element that was selected when opening the 'add' pane
   // used when adding new panel from the sidebar
-  const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
-    dashboard
-  );
+  const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject>(dashboard);
 
   const editableElement = useMemo(() => {
-    return getEditableElementFor(selectedObject);
-  }, [selectedObject]);
+    return getEditableElementForSelection(editPane, selectionContext.selected);
+  }, [editPane, selectionContext.selected]);
 
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
@@ -72,7 +70,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       {editableElement && isEditing && (
         <Sidebar.OpenPane>
           <ElementEditPane
-            key={selectedObject?.state.key}
+            key={selectionContext.selected.map((s) => s.id).join(',')} // force remount when selection changes
             editPane={editPane}
             element={editableElement}
             isNewElement={isNewElement}

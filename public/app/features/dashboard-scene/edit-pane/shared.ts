@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import {
   dataLayers,
   LocalValueVariable,
+  sceneGraph,
   SceneGridRow,
   type SceneObject,
   type SceneVariable,
@@ -36,9 +37,35 @@ import { isSceneVariable } from '../settings/variables/utils';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
+import { ElementSelectionContextItem } from '@grafana/ui';
+import { BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
+import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 
 export function useEditPaneCollapsed() {
   return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
+}
+
+export function getEditableElementForSelection(
+  scene: SceneObject,
+  selected: ElementSelectionContextItem[]
+): EditableDashboardElement | undefined {
+  if (selected.length === 1) {
+    const obj = sceneGraph.findByKey(scene, selected[0].id);
+    if (obj) {
+      return getEditableElementFor(obj);
+    }
+  }
+
+  if (selected.length > 1) {
+    const objects = selected.map((s) => sceneGraph.findByKey(scene, s.id)).filter((o) => o !== undefined);
+    const elements: BulkActionElement[] = objects
+      .map((obj) => getEditableElementFor(obj))
+      .filter((e): e is BulkActionElement => isBulkActionElement(e!));
+
+    return new MultiSelectedObjectsEditableElement(elements);
+  }
+
+  return undefined;
 }
 
 export function getEditableElementFor(sceneObj: SceneObject | undefined): EditableDashboardElement | undefined {
