@@ -255,9 +255,11 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	))
 	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		s.logger.Error("failed to get requester from context", "err", err)
+		ctxLogger.Error("failed to get requester from context", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -269,7 +271,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
-		s.logger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -278,7 +280,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(cmd.UserID, 10)
 	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
-		s.logger.Error("k8s user list failed", "namespace", namespace, "userID", cmd.UserID, "err", err)
+		ctxLogger.Error("k8s user list failed", "namespace", namespace, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -291,7 +293,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	}
 
 	if len(list.Items) > 1 {
-		s.logger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", cmd.UserID, "count", len(list.Items))
+		ctxLogger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", cmd.UserID, "count", len(list.Items))
 		err := errors.New("multiple users found")
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -336,7 +338,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 
 	_, err = client.Update(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.UpdateOptions{})
 	if err != nil {
-		s.logger.Error("k8s user update failed", "namespace", namespace, "orgID", orgID, "userID", cmd.UserID, "err", err)
+		ctxLogger.Error("k8s user update failed", "namespace", namespace, "orgID", orgID, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
