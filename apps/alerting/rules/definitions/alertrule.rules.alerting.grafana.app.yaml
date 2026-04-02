@@ -72,34 +72,8 @@ spec:
                 default: NoData
                 type: string
               notificationSettings:
-                properties:
-                  activeTimeIntervals:
-                    items:
-                      description: 'TODO(@moustafab): validate regex for time interval
-                        ref'
-                      type: string
-                    type: array
-                  groupBy:
-                    items:
-                      type: string
-                    type: array
-                  groupInterval:
-                    type: string
-                  groupWait:
-                    type: string
-                  muteTimeIntervals:
-                    items:
-                      description: 'TODO(@moustafab): validate regex for time interval
-                        ref'
-                      type: string
-                    type: array
-                  policy:
-                    type: string
-                  receiver:
-                    type: string
-                  repeatInterval:
-                    type: string
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               panelRef:
                 properties:
                   dashboardUID:
@@ -178,8 +152,6 @@ spec:
     - jsonPath: .spec.paused
     - jsonPath: .spec.panelRef.dashboardUID
     - jsonPath: .spec.panelRef.panelID
-    - jsonPath: .spec.notificationSettings.receiver
-    - jsonPath: .spec.notificationSettings.policy
     served: true
     storage: true
     subresources:

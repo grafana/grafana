@@ -27,8 +27,7 @@ AlertRuleSpec: #RuleSpec & {
 	panelID:      int & >0
 }
 
-// TODO(@moustafab): this should be imported from the notifications package
-#NotificationSettings: {
+#ContactPointRouting: {
 	receiver?: string
 	groupBy?: [...string]
 	groupWait?:      #PromDuration
@@ -36,5 +35,11 @@ AlertRuleSpec: #RuleSpec & {
 	repeatInterval?: #PromDuration
 	muteTimeIntervals?: [...#TimeIntervalRef]
 	activeTimeIntervals?: [...#TimeIntervalRef]
-	policy?: string
 }
+
+#PolicyRouting: {
+	policy: string
+}
+
+// TODO(@moustafab): this should be imported from the notifications package
+#NotificationSettings: #ContactPointRouting | #PolicyRouting

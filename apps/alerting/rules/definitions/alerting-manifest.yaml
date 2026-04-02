@@ -116,9 +116,6 @@ spec:
           type: object
         TemplateString:
           type: string
-        TimeIntervalRef:
-          description: 'TODO(@moustafab): validate regex for time interval ref'
-          type: string
         spec:
           additionalProperties: false
           properties:
@@ -146,30 +143,7 @@ spec:
               default: NoData
               type: string
             notificationSettings:
-              additionalProperties: false
-              properties:
-                activeTimeIntervals:
-                  items:
-                    $ref: '#/components/schemas/TimeIntervalRef'
-                  type: array
-                groupBy:
-                  items:
-                    type: string
-                  type: array
-                groupInterval:
-                  $ref: '#/components/schemas/PromDuration'
-                groupWait:
-                  $ref: '#/components/schemas/PromDuration'
-                muteTimeIntervals:
-                  items:
-                    $ref: '#/components/schemas/TimeIntervalRef'
-                  type: array
-                policy:
-                  type: string
-                receiver:
-                  type: string
-                repeatInterval:
-                  $ref: '#/components/schemas/PromDuration'
+              additionalProperties: {}
               type: object
             panelRef:
               additionalProperties: false
@@ -219,8 +193,6 @@ spec:
       - spec.paused
       - spec.panelRef.dashboardUID
       - spec.panelRef.panelID
-      - spec.notificationSettings.receiver
-      - spec.notificationSettings.policy
     - admission:
         mutation:
           operations:

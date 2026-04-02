@@ -16,11 +16,6 @@ export type TemplateString = string;
 
 export const defaultTemplateString = (): TemplateString => ("");
 
-// TODO(@moustafab): validate regex for time interval ref
-export type TimeIntervalRef = string;
-
-export const defaultTimeIntervalRef = (): TimeIntervalRef => ("");
-
 // TODO: validate that only one can specify source=true
 // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 export type ExpressionMap = Record<string, Expression>;
@@ -74,16 +69,7 @@ export interface Spec {
 	missingSeriesEvalsToResolve?: number;
 	noDataState: string;
 	execErrState: string;
-	notificationSettings?: {
-		receiver?: string;
-		groupBy?: string[];
-		groupWait?: PromDuration;
-		groupInterval?: PromDuration;
-		repeatInterval?: PromDuration;
-		muteTimeIntervals?: TimeIntervalRef[];
-		activeTimeIntervals?: TimeIntervalRef[];
-		policy?: string;
-	};
+	notificationSettings?: any;
 	expressions: ExpressionMap;
 	panelRef?: {
 		dashboardUID: string;

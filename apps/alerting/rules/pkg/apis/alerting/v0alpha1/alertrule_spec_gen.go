@@ -23,10 +23,6 @@ type AlertRulePromDuration string
 // +k8s:openapi-gen=true
 type AlertRuleTemplateString string
 
-// TODO(@moustafab): validate regex for time interval ref
-// +k8s:openapi-gen=true
-type AlertRuleTimeIntervalRef string
-
 // TODO: validate that only one can specify source=true
 // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 // +k8s:openapi-gen=true
@@ -86,19 +82,19 @@ type AlertRuleDatasourceUID string
 
 // +k8s:openapi-gen=true
 type AlertRuleSpec struct {
-	Title                       string                                     `json:"title"`
-	Paused                      *bool                                      `json:"paused,omitempty"`
-	Trigger                     AlertRuleIntervalTrigger                   `json:"trigger"`
-	Labels                      map[string]AlertRuleTemplateString         `json:"labels,omitempty"`
-	Annotations                 map[string]AlertRuleTemplateString         `json:"annotations,omitempty"`
-	For                         *string                                    `json:"for,omitempty"`
-	KeepFiringFor               *string                                    `json:"keepFiringFor,omitempty"`
-	MissingSeriesEvalsToResolve *int64                                     `json:"missingSeriesEvalsToResolve,omitempty"`
-	NoDataState                 string                                     `json:"noDataState"`
-	ExecErrState                string                                     `json:"execErrState"`
-	NotificationSettings        *AlertRuleV0alpha1SpecNotificationSettings `json:"notificationSettings,omitempty"`
-	Expressions                 AlertRuleExpressionMap                     `json:"expressions"`
-	PanelRef                    *AlertRuleV0alpha1SpecPanelRef             `json:"panelRef,omitempty"`
+	Title                       string                             `json:"title"`
+	Paused                      *bool                              `json:"paused,omitempty"`
+	Trigger                     AlertRuleIntervalTrigger           `json:"trigger"`
+	Labels                      map[string]AlertRuleTemplateString `json:"labels,omitempty"`
+	Annotations                 map[string]AlertRuleTemplateString `json:"annotations,omitempty"`
+	For                         *string                            `json:"for,omitempty"`
+	KeepFiringFor               *string                            `json:"keepFiringFor,omitempty"`
+	MissingSeriesEvalsToResolve *int64                             `json:"missingSeriesEvalsToResolve,omitempty"`
+	NoDataState                 string                             `json:"noDataState"`
+	ExecErrState                string                             `json:"execErrState"`
+	NotificationSettings        interface{}                        `json:"notificationSettings,omitempty"`
+	Expressions                 AlertRuleExpressionMap             `json:"expressions"`
+	PanelRef                    *AlertRuleV0alpha1SpecPanelRef     `json:"panelRef,omitempty"`
 }
 
 // NewAlertRuleSpec creates a new AlertRuleSpec object.
@@ -113,28 +109,6 @@ func NewAlertRuleSpec() *AlertRuleSpec {
 // OpenAPIModelName returns the OpenAPI model name for AlertRuleSpec.
 func (AlertRuleSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSpec"
-}
-
-// +k8s:openapi-gen=true
-type AlertRuleV0alpha1SpecNotificationSettings struct {
-	Receiver            *string                    `json:"receiver,omitempty"`
-	GroupBy             []string                   `json:"groupBy,omitempty"`
-	GroupWait           *AlertRulePromDuration     `json:"groupWait,omitempty"`
-	GroupInterval       *AlertRulePromDuration     `json:"groupInterval,omitempty"`
-	RepeatInterval      *AlertRulePromDuration     `json:"repeatInterval,omitempty"`
-	MuteTimeIntervals   []AlertRuleTimeIntervalRef `json:"muteTimeIntervals,omitempty"`
-	ActiveTimeIntervals []AlertRuleTimeIntervalRef `json:"activeTimeIntervals,omitempty"`
-	Policy              *string                    `json:"policy,omitempty"`
-}
-
-// NewAlertRuleV0alpha1SpecNotificationSettings creates a new AlertRuleV0alpha1SpecNotificationSettings object.
-func NewAlertRuleV0alpha1SpecNotificationSettings() *AlertRuleV0alpha1SpecNotificationSettings {
-	return &AlertRuleV0alpha1SpecNotificationSettings{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for AlertRuleV0alpha1SpecNotificationSettings.
-func (AlertRuleV0alpha1SpecNotificationSettings) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleV0alpha1SpecNotificationSettings"
 }
 
 // +k8s:openapi-gen=true
