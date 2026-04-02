@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -257,6 +258,8 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		s.logger.Error("failed to get requester from context", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -267,6 +270,8 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		s.logger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -275,20 +280,28 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	if err != nil {
 		s.logger.Error("k8s user list failed", "namespace", namespace, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
 	if len(list.Items) == 0 {
+		span.RecordError(user.ErrUserNotFound)
+		span.SetStatus(codes.Error, user.ErrUserNotFound.Error())
 		return user.ErrUserNotFound
 	}
 
 	if len(list.Items) > 1 {
 		s.logger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", cmd.UserID, "count", len(list.Items))
-		return errors.New("multiple users found")
+		err := errors.New("multiple users found")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	var existing iamv0alpha1.User
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, &existing); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -316,6 +329,8 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&existing)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -323,6 +338,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	if err != nil {
 		s.logger.Error("k8s user update failed", "namespace", namespace, "orgID", orgID, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 

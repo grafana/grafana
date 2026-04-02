@@ -310,14 +310,18 @@ func getDeprecatedInternalIDFromLabels(options *internalversion.ListOptions) int
 	}
 
 	for _, req := range reqs {
-		if req.Key() == utils.LabelKeyDeprecatedInternalID && req.Operator() == selection.Equals {
-			vals := req.Values()
-			if vals.Len() == 1 {
-				idStr, _ := vals.PopAny()
-				if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
-					return id
-				}
-			}
+		if req.Key() != utils.LabelKeyDeprecatedInternalID || req.Operator() != selection.Equals {
+			continue
+		}
+
+		vals := req.Values()
+		if vals.Len() != 1 {
+			return 0
+		}
+
+		idStr, _ := vals.PopAny()
+		if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
+			return id
 		}
 	}
 

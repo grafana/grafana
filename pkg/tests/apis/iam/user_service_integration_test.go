@@ -187,6 +187,14 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 				t.Run("should update user via k8s service and verify it using the legacy API", func(t *testing.T) {
 					require.NotZero(t, createRsp.Result.ID)
 
+					t.Cleanup(func() {
+						apis.DoRequest(helper, apis.RequestParams{
+							User:   helper.Org1.Admin,
+							Method: "DELETE",
+							Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
+						}, &struct{}{})
+					})
+
 					updateRsp := apis.DoRequest(helper, apis.RequestParams{
 						User:   helper.Org1.Admin,
 						Method: "PUT",
@@ -212,13 +220,6 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 					require.Equal(t, "Updated Name", getRsp.Result.Name)
 					require.Equal(t, "updated@example.com", getRsp.Result.Email)
 					require.Equal(t, "updated-user", getRsp.Result.Login)
-
-					deleteRsp := apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: "DELETE",
-						Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
-					}, &struct{}{})
-					require.Equal(t, 200, deleteRsp.Response.StatusCode)
 				})
 			} else {
 				// Modes 4–5 use the kubernetes API as the primary (or only) storage. Since the
@@ -233,6 +234,10 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 						GVR:       gvrUsers,
 					})
 
+					t.Cleanup(func() {
+						_ = userClient.Resource.Delete(ctx, createRsp.Result.UID, metav1.DeleteOptions{})
+					})
+
 					patchBody := []byte(`{"spec":{"title":"Updated K8s Name","email":"updated-k8s@example.com","login":"updated-k8s-user"}}`)
 					_, err := userClient.Resource.Patch(ctx, createRsp.Result.UID, types.MergePatchType, patchBody, metav1.PatchOptions{})
 					require.NoError(t, err)
@@ -244,9 +249,6 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 					require.Equal(t, "Updated K8s Name", userSpec["title"])
 					require.Equal(t, "updated-k8s@example.com", userSpec["email"])
 					require.Equal(t, "updated-k8s-user", userSpec["login"])
-
-					err = userClient.Resource.Delete(ctx, createRsp.Result.UID, metav1.DeleteOptions{})
-					require.NoError(t, err)
 				})
 			}
 		})
