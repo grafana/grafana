@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Consegnato a <2>{{name}}</2>",
-      "no-grouping": "Nessun raggruppamento"
+      "delivered-to-disabled": "",
+      "no-grouping": "Nessun raggruppamento",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident non è installata o non è configurata correttamente",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Dichiara incidente"
     },
     "delete-rule-modal": {
@@ -2244,7 +2247,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -3577,8 +3582,10 @@
       },
       "instance-details-drawer": {
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Dettagli dell'istanza",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Non sono presenti istanze di avviso in stato di attivazione o in sospeso per l'intervallo di tempo selezionato.",
@@ -4265,6 +4272,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio.",
       "new-folder-owner-selector-checkbox": "Assegna un proprietario alla cartella",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Hai selezionato sia risorse sottoposte a provisioning che risorse non sottoposte a provisioning. Non possono essere elaborate insieme. Seleziona solo risorse sottoposte a provisioning o solo risorse non sottoposte a provisioning e riprova.",
       "selected-mix-resources-modal-title": "Tipi di risorse miste selezionati"
     },
@@ -4428,6 +4436,20 @@
       "error": "Impossibile caricare le dashboard visualizzate di recente.",
       "retry": "Riprova",
       "title": "Visti di recente"
+    },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
     },
     "restore": {
       "success-multiple": "",
@@ -5609,6 +5631,8 @@
         "title": ""
       },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Applica",
           "change-value": "Modifica il valore variabile",
@@ -6504,6 +6528,9 @@
       },
       "name": {
         "action": "Modifica nome variabile"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -10326,6 +10353,8 @@
     "sidebar": {
       "close": "Chiudi",
       "dock": "Aggancia",
+      "hide": "",
+      "show": "",
       "undock": "Sgancia"
     },
     "slider": {
@@ -12962,12 +12991,14 @@
       "not-saved": "Il resto degli utenti Grafana nella tua organizzazione vedrà ancora la versione corrente salvata nel ramo predefinito configurato fino a quando questo ramo non verrà unito",
       "open-in-repo-button": "Apri in {{repoType}}",
       "open-pull-request-in-repo": "Apri richiesta pull in {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "Visualizzala in {{repoType}} per vedere le ultime modifiche.",
       "view-pull-request-in-repo": "Visualizza richiesta pull in {{repoType}}"
     },
     "title-created-branch-in-repo": "È stata creata una nuova risorsa in un ramo in {{repoType}}.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Questa risorsa viene caricata dal ramo appena creato in {{repoType}} ed è visibile solo a te"
+    "title-loaded-pull-request-in-repo": "Questa risorsa viene caricata dal ramo appena creato in {{repoType}} ed è visibile solo a te",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -15364,8 +15395,7 @@
       "bar": "Grafico a barre",
       "bar-stacked": "Grafico a barre – in pila",
       "bar-stacked-percent": "Grafico a barre – in pila per percentuale",
-      "line": "Grafico a linee",
-      "line-smooth": "Grafico a linee – uniforme"
+      "line": "Grafico a linee"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Aggiungi fuso orario",
