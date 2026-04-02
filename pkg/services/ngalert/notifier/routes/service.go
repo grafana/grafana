@@ -48,15 +48,15 @@ type routeAccessControl interface {
 }
 
 type Service struct {
-	configStore     alertmanagerConfigStore
-	provenanceStore routeProvenanceStore
-	xact            transactionManager
-	log             log.Logger
-	settings        setting.UnifiedAlertingSettings
-	validator       validation.ProvenanceStatusTransitionValidator
-	FeatureToggles  featuremgmt.FeatureToggles
-	tracer          tracing.Tracer
-	routeAccess     routeAccessControl
+	configStore                         alertmanagerConfigStore
+	provenanceStore                     routeProvenanceStore
+	xact                                transactionManager
+	log                                 log.Logger
+	settings                            setting.UnifiedAlertingSettings
+	provenanceStatusTransitionValidator validation.ProvenanceStatusTransitionValidator
+	FeatureToggles                      featuremgmt.FeatureToggles
+	tracer                              tracing.Tracer
+	routeAccess                         routeAccessControl
 }
 
 func (nps *Service) AccessControlMetadata(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) (map[string]models.RoutePermissionSet, error) {
@@ -89,15 +89,15 @@ func NewService(
 	routeAccess routeAccessControl,
 ) *Service {
 	return &Service{
-		configStore:     am,
-		provenanceStore: prov,
-		xact:            xact,
-		log:             log,
-		settings:        settings,
-		FeatureToggles:  features,
-		validator:       validator,
-		tracer:          tracer,
-		routeAccess:     routeAccess,
+		configStore:                         am,
+		provenanceStore:                     prov,
+		xact:                                xact,
+		log:                                 log,
+		settings:                            settings,
+		FeatureToggles:                      features,
+		provenanceStatusTransitionValidator: validator,
+		tracer:                              tracer,
+		routeAccess:                         routeAccess,
 	}
 }
 
@@ -264,7 +264,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	if err := nps.validator(ctx, storedProvenance, p); err != nil {
+	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, p); err != nil {
 		return nil, err
 	}
 
@@ -348,7 +348,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return err
 	}
-	if err := nps.validator(ctx, storedProvenance, p); err != nil {
+	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, p); err != nil {
 		return err
 	}
 
@@ -408,6 +408,10 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	}
 
 	if err := nps.routeAccess.AuthorizeCreate(ctx, user); err != nil {
+		return nil, err
+	}
+
+	if err := nps.provenanceStatusTransitionValidator(ctx, models.ProvenanceNone, p); err != nil {
 		return nil, err
 	}
 

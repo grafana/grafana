@@ -108,6 +108,10 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule definitions.I
 		return definitions.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
+	if err := svc.validator(ctx, models.ProvenanceNone, models.Provenance(rule.Provenance)); err != nil {
+		return definitions.InhibitionRule{}, err
+	}
+
 	created, err := legacy_storage.InhibitRuleToInhibitionRule(rule.Name, rule.InhibitRule, rule.Provenance)
 	if err != nil {
 		return definitions.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)

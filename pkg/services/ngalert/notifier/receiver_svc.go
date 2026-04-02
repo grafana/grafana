@@ -356,6 +356,10 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
+	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
+		return nil, err
+	}
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err

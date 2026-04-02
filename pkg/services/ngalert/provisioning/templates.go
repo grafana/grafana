@@ -164,6 +164,9 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 	if tmpl.Kind == definition.MimirTemplateKind {
 		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
 	}
+	if err := t.validator(ctx, models.ProvenanceNone, models.Provenance(tmpl.Provenance)); err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
 
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {

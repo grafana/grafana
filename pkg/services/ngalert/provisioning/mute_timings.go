@@ -171,6 +171,10 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
+	if err := svc.validator(ctx, models.ProvenanceNone, models.Provenance(mt.Provenance)); err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
