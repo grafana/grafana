@@ -16,7 +16,7 @@ weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/grafanagcx
 ---
 
-# Overview of the `gcx` Grafana CLI
+# Overview of the `gcx` CLI
 
 {{< admonition type="caution" >}}
 

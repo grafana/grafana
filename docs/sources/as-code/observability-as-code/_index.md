@@ -17,7 +17,7 @@ title: Observability as code
 weight: 100
 cards:
   items:
-    - title: Grafana CLI
+    - title: Grafana CLIs
       height: 24
       href: ./grafana-cli/
       description: The Grafana CLIs are command-line tools designed to simplify interaction with Grafana instances using the new REST APIs. You can authenticate, manage multiple environments, and perform administrative tasks from the terminal. It's suitable for CI/CD pipelines, local development, or free-form tasks.
@@ -63,7 +63,7 @@ Grafana provides a suite of tools for **Observability as code** to help you mana
 Historically, managing Grafana as code involved various community and Grafana Labs tools, but lacked a single, cohesive story. Grafana 12 introduces foundational improvements, including new versioned APIs and official tooling, to provide a clearer path forward:
 
 - This approach requires handling HTTP requests and responses but provides complete control over resource management.
-- `grafanactl`, Git Sync, and the Foundation SDK are all built on top of these APIs.
+- `gcx`, `grafanactl`, Git Sync, and the Foundation SDK are all built on top of these APIs.
 - To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/index.md).
 
 ## Explore
