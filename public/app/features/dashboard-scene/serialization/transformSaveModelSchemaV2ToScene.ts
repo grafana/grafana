@@ -68,6 +68,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -81,6 +82,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
@@ -182,6 +184,13 @@ export function transformSaveModelSchemaV2ToScene(
     .get(dashboard.layout.kind)
     .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
+  let templateLayoutManager: DashboardLayoutManager | undefined = undefined;
+  if (config.featureToggles.dashboardDefaultLayoutSelector && dashboard.preferences?.layout) {
+    templateLayoutManager = layoutDeserializerRegistry
+      .get(dashboard.preferences.layout.kind)
+      .deserialize(dashboard.preferences.layout, {}, false);
+  }
+
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title);
 
@@ -207,6 +216,11 @@ export function transformSaveModelSchemaV2ToScene(
   const dashboardScene = new DashboardScene(
     {
       id: deprecatedId ? parseInt(deprecatedId, 10) : undefined,
+      preferences: templateLayoutManager
+        ? {
+            defaultLayoutTemplate: templateLayoutManager,
+          }
+        : undefined,
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
@@ -245,6 +259,7 @@ export function transformSaveModelSchemaV2ToScene(
           uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
+        new DefaultControlsBehavior(),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,
@@ -292,7 +307,8 @@ function getVariables(
 
 function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariables: VariableKind[] = []) {
   const isDefined = (v: SceneVariable | null): v is SceneVariable => Boolean(v);
-  const variableObjects = (dashboard.variables ?? [])
+  const variables = migrateGroupByVariablesV2(dashboard.variables ?? []);
+  const variableObjects = variables
     .map((v) => {
       try {
         return createSceneVariableFromVariableModel(v);
@@ -360,7 +376,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       layout: 'combobox',
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
@@ -505,7 +522,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.spec.defaultValue

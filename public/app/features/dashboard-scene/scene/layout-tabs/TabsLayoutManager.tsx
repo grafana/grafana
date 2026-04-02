@@ -195,7 +195,7 @@ export class TabsLayoutManager
   }
 
   public addNewTab(tab?: TabItem) {
-    const newTab = tab ?? new TabItem({});
+    const newTab = tab ?? new TabItem({ layout: getDashboardSceneFor(this).getDefaultLayout() });
     const existingNames = new Set(
       this.getTabsIncludingRepeats()
         .map((tab) => tab.state.title)
@@ -230,10 +230,6 @@ export class TabsLayoutManager
     const scene = getDashboardSceneFor(this);
     const tab = getTabFromClipboard(scene);
     this.addNewTab(tab);
-  }
-
-  public shouldUngroup(): boolean {
-    return this.state.tabs.length === 1;
   }
 
   public convertAllGridLayouts(gridLayoutType: GridLayoutType) {

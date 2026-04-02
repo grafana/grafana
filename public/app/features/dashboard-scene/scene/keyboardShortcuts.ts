@@ -26,6 +26,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   let vizPanelPathId: string | null = null;
 
   const canEdit = scene.canEditDashboard();
+  const canSave = Boolean(scene.state.meta.canSave);
 
   const panelAttentionSubscription = appEvents.subscribe(SetPanelAttentionEvent, (event) => {
     if (typeof event.payload.panelId === 'string') {
@@ -239,10 +240,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     });
 
     // Open save drawer
-    keybindings.addBinding({
-      key: 'mod+s',
-      onTrigger: () => scene.openSaveDrawer({}),
-    });
+    if (canSave) {
+      keybindings.addBinding({
+        key: 'mod+s',
+        onTrigger: () => scene.openSaveDrawer({}),
+      });
+    }
 
     // delete panel
     keybindings.addBinding({

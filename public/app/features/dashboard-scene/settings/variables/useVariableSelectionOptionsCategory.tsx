@@ -87,7 +87,11 @@ function MultiValueSwitch({ variable, id }: InputProps) {
   const { isMulti } = variable.useState();
 
   return (
-    <Switch id={id} value={isMulti} onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })} />
+    <Switch
+      id={id}
+      value={Boolean(isMulti)}
+      onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })}
+    />
   );
 }
 
@@ -97,7 +101,7 @@ function IncludeAllSwitch({ variable, id }: InputProps) {
   return (
     <Switch
       id={id}
-      value={includeAll}
+      value={Boolean(includeAll)}
       onChange={(evt) => variable.setState({ includeAll: evt.currentTarget.checked })}
     />
   );
