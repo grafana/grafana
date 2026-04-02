@@ -292,10 +292,7 @@ jobs:
           RPM: ${{ matrix.rpm }}
         run: |
           if [[ "$RPM" == "true" ]]; then
-            make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER" &
-            DEB_PID=$!
-            make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
-            wait $DEB_PID
+            make -j2 build-deb build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
           else
             make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
           fi

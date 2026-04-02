@@ -103,7 +103,7 @@ fpm \
   --license=AGPLv3 \
   --name="${TARGZ_PACKAGE_NAME}" \
   --deb-no-default-config-files \
-  --deb-compression zstd \
+  --deb-compression zst \
   .
 
 echo "created dist/${FILENAME}"
