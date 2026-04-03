@@ -197,7 +197,7 @@ describe('ScopesService', () => {
         changeScopesResolve = resolve;
       });
 
-      let rejectPathToRoot: (err: Error) => void;
+      let rejectPathToRoot: (err: Error) => void = () => {};
       selectorService.changeScopes = jest.fn().mockImplementation(() => {
         selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
         selectorService.state.scopes = {
