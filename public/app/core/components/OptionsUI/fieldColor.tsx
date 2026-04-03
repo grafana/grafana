@@ -30,9 +30,11 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
 
-  const filteredOptions = availableOptions
-    .filter((option) => !option.excludeFromPicker)
-    .filter((option) => option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions);
+  const filteredOptions = availableOptions.filter(
+    (option) =>
+      !option.excludeFromPicker &&
+      (option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions)
+  );
 
   const options: Array<SelectableValue<string>> = [];
   // collect any grouped options in this map
