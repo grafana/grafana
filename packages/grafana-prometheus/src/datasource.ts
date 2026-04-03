@@ -435,7 +435,7 @@ export class PrometheusDatasource
       }));
     }
 
-    if (config.featureToggles.groupByVariable) {
+    if (config.featureToggles.groupByVariable || config.featureToggles.dashboardUnifiedDrilldownControls) {
       processedTarget.groupByKeys = request.groupByKeys;
     }
 

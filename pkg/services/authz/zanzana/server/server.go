@@ -18,6 +18,7 @@ import (
 
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -197,7 +198,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				Workers:             cfg.ZanzanaReconciler.Workers,
 				Interval:            cfg.ZanzanaReconciler.Interval,
 				WriteBatchSize:      cfg.ZanzanaReconciler.WriteBatchSize,
-				ZanzanaReadPageSize: cfg.ZanzanaReconciler.ZanzanaReadPageSize,
+				ZanzanaReadPageSize: int(cfg.ZanzanaServer.ReadPageSize),
 				QueueSize:           cfg.ZanzanaReconciler.QueueSize,
 			},
 			reconcilerLogger,
@@ -263,6 +264,19 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 				Object: common.NewGroupResourceIdent(
 					dashboardV2beta1.DashboardResourceInfo.GroupResource().Group,
 					dashboardV2beta1.DashboardResourceInfo.GroupResource().Resource,
+					"",
+				),
+			},
+		)
+
+		contextuals = append(
+			contextuals,
+			&openfgav1.TupleKey{
+				User:     subject,
+				Relation: common.RelationSetView,
+				Object: common.NewGroupResourceIdent(
+					folders.FolderResourceInfo.GroupResource().Group,
+					folders.FolderResourceInfo.GroupResource().Resource,
 					"",
 				),
 			},
