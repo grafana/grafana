@@ -37,9 +37,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`          | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
+| `dashboardDefaultLayoutSelector`      | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `playlistsRBAC`                       | Enables RBAC for playlists                                                                                                                                    |                    |
+| `alertingListViewV2`                  | Enables the new alert list view design                                                                                                                        | Yes                |
 | `alertingNavigationV2`                | Enables the new Alerting navigation structure with improved menu grouping                                                                                     | Yes                |
 | `pluginProxyPreserveTrailingSlash`    | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`     | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
@@ -83,6 +85,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
+| `annotationsClustering`           | Enables annotation clustering and switches to refactored annotation code                               |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
@@ -99,6 +102,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
+| `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |

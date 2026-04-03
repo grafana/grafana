@@ -394,10 +394,7 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resourcepb.ReadReque
 }
 
 func (a *dashboardSqlAccess) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.Search")
-	defer span.End()
-
-	return a.dashboardSearchClient.Search(ctx, req)
+	return nil, fmt.Errorf("legacy search is no longer supported; dashboards are in unified storage (mode 5)")
 }
 
 func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -410,8 +407,5 @@ func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resourcepb.Co
 
 // GetStats implements ResourceServer.
 func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
-	ctx, span := tracer.Start(ctx, "legacy.dashboardSqlAccess.GetStats")
-	defer span.End()
-
-	return a.dashboardSearchClient.GetStats(ctx, req)
+	return nil, fmt.Errorf("legacy stats is no longer supported; dashboards are in unified storage (mode 5)")
 }

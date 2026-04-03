@@ -44,7 +44,7 @@ type Config struct {
 	Interval            time.Duration
 	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
 	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
-	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 1000)
+	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 100, max 100)
 }
 
 func (c Config) queueSize() int {
@@ -56,7 +56,7 @@ func (c Config) queueSize() int {
 
 func (c Config) zanzanaReadPageSize() int32 {
 	if c.ZanzanaReadPageSize <= 0 {
-		return 1000
+		return 100
 	}
 	return int32(c.ZanzanaReadPageSize)
 }

@@ -32,13 +32,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
 	fStore := folderimpl.ProvideStore(db, cfg)
+	searchMock := resource.NewMockResourceClient(tb)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 	return folderimpl.ProvideService(fStore, ac, bus, dashboardStore, nil, db,
-		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {
@@ -75,7 +80,12 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (*da
 			client.MockTestRestConfig{},
 			dashboardStore,
 			nil,
-			nil,
+			func() resource.ResourceClient {
+				m := resource.NewMockResourceClient(tb)
+				m.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+				m.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
+				return m
+			}(),
 			sort.ProvideService(),
 			dualwrite.ProvideTestService(),
 			nil,
