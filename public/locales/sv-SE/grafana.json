@@ -4364,6 +4364,17 @@
       "title": "Du har inte skapat några instrumentpaneler ännu",
       "title-folder": "Den här mappen har inga instrumentpaneler ännu"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Radera den här mappen",
       "delete-folder-error": "Fel vid radering av mapp. Försök igen senare.",
@@ -5436,9 +5447,6 @@
         "title": {
           "proceed-to-external-site": "Fortsätt till extern webbplats?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Visa som scen"
       }
     },
     "dashboard-links-menu": {
@@ -5985,12 +5993,20 @@
       "not-found": "Datakälla med UID ”{{datasourceUid}}” hittades inte."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Konfigurera",
       "configure-button-menu": "Växla meny",
+      "configure-visualization": "",
       "empty-state-message": "Kör en fråga för att visualisera den här eller gå till alla visualiseringar för att lägga till andra paneltyper",
       "menu-open-panel-editor": "Konfigurera",
       "menu-use-library-panel": "Använd bibliotekspanel",
-      "missing-config": "Panelkonfiguration saknas"
+      "menu-use-saved-query": "",
+      "missing-config": "Panelkonfiguration saknas",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Ny panel",
     "on-create-new-row": {
@@ -6769,6 +6785,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6855,6 +6876,10 @@
       "constant-options": "Konstanta alternativ",
       "label-value": "Värde",
       "placeholder-your-metric-prefix": "Ditt metrikprefix"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Visa/dölj regler fungerar inte",
@@ -7185,6 +7210,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7503,6 +7534,7 @@
     "sharing": {
       "save-before-share": {
         "text": "Det finns ändringar i denna instrumentpanel som inte sparats. Du måste spara dem innan du kan dela dem.",
+        "text-no-save": "",
         "title": "Ändringar som inte sparats"
       }
     },
@@ -7636,6 +7668,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulär för variabelsredigering",
       "back-to-list": "Tillbaka till listan",
@@ -7665,6 +7702,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Är du säker på att du vill radera: {{variable}}?",
       "confirmText-delete-variable": "Radera variabel",
+      "drag-handle-label": "",
       "title-delete-variable": "Radera variabel",
       "tooltip-duplicate-variable": "Dubblettvariabel",
       "tooltip-remove-variable": "Ta bort variabel"
@@ -8234,6 +8272,7 @@
       "label-preview": "Förhandsgranska"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Dubblerad värdemappning",
       "duplicate-value-mapping-tooltip-duplicate": "Dubblett",
       "placeholder-exact-value-to-match": "Exakt värde att matcha",
@@ -10052,6 +10091,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Lägg till länk",
+      "drag-handle-label": "",
       "edit-link": "Redigera länk",
       "one-click": "En klickning",
       "one-click-enabled": "En klickning aktiverad",
@@ -12596,7 +12636,7 @@
       "name-required": "Namn är obligatoriskt",
       "save": "Spara",
       "table-delete": "Radera post i spellista",
-      "table-drag": "Ändra ordning genom dra och släpp",
+      "table-drag": "",
       "table-empty": "Spellistan är tom. Lägg till instrumentpaneler nedan.",
       "table-heading": "Instrumentpaneler"
     },
@@ -15577,6 +15617,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Klicka för att redigera",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Radera uppräkningsrad",
       "remove-enum-row-tooltip-delete": "Radera"
     },
@@ -16490,6 +16531,7 @@
       "variable": "Variabel"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Dubblettvariabel",
       "tooltip-remove-variable": "Ta bort variabel"
     },
