@@ -3,6 +3,7 @@ import { type IconName } from '@grafana/ui';
 
 import assistantHeroImage from './images/assistant-hero.png';
 import gitSyncImage from './images/git-sync.png';
+import dynamicDashboardsImage from './images/dynamic-dashboards.png';
 import libraryOfThingsImage from './images/library-of-things.png';
 
 export type AccentColorKey = 'dark-purple' | 'primary' | 'success' | 'dark-orange';
@@ -43,7 +44,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
           t('splash-screen.assistant.bullet-3', 'Onboard new team members in days, not weeks'),
         ],
         ctaText: t('splash-screen.assistant.cta', 'Show me'),
-        ctaUrl: '/a/grafana-assistant-app',
+        ctaUrl: 'https://grafana.com/grafana/plugins/grafana-assistant-app/',
         heroImageUrl: assistantHeroImage,
       },
       {
@@ -66,7 +67,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         ],
         ctaText: t('splash-screen.dynamic-dashboards.cta', 'Show me'),
         ctaUrl: '/dashboards',
-        heroImageUrl: assistantHeroImage,
+        heroImageUrl: dynamicDashboardsImage,
       },
       {
         id: 'git-sync',
