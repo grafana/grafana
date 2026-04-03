@@ -205,7 +205,7 @@ COPY ${RUN_SH} /run.sh
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
 
-# Ubuntu final stage
+# Ubuntu final stage — use --target=final-ubuntu to select this variant
 FROM ubuntu-base AS final-ubuntu
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
@@ -267,3 +267,7 @@ COPY ${RUN_SH} /run.sh
 
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
+
+# Default stage — alpine. Builds without --target produce an alpine image.
+# Use --target=final-ubuntu to build the ubuntu variant instead.
+FROM final-alpine
