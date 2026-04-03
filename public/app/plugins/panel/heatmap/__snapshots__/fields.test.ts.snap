@@ -1,0 +1,2454 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Heatmap data HeatmapCells format returns getDenseHeatmapData for dense HeatmapCells frame 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "x",
+        "state": {
+          "displayName": "x",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "y",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 1,
+            "diff": 1,
+            "diffperc": 100,
+            "first": 1,
+            "firstNotNull": 1,
+            "last": 2,
+            "lastNotNull": 2,
+            "logmin": 1,
+            "max": 2,
+            "mean": 1.5,
+            "min": 1,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 1,
+            "step": -1,
+            "sum": 6,
+          },
+          "displayName": "y",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          1,
+          2,
+          1,
+          2,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "count",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 15,
+            "diff": 15,
+            "diffperc": 300,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 20,
+            "lastNotNull": 20,
+            "logmin": 5,
+            "max": 20,
+            "mean": 12.5,
+            "min": 5,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 15,
+            "step": 5,
+            "sum": 50,
+          },
+          "displayName": "count",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+          20,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "type": "heatmap-cells",
+    },
+  },
+  "heatmapColors": {
+    "maxValue": 20,
+    "minValue": 5,
+    "palette": [
+      "#000",
+      "#888",
+      "#fff",
+    ],
+    "values": [
+      0,
+      1,
+      2,
+      2,
+    ],
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "unknown",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data HeatmapCells format returns getSparseHeatmapData for sparse HeatmapCells frame 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "state": {
+          "displayName": "xMax",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "yMin",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 3,
+            "diff": 3,
+            "diffperc": 300,
+            "first": 1,
+            "firstNotNull": 1,
+            "last": 4,
+            "lastNotNull": 4,
+            "logmin": 1,
+            "max": 4,
+            "mean": 2.5,
+            "min": 1,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 3,
+            "step": -3,
+            "sum": 10,
+          },
+          "displayName": "yMin",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          1,
+          4,
+          1,
+          4,
+        ],
+      },
+      {
+        "config": {},
+        "name": "yMax",
+        "state": {
+          "displayName": "yMax",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          4,
+          16,
+          4,
+          16,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "count",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 15,
+            "diff": 15,
+            "diffperc": 300,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 20,
+            "lastNotNull": 20,
+            "logmin": 5,
+            "max": 20,
+            "mean": 12.5,
+            "min": 5,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 15,
+            "step": 5,
+            "sum": 50,
+          },
+          "displayName": "count",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+          20,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "type": "heatmap-cells",
+    },
+  },
+  "heatmapColors": {
+    "maxValue": 20,
+    "minValue": 5,
+    "palette": [
+      "#000",
+      "#888",
+      "#fff",
+    ],
+    "values": [
+      0,
+      1,
+      2,
+      2,
+    ],
+  },
+}
+`;
+
+exports[`Heatmap data calculate mode uses calculateHeatmapFromData when options.calculate is true 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMin",
+        "type": "time",
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          10,
+          10,
+          10,
+          10,
+          10,
+          20,
+          20,
+          20,
+          20,
+          20,
+          30,
+          30,
+          30,
+          30,
+          30,
+          40,
+          40,
+          40,
+          40,
+          40,
+          50,
+          50,
+          50,
+          50,
+          50,
+        ],
+      },
+      {
+        "config": {
+          "custom": {
+            "scaleDistribution": {
+              "type": "linear",
+            },
+          },
+        },
+        "display": [Function],
+        "name": "yMin",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 30,
+            "delta": 95,
+            "diff": 20,
+            "diffperc": 200,
+            "first": 10,
+            "firstNotNull": 10,
+            "last": 30,
+            "lastNotNull": 30,
+            "logmin": 10,
+            "max": 30,
+            "mean": 20,
+            "min": 10,
+            "nonNullCount": 30,
+            "previousDeltaUp": true,
+            "range": 20,
+            "step": -20,
+            "sum": 600,
+          },
+        },
+        "type": "number",
+        "values": [
+          10,
+          15,
+          20,
+          25,
+          30,
+          10,
+          15,
+          20,
+          25,
+          30,
+          10,
+          15,
+          20,
+          25,
+          30,
+          10,
+          15,
+          20,
+          25,
+          30,
+          10,
+          15,
+          20,
+          25,
+          30,
+          10,
+          15,
+          20,
+          25,
+          30,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "display": [Function],
+        "name": "Count",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 30,
+            "delta": 3,
+            "diff": 0,
+            "diffperc": NaN,
+            "first": 0,
+            "firstNotNull": 0,
+            "last": 0,
+            "lastNotNull": 0,
+            "logmin": 1,
+            "max": 1,
+            "mean": 0.1,
+            "min": 0,
+            "nonNullCount": 30,
+            "previousDeltaUp": true,
+            "range": 1,
+            "step": -1,
+            "sum": 3,
+          },
+        },
+        "type": "number",
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ],
+      },
+    ],
+    "length": 30,
+    "meta": {
+      "type": "heatmap-cells",
+    },
+    "name": "value",
+  },
+  "heatmapColors": {
+    "maxValue": 1,
+    "minValue": 0,
+    "palette": [
+      "#000",
+      "#fff",
+    ],
+    "values": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    ],
+  },
+  "xBucketCount": 6,
+  "xBucketSize": 10,
+  "xLayout": "ge",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 5,
+  "yBucketSize": 5,
+  "yLayout": "ge",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data data links assigns getLinks to fields with config.links 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          0,
+          0,
+        ],
+      },
+      {
+        "config": {
+          "links": [
+            {
+              "title": "Link",
+              "url": "http://example.com",
+            },
+          ],
+          "unit": "short",
+        },
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 3,
+            "delta": 10,
+            "diff": 10,
+            "diffperc": 200,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 15,
+            "lastNotNull": 15,
+            "logmin": 5,
+            "max": 15,
+            "mean": 10,
+            "min": 5,
+            "nonNullCount": 3,
+            "previousDeltaUp": true,
+            "range": 10,
+            "step": 5,
+            "sum": 30,
+          },
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "bucket",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": 15,
+    "minValue": 5,
+    "palette": [],
+    "values": [
+      -1,
+      -1,
+      -1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {
+          "links": [
+            {
+              "title": "Link",
+              "url": "http://example.com",
+            },
+          ],
+          "unit": "short",
+        },
+        "getLinks": [Function],
+        "name": "bucket",
+        "state": {
+          "displayName": "bucket",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "type": "heatmap-rows",
+    },
+  },
+  "xBucketCount": 3,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 1,
+  "yBucketSize": 0,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data display options applies cellValues unit and decimals to display 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "x",
+        "state": {
+          "displayName": "x",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "y",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 1,
+            "diff": 1,
+            "diffperc": 100,
+            "first": 1,
+            "firstNotNull": 1,
+            "last": 2,
+            "lastNotNull": 2,
+            "logmin": 1,
+            "max": 2,
+            "mean": 1.5,
+            "min": 1,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 1,
+            "step": -1,
+            "sum": 6,
+          },
+          "displayName": "y",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          1,
+          2,
+          1,
+          2,
+        ],
+      },
+      {
+        "config": {
+          "decimals": 2,
+          "unit": "short",
+        },
+        "display": [Function],
+        "name": "count",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 15,
+            "diff": 15,
+            "diffperc": 300,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 20,
+            "lastNotNull": 20,
+            "logmin": 5,
+            "max": 20,
+            "mean": 12.5,
+            "min": 5,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 15,
+            "step": 5,
+            "sum": 50,
+          },
+          "displayName": "count",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+          20,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "type": "heatmap-cells",
+    },
+  },
+  "heatmapColors": {
+    "maxValue": 20,
+    "minValue": 5,
+    "palette": [
+      "#000",
+      "#fff",
+    ],
+    "values": [
+      0,
+      0,
+      1,
+      1,
+    ],
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "unknown",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data display options applies yAxis unit and decimals for dense heatmap 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMin",
+        "state": {
+          "displayName": "xMin",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {
+          "decimals": 1,
+          "unit": "short",
+        },
+        "display": [Function],
+        "name": "yMin",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 1,
+            "diff": 1,
+            "diffperc": 100,
+            "first": 1,
+            "firstNotNull": 1,
+            "last": 2,
+            "lastNotNull": 2,
+            "logmin": 1,
+            "max": 2,
+            "mean": 1.5,
+            "min": 1,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 1,
+            "step": -1,
+            "sum": 6,
+          },
+          "displayName": "yMin",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          1,
+          2,
+          1,
+          2,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "count",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 15,
+            "diff": 15,
+            "diffperc": 300,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 20,
+            "lastNotNull": 20,
+            "logmin": 5,
+            "max": 20,
+            "mean": 12.5,
+            "min": 5,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 15,
+            "step": 5,
+            "sum": 50,
+          },
+          "displayName": "count",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+          20,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "type": "heatmap-cells",
+    },
+  },
+  "heatmapColors": {
+    "maxValue": 20,
+    "minValue": 5,
+    "palette": [
+      "#000",
+      "#fff",
+    ],
+    "values": [
+      0,
+      0,
+      1,
+      1,
+    ],
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "ge",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "ge",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data filter values respects filterValues le and ge 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "x",
+        "state": {
+          "displayName": "x",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "y",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 1,
+            "diff": 1,
+            "diffperc": 100,
+            "first": 1,
+            "firstNotNull": 1,
+            "last": 2,
+            "lastNotNull": 2,
+            "logmin": 1,
+            "max": 2,
+            "mean": 1.5,
+            "min": 1,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 1,
+            "step": -1,
+            "sum": 6,
+          },
+          "displayName": "y",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          1,
+          2,
+          1,
+          2,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "count",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 15,
+            "diff": 15,
+            "diffperc": 300,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 20,
+            "lastNotNull": 20,
+            "logmin": 5,
+            "max": 20,
+            "mean": 12.5,
+            "min": 5,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 15,
+            "step": 5,
+            "sum": 50,
+          },
+          "displayName": "count",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+          20,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "type": "heatmap-cells",
+    },
+  },
+  "heatmapColors": {
+    "maxValue": -Infinity,
+    "minValue": Infinity,
+    "palette": [
+      "#000",
+      "#fff",
+    ],
+    "values": [
+      0,
+      0,
+      0,
+      0,
+    ],
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "unknown",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data filters out empty frames and keeps valid ones 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          0,
+          0,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 3,
+            "delta": 10,
+            "diff": 10,
+            "diffperc": 200,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 15,
+            "lastNotNull": 15,
+            "logmin": 5,
+            "max": 15,
+            "mean": 10,
+            "min": 5,
+            "nonNullCount": 3,
+            "previousDeltaUp": true,
+            "range": 10,
+            "step": 5,
+            "sum": 30,
+          },
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "bucket",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": 15,
+    "minValue": 5,
+    "palette": [],
+    "values": [
+      -1,
+      -1,
+      -1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "bucket",
+        "state": {
+          "displayName": "bucket",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "type": "heatmap-rows",
+    },
+  },
+  "xBucketCount": 3,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 1,
+  "yBucketSize": 0,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data getDenseHeatmapData edge cases returns non-broken heatmap when frame is too small 1`] = `
+{
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "x",
+        "state": {
+          "displayName": "x",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "y",
+        "state": {
+          "displayName": "y",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          1,
+        ],
+      },
+    ],
+    "length": 1,
+    "meta": {
+      "type": "heatmap-cells",
+    },
+  },
+}
+`;
+
+exports[`Heatmap data getDenseHeatmapData edge cases returns warning when dense frame has no value field 1`] = `
+{
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "x",
+        "state": {
+          "displayName": "x",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "y",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 2,
+            "delta": 1,
+            "diff": 1,
+            "diffperc": 100,
+            "first": 1,
+            "firstNotNull": 1,
+            "last": 2,
+            "lastNotNull": 2,
+            "logmin": 1,
+            "max": 2,
+            "mean": 1.5,
+            "min": 1,
+            "nonNullCount": 2,
+            "previousDeltaUp": true,
+            "range": 1,
+            "step": 1,
+            "sum": 3,
+          },
+          "displayName": "y",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          1,
+          2,
+        ],
+      },
+    ],
+    "length": 2,
+    "meta": {
+      "type": "heatmap-cells",
+    },
+  },
+  "warning": "Missing value field",
+}
+`;
+
+exports[`Heatmap data handles heatmap rows frame with all-null values without throwing 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          0,
+          0,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": true,
+            "allIsZero": false,
+            "count": 0,
+            "delta": 0,
+            "diff": null,
+            "diffperc": 0,
+            "first": null,
+            "firstNotNull": null,
+            "last": null,
+            "lastNotNull": null,
+            "logmin": 1.7976931348623157e+308,
+            "max": null,
+            "mean": null,
+            "min": null,
+            "nonNullCount": 0,
+            "previousDeltaUp": true,
+            "range": null,
+            "step": null,
+            "sum": 0,
+          },
+        },
+        "type": "number",
+        "values": [
+          null,
+          null,
+          null,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "bucket",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": -Infinity,
+    "minValue": Infinity,
+    "palette": [],
+    "values": [
+      0,
+      0,
+      0,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "bucket",
+        "state": {
+          "displayName": "bucket",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          null,
+          null,
+          null,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "type": "heatmap-rows",
+    },
+  },
+  "xBucketCount": 3,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 1,
+  "yBucketSize": 0,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data handles heatmap rows frame with negative values and computes valid color range 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          0,
+          0,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 3,
+            "delta": 20,
+            "diff": 20,
+            "diffperc": -66.66666666666666,
+            "first": -30,
+            "firstNotNull": -30,
+            "last": -10,
+            "lastNotNull": -10,
+            "logmin": 1.7976931348623157e+308,
+            "max": -10,
+            "mean": -20,
+            "min": -30,
+            "nonNullCount": 3,
+            "previousDeltaUp": true,
+            "range": 20,
+            "step": 10,
+            "sum": -60,
+          },
+        },
+        "type": "number",
+        "values": [
+          -30,
+          -20,
+          -10,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "bucket",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": -10,
+    "minValue": -30,
+    "palette": [
+      "#000000",
+      "#ffffff",
+    ],
+    "values": [
+      0,
+      1,
+      1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "bucket",
+        "state": {
+          "displayName": "bucket",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          -30,
+          -20,
+          -10,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "type": "heatmap-rows",
+    },
+  },
+  "xBucketCount": 3,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 1,
+  "yBucketSize": 0,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data multiple frames without HeatmapRows outerJoins multiple frames and returns heatmap with series 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          1,
+          0,
+          1,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 20,
+            "diff": 30,
+            "diffperc": 300,
+            "first": 10,
+            "firstNotNull": 10,
+            "last": 40,
+            "lastNotNull": 40,
+            "logmin": 10,
+            "max": 40,
+            "mean": 25,
+            "min": 10,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 30,
+            "step": -10,
+            "sum": 100,
+          },
+        },
+        "type": "number",
+        "values": [
+          10,
+          30,
+          20,
+          40,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "value 1",
+          "value 2",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": 40,
+    "minValue": 10,
+    "palette": [],
+    "values": [
+      -1,
+      -1,
+      -1,
+      -1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": true,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {},
+        "name": "value",
+        "state": {
+          "displayName": "value 1",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          10,
+          20,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {},
+        "name": "value",
+        "state": {
+          "displayName": "value 2",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          30,
+          40,
+        ],
+      },
+    ],
+    "length": 2,
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data multiple frames without HeatmapRows outerJoins multiple frames without sorting when displayNames are non-numeric 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          1,
+          0,
+          1,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 20,
+            "diff": 30,
+            "diffperc": 300,
+            "first": 10,
+            "firstNotNull": 10,
+            "last": 40,
+            "lastNotNull": 40,
+            "logmin": 10,
+            "max": 40,
+            "mean": 25,
+            "min": 10,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 30,
+            "step": -10,
+            "sum": 100,
+          },
+        },
+        "type": "number",
+        "values": [
+          10,
+          30,
+          20,
+          40,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "value 1",
+          "value 2",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": 40,
+    "minValue": 10,
+    "palette": [],
+    "values": [
+      -1,
+      -1,
+      -1,
+      -1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": true,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {},
+        "name": "value",
+        "state": {
+          "displayName": "value 1",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          10,
+          20,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {},
+        "name": "value",
+        "state": {
+          "displayName": "value 2",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          30,
+          40,
+        ],
+      },
+    ],
+    "length": 2,
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data multiple frames without HeatmapRows sorts and reorders number fields when displayNames are numeric 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          1,
+          0,
+          1,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 0,
+            "diff": -5,
+            "diffperc": -33.33333333333333,
+            "first": 15,
+            "firstNotNull": 15,
+            "last": 10,
+            "lastNotNull": 10,
+            "logmin": 5,
+            "max": 20,
+            "mean": 12.5,
+            "min": 5,
+            "nonNullCount": 4,
+            "previousDeltaUp": false,
+            "range": 15,
+            "step": -10,
+            "sum": 50,
+          },
+        },
+        "type": "number",
+        "values": [
+          15,
+          5,
+          20,
+          10,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "2",
+          "10",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": 20,
+    "minValue": 5,
+    "palette": [],
+    "values": [
+      -1,
+      -1,
+      -1,
+      -1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "2",
+        "state": {
+          "displayName": "2",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          15,
+          20,
+        ],
+      },
+      {
+        "config": {},
+        "name": "10",
+        "state": {
+          "displayName": "10",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+        ],
+      },
+    ],
+    "length": 2,
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data multiple frames without HeatmapRows sorts frames by label when all numeric 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          1,
+          0,
+          1,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 4,
+            "delta": 20,
+            "diff": 30,
+            "diffperc": 300,
+            "first": 10,
+            "firstNotNull": 10,
+            "last": 40,
+            "lastNotNull": 40,
+            "logmin": 10,
+            "max": 40,
+            "mean": 25,
+            "min": 10,
+            "nonNullCount": 4,
+            "previousDeltaUp": true,
+            "range": 30,
+            "step": -10,
+            "sum": 100,
+          },
+        },
+        "type": "number",
+        "values": [
+          10,
+          30,
+          20,
+          40,
+        ],
+      },
+    ],
+    "length": 4,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "value 1",
+          "value 2",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": 40,
+    "minValue": 10,
+    "palette": [],
+    "values": [
+      -1,
+      -1,
+      -1,
+      -1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": true,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {},
+        "name": "value",
+        "state": {
+          "displayName": "value 1",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          10,
+          20,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {},
+        "name": "value",
+        "state": {
+          "displayName": "value 2",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          30,
+          40,
+        ],
+      },
+    ],
+    "length": 2,
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data multiple frames without HeatmapRows uses single frame as-is when number fields have non-numeric displayNames 1`] = `
+{
+  "display": [Function],
+  "exemplars": undefined,
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          1000,
+          2000,
+          2000,
+          3000,
+          3000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 6,
+            "delta": 15,
+            "diff": 25,
+            "diffperc": 500,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 30,
+            "lastNotNull": 30,
+            "logmin": 5,
+            "max": 30,
+            "mean": 17.5,
+            "min": 5,
+            "nonNullCount": 6,
+            "previousDeltaUp": true,
+            "range": 25,
+            "step": -10,
+            "sum": 105,
+          },
+        },
+        "type": "number",
+        "values": [
+          5,
+          20,
+          10,
+          25,
+          15,
+          30,
+        ],
+      },
+    ],
+    "length": 6,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "bucket_a",
+          "bucket_b",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": 30,
+    "minValue": 5,
+    "palette": [],
+    "values": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+          3000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "bucket_a",
+        "state": {
+          "displayName": "bucket_a",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+          15,
+        ],
+      },
+      {
+        "config": {},
+        "name": "bucket_b",
+        "state": {
+          "displayName": "bucket_b",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          20,
+          25,
+          30,
+        ],
+      },
+    ],
+    "length": 3,
+  },
+  "xBucketCount": 3,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 2,
+  "yBucketSize": 1,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
+
+exports[`Heatmap data threads exemplar frame through to HeatmapData when annotations also include a non-exemplar frame 1`] = `
+{
+  "display": [Function],
+  "exemplars": {
+    "fields": [
+      {
+        "config": {},
+        "getLinks": [Function],
+        "name": "Time",
+        "type": "time",
+        "values": [
+          1500,
+        ],
+      },
+      {
+        "config": {},
+        "getLinks": [Function],
+        "name": "Value",
+        "type": "number",
+        "values": [
+          7,
+        ],
+      },
+    ],
+    "length": 1,
+    "meta": {
+      "custom": {
+        "resultType": "exemplar",
+      },
+    },
+    "name": "exemplar",
+  },
+  "heatmap": {
+    "fields": [
+      {
+        "config": {},
+        "name": "xMax",
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+        ],
+      },
+      {
+        "config": {
+          "unit": "short",
+        },
+        "name": "y",
+        "type": "number",
+        "values": [
+          0,
+          0,
+        ],
+      },
+      {
+        "config": {},
+        "display": [Function],
+        "name": "Value",
+        "state": {
+          "calcs": {
+            "allIsNull": false,
+            "allIsZero": false,
+            "count": 2,
+            "delta": 5,
+            "diff": 5,
+            "diffperc": 100,
+            "first": 5,
+            "firstNotNull": 5,
+            "last": 10,
+            "lastNotNull": 10,
+            "logmin": 5,
+            "max": 10,
+            "mean": 7.5,
+            "min": 5,
+            "nonNullCount": 2,
+            "previousDeltaUp": true,
+            "range": 5,
+            "step": 5,
+            "sum": 15,
+          },
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+        ],
+      },
+    ],
+    "length": 2,
+    "meta": {
+      "custom": {
+        "yMatchWithLabel": undefined,
+        "yOrdinalDisplay": [
+          "bucket",
+        ],
+      },
+      "type": "heatmap-cells",
+    },
+    "refId": undefined,
+  },
+  "heatmapColors": {
+    "maxValue": 10,
+    "minValue": 5,
+    "palette": [],
+    "values": [
+      -1,
+      -1,
+    ],
+  },
+  "series": {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "state": {
+          "displayName": "time",
+          "multipleFrames": false,
+        },
+        "type": "time",
+        "values": [
+          1000,
+          2000,
+        ],
+      },
+      {
+        "config": {},
+        "name": "bucket",
+        "state": {
+          "displayName": "bucket",
+          "multipleFrames": false,
+        },
+        "type": "number",
+        "values": [
+          5,
+          10,
+        ],
+      },
+    ],
+    "length": 2,
+    "meta": {
+      "type": "heatmap-rows",
+    },
+  },
+  "xBucketCount": 2,
+  "xBucketSize": 1000,
+  "xLayout": "le",
+  "xLog": 0,
+  "xLogSplit": 1,
+  "yBucketCount": 1,
+  "yBucketSize": 0,
+  "yLayout": "unknown",
+  "yLog": 0,
+  "yLogSplit": 1,
+}
+`;
