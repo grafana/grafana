@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, type SceneObject, sceneUtils, useSceneObjectState } from '@grafana/scenes';
+import { useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -18,7 +18,8 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
-import { getEditableElementForSelection } from './shared';
+import { DashboardOutline } from './DashboardOutline';
+import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -37,10 +38,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = editPane.getSelectedObject();
-
-  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
-  const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
-
   const theme = useTheme2();
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebarContext();
@@ -65,21 +62,8 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   return (
     <>
       {openPane && <Sidebar.OpenPane>{openPane && <openPane.Component model={openPane} />}</Sidebar.OpenPane>}
-      {/* {openPane === 'add' && (
-        <Sidebar.OpenPane>
-          <AddNewEditPane
-            selectedElement={lastSelectedElement}
-            onAddPanel={() => editPane.addNewPanel(lastSelectedElement)}
-            onPastePanel={() => editPane.pastePanel(lastSelectedElement, 'sidebar')}
-            dashboard={dashboard}
-          />
-        </Sidebar.OpenPane>
-      )}
-      {openPane === 'outline' && (
-        <Sidebar.OpenPane>
-          <DashboardOutline editPane={editPane} isEditing={isEditing} />
-        </Sidebar.OpenPane>
-      )}
+      {/* {openPane === 'add' && (      
+   
       {openPane === 'filters' && (
         <Sidebar.OpenPane>
           <DashboardFiltersOverviewPane
@@ -104,9 +88,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             <Sidebar.Button
               icon="plus"
               variant="primary"
-              onClick={() => {
-                editPane.openPane('add');
-              }}
+              onClick={() => editPane.openPane(new AddNewEditPane({}))}
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
@@ -161,7 +143,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
           <Sidebar.Button
             icon="list-ui-alt"
-            onClick={() => editPane.openPane('outline')}
+            onClick={() => editPane.openPane(new DashboardOutline({}))}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
@@ -169,11 +151,10 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           />
           {config.featureToggles.dashboardNewLayouts &&
             (config.featureToggles.dashboardFiltersOverview ||
-              config.featureToggles.dashboardUnifiedDrilldownControls) &&
-            adHocVar && (
+              config.featureToggles.dashboardUnifiedDrilldownControls) && (
               <Sidebar.Button
                 icon="filter"
-                onClick={() => editPane.openPane('filters')}
+                onClick={() => editPane.openPane(new DashboardFiltersOverviewPane({}))}
                 title={t('dashboards.filters-overview.filters', 'Filters')}
                 tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
                 active={openPane?.getId() === 'filters'}

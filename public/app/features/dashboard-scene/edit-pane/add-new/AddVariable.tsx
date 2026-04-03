@@ -16,7 +16,7 @@ export function AddVariable({
   selectedElement,
 }: {
   dashboardScene: DashboardScene;
-  selectedElement: SceneObject | undefined;
+  selectedElement: SceneObject | null;
 }) {
   const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
 
