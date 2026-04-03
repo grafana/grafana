@@ -219,13 +219,14 @@ func NewMapperRegistry() MapperRegistry {
 				resource:  "dashboards",
 				attribute: "uid",
 				verbMapping: map[string]string{
-					utils.VerbGet:    "annotations:read",
-					utils.VerbList:   "annotations:read",
-					utils.VerbWatch:  "annotations:read",
-					utils.VerbCreate: "annotations:create",
-					utils.VerbUpdate: "annotations:write",
-					utils.VerbPatch:  "annotations:write",
-					utils.VerbDelete: "annotations:delete",
+					utils.VerbGet:              "annotations:read",
+					utils.VerbList:             "annotations:read",
+					utils.VerbWatch:            "annotations:read",
+					utils.VerbCreate:           "annotations:create",
+					utils.VerbUpdate:           "annotations:write",
+					utils.VerbPatch:            "annotations:write",
+					utils.VerbDelete:           "annotations:delete",
+					utils.VerbDeleteCollection: "annotations:delete",
 				},
 				// Mirror dashboard action sets so managed roles like "dashboards:view" also grant annotations:read.
 				actionSetMapping: map[string][]string{
