@@ -7,7 +7,7 @@ export enum FieldColorModeId {
   PaletteClassicByName = 'palette-classic-by-name',
   PaletteSaturated = 'palette-saturated',
   /**
-   * @alpha - the color blind safe palette is experimental and may be removed or changed 
+   * @alpha - the color blind safe palette is experimental and may be removed or changed
    * as we work towards a GA of improved color blind support.
    */
   PaletteColorblind = 'palette-colorblind',
