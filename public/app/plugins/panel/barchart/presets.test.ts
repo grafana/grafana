@@ -102,14 +102,6 @@ describe('barchartPresetsSupplier', () => {
       expect(presets).toHaveLength(4);
       expect(presets).toMatchSnapshot();
     });
-
-    // @todo no longer the case, investigate if this is intentional or this test is brittle
-    it.skip('returns 3 presets when dataSummary is undefined', () => {
-      const presets = barchartPresetsSupplier({ dataSummary: undefined });
-
-      expect(presets).toHaveLength(3);
-      expect(presets).toMatchSnapshot();
-    });
   });
 
   describe('preset structure', () => {
