@@ -478,7 +478,7 @@ $(DOCKER_UBUNTU_FILE): $(TARGZ_FILE)
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
 	--target=final-ubuntu \
-	--tag $(DOCKER_TAG)-ubuntu \
+	--tag $(DOCKER_TAG) \
 	--output type=docker,dest=$@ \
 	.
 
