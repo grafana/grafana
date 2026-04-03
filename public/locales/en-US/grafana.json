@@ -14770,38 +14770,38 @@
   "splash-screen": {
     "aria-label": "What's new in Grafana",
     "assistant": {
-      "bullet-1": "Build complex dashboards in minutes",
-      "bullet-2": "Correlate metrics, logs and traces and gain insights in minutes",
-      "bullet-3": "Onboard new team members in a week instead of a month",
+      "badge": "NEW",
+      "bullet-1": "Explore your data by prompting Assistant to generate queries for you",
+      "bullet-2": "Create comprehensive dashboards in minutes",
+      "bullet-3": "Onboard new team members in days, not weeks",
       "cta": "Show me",
-      "subtitle": "Say no to lengthy config work and troubleshooting. Use the Assistant to be faster than ever.",
-      "title": "Grafana Assistant is now available in OSS"
+      "subtitle": "Use AI to handle everything from config to query generation",
+      "title": "Grafana Assistant is now available to OSS users"
     },
-    "badge": "NEW FEATURE",
+    "badge": {
+      "new": "NEW IN G13"
+    },
     "close": "Close",
-    "explore": {
-      "bullet-1": "Streamlined query building across all data sources",
-      "bullet-2": "Side-by-side comparison of metrics, logs, and traces",
-      "bullet-3": "Save and share your explorations with your team",
-      "cta": "Show me",
-      "subtitle": "A redesigned Explore makes it easier to query, visualize, and understand your data.",
-      "title": "Explore your data with a new experience"
+    "dynamic-dashboards": {
+      "bullet-1": "Split content into tabs for quick switching",
+      "bullet-2": "Show or hide panels based on template variables and other conditions",
+      "bullet-3": "Auto-arrange panels into a grid for an efficient layout",
+      "subtitle": "Make your dashboards more impactful and easier to explore",
+      "title": "Add tabs and panel conditions to your dashboards"
     },
     "git-sync": {
       "bullet-1": "Store your dashboard configuration safely in any git repository",
-      "bullet-2": "Keep track of the changes — and who made them!",
-      "bullet-3": "Works with many deployment scenarios",
-      "cta": "Show me",
-      "subtitle": "Combine the benefit of managing dashboards as code with the simplicity of creating and editing them in Grafana UI.",
-      "title": "Connect Grafana to your preferred git repository and keep them always in sync"
+      "bullet-2": "keep track of the changes - and who made them",
+      "bullet-3": "Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams",
+      "subtitle": "Bring version control, collaboration, and reliability to your dashboards",
+      "title": "Sync your dashboards to Git"
     },
-    "library": {
-      "bullet-1": "Saved queries is redesigned to make reusing queries easier",
-      "bullet-2": "Gather inspiration from templates and customize them to your needs",
-      "bullet-3": "Jump-start dashboard creation with suggestions tailored to your data",
-      "cta": "Show me",
-      "subtitle": "Now you can build faster with reusable assets",
-      "title": "Dashboard creation with saved queries and templates"
+    "library-of-things": {
+      "bullet-1": "Start from a clean layout instead of building from scratch",
+      "bullet-2": "Load a template and customize it to your needs",
+      "bullet-3": "Explore and use community dashboards tailored to your data source",
+      "subtitle": "Get to a useful dashboard sooner by starting from a proven design",
+      "title": "Kickstart dashboards with suggestions and templates"
     },
     "nav": {
       "go-to": "Go to slide {{number}}",
