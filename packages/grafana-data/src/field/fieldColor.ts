@@ -24,8 +24,9 @@ import { fallBackThreshold } from './thresholds';
 
 /**
  * Color blind-safe palette based on Wong (2011) "Points of view: Color blindness"
- * Nature Methods 8:441. Extended with Tol qualitative colors.
- * Includes both black and white for theme-adaptive contrast filtering.
+ * Nature Methods 8:441. All 8 colors are validated as mutually distinguishable
+ * under protanopia, deuteranopia, and tritanopia.
+ * Black and white are included for theme-adaptive contrast filtering.
  */
 const COLORBLIND_SAFE_PALETTE: string[] = [
   '#0072B2',
@@ -37,14 +38,6 @@ const COLORBLIND_SAFE_PALETTE: string[] = [
   '#F0E442',
   '#000000',
   '#FFFFFF',
-  '#0077BB',
-  '#33BBEE',
-  '#EE7733',
-  '#EE3377',
-  '#BBBBBB',
-  '#AA3377',
-  '#66CCEE',
-  '#CCBB44',
 ];
 
 /** @beta */

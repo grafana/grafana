@@ -14,6 +14,7 @@ import {
   getFieldColorMode,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
@@ -29,7 +30,9 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
 
-  const filteredOptions = availableOptions.filter((option) => !option.excludeFromPicker);
+  const filteredOptions = availableOptions
+    .filter((option) => !option.excludeFromPicker)
+    .filter((option) => option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions);
 
   const options: Array<SelectableValue<string>> = [];
   // collect any grouped options in this map
