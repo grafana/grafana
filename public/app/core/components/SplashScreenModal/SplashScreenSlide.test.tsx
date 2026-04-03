@@ -6,6 +6,8 @@ import { type SplashFeature } from './splashContent';
 const mockFeature: SplashFeature = {
   id: 'test-feature',
   icon: 'apps',
+  badgeText: 'NEW',
+  accentColor: 'primary',
   title: 'Test Feature Title',
   subtitle: 'Test subtitle text',
   bullets: ['Bullet one', 'Bullet two', 'Bullet three'],
