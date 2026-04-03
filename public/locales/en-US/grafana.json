@@ -3621,7 +3621,7 @@
       "state-pending": "Pending",
       "time-mode": {
         "history": "History",
-        "live": "Live",
+        "live": "Active now",
         "live-description": "Showing currently active alerts only. Content auto-refreshes every 15 seconds."
       }
     },

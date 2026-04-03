@@ -71,7 +71,7 @@ function TriageTimeModeControlRenderer({ model }: SceneComponentProps<TriageTime
 
   const modeOptions = useMemo(
     () => [
-      { label: t('alerting.triage.time-mode.live', 'Live'), value: 'live' as const },
+      { label: t('alerting.triage.time-mode.live', 'Active now'), value: 'live' as const },
       { label: t('alerting.triage.time-mode.history', 'History'), value: 'history' as const },
     ],
     []
@@ -148,7 +148,7 @@ function TriageTimeModeControlRenderer({ model }: SceneComponentProps<TriageTime
         {mode === 'live' ? (
           <Button variant="secondary" size="md" className={styles.liveButton}>
             <span className={styles.liveIndicator} />
-            <span className={styles.liveText}>{t('alerting.triage.time-mode.live', 'Live')}</span>
+            <span className={styles.liveText}>{t('alerting.triage.time-mode.live', 'Active now')}</span>
             <Icon name="angle-down" />
           </Button>
         ) : (

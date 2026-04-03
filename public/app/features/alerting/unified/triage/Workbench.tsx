@@ -29,6 +29,7 @@ import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
+import { TimeRulerStrip } from './scene/TimeRulerStrip';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
 import { type Domain, type Filter, type WorkbenchRow } from './types';
 
@@ -231,6 +232,10 @@ export function Workbench({
                   <SummaryChartReact />
                 </div>
               )}
+              <div className={styles.groupItemWrapper(leftColumnWidth)}>
+                <div />
+                <TimeRulerStrip />
+              </div>
               {groupBy && groupBy.length > 0 && (
                 <div className={styles.expandCollapseToolbar}>
                   <Button
