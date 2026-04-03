@@ -19,6 +19,8 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
+import { AddNewEditPane } from './add-new/AddNewEditPane';
+import { DashboardCodePane } from './DashboardCodePane';
 import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 
 export interface Props {
@@ -62,26 +64,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   return (
     <>
       {openPane && <Sidebar.OpenPane>{openPane && <openPane.Component model={openPane} />}</Sidebar.OpenPane>}
-      {/* {openPane === 'add' && (      
-   
-      {openPane === 'filters' && (
-        <Sidebar.OpenPane>
-          <DashboardFiltersOverviewPane
-            adhocFilters={adHocVar}
-            groupByVariable={groupByVar}
-            onClose={() => editPane.closePane()}
-          />
-        </Sidebar.OpenPane>
-      )}
-      {openPane === 'code' && (
-        <Sidebar.OpenPane>
-          <DashboardCodePane
-            key={dashboard.state.key}
-            initialValue={getDashboardJsonText(dashboard)}
-            onApply={(jsonText) => applyJsonToDashboard(dashboard, jsonText)}
-          />
-        </Sidebar.OpenPane>
-      )} */}
       <Sidebar.Toolbar>
         {isEditing && (
           <div className={styles.editGroup}>
@@ -127,7 +109,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
-              onClick={() => editPane.openPane('code')}
+              onClick={() => editPane.openPane(new DashboardCodePane({}))}
               active={openPane?.getId() === 'code'}
             />
             {config.featureToggles.dashboardUndoRedo && (
