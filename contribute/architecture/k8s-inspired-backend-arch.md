@@ -259,7 +259,7 @@ The easiest way to use `kubectl` is under a dev-mode-only, experimental `grafana
 export KUBECONFIG=../../data/grafana-apiserver/grafana.kubeconfig
 
 cat <<EOF | kubectl create -f -
-apiVersion: folder.grafana.app/v1beta1
+apiVersion: folder.grafana.app/v1
 kind: Folder
 metadata:
   name: kubectl-folder
@@ -269,7 +269,7 @@ status: {}
 EOF
 
 cat <<EOF | kubectl create -f -
-apiVersion: dashboard.grafana.app/v1beta1
+apiVersion: dashboard.grafana.app/v1
 kind: Dashboard
 metadata:
   name: kubectl-dash

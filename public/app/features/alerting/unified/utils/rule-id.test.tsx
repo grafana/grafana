@@ -2,15 +2,15 @@ import { renderHook } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config, locationService } from '@grafana/runtime';
-import { AlertingRule, RecordingRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { type AlertingRule, type RecordingRule, type RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
+  type GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import {

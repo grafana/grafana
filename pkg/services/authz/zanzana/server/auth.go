@@ -2,9 +2,9 @@ package server
 
 import (
 	"context"
+	"slices"
 
 	claims "github.com/grafana/authlib/types"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

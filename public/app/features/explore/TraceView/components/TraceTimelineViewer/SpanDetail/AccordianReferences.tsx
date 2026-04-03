@@ -15,12 +15,12 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type Field, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TraceSpanReference } from '../../types/trace';
+import { type TraceSpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
 
 import AccordianKeyValues from './AccordianKeyValues';

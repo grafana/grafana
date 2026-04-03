@@ -14,9 +14,9 @@ import {
   WeekStartPicker,
   FeatureBadge,
   Combobox,
-  ComboboxOption,
+  type ComboboxOption,
   TextLink,
-  WeekStart,
+  type WeekStart,
   isWeekStart,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -25,7 +25,14 @@ import { changeTheme } from 'app/core/services/theme';
 
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props, State } from './utils';
+import {
+  getLanguageOptions,
+  getRegionalFormatOptions,
+  getStyles,
+  getTranslatedThemeName,
+  type Props,
+  type State,
+} from './utils';
 
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;

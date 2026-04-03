@@ -3,15 +3,15 @@ import tinycolor from 'tinycolor2';
 import {
   colorManipulator,
   FALLBACK_COLOR,
-  FieldDisplay,
+  type FieldDisplay,
   getFieldColorMode,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   ThresholdsMode,
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
 import { DEFAULT_DECIMALS } from './constants';
-import { GradientStop } from './types';
+import { type GradientStop } from './types';
 import { getThresholdPercentageValue, getValuePercentageForValue, getFormattedThresholds } from './utils';
 
 export function buildGradientColors(

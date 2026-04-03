@@ -3501,7 +3501,6 @@ export type CreateRoleForm = {
   name?: string;
   permissions?: Permission[];
   uid?: string;
-  version?: number;
 };
 export type SuccessResponseBody = {
   message?: string;
@@ -3514,7 +3513,6 @@ export type UpdateRoleCommand = {
   hidden?: boolean;
   name?: string;
   permissions?: Permission[];
-  version?: number;
 };
 export type RoleAssignmentsDto = {
   role_uid?: string;
@@ -4818,7 +4816,6 @@ export type AnnotationActions = {
 };
 export type AnnotationPermission = {
   dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
 };
 export type DashboardMeta = {
   annotationsPermissions?: AnnotationPermission;
@@ -5052,9 +5049,19 @@ export type ReportBrandingOptions = {
   emailLogoUrl?: string;
   reportLogoUrl?: string;
 };
+export type FooterItem = {
+  color?: string;
+  fontSize?: string;
+  fontStyle?: string;
+  fontWeight?: string;
+  type?: string;
+  value?: string;
+};
 export type ReportSettings = {
   branding?: ReportBrandingOptions;
   embeddedImageTheme?: string;
+  footerFontFamily?: string;
+  footerItems?: FooterItem[];
   id?: number;
   orgId?: number;
   pdfDashboardTitleEnabled?: boolean;

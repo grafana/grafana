@@ -32,9 +32,12 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		treeCache:         newFolderTreeCache(folderService),
 	}
 
-	l.registerAPIEndpoints()
-	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, l.folderService))
-
+	if routeRegister != nil {
+		l.registerAPIEndpoints()
+	}
+	if folderService != nil {
+		ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, l.folderService))
+	}
 	return l
 }
 

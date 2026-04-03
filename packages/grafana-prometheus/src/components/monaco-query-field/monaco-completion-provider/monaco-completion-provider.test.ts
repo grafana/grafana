@@ -1,7 +1,7 @@
-import { dateTime, TimeRange } from '@grafana/data';
+import { dateTime, type TimeRange } from '@grafana/data';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { DataProvider } from './data_provider';
+import { type DataProvider } from './data_provider';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 
 // Mock the dependencies
