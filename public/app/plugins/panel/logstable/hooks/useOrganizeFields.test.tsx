@@ -4,6 +4,7 @@ import { type DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/
 // Internal package imports, but not exposed to end users, how do we expect plugin developers to test anything that contains a transform?
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { TableCellDisplayMode } from '@grafana/ui';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
@@ -184,6 +185,51 @@ describe('useOrganizeFields', () => {
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions).not.toBeDefined();
+      });
+    });
+
+    test('log line body has no cellOptions when it is moved from the first position', async () => {
+      const optionsBodyFirst = {
+        displayedFields: [LOG_LINE_BODY_FIELD_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, 'level'],
+        showInspectLogLine: true,
+      };
+      const optionsBodySecond = {
+        displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOG_LINE_BODY_FIELD_NAME, 'level'],
+        showInspectLogLine: true,
+      };
+
+      const { result, rerender } = renderHook(
+        (options: typeof optionsBodyFirst, frame = extractedFrame) =>
+          useOrganizeFields({
+            extractedFrame: frame,
+            bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+            levelFieldName: 'level',
+            logsFrame: testLogsFrame,
+            onPermalinkClick: () => null,
+            options,
+            supportsPermalink: false,
+            timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+            fieldConfig: { defaults: {}, overrides: [] },
+          }),
+        { initialProps: optionsBodyFirst }
+      );
+
+      await waitFor(() => {
+        const frame = result.current.organizedFrame;
+        expect(frame).not.toBeNull();
+        expect(frame!.fields[0].name).toBe(LOGS_DATAPLANE_BODY_NAME);
+        const bodyField = frame!.fields.find((f) => f.name === LOGS_DATAPLANE_BODY_NAME);
+        expect(bodyField?.config.custom?.cellOptions).toBeDefined();
+      });
+
+      rerender(optionsBodySecond);
+
+      await waitFor(() => {
+        const frame = result.current.organizedFrame;
+        expect(frame).not.toBeNull();
+        expect(frame!.fields[1].name).toBe(LOGS_DATAPLANE_BODY_NAME);
+        const bodyField = frame!.fields.find((f) => f.name === LOGS_DATAPLANE_BODY_NAME);
+        expect(bodyField?.config.custom?.cellOptions).not.toBeDefined();
       });
     });
 

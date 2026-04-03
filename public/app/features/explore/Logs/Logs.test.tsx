@@ -41,6 +41,19 @@ jest.mock('app/core/utils/shortLinks', () => ({
   createAndCopyShortLink: (url: string) => createAndCopyShortLink(url),
 }));
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
 jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
@@ -65,6 +78,7 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
+    setBooleanFlags({ newLogsPanel: false, logsPanelControls: false });
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
@@ -467,15 +481,10 @@ describe('Logs', () => {
   });
 
   describe('with table visualisation', () => {
-    let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-
-    beforeAll(() => {
-      originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-      config.featureToggles.logsExploreTableVisualisation = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
+    beforeEach(() => {
+      setBooleanFlags({
+        newLogsPanel: false,
+      });
     });
 
     it('should show visualisation type radio group', () => {
@@ -517,11 +526,13 @@ describe('Logs', () => {
     });
   });
   describe('with table panel visualisation', () => {
-    let originalVisualisationTypeValue = config.featureToggles.logsTablePanelNG;
     let origResizeObserver = global.ResizeObserver;
+    let originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
 
     beforeEach(() => {
       origResizeObserver = global.ResizeObserver;
+      originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
+      config.featureToggles.logsTablePanelNG = false;
       // Mock ResizeObserver
       global.ResizeObserver = class ResizeObserver {
         constructor(callback: unknown) {
@@ -542,16 +553,16 @@ describe('Logs', () => {
     });
 
     afterEach(() => {
+      config.featureToggles.logsTablePanelNG = originalLogsTablePanelNG;
       global.ResizeObserver = origResizeObserver;
     });
 
-    beforeAll(() => {
-      originalVisualisationTypeValue = config.featureToggles.logsTablePanelNG;
-      config.featureToggles.logsTablePanelNG = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.logsTablePanelNG = originalVisualisationTypeValue;
+    beforeEach(() => {
+      setBooleanFlags({
+        newLogsPanel: false,
+        logsPanelControls: true,
+        logsTablePanelNG: false,
+      });
     });
 
     it('should show table', async () => {
@@ -563,8 +574,7 @@ describe('Logs', () => {
         },
       });
       await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
-      const logs = screen.queryByTestId('logRows');
-      expect(logs).not.toBeInTheDocument();
+      expect(screen.getByTestId('logRowsTable')).toBeInTheDocument();
     });
 
     it('should show logs', async () => {
@@ -576,7 +586,24 @@ describe('Logs', () => {
         },
       });
 
-      await waitFor(() => expect(screen.getByText('Download')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      const logs = await screen.findByTestId('logRows');
+      expect(logs).toBeInTheDocument();
+      expect(screen.getByText('log message 3')).toBeVisible();
+    });
+
+    it('should show logs when logsPanelControls is enabled and logsTablePanelNG is true', async () => {
+      config.featureToggles.logsTablePanelNG = true;
+
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'logs',
+          },
+        },
+      });
+
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
       const logs = await screen.findByTestId('logRows');
       expect(logs).toBeInTheDocument();
       expect(screen.getByText('log message 3')).toBeVisible();

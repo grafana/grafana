@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -12,35 +11,10 @@ import (
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
-// NewStaticStorage -- temporary shim
-func NewStaticStorage(
-	gr schema.GroupResource,
-	mode rest.DualWriterMode,
-	legacy rest.Storage,
-	unified rest.Storage,
-) (rest.Storage, error) {
-	m := &staticService{metrics: provideDualWriterMetrics(prometheus.NewRegistry())}
-	m.SetMode(gr, mode)
-	return m.NewStorage(gr, legacy, unified)
-}
-
 type staticService struct {
 	cfg          *setting.Cfg
 	statusReader unifiedmigrations.MigrationStatusReader
 	metrics      *dualWriterMetrics
-}
-
-// Used in tests
-func (m *staticService) SetMode(gr schema.GroupResource, mode rest.DualWriterMode) {
-	if m.cfg == nil {
-		m.cfg = &setting.Cfg{}
-	}
-	if m.cfg.UnifiedStorage == nil {
-		m.cfg.UnifiedStorage = make(map[string]setting.UnifiedStorageConfig)
-	}
-	m.cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{
-		DualWriterMode: mode,
-	}
 }
 
 // getStorageMode returns the StorageMode for a resource.

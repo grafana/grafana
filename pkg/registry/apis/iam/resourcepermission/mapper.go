@@ -171,7 +171,9 @@ func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
 // Used when reading permissions from the database for two purposes:
 //  1. Populating the ResourcePermission Spec (Group, Resource, Name fields)
 //  2. Making AccessClient Check requests to authorize viewing the resource
-func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
+//
+// datasourceType is the datasource type from the permission row, used to resolve the concrete group.
+func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
@@ -180,16 +182,22 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
-	group := gr.Group
 
-	// FIXME: This is a hack to support wildcard entries, since we have no way to know
-	// the exact concrete group from just the RBAC scope prefix
-	// (e.g., "datasources" -> could be loki, tempo, etc.).
-	// Return "unknown.<suffix>" as a placeholder.
-	if strings.HasPrefix(group, "*.") {
-		group = "unknown" + group[1:] // e.g., "unknown.datasource.grafana.app"
-	}
+	group := resolveGroup(gr.Group, datasourceType)
+
 	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
+}
+
+// resolveGroup resolves a wildcard group (e.g. "*.datasource.grafana.app") to a concrete group
+// (e.g. "loki.datasource.grafana.app") using the prefix
+func resolveGroup(group, prefix string) string {
+	if !strings.HasPrefix(group, "*.") {
+		return group
+	}
+	if prefix == "" {
+		return "unknown" + group[1:]
+	}
+	return prefix + group[1:]
 }
 
 // EnabledActionSets returns the action sets for all currently-enabled mappers.

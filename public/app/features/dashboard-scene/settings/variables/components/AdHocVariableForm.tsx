@@ -1,7 +1,13 @@
 import { css } from '@emotion/css';
 import { type FormEvent, useCallback } from 'react';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2, type MetricFindValue, readCSV } from '@grafana/data';
+import {
+  type DataSourceInstanceSettings,
+  type GrafanaTheme2,
+  type MetricFindValue,
+  type SelectableValue,
+  readCSV,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
@@ -12,7 +18,9 @@ import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
+import { DefaultGroupByValueEditor } from './DefaultGroupByValueEditor';
 import { VariableLegend } from './VariableLegend';
+
 export interface AdHocVariableFormProps {
   datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
@@ -24,6 +32,9 @@ export interface AdHocVariableFormProps {
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   onEnableGroupByChange?: (event: FormEvent<HTMLInputElement>) => void;
   originFiltersController?: AdHocFiltersController;
+  defaultGroupByValues?: Array<SelectableValue<string>>;
+  defaultGroupByOptions?: Array<SelectableValue<string>>;
+  onDefaultGroupByChange?: (items: Array<SelectableValue<string>>) => void;
   inline?: boolean;
   datasourceSupported: boolean;
   datasourceSupportsGroupBy?: boolean;
@@ -39,6 +50,9 @@ export function AdHocVariableForm({
   onAllowCustomValueChange,
   onEnableGroupByChange,
   originFiltersController,
+  defaultGroupByValues,
+  defaultGroupByOptions,
+  onDefaultGroupByChange,
   defaultKeys,
   inline,
   datasourceSupported,
@@ -96,6 +110,37 @@ export function AdHocVariableForm({
       {datasourceSupported && originFiltersController && (
         <div className={!inline ? styles.originFiltersWrapper : undefined}>
           <AdHocOriginFiltersEditor controller={originFiltersController} />
+        </div>
+      )}
+
+      {config.featureToggles.dashboardUnifiedDrilldownControls &&
+        datasource &&
+        datasourceSupported &&
+        datasourceSupportsGroupBy &&
+        onEnableGroupByChange && (
+          <Field
+            label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
+            description={t(
+              'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
+              'Enables group by operator in the filter combobox'
+            )}
+            noMargin
+          >
+            <Switch
+              value={enableGroupBy ?? false}
+              onChange={onEnableGroupByChange}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle}
+            />
+          </Field>
+        )}
+
+      {datasourceSupported && onDefaultGroupByChange && (
+        <div className={!inline ? styles.originFiltersWrapper : undefined}>
+          <DefaultGroupByValueEditor
+            values={defaultGroupByValues ?? []}
+            options={defaultGroupByOptions}
+            onChange={onDefaultGroupByChange}
+          />
         </div>
       )}
 
@@ -158,27 +203,6 @@ export function AdHocVariableForm({
           />
         </Field>
       )}
-
-      {config.featureToggles.dashboardUnifiedDrilldownControls &&
-        datasource &&
-        datasourceSupported &&
-        datasourceSupportsGroupBy &&
-        onEnableGroupByChange && (
-          <Field
-            label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
-            description={t(
-              'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
-              'Enables group by operator in the filter combobox'
-            )}
-            noMargin
-          >
-            <Switch
-              value={enableGroupBy ?? false}
-              onChange={onEnableGroupByChange}
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle}
-            />
-          </Field>
-        )}
     </Stack>
   );
 }

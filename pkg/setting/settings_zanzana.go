@@ -12,6 +12,21 @@ const (
 	ZanzanaModeEmbedded ZanzanaMode = "embedded"
 )
 
+// ZanzanaPrimaryEngine controls which engine is on the hot path when the shadow
+// client is active (i.e. the Zanzana feature flag is enabled but
+// ZanzanaNoLegacyClient is not). The other engine runs in the background for
+// comparison only.
+type ZanzanaPrimaryEngine string
+
+const (
+	// ZanzanaPrimaryEngineRBAC uses legacy RBAC as the primary engine and runs
+	// Zanzana checks in the background (default – preserves existing behaviour).
+	ZanzanaPrimaryEngineRBAC ZanzanaPrimaryEngine = "rbac"
+	// ZanzanaPrimaryEngineZanzana uses Zanzana as the primary engine and runs
+	// legacy RBAC checks in the background.
+	ZanzanaPrimaryEngineZanzana ZanzanaPrimaryEngine = "zanzana"
+)
+
 type ZanzanaClientSettings struct {
 	// Mode can either be embedded or client.
 	Mode ZanzanaMode
@@ -29,6 +44,9 @@ type ZanzanaClientSettings struct {
 	TokenExchangeURL string
 	// Namespace to use for the token.
 	TokenNamespace string
+	// PrimaryEngine selects which engine is on the hot path when the shadow
+	// client is active. Accepted values: "rbac" (default) and "zanzana".
+	PrimaryEngine ZanzanaPrimaryEngine
 }
 
 type ZanzanaReconcilerMode string
@@ -57,8 +75,6 @@ type ZanzanaReconcilerSettings struct {
 	Interval time.Duration
 	// Batch size for writing tuples to Zanzana.
 	WriteBatchSize int
-	// Page size when reading tuples from Zanzana during reconciliation.
-	ZanzanaReadPageSize int
 	// Size of the buffered work queue for namespaces.
 	QueueSize int
 
@@ -291,6 +307,13 @@ func (cfg *Cfg) readZanzanaSettings() {
 		zc.TokenExchangeURL = tokenExchangeURL
 	}
 
+	zc.PrimaryEngine = ZanzanaPrimaryEngine(clientSec.Key("primary_engine").MustString(string(ZanzanaPrimaryEngineRBAC)))
+	validEngines := []ZanzanaPrimaryEngine{ZanzanaPrimaryEngineRBAC, ZanzanaPrimaryEngineZanzana}
+	if !slices.Contains(validEngines, zc.PrimaryEngine) {
+		cfg.Logger.Warn("Invalid zanzana primary_engine", "expected", validEngines, "got", zc.PrimaryEngine)
+		zc.PrimaryEngine = ZanzanaPrimaryEngineRBAC
+	}
+
 	cfg.ZanzanaClient = zc
 
 	zs := ZanzanaServerSettings{}
@@ -385,7 +408,6 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
-	zr.ZanzanaReadPageSize = reconcilerSec.Key("zanzana_read_page_size").MustInt(1000)
 	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
 	zr.LeaderElectionEnabled = reconcilerSec.Key("leader_election_enabled").MustBool(false)
 	zr.LeaderElectionLeaseName = reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler")

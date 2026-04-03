@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -36,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -71,7 +69,6 @@ type dashboardSqlAccess struct {
 
 	// Use for writing (not reading)
 	dashStore              dashboards.Store
-	dashboardSearchClient  legacysearcher.DashboardSearchClient
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService
 
 	accessControl   accesscontrol.AccessControl
@@ -113,18 +110,15 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
 	libraryPanelSvc librarypanels.Service,
-	sorter sort.Service,
 	dashboardPermissionSvc accesscontrol.DashboardPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	features featuremgmt.FeatureToggles,
 ) *dashboardSqlAccess {
-	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
 		sql:                    sql,
 		namespacer:             namespacer,
 		dashStore:              dashStore,
 		provisioning:           provisioning,
-		dashboardSearchClient:  *dashboardSearchClient,
 		dashboardPermissionSvc: dashboardPermissionSvc,
 		libraryPanelSvc:        libraryPanelSvc,
 		accessControl:          accessControl,
