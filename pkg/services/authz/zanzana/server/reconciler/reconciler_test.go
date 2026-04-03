@@ -19,71 +19,57 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-// ensureServerMock is a configurable mock of zanzana.ServerInternal for
-// EnsureNamespace tests. Each callback can be replaced per-test; nil
-// callbacks fall back to sensible defaults.
-type ensureServerMock struct {
+// stubServer is a minimal implementation of zanzana.ServerInternal for
+// EnsureNamespace / reconcileNamespace tests.
+//
+// GetStore returns results from getStoreResults in order; a nil entry means
+// ErrStoreNotFound. Panics if called more times than results provided.
+type stubServer struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	getStoreFn       func(ctx context.Context, ns string) (*zanzana.StoreInfo, error)
-	getOrCreateFn    func(ctx context.Context, ns string) (*zanzana.StoreInfo, error)
-	deleteStoreFn    func(ctx context.Context, ns string) error
+	getStoreResults  []*zanzana.StoreInfo
+	getStoreIdx      atomic.Int32
 	deleteStoreCalls atomic.Int32
+	getOrCreateCalls atomic.Int32
 }
 
-func (m *ensureServerMock) Close()                              {}
-func (m *ensureServerMock) RunReconciler(context.Context) error { return nil }
-func (m *ensureServerMock) ListAllStores(context.Context) ([]zanzana.StoreInfo, error) {
+func (s *stubServer) Close()                              {}
+func (s *stubServer) RunReconciler(context.Context) error { return nil }
+func (s *stubServer) ListAllStores(context.Context) ([]zanzana.StoreInfo, error) {
 	return nil, nil
 }
-func (m *ensureServerMock) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) error {
+func (s *stubServer) WriteTuples(context.Context, *zanzana.StoreInfo, []*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition) error {
 	return nil
 }
-func (m *ensureServerMock) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
+func (s *stubServer) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
 	return &mockOpenFGAServer{}
 }
-
-func (m *ensureServerMock) GetStore(ctx context.Context, ns string) (*zanzana.StoreInfo, error) {
-	if m.getStoreFn != nil {
-		return m.getStoreFn(ctx, ns)
-	}
+func (s *stubServer) GetOrCreateStore(_ context.Context, ns string) (*zanzana.StoreInfo, error) {
+	s.getOrCreateCalls.Add(1)
 	return &zanzana.StoreInfo{ID: "store-1", Name: ns}, nil
 }
-
-func (m *ensureServerMock) GetOrCreateStore(ctx context.Context, ns string) (*zanzana.StoreInfo, error) {
-	if m.getOrCreateFn != nil {
-		return m.getOrCreateFn(ctx, ns)
-	}
-	return &zanzana.StoreInfo{ID: "store-1", Name: ns}, nil
-}
-
-func (m *ensureServerMock) DeleteStore(ctx context.Context, ns string) error {
-	m.deleteStoreCalls.Add(1)
-	if m.deleteStoreFn != nil {
-		return m.deleteStoreFn(ctx, ns)
-	}
+func (s *stubServer) DeleteStore(context.Context, string) error {
+	s.deleteStoreCalls.Add(1)
 	return nil
 }
+func (s *stubServer) GetStore(_ context.Context, ns string) (*zanzana.StoreInfo, error) {
+	idx := int(s.getStoreIdx.Add(1)) - 1
+	if idx >= len(s.getStoreResults) || s.getStoreResults[idx] == nil {
+		return nil, zanzana.ErrStoreNotFound
+	}
+	return s.getStoreResults[idx], nil
+}
 
-// notFoundClientFactory returns a NotFound error from Clients(), which makes
-// fetchAndTranslateTuples propagate the error so reconcileNamespace enters
-// its "namespace deleted" branch.
+// notFoundClientFactory causes fetchAndTranslateTuples to return a NotFound
+// error, driving reconcileNamespace into its "namespace deleted" branch.
 type notFoundClientFactory struct{}
 
 func (notFoundClientFactory) Clients(_ context.Context, ns string) (resources.ResourceClients, error) {
 	return nil, apierrors.NewNotFound(schema.GroupResource{Resource: "namespaces"}, ns)
 }
 
-// noopClientFactory returns a NotFound error — identical to notFoundClientFactory
-// but provided for readability in tests that don't exercise the reconcile path.
-type noopClientFactory struct{}
-
-func (noopClientFactory) Clients(_ context.Context, _ string) (resources.ResourceClients, error) {
-	return nil, apierrors.NewNotFound(schema.GroupResource{Resource: "namespaces"}, "unused")
-}
-
-func newEnsureReconciler(srv *ensureServerMock, cf resources.ClientFactory) *Reconciler {
+func newReconcilerForTest(srv *stubServer, cf resources.ClientFactory) *Reconciler {
 	return &Reconciler{
 		server:        srv,
 		clientFactory: cf,
@@ -93,126 +79,64 @@ func newEnsureReconciler(srv *ensureServerMock, cf resources.ClientFactory) *Rec
 }
 
 func TestEnsureNamespace_DoesNotCacheDeletedNamespace(t *testing.T) {
-	// Scenario: store doesn't exist → GetOrCreateStore creates it →
-	// reconcileNamespace discovers namespace is gone (NotFound) → deletes store.
-	// The ensuredNamespaces cache must NOT contain the namespace.
-	getStoreCall := 0
-	srv := &ensureServerMock{
-		getStoreFn: func(_ context.Context, _ string) (*zanzana.StoreInfo, error) {
-			getStoreCall++
-			if getStoreCall == 1 {
-				// First call: store not found
-				return nil, zanzana.ErrStoreNotFound
-			}
-			// Second call (verification after reconcile): store was deleted
-			return nil, zanzana.ErrStoreNotFound
-		},
-	}
-
-	r := newEnsureReconciler(srv, notFoundClientFactory{})
+	// Store is missing on both the initial check and the post-reconcile
+	// verification → EnsureNamespace must return an error and not cache.
+	srv := &stubServer{getStoreResults: []*zanzana.StoreInfo{nil, nil}}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
 
 	err := r.EnsureNamespace(context.Background(), "deleted-ns")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "store disappeared during reconciliation")
+	require.ErrorContains(t, err, "store disappeared during reconciliation")
 
 	_, cached := r.ensuredNamespaces.Load("deleted-ns")
-	assert.False(t, cached, "deleted namespace should not be cached")
-	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load(), "DeleteStore should have been called by reconcileNamespace")
+	assert.False(t, cached)
+	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
 }
 
 func TestEnsureNamespace_CachesSuccessfulNamespace(t *testing.T) {
-	// Scenario: store doesn't exist → create + reconcile succeeds →
-	// namespace is cached.
-	getStoreCall := 0
-	srv := &ensureServerMock{
-		getStoreFn: func(_ context.Context, ns string) (*zanzana.StoreInfo, error) {
-			getStoreCall++
-			if getStoreCall == 1 {
-				return nil, zanzana.ErrStoreNotFound
-			}
-			// After reconcile, store exists
-			return &zanzana.StoreInfo{ID: "store-1", Name: ns}, nil
-		},
-	}
+	// Store is missing on the initial check but present on the post-reconcile
+	// verification → EnsureNamespace must succeed and cache the namespace.
+	srv := &stubServer{getStoreResults: []*zanzana.StoreInfo{nil, {ID: "store-1", Name: "good-ns"}}}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
 
-	r := newEnsureReconciler(srv, notFoundClientFactory{})
-
-	// notFoundClientFactory triggers the namespace-deleted branch in
-	// reconcileNamespace, but the store still exists (getStoreFn returns it
-	// on the verification call). However, reconcileNamespace returns nil after
-	// deleting. We need a clientFactory that does NOT trigger NotFound for
-	// a successful reconcile.
-	//
-	// For this test, we use a clientFactory that triggers NotFound (so
-	// reconcileNamespace deletes the store and returns nil) but the post-
-	// reconcile GetStore check returns the store as still existing.
-	// This simulates a race where the store is recreated.
-	//
-	// Actually, for a truly successful path, we need reconcileNamespace to
-	// succeed without deleting. The simplest way: provide a clientFactory
-	// that returns NotFound (so reconcileNamespace deletes + returns nil)
-	// but have the post-reconcile GetStore still return the store.
-	// This tests that verification catches the "store still alive" case.
-
-	err := r.EnsureNamespace(context.Background(), "good-ns")
-	require.NoError(t, err)
+	require.NoError(t, r.EnsureNamespace(context.Background(), "good-ns"))
 
 	_, cached := r.ensuredNamespaces.Load("good-ns")
-	assert.True(t, cached, "successfully ensured namespace should be cached")
+	assert.True(t, cached)
 }
 
 func TestEnsureNamespace_ShortCircuitsOnCachedNamespace(t *testing.T) {
-	// Pre-populate cache; GetStore should never be called.
-	getStoreCalled := false
-	srv := &ensureServerMock{
-		getStoreFn: func(_ context.Context, _ string) (*zanzana.StoreInfo, error) {
-			getStoreCalled = true
-			return &zanzana.StoreInfo{ID: "store-1"}, nil
-		},
-	}
-
-	r := newEnsureReconciler(srv, noopClientFactory{})
+	// Pre-populated cache → GetStore must never be called.
+	srv := &stubServer{}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
 	r.ensuredNamespaces.Store("cached-ns", struct{}{})
 
-	err := r.EnsureNamespace(context.Background(), "cached-ns")
-	require.NoError(t, err)
-	assert.False(t, getStoreCalled, "GetStore should not be called for cached namespace")
+	require.NoError(t, r.EnsureNamespace(context.Background(), "cached-ns"))
+	assert.Equal(t, int32(0), srv.getStoreIdx.Load(), "GetStore should not be called for a cached namespace")
 }
 
 func TestEnsureNamespace_ExistingStoreIsCachedWithoutReconcile(t *testing.T) {
-	// Store already exists in OpenFGA → no GetOrCreateStore / reconcile needed,
+	// Store already exists → GetOrCreateStore and reconcile must be skipped,
 	// but the namespace should still be cached.
-	getOrCreateCalled := false
-	srv := &ensureServerMock{
-		getOrCreateFn: func(_ context.Context, _ string) (*zanzana.StoreInfo, error) {
-			getOrCreateCalled = true
-			return &zanzana.StoreInfo{ID: "store-1"}, nil
-		},
-	}
+	srv := &stubServer{getStoreResults: []*zanzana.StoreInfo{{ID: "store-1", Name: "existing-ns"}}}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
 
-	r := newEnsureReconciler(srv, noopClientFactory{})
-
-	err := r.EnsureNamespace(context.Background(), "existing-ns")
-	require.NoError(t, err)
+	require.NoError(t, r.EnsureNamespace(context.Background(), "existing-ns"))
 
 	_, cached := r.ensuredNamespaces.Load("existing-ns")
-	assert.True(t, cached, "existing namespace should be cached after EnsureNamespace")
-	assert.False(t, getOrCreateCalled, "GetOrCreateStore should not be called when store already exists")
+	assert.True(t, cached)
+	assert.Equal(t, int32(0), srv.getOrCreateCalls.Load(), "GetOrCreateStore should not be called when store already exists")
 }
 
 func TestReconcileNamespace_EvictsCacheOnNotFound(t *testing.T) {
-	// Simulate: namespace was cached → background reconcileNamespace runs →
-	// namespace is gone (NotFound) → cache entry is evicted.
-	srv := &ensureServerMock{}
-	r := newEnsureReconciler(srv, notFoundClientFactory{})
-
-	// Pre-populate cache as if EnsureNamespace had run before.
+	// A previously cached namespace is evicted from ensuredNamespaces when the
+	// background worker discovers the namespace is gone (NotFound).
+	srv := &stubServer{}
+	r := newReconcilerForTest(srv, notFoundClientFactory{})
 	r.ensuredNamespaces.Store("evict-ns", struct{}{})
 
-	err := r.reconcileNamespace(context.Background(), "evict-ns")
-	require.NoError(t, err)
+	require.NoError(t, r.reconcileNamespace(context.Background(), "evict-ns"))
 
 	_, cached := r.ensuredNamespaces.Load("evict-ns")
-	assert.False(t, cached, "cache entry should be evicted when reconcileNamespace encounters NotFound")
-	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load(), "DeleteStore should have been called")
+	assert.False(t, cached)
+	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
 }
