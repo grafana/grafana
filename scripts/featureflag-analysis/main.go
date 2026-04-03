@@ -2,21 +2,12 @@ package main
 
 import (
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"time"
+	"sort"
 )
-
-type graphiteMetric struct {
-	Name     string `json:"name"`
-	Value    int    `json:"value"`
-	Interval int    `json:"interval"`
-	MType    string `json:"mtype"`
-	Time     int64  `json:"time"`
-}
 
 func main() {
 	roots := []string{"."}
@@ -38,29 +29,27 @@ func main() {
 		len(idx.beOld), len(idx.beNew), len(idx.feOld), len(idx.feNew))
 
 	counts := map[migrationStatus]int{}
-	byStatus := map[migrationStatus][]string{}
+	var easyFlags []string
 	for _, f := range flags {
-		s := classifyFlag(f.Name, idx)
+		s, ok := classifyFlag(f.Name, idx)
+		if !ok {
+			continue
+		}
 		counts[s]++
-		byStatus[s] = append(byStatus[s], f.Name)
+		if s == statusNotMigrated && isBEEasy(f.Name, idx) {
+			easyFlags = append(easyFlags, f.Name)
+		}
 	}
+	sort.Strings(easyFlags)
 
-	total := len(flags)
-	fmt.Fprintf(os.Stderr, "Total: %d | Migrated: %d | Partial: %d | Not migrated: %d | No usage: %d\n",
-		total, counts[statusMigrated], counts[statusPartial], counts[statusNotMigrated], counts[statusNoUsage])
-	fmt.Fprintf(os.Stderr, "No usage: %v\n", byStatus[statusNoUsage])
-
-	ts := time.Now().Unix()
-	metrics := []graphiteMetric{
-		{"grafana.ci-code.featureflags.total", total, 86400, "gauge", ts},
-		{"grafana.ci-code.featureflags.migrated", counts[statusMigrated], 86400, "gauge", ts},
-		{"grafana.ci-code.featureflags.partial", counts[statusPartial], 86400, "gauge", ts},
-		{"grafana.ci-code.featureflags.not_migrated", counts[statusNotMigrated], 86400, "gauge", ts},
-		{"grafana.ci-code.featureflags.no_usage", counts[statusNoUsage], 86400, "gauge", ts},
-	}
-
-	if err := json.NewEncoder(os.Stdout).Encode(metrics); err != nil {
-		log.Fatalf("encoding output: %v", err)
+	total := counts[statusMigrated] + counts[statusPartial] + counts[statusNotMigrated]
+	fmt.Printf("Total (with usage): %d\n", total)
+	fmt.Printf("Migrated:           %d\n", counts[statusMigrated])
+	fmt.Printf("Partial:            %d\n", counts[statusPartial])
+	fmt.Printf("Not migrated:       %d\n", counts[statusNotMigrated])
+	fmt.Printf("\nEasy to migrate (%d):\n", len(easyFlags))
+	for _, name := range easyFlags {
+		fmt.Printf("  %s\n", name)
 	}
 }
 
