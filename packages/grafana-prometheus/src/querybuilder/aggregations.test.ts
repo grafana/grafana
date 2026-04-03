@@ -1,5 +1,5 @@
 import { getAggregationOperations } from './aggregations';
-import { QueryBuilderOperation } from './shared/types';
+import { type QueryBuilderOperation } from './shared/types';
 import { PromOperationId } from './types';
 
 describe('getAggregationOperations', () => {

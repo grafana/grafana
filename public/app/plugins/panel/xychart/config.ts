@@ -3,15 +3,15 @@ import {
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
-  SetFieldConfigOptionsArgs,
+  type SetFieldConfigOptionsArgs,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LineStyle } from '@grafana/schema';
+import { type LineStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { FieldConfig, XYShowMode, PointShape } from './panelcfg.gen';
+import { type FieldConfig, XYShowMode, PointShape } from './panelcfg.gen';
 
 export const DEFAULT_POINT_SIZE = 5;
 

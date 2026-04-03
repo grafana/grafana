@@ -1,4 +1,4 @@
-import { FieldConfigSource } from '@grafana/data';
+import { type FieldConfigSource } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 import { config } from '@grafana/runtime';
 import { FIELD_CONFIG_CUSTOM_KEY, FIELD_CONFIG_OVERRIDES_KEY, PanelLogEvents } from 'app/core/log_events';

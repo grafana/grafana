@@ -1,4 +1,4 @@
-import { CustomVariableModel } from '@grafana/data';
+import { type CustomVariableModel } from '@grafana/data';
 
 import { logGroupNamesVariable, setupMockedTemplateService, regionVariable } from '../mocks/CloudWatchDataSource';
 

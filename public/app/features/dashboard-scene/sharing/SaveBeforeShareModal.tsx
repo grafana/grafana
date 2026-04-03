@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { ReactNode, useCallback, useEffect } from 'react';
+import { type ReactNode, useCallback, useEffect } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 interface Props {
   dashboard: DashboardScene;
@@ -16,6 +16,7 @@ interface Props {
 
 export function SaveBeforeShareModal({ dashboard, onContinue, onDismiss, title, message }: Props) {
   const isDirty = dashboard.state.isEditing && dashboard.state.isDirty;
+  const canSave = Boolean(dashboard.state.meta.canSave);
 
   // Avoid showing a stale modal if the dashboard gets saved/discarded elsewhere.
   useEffect(() => {
@@ -44,9 +45,13 @@ export function SaveBeforeShareModal({ dashboard, onContinue, onDismiss, title, 
   }, [dashboard, onContinue, onDismiss]);
 
   const defaultTitle = t('dashboard-scene.sharing.save-before-share.title', 'Unsaved changes');
-  const defaultMessage = (
+  const defaultMessage = canSave ? (
     <Trans i18nKey="dashboard-scene.sharing.save-before-share.text">
       You have unsaved changes to this dashboard. You need to save them before you can share it.
+    </Trans>
+  ) : (
+    <Trans i18nKey="dashboard-scene.sharing.save-before-share.text-no-save">
+      You have unsaved changes. You don’t have permission to save. Discard changes and share the original?
     </Trans>
   );
 
@@ -55,13 +60,7 @@ export function SaveBeforeShareModal({ dashboard, onContinue, onDismiss, title, 
   }
 
   return (
-    <Modal
-      isOpen={true}
-      title={title ?? defaultTitle}
-      onDismiss={onDismiss}
-      icon="exclamation-triangle"
-      className={css({ width: '500px' })}
-    >
+    <Modal isOpen={true} title={title ?? defaultTitle} onDismiss={onDismiss} className={css({ width: '500px' })}>
       <h5>{message ?? defaultMessage}</h5>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onCancel} fill="outline">
@@ -70,9 +69,11 @@ export function SaveBeforeShareModal({ dashboard, onContinue, onDismiss, title, 
         <Button variant="destructive" onClick={onDiscard}>
           <Trans i18nKey="common.discard">Discard</Trans>
         </Button>
-        <Button onClick={onSave}>
-          <Trans i18nKey="common.save">Save</Trans>
-        </Button>
+        {canSave && (
+          <Button onClick={onSave}>
+            <Trans i18nKey="common.save">Save</Trans>
+          </Button>
+        )}
       </Modal.ButtonRow>
     </Modal>
   );

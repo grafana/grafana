@@ -1,20 +1,20 @@
-import { DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams } from 'msw';
+import { type DefaultBodyType, HttpResponse, type HttpResponseResolver, type PathParams } from 'msw';
 
 import { base64UrlEncode } from '@grafana/alerting';
-import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { type PromRuleGroupDTO, type PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 /** Helper method to help generate a kubernetes-style response with a list of items */
 export const getK8sResponse = <T>(kind: string, items: T[]) => {
   return {
     kind,
-    apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+    apiVersion: 'notifications.alerting.grafana.app/v1beta1',
     metadata: {},
     items,
   };
 };
 
 /** Expected base URL for our k8s APIs */
-export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafana.app/v0alpha1';
+export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafana.app/v1beta1';
 
 export function paginatedHandlerFor(
   groups: PromRuleGroupDTO[]

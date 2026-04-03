@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { PluginType, GrafanaTheme2 } from '@grafana/data';
+import { PluginType, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { RoadmapLinks } from 'app/features/plugins/admin/components/RoadmapLinks';

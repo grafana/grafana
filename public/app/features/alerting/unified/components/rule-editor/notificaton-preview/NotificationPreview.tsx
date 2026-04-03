@@ -2,15 +2,15 @@ import { css } from '@emotion/css';
 import { Fragment, Suspense, lazy } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AccessControlAction } from 'app/types/accessControl';
-import { AlertQuery, Labels } from 'app/types/unified-alerting-dto';
+import { type AlertQuery, type Labels } from 'app/types/unified-alerting-dto';
 
-import { Folder, KBObjectArray } from '../../../types/rule-form';
+import { type Folder, type KBObjectArray } from '../../../types/rule-form';
 import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
@@ -182,7 +182,9 @@ export const NotificationPreview = ({
  */
 function NotificationPreviewGrafanaPermissionCheck({ children }: React.PropsWithChildren) {
   const hasLegacyNotificationPermission = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
-  const hasNotificationPolicyTreePermission = contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead);
+  const hasNotificationPolicyTreePermission =
+    contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead) ||
+    contextSrv.hasPermission(AccessControlAction.ActionAlertingManagedRoutesRead);
 
   if (hasLegacyNotificationPermission || hasNotificationPolicyTreePermission) {
     return <>{children}</>;

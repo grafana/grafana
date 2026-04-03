@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo, useState, useEffect } from 'react';
 
-import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { type StandardEditorProps, type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
-import { GAZETTEER_OPTIONS, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
+import { GAZETTEER_OPTIONS, type Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 
 const defaultPaths: Array<SelectableValue<string>> = Object.values(GAZETTEER_OPTIONS).map(
   ({ label, description, path }) => ({ label, description, value: path })
