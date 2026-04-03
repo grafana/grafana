@@ -5,6 +5,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.use({
   featureToggles: {
     canvasPanelPanZoom: true,
+    dashboardNewLayouts: false,
   },
 });
 test.describe('Canvas Panel - Scene Tests', () => {
