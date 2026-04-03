@@ -4364,6 +4364,17 @@
       "title": "Vous n'avez pas encore créé de tableaux de bord",
       "title-folder": "Ce dossier ne contient pas encore de tableaux de bord"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Supprimer ce dossier",
       "delete-folder-error": "Erreur lors de la suppression du dossier. Veuillez réessayer plus tard.",
@@ -5436,9 +5447,6 @@
         "title": {
           "proceed-to-external-site": "Accéder au site externe ?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Afficher en tant que scène"
       }
     },
     "dashboard-links-menu": {
@@ -5985,12 +5993,20 @@
       "not-found": "Source de données avec UID « {{datasourceUid}} » introuvable."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Configurer",
       "configure-button-menu": "Afficher/Masquer le menu",
+      "configure-visualization": "",
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
       "menu-open-panel-editor": "Configurer",
       "menu-use-library-panel": "Utiliser le panneau de bibliothèque",
-      "missing-config": "Configuration de panneau manquante"
+      "menu-use-saved-query": "",
+      "missing-config": "Configuration de panneau manquante",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Nouveau panneau",
     "on-create-new-row": {
@@ -6769,6 +6785,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6855,6 +6876,10 @@
       "constant-options": "Options constantes",
       "label-value": "Valeur",
       "placeholder-your-metric-prefix": "Votre préfixe de métrique"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Les règles d’affichage et de masquage ne fonctionneront pas",
@@ -7185,6 +7210,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7503,6 +7534,7 @@
     "sharing": {
       "save-before-share": {
         "text": "Vous avez des modifications non enregistrées dans ce tableau de bord. Vous devez les enregistrer avant de pouvoir le partager.",
+        "text-no-save": "",
         "title": "Modifications non enregistrées"
       }
     },
@@ -7636,6 +7668,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulaire de l’éditeur de variables",
       "back-to-list": "Retour à la liste",
@@ -7665,6 +7702,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Voulez-vous vraiment supprimer : {{variable}} ?",
       "confirmText-delete-variable": "Supprimer la variable",
+      "drag-handle-label": "",
       "title-delete-variable": "Supprimer la variable",
       "tooltip-duplicate-variable": "Dupliquer la variable",
       "tooltip-remove-variable": "Supprimer la variable"
@@ -8234,6 +8272,7 @@
       "label-preview": "Aperçu"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Dupliquer le mappage de valeur",
       "duplicate-value-mapping-tooltip-duplicate": "Dupliquer",
       "placeholder-exact-value-to-match": "Valeur exacte à faire correspondre",
@@ -10052,6 +10091,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Ajouter un lien",
+      "drag-handle-label": "",
       "edit-link": "Modifier le lien",
       "one-click": "Un clic",
       "one-click-enabled": "Un clic activé",
@@ -12596,7 +12636,7 @@
       "name-required": "Un nom est obligatoire",
       "save": "Enregistrer",
       "table-delete": "Supprimer l'élément de la playlist",
-      "table-drag": "Glisser et déposer pour réorganiser",
+      "table-drag": "",
       "table-empty": "La playlist est vide. Ajoutez des tableaux de bord ci-dessous.",
       "table-heading": "Tableaux de bord"
     },
@@ -15577,6 +15617,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Cliquer pour modifier",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Supprimer la ligne énumérée",
       "remove-enum-row-tooltip-delete": "Supprimer"
     },
@@ -16490,6 +16531,7 @@
       "variable": "Variable"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Dupliquer la variable",
       "tooltip-remove-variable": "Supprimer la variable"
     },
