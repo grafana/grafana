@@ -14771,12 +14771,12 @@
     "aria-label": "What's new in Grafana",
     "assistant": {
       "badge": "NOW IN OSS",
-      "bullet-1": "Build complex dashboards in minutes",
-      "bullet-2": "Correlate metrics, logs and traces and gain insights in minutes",
-      "bullet-3": "Onboard new team members in a week instead of a month",
+      "bullet-1": "Explore your data by prompting Assistant to generate queries for you",
+      "bullet-2": "Create comprehensive dashboards in minutes",
+      "bullet-3": "Onboard new team members in days, not weeks",
       "cta": "Show me",
       "subtitle": "Use AI to handle everything from config to query generation",
-      "title": "Use Grafana Assistant in Grafana OSS"
+      "title": "Use Grafana's AI Assistant in Grafana OSS"
     },
     "badge": {
       "new": "NEW IN G13"
@@ -14785,26 +14785,26 @@
     "dynamic-dashboards": {
       "bullet-1": "Split content into tabs for quick switching",
       "bullet-2": "Show or hide panels based on template variables and other conditions",
-      "bullet-3": "Auto-arrange panels for an efficient layout",
+      "bullet-3": "Auto-arrange panels into a grid for an efficient layout",
       "cta": "Show me",
-      "subtitle": "Make your dashboards more impactful by making them more interactive",
-      "title": "Make your dashboards more dynamic"
+      "subtitle": "Make your dashboards more impactful and easier to explore",
+      "title": "Add tabs and panel conditions to your dashboards"
     },
     "git-sync": {
       "bullet-1": "Store your dashboard configuration safely in any git repository",
-      "bullet-2": "Keep track of the changes - and who made them!",
-      "bullet-3": "Works with many deployment scenarios",
+      "bullet-2": "keep track of the changes - and who made them",
+      "bullet-3": "Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams",
       "cta": "Show me",
       "subtitle": "Bring version control, collaboration, and reliability to your dashboards",
       "title": "Sync your dashboards to Git"
     },
     "library-of-things": {
-      "bullet-1": "Start with a community dashboard tailored to your data source",
-      "bullet-2": "Start with a template and customize it to your needs",
-      "bullet-3": "Start from proven designs instead of building from scratch",
+      "bullet-1": "Start from a clean layout instead of building from scratch",
+      "bullet-2": "Load a template and customize it to your needs",
+      "bullet-3": "Explore and use community dashboards tailored to your data source",
       "cta": "Show me",
-      "subtitle": "Use dashboard suggestions, templates, and saved queries get to a useful dashboard sooner",
-      "title": "Dashboard suggestions and templates"
+      "subtitle": "Get to a useful dashboard sooner by starting from a proven design",
+      "title": "Kickstart dashboards with suggestions and templates"
     },
     "nav": {
       "go-to": "Go to slide {{number}}",
