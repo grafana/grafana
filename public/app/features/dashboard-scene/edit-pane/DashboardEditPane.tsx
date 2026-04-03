@@ -267,8 +267,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     if (multi) {
-      if (hasItem && !force) {
-        this.updateSelection(this.state.selectionContext.selected.filter((i) => i.id !== id));
+      if (hasItem) {
+        // Remove item unless force is true
+        if (!force) {
+          this.updateSelection(this.state.selectionContext.selected.filter((i) => i.id !== id));
+        }
       } else {
         this.updateSelection([...this.state.selectionContext.selected, { id }]);
       }

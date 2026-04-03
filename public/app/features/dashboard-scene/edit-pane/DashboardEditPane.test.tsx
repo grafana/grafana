@@ -100,6 +100,13 @@ describe('DashboardEditPane', () => {
       editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: false, force: true });
 
       expect(editPane.getSelection()).toBe(panel);
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
+
+      // Force select with multi
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: true, force: true });
+
+      // Still only 1 item selected
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
     });
   });
 
