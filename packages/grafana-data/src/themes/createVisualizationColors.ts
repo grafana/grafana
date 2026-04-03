@@ -344,25 +344,6 @@ function getClassicPalette() {
   ];
 }
 
-/**
- * Color blind-safe palette based on Wong (2011) "Points of view: Color blindness"
- * Nature Methods 8:441. All 8 colors are validated as mutually distinguishable
- * under protanopia, deuteranopia, and tritanopia.
- */
-export function getColorblindPalette(): string[] {
-  return [
-    '#0072B2', // blue
-    '#E69F00', // orange
-    '#009E73', // bluish green
-    '#CC79A7', // reddish purple
-    '#56B4E9', // sky blue
-    '#D55E00', // vermilion
-    '#F0E442', // yellow
-    '#000000', // black
-    '#FFFFFF', // white
-  ];
-}
-
 // Old hues
 // function getDarkHues(): ThemeVizHue[] {
 //     return [
