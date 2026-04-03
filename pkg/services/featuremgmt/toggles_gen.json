@@ -4299,6 +4299,22 @@
     },
     {
       "metadata": {
+        "name": "pyroscopeUTF8LabelNames",
+        "resourceVersion": "1775220811855",
+        "creationTimestamp": "2026-04-03T12:50:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-03 12:53:31.855811 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables support for UTF-8 label names in Pyroscope label selectors",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryCacheRequestDeduplication",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-08-29T14:46:39Z",
