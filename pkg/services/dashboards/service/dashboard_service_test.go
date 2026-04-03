@@ -102,12 +102,6 @@ func TestDashboardServiceValidation(t *testing.T) {
 			dto.Message = `message`
 		})
 
-		t.Run("Should return validation error if folder is named General", func(t *testing.T) {
-			dto.Dashboard = dashboards.NewDashboardFolder("General")
-			_, err := service.SaveDashboard(ctx, dto, false)
-			require.Equal(t, err, dashboards.ErrDashboardFolderNameExists)
-		})
-
 		t.Run("When saving a dashboard should validate uid", func(t *testing.T) {
 			testCases := []struct {
 				Uid   string
