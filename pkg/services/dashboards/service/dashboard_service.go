@@ -501,7 +501,7 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 }
 
 func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
-	res, err := dr.k8sclient.Search(ctx, orgID, &resourcepb.ResourceSearchRequest{
+	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Fields: []*resourcepb.Requirement{
 				{
@@ -512,12 +512,9 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 			},
 		},
 		Limit: listAllDashboardsLimit,
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	results, err := dashboardsearch.ParseResults(res, 0)
+	results, err := dashboardsearch.SearchAll(ctx, orgID, request, dr.k8sclient.Search)
 	if err != nil {
 		return nil, err
 	}
@@ -2054,12 +2051,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		}
 	}
 
-	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
-	if err != nil {
-		return dashboardv0.SearchResults{}, err
-	}
-
-	return dashboardsearch.ParseResults(res, 0)
+	return dashboardsearch.SearchAll(ctx, query.OrgId, request, dr.k8sclient.Search)
 }
 
 type dashboardProvisioningWithUID struct {
