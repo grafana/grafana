@@ -242,10 +242,10 @@ var (
 		{
 			Name:            "provisioningFolderMetadata",
 			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "provisioningExport",
@@ -308,6 +308,14 @@ var (
 		{
 			Name:         "reportingHeaderSettings",
 			Description:  "Enables configuration of PDF report settings",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "reportingFooterSettings",
+			Description:  "Enables the configurable footer settings for PDF reports",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaOperatorExperienceSquad,
@@ -603,7 +611,7 @@ var (
 		{
 			Name:         "annotationsClustering",
 			Description:  "Enables annotation clustering and switches to refactored annotation code",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
@@ -619,10 +627,10 @@ var (
 		{
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables new dashboard layouts",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardDefaultLayoutSelector",
@@ -951,7 +959,7 @@ var (
 		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
@@ -1026,10 +1034,10 @@ var (
 		{
 			Name:         "newUnconfiguredPanel",
 			Description:  "Enables the new unconfigured panel experience",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLibrary",
@@ -1082,10 +1090,10 @@ var (
 		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingAlertListPanelEnhancements",
@@ -1103,22 +1111,7 @@ var (
 			FrontendOnly: false,
 			Expression:   "true",
 		},
-		{
-			Name:         "alertingSavedSearches",
-			Description:  "Enables saved searches for alert rules list",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "alertingTriageSavedSearches",
-			Description:  "Enables saved searches for the Alert Activity page",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
+
 		{
 			Name:         "alertingDisableSendAlertsExternal",
 			Description:  "Disables the ability to send alerts to an external Alertmanager datasource.",
@@ -1223,14 +1216,7 @@ var (
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
 		},
-		{
-			Name:         "alertingFilterV2",
-			Description:  "Enable the new alerting search experience",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
+
 		{
 			Name:            "dataplaneAggregator",
 			Description:     "Enable grafana dataplane aggregator",
@@ -1805,9 +1791,9 @@ var (
 			Name:         "alertingListViewV2PreviewToggle",
 			Description:  "Enables the alerting list view v2 preview toggle",
 			FrontendOnly: true,
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "alertRuleUseFiredAtForStartsAt",
@@ -2758,10 +2744,10 @@ var (
 		{
 			Name:         "splashScreen",
 			Description:  "Enables the splash screen modal for introducing new Grafana features on first session",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "streamingForwardTeamHeadersTempo",
@@ -2814,6 +2800,14 @@ var (
 			Description:  "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "enableColorblindSafePanelOptions",
+			Description:  "Enables new colorblind safe palette and line fill patterns for panels",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
 			FrontendOnly: true,
 			Expression:   "false",
 		},

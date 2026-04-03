@@ -55,14 +55,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestDashboardServiceValidation(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-	defer fakeStore.AssertExpectations(t)
 
 	service := &DashboardServiceImpl{
 		cfg:                    setting.NewCfg(),
 		log:                    log.New("test.logger"),
-		dashboardStore:         &fakeStore,
 		folderService:          foldertest.NewFakeService(),
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
 		features:               featuremgmt.WithFeatures(),
@@ -626,298 +623,9 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 	k8sCliMock.AssertExpectations(t)
 }
 
-func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
-	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-	fakeDashboardStore := &dashboards.FakeDashboardStore{}
+func TestUnprovisionDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
-		orgService: &orgtest.FakeOrgService{
-			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
-		},
-		publicDashboardService: fakePublicDashboardService,
-		dashboardStore:         fakeDashboardStore,
-		log:                    log.NewNopLogger(),
-	}
-
-	t.Run("Should delete across all orgs, but only delete file based provisioned dashboards", func(t *testing.T) {
-		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
-		_, k8sCliMock := setupK8sDashboardTests(service)
-		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			// nolint:staticcheck
-			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
-		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_MANAGER_ID,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_PATH,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_TIME,
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder 1"),
-							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
-							[]byte("orphaned"),
-							[]byte("path/to/file"),
-							[]byte("hash"),
-							[]byte("1234567"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}, nil).Once()
-
-		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			// nolint:staticcheck
-			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
-		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_MANAGER_ID,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_PATH,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_TIME,
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid2",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 2"),
-							[]byte("folder 2"),
-							[]byte(string(utils.ManagerKindPlugin)),
-							[]byte("app"),
-							[]byte(""),
-							[]byte(""),
-							[]byte(""),
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid3",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 3"),
-							[]byte("folder 3"),
-							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
-							[]byte("orphaned"),
-							[]byte("path/to/file"),
-							[]byte("hash"),
-							[]byte("1234567"),
-						},
-					},
-				},
-			},
-			TotalHits: 2,
-		}, nil).Once()
-
-		// mock call to waitForSearchQuery()
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-			Results:   &resourcepb.ResourceTable{},
-			TotalHits: 0,
-		}, nil).Twice()
-
-		err := service.DeleteOrphanedProvisionedDashboards(context.Background(), &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
-			Config: []dashboards.ProvisioningConfig{{Name: "test"}},
-		})
-		require.NoError(t, err)
-		k8sCliMock.AssertExpectations(t)
-	})
-
-	t.Run("Should retry until deleted dashboard not found in search", func(t *testing.T) {
-		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
-		repo := "test"
-		singleOrgService := &DashboardServiceImpl{
-			cfg: setting.NewCfg(),
-			orgService: &orgtest.FakeOrgService{
-				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
-			},
-			publicDashboardService: fakePublicDashboardService,
-			dashboardStore:         fakeDashboardStore,
-			log:                    log.NewNopLogger(),
-		}
-		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
-		// Call to searchProvisionedDashboardsThroughK8s()
-		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			// make sure the kind is added to the query
-			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
-				req.Options.Fields[1].Values[0] == repo
-		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_MANAGER_ID,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_PATH,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: resource.SEARCH_FIELD_SOURCE_TIME,
-						Type: resourcepb.ResourceTableColumnDefinition_INT64,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder 1"),
-							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
-							[]byte("orphaned"),
-							[]byte("path/to/file"),
-							[]byte("hash"),
-							[]byte("1234567"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}, nil)
-
-		// Mock deleteDashboard()
-		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-
-		// Mock WaitForSearchQuery()
-		// First call returns 1 hit
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-			Results:   &resourcepb.ResourceTable{},
-			TotalHits: 1,
-		}, nil).Once()
-
-		// Second call returns 0 hits
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-			Results:   &resourcepb.ResourceTable{},
-			TotalHits: 0,
-		}, nil).Once()
-
-		err := singleOrgService.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
-			Config: []dashboards.ProvisioningConfig{{Name: "test"}},
-		})
-		require.NoError(t, err)
-		k8sCliMock.AssertExpectations(t)
-	})
-
-	t.Run("Will not wait for indexer when no dashboards were deleted", func(t *testing.T) {
-		fakeDashboardStore.On("GetDuplicateProvisionedDashboards", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{}, nil)
-		repo := "test"
-		singleOrgService := &DashboardServiceImpl{
-			cfg: setting.NewCfg(),
-			orgService: &orgtest.FakeOrgService{
-				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
-			},
-			publicDashboardService: fakePublicDashboardService,
-			dashboardStore:         fakeDashboardStore,
-			log:                    log.NewNopLogger(),
-		}
-		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
-
-		// Call to searchProvisionedDashboardsThroughK8s()
-		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			// make sure the kind is added to the query
-			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
-				req.Options.Fields[1].Values[0] == repo
-		})).Return(&resourcepb.ResourceSearchResponse{
-			Results:   &resourcepb.ResourceTable{},
-			TotalHits: 0,
-		}, nil)
-
-		err := singleOrgService.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{
-			Config: []dashboards.ProvisioningConfig{{Name: "test"}},
-		})
-		require.NoError(t, err)
-		k8sCliMock.AssertExpectations(t)
-	})
-}
-
-func TestUnprovisionDashboard(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
-	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -937,7 +645,6 @@ func TestUnprovisionDashboard(t *testing.T) {
 		},
 		"spec": map[string]any{},
 	}}
-	fakeStore.On("UnprovisionDashboard", mock.Anything, int64(1)).Return(nil).Once()
 	k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 	dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": dashboardv0.APIVERSION,
@@ -988,7 +695,6 @@ func TestUnprovisionDashboard(t *testing.T) {
 	err := service.UnprovisionDashboard(ctx, 1)
 	require.NoError(t, err)
 	k8sCliMock.AssertExpectations(t)
-	fakeStore.AssertExpectations(t)
 }
 
 func TestGetDashboardsByPluginID(t *testing.T) {
@@ -1050,9 +756,6 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 }
 
 func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
-
 	folderPermService := acmock.NewMockedPermissionsService()
 	folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
@@ -1065,7 +768,6 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 
 	service := &DashboardServiceImpl{
 		cfg:               cfg,
-		dashboardStore:    &fakeStore,
 		folderPermissions: folderPermService,
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
@@ -1092,11 +794,8 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 }
 
 func TestSaveProvisionedDashboard(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
 				ID:  0,
@@ -1141,16 +840,11 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, dashboard)
 	k8sCliMock.AssertExpectations(t)
-	// ensure the provisioning data is still saved to the db
-	fakeStore.AssertExpectations(t)
 }
 
 func TestSaveDashboard(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{},
 		},
@@ -1222,12 +916,9 @@ func TestSaveDashboard(t *testing.T) {
 }
 
 func TestDeleteDashboard(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:                    setting.NewCfg(),
-		dashboardStore:         &fakeStore,
 		publicDashboardService: fakePublicDashboardService,
 	}
 
@@ -1279,11 +970,8 @@ func TestDeleteDashboard(t *testing.T) {
 }
 
 func TestDeleteAllDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
@@ -1295,20 +983,17 @@ func TestDeleteAllDashboards(t *testing.T) {
 }
 
 func TestSearchDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
 	fakeFolders := foldertest.NewFakeService()
 	fakeFolders.ExpectedFolder = &folder.Folder{
 		Title: "testing-folder-1",
 		UID:   "f1",
 	}
 	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		features:       featuremgmt.WithFeatures(),
-		dashboardStore: &fakeStore,
-		folderService:  fakeFolders,
-		metrics:        newDashboardsMetrics(prometheus.NewRegistry()),
+		cfg:           setting.NewCfg(),
+		features:      featuremgmt.WithFeatures(),
+		folderService: fakeFolders,
+		metrics:       newDashboardsMetrics(prometheus.NewRegistry()),
 	}
 
 	expectedResult := model.HitList{
@@ -2204,7 +1889,6 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				ctx = identity.WithRequester(ctx, user)
 
 				// Setup mocks and service
-				dashboardStore := &dashboards.FakeDashboardStore{}
 				features := featuremgmt.WithFeatures()
 
 				permService := acmock.NewMockedPermissionsService()
@@ -2213,7 +1897,6 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				service := &DashboardServiceImpl{
 					cfg:                       setting.NewCfg(),
 					log:                       log.New("test-logger"),
-					dashboardStore:            dashboardStore,
 					features:                  features,
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
@@ -2250,72 +1933,36 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 }
 
 func TestCleanUpDashboard(t *testing.T) {
-	tests := []struct {
-		name          string
-		deleteError   error
-		cleanupError  error
-		expectCleanup bool
-		expectedError error
-	}{
-		{
-			name:          "Should delete public dashboards and clean up after delete",
-			expectCleanup: true,
-		},
-		{
-			name:          "Should return error if DeleteByDashboardUIDs fails",
-			deleteError:   fmt.Errorf("deletion error"),
-			expectCleanup: false,
-			expectedError: fmt.Errorf("deletion error"),
-		},
-		{
-			name:          "Should return error if CleanupAfterDelete fails",
-			cleanupError:  fmt.Errorf("cleanup error"),
-			expectCleanup: true,
-			expectedError: fmt.Errorf("cleanup error"),
-		},
-	}
+	t.Run("Should delete public dashboards and clean up after delete", func(t *testing.T) {
+		sqlStore, _ := sqlstore.InitTestDB(t)
+		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+		service := &DashboardServiceImpl{
+			cfg:                    setting.NewCfg(),
+			sqlStore:               sqlStore,
+			publicDashboardService: fakePublicDashboardService,
+		}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			fakeStore := dashboards.FakeDashboardStore{}
-			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-			service := &DashboardServiceImpl{
-				cfg:                    setting.NewCfg(),
-				dashboardStore:         &fakeStore,
-				publicDashboardService: fakePublicDashboardService,
-			}
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash-uid"}).Return(nil)
 
-			ctx := context.Background()
-			dashboardUID := "dash-uid"
-			dashboardID := int64(1)
-			orgID := int64(1)
+		err := service.CleanUpDashboard(context.Background(), "dash-uid", int64(1), int64(1))
+		require.NoError(t, err)
+		fakePublicDashboardService.AssertExpectations(t)
+	})
 
-			// Setup mocks
-			fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, orgID, []string{dashboardUID}).Return(tc.deleteError).Maybe()
+	t.Run("Should return error if DeleteByDashboardUIDs fails", func(t *testing.T) {
+		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+		service := &DashboardServiceImpl{
+			cfg:                    setting.NewCfg(),
+			publicDashboardService: fakePublicDashboardService,
+		}
 
-			if tc.expectCleanup {
-				fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{
-					OrgID: orgID,
-					UID:   dashboardUID,
-					ID:    dashboardID,
-				}).Return(tc.cleanupError).Maybe()
-			}
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash-uid"}).Return(fmt.Errorf("deletion error"))
 
-			// Execute
-			err := service.CleanUpDashboard(ctx, dashboardUID, dashboardID, orgID)
-
-			// Assert
-			if tc.expectedError != nil {
-				require.Error(t, err)
-				require.Equal(t, tc.expectedError.Error(), err.Error())
-			} else {
-				require.NoError(t, err)
-			}
-
-			fakePublicDashboardService.AssertExpectations(t)
-			fakeStore.AssertExpectations(t)
-		})
-	}
+		err := service.CleanUpDashboard(context.Background(), "dash-uid", int64(1), int64(1))
+		require.Error(t, err)
+		require.Equal(t, "deletion error", err.Error())
+		fakePublicDashboardService.AssertExpectations(t)
+	})
 }
 
 func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
@@ -2339,7 +1986,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				}
 
 				kv := service.kvstore.(*kvstore.FakeKVStore)
-				fakeStore := service.dashboardStore.(*dashboards.FakeDashboardStore)
 				fakePublicDashboardService := service.publicDashboardService.(*publicdashboards.FakePublicDashboardServiceWrapper)
 
 				// Create dashboard unstructured items for response
@@ -2381,7 +2027,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				// Mock cleanup
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash1"}).Return(nil).Once()
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(2), []string{"dash2"}).Return(nil).Once()
-				fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Times(2)
 			},
 			verifyFunc: func(t *testing.T, service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler, kv *kvstore.FakeKVStore) {
 				k8sCliMock.AssertExpectations(t)
@@ -2407,7 +2052,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				}
 
 				kv := service.kvstore.(*kvstore.FakeKVStore)
-				fakeStore := service.dashboardStore.(*dashboards.FakeDashboardStore)
 				fakePublicDashboardService := service.publicDashboardService.(*publicdashboards.FakePublicDashboardServiceWrapper)
 
 				// Setup initial resource version
@@ -2461,9 +2105,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash3"}).Return(nil).Once()
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash4"}).Return(nil).Once()
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash5"}).Return(nil).Once()
-
-				// Mock cleanup after delete for each dashboard
-				fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Times(5)
 			},
 			verifyFunc: func(t *testing.T, service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler, kv *kvstore.FakeKVStore) {
 				k8sCliMock.AssertExpectations(t)
@@ -2483,7 +2124,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
 
-			fakeStore := dashboards.FakeDashboardStore{}
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 			fakeOrgService := orgtest.NewOrgServiceFake()
 			features := featuremgmt.WithFeatures()
@@ -2491,7 +2131,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 			service := &DashboardServiceImpl{
 				cfg:                    setting.NewCfg(),
 				log:                    log.New("test.logger"),
-				dashboardStore:         &fakeStore,
+				sqlStore:               sqlStore,
 				publicDashboardService: fakePublicDashboardService,
 				orgService:             fakeOrgService,
 				serverLockService:      lockService,
@@ -2574,9 +2214,7 @@ func createTestUnstructuredDashboard(uid, title string, resourceVersion string) 
 }
 
 func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-	defer fakeStore.AssertExpectations(t)
 
 	k8sCliMock := new(client.MockK8sHandler)
 
@@ -2584,7 +2222,6 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg:                    setting.NewCfg(),
 		log:                    log.New("test.logger"),
-		dashboardStore:         &fakeStore,
 		folderService:          folderSvc,
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
 		features:               featuremgmt.WithFeatures(),

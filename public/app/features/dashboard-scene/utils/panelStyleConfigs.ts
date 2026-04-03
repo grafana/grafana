@@ -68,6 +68,23 @@ const graphPanelStyleConfig: PanelStyleConfig = {
 };
 
 /**
+ * Shared axis custom field config keys used by several panel types.
+ * Extracted to avoid repetition.
+ */
+const axisCustomDefaults: readonly string[] = [
+  'axisPlacement',
+  'axisLabel',
+  'axisWidth',
+  'axisSoftMin',
+  'axisSoftMax',
+  'axisGridShow',
+  'axisBorderShow',
+  'axisCenteredZero',
+  'axisColorMode',
+  'scaleDistribution',
+];
+
+/**
  * Style config for the stat panel. No custom field config — all styling
  * comes from standard fieldConfig properties and panel-level options.
  *
@@ -235,7 +252,6 @@ const barGaugePanelStyleConfig: PanelStyleConfig = {
  *   barWidth            – width of individual bars
  *   barRadius           – corner radius of bars
  *   fullHighlight       – highlight full bar area on hover
- *   tooltip             – tooltip options
  *   legend              – legend options
  *   text                – text size options
  */
@@ -272,7 +288,6 @@ const barChartPanelStyleConfig: PanelStyleConfig = {
       'barWidth',
       'barRadius',
       'fullHighlight',
-      'tooltip',
       'legend',
       'text',
     ],
@@ -289,7 +304,6 @@ const barChartPanelStyleConfig: PanelStyleConfig = {
  *   pieType       – pie or donut
  *   sort          – slice sort order (descending, ascending, none)
  *   displayLabels – labels shown on slices (percent, name, value)
- *   tooltip       – tooltip options
  *   legend        – legend options including legend.values (percent, value)
  */
 const pieChartPanelStyleConfig: PanelStyleConfig = {
@@ -298,7 +312,155 @@ const pieChartPanelStyleConfig: PanelStyleConfig = {
     customProps: [],
   },
   options: {
-    props: ['pieType', 'sort', 'displayLabels', 'tooltip', 'legend'],
+    props: ['pieType', 'sort', 'displayLabels', 'legend'],
+  },
+};
+
+/**
+ * Style config for the histogram panel.
+ *
+ * fieldConfig.defaults:
+ *   color – color scheme
+ *
+ * fieldConfig.defaults.custom:
+ *   lineWidth    – bar border width
+ *   fillOpacity  – bar fill opacity
+ *   gradientMode – gradient fill mode
+ *   + axis config
+ *
+ * options:
+ *   legend – legend options
+ */
+const histogramPanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color'],
+    customProps: ['lineWidth', 'fillOpacity', 'gradientMode', ...axisCustomDefaults],
+  },
+  options: {
+    props: ['legend'],
+  },
+};
+
+/**
+ * Style config for the heatmap panel. Most standard fieldConfig options are
+ * disabled; all visual configuration lives in panel options.
+ *
+ * fieldConfig.defaults.custom:
+ *   scaleDistribution – y-axis scale distribution
+ *
+ * options:
+ *   color        – color mode, scheme, scale, opacity, steps, min/max
+ *   cellGap      – gap between cells
+ *   cellRadius   – corner radius of cells
+ *   showValue    – show value inside cells (auto, always, never)
+ *   legend       – legend show/hide
+ *   yAxis        – y-axis config (placement, scale, min/max, reverse, decimals)
+ *   exemplars    – exemplar marker color
+ *   selectionMode – which axis allows brush selection
+ */
+const heatmapPanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: [],
+    customProps: ['scaleDistribution'],
+  },
+  options: {
+    props: ['color', 'cellGap', 'cellRadius', 'showValue', 'legend', 'yAxis', 'exemplars', 'selectionMode'],
+  },
+};
+
+/**
+ * Style config for the state timeline panel.
+ *
+ * fieldConfig.defaults:
+ *   color – color scheme
+ *
+ * fieldConfig.defaults.custom:
+ *   lineWidth   – border width of state regions
+ *   fillOpacity – fill opacity of state regions
+ *   + axis config
+ *
+ * options:
+ *   alignValue  – value alignment inside regions (left, center, right)
+ *   mergeValues – merge consecutive equal values into one region
+ *   rowHeight   – height of each row (0–1)
+ *   showValue   – show value labels (auto, always, never)
+ *   legend      – legend options
+ */
+const stateTimelinePanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color'],
+    customProps: ['lineWidth', 'fillOpacity', ...axisCustomDefaults],
+  },
+  options: {
+    props: ['alignValue', 'mergeValues', 'rowHeight', 'showValue', 'legend'],
+  },
+};
+
+/**
+ * Style config for the status history panel.
+ *
+ * fieldConfig.defaults:
+ *   color – color scheme
+ *
+ * fieldConfig.defaults.custom:
+ *   lineWidth   – border width of status cells
+ *   fillOpacity – fill opacity of status cells
+ *   + axis config
+ *
+ * options:
+ *   colWidth  – column width (0–1)
+ *   rowHeight – row height (0–1)
+ *   showValue – show value labels (auto, always, never)
+ *   legend    – legend options
+ */
+const statusHistoryPanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color'],
+    customProps: ['lineWidth', 'fillOpacity', ...axisCustomDefaults],
+  },
+  options: {
+    props: ['colWidth', 'rowHeight', 'showValue', 'legend'],
+  },
+};
+
+/**
+ * Style config for the XY chart panel.
+ *
+ * fieldConfig.defaults:
+ *   color – color scheme
+ *
+ * fieldConfig.defaults.custom:
+ *   fillOpacity      – marker fill opacity
+ *   lineStyle        – line dash style
+ *   lineWidth        – line width
+ *   pointShape       – circle or square
+ *   pointSize        – marker size (fixed, min, max)
+ *   pointStrokeWidth – marker stroke width
+ *   show             – points, lines, or points+lines
+ *   + axis config
+ *
+ * options:
+ *   legend – legend options
+ *
+ * Note: `mapping` and `series` are excluded — they reference specific field
+ * names and are data configuration, not visual style.
+ */
+const xychartPanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color'],
+    customProps: [
+      'fillOpacity',
+      'lineStyle',
+      'lineWidth',
+      'pointShape',
+      'pointSize',
+      'pointStrokeWidth',
+      'show',
+      ...axisCustomDefaults,
+    ],
+  },
+  options: {
+    props: ['legend'],
   },
 };
 
@@ -311,6 +473,11 @@ const PANEL_STYLE_CONFIGS: Record<string, PanelStyleConfig> = {
   bargauge: barGaugePanelStyleConfig,
   barchart: barChartPanelStyleConfig,
   piechart: pieChartPanelStyleConfig,
+  histogram: histogramPanelStyleConfig,
+  heatmap: heatmapPanelStyleConfig,
+  'state-timeline': stateTimelinePanelStyleConfig,
+  'status-history': statusHistoryPanelStyleConfig,
+  xychart: xychartPanelStyleConfig,
 };
 
 /**

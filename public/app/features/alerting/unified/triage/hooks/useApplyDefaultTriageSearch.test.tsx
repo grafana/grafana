@@ -1,8 +1,6 @@
 import { type PropsWithChildren } from 'react';
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import * as runtime from '@grafana/runtime';
-
 import * as triageSavedSearchUtilsMod from '../scene/triageSavedSearchUtils';
 
 import { useApplyDefaultTriageSearch } from './useApplyDefaultTriageSearch';
@@ -12,12 +10,6 @@ import * as useTriageSavedSearchesMod from './useTriageSavedSearches';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      alertingTriageSavedSearches: true,
-    },
-  },
 }));
 
 jest.mock('./useTriageSavedSearches', () => ({
@@ -61,9 +53,6 @@ describe('useApplyDefaultTriageSearch', () => {
     // Default mock behavior
     loadDefaultTriageSavedSearchMock.mockResolvedValue(null);
     serializeCurrentStateMock.mockReturnValue('');
-
-    // Re-enable feature toggle for each test
-    runtime.config.featureToggles.alertingTriageSavedSearches = true;
   });
 
   afterEach(() => {
@@ -176,28 +165,6 @@ describe('useApplyDefaultTriageSearch', () => {
 
     expect(applySavedSearchMock).not.toHaveBeenCalled();
     expect(trackTriageSavedSearchAutoApplyMock).not.toHaveBeenCalled();
-  });
-
-  it('should not apply when feature toggle is disabled', async () => {
-    runtime.config.featureToggles.alertingTriageSavedSearches = false;
-
-    const mockDefaultSearch = {
-      id: '1',
-      name: 'Default Search',
-      query: 'var-filters=test',
-      isDefault: true,
-      createdAt: Date.now(),
-    };
-
-    loadDefaultTriageSavedSearchMock.mockResolvedValue(mockDefaultSearch);
-    serializeCurrentStateMock.mockReturnValue('');
-
-    renderHook(() => useApplyDefaultTriageSearch(), { wrapper: createWrapper() });
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    expect(loadDefaultTriageSavedSearchMock).not.toHaveBeenCalled();
-    expect(applySavedSearchMock).not.toHaveBeenCalled();
   });
 
   it('should clear session storage on unmount', async () => {

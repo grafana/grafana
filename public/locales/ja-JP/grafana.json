@@ -4337,6 +4337,17 @@
       "title": "まだダッシュボードを作成していません",
       "title-folder": "このフォルダにはまだダッシュボードがありません"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "このフォルダを削除",
       "delete-folder-error": "フォルダの削除中にエラーが発生しました。後でもう一度お試しください。",
@@ -5406,9 +5417,6 @@
         "title": {
           "proceed-to-external-site": "外部サイトに移動しますか？"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "シーンとして表示"
       }
     },
     "dashboard-links-menu": {
@@ -5955,12 +5963,20 @@
       "not-found": "UID「{{datasourceUid}}」のデータソースが見つかりません。"
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "構成",
       "configure-button-menu": "メニューの切り替え",
+      "configure-visualization": "",
       "empty-state-message": "クエリを実行してここで可視化するか、すべての視覚化に移動して他のパネルタイプを追加します",
       "menu-open-panel-editor": "構成",
       "menu-use-library-panel": "ライブラリパネルを使用",
-      "missing-config": "パネル構成がありません"
+      "menu-use-saved-query": "",
+      "missing-config": "パネル構成がありません",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "新規パネル",
     "on-create-new-row": {
@@ -6737,6 +6753,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6823,6 +6844,10 @@
       "constant-options": "定数オプション",
       "label-value": "値",
       "placeholder-your-metric-prefix": "メトリックのプレフィックス"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "ルールの表示/非表示は機能しません",
@@ -7149,6 +7174,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7464,6 +7495,7 @@
     "sharing": {
       "save-before-share": {
         "text": "このダッシュボードには未保存の変更があります。共有する前に保存する必要があります。",
+        "text-no-save": "",
         "title": "未保存の変更"
       }
     },
@@ -7597,6 +7629,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "変数エディタフォーム",
       "back-to-list": "一覧に戻る",
@@ -7626,6 +7663,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "{{variable}}を削除してもよろしいですか？",
       "confirmText-delete-variable": "変数を削除",
+      "drag-handle-label": "",
       "title-delete-variable": "変数を削除",
       "tooltip-duplicate-variable": "変数を複製",
       "tooltip-remove-variable": "変数を削除"
@@ -8191,6 +8229,7 @@
       "label-preview": "プレビュー"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "値マッピングを複製",
       "duplicate-value-mapping-tooltip-duplicate": "複製",
       "placeholder-exact-value-to-match": "一致する正確な値",
@@ -9997,6 +10036,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "リンクの追加",
+      "drag-handle-label": "",
       "edit-link": "リンクの編集",
       "one-click": "ワンクリック",
       "one-click-enabled": "ワンクリックが有効になりました",
@@ -12530,7 +12570,7 @@
       "name-required": "名前を入力してください",
       "save": "保存",
       "table-delete": "プレイリストアイテムの削除",
-      "table-drag": "ドラッグアンドドロップで並べ替え",
+      "table-drag": "",
       "table-empty": "プレイリストは空です。以下にダッシュボードを追加します。",
       "table-heading": "ダッシュボード"
     },
@@ -15489,6 +15529,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "クリックして編集",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "列挙行を削除",
       "remove-enum-row-tooltip-delete": "削除"
     },
@@ -16402,6 +16443,7 @@
       "variable": "変数"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "変数を複製",
       "tooltip-remove-variable": "変数を削除"
     },
