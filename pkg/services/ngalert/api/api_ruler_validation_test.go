@@ -37,7 +37,7 @@ var allExecError = []apimodels.ExecutionErrorState{
 
 func config(t *testing.T) *setting.UnifiedAlertingSettings {
 	t.Helper()
-	baseInterval := time.Duration(rand.IntN(99)+1) * time.Second
+	baseInterval := time.Duration(rand.IntN(97)+3) * time.Second // Possible intervals: [3, 99].
 	result := &setting.UnifiedAlertingSettings{
 		BaseInterval:                  baseInterval,
 		DefaultRuleEvaluationInterval: baseInterval * time.Duration(rand.IntN(9)+1),

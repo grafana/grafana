@@ -73,7 +73,13 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
               tooltip={t('grafana-ui.data-links-inline-editor.tooltip-remove', 'Remove')}
             />
             <div className={styles.dragIcon} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
+              <Icon
+                name="draggabledots"
+                size="lg"
+                title={t('grafana-ui.data-links-inline-editor.drag-handle-label', 'Reorder data link {{title}}', {
+                  title: hasTitle ? title : url,
+                })}
+              />
             </div>
           </div>
         </div>

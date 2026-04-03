@@ -1,11 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import {
-  type AlertManagerCortexConfig,
-  type AlertmanagerGroup,
-  type AlertmanagerStatus,
-} from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, type AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
 
@@ -67,18 +63,6 @@ export async function deleteAlertManagerConfig(alertManagerSourceName: string): 
       showSuccessAlert: false,
     })
   );
-}
-
-export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<AlertmanagerGroup[]> {
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<AlertmanagerGroup[]>({
-      url: `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/alerts/groups`,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-
-  return result.data;
 }
 
 export async function fetchStatus(alertManagerSourceName: string): Promise<AlertmanagerStatus> {

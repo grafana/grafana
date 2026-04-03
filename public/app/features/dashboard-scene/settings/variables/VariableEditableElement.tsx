@@ -13,8 +13,10 @@ import {
   useSceneObjectState,
 } from '@grafana/scenes';
 import { Input, TextArea, Button, Field, Box, Stack, Alert } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -125,7 +127,11 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public renderActions() {
-    return <ChangeVariableTypeButton variable={this.variable} />;
+    return (
+      <Stack grow={1}>
+        <ChangeVariableTypeButton variable={this.variable} />
+      </Stack>
+    );
   }
 
   public onDuplicate() {
@@ -142,6 +148,22 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       }),
     });
     DashboardInteractions.variableActionButtonClicked('duplicate', { type: this.variable.state.type });
+  }
+
+  public onConfirmDelete() {
+    const name = this.variable.state.name;
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.variable-editable-element.delete-title', 'Delete variable'),
+        text: t('dashboard-scene.variable-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
+          name,
+        }),
+        yesText: t('dashboard-scene.variable-editable-element.delete-confirm', 'Delete variable'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
   }
 
   public onDelete() {

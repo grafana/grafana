@@ -897,9 +897,9 @@ type GrafanaOption func(opts *testinfra.GrafanaOpts)
 // Useful for debugging a test in development.
 //
 
-// WithProvisioningFolderMetadata enables the FlagProvisioningFolderMetadata feature toggle.
-func WithProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
+// WithoutProvisioningFolderMetadata disables the FlagProvisioningFolderMetadata feature toggle.
+func WithoutProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
+	opts.DisableFeatureToggles = append(opts.DisableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
 }
 
 func WithRepositoryTypes(types []string) GrafanaOption {
