@@ -1,7 +1,7 @@
 import { createTheme, dateTime, FieldType } from '@grafana/data';
 
 import { prepareHeatmapData } from './fields';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const theme = createTheme();
 

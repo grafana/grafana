@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState, type JSX } from 'react';
 
-import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type PanelPluginMeta, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';

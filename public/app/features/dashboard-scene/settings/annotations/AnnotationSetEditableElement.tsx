@@ -1,13 +1,16 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { partitionAnnotationsByDisplay } from '../../edit-pane/dashboard/DashboardAnnotationsList';
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 
 import { AnnotationList } from './AnnotationList';
 

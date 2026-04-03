@@ -4,8 +4,8 @@ import { toArray } from 'rxjs/operators';
 import { CoreApp } from '@grafana/data';
 
 import {
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
+  type CloudWatchLogsQuery,
+  type CloudWatchMetricsQuery,
   LogsQueryLanguage,
   MetricEditorMode,
   MetricQueryType,
@@ -20,7 +20,7 @@ import {
 } from './mocks/CloudWatchDataSource';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './mocks/queries';
 import { TimeRangeMock } from './mocks/timeRange';
-import { CloudWatchQuery, CloudWatchLogsRequest, CloudWatchDefaultQuery } from './types';
+import { type CloudWatchQuery, type CloudWatchLogsRequest, type CloudWatchDefaultQuery } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
 
 describe('datasource', () => {

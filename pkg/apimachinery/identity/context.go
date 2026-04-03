@@ -193,6 +193,12 @@ var serviceIdentityTokenPermissions = []string{
 
 	// Secrets Manager uses a custom verb for secret decryption, and its authorizer does not allow wildcard permissions.
 	"secret.grafana.app/securevalues:decrypt",
+
+	// Allow access to all apiextensions.k8s.io resources
+	"*.ext.grafana.app:*",
+
+	// Allow access to apps.grafana.app resources (e.g. AppManifest)
+	"apps.grafana.app:*",
 }
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{

@@ -1,8 +1,8 @@
-import { SceneObject, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import { type SceneObject, SceneObjectBase, type SceneObjectState, sceneGraph } from '@grafana/scenes';
 import {
-  ElementSelectionContextItem,
-  ElementSelectionContextState,
-  ElementSelectionOnSelectOptions,
+  type ElementSelectionContextItem,
+  type ElementSelectionContextState,
+  type ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
@@ -15,13 +15,14 @@ import { ElementSelection } from './ElementSelection';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
-  DashboardEditActionEventPayload,
+  type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
   RepeatsUpdatedEvent,
 } from './shared';
+import { type EditPaneSelectionActions } from './types';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
@@ -33,9 +34,9 @@ export interface DashboardEditPaneState extends SceneObjectState {
   isDocked?: boolean;
 }
 
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add';
+export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'code';
 
-export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
+export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements EditPaneSelectionActions {
   public constructor() {
     super({
       selectionContext: {
@@ -64,6 +65,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
+
+    if (dashboard.state.isEditing) {
+      this.enableSelection();
+    }
 
     this._subs.add(
       dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
@@ -105,6 +110,13 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       this.performPanelEditAction(this.panelEditAction);
       this.panelEditAction = undefined;
     }
+
+    return () => {
+      if (this.state.selection) {
+        this.clearSelection(true);
+      }
+      this.disableSelection();
+    };
   }
 
   private performPanelEditAction(action: DashboardEditActionEvent) {
@@ -148,9 +160,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     action.undo();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    /**
-     * Some edit actions also require clearing selection or selecting new objects
-     */
     if (action.addedObject) {
       this.clearSelection();
     }
@@ -181,7 +190,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
-    if (action.removedObject) {
+    if (action.removedObject && !action.addedObject) {
       this.clearSelection();
     }
   }
@@ -202,15 +211,22 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public enableSelection() {
-    // Enable element selection
+    if (this.state.selectionContext.enabled) {
+      return;
+    }
+
     this.setState({ selectionContext: { ...this.state.selectionContext, enabled: true } });
   }
 
   public disableSelection() {
+    if (!this.state.selectionContext.enabled) {
+      return;
+    }
+
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
       selection: undefined,
-      openPane: this.state.openPane === 'element' ? undefined : this.state.openPane,
+      openPane: undefined,
     });
   }
 

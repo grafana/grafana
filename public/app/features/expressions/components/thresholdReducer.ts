@@ -2,7 +2,7 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { ClassicCondition, ExpressionQueryType, ThresholdExpressionQuery } from '../types';
+import { type ClassicCondition, ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
 
 export const updateRefId = createAction<string | undefined>('thresold/updateRefId');
 export const updateThresholdType = createAction<{

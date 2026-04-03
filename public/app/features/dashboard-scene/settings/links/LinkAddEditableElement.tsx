@@ -1,13 +1,18 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 import type { DashboardLink } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { type DashboardScene } from '../../scene/DashboardScene';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 
 import {
   LinkBooleanSwitch,
@@ -22,7 +27,7 @@ import { NEW_LINK } from './utils';
 
 // Default to dropdown for new links because if a dashboard has a lot of links,
 // the side pane will be pushed down the page and be unscrollable
-function createDefaultLink(): DashboardLink {
+export function createDefaultLink(): DashboardLink {
   return { ...NEW_LINK, asDropdown: true };
 }
 
@@ -62,7 +67,11 @@ function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   return link?.type === type;
 }
 
-function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): OptionsPaneCategoryDescriptor[] {
+function useEditPaneOptions(
+  this: LinkEditEditableElement,
+  linkEdit: LinkEdit,
+  isNewElement: boolean
+): OptionsPaneCategoryDescriptor[] {
   const basicCategoryId = useId();
   const titleId = useId();
   const typeId = useId();
@@ -84,7 +93,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
         new OptionsPaneItemDescriptor({
           title: '',
           id: titleId,
-          render: () => <LinkTextInput linkEdit={linkEdit} prop="title" />,
+          render: () => <LinkTextInput linkEdit={linkEdit} prop="title" autoFocus={isNewElement} />,
         })
       )
       .addItem(
@@ -126,7 +135,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
           render: () => <LinkIconSelect linkEdit={linkEdit} />,
         })
       );
-  }, [basicCategoryId, titleId, typeId, tagsId, urlId, tooltipId, iconId, linkEdit]);
+  }, [basicCategoryId, titleId, typeId, tagsId, urlId, tooltipId, iconId, linkEdit, isNewElement]);
 
   const optionsCategory = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
@@ -199,6 +208,37 @@ export class LinkEditEditableElement implements EditableDashboardElement {
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.linkEdit);
+
+  public onDuplicate() {
+    const dashboard = this.linkEdit.state.dashboardRef.resolve();
+    const { links } = dashboard.state;
+
+    const link = { ...links[this.linkEdit.state.linkIndex] };
+    link.title = `${link.title} - Copy`;
+    const linkEdit = createLinkEdit(dashboard, this.linkEdit.state.linkIndex);
+
+    linkEditActions.addLink({ dashboard, link, addedObject: linkEdit });
+    openLinkEditPane(dashboard, links.length);
+  }
+
+  public onConfirmDelete(): void {
+    const dashboard = this.linkEdit.state.dashboardRef.resolve();
+    const links = dashboard.state.links ?? [];
+    const link = links[this.linkEdit.state.linkIndex];
+    const name = link?.title ?? t('dashboard-scene.link-editable-element.unnamed', 'Unnamed link');
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.link-editable-element.delete-title', 'Delete link'),
+        text: t('dashboard-scene.link-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
+          name,
+        }),
+        yesText: t('dashboard-scene.link-editable-element.delete-confirm', 'Delete link'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
+  }
 
   public onDelete(): void {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();

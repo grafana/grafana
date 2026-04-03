@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Label, useStyles2 } from '@grafana/ui';
 
-import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
-import { OptionPaneItemOverrideInfo } from './types';
+import { type OptionPaneItemOverrideInfo } from './types';
 
 export interface OptionsPaneItemInfo {
   title?: string;

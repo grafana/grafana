@@ -1,6 +1,6 @@
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
-import { getTargetFolderPathInRepo, getNestedFolderPath } from './utils';
+import { getTargetFolderPathInRepo, getNestedFolderPath, getResourceTargetPath } from './utils';
 
 const MOCK_FOLDER = {
   metadata: { annotations: { [AnnoKeySourcePath]: 'path/to/folder' } },
@@ -55,5 +55,42 @@ describe('getNestedFolderPath', () => {
     // @ts-expect-error
     const result = getNestedFolderPath({});
     expect(result).toBe('/');
+  });
+
+  it('should not produce double slashes when sourcePath has trailing slash', () => {
+    const result = getNestedFolderPath({
+      metadata: { annotations: { [AnnoKeySourcePath]: 'path/to/folder/' } },
+      spec: { title: 'folder title' },
+    });
+    expect(result).toBe('path/to/folder/');
+  });
+
+  it('should normalize path without trailing slash', () => {
+    const result = getNestedFolderPath({
+      metadata: { annotations: { [AnnoKeySourcePath]: 'path/to/folder' } },
+      spec: { title: 'folder title' },
+    });
+    expect(result).toBe('path/to/folder/');
+  });
+});
+
+describe('getResourceTargetPath', () => {
+  it('should not produce double slashes when targetFolderPath has trailing slash', () => {
+    const result = getResourceTargetPath('old/path/dashboard.json', 'new/path/');
+    expect(result).toBe('new/path/dashboard.json');
+  });
+
+  it('should handle folder paths', () => {
+    const result = getResourceTargetPath('old/path/folder/', 'new/path/');
+    expect(result).toBe('new/path/folder/');
+  });
+
+  it('should handle targetFolderPath without trailing slash', () => {
+    const result = getResourceTargetPath('old/path/dashboard.json', 'new/path');
+    expect(result).toBe('new/path/dashboard.json');
+  });
+
+  it('should throw for invalid path', () => {
+    expect(() => getResourceTargetPath('/', 'new/path')).toThrow('Invalid path');
   });
 });

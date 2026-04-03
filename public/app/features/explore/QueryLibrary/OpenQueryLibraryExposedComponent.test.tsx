@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { OpenQueryLibraryExposedComponent } from './OpenQueryLibraryExposedComponent';
-import { QueryLibraryContextType, useQueryLibraryContext } from './QueryLibraryContext';
+import { type QueryLibraryContextType, useQueryLibraryContext } from './QueryLibraryContext';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

@@ -1,4 +1,4 @@
-import { E2ESelectors, Selectors, selectors } from '@grafana/e2e-selectors';
+import { type E2ESelectors, type Selectors, selectors } from '@grafana/e2e-selectors';
 
 import * as flows from './flows';
 import { e2eFactory } from './support';

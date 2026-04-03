@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Labels } from '@grafana/data';
+import { type DataFrame, type Labels } from '@grafana/data';
 import { useQueryRunner } from '@grafana/scenes-react';
 
 import { DATASOURCE_UID, METRIC_NAME } from '../constants';

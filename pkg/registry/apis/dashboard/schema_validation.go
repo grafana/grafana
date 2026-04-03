@@ -12,7 +12,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	v0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	v2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	v2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	v2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,6 +38,7 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV1)
 		case *v2alpha1.Dashboard:
 		case *v2beta1.Dashboard:
+		case *v2.Dashboard:
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV2)
 		default:
@@ -62,6 +64,8 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 			errors = v2alpha1.ValidateDashboardSpec(v)
 		case *v2beta1.Dashboard:
 			errors = v2beta1.ValidateDashboardSpec(v)
+		case *v2.Dashboard:
+			errors = v2.ValidateDashboardSpec(v)
 		}
 	}
 
