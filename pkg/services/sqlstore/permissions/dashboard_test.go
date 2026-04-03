@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -854,6 +855,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		now := time.Now()
 		_, err := sess.Insert(&dashboards.Dashboard{
+			UID:     util.GenerateShortUID(),
 			OrgID:   orgID,
 			Slug:    "dashboard-under-the-root",
 			Title:   "dashboard under the root",
@@ -869,6 +871,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		now := time.Now()
 		_, err := sess.Insert(&dashboards.Dashboard{
+			UID:       util.GenerateShortUID(),
 			OrgID:     orgID,
 			Slug:      "dashboard-under-parent-folder",
 			Title:     "dashboard under parent folder",
@@ -885,6 +888,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		now := time.Now()
 		_, err := sess.Insert(&dashboards.Dashboard{
+			UID:       util.GenerateShortUID(),
 			OrgID:     orgID,
 			Slug:      "dashboard-under-subfolder",
 			Title:     "dashboard under subfolder",
