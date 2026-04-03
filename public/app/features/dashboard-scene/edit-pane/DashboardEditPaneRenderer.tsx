@@ -35,7 +35,7 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane, selectionContext, isNewElement } = useSceneObjectState(editPane, {
+  const { openPane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid } = dashboard.useState();
@@ -46,10 +46,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   // the layout element that was selected when opening the 'add' pane
   // used when adding new panel from the sidebar
   const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject>(dashboard);
-
-  const editableElement = useMemo(() => {
-    return getEditableElementForSelection(editPane, selectionContext.selected);
-  }, [editPane, selectionContext.selected]);
 
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
@@ -68,17 +64,8 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
   return (
     <>
-      {editableElement && isEditing && (
-        <Sidebar.OpenPane>
-          <ElementEditPane
-            key={selectionContext.selected.map((s) => s.id).join(',')} // force remount when selection changes
-            editPane={editPane}
-            element={editableElement}
-            isNewElement={isNewElement}
-          />
-        </Sidebar.OpenPane>
-      )}
-      {openPane === 'add' && (
+      {openPane && <Sidebar.OpenPane>{openPane && <openPane.Component model={openPane} />}</Sidebar.OpenPane>}
+      {/* {openPane === 'add' && (
         <Sidebar.OpenPane>
           <AddNewEditPane
             selectedElement={lastSelectedElement}
@@ -110,7 +97,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             onApply={(jsonText) => applyJsonToDashboard(dashboard, jsonText)}
           />
         </Sidebar.OpenPane>
-      )}
+      )} */}
       <Sidebar.Toolbar>
         {isEditing && (
           <div className={styles.editGroup}>
@@ -124,7 +111,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
-              active={selectedObject === null || openPane === 'add'}
+              active={openPane?.getId() === 'add'}
             />
 
             <Sidebar.Button
@@ -160,7 +147,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
               onClick={() => editPane.openPane('code')}
-              active={openPane === 'code'}
+              active={openPane?.getId() === 'code'}
             />
             {config.featureToggles.dashboardUndoRedo && (
               <>
@@ -179,7 +166,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
-            active={openPane === 'outline'}
+            active={openPane?.getId() === 'outline'}
           />
           {config.featureToggles.dashboardNewLayouts &&
             (config.featureToggles.dashboardFiltersOverview ||
@@ -190,7 +177,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
                 onClick={() => editPane.openPane('filters')}
                 title={t('dashboards.filters-overview.filters', 'Filters')}
                 tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
-                active={openPane === 'filters'}
+                active={openPane?.getId() === 'filters'}
               />
             )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
