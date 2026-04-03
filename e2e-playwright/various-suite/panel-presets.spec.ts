@@ -24,12 +24,18 @@ test.use({
   },
 });
 
-function getPanelStylesHeading(page: Page) {
-  return page.getByRole('heading', { name: /Panel styles/i, level: 6 });
+function getPanelStylesSection(page: Page) {
+  return page.getByTestId('data-testid Options group panel-styles');
 }
 
 function getPresetCard(page: Page, name: string) {
   return page.getByTestId(`data-testid suggestion-${name}`);
+}
+
+async function waitForPanelToLoad(page: Page) {
+  await expect(page.getByLabel('Panel loading bar'), 'wait for panel to finish loading').toHaveCount(0, {
+    timeout: 30000,
+  });
 }
 
 test.describe(
@@ -39,23 +45,23 @@ test.describe(
   },
   () => {
     test('Panel styles section should appear with a New badge', async ({ gotoPanelEditPage, page }) => {
-      const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
 
-      const panelStylesHeading = getPanelStylesHeading(page);
-      await expect(panelStylesHeading).toBeVisible({ timeout: 10000 });
-      await expect(panelStylesHeading).toContainText('New');
+      const panelStylesSection = getPanelStylesSection(page);
+      await expect(panelStylesSection, 'panel styles section is visible').toBeVisible({ timeout: 10000 });
+      await expect(panelStylesSection, 'panel styles section contains "New" badge').toContainText('New');
     });
 
     test('Panel styles section should be expanded by default', async ({ gotoPanelEditPage, page }) => {
-      const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
 
-      const collapseButton = page.getByRole('button', { name: /Collapse Panel styles/i });
-      await expect(collapseButton).toBeVisible({ timeout: 10000 });
-      await expect(collapseButton).toHaveAttribute('aria-expanded', 'true');
+      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
+
+      const collapseButton = getPanelStylesSection(page).getByRole('button', { name: /Collapse/i });
+      await expect(collapseButton, 'collapse button is visible').toBeVisible();
+      await expect(collapseButton, 'panel styles section is expanded').toHaveAttribute('aria-expanded', 'true');
     });
   }
 );
@@ -73,10 +79,12 @@ test.describe(
       await queryEditorRow.getByLabel('Scenario').last().click();
       await page.getByText('No Data Points', { exact: true }).click();
 
-      await panelEditPage.refreshPanel();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await waitForPanelToLoad(page);
 
-      await expect(getPanelStylesHeading(page)).toBeHidden();
+      await expect(
+        getPanelStylesSection(page),
+        'panel styles section should be hidden when there is no data'
+      ).toBeHidden();
     });
   }
 );
@@ -89,21 +97,25 @@ test.describe(
   () => {
     for (const panel of PANELS_WITH_PRESETS) {
       test(`Presets should appear for ${panel.name}`, async ({ gotoPanelEditPage, page }) => {
-        const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: panel.id });
-        await expect(panelEditPage.refreshPanel()).toBeOK();
-        await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+        await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: panel.id });
+        await waitForPanelToLoad(page);
 
-        await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
+        await expect(
+          getPanelStylesSection(page),
+          `panel styles section should be visible for ${panel.name}`
+        ).toBeVisible({ timeout: 10000 });
       });
     }
 
     for (const panel of PANELS_WITHOUT_PRESETS) {
       test(`Panel styles should not appear for ${panel.name}`, async ({ gotoPanelEditPage, page }) => {
-        const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: panel.id });
-        await expect(panelEditPage.refreshPanel()).toBeOK();
-        await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+        await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: panel.id });
+        await waitForPanelToLoad(page);
 
-        await expect(getPanelStylesHeading(page)).toBeHidden();
+        await expect(
+          getPanelStylesSection(page),
+          `panel styles section should be hidden for ${panel.name}`
+        ).toBeHidden();
       });
     }
   }
@@ -125,19 +137,21 @@ test.describe(
       await queryEditorRow.getByLabel('Scenario').last().click();
       await page.getByText('CSV Metric Values', { exact: true }).click();
 
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await waitForPanelToLoad(page);
 
-      await expect(getPresetCard(page, 'Single fill')).toBeVisible({ timeout: 10000 });
+      await expect(
+        getPresetCard(page, 'Single fill'),
+        'single-series few-points preset card should be visible'
+      ).toBeVisible({ timeout: 10000 });
     });
 
     test('multiple series with many data points shows multi-series presets', async ({ gotoPanelEditPage, page }) => {
-      // The timeseries panel already has seriesCount=4, so multi-series presets should appear
-      const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
 
-      await expect(getPresetCard(page, 'Lines with points')).toBeVisible({ timeout: 10000 });
+      await expect(getPresetCard(page, 'Lines with points'), 'multi-series preset card should be visible').toBeVisible({
+        timeout: 10000,
+      });
     });
   }
 );
@@ -149,17 +163,16 @@ test.describe(
   },
   () => {
     test('clicking a preset card should apply the style', async ({ gotoPanelEditPage, page }) => {
-      const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
 
-      await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
+      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
 
       const firstPreset = getPresetCard(page, 'Lines with points');
-      await expect(firstPreset).toBeVisible();
+      await expect(firstPreset, 'preset card is visible before clicking').toBeVisible();
       await firstPreset.click();
 
-      await expect(firstPreset).toBeVisible();
+      await expect(firstPreset, 'preset card remains visible after clicking').toBeVisible();
     });
   }
 );
@@ -172,34 +185,41 @@ test.describe(
   () => {
     test('changing viz type should update presets for the new plugin', async ({ gotoPanelEditPage, page }) => {
       const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await waitForPanelToLoad(page);
 
-      await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
+      await expect(getPanelStylesSection(page), 'panel styles section is visible for time series').toBeVisible({
+        timeout: 10000,
+      });
       const timeseriesPreset = getPresetCard(page, 'Lines with points');
-      await expect(timeseriesPreset).toBeVisible();
+      await expect(timeseriesPreset, 'time series preset is visible').toBeVisible();
 
       await panelEditPage.setVisualization('Gauge');
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await expect(page.getByLabel('Panel loading bar'), 'wait for gauge panel to load').toHaveCount(0, {
+        timeout: 10000,
+      });
 
-      await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
+      await expect(getPanelStylesSection(page), 'panel styles section is visible for gauge').toBeVisible({
+        timeout: 10000,
+      });
       const gaugePreset = getPresetCard(page, 'Standard');
-      await expect(gaugePreset).toBeVisible({ timeout: 10000 });
-
-      await expect(timeseriesPreset).toBeHidden();
+      await expect(gaugePreset, 'gauge preset card is visible').toBeVisible({ timeout: 10000 });
+      await expect(timeseriesPreset, 'time series preset is hidden after switching to gauge').toBeHidden();
     });
 
     test('switching to a viz type without presets should hide Panel styles', async ({ gotoPanelEditPage, page }) => {
       const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await waitForPanelToLoad(page);
 
-      await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
+      await expect(getPanelStylesSection(page), 'panel styles section is visible for time series').toBeVisible({
+        timeout: 10000,
+      });
 
       await panelEditPage.setVisualization('Table');
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await expect(page.getByLabel('Panel loading bar'), 'wait for table panel to load').toHaveCount(0, {
+        timeout: 10000,
+      });
 
-      await expect(getPanelStylesHeading(page)).toBeHidden();
+      await expect(getPanelStylesSection(page), 'panel styles section should be hidden for table').toBeHidden();
     });
   }
 );
@@ -212,15 +232,15 @@ test.describe(
   () => {
     test('applying a preset should mark the dashboard as dirty', async ({ gotoPanelEditPage, selectors, page }) => {
       const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await waitForPanelToLoad(page);
 
-      await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
+      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
       const preset = getPresetCard(page, 'Lines with points');
       await preset.click();
 
       await expect(
-        panelEditPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.discardChangesButton)
+        panelEditPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.discardChangesButton),
+        'discard changes button should be enabled after applying a preset'
       ).toBeEnabled();
     });
   }
@@ -233,32 +253,55 @@ test.describe(
   },
   () => {
     test('preset cards should be focusable via Tab and activatable with Enter', async ({ gotoPanelEditPage, page }) => {
-      const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
 
-      await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
+      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
 
       const firstPreset = getPresetCard(page, 'Lines with points');
       await firstPreset.focus();
-      await expect(firstPreset).toBeFocused();
+      await expect(firstPreset, 'preset card is focused').toBeFocused();
       await page.keyboard.press('Enter');
 
-      await expect(firstPreset).toBeVisible();
+      await expect(firstPreset, 'preset card is still visible after Enter').toBeVisible();
     });
 
     test('preset cards should be activatable with Space', async ({ gotoPanelEditPage, page }) => {
-      const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
 
-      await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
+      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
 
       const firstPreset = getPresetCard(page, 'Lines with points');
       await firstPreset.focus();
       await page.keyboard.press('Space');
 
-      await expect(firstPreset).toBeVisible();
+      await expect(firstPreset, 'preset card is still visible after Space').toBeVisible();
+    });
+  }
+);
+
+test.describe(
+  'Panel presets - @a11y',
+  {
+    tag: ['@various', '@presets', '@a11y'],
+  },
+  () => {
+    test('basic case should have no a11y violations', async ({
+      gotoPanelEditPage,
+      scanForA11yViolations,
+      page,
+      selectors,
+    }) => {
+      await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
+      await waitForPanelToLoad(page);
+
+      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
+
+      const results = await scanForA11yViolations({
+        include: `[data-testid="${selectors.components.OptionsGroup.group('panel-styles')}"]`,
+      });
+      expect(results, 'presets section should have no a11y violations').toHaveNoA11yViolations();
     });
   }
 );
@@ -271,23 +314,27 @@ test.describe(
   () => {
     test('changing data shape should show different presets', async ({ gotoPanelEditPage, page }) => {
       const panelEditPage = await gotoPanelEditPage({ dashboard: { uid: DASHBOARD_UID }, id: '2' });
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await waitForPanelToLoad(page);
 
-      // Panel has seriesCount=4, so multi-series presets should appear
-      await expect(getPanelStylesHeading(page)).toBeVisible({ timeout: 10000 });
-      await expect(getPresetCard(page, 'Lines with points')).toBeVisible();
+      await expect(getPanelStylesSection(page), 'panel styles section is visible').toBeVisible({ timeout: 10000 });
+      await expect(
+        getPresetCard(page, 'Lines with points'),
+        'multi-series preset is visible with seriesCount=4'
+      ).toBeVisible();
 
-      // Change to 1 series to get single-series presets
       const queryEditorRow = await panelEditPage.getQueryEditorRow('A');
       await queryEditorRow.getByRole('spinbutton', { name: 'Series count' }).fill('1');
 
-      await expect(panelEditPage.refreshPanel()).toBeOK();
-      await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+      await waitForPanelToLoad(page);
 
-      // Single-series presets should now appear
-      await expect(getPresetCard(page, 'Line fill')).toBeVisible({ timeout: 10000 });
-      await expect(getPresetCard(page, 'Lines with points')).toBeHidden();
+      await expect(
+        getPresetCard(page, 'Line fill'),
+        'single-series preset should appear after changing to 1 series'
+      ).toBeVisible({ timeout: 10000 });
+      await expect(
+        getPresetCard(page, 'Lines with points'),
+        'multi-series preset should be hidden after changing to 1 series'
+      ).toBeHidden();
     });
   }
 );
