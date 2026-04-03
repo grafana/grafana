@@ -1481,14 +1481,17 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-10-23T08:55:45Z"
+        "resourceVersion": "1775209187023",
+        "creationTimestamp": "2024-10-23T08:55:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-03 09:39:47.02364 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables new dashboard layouts",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1577,12 +1580,15 @@
     {
       "metadata": {
         "name": "dashboardUnifiedDrilldownControls",
-        "resourceVersion": "1773081615691",
-        "creationTimestamp": "2026-03-09T18:40:15Z"
+        "resourceVersion": "1775213461656",
+        "creationTimestamp": "2026-03-09T18:40:15Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-03 10:51:01.656487 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Renders ad hoc filters and group by in a single unified control",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
@@ -3782,18 +3788,18 @@
     {
       "metadata": {
         "name": "newUnconfiguredPanel",
-        "resourceVersion": "1775046318180",
+        "resourceVersion": "1775140423960",
         "creationTimestamp": "2026-03-31T20:51:37Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-01 12:25:18.180841 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-02 14:33:43.960018 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the new unconfigured panel experience",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4249,18 +4255,18 @@
     {
       "metadata": {
         "name": "provisioningFolderMetadata",
-        "resourceVersion": "1771843876800",
+        "resourceVersion": "1775153228871",
         "creationTimestamp": "2026-02-23T10:49:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-02-23 10:51:16.80095 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-02 18:07:08.87157 +0000 UTC"
         }
       },
       "spec": {
         "description": "Allow setting folder metadata for provisioned folders",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4592,6 +4598,20 @@
     },
     {
       "metadata": {
+        "name": "reportingFooterSettings",
+        "resourceVersion": "1774457609263",
+        "creationTimestamp": "2026-03-25T16:53:29Z"
+      },
+      "spec": {
+        "description": "Enables the configurable footer settings for PDF reports",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingHeaderSettings",
         "resourceVersion": "1773744562248",
         "creationTimestamp": "2026-03-17T10:49:22Z"
@@ -4836,15 +4856,18 @@
     {
       "metadata": {
         "name": "splashScreen",
-        "resourceVersion": "1774461556169",
-        "creationTimestamp": "2026-03-25T17:59:16Z"
+        "resourceVersion": "1775046571105",
+        "creationTimestamp": "2026-03-25T17:59:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 12:29:31.105103 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the splash screen modal for introducing new Grafana features on first session",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

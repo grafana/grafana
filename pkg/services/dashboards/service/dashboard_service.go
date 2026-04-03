@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -84,7 +85,7 @@ const (
 type DashboardServiceImpl struct {
 	cfg                    *setting.Cfg
 	log                    log.Logger
-	dashboardStore         dashboards.Store
+	sqlStore               db.DB // solely used to cleanup associated resources after dashboard deletion
 	folderService          folder.Service
 	orgService             org.Service
 	features               featuremgmt.FeatureToggles
@@ -398,7 +399,7 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
-	dashboardStore dashboards.Store,
+	sqlStore db.DB,
 	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
@@ -416,7 +417,7 @@ func ProvideDashboardServiceImpl(
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
 		log:                       log.New("dashboard-service"),
-		dashboardStore:            dashboardStore,
+		sqlStore:                  sqlStore,
 		features:                  features,
 		folderPermissions:         folderPermissionsService,
 		ac:                        ac,
@@ -1162,7 +1163,7 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 			return err
 		}
 
-		return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
+		return nil
 	}
 
 	return dashboards.ErrDashboardNotFound
@@ -1719,7 +1720,7 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 		return err
 	}
 
-	return dr.dashboardStore.CleanupAfterDelete(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgId, UID: dashboardUID, ID: dashboardID})
+	return dr.cleanupAfterDelete(ctx, orgId, dashboardUID, dashboardID)
 }
 
 // -----------------------------------------------------------------------------------------
@@ -2354,4 +2355,43 @@ func getFolderUIDs(hits []dashboardv0.DashboardHit) []string {
 		}
 	}
 	return slices.Collect(maps.Keys(folderSet))
+}
+
+func (dr *DashboardServiceImpl) cleanupAfterDelete(ctx context.Context, orgID int64, uid string, id int64) error {
+	type statement struct {
+		SQL  string
+		args []any
+	}
+	sqlStatements := []statement{
+		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{uid, orgID}},
+		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{id}},
+		{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{id, orgID}},
+	}
+
+	return dr.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		for _, stmnt := range sqlStatements {
+			_, err := sess.Exec(append([]any{stmnt.SQL}, stmnt.args...)...)
+			if err != nil {
+				return err
+			}
+		}
+
+		return dr.deleteResourcePermissions(sess, orgID, accesscontrol.GetResourceScopeUID("dashboards", uid))
+	})
+}
+
+// FIXME: Remove me and handle nested deletions in the service with the DashboardPermissionsService
+func (dr *DashboardServiceImpl) deleteResourcePermissions(sess *db.Session, orgID int64, resourceScope string) error {
+	var permissionIDs []int64
+	err := sess.SQL("SELECT permission.id FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ?", resourceScope, orgID).Find(&permissionIDs)
+	if err != nil {
+		return err
+	}
+
+	if len(permissionIDs) == 0 {
+		return nil
+	}
+
+	_, err = sess.In("id", permissionIDs).Delete(&accesscontrol.Permission{})
+	return err
 }

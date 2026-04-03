@@ -165,7 +165,7 @@ export interface FeatureToggles {
   provisioning?: boolean;
   /**
   * Allow setting folder metadata for provisioned folders
-  * @default false
+  * @default true
   */
   provisioningFolderMetadata?: boolean;
   /**
@@ -208,6 +208,11 @@ export interface FeatureToggles {
   * @default false
   */
   reportingHeaderSettings?: boolean;
+  /**
+  * Enables the configurable footer settings for PDF reports
+  * @default false
+  */
+  reportingFooterSettings?: boolean;
   /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   * @default false
@@ -405,7 +410,7 @@ export interface FeatureToggles {
   dashboardScene?: boolean;
   /**
   * Enables new dashboard layouts
-  * @default false
+  * @default true
   */
   dashboardNewLayouts?: boolean;
   /**
@@ -655,7 +660,7 @@ export interface FeatureToggles {
   newSavedQueriesExperience?: boolean;
   /**
   * Enables the new unconfigured panel experience
-  * @default false
+  * @default true
   */
   newUnconfiguredPanel?: boolean;
   /**
@@ -1722,7 +1727,7 @@ export interface FeatureToggles {
   frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default false
+  * @default true
   */
   splashScreen?: boolean;
   /**
