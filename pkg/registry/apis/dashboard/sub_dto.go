@@ -191,10 +191,44 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		access.CanStar = user.IsIdentityType(authlib.TypeUser)
 
-		// Annotation permissions - use write permission as proxy
-		access.AnnotationsPermissions = &dashboard.AnnotationPermission{
-			Dashboard: dashboard.AnnotationActions{CanAdd: writeRes.Allowed, CanEdit: writeRes.Allowed, CanDelete: writeRes.Allowed},
+		checkRes, err := r.accessClient.BatchCheck(ctx, authInfo, authlib.BatchCheckRequest{
+			Namespace: ns,
+			Checks: []authlib.BatchCheckItem{
+				{
+					CorrelationID: "create",
+					Verb:          utils.VerbCreate,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Subresource:   "annotations",
+					Name:          name,
+				},
+				{
+					CorrelationID: "update",
+					Verb:          utils.VerbUpdate,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Subresource:   "annotations",
+					Name:          name,
+				},
+				{
+					CorrelationID: "delete",
+					Verb:          utils.VerbDelete,
+					Group:         gvr.Group,
+					Resource:      gvr.Resource,
+					Subresource:   "annotations",
+					Name:          name,
+				},
+			},
+		})
+		if err != nil {
+			logger.Warn("Failed to check annotation create permission", "err", err)
 		}
+
+		access.AnnotationsPermissions = &dashboard.AnnotationPermission{Dashboard: dashboard.AnnotationActions{
+			CanAdd:    checkRes.Results["create"].Allowed,
+			CanEdit:   checkRes.Results["update"].Allowed,
+			CanDelete: checkRes.Results["delete"].Allowed,
+		}}
 
 		title := obj.FindTitle("")
 		access.Slug = slugify.Slugify(title)
