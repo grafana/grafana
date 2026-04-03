@@ -28,7 +28,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-09-19,datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2024-11-22,provisioning,GA,@grafana/grafana-app-platform-squad,false,true,false
-2026-02-23,provisioningFolderMetadata,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-02-23,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-02-23,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-12-06,grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false

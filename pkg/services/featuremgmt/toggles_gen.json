@@ -4249,18 +4249,18 @@
     {
       "metadata": {
         "name": "provisioningFolderMetadata",
-        "resourceVersion": "1771843876800",
+        "resourceVersion": "1775153228871",
         "creationTimestamp": "2026-02-23T10:49:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-02-23 10:51:16.80095 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-02 18:07:08.87157 +0000 UTC"
         }
       },
       "spec": {
         "description": "Allow setting folder metadata for provisioned folders",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

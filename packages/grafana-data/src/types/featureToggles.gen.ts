@@ -165,7 +165,7 @@ export interface FeatureToggles {
   provisioning?: boolean;
   /**
   * Allow setting folder metadata for provisioned folders
-  * @default false
+  * @default true
   */
   provisioningFolderMetadata?: boolean;
   /**

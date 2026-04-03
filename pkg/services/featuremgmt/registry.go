@@ -242,10 +242,10 @@ var (
 		{
 			Name:            "provisioningFolderMetadata",
 			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "provisioningExport",
