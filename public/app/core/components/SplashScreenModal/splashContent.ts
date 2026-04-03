@@ -2,8 +2,8 @@ import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 
 import assistantHeroImage from './images/assistant-hero.png';
-import gitSyncImage from './images/git-sync.png';
 import dynamicDashboardsImage from './images/dynamic-dashboards.png';
+import gitSyncImage from './images/git-sync.png';
 import libraryOfThingsImage from './images/library-of-things.png';
 
 export type AccentColorKey = 'dark-purple' | 'primary' | 'success' | 'dark-orange';
@@ -17,8 +17,8 @@ export interface SplashFeature {
   title: string;
   subtitle: string;
   bullets: string[];
-  ctaText: string;
-  ctaUrl: string;
+  ctaText?: string;
+  ctaUrl?: string;
   heroImageUrl: string;
 }
 
@@ -65,8 +65,6 @@ export function getSplashScreenConfig(): SplashScreenConfig {
           ),
           t('splash-screen.dynamic-dashboards.bullet-3', 'Auto-arrange panels into a grid for an efficient layout'),
         ],
-        ctaText: t('splash-screen.dynamic-dashboards.cta', 'Show me'),
-        ctaUrl: '/dashboards',
         heroImageUrl: dynamicDashboardsImage,
       },
       {
@@ -87,8 +85,6 @@ export function getSplashScreenConfig(): SplashScreenConfig {
             'Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams'
           ),
         ],
-        ctaText: t('splash-screen.git-sync.cta', 'Show me'),
-        ctaUrl: '/admin/provisioning',
         heroImageUrl: gitSyncImage,
       },
       {
@@ -109,8 +105,6 @@ export function getSplashScreenConfig(): SplashScreenConfig {
             'Explore and use community dashboards tailored to your data source'
           ),
         ],
-        ctaText: t('splash-screen.library-of-things.cta', 'Show me'),
-        ctaUrl: '/explore',
         heroImageUrl: libraryOfThingsImage,
       },
     ],
