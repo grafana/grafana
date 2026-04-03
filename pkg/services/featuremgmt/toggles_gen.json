@@ -4856,15 +4856,18 @@
     {
       "metadata": {
         "name": "splashScreen",
-        "resourceVersion": "1774461556169",
-        "creationTimestamp": "2026-03-25T17:59:16Z"
+        "resourceVersion": "1775046571105",
+        "creationTimestamp": "2026-03-25T17:59:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 12:29:31.105103 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the splash screen modal for introducing new Grafana features on first session",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
