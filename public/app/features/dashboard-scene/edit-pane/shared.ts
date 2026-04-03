@@ -144,6 +144,8 @@ export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
   static type = 'repeats-updated';
 }
 
+export { DashboardEditActionEvent, DashboardStateChangedEvent, type DashboardEditActionEventPayload } from './events';
+
 export interface AddElementActionHelperProps {
   addedObject: SceneObject;
   source: SceneObject;
