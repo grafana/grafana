@@ -13,10 +13,12 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { type ElementSelectionContextItem } from '@grafana/ui';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
+import { type BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
 import { type EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
@@ -34,12 +36,10 @@ import {
 } from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
 
+import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
-import { ElementSelectionContextItem } from '@grafana/ui';
-import { BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
-import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 
 export function useEditPaneCollapsed() {
   return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
@@ -61,6 +61,13 @@ export function getEditableElementForSelection(
     const elements: BulkActionElement[] = objects
       .map((obj) => getEditableElementFor(obj))
       .filter((e): e is BulkActionElement => isBulkActionElement(e!));
+
+    const first = elements[0];
+    const allSameType = elements.every((e) => e.constructor.name === first.constructor.name);
+
+    if (allSameType && first.createMultiSelectedElement) {
+      return first.createMultiSelectedElement(elements);
+    }
 
     return new MultiSelectedObjectsEditableElement(elements);
   }

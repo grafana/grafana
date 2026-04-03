@@ -171,7 +171,7 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
       const newVar = getVariableScene(type, { name: getNextAvailableId(type, allVars) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
-      DashboardInteractions.newVariableTypeSelected({ type });
+      DashboardInteractions.variableTypeSelected({ type });
     },
     [variableAdd]
   );
@@ -201,7 +201,7 @@ function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableA
       });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
-      DashboardInteractions.newSectionVariableTypeSelected({ type });
+      DashboardInteractions.sectionVariableTypeSelected({ type });
     },
     [sectionVariableAdd]
   );

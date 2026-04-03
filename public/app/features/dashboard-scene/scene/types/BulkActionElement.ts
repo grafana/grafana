@@ -1,6 +1,6 @@
-import { type DashboardEditableElement } from '../../edit-pane/dashboard/DashboardEditableElement';
+import { EditableDashboardElement } from './EditableDashboardElement';
 
-export interface BulkActionElement extends DashboardEditableElement {
+export interface BulkActionElement extends EditableDashboardElement {
   /**
    * Called when the element should be deleted
    */

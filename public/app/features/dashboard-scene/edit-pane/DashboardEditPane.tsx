@@ -29,6 +29,8 @@ export interface DashboardEditPaneState extends SceneObjectState {
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
   openPane?: DashboardSidebarPaneName;
+  /** True when a new element is being added and selected */
+  isNewElement: boolean;
   isDocked?: boolean;
 }
 
@@ -43,6 +45,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
         onSelect: (item, options) => this.selectElement(item, options),
         onClear: () => this.clearSelection(),
       },
+      isNewElement: false,
       undoStack: [],
       redoStack: [],
     });
@@ -269,6 +272,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selected.length === 0 ? undefined : 'element',
+      isNewElement: false,
     });
   }
 
@@ -326,7 +330,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
 
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj);
-    //this.state.selection?.markAsNewElement();
+    this.setState({ isNewElement: true });
   }
 
   public addNewPanel(targetElement?: SceneObject) {

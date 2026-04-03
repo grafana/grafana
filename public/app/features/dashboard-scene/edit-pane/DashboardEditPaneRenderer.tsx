@@ -35,13 +35,14 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane, selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { openPane, selectionContext, isNewElement } = useSceneObjectState(editPane, {
+    shouldActivateOrKeepAlive: true,
+  });
   const { isEditing, meta, uid } = dashboard.useState();
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = editPane.getSelection();
-  const isNewElement = false; // selection?.isNewElement() ?? false;
   // the layout element that was selected when opening the 'add' pane
   // used when adding new panel from the sidebar
   const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject>(dashboard);

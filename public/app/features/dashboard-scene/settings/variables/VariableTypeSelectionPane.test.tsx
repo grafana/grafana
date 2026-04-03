@@ -27,6 +27,7 @@ import {
   VariableTypeSelection,
   VariableTypeChange,
 } from './VariableTypeSelectionPane';
+import { getEditableElementForSelection } from '../../edit-pane/shared';
 
 const defaultDsSettings = {
   name: 'TestDataSource',
@@ -216,10 +217,12 @@ describe('collectDescendantVariables', () => {
 
 function VariableEditPaneHarness({ dashboard }: { dashboard: DashboardScene }) {
   const editPane = dashboard.state.editPane;
-  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
-  const selectedObject = selection?.getFirstObject();
-  const editableElement = useMemo(() => selection?.createSelectionElement(), [selection]);
-  const isNewElement = selection?.isNewElement() ?? false;
+  const { selectionContext, isNewElement } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const selectedObject = editPane.getSelection();
+  const editableElement = useMemo(
+    () => getEditableElementForSelection(editPane, selectionContext.selected),
+    [selectionContext.selected]
+  );
 
   if (!editableElement) {
     return null;

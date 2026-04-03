@@ -25,12 +25,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const header = new OptionsPaneCategoryDescriptor({
-      title: ``,
-      id: '',
-    });
-
-    return [header];
+    return [];
   }
 
   public onConfirmDelete() {
