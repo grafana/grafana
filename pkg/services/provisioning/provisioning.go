@@ -68,6 +68,7 @@ func ProvideService(
 	dual dualwrite.Service,
 	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
 	serverLockService *serverlock.ServerLockService,
+	routesPermissions accesscontrol.RoutePermissionsService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -96,6 +97,7 @@ func ProvideService(
 		migratePrometheusType:        promTypeMigrationProvider.Run,
 		dual:                         dual,
 		serverLock:                   serverLockService,
+		routesPermissions:            routesPermissions,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -238,6 +240,7 @@ type ProvisioningServiceImpl struct {
 	secretService                secrets.Service
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
+	routesPermissions            accesscontrol.RoutePermissionsService
 	tracer                       tracing.Tracer
 	dual                         dualwrite.Service
 	serverLock                   *serverlock.ServerLockService
@@ -334,6 +337,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		validation.ValidateProvenanceRelaxed,
 		ps.tracer,
+		alertingauthz.NewRouteAccess[*legacy_storage.ManagedRoute](ps.ac, ps.routesPermissions, true),
 	)
 	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
 	receiverSvc := notifier.NewReceiverService(

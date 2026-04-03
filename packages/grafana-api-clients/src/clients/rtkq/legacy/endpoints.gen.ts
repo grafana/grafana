@@ -5049,9 +5049,19 @@ export type ReportBrandingOptions = {
   emailLogoUrl?: string;
   reportLogoUrl?: string;
 };
+export type FooterItem = {
+  color?: string;
+  fontSize?: string;
+  fontStyle?: string;
+  fontWeight?: string;
+  type?: string;
+  value?: string;
+};
 export type ReportSettings = {
   branding?: ReportBrandingOptions;
   embeddedImageTheme?: string;
+  footerFontFamily?: string;
+  footerItems?: FooterItem[];
   id?: number;
   orgId?: number;
   pdfDashboardTitleEnabled?: boolean;

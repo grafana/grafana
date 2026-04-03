@@ -9,14 +9,13 @@ import { ModalBase } from '@grafana/ui/internal';
 import { SplashScreenNav } from './SplashScreenNav';
 import { SplashScreenSlide } from './SplashScreenSlide';
 import { getSplashScreenConfig } from './splashContent';
+import { useShouldShowSplash } from './useShouldShowSplash';
 
 export function SplashScreenModal() {
-  const [isOpen, setIsOpen] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const styles = useStyles2(getStyles);
   const config = getSplashScreenConfig();
-
-  const handleDismiss = useCallback(() => setIsOpen(false), []);
+  const { shouldShow, dismiss } = useShouldShowSplash(config.version);
 
   const total = config.features.length;
   const goToPrev = useCallback(() => setActiveIndex((i) => (i - 1 + total) % total), [total]);
@@ -33,7 +32,7 @@ export function SplashScreenModal() {
     [goToPrev, goToNext]
   );
 
-  if (!isOpen) {
+  if (!shouldShow) {
     return null;
   }
 
@@ -48,24 +47,26 @@ export function SplashScreenModal() {
         onNext={goToNext}
         onGoTo={setActiveIndex}
       />
-      <LinkButton
-        href={activeFeature.ctaUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        icon="external-link-alt"
-        variant="secondary"
-        fill="outline"
-        size="md"
-      >
-        {activeFeature.ctaText}
-      </LinkButton>
+      {activeFeature.ctaUrl && (
+        <LinkButton
+          href={activeFeature.ctaUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          icon="external-link-alt"
+          variant="secondary"
+          fill="outline"
+          size="md"
+        >
+          {activeFeature.ctaText}
+        </LinkButton>
+      )}
     </>
   );
 
   return (
     <ModalBase
       isOpen
-      onDismiss={handleDismiss}
+      onDismiss={dismiss}
       aria-label={t('splash-screen.aria-label', "What's new in Grafana")}
       className={styles.modal}
     >
@@ -74,7 +75,7 @@ export function SplashScreenModal() {
         <IconButton
           name="times"
           size="lg"
-          onClick={handleDismiss}
+          onClick={dismiss}
           aria-label={t('splash-screen.close', 'Close')}
           className={styles.closeButton}
         />

@@ -8,15 +8,18 @@ import { Box, FilterInput, Icon, Label, Stack, useStyles2 } from '@grafana/ui';
 
 import { trackAlertRuleFilterEvent, trackRulesSearchInputCleared } from '../../Analytics';
 import { PopupCard } from '../../components/HoverCard';
-import { RulesViewModeSelector } from '../../components/rules/Filter/RulesViewModeSelector';
+import { RulesViewModeSelector, type SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
 import { SavedSearches } from '../../components/saved-searches/SavedSearches';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
-import { shouldUseSavedSearches } from '../../featureToggles';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
-import { type RulesFilterProps } from './RulesFilter';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
+
+export interface RulesFilterProps {
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
+}
 
 type SearchQueryForm = {
   query: string;
@@ -24,9 +27,6 @@ type SearchQueryForm = {
 
 export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterProps) {
   const { searchQuery, updateFilters } = useRulesFilter();
-
-  // Feature toggle for saved searches
-  const savedSearchesEnabled = shouldUseSavedSearches();
 
   const {
     savedSearches,
@@ -120,18 +120,16 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               )}
             />
           </Box>
-          {savedSearchesEnabled && (
-            <SavedSearches
-              savedSearches={savedSearches}
-              currentSearchQuery={searchQuery}
-              onSave={saveSearch}
-              onRename={renameSearch}
-              onDelete={deleteSearch}
-              onApply={handleApplySearch}
-              onSetDefault={setDefaultSearch}
-              isLoading={savedSearchesLoading}
-            />
-          )}
+          <SavedSearches
+            savedSearches={savedSearches}
+            currentSearchQuery={searchQuery}
+            onSave={saveSearch}
+            onRename={renameSearch}
+            onDelete={deleteSearch}
+            onApply={handleApplySearch}
+            onSetDefault={setDefaultSearch}
+            isLoading={savedSearchesLoading}
+          />
           <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
         </Stack>
       </Stack>

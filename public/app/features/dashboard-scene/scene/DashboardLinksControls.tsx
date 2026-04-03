@@ -31,6 +31,7 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
           dashboardUID={uid}
           key={`${link.title}-$${index}`}
           linkIndex={links.indexOf(link)}
+          dashboard={dashboard}
         />
       ))}
     </div>
