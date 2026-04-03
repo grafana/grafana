@@ -6,11 +6,18 @@ import (
 	"fmt"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
+	infdb "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 const (
@@ -189,6 +196,42 @@ func TestKVStorageBackendProcessBulkPreservesImportedHistory(t *testing.T) {
 	require.Empty(t, collectLatestBulkImportNames(t, backend, namespace))
 }
 
+func TestKVStorageBackendProcessBulkWritesLegacyHistoryFieldsUpFront(t *testing.T) {
+	backend, dbConn := setupCompatSqlKVStorageBackend(t)
+
+	const namespace = "sqlkv-compat-history"
+	resp := backend.ProcessBulk(context.Background(), BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{
+			Namespace: namespace,
+			Group:     testBulkImportGroup,
+			Resource:  testBulkImportResource,
+		}},
+	}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+		newBulkImportRequestWithGeneration(namespace, "item-1", resourcepb.BulkRequest_ADDED, 3),
+		newBulkImportRequestWithGeneration(namespace, "item-1", resourcepb.BulkRequest_MODIFIED, 4),
+		newBulkImportRequestWithGeneration(namespace, "item-1", resourcepb.BulkRequest_DELETED, 5),
+	}))
+
+	require.Nil(t, resp.Error)
+	require.Empty(t, resp.Rejected)
+	require.Equal(t, int64(3), resp.Processed)
+
+	rows := collectLegacyHistoryRows(t, dbConn, namespace)
+	require.Len(t, rows, 3)
+
+	require.Equal(t, int64(1), rows[0].Action)
+	require.Zero(t, rows[0].PreviousResourceVersion)
+	require.Equal(t, int64(3), rows[0].Generation)
+
+	require.Equal(t, int64(2), rows[1].Action)
+	require.Equal(t, rows[0].ResourceVersion, rows[1].PreviousResourceVersion)
+	require.Equal(t, int64(4), rows[1].Generation)
+
+	require.Equal(t, int64(3), rows[2].Action)
+	require.Equal(t, rows[1].ResourceVersion, rows[2].PreviousResourceVersion)
+	require.Zero(t, rows[2].Generation)
+}
+
 func TestKVStorageBackendProcessBulkRejectsEmptyBatch(t *testing.T) {
 	backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
 
@@ -275,6 +318,119 @@ func newBulkImportRequest(namespace, name string, action resourcepb.BulkRequest_
 			name,
 		)),
 	}
+}
+
+func newBulkImportRequestWithGeneration(namespace, name string, action resourcepb.BulkRequest_Action, generation int64) *resourcepb.BulkRequest {
+	return &resourcepb.BulkRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: namespace,
+			Group:     testBulkImportGroup,
+			Resource:  testBulkImportResource,
+			Name:      name,
+		},
+		Action: action,
+		Value: []byte(fmt.Sprintf(
+			`{"apiVersion":"bulk.grafana.app/v1","kind":"Item","metadata":{"name":"%s","namespace":"%s","generation":%d},"spec":{"name":"%s"}}`,
+			name,
+			namespace,
+			generation,
+			name,
+		)),
+	}
+}
+
+type legacyHistoryRow struct {
+	Action                  int64
+	ResourceVersion         int64
+	PreviousResourceVersion int64
+	Generation              int64
+}
+
+func setupCompatSqlKVStorageBackend(t *testing.T) (*kvStorageBackend, sqldb.DB) {
+	t.Helper()
+
+	dbstore := infdb.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	dbConn, err := eDB.Init(context.Background())
+	require.NoError(t, err)
+
+	kvStore, err := kvpkg.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	require.NoError(t, err)
+
+	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+		Dialect: sqltemplate.DialectForDriver(dbConn.DriverName()),
+		DB:      dbConn,
+	})
+	require.NoError(t, err)
+
+	opts := KVBackendOptions{
+		KvStore:     kvStore,
+		RvManager:   rvManager,
+		DBKeepAlive: eDB,
+		WatchOptions: WatchOptions{
+			SettleDelay: time.Millisecond,
+		},
+	}
+	if dbConn.DriverName() == "sqlite3" {
+		opts.UseChannelNotifier = true
+	}
+
+	backend, err := NewKVStorageBackend(opts)
+	require.NoError(t, err)
+
+	kvBackend := backend.(*kvStorageBackend)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = kvBackend.Stop(ctx)
+	})
+
+	return kvBackend, dbConn
+}
+
+func collectLegacyHistoryRows(t *testing.T, dbConn sqldb.DB, namespace string) []legacyHistoryRow {
+	t.Helper()
+
+	dialect, err := kvpkg.DialectFromDriver(dbConn.DriverName())
+	require.NoError(t, err)
+
+	query := fmt.Sprintf(
+		"SELECT %s, %s, %s, %s FROM %s WHERE %s = %s AND %s = %s AND %s = %s ORDER BY %s ASC",
+		dialect.QuoteIdent("action"),
+		dialect.QuoteIdent("resource_version"),
+		dialect.QuoteIdent("previous_resource_version"),
+		dialect.QuoteIdent("generation"),
+		dialect.QuoteIdent("resource_history"),
+		dialect.QuoteIdent("namespace"),
+		dialect.Placeholder(1),
+		dialect.QuoteIdent("group"),
+		dialect.Placeholder(2),
+		dialect.QuoteIdent("resource"),
+		dialect.Placeholder(3),
+		dialect.QuoteIdent("resource_version"),
+	)
+
+	rows, err := dbConn.QueryContext(context.Background(), query, namespace, testBulkImportGroup, testBulkImportResource)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, rows.Close())
+	}()
+
+	var records []legacyHistoryRow
+	for rows.Next() {
+		var record legacyHistoryRow
+		require.NoError(t, rows.Scan(
+			&record.Action,
+			&record.ResourceVersion,
+			&record.PreviousResourceVersion,
+			&record.Generation,
+		))
+		records = append(records, record)
+	}
+
+	require.NoError(t, rows.Err())
+	return records
 }
 
 func collectBulkImportNames(t *testing.T, backend *kvStorageBackend, namespace string) []string {

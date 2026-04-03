@@ -4337,6 +4337,17 @@
       "title": "아직 생성한 대시보드가 없습니다.",
       "title-folder": "이 폴더에는 아직 대시보드가 없습니다."
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "해당 폴더 삭제",
       "delete-folder-error": "폴더 삭제 도중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
@@ -5406,9 +5417,6 @@
         "title": {
           "proceed-to-external-site": "외부 사이트로 이동하시겠어요?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "씬으로 보기"
       }
     },
     "dashboard-links-menu": {
@@ -5955,12 +5963,20 @@
       "not-found": "UID가 '{{datasourceUid}}'인 데이터 소스를 찾을 수 없습니다."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "구성",
       "configure-button-menu": "토글 메뉴",
+      "configure-visualization": "",
       "empty-state-message": "쿼리를 실행해 여기에서 시각화하거나 모든 시각화로 이동해 다른 패널 유형을 추가하세요",
       "menu-open-panel-editor": "구성",
       "menu-use-library-panel": "라이브러리 패널 사용",
-      "missing-config": "패널 구성 누락"
+      "menu-use-saved-query": "",
+      "missing-config": "패널 구성 누락",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "새 패널",
     "on-create-new-row": {
@@ -6737,6 +6753,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6823,6 +6844,10 @@
       "constant-options": "상수 옵션",
       "label-value": "값",
       "placeholder-your-metric-prefix": "메트릭 접두사"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "규칙 표시/숨기기가 작동하지 않습니다",
@@ -7149,6 +7174,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7464,6 +7495,7 @@
     "sharing": {
       "save-before-share": {
         "text": "이 대시보드에 저장되지 않은 변경 사항이 있습니다. 변경 사항을 공유하기 전에 저장해야 합니다.",
+        "text-no-save": "",
         "title": "저장되지 않은 변경 사항"
       }
     },
@@ -7597,6 +7629,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "변수 편집기 양식",
       "back-to-list": "목록으로 돌아가기",
@@ -7626,6 +7663,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "정말 {{variable}}을(를) 삭제하시겠어요?",
       "confirmText-delete-variable": "변수 삭제",
+      "drag-handle-label": "",
       "title-delete-variable": "변수 삭제",
       "tooltip-duplicate-variable": "변수 복제",
       "tooltip-remove-variable": "변수 제거"
@@ -8191,6 +8229,7 @@
       "label-preview": "미리보기"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "값 매핑 복제",
       "duplicate-value-mapping-tooltip-duplicate": "복제",
       "placeholder-exact-value-to-match": "정확히 일치하는 값",
@@ -9997,6 +10036,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "링크 추가",
+      "drag-handle-label": "",
       "edit-link": "링크 편집",
       "one-click": "원 클릭",
       "one-click-enabled": "원 클릭 활성화됨",
@@ -12530,7 +12570,7 @@
       "name-required": "이름은 필수 입력 항목입니다.",
       "save": "저장",
       "table-delete": "플레이리스트 항목 삭제",
-      "table-drag": "드래그 앤 드롭으로 순서 변경",
+      "table-drag": "",
       "table-empty": "플레이리스트가 비어 있습니다. 아래에 대시보드를 추가하세요.",
       "table-heading": "대시보드"
     },
@@ -15489,6 +15529,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "클릭하여 편집",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "열거형 행 삭제",
       "remove-enum-row-tooltip-delete": "삭제"
     },
@@ -16402,6 +16443,7 @@
       "variable": "변수"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "변수 복제",
       "tooltip-remove-variable": "변수 제거"
     },
