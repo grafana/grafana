@@ -11,6 +11,8 @@ interface EchoConfig {
   debug: boolean;
 }
 
+const MAX_META_URL_LENGTH = 2048;
+
 /**
  * Echo is a service for collecting events from Grafana client-app
  * It collects events, distributes them across registered backend and flushes once per configured interval
@@ -86,7 +88,10 @@ export class Echo implements EchoSrv {
       ts: new Date().getTime(),
       timeSinceNavigationStart: performance.now(),
       path: window.location.pathname,
-      url: window.location.href,
+      url:
+        window.location.href.length > MAX_META_URL_LENGTH
+          ? window.location.href.substring(0, MAX_META_URL_LENGTH)
+          : window.location.href,
     };
   };
 }
