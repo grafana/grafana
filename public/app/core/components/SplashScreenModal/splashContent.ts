@@ -1,4 +1,3 @@
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 
@@ -6,11 +5,14 @@ import assistantHeroImage from './images/assistant-hero.png';
 import gitSyncImage from './images/git-sync.png';
 import libraryOfThingsImage from './images/library-of-things.png';
 
+export type AccentColorKey = 'dark-purple' | 'primary' | 'success' | 'dark-orange';
+
 export interface SplashFeature {
   id: string;
   icon: IconName;
-  badge: { text: string; icon?: IconName };
-  accentColor: (theme: GrafanaTheme2) => string;
+  badgeText: string;
+  badgeIcon?: IconName;
+  accentColor: AccentColorKey;
   title: string;
   subtitle: string;
   bullets: string[];
@@ -31,8 +33,8 @@ export function getSplashScreenConfig(): SplashScreenConfig {
       {
         id: 'assistant',
         icon: 'ai-sparkle',
-        badge: { text: t('splash-screen.assistant.badge', 'NOW IN OSS') },
-        accentColor: (theme) => theme.visualization.getColorByName('dark-purple'),
+        badgeText: t('splash-screen.assistant.badge', 'NOW IN OSS'),
+        accentColor: 'dark-purple',
         title: t('splash-screen.assistant.title', 'Use Grafana Assistant in Grafana OSS'),
         subtitle: t('splash-screen.assistant.subtitle', 'Use AI to handle everything from config to query generation'),
         bullets: [
@@ -47,13 +49,19 @@ export function getSplashScreenConfig(): SplashScreenConfig {
       {
         id: 'dynamic-dashboards',
         icon: 'apps',
-        badge: { text: t('splash-screen.dynamic-dashboards.badge', 'NEW IN G13') },
-        accentColor: (theme) => theme.colors.primary.text,
+        badgeText: t('splash-screen.badge.new', 'NEW IN G13'),
+        accentColor: 'primary',
         title: t('splash-screen.dynamic-dashboards.title', 'Make your dashboards more dynamic'),
-        subtitle: t('splash-screen.dynamic-dashboards.subtitle', 'Make your dashboards more impactful by making them more interactive'),
+        subtitle: t(
+          'splash-screen.dynamic-dashboards.subtitle',
+          'Make your dashboards more impactful by making them more interactive'
+        ),
         bullets: [
           t('splash-screen.dynamic-dashboards.bullet-1', 'Split content into tabs for quick switching'),
-          t('splash-screen.dynamic-dashboards.bullet-2', 'Show or hide panels based on template variables and other conditions'),
+          t(
+            'splash-screen.dynamic-dashboards.bullet-2',
+            'Show or hide panels based on template variables and other conditions'
+          ),
           t('splash-screen.dynamic-dashboards.bullet-3', 'Auto-arrange panels for an efficient layout'),
         ],
         ctaText: t('splash-screen.dynamic-dashboards.cta', 'Show me'),
@@ -63,10 +71,13 @@ export function getSplashScreenConfig(): SplashScreenConfig {
       {
         id: 'git-sync',
         icon: 'code-branch',
-        badge: { text: t('splash-screen.git-sync.badge', 'NEW IN G13') },
-        accentColor: (theme) => theme.colors.success.text,
-        title: t('splash-screen.git-sync.title','Sync your dashboards to Git'),
-        subtitle: t('splash-screen.git-sync.subtitle', 'Bring version control, collaboration, and reliability to your dashboards'),
+        badgeText: t('splash-screen.badge.new', 'NEW IN G13'),
+        accentColor: 'success',
+        title: t('splash-screen.git-sync.title', 'Sync your dashboards to Git'),
+        subtitle: t(
+          'splash-screen.git-sync.subtitle',
+          'Bring version control, collaboration, and reliability to your dashboards'
+        ),
         bullets: [
           t('splash-screen.git-sync.bullet-1', 'Store your dashboard configuration safely in any git repository'),
           t('splash-screen.git-sync.bullet-2', 'Keep track of the changes - and who made them!'),
@@ -79,13 +90,18 @@ export function getSplashScreenConfig(): SplashScreenConfig {
       {
         id: 'library-of-things',
         icon: 'compass',
-        badge: { text: t('splash-screen.library-of-things.badge', 'NEW IN G13') },
-        accentColor: (theme) => theme.visualization.getColorByName('dark-orange'),
+        badgeText: t('splash-screen.badge.new', 'NEW IN G13'),
+        accentColor: 'dark-orange',
         title: t('splash-screen.library-of-things.title', 'Dashboard suggestions and templates'),
         subtitle: t(
-          'splash-screen.library-of-things.subtitle', 'Use dashboard suggestions, templates, and saved queries get to a useful dashboard sooner'),
+          'splash-screen.library-of-things.subtitle',
+          'Use dashboard suggestions, templates, and saved queries get to a useful dashboard sooner'
+        ),
         bullets: [
-          t('splash-screen.library-of-things.bullet-1', 'Start with a community dashboard tailored to your data source'),
+          t(
+            'splash-screen.library-of-things.bullet-1',
+            'Start with a community dashboard tailored to your data source'
+          ),
           t('splash-screen.library-of-things.bullet-2', 'Start with a template and customize it to your needs'),
           t('splash-screen.library-of-things.bullet-3', 'Start from proven designs instead of building from scratch'),
         ],
