@@ -251,13 +251,13 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
     if (multi) {
-      if (hasItem) {
+      if (hasItem && !force) {
         this.updateSelection(this.state.selectionContext.selected.filter((i) => i.id !== id));
       } else {
         this.updateSelection([...this.state.selectionContext.selected, { id }]);
       }
     } else {
-      if (hasItem) {
+      if (hasItem && !force) {
         this.updateSelection([]);
       } else {
         this.updateSelection([{ id }]);

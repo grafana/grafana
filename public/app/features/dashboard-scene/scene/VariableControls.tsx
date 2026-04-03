@@ -87,7 +87,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
-    dashboard.state.editPane.selectObject(variable, variable.state.key!);
+    dashboard.state.editPane.selectObject(variable);
   }, [variable]);
 
   const onClickDeleteVariable = useCallback(() => {

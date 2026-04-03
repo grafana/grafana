@@ -88,6 +88,19 @@ describe('DashboardEditPane', () => {
 
       expect(editPane.getSelection()).toBe(scene);
     });
+
+    it('Force selecting should keep selecting if already selected', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      // This selects panel
+      const panel = scene.onCreateNewPanel();
+
+      // Force select
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: false, force: true });
+
+      expect(editPane.getSelection()).toBe(panel);
+    });
   });
 
   it('Handles edit action events that adds objects', () => {

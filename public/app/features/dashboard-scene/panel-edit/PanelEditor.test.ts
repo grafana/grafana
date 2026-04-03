@@ -141,7 +141,7 @@ describe('PanelEditor', () => {
         }),
       });
 
-      dashboard.state.editPane.selectObject(panel, panel.state.key!, { force: true });
+      dashboard.state.editPane.selectObject(panel, { force: true });
       expect(dashboard.state.editPane.getSelection()).toBe(panel);
 
       deactivate = activateFullSceneTree(dashboard);

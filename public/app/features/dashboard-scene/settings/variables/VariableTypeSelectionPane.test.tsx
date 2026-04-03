@@ -274,7 +274,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, variable.state.key!, { force: true });
+  dashboard.state.editPane.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }
@@ -304,7 +304,7 @@ function buildSectionVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(sectionVariable, sectionVariable.state.key!, { force: true });
+  dashboard.state.editPane.selectObject(sectionVariable, { force: true });
 
   return { dashboard, dashboardVariable, sectionVariableSet };
 }
