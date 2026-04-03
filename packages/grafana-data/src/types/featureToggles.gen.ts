@@ -1727,7 +1727,7 @@ export interface FeatureToggles {
   frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default false
+  * @default true
   */
   splashScreen?: boolean;
   /**
