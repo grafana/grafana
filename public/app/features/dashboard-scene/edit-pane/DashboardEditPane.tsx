@@ -11,6 +11,7 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
+import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
@@ -21,24 +22,18 @@ import {
   ObjectsReorderedOnCanvasEvent,
   RepeatsUpdatedEvent,
 } from './shared';
-import { type EditPaneSelectionActions } from './types';
+import { type DashboardSidebarPane, type EditPaneSelectionActions } from './types';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selectionContext: ElementSelectionContextState;
 
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
-  openPane?: DashboardSidebarPaneName;
-  /**
-   * Temp hack to open pane using element selection
-   */
-  openPaneTempHack?: SceneObject;
+  openPane?: DashboardSidebarPane;
   /** True when a new element is being added and selected */
   isNewElement: boolean;
   isDocked?: boolean;
 }
-
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'code';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements EditPaneSelectionActions {
   public constructor() {
@@ -293,9 +288,8 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
 
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selected.length === 0 ? undefined : 'element',
+      openPane: new ElementEditPane({}),
       isNewElement: false,
-      openPaneTempHack: undefined,
     });
   }
 
@@ -308,10 +302,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     if (key) {
       // Not using findByKey here as it requires try catch in case object is not found
       return sceneGraph.findObject(this, (obj) => obj.state.key === key);
-    }
-
-    if (this.state.openPaneTempHack) {
-      return this.state.openPaneTempHack;
     }
 
     if (this.state.selectionContext.selected.length === 0) {
@@ -344,16 +334,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.updateSelection([]);
   }
 
-  public openPane(openPane: DashboardSidebarPaneName) {
-    if (this.state.selectionContext.selected.length) {
-      this.clearSelection(true);
-    }
-
-    if (openPane === this.state.openPane) {
-      this.setState({ openPane: undefined });
-    } else {
-      this.setState({ openPane });
-    }
+  public openPane(openPane: string) {
+    // if (openPane === this.state.openPane) {
+    //   this.setState({ openPane: undefined });
+    // } else {
+    //   this.setState({ openPane });
+    // }
   }
 
   public closePane() {
