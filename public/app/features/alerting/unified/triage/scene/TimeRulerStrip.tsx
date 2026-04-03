@@ -41,7 +41,12 @@ export function TimeRulerStrip() {
           series: [
             {
               fields: [
-                { name: 'Time', type: FieldType.time, values: [timeRange.from.valueOf(), timeRange.to.valueOf()], config: {} },
+                {
+                  name: 'Time',
+                  type: FieldType.time,
+                  values: [timeRange.from.valueOf(), timeRange.to.valueOf()],
+                  config: {},
+                },
                 { name: 'Value', type: FieldType.number, values: [0, 0], config: {} },
               ],
               length: 2,
