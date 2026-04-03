@@ -1,8 +1,9 @@
-import { type DrilldownsApplicability } from '@grafana/data';
+import { AdHocVariableFilter, type DrilldownsApplicability } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   type GroupByVariable,
+  isGroupByFilter,
   sceneGraph,
   type SceneObject,
   type SceneQueryRunner,
@@ -10,11 +11,6 @@ import {
 import { type DataSourceRef } from '@grafana/schema';
 
 import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
-
-// Inline check until isGroupByFilter is available from @grafana/scenes
-function isGroupByFilter(filter: { operator: string }): boolean {
-  return filter.operator === 'groupBy';
-}
 
 export function verifyDrilldownApplicability(
   sourceObject: SceneObject,
@@ -59,7 +55,7 @@ export async function getDrilldownApplicability(
     return;
   }
 
-  const filters: Array<{ key: string; operator: string; value: string; origin?: string; values?: string[] }> = [];
+  const filters: AdHocVariableFilter[] = [];
   const groupByKeys: string[] = [];
 
   if (hasFiltersApplicability) {
