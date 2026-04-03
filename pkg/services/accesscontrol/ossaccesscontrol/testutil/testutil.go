@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -21,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,17 +43,13 @@ func ProvideFolderPermissions(
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
-	if err != nil {
-		return nil, err
-	}
 
 	fStore := folderimpl.ProvideStore(sqlStore, cfg)
 	searchMock := &resource.MockResourceClient{}
 	searchMock.On("Search", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 	searchMock.On("GetStats", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 	fService := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	acSvc := acimpl.ProvideOSSService(

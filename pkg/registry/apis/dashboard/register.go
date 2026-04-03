@@ -56,7 +56,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -110,7 +109,6 @@ type DashboardsAPIBuilder struct {
 	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
 	scheme                   *runtime.Scheme
 	search                   *SearchHandler
-	dashStore                dashboards.Store
 	QuotaService             quota.Service
 	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
@@ -137,14 +135,12 @@ func RegisterAPIService(
 	accessControl accesscontrol.AccessControl,
 	accessClient authlib.AccessClient,
 	provisioning provisioning.ProvisioningService,
-	dashStore dashboards.Store,
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 	dual dualwrite.Service,
 	quotaService quota.Service,
-	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
 	libraryPanels libraryelements.Service,
@@ -180,7 +176,6 @@ func RegisterAPIService(
 		accessClient:             accessClient,
 		unified:                  unified,
 		search:                   NewSearchHandler(tracing, unified, features),
-		dashStore:                dashStore,
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,
 		minRefreshInterval:       cfg.MinRefreshInterval,
@@ -193,7 +188,7 @@ func RegisterAPIService(
 		snapshotOptions:          snapshotOptions,
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
-		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, dashboardPermissionsSvc, accessControl, features),
+		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 	}
 
 	migration.RegisterMetrics(reg)

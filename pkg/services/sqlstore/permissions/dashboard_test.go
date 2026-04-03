@@ -684,8 +684,6 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 	t.Helper()
 
 	db, cfg := db.InitTestDBWithCfg(t)
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
-	require.NoError(t, err)
 	fStore := folderimpl.ProvideStore(db, cfg)
 
 	// Create a signed-in user for folder creation

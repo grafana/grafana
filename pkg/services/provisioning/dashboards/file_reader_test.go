@@ -20,13 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -133,16 +131,12 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 	sql, cfgT := db.InitTestDBWithCfg(t)
 	features := featuremgmt.WithFeatures()
 	fStore := folderimpl.ProvideStore(sql, cfgT)
-	tagService := tagimpl.ProvideService(sql)
-	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
-	require.NoError(t, err)
 	searchMock := resource.NewMockResourceClient(t)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
-	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, nil, sql, featuremgmt.WithFeatures(),
+	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {

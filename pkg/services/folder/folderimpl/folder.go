@@ -49,7 +49,6 @@ type Service struct {
 	unifiedStore           folder.Store
 	db                     db.DB
 	log                    *slog.Logger
-	dashboardStore         dashboards.Store // folders are saved in the dashboard table
 	dashboardFolderStore   *DashboardFolderStoreImpl
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
@@ -71,7 +70,6 @@ func ProvideService(
 	store *FolderStoreImpl,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
-	dashboardStore dashboards.Store,
 	userService user.Service,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
@@ -87,7 +85,6 @@ func ProvideService(
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
-		dashboardStore:         dashboardStore,
 		dashboardFolderStore:   newDashboardFolderStore(db, cfg.MaxNestedFolderDepth),
 		store:                  store,
 		features:               features,
