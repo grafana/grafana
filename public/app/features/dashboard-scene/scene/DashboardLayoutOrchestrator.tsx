@@ -180,6 +180,16 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const validDropTargetUnderMouse = this._getDropTargetUnderMouse(evt);
     const effectiveDropTarget = validDropTargetUnderMouse ?? lastDropTarget;
 
+    // When effectiveDropTarget differs from lastDropTarget (e.g. due to coalesced
+    // pointermove), clear stale visual drop state on the previous target so it
+    // doesn't keep showing a placeholder/highlight after the drop.
+    if (effectiveDropTarget !== lastDropTarget && lastDropTarget) {
+      lastDropTarget.setDropPosition?.(null);
+      lastDropTarget.setIsDropTarget?.(false);
+      this._currentDropPosition = null;
+      this._lastHoveredAutoGridItemKey = null;
+    }
+
     // TabsLayoutManager is not a valid panel drop target — it represents the
     // tab bar area between tab headers. Cancel the drop so the panel either
     // stays in place or returns to its source layout.
