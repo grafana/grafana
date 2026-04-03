@@ -2138,10 +2138,10 @@ var (
 		{
 			Name:            "prometheusTypeMigration",
 			Description:     "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageDeprecated,
 			RequiresRestart: true,
 			Owner:           grafanaPartnerPluginsSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "pluginContainers",
