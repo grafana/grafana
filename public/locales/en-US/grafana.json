@@ -6879,7 +6879,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "Delete",
-      "aria-label-edit": "Edit"
+      "aria-label-edit": "Edit",
+      "delete": {
+        "confirm": "Are you sure you want to delete: {{name}}?",
+        "text": "Delete {{type}}",
+        "title": "Delete {{type}}"
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
