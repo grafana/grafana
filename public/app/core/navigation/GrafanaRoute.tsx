@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useLayoutEffect } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
@@ -36,9 +36,17 @@ export function GrafanaRoute(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const lastReportedPage = useRef<string>('');
+
   useEffect(() => {
     cleanupDOM();
-    reportPageview();
+    // Only report a pageview when the URL actually changes to avoid firing on every re-render.
+    // Dashboards can re-render frequently (variable loading, data fetching) while the URL stays the same.
+    const currentPage = props.location.pathname + props.location.search + props.location.hash;
+    if (currentPage !== lastReportedPage.current) {
+      lastReportedPage.current = currentPage;
+      reportPageview();
+    }
     navigationLogger('GrafanaRoute', false, 'Updated', props);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.location.pathname, props.location.search, props.location.hash]);
