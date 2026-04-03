@@ -52,7 +52,7 @@ type Server struct {
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]zanzana.StoreInfo
-	storesMU *sync.Mutex
+	storesMU sync.RWMutex
 	cache    *localcache.CacheService
 
 	mtReconciler zanzana.MTReconciler
@@ -91,7 +91,6 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		openFGAServer: openfga,
 		openFGAClient: openFGAClient,
 		store:         store,
-		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]zanzana.StoreInfo),
 		cfg:           zanzanaCfg,
 		cache:         localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),

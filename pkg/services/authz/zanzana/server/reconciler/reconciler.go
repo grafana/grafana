@@ -33,6 +33,11 @@ type Reconciler struct {
 
 	workQueue chan string
 
+	// ensuredNamespaces caches namespaces that have been fully ensured in this
+	// process lifetime so EnsureNamespace can short-circuit on subsequent calls
+	// without taking any lock or making any RPC.
+	ensuredNamespaces sync.Map
+
 	globalRoleMu sync.RWMutex
 	// resolved effective permissions per GlobalRole name (for Role composition)
 	globalRolePerms map[string][]*authzextv1.RolePermission
@@ -292,6 +297,12 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 // leader's background reconciliation loop is safe because reconcileNamespace
 // is idempotent.
 func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
+	// Fast path: namespace was already ensured in this process lifetime.
+	// Avoids a GetStore call (and its lock) on every authorization request.
+	if _, ok := r.ensuredNamespaces.Load(namespace); ok {
+		return nil
+	}
+
 	ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
 	defer span.End()
 
@@ -300,20 +311,19 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 		return fmt.Errorf("failed to get store: %w", err)
 	}
 
-	if store != nil {
-		return nil
+	if store == nil {
+		// Create store if it doesn't exist
+		_, err = r.server.GetOrCreateStore(ctx, namespace)
+		if err != nil {
+			return fmt.Errorf("failed to create store: %w", err)
+		}
+
+		err = r.reconcileNamespace(ctx, namespace)
+		if err != nil {
+			return fmt.Errorf("failed to reconcile namespace: %w", err)
+		}
 	}
 
-	// Create store if it doesn't exist
-	_, err = r.server.GetOrCreateStore(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("failed to create store: %w", err)
-	}
-
-	err = r.reconcileNamespace(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("failed to reconcile namespace: %w", err)
-	}
-
+	r.ensuredNamespaces.Store(namespace, struct{}{})
 	return nil
 }

@@ -57,10 +57,11 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*zanzana.S
 }
 
 func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
-	s.storesMU.Lock()
-	defer s.storesMU.Unlock()
-
+	// Fast path: concurrent reads without blocking writers.
+	s.storesMU.RLock()
 	info, ok := s.stores[namespace]
+	s.storesMU.RUnlock()
+
 	if ok {
 		return &zanzana.StoreInfo{
 			ID:      info.ID,
@@ -69,6 +70,8 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 		}, nil
 	}
 
+	// Cache miss: query OpenFGA without holding any lock so concurrent requests
+	// do not serialize on the DB call.
 	res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
 	if err != nil {
 		return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
@@ -76,16 +79,27 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 
 	for _, store := range res.GetStores() {
 		if store.GetName() == namespace {
-			info = zanzana.StoreInfo{
+			newInfo := zanzana.StoreInfo{
 				ID:   store.GetId(),
 				Name: store.GetName(),
 			}
 
-			s.stores[namespace] = info
+			s.storesMU.Lock()
+			// Double-check: another goroutine may have written while we queried.
+			if existing, exists := s.stores[namespace]; exists {
+				s.storesMU.Unlock()
+				return &zanzana.StoreInfo{
+					ID:      existing.ID,
+					Name:    existing.Name,
+					ModelID: existing.ModelID,
+				}, nil
+			}
+			s.stores[namespace] = newInfo
+			s.storesMU.Unlock()
 
 			return &zanzana.StoreInfo{
-				ID:   info.ID,
-				Name: info.Name,
+				ID:   newInfo.ID,
+				Name: newInfo.Name,
 			}, nil
 		}
 	}
