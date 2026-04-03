@@ -206,6 +206,7 @@
 /pkg/tests/apis/iam @grafana/identity-access-team
 /pkg/tests/apis/shorturl @grafana/sharing-squad
 /pkg/tests/api/correlations/ @grafana/datapro
+/pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/data-sources-plguins
 /pkg/util/ @grafana/grafana-backend-group
