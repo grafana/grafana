@@ -1144,6 +1144,36 @@
     },
     {
       "metadata": {
+        "name": "cacheConfigDataMigration",
+        "resourceVersion": "1775236415505",
+        "creationTimestamp": "2026-04-03T17:13:35Z",
+        "deletionTimestamp": "2026-04-03T17:15:03Z"
+      },
+      "spec": {
+        "description": "Enables cache config data migration to move cache configuration to a new storage format",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "cacheConfigUnifiedStorageMigration",
+        "resourceVersion": "1775236722763",
+        "creationTimestamp": "2026-04-03T17:15:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-03 17:18:42.763848 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables cache config data migration to migrate cache configs to unified storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-10-12T16:56:49Z"
