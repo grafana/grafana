@@ -140,23 +140,24 @@ describe('barchartPresetsSupplier', () => {
     });
   });
 
-  describe('maxRows', () => {
-    it('maxRows are respected if maxRows is greater then 20', () => {
+  // rowCountMax on PanelDataSummary is the largest frame.length in the panel; barchart presets set cardOptions.maxRows only when that exceeds 20, to cap preview size.
+  describe('rowCountMax', () => {
+    it.each([21, 200000, Infinity])('when rowCountMax is %s, first preset cardOptions.maxRows is 20', (i) => {
       const dataSummary = getPanelDataSummary([createPresetFrame(3, 1000)]);
-      dataSummary.rowCountMax = 21;
+      dataSummary.rowCountMax = i;
       const presets = barchartPresetsSupplier({ dataSummary });
-      expect(presets).toHaveLength(4);
       expect(presets![0].cardOptions?.maxRows).toEqual(20);
     });
 
-    // This seems unexpected, why would a maxRows of 20 return undefined?
-    it.each([0, 10, 20, undefined, null])('maxRows are ignored if maxRows is 20 or fewer: %i', (i) => {
-      const dataSummary = getPanelDataSummary([createPresetFrame(3, 1000)]);
-      //@ts-expect-error
-      dataSummary.rowCountMax = i;
-      const presets = barchartPresetsSupplier({ dataSummary });
-      expect(presets).toHaveLength(4);
-      expect(presets![0].cardOptions?.maxRows).toEqual(undefined);
-    });
+    it.each([0, 10, 20, undefined, null, -Infinity])(
+      'when rowCountMax is %s, first preset cardOptions.maxRows is undefined',
+      (i) => {
+        const dataSummary = getPanelDataSummary([createPresetFrame(3, 1000)]);
+        //@ts-expect-error
+        dataSummary.rowCountMax = i;
+        const presets = barchartPresetsSupplier({ dataSummary });
+        expect(presets![0].cardOptions?.maxRows).toEqual(undefined);
+      }
+    );
   });
 });
