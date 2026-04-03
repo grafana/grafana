@@ -147,6 +147,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     this._sourceDropTarget = dropTarget;
     this._lastDropTarget = dropTarget;
+    this._sourceOriginalIndex = this._getGridItemIndex(gridItem);
 
     // Capture the offset from cursor to item's top-left corner
     this._captureDragOffset(evt.clientX, evt.clientY, gridItem);
@@ -786,7 +787,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           this._previewType = 'panel';
           this._captureItemDimensions(gridItem);
 
-          this._sourceOriginalIndex = this._getGridItemIndex(gridItem);
           this._sourceDropTarget.draggedGridItemOutside?.(gridItem);
           this._itemDetachedFromSource = true;
 
