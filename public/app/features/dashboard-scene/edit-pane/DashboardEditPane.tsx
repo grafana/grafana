@@ -29,6 +29,10 @@ export interface DashboardEditPaneState extends SceneObjectState {
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
   openPane?: DashboardSidebarPaneName;
+  /**
+   * Temp hack to open pane using element selection
+   */
+  openPaneTempHack?: SceneObject;
   /** True when a new element is being added and selected */
   isNewElement: boolean;
   isDocked?: boolean;
@@ -253,6 +257,15 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
+    if (obj.getRoot() !== this.getRoot()) {
+      this.setState({
+        openPaneTempHack: obj,
+        selectionContext: { ...this.state.selectionContext, selected: [{ id: obj.state.key! }] },
+        openPane: 'element',
+      });
+      return;
+    }
+
     if (multi) {
       if (hasItem && !force) {
         this.updateSelection(this.state.selectionContext.selected.filter((i) => i.id !== id));
@@ -273,10 +286,15 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selected.length === 0 ? undefined : 'element',
       isNewElement: false,
+      openPaneTempHack: undefined,
     });
   }
 
   public getSelection(): SceneObject | undefined {
+    if (this.state.openPaneTempHack) {
+      return this.state.openPaneTempHack;
+    }
+
     if (this.state.selectionContext.selected.length === 0) {
       return undefined;
     }

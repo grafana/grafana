@@ -14,6 +14,7 @@ import {
 import { Sidebar, useSidebar } from '@grafana/ui';
 
 import { ElementEditPane } from '../../edit-pane/ElementEditPane';
+import { getEditableElementForSelection } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -27,7 +28,6 @@ import {
   VariableTypeSelection,
   VariableTypeChange,
 } from './VariableTypeSelectionPane';
-import { getEditableElementForSelection } from '../../edit-pane/shared';
 
 const defaultDsSettings = {
   name: 'TestDataSource',
@@ -217,11 +217,13 @@ describe('collectDescendantVariables', () => {
 
 function VariableEditPaneHarness({ dashboard }: { dashboard: DashboardScene }) {
   const editPane = dashboard.state.editPane;
-  const { selectionContext, isNewElement } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selectionContext, isNewElement, openPaneTempHack } = useSceneObjectState(editPane, {
+    shouldActivateOrKeepAlive: true,
+  });
   const selectedObject = editPane.getSelection();
   const editableElement = useMemo(
-    () => getEditableElementForSelection(editPane, selectionContext.selected),
-    [selectionContext.selected]
+    () => getEditableElementForSelection(editPane, selectionContext.selected, openPaneTempHack),
+    [editPane, selectionContext.selected, openPaneTempHack]
   );
 
   if (!editableElement) {

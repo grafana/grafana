@@ -35,7 +35,7 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane, selectionContext, isNewElement } = useSceneObjectState(editPane, {
+  const { openPane, selectionContext, isNewElement, openPaneTempHack } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid } = dashboard.useState();
@@ -48,8 +48,8 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject>(dashboard);
 
   const editableElement = useMemo(() => {
-    return getEditableElementForSelection(editPane, selectionContext.selected);
-  }, [editPane, selectionContext.selected]);
+    return getEditableElementForSelection(editPane, selectionContext.selected, openPaneTempHack);
+  }, [editPane, selectionContext.selected, openPaneTempHack]);
 
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));

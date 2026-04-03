@@ -36,6 +36,7 @@ import {
 } from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
 
+import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
@@ -46,18 +47,23 @@ export function useEditPaneCollapsed() {
 }
 
 export function getEditableElementForSelection(
-  scene: SceneObject,
-  selected: ElementSelectionContextItem[]
+  editPane: DashboardEditPane,
+  selected: ElementSelectionContextItem[],
+  openPaneTempHack?: SceneObject
 ): EditableDashboardElement | undefined {
+  if (openPaneTempHack) {
+    return getEditableElementFor(openPaneTempHack);
+  }
+
   if (selected.length === 1) {
-    const obj = sceneGraph.findByKey(scene, selected[0].id);
+    const obj = sceneGraph.findByKey(editPane, selected[0].id);
     if (obj) {
       return getEditableElementFor(obj);
     }
   }
 
   if (selected.length > 1) {
-    const objects = selected.map((s) => sceneGraph.findByKey(scene, s.id)).filter((o) => o !== undefined);
+    const objects = selected.map((s) => sceneGraph.findByKey(editPane, s.id)).filter((o) => o !== undefined);
     const elements: BulkActionElement[] = objects
       .map((obj) => getEditableElementFor(obj))
       .filter((e): e is BulkActionElement => isBulkActionElement(e!));
