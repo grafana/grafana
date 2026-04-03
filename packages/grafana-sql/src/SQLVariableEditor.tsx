@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataQueryRequest, Field } from '@grafana/data';
+import { type DataQueryRequest, type Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
-import { Combobox, ComboboxOption } from '@grafana/ui';
+import { Combobox, type ComboboxOption } from '@grafana/ui';
 
 import { migrateVariableQuery } from './SQLVariableUtils';
-import { SqlQueryEditorProps } from './components/QueryEditor';
+import { type SqlQueryEditorProps } from './components/QueryEditor';
 import { SqlQueryEditorLazy } from './components/QueryEditorLazy';
-import { type SQLQuery, type SQLQueryMeta, SQLDialect } from './types';
+import { type SQLQuery, type SQLQueryMeta, type SQLDialect } from './types';
 
 type SQLVariableQueryEditorProps = SqlQueryEditorProps;
 

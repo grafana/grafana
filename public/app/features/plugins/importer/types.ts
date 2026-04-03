@@ -1,13 +1,13 @@
 import {
-  AppPlugin,
-  AppPluginMeta,
-  DataSourcePluginMeta,
-  PanelPlugin,
-  PanelPluginMeta,
-  PluginLoadingStrategy,
-  PluginMeta,
+  type AppPlugin,
+  type AppPluginMeta,
+  type DataSourcePluginMeta,
+  type PanelPlugin,
+  type PanelPluginMeta,
+  type PluginLoadingStrategy,
+  type PluginMeta,
 } from '@grafana/data';
-import { GenericDataSourcePlugin } from 'app/features/datasources/types';
+import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 
 export interface PluginImporter {
   /**

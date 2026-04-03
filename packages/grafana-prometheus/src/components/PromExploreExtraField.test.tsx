@@ -1,12 +1,12 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromExploreExtraField.test.tsx
 import { render, screen } from '@testing-library/react';
 
-import { PrometheusDatasource } from '../datasource';
-import { PromQuery } from '../types';
+import { type PrometheusDatasource } from '../datasource';
+import { type PromQuery } from '../types';
 
 import {
   PromExploreExtraField,
-  PromExploreExtraFieldProps,
+  type PromExploreExtraFieldProps,
   promExploreExtraFieldTestIds,
 } from './PromExploreExtraField';
 

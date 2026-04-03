@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin, PluginUpdateStrategy } from '../types';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 
@@ -33,8 +33,8 @@ describe('PluginListItemBadges', () => {
     isDisabled: false,
     isDeprecated: false,
     isPublished: true,
-    isManaged: false,
     isPreinstalled: { found: false, withVersion: false },
+    managed: { enabled: false, strategy: undefined },
   };
 
   afterEach(() => {
@@ -80,7 +80,15 @@ describe('PluginListItemBadges', () => {
 
   it('does not render an upgrade badge (when plugin has an available update and is managed)', () => {
     render(
-      <PluginListItemBadges plugin={{ ...plugin, hasUpdate: true, installedVersion: '0.0.9', isManaged: true }} />
+      <PluginListItemBadges
+        plugin={{
+          ...plugin,
+          hasUpdate: true,
+          installedVersion: '0.0.9',
+          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+          signatureType: PluginSignatureType.grafana,
+        }}
+      />
     );
     expect(screen.queryByText(/update available/i)).toBeNull();
   });

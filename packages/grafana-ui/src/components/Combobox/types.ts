@@ -1,4 +1,4 @@
-import { IconName } from '@grafana/data';
+import { type IconName } from '@grafana/data';
 
 export const ALL_OPTION_VALUE = '__GRAFANA_INTERNAL_MULTICOMBOBOX_ALL_OPTION__';
 

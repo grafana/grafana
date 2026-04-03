@@ -3,11 +3,11 @@ import uPlot from 'uplot';
 
 import {
   FALLBACK_COLOR,
-  Field,
+  type Field,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   MappingType,
   SpecialValueMatch,
   ThresholdsMode,
@@ -16,13 +16,13 @@ import {
 import { t } from '@grafana/i18n';
 import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import { FacetedData, FacetSeries } from '@grafana/ui/internal';
+import { type FacetedData, type FacetSeries } from '@grafana/ui/internal';
 
-import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
+import { pointWithin, Quadtree, type Rect } from '../barchart/quadtree';
 import { valuesToFills } from '../heatmap/utils';
 
 import { PointShape } from './panelcfg.gen';
-import { XYSeries } from './types2';
+import { type XYSeries } from './types2';
 import { getCommonPrefixSuffix } from './utils';
 
 interface DrawBubblesOpts {

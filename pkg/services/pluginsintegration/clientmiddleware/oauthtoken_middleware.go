@@ -44,7 +44,7 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 
 	ds := &datasources.DataSource{
 		ID:       settings.ID,
-		OrgID:    pCtx.OrgID,
+		OrgID:    pCtx.OrgID, // nolint:staticcheck
 		JsonData: jsonDataBytes,
 		Updated:  settings.Updated,
 	}

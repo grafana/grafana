@@ -1,8 +1,8 @@
 import { ComparisonOperation } from '@grafana/schema';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { DataFrame, FieldType } from '../../types/dataFrame';
-import { FieldMatcher } from '../../types/transformations';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
+import { type FieldMatcher } from '../../types/transformations';
 import { ReducerID } from '../fieldReducer';
 
 import { fieldValueMatcherInfo } from './fieldValueMatcher';

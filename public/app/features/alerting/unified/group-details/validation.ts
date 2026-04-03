@@ -1,10 +1,10 @@
-import { FieldValues, RegisterOptions } from 'react-hook-form';
+import { type FieldValues, type RegisterOptions } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { MIN_TIME_RANGE_STEP_S } from '../components/rule-editor/GrafanaEvaluationBehavior';
 import { rulesInSameGroupHaveInvalidFor } from '../state/actions';
+import { MIN_TIME_RANGE_STEP_S } from '../utils/constants';
 import { getAlertInfo } from '../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 

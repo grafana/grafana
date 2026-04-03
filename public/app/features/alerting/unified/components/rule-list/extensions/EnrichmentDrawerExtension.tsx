@@ -1,4 +1,4 @@
-import { ComponentType, memo } from 'react';
+import { type ComponentType, memo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { withErrorBoundary } from '@grafana/ui';

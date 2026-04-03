@@ -52,8 +52,8 @@ The Active notifications view is useful for debugging and verifying how notifica
 
 To view alert groups, complete the following steps.
 
-1. Click **Alerts & IRM** -> **Alerting**.
-1. Click **Active notifications** to view the list of groups firing notifications.
+1. Click **Alerts & IRM** -> **Alerting** -> **Alert activity**.
+1. Select the **Active notifications** tab to view the list of groups firing notifications.
 
    {{< figure src="/media/docs/alerting/active-notifications-view2.png" max-width="750px" alt="Active notifications view in Grafana Alerting" >}}
 
@@ -97,7 +97,7 @@ Notification errors are only available with [pre-configured Grafana Alertmanager
 
 Notification errors provide information about why they failed to be sent or were not received.
 
-To view notification errors, navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+To view notification errors, navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 
 Each contact point displays a message about the status of their latest notification deliveries.
 

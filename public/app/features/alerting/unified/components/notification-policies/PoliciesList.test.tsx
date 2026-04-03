@@ -12,7 +12,12 @@ import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
-import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
+import {
+  getRoutingTree,
+  getRoutingTreeList,
+  resetRoutingTreeMap,
+  setAllRoutingTreePermissions,
+} from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType } from '../../utils/datasource';
 import { K8sAnnotations } from '../../utils/k8s/constants';
@@ -215,6 +220,7 @@ describe('PoliciesList', () => {
       });
       it('does not show more actions if user has no edit permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -256,6 +262,7 @@ describe('PoliciesList', () => {
       });
       it('does not show more actions if user has no export or edit permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -282,6 +289,7 @@ describe('PoliciesList', () => {
       });
       it('does not show more actions on default policy if user has no permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
         renderNotificationPolicies();
         const allRoots = await ui.rootRouteContainer.findAll();
@@ -301,7 +309,7 @@ describe('PoliciesList', () => {
       // The measureText utility in @grafana/ui caches the canvas context at module level.
       // jest.resetAllMocks() between tests resets the cached context's measureText mock, causing
       // crashes when uncached text is measured. We patch the context directly to fix this.
-      const { getCanvasContext } = require('@grafana/ui') as typeof import('@grafana/ui');
+      const { getCanvasContext } = require('@grafana/ui');
       const ctx = getCanvasContext();
       ctx.measureText = jest.fn().mockReturnValue({ width: 100 } as TextMetrics);
     });

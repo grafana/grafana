@@ -1,19 +1,20 @@
 import { css } from '@emotion/css';
-import { CSSProperties, FC } from 'react';
+import { type CSSProperties, type FC } from 'react';
 
 import {
-  StandardEditorProps,
+  type StandardEditorProps,
   FieldColorModeId,
-  SelectableValue,
-  FieldColor,
+  type SelectableValue,
+  type FieldColor,
   fieldColorModeRegistry,
-  FieldColorMode,
-  GrafanaTheme2,
-  FieldColorConfigSettings,
-  FieldColorSeriesByMode,
+  type FieldColorMode,
+  type GrafanaTheme2,
+  type FieldColorConfigSettings,
+  type FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
@@ -29,7 +30,11 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
 
-  const filteredOptions = availableOptions.filter((option) => !option.excludeFromPicker);
+  const filteredOptions = availableOptions.filter(
+    (option) =>
+      !option.excludeFromPicker &&
+      (option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions)
+  );
 
   const options: Array<SelectableValue<string>> = [];
   // collect any grouped options in this map
