@@ -72,7 +72,7 @@ Starting with Grafana v13.0, the Elasticsearch data source is a standalone plugi
 
 To adjust this behavior:
 
-- **Opt out of auto-updates:** Set `auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
+- **Opt out of auto-updates:** Set `preinstall_auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
 - **Update manually:** Update at any time from the **Administration > Plugins** page without restarting Grafana.
 
 ## Additional resources
