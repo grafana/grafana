@@ -627,10 +627,10 @@ var (
 		{
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables new dashboard layouts",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardDefaultLayoutSelector",

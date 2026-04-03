@@ -38,6 +38,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`          | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
+| `dashboardNewLayouts`                 | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`      | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
@@ -87,7 +88,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `annotationsClustering`           | Enables annotation clustering and switches to refactored annotation code                               |
-| `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |

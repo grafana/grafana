@@ -410,7 +410,7 @@ export interface FeatureToggles {
   dashboardScene?: boolean;
   /**
   * Enables new dashboard layouts
-  * @default false
+  * @default true
   */
   dashboardNewLayouts?: boolean;
   /**
