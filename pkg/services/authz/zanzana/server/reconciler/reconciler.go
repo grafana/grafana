@@ -35,7 +35,7 @@ type Reconciler struct {
 
 	workQueue chan string
 
-	// ensuredNamespaces caches namespaces that have been fully ensured in this
+	// ensuredNamespaces caches namespaces that have been fully reconciled - the store for this namespace exists with up to date permissions - in this
 	// process lifetime so EnsureNamespace can short-circuit on subsequent calls
 	// without taking any lock or making any RPC.
 	ensuredNamespaces sync.Map
