@@ -17,7 +17,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -125,7 +125,11 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
-	out, err := s.service.CreateTemplate(ctx, info.OrgID, convertToDomainModel(p))
+	domainModel, err := convertToDomainModel(p)
+	if err != nil {
+		return nil, errors.NewBadRequest(err.Error())
+	}
+	out, err := s.service.CreateTemplate(ctx, info.OrgID, domainModel)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +171,10 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
 
-	domainModel := convertToDomainModel(p)
+	domainModel, err := convertToDomainModel(p)
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
 	updated, err := s.service.UpdateTemplate(ctx, info.OrgID, domainModel)
 	if err != nil {
 		return nil, false, err
@@ -196,8 +203,16 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			return nil, false, err
 		}
 	}
-	err = s.service.DeleteTemplate(ctx, info.OrgID, name, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
-	return old, false, err                                                                                        // false - will be deleted async
+	oldTemplate, ok := old.(*model.TemplateGroup)
+	if !ok {
+		return nil, false, fmt.Errorf("expected template but got %s", old.GetObjectKind().GroupVersionKind())
+	}
+	prov, err := ngmodels.ProvenanceFromString(oldTemplate.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteTemplate(ctx, info.OrgID, name, definitions.Provenance(prov), version) // TODO add support for dry-run option
+	return old, false, err                                                                       // false - will be deleted async
 }
 
 func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, error) {
