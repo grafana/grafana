@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 
 import { of } from 'rxjs';
 
-import { DataQuery, store } from '@grafana/data';
+import { type DataQuery, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 

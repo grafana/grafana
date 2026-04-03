@@ -194,9 +194,15 @@ var (
 			Name:        "queryHistoryLocalOnly",
 			Description: "Store query history in browser IndexedDB instead of server-side",
 			Stage:       FeatureStageExperimental,
+<<<<<<< HEAD
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
+=======
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+>>>>>>> e554f2a4e09 (fix: fixes all `yarn lint` errors)
 		},
 		{
 			Name:        "awsDatasourcesTempCredentials",

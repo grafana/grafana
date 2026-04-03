@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataQuery, store } from '@grafana/data';
+import { type DataQuery, store } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
 import type RichHistoryIndexedDBStorage from './RichHistoryIndexedDBStorage';

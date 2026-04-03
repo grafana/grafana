@@ -1,16 +1,21 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { isEqual, omit } from 'lodash';
 
-import { DataQuery, store } from '@grafana/data';
+import { type DataQuery, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { RichHistorySearchBackendFilters, RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
-import { RichHistoryQuery } from 'app/types/explore';
+import {
+  type RichHistorySearchBackendFilters,
+  type RichHistorySettings,
+  SortOrder,
+} from 'app/core/utils/richHistoryTypes';
+import type { RichHistoryQuery } from 'app/types/explore';
 
 import { RICH_HISTORY_KEY } from './RichHistoryLocalStorage';
-import RichHistoryStorage, {
-  RichHistoryResults,
+import {
+  type default as RichHistoryStorage,
+  type RichHistoryResults,
   RichHistoryServiceError,
-  RichHistoryStorageWarningDetails,
+  type RichHistoryStorageWarningDetails,
 } from './RichHistoryStorage';
 import { migrateToIndexedDB } from './indexedDBMigration';
 import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
