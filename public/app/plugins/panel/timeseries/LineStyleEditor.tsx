@@ -79,6 +79,9 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
     return val;
   }, [value, options]);
 
+  // Only dash and dots use LineStyle.dash definitions
+  const hasDashPattern = value?.fill && value?.fill !== 'solid' && value?.fill !== 'auto';
+
   return (
     <Stack wrap={true} alignItems="flex-end">
       <RadioButtonGroup
@@ -97,7 +100,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
           });
         }}
       />
-      {value?.fill && value?.fill !== 'solid' && value?.fill !== 'auto' && (
+      {hasDashPattern && (
         <>
           <Select
             allowCustomValue={true}
