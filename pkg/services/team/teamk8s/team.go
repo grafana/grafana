@@ -181,7 +181,39 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 }
 
 func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	return errors.New("not implemented")
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	orgID := requester.GetOrgID()
+
+	uid, _ := ctx.Value(team.TeamUIDCtxKey{}).(string)
+	if uid == "" {
+		legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+			ID:    cmd.ID,
+			OrgID: orgID,
+		})
+		if err != nil {
+			return err
+		}
+		uid = legacyTeam.UID
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	err = client.Delete(ctx, uid, metav1.DeleteOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return team.ErrTeamNotFound
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, error) {

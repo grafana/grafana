@@ -59,10 +59,9 @@ func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) e
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	// TODO enable Kubernetes team service for DeleteTeam once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.DeleteTeam(ctx, cmd)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.DeleteTeam(ctx, cmd)
+	}
 
 	return s.legacyService.DeleteTeam(ctx, cmd)
 }
