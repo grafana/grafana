@@ -1,6 +1,6 @@
-import { FetchError } from '@grafana/runtime';
+import { type FetchError } from '@grafana/runtime';
 import { getMessageFromError } from 'app/core/utils/errors';
-import { LoadError } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { type LoadError } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 describe('errors functions', () => {
   let message: string | null;

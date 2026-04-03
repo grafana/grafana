@@ -1,12 +1,12 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType, Field } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { FieldType, type Field } from '../../types/dataFrame';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
 
-import { GroupByOperationID, GroupByTransformerOptions } from './groupBy';
-import { groupToNestedTable, GroupToNestedTableTransformerOptions } from './groupToNestedTable';
+import { GroupByOperationID, type GroupByTransformerOptions } from './groupBy';
+import { groupToNestedTable, type GroupToNestedTableTransformerOptions } from './groupToNestedTable';
 import { DataTransformerID } from './ids';
 
 describe('GroupToSubframe transformer', () => {

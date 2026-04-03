@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type ComponentProps } from 'react';
+import { type Props } from 'react-virtualized-auto-sizer';
 
-import { DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { InspectDataTab } from './InspectDataTab';

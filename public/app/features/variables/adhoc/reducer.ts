@@ -1,10 +1,10 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
+import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
 import { initialVariableModelState } from 'app/features/variables/types';
 
 import { getInstanceState } from '../state/getInstanceState';
-import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { initialVariablesState, type VariablePayload, type VariablesState } from '../state/types';
 
 export interface AdHocVariabelFilterUpdate {
   index: number;

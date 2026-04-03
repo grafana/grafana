@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { AccessControlAction } from 'app/types/accessControl';
-import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
+import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';

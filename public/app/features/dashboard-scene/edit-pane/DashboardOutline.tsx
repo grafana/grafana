@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
@@ -13,7 +13,7 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
 
@@ -78,7 +78,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
     }
 
     editableElement.scrollIntoView?.();
-    DashboardInteractions.outlineItemClicked({ index, depth });
+    DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
   };
 
   const onToggleCollapse = (evt: React.MouseEvent) => {

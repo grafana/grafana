@@ -1,4 +1,4 @@
-import { RenderResult, screen } from '@testing-library/react';
+import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 

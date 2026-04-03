@@ -25,9 +25,9 @@ export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath =
   const pathSlug = slug || `new-dashboard-${timestamp}`;
   path = `${pathSlug}.json`;
 
-  // Add folder path if it exists
+  // Add folder path if it exists (folder annotations may use trailing slashes; avoid "//" in repo paths)
   if (folderPath) {
-    return `${folderPath}/${path}`;
+    return joinPath(folderPath, path);
   }
 
   return path;
@@ -55,4 +55,20 @@ export function joinPath(directory: string, filename: string): string {
   const cleanDir = directory.replace(/\/+$/, '');
   const cleanFile = filename.replace(/^\/+/, '');
   return cleanDir ? `${cleanDir}/${cleanFile}` : cleanFile;
+}
+
+/**
+ * Ensures a non-empty folder path ends with a trailing slash.
+ * The backend's IsPathSupported() uses the trailing slash to distinguish
+ * folder paths from file paths; without it, folder paths fail validation
+ * with "unsupported file extension".
+ */
+export function ensureFolderPathTrailingSlash(path: string) {
+  if (!path) {
+    return '';
+  }
+  if (path.endsWith('/')) {
+    return path;
+  }
+  return `${path}/`;
 }

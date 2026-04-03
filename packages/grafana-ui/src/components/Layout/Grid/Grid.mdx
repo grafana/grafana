@@ -15,13 +15,45 @@ Use the Grid component when you want to create structured and organized layouts 
 
 ### When not to use
 
-Use the `Stack` component instead for these use cases:
+Use the [Stack](/docs/layout-stack--docs) component instead for these use cases:
 
 - **Alignment:** More options for item alignment.
 - **Flex items:** Custom flex basis or configure how items stretch and wrap.
 
 ## Properties
 
-_Note: There is no support for using `columns` and `minColumnWidth` props at the same time. The correct behaviour is working just with one of them not both._
+There are two ways to define the Grid, either by the number of columns or by the minimum column width.
+
+_Note: There is no support for using `columns` and `minColumnWidth` props at the same time. The correct behaviour is working just with one of them, not both._
+
+### Columns
+
+The `columns` prop defines the number of columns that the grid will have. The columns will be equally sized.
+The props that you can use are:
+
+- `columns`, with possible values: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+- `gap`, with possible values: ThemeSpacingTokens (0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10)
+
+### Minimum column width
+
+The `minColumnWidth` prop defines a minimum width that each column can have, the number of columns will be determined by the available space.
+The props that you can use are:
+
+- `minColumnWidth`, with possible values: 1 | 2 | 3 | 5 | 8 | 13 | 21 | 34 | 44 | 55 | 72 | 89 | 144, where the number will then be multiplied by the grid size.
+- `gap`, with possible values: ThemeSpacingTokens (0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10)
+
+### Responsiveness
+
+All of the above props can be defined in a responsive way, meaning that different values will be set depending on the window size.
+
+To define any of them responsively, simply pass in an object with responsive breakpoints as keys. For instance, instead of defining the `columns` prop in this way `columns={4}`
+define it like `columns={{ xs: 1, md: 4 }}`.
+This means that from the `xs` breakpoint up, the column number is 1, while from the `md` breakpoint up, it is 4.
+
+The possible breakpoints in the theme can be found [here](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/themes/breakpoints.ts#L28).
+
+### Further Reading
+
+- [Storybook docs and props table](https://developers.grafana.com/ui/canary/index.html?path=/docs/general-layout-grid--docs)
 
 <ArgTypes of={Grid} />

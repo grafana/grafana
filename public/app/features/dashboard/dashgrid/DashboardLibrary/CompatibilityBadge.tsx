@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -58,7 +58,7 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
       <Tooltip interactive={true} content={tooltipContent}>
         <Button
           variant="secondary"
-          fill="outline"
+          fill="solid"
           disabled={isLoading}
           onClick={(e) => {
             e.stopPropagation();
@@ -68,6 +68,7 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
           data-testid={isLoading ? 'compatibility-badge-loading' : undefined}
           className={styles.button}
           icon="info-circle"
+          size="sm"
         >
           {buttonText}
           {isLoading && <Spinner size="xs" inline className={styles.spinner} />}
@@ -124,7 +125,6 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
             })}
             icon={icon}
             color={color}
-            className={styles.badge}
           />
         </span>
       </Tooltip>
@@ -229,10 +229,6 @@ function getStyles(theme: GrafanaTheme2) {
     badgeWrapper: css({
       display: 'inline-flex',
       alignItems: 'center',
-    }),
-    badge: css({
-      paddingTop: theme.spacing(0.8),
-      paddingBottom: theme.spacing(0.8),
     }),
     clickableBadge: css({
       paddingTop: theme.spacing(0.8),

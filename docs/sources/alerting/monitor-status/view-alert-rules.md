@@ -91,7 +91,7 @@ Admin users can delete all of the alert rules within a folder. To delete all the
 
 Only users with an Admin role can restore deleted Grafana-managed alert rules. After an alert rule is restored, it is restored with a new, different UID from the one it had before.
 
-1. Go to **Alerts & IRM** -> **Alerting** -> **Recently deleted**.
+1. Go to **Alerts & IRM** -> **Alerting** -> **Alert rules**, then click the **Recently deleted** tab.
 1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
 
 {{< admonition type="note" >}}

@@ -1,4 +1,4 @@
-import { ResponsiveProp } from './utils/responsiveness';
+import { type ResponsiveProp } from './utils/responsiveness';
 
 export type AlignItems =
   | 'stretch'

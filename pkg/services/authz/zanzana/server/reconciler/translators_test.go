@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -177,12 +177,6 @@ func TestTranslateGlobalRoleBindingToTuples(t *testing.T) {
 			subjectName:  "team1",
 			expectedUser: "team:team1#member",
 		},
-		{
-			name:         "basic role subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindBasicRole,
-			subjectName:  "basic_viewer",
-			expectedUser: "role:basic_viewer#assignee",
-		},
 	}
 
 	for _, tt := range tests {
@@ -235,12 +229,6 @@ func TestTranslateRoleBindingToTuples(t *testing.T) {
 			subjectKind:  iamv0.RoleBindingSpecSubjectKindTeam,
 			subjectName:  "team1",
 			expectedUser: "team:team1#member",
-		},
-		{
-			name:         "basic role subject",
-			subjectKind:  iamv0.RoleBindingSpecSubjectKindBasicRole,
-			subjectName:  "basic_viewer",
-			expectedUser: "role:basic_viewer#assignee",
 		},
 	}
 
@@ -345,9 +333,9 @@ func TestTranslateFolderToTuples(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, tuples, 1)
 
-		assert.Equal(t, "folder:child-folder", tuples[0].GetUser())
+		assert.Equal(t, "folder:parent-folder", tuples[0].GetUser())
 		assert.Equal(t, common.RelationParent, tuples[0].GetRelation())
-		assert.Equal(t, "folder:parent-folder", tuples[0].GetObject())
+		assert.Equal(t, "folder:child-folder", tuples[0].GetObject())
 	})
 
 	t.Run("root folder without parent", func(t *testing.T) {
@@ -359,6 +347,31 @@ func TestTranslateFolderToTuples(t *testing.T) {
 		tuples, err := TranslateFolderToTuples(toUnstructured(t, folder))
 		require.NoError(t, err)
 		assert.Nil(t, tuples)
+	})
+
+	t.Run("reconciler tuples match mutation path convention", func(t *testing.T) {
+		// Verify the reconciler produces the same tuple as the mutation path
+		// (common.NewFolderParentTuple(child, parent)) to prevent argument swap regression.
+		folder := &folderv1.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "grandchild",
+				Annotations: map[string]string{
+					"grafana.app/folder": "child",
+				},
+			},
+			Spec: folderv1.FolderSpec{Title: "Grandchild"},
+		}
+
+		tuples, err := TranslateFolderToTuples(toUnstructured(t, folder))
+		require.NoError(t, err)
+		require.Len(t, tuples, 1)
+
+		// The mutation path creates: NewFolderParentTuple(folderUID, parentUID)
+		// where folderUID is the child and parentUID is the parent.
+		expected := common.NewFolderParentTuple("grandchild", "child")
+		assert.Equal(t, expected.GetObject(), tuples[0].GetObject(), "Object should be the child folder")
+		assert.Equal(t, expected.GetRelation(), tuples[0].GetRelation())
+		assert.Equal(t, expected.GetUser(), tuples[0].GetUser(), "User should be the parent folder")
 	})
 }
 
@@ -766,7 +779,6 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			{iamv0.RoleBindingSpecSubjectKindUser, "uid1"},
 			{iamv0.RoleBindingSpecSubjectKindServiceAccount, "sa1"},
 			{iamv0.RoleBindingSpecSubjectKindTeam, "team1"},
-			{iamv0.RoleBindingSpecSubjectKindBasicRole, "basic_viewer"},
 		}
 
 		for _, s := range subjects {
@@ -820,7 +832,6 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			{iamv0.GlobalRoleBindingSpecSubjectKindUser, "uid1"},
 			{iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount, "sa1"},
 			{iamv0.GlobalRoleBindingSpecSubjectKindTeam, "team1"},
-			{iamv0.GlobalRoleBindingSpecSubjectKindBasicRole, "basic_viewer"},
 		}
 
 		for _, s := range subjects {
