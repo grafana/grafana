@@ -209,6 +209,11 @@ export interface FeatureToggles {
   */
   reportingHeaderSettings?: boolean;
   /**
+  * Enables the configurable footer settings for PDF reports
+  * @default false
+  */
+  reportingFooterSettings?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   * @default false
   */

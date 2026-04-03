@@ -37,6 +37,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-03-05,aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 2026-01-08,reportingCsvEncodingOptions,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-03-17,reportingHeaderSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-03-25,reportingFooterSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-03-24,sseExpressionErrorIsolation,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
