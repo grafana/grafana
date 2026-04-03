@@ -98,6 +98,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _currentDropPosition: number | null = null;
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
+  /** Original child index of the dragged item before it was detached from its source layout */
+  private _sourceOriginalIndex: number | null = null;
   private _tabDragState: TabDragState | undefined;
   /** Stored pointerup handler for new-panel drag so we can remove it */
   private _dropNewItemPointerUpHandler: ((evt: PointerEvent) => void) | null = null;
@@ -171,6 +173,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const sourceDropTarget = this._sourceDropTarget;
     const lastDropTarget = this._lastDropTarget;
     const dropPosition = this._currentDropPosition;
+    const sourceOriginalIndex = this._sourceOriginalIndex;
 
     // Fresh target under the pointer at drop time takes priority over
     // lastDropTarget which may be stale if pointermove events were coalesced.
@@ -186,7 +189,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
       if (wasDetached && gridItem) {
         setTimeout(() => {
-          sourceDropTarget?.draggedGridItemInside?.(gridItem);
+          sourceDropTarget?.draggedGridItemInside?.(gridItem, sourceOriginalIndex ?? undefined);
           if (sourceDropTarget instanceof AutoGridLayoutManager) {
             sourceDropTarget.state.layout.endExternalDrag();
           }
@@ -250,6 +253,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._lastDropTarget = null;
     this._sourceDropTarget = null;
     this._itemDetachedFromSource = false;
+    this._sourceOriginalIndex = null;
     this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
   }
 
@@ -772,6 +776,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           this._previewType = 'panel';
           this._captureItemDimensions(gridItem);
 
+          this._sourceOriginalIndex = this._getGridItemIndex(gridItem);
           this._sourceDropTarget.draggedGridItemOutside?.(gridItem);
           this._itemDetachedFromSource = true;
 
@@ -803,6 +808,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
         }
       }
     }
+  }
+
+  private _getGridItemIndex(gridItem: SceneGridItemLike): number | null {
+    if (this._sourceDropTarget instanceof AutoGridLayoutManager) {
+      const children = this._sourceDropTarget.state.layout.state.children;
+      const idx = children.findIndex((child) => child === gridItem);
+      return idx >= 0 ? idx : null;
+    }
+    return null;
   }
 
   private _getItemLabel(gridItem: SceneGridItemLike): string {
