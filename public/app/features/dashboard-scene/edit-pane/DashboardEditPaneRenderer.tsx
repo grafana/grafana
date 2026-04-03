@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, type SceneObject, sceneUtils, useSceneObjectState } from '@grafana/scenes';
+import { useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -21,10 +21,7 @@ import { DashboardCodePane } from './DashboardCodePane';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
-import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
-import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
-import { getEditableElementForSelection } from './shared';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -58,26 +55,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   return (
     <>
       {openPane && <Sidebar.OpenPane>{openPane && <openPane.Component model={openPane} />}</Sidebar.OpenPane>}
-      {/* {openPane === 'add' && (      
-   
-      {openPane === 'filters' && (
-        <Sidebar.OpenPane>
-          <DashboardFiltersOverviewPane
-            adhocFilters={adHocVar}
-            groupByVariable={groupByVar}
-            onClose={() => editPane.closePane()}
-          />
-        </Sidebar.OpenPane>
-      )}
-      {openPane === 'code' && (
-        <Sidebar.OpenPane>
-          <DashboardCodePane
-            key={dashboard.state.key}
-            initialValue={getDashboardJsonText(dashboard)}
-            onApply={(jsonText) => applyJsonToDashboard(dashboard, jsonText)}
-          />
-        </Sidebar.OpenPane>
-      )} */}
       <Sidebar.Toolbar>
         {isEditing && (
           <div className={styles.editGroup}>
@@ -123,7 +100,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
-              onClick={() => editPane.openPane('code')}
+              onClick={() => editPane.openPane(new DashboardCodePane({}))}
               active={openPane?.getId() === 'code'}
             />
             {config.featureToggles.dashboardUndoRedo && (
