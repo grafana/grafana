@@ -1,4 +1,11 @@
-import { createDataFrame, dateTime, type DateTimeInput, type EventBus, FieldColorModeId, FieldType } from '@grafana/data';
+import {
+  createDataFrame,
+  dateTime,
+  type DateTimeInput,
+  type EventBus,
+  FieldColorModeId,
+  FieldType,
+} from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
@@ -471,7 +478,7 @@ describe('colorblind line style patterns', () => {
   it('should assign all 9 distinct patterns before cycling', () => {
     const builder = buildWithLineStyle({ fill: 'auto' }, 9);
     const series = builder.getSeries();
-    const styles = series.map((s: { props: { lineStyle: unknown } }) => JSON.stringify(s.props.lineStyle));
+    const styles = series.map((s) => JSON.stringify(s.props.lineStyle));
     const unique = new Set(styles);
     expect(unique.size).toBe(9);
   });
@@ -481,7 +488,7 @@ describe('colorblind line style patterns', () => {
     const series = builder.getSeries();
 
     for (const s of series) {
-      expect(s.props.lineStyle.fill).toMatch(/^(solid|dash)$/);
+      expect(s.props.lineStyle?.fill).toMatch(/^(solid|dash)$/);
     }
   });
 
