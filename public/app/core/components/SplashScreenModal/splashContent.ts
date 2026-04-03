@@ -35,12 +35,12 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         icon: 'ai-sparkle',
         badgeText: t('splash-screen.assistant.badge', 'NOW IN OSS'),
         accentColor: 'dark-purple',
-        title: t('splash-screen.assistant.title', 'Use Grafana Assistant in Grafana OSS'),
+        title: t('splash-screen.assistant.title', "Use Grafana's AI Assistant in Grafana OSS"),
         subtitle: t('splash-screen.assistant.subtitle', 'Use AI to handle everything from config to query generation'),
         bullets: [
-          t('splash-screen.assistant.bullet-1', 'Build complex dashboards in minutes'),
-          t('splash-screen.assistant.bullet-2', 'Correlate metrics, logs and traces and gain insights in minutes'),
-          t('splash-screen.assistant.bullet-3', 'Onboard new team members in a week instead of a month'),
+          t('splash-screen.assistant.bullet-1', 'Explore your data by prompting Assistant to generate queries for you'),
+          t('splash-screen.assistant.bullet-2', 'Create comprehensive dashboards in minutes'),
+          t('splash-screen.assistant.bullet-3', 'Onboard new team members in days, not weeks'),
         ],
         ctaText: t('splash-screen.assistant.cta', 'Show me'),
         ctaUrl: '/a/grafana-assistant-app',
@@ -51,10 +51,10 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         icon: 'apps',
         badgeText: t('splash-screen.badge.new', 'NEW IN G13'),
         accentColor: 'primary',
-        title: t('splash-screen.dynamic-dashboards.title', 'Make your dashboards more dynamic'),
+        title: t('splash-screen.dynamic-dashboards.title', 'Add tabs and panel conditions to your dashboards'),
         subtitle: t(
           'splash-screen.dynamic-dashboards.subtitle',
-          'Make your dashboards more impactful by making them more interactive'
+          'Make your dashboards more impactful and easier to explore'
         ),
         bullets: [
           t('splash-screen.dynamic-dashboards.bullet-1', 'Split content into tabs for quick switching'),
@@ -62,7 +62,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
             'splash-screen.dynamic-dashboards.bullet-2',
             'Show or hide panels based on template variables and other conditions'
           ),
-          t('splash-screen.dynamic-dashboards.bullet-3', 'Auto-arrange panels for an efficient layout'),
+          t('splash-screen.dynamic-dashboards.bullet-3', 'Auto-arrange panels into a grid for an efficient layout'),
         ],
         ctaText: t('splash-screen.dynamic-dashboards.cta', 'Show me'),
         ctaUrl: '/dashboards',
@@ -80,8 +80,11 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         ),
         bullets: [
           t('splash-screen.git-sync.bullet-1', 'Store your dashboard configuration safely in any git repository'),
-          t('splash-screen.git-sync.bullet-2', 'Keep track of the changes - and who made them!'),
-          t('splash-screen.git-sync.bullet-3', 'Works with many deployment scenarios'),
+          t('splash-screen.git-sync.bullet-2', 'keep track of the changes - and who made them'),
+          t(
+            'splash-screen.git-sync.bullet-3',
+            'Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams'
+          ),
         ],
         ctaText: t('splash-screen.git-sync.cta', 'Show me'),
         ctaUrl: '/admin/provisioning',
@@ -92,18 +95,18 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         icon: 'compass',
         badgeText: t('splash-screen.badge.new', 'NEW IN G13'),
         accentColor: 'dark-orange',
-        title: t('splash-screen.library-of-things.title', 'Dashboard suggestions and templates'),
+        title: t('splash-screen.library-of-things.title', 'Kickstart dashboards with suggestions and templates'),
         subtitle: t(
           'splash-screen.library-of-things.subtitle',
-          'Use dashboard suggestions, templates, and saved queries get to a useful dashboard sooner'
+          'Get to a useful dashboard sooner by starting from a proven design'
         ),
         bullets: [
+          t('splash-screen.library-of-things.bullet-1', 'Start from a clean layout instead of building from scratch'),
+          t('splash-screen.library-of-things.bullet-2', 'Load a template and customize it to your needs'),
           t(
-            'splash-screen.library-of-things.bullet-1',
-            'Start with a community dashboard tailored to your data source'
+            'splash-screen.library-of-things.bullet-3',
+            'Explore and use community dashboards tailored to your data source'
           ),
-          t('splash-screen.library-of-things.bullet-2', 'Start with a template and customize it to your needs'),
-          t('splash-screen.library-of-things.bullet-3', 'Start from proven designs instead of building from scratch'),
         ],
         ctaText: t('splash-screen.library-of-things.cta', 'Show me'),
         ctaUrl: '/explore',
