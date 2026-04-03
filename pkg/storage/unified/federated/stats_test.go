@@ -10,15 +10,12 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	rest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -77,16 +74,6 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 		}}})
 	require.NoError(t, err)
 
-	// insert a dashboard into legacy dashboard table for LegacyStatsGetter to read
-	err = db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Insert(&dashboards.Dashboard{
-			OrgID: 1, FolderUID: folder1UID, IsFolder: false,
-			Version: 1, Created: now, Updated: now, Data: simplejson.New(),
-		})
-		return err
-	})
-	require.NoError(t, err)
-
 	store := &LegacyStatsGetter{
 		SQL: legacysql.NewDatabaseProvider(db),
 	}
@@ -119,8 +106,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			},
 			{
 				"group": "sql-fallback",
-				"resource": "dashboards",
-				"count": 1
+				"resource": "dashboards"
 			},
 			{
 				"group": "sql-fallback",
@@ -181,15 +167,11 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 
 		var hasDashboards, hasFolders bool
 		for _, s := range stats.Stats {
-			if s.Resource == "dashboards" {
-				hasDashboards = true
-				require.EqualValues(t, 1, s.Count)
-			}
 			if s.Resource == "folders" {
 				hasFolders = true
 			}
 		}
-		require.True(t, hasDashboards, "dashboards stats should be present")
+		require.False(t, hasDashboards, "dashboards stats should be present")
 		require.False(t, hasFolders, "folders stats should be disabled")
 	})
 

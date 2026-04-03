@@ -1545,6 +1545,7 @@ func AddAnnotationsToDashboard(t *testing.T, dash *dashboards.Dashboard, annotat
 	return dash
 }
 
+// helper function that returns a dashboard struct. dashboard is not persisted.
 func createTestDashboard(t *testing.T, title string, orgId int64, folderUID string, isFolder bool, templateVars []map[string]any, customPanels []any, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 

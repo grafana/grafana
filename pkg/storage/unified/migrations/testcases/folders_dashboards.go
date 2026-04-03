@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // foldersAndDashboardsTestCase tests the "folders-dashboards" ResourceMigration
@@ -225,6 +226,7 @@ func createTestDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelpe
 
 	now := time.Now()
 	dash := &dashboards.Dashboard{
+		UID:       util.GenerateShortUID(),
 		OrgID:     helper.Org1.OrgID,
 		CreatedBy: userID,
 		FolderUID: folderUID,
@@ -267,6 +269,7 @@ func createLargeDashboard(t *testing.T, helper *apis.K8sTestHelper, title, folde
 
 	now := time.Now()
 	dash := &dashboards.Dashboard{
+		UID:       util.GenerateShortUID(),
 		OrgID:     helper.Org1.OrgID,
 		CreatedBy: userID,
 		FolderUID: folderUID,

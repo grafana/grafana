@@ -855,7 +855,7 @@ func TestIntegrationGetMetrics(t *testing.T) {
 	})
 }
 
-// helper function to create a dashboard struct without SQL
+// helper function that returns a dashboard struct. dashboards are not persisted.
 func createTestDashboard(title string, orgID int64, folderUID string, isFolder bool, tags ...any) *dashboards.Dashboard {
 	uid := util.GenerateShortUID()
 	dash := &dashboards.Dashboard{
