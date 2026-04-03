@@ -64,7 +64,9 @@ export const ConfigureCorrelationTargetForm = () => {
   const timeRange: CorrelationQueryTimeRange | undefined =
     useWatch({ name: 'timeRange' }) || (correlation?.type === 'query' ? correlation?.config?.timeRange : undefined);
   const styles = useStyles2(getStyles);
-  const [enableTimeRange, setEnableTimeRange] = useState(false);
+  const [enableTimeRange, setEnableTimeRange] = useState(
+    timeRange?.field !== undefined || timeRange?.range !== undefined
+  );
 
   return (
     <>

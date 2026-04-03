@@ -19,8 +19,8 @@ export interface DataLinkClickEvent<T = any> {
  * @internal
  */
 export type CorrelationQueryTimeRange = {
-  field: string;
-  range: RelativeTimeRange;
+  field?: string;
+  range?: RelativeTimeRange;
 };
 
 /**

@@ -1,3 +1,5 @@
+import { intervalToSeconds } from 'src/datetime/rangeutil';
+
 import { dateTime, rangeUtil } from '@grafana/data';
 import { isCustomVariableValue } from '@grafana/scenes';
 
@@ -62,7 +64,10 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   let exploreRange = range ? { ...range } : undefined;
   // the time range passed in is the default (from the source pane). if the correlation defined a custom one, override it
   // todo - tweak this after its working
-  if (link.meta?.timeRange !== undefined && link.meta?.timeRange.field !== undefined) {
+  if (
+    link.meta?.timeRange !== undefined &&
+    (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined)
+  ) {
     let timeRangeField = link.meta.timeRange.field;
     if (timeRangeField !== undefined && !isCustomVariableValue(timeRangeField)) {
       timeRangeField = `\$\{${timeRangeField}\}`;
@@ -75,12 +80,13 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       const interpolatedBaseTime = dateTime(interpolatedBaseTimeStr, 'x');
 
       exploreRange = rangeUtil.relativeToTimeRange(
-        link.meta.timeRange.range ?? { from: 3600, to: -3600 },
+        {
+          from: link.meta.timeRange.range?.from ?? 3600,
+          to: link.meta.timeRange.range?.to !== undefined ? -Math.abs(link.meta.timeRange.range?.to) : -3600,
+        },
         interpolatedBaseTime
       );
-      console.log('exploreRange', link.title, exploreRange);
     } catch (e) {
-      console.log('err', e);
       // silently fail if any part of this interpolation does not succeed
     }
   }
