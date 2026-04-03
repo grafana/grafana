@@ -167,7 +167,15 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 	return all
 }
 
-func verifyFlagName(name string) error {
+func verifyFlagName(flag FeatureFlag) error {
+	name := flag.Name
+
+	// Flags should be in the format `namespace.flagName`, except legacy feature toggles
+	isLegacy := flag.ShouldGenerate(GenerateLegacyGo) || flag.ShouldGenerate(GenerateLegacyFrontend)
+	if !isLegacy && !strings.Contains(name, ".") {
+		return fmt.Errorf("flag name %q must contain a flag namespace, separated with a dot", name)
+	}
+
 	for part := range strings.SplitSeq(name, ".") {
 		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
 		if part != strcase.ToLowerCamel(part) {
@@ -206,7 +214,7 @@ func verifyFlagsConfiguration(t *testing.T) {
 			t.Errorf("the `Expression` property for %s is incorrect. Empty string values are not allowed. Please explicitly define the default value of the Feature Flag. Valid values include boolean, non-empty string, integer, float, and structured values in JSON format.", flag.Name)
 		}
 		// Check camel case names
-		if err := verifyFlagName(flag.Name); err != nil {
+		if err := verifyFlagName(flag); err != nil {
 			t.Error(err)
 		}
 		if flag.Generate == 0 {
