@@ -626,7 +626,7 @@ func (s *server) Stop(ctx context.Context) error {
 // Old value indicates an update -- otherwise a create
 //
 //nolint:gocyclo
-func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
+func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rv int64, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
 	if err != nil {
@@ -660,10 +660,11 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	}
 
 	event := &WriteEvent{
-		Value:  value,
-		Key:    key,
-		Object: obj,
-		GUID:   uuid.New().String(),
+		Value:      value,
+		Key:        key,
+		Object:     obj,
+		GUID:       uuid.New().String(),
+		PreviousRV: rv,
 	}
 
 	if oldValue == nil {
@@ -755,6 +756,11 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			return nil, AsErrorResult(err)
 		}
 	}
+
+	if err := event.Validate(); err != nil {
+		return nil, NewBadRequestError(fmt.Sprintf("invalid event: %v", err))
+	}
+
 	return event, nil
 }
 
@@ -871,7 +877,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	rsp := &resourcepb.CreateResponse{}
 
-	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
+	event, e := s.newEvent(ctx, user, req.Key, 0, req.Value, nil)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
@@ -982,7 +988,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
-	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
+	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
@@ -1100,6 +1106,11 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable creating deletion marker, %v", err))
+	}
+
+	if err := event.Validate(); err != nil {
+		rsp.Error = NewBadRequestError(fmt.Sprintf("invalid event: %v", err))
+		return rsp, nil
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
