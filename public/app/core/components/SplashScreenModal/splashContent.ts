@@ -33,9 +33,9 @@ export function getSplashScreenConfig(): SplashScreenConfig {
       {
         id: 'assistant',
         icon: 'ai-sparkle',
-        badgeText: t('splash-screen.assistant.badge', 'NOW IN OSS'),
+        badgeText: t('splash-screen.assistant.badge', 'NEW'),
         accentColor: 'dark-purple',
-        title: t('splash-screen.assistant.title', "Use Grafana's AI Assistant in Grafana OSS"),
+        title: t('splash-screen.assistant.title', 'Grafana Assistant is now available to OSS users'),
         subtitle: t('splash-screen.assistant.subtitle', 'Use AI to handle everything from config to query generation'),
         bullets: [
           t('splash-screen.assistant.bullet-1', 'Explore your data by prompting Assistant to generate queries for you'),
