@@ -63,10 +63,10 @@ export function getEditableElementForSelection(
   }
 
   if (selected.length > 1) {
-    const objects = selected.map((s) => sceneGraph.findByKey(editPane, s.id)).filter((o) => o !== undefined);
+    const objects = selected.map((s) => sceneGraph.findByKey(editPane, s.id));
     const elements: BulkActionElement[] = objects
       .map((obj) => getEditableElementFor(obj))
-      .filter((e): e is BulkActionElement => isBulkActionElement(e!));
+      .filter((e): e is BulkActionElement => Boolean(e) && isBulkActionElement(e!));
 
     const first = elements[0];
     const allSameType = elements.every((e) => e.constructor.name === first.constructor.name);
