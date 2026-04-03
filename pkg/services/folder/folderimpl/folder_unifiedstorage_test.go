@@ -614,6 +614,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 				},
 				Labels: []*resourcepb.Requirement{},
 			},
+			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -704,6 +705,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 					},
 				},
 			},
+			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -769,6 +771,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			},
 			Query:  "*test*",
 			Fields: dashboardsearch.IncludeFields,
+			Page:   1,
 			Limit:  folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -1034,6 +1037,7 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 					},
 				},
 			},
+			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
