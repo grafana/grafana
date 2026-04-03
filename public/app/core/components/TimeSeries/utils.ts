@@ -19,7 +19,7 @@ import {
   GraphDrawStyle,
   type GraphFieldConfig,
   GraphThresholdsStyleMode,
-  LineStyle,
+  type LineStyle,
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
@@ -32,10 +32,10 @@ import {
 } from '@grafana/schema';
 
 /**
- * Distinct line styles cycled per series when the "colorblind" line style is selected.
+ * Distinct line styles cycled per series when the "auto" line style is selected.
  * 9 patterns to maximize distinguishable series before repeats.
  */
-const COLORBLIND_LINE_STYLES: LineStyle[] = [
+const ALTERNATING_PATTERN_LINE_STYLES: LineStyle[] = [
   { fill: 'solid' },
   { fill: 'dash', dash: [10, 10] },
   { fill: 'dash', dash: [20, 10] },
@@ -48,14 +48,14 @@ const COLORBLIND_LINE_STYLES: LineStyle[] = [
 ];
 
 /**
- * Resolves the "colorblind" fill type into a concrete line style per series.
- * Non-colorblind line styles pass through unchanged.
+ * Resolves the "auto" (alternating patterns) fill type into a concrete line style per series.
+ * Non auto line styles pass through unchanged.
  */
 function resolveLineStyle(lineStyle: LineStyle | undefined, seriesIndex: number): LineStyle | undefined {
   if (!lineStyle || lineStyle.fill !== 'auto') {
     return lineStyle;
   }
-  return COLORBLIND_LINE_STYLES[seriesIndex % COLORBLIND_LINE_STYLES.length];
+  return ALTERNATING_PATTERN_LINE_STYLES[seriesIndex % ALTERNATING_PATTERN_LINE_STYLES.length];
 }
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
