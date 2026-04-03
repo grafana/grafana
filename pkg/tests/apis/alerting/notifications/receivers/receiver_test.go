@@ -915,6 +915,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	// writer has resource write actions but NO provenance set-status permission.
 	writer := helper.CreateUser("ReceiversWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
 			accesscontrol.ActionAlertingReceiversRead,
 			accesscontrol.ActionAlertingReceiversUpdate,
 			accesscontrol.ActionAlertingReceiversDelete,
@@ -926,6 +927,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	// provisioner has the same write actions PLUS provenance set-status permission.
 	provisioner := helper.CreateUser("ReceiversProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
 			accesscontrol.ActionAlertingReceiversRead,
 			accesscontrol.ActionAlertingReceiversUpdate,
 			accesscontrol.ActionAlertingReceiversDelete,
