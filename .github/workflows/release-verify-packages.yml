@@ -273,7 +273,7 @@ jobs:
           echo "IMAGE_UNDER_TEST=$IMAGE" >> "$GITHUB_ENV"
 
       - name: Run Docker image under test
-        run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_SPLASHSCREEN=false "${IMAGE_UNDER_TEST}"
+        run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_splashScreen=false "${IMAGE_UNDER_TEST}"
 
       - name: Install Playwright browsers
         run: yarn playwright install chromium --with-deps
@@ -360,7 +360,7 @@ jobs:
           echo "IMAGE_UNDER_TEST=$IMAGE" >> "$GITHUB_ENV"
 
       - name: Run Docker Ubuntu image under test
-        run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_SPLASHSCREEN=false "${IMAGE_UNDER_TEST}"
+        run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_splashScreen=false "${IMAGE_UNDER_TEST}"
 
       - name: Install Playwright browsers
         run: yarn playwright install chromium --with-deps
