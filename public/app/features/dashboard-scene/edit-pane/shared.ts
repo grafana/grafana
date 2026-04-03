@@ -26,14 +26,6 @@ import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEdit
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
-import {
-  SectionVariableAdd,
-  SectionVariableAddEditableElement,
-  VariableAdd,
-  VariableAddEditableElement,
-  VariableTypeChange,
-  VariableTypeChangeEditableElement,
-} from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
 
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
@@ -108,18 +100,6 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
     return new VariableEditableElement(sceneObj);
   }
 
-  if (sceneObj instanceof VariableAdd) {
-    return new VariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof SectionVariableAdd) {
-    return new SectionVariableAddEditableElement(sceneObj);
-  }
-
-  if (sceneObj instanceof VariableTypeChange) {
-    return new VariableTypeChangeEditableElement(sceneObj);
-  }
-
   if (sceneObj instanceof LinkEdit) {
     return new LinkEditEditableElement(sceneObj);
   }
@@ -154,8 +134,6 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
 export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
   static type = 'repeats-updated';
 }
-
-export { DashboardEditActionEvent, DashboardStateChangedEvent, type DashboardEditActionEventPayload } from './events';
 
 export interface AddElementActionHelperProps {
   addedObject: SceneObject;

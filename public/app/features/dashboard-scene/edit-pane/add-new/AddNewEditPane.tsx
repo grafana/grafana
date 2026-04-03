@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject } from '@grafana/scenes';
+import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { Sidebar, useStyles2 } from '@grafana/ui';
 import addPanelImg from 'img/dashboards/add-panel.png';
 
@@ -64,11 +64,11 @@ export function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEdit
                         {...dragProvided.draggableProps}
                         {...dragProvided.dragHandleProps}
                         className={cx(styles.imageContainer, dragSnapshot.isDragging && styles.dragging)}
-                        onClick={() => editPane.addNewPanel()}
+                        onClick={() => editPane.addNewPanel(selectedObj)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            editPane.addNewPanel();
+                            editPane.addNewPanel(selectedObj);
                           }
                         }}
                         aria-label={t('dashboard.add.new-panel.title', 'Panel')}
@@ -99,11 +99,11 @@ export function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEdit
                           className={styles.pasteButton}
                           icon="clipboard-alt"
                           tabIndex={0}
-                          onClick={() => editPane.pastePanel()}
+                          onClick={() => editPane.pastePanel(selectedObj)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              editPane.pastePanel();
+                              editPane.pastePanel(selectedObj);
                             }
                           }}
                           aria-label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}

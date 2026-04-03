@@ -147,7 +147,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
 
   useEffect(() => {
     const wasCodePane = previousPaneRef.current === 'code';
-    const isCodePane = openPane === 'code';
+    const isCodePane = openPane?.getId() === 'code';
     previousPaneRef.current = openPane;
 
     if (isCodePane && !wasCodePane) {

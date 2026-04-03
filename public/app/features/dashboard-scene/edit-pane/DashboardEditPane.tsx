@@ -270,7 +270,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   private updateSelection(selected: ElementSelectionContextItem[]) {
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: new ElementEditPane({}),
+      openPane: selected.length ? new ElementEditPane({}) : undefined,
       isNewElement: false,
     });
   }
@@ -329,33 +329,31 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.setState({ isNewElement: true });
   }
 
-  public addNewPanel() {
-    const selectedObj = this.getSelection();
+  public addNewPanel(target?: SceneObject) {
     const panel = getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
 
-    if (selectedObj) {
-      const layout = getLayoutForObject(selectedObj) ?? dashboard;
+    if (target) {
+      const layout = getLayoutForObject(target) ?? dashboard;
       layout.addPanel(panel);
     } else {
       dashboard.addPanel(panel);
     }
 
-    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(selectedObj));
+    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(target));
   }
 
-  public pastePanel(source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
+  public pastePanel(target?: SceneObject, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
     const dashboard = getDashboardSceneFor(this);
-    const selectedObj = this.getSelection();
 
-    if (selectedObj) {
-      const layout = getLayoutForObject(selectedObj) ?? dashboard;
+    if (target) {
+      const layout = getLayoutForObject(target) ?? dashboard;
       layout.pastePanel();
     } else {
       dashboard.pastePanel();
     }
 
-    DashboardInteractions.trackPastePanelClick(source, getLayoutType(selectedObj), 'click');
+    DashboardInteractions.trackPastePanelClick(source, getLayoutType(target), 'click');
   }
 }
 
