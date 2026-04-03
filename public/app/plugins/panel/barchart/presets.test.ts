@@ -13,14 +13,15 @@ import { barchartPresetsSupplier } from './presets';
 /**
  * Creates a minimal DataFrame for barchart presets tests.
  * @param numNumberFields - Number of numeric value fields (default 1)
+ * @param valueCount - Number of values in each field (default 3)
  */
-function createPresetFrame(numNumberFields = 1): DataFrame {
+function createPresetFrame(numNumberFields = 1, valueCount = 3): DataFrame {
   const fields = [
-    { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+    { name: 'time', type: FieldType.time, values: Array.from({ length: valueCount }, (_, i) => 1000 * i) },
     ...Array.from({ length: numNumberFields }, (_, i) => ({
       name: `value${i + 1}`,
       type: FieldType.number,
-      values: [10, 20, 30],
+      values: Array.from({ length: valueCount }, (_, i) => 10 * i),
     })),
   ];
   return createDataFrame({ fields });
@@ -48,7 +49,7 @@ describe('barchartPresetsSupplier', () => {
   });
 
   it('returns empty array when there are no number fields', () => {
-    const summary = getPanelDataSummary([
+    const dataSummary = getPanelDataSummary([
       createDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1, 2, 3] },
@@ -56,11 +57,11 @@ describe('barchartPresetsSupplier', () => {
         ],
       }),
     ]);
-    expect(barchartPresetsSupplier({ dataSummary: summary })).toEqual([]);
+    expect(barchartPresetsSupplier({ dataSummary })).toEqual([]);
   });
 
   it('returns presets when data has number fields', () => {
-    const summary = getPanelDataSummary([
+    const dataSummary = getPanelDataSummary([
       createDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1, 2, 3] },
@@ -68,20 +69,12 @@ describe('barchartPresetsSupplier', () => {
         ],
       }),
     ]);
-    const result = barchartPresetsSupplier({ dataSummary: summary });
-    expect(result!.length).toBeGreaterThan(0);
+    const result = barchartPresetsSupplier({ dataSummary });
+    expect(result!.length).toBe(3);
   });
 
   it('includes stacked preset when multiple number fields exist', () => {
-    const summary = getPanelDataSummary([
-      createDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'value1', type: FieldType.number, values: [10, 20, 30] },
-          { name: 'value2', type: FieldType.number, values: [40, 50, 60] },
-        ],
-      }),
-    ]);
+    const summary = getPanelDataSummary([createPresetFrame(2)]);
     const result = barchartPresetsSupplier({ dataSummary: summary });
     expect(result).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'Palette classic stacked' })]));
   });
@@ -94,9 +87,8 @@ describe('barchartPresetsSupplier', () => {
       expect(presets).toHaveLength(3);
       expect(presets).toMatchSnapshot();
     });
-
-    it('returns 4 presets when data has multiple number fields', () => {
-      const dataSummary = getPanelDataSummary([createPresetFrame(2)]);
+    it.each([2, 3, 10])('returns 4 presets when data has %i number fields', (i) => {
+      const dataSummary = getPanelDataSummary([createPresetFrame(i)]);
       const presets = barchartPresetsSupplier({ dataSummary });
 
       expect(presets).toHaveLength(4);
@@ -149,6 +141,22 @@ describe('barchartPresetsSupplier', () => {
   });
 
   describe('maxRows', () => {
-    it.todo('maxRows are respected');
+    it('maxRows are respected if maxRows is greater then 20', () => {
+      const dataSummary = getPanelDataSummary([createPresetFrame(3, 1000)]);
+      dataSummary.rowCountMax = 21;
+      const presets = barchartPresetsSupplier({ dataSummary });
+      expect(presets).toHaveLength(4);
+      expect(presets![0].cardOptions?.maxRows).toEqual(20);
+    });
+
+    // This seems unexpected, why would a maxRows of 20 return undefined?
+    it.each([0, 10, 20, undefined, null])('maxRows are ignored if maxRows is 20 or fewer: %i', (i) => {
+      const dataSummary = getPanelDataSummary([createPresetFrame(3, 1000)]);
+      //@ts-expect-error
+      dataSummary.rowCountMax = i;
+      const presets = barchartPresetsSupplier({ dataSummary });
+      expect(presets).toHaveLength(4);
+      expect(presets![0].cardOptions?.maxRows).toEqual(undefined);
+    });
   });
 });
