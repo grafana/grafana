@@ -817,7 +817,6 @@ jobs:
       runs-on: ubuntu-x64-small
 
   publish-dockerhub:
-    if: github.ref_name == 'main'
     permissions:
       contents: read
       id-token: write
