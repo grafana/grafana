@@ -406,7 +406,6 @@ func (s *ServiceImpl) readNavigationSettings() {
 			SectionID: navtree.NavIDCfg,
 			Text:      "Advisor",
 			SubTitle:  "Run checks and get suggestions to fix issues",
-			IsNew:     true,
 		}
 	}
 
