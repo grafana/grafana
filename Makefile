@@ -263,12 +263,21 @@ gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
 ## Second go test run will compare the generated files and pass.
 	@echo "generate feature toggles"
-	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
+	go test ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
 	if [ $$? -eq 0 ]; then \
 		echo "feature toggles already up-to-date"; \
 	else \
-		go test -v ./pkg/services/featuremgmt/...; \
+		go test ./pkg/services/featuremgmt/...; \
 	fi
+
+	@echo "generate openfeature react hooks"
+	$(openfeature) generate react \
+		--manifest ./pkg/services/featuremgmt/openfeature-manifest-react.gen.json \
+		--output ./packages/grafana-runtime/src/internal/openFeature \
+		--template ./pkg/services/featuremgmt/openfeature_react.tmpl \
+		--no-input
+	mv ./packages/grafana-runtime/src/internal/openFeature/openfeature.ts ./packages/grafana-runtime/src/internal/openFeature/openfeature.gen.ts
+	rm ./pkg/services/featuremgmt/openfeature-manifest-react.gen.json
 
 .PHONY: gen-go gen-enterprise-go
 ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled

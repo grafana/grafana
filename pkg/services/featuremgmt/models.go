@@ -126,14 +126,16 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// FeatureFlagGenerationTarget is a bitwise flag that instructs codegen on what clients to generate for a feature flag.
-type FeatureFlagGenerationTarget uint8
+// FlagGenerationTarget is a bitwise flag that instructs codegen on what clients to generate for a feature flag.
+type FlagGenerationTarget uint8
 
 const (
 	// GenerateLegacyGo generates the legacy Go client (constants in feature_toggles.go)
-	GenerateLegacyGo FeatureFlagGenerationTarget = 1 << iota
+	GenerateLegacyGo FlagGenerationTarget = 1 << iota
 	// GenerateLegacyFrontend generates the legacy frontend client (constants in featureToggles.gen.ts)
 	GenerateLegacyFrontend
+	// GenerateReact generates the React client
+	GenerateReact
 )
 
 // These are properties about the feature, but not the current state or value for it
@@ -161,10 +163,10 @@ type FeatureFlag struct {
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
 
 	// Generate instructs codegen on what clients to generate for this feature flag.
-	Generate FeatureFlagGenerationTarget `json:"-"`
+	Generate FlagGenerationTarget `json:"-"`
 }
 
-func (f FeatureFlag) ShouldGenerate(client FeatureFlagGenerationTarget) bool {
+func (f FeatureFlag) ShouldGenerate(client FlagGenerationTarget) bool {
 	return f.Generate&client != 0
 }
 

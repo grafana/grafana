@@ -159,11 +159,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Allow setting folder metadata for provisioned folders
-  * @default true
-  */
-  provisioningFolderMetadata?: boolean;
-  /**
   * Enable export functionality for provisioned resources
   * @default false
   */
@@ -669,16 +664,6 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
-  * Enables the Assistant button in the dashboard templates card
-  * @default false
-  */
-  dashboardTemplatesAssistantButton?: boolean;
-  /**
-  * Enables the 'Customize with Assistant' button on suggested dashboard cards
-  * @default false
-  */
-  suggestedDashboardsAssistantButton?: boolean;
-  /**
   * Enables the new alert list view design
   * @default true
   */
@@ -1181,20 +1166,10 @@ export interface FeatureToggles {
   */
   restoreDashboards?: boolean;
   /**
-  * Enables recently viewed dashboards section in the browsing dashboard page
-  * @default false
-  */
-  recentlyViewedDashboards?: boolean;
-  /**
   * A/A test for recently viewed dashboards feature
   * @default false
   */
   experimentRecentlyViewedDashboards?: boolean;
-  /**
-  * Enables the created by me search filter on the browse dashboards page
-  * @default false
-  */
-  createdByMeSearchFilter?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1632,11 +1607,6 @@ export interface FeatureToggles {
   */
   frontendServiceUseSettingsService?: boolean;
   /**
-  * Whether to use the new SharedPreferences functional component
-  * @default false
-  */
-  functionalSharedPreferences?: boolean;
-  /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
   */
@@ -1657,11 +1627,6 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpoint?: boolean;
   /**
-  * Enables new analytics framework
-  * @default false
-  */
-  analyticsFramework?: boolean;
-  /**
   * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
   * @default false
   */
@@ -1672,20 +1637,10 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
-  * Enables the new Flame Graph UI containing the Call Tree view
-  * @default false
-  */
-  flameGraphWithCallTree?: boolean;
-  /**
   * Enables the advisor report integration with datasource pages
   * @default false
   */
   advisorDatasourceIntegration?: boolean;
-  /**
-  * Enables an inline version of Log Details that creates no new scrolls
-  * @default false
-  */
-  inlineLogDetailsNoScrolls?: boolean;
   /**
   * Enables the new colorblind-friendly themes
   * @default false
@@ -1711,11 +1666,6 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceSSOAutoLogin?: boolean;
-  /**
-  * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default true
-  */
-  splashScreen?: boolean;
   /**
   * Enables forwarding team headers from tempo for streaming requests with LBAC rules
   * @default false
