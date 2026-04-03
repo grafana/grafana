@@ -65,7 +65,6 @@ export function VariableDisplaySelect({
   }
 
   return (
-    // eslint-disable-next-line no-restricted-syntax
     <Field label={t('dashboard-scene.variable-display-select.label', 'Display')}>
       <Combobox
         data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect}

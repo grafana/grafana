@@ -98,6 +98,7 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 type ListUserQuery struct {
 	OrgID int64
 	UID   string
+	ID    int64
 	Email string
 	Login string
 
@@ -134,6 +135,9 @@ func (r listUsersQuery) Validate() error {
 
 // ListUsers implements LegacyIdentityStore.
 func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
 	// for continue
 	limit := int(query.Pagination.Limit)
 	query.Pagination.Limit += 1

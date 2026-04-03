@@ -191,7 +191,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      padding: theme.spacing(1, 0),
+      paddingBottom: theme.spacing(1),
       flexGrow: 0,
       gap: theme.spacing(2),
       overflowX: 'hidden',
@@ -213,6 +213,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       width: '280px',
       flexGrow: 1,
       paddingBottom: theme.spacing(2),
+      overflowY: 'auto',
     }),
     openPaneRight: css({
       borderRight: `1px solid ${theme.colors.border.weak}`,

@@ -43,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -62,7 +61,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -145,7 +143,6 @@ func RegisterAPIService(
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 	dual dualwrite.Service,
-	sorter sort.Service,
 	quotaService quota.Service,
 	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
@@ -164,9 +161,8 @@ func RegisterAPIService(
 
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
-	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
-	dashboardClient := client.NewK8sHandler(dual, namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
+	folderClient := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
+	dashboardClient := client.NewK8sHandler(namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, userService, unified)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
 		SnapshotsEnabled:     cfg.SnapshotEnabled,
@@ -183,7 +179,7 @@ func RegisterAPIService(
 		accessControl:            accessControl,
 		accessClient:             accessClient,
 		unified:                  unified,
-		search:                   NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
+		search:                   NewSearchHandler(tracing, unified, features),
 		dashStore:                dashStore,
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,
@@ -197,7 +193,7 @@ func RegisterAPIService(
 		snapshotOptions:          snapshotOptions,
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
-		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
+		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, dashboardPermissionsSvc, accessControl, features),
 	}
 
 	migration.RegisterMetrics(reg)
@@ -614,6 +610,7 @@ func validateDashboardTags(obj runtime.Object) error {
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
+		Scheme:                      opts.Scheme,
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 	}

@@ -8,10 +8,18 @@ on:
         required: true
         type: string
       packages-artifact-name:
-        description: Name of the uploaded package artifact bundle
+        description: Name of the artifact containing deb/rpm packages
         required: false
         type: string
         default: artifacts-linux-amd64
+      docker-artifact-name:
+        description: Name of the artifact containing the alpine docker image. Defaults to packages-artifact-name.
+        required: false
+        type: string
+      docker-ubuntu-artifact-name:
+        description: Name of the artifact containing the ubuntu docker image. Defaults to docker-artifact-name.
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -243,7 +251,7 @@ jobs:
 
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
-          name: ${{ inputs.packages-artifact-name }}
+          name: ${{ inputs.docker-artifact-name || inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
           path: dist
 
@@ -330,7 +338,7 @@ jobs:
 
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
-          name: ${{ inputs.packages-artifact-name }}
+          name: ${{ inputs.docker-ubuntu-artifact-name || inputs.docker-artifact-name || inputs.packages-artifact-name }}
           run-id: ${{ inputs.run-id }}
           path: dist
 

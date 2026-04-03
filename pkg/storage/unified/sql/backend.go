@@ -72,6 +72,15 @@ type Backend interface {
 	resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
+// tmpDir returns a writable temp directory under dataPath for Parquet bulk
+// migration files. Returns "" (OS default) when dataPath is empty.
+func tmpDir(dataPath string) string {
+	if dataPath == "" {
+		return ""
+	}
+	return filepath.Join(dataPath, "tmp")
+}
+
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
@@ -119,6 +128,7 @@ func NewStorageBackend(
 			},
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
+			TmpDir:                  tmpDir(cfg.DataPath),
 			DisableStorageServices:  disableStorageServices,
 			DisablePruner:           cfg.DisablePruner,
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
@@ -216,6 +226,11 @@ type BackendOptions struct {
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	MigrationParquetBuffer bool
 
+	// Directory for temporary Parquet files during bulk migration.
+	// Defaults to the OS temp dir when empty. Set to cfg.DataPath/tmp to
+	// support containers with readonlyRootFilesystem enabled.
+	TmpDir string
+
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 
@@ -255,6 +270,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
+		tmpDir:                  opts.TmpDir,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
 	}
@@ -314,6 +330,9 @@ type backend struct {
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool
+
+	// tmpDir is the directory for temporary Parquet files; empty means OS default.
+	tmpDir string
 
 	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration

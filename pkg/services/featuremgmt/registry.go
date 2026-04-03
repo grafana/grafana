@@ -200,14 +200,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "logsExploreTableVisualisation",
-			Description:  "A table visualisation for logs in Explore",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -322,8 +314,23 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "reportingFooterSettings",
+			Description:  "Enables the configurable footer settings for PDF reports",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "sseExpressionErrorIsolation",
+			Description: "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
@@ -604,7 +611,7 @@ var (
 		{
 			Name:         "annotationsClustering",
 			Description:  "Enables annotation clustering and switches to refactored annotation code",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
@@ -628,10 +635,10 @@ var (
 		{
 			Name:         "dashboardDefaultLayoutSelector",
 			Description:  "Enables default layout selector in dashboard settings",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardAssistantPopover",
@@ -870,10 +877,10 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStageGeneralAvailability,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
-			Expression:   "true",
+			Expression:   "false",
 		},
 		{
 			Name:         "sqlExpressionsColumnAutoComplete",
@@ -1025,6 +1032,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newUnconfiguredPanel",
+			Description:  "Enables the new unconfigured panel experience",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardLibrary",
 			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
@@ -1075,10 +1090,10 @@ var (
 		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingAlertListPanelEnhancements",
@@ -1096,22 +1111,7 @@ var (
 			FrontendOnly: false,
 			Expression:   "true",
 		},
-		{
-			Name:         "alertingSavedSearches",
-			Description:  "Enables saved searches for alert rules list",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "alertingTriageSavedSearches",
-			Description:  "Enables saved searches for the Alert Activity page",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
+
 		{
 			Name:         "alertingDisableSendAlertsExternal",
 			Description:  "Disables the ability to send alerts to an external Alertmanager datasource.",
@@ -1216,14 +1216,7 @@ var (
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
 		},
-		{
-			Name:         "alertingFilterV2",
-			Description:  "Enable the new alerting search experience",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
+
 		{
 			Name:            "dataplaneAggregator",
 			Description:     "Enable grafana dataplane aggregator",
@@ -1798,9 +1791,9 @@ var (
 			Name:         "alertingListViewV2PreviewToggle",
 			Description:  "Enables the alerting list view v2 preview toggle",
 			FrontendOnly: true,
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "alertRuleUseFiredAtForStartsAt",
@@ -2454,7 +2447,7 @@ var (
 		{
 			Name:         "queryEditorNext",
 			Description:  "Enables next generation query editor experience",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
 			Expression:   "false",
@@ -2784,6 +2777,39 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "tracesDrilldownTimeSeeker",
+			Description:  "Enables the time seeker in traces drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "clearPreviousFieldValues",
+			Description:  "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "enableDatasourceMetaApiPluginLoading",
+			Description:  "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "enableColorblindSafePanelOptions",
+			Description:  "Enables new colorblind safe palette and line fill patterns for panels",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			FrontendOnly: true,
+			Expression:   "false",
 		},
 	}
 )

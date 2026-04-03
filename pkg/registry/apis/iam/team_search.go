@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 	common "k8s.io/kube-openapi/pkg/common"
@@ -35,6 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
+
+const maxIDFilterValues = 100
 
 // accessControlCheck maps a legacy RBAC action name to a K8s-style check.
 // The RBAC authz server translates Group/Resource/Verb through the mapper
@@ -104,9 +107,37 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 									ParameterProps: spec3.ParameterProps{
 										Name:        "query",
 										In:          "query",
-										Description: "team name query string",
+										Description: "team name query string (fuzzy/partial match). Mutually exclusive with title.",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "title",
+										In:          "query",
+										Description: "exact match on team name. Mutually exclusive with query.",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "uid",
+										In:          "query",
+										Description: "filter by team UIDs. Mutually exclusive with teamId.",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "teamId",
+										In:          "query",
+										Description: "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
+										Required:    false,
+										Deprecated:  true,
+										Schema:      spec.ArrayProperty(spec.Int64Property()),
 									},
 								},
 								{
@@ -222,6 +253,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 	}
 }
 
+// nolint:gocyclo
 func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "team.search")
 	defer span.End()
@@ -300,6 +332,56 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, s)
 		}
+	}
+
+	if title := queryParams.Get("title"); title != "" {
+		if searchRequest.Query != "" {
+			http.Error(w, "query and title parameters are mutually exclusive", http.StatusBadRequest)
+			return
+		}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_TITLE,
+			Operator: string(selection.Equals),
+			Values:   []string{title},
+		})
+	}
+
+	uids := queryParams["uid"]
+	teamIds := queryParams["teamId"]
+	if len(uids) > 0 && len(teamIds) > 0 {
+		http.Error(w, "uid and teamId parameters are mutually exclusive", http.StatusBadRequest)
+		return
+	}
+	if len(uids) > maxIDFilterValues {
+		http.Error(w, fmt.Sprintf("uid parameter exceeds maximum of %d values", maxIDFilterValues), http.StatusBadRequest)
+		return
+	}
+	if len(teamIds) > maxIDFilterValues {
+		http.Error(w, fmt.Sprintf("teamId parameter exceeds maximum of %d values", maxIDFilterValues), http.StatusBadRequest)
+		return
+	}
+	for _, id := range teamIds {
+		if _, err := strconv.ParseInt(id, 10, 64); err != nil {
+			http.Error(w, fmt.Sprintf("invalid teamId value %q: must be an integer", id), http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Team UIDs in the legacy store maps to the name field in the unified store.
+	if len(uids) > 0 {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.In),
+			Values:   uids,
+		})
+	}
+
+	if len(teamIds) > 0 {
+		searchRequest.Options.Labels = append(searchRequest.Options.Labels, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_LEGACY_ID,
+			Operator: string(selection.In),
+			Values:   teamIds,
+		})
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
