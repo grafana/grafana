@@ -87,6 +87,17 @@ func (s *boomService) IsDisabled() bool {
 	return false
 }
 
+// shutdownDisabledBGTestService is skipped by the adapter (Shutdown test only; distinct dskit module name).
+type shutdownDisabledBGTestService struct{}
+
+func (shutdownDisabledBGTestService) Run(ctx context.Context) error {
+	return fmt.Errorf("Shouldn't run disabled service")
+}
+
+func (shutdownDisabledBGTestService) IsDisabled() bool {
+	return true
+}
+
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
 	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
@@ -118,8 +129,8 @@ func TestServer_Run_Error(t *testing.T) {
 func TestServer_Shutdown(t *testing.T) {
 	t.Run("successful shutdown", func(t *testing.T) {
 		ctx := context.Background()
-		// boomService and *testService must not share the same reflect type name (dskit module key).
-		s := testServer(t, newBoomService(nil), newTestService(nil, true, nil))
+		// Dedicated types so dskit module names differ (*testService vs shutdownDisabledBGTestService).
+		s := testServer(t, newTestService(nil, false, nil), shutdownDisabledBGTestService{})
 		ch := make(chan error)
 		go func() {
 			defer close(ch)
