@@ -1,6 +1,8 @@
 import { type Page, type Response, type Request } from '@playwright/test';
 import * as prom from 'prom-client';
 
+type LabelKeys = 'type' | 'host_type' | 'plugin_name';
+
 /**
  * Records and tracks network request body sizes.
  *
@@ -16,9 +18,9 @@ export class RequestsRecorder {
 
   #currentRequests: Set<Request> = new Set<Request>();
 
-  #inflatedSizeBytesCounter: prom.Counter<'type' | 'host_type' | 'plugin_name'>;
-  #transferSizeBytesCounter: prom.Counter<'type' | 'host_type' | 'plugin_name'>;
-  #requestCountCounter: prom.Counter<'type' | 'host_type' | 'plugin_name'>;
+  #inflatedSizeBytesCounter: prom.Counter<LabelKeys>;
+  #transferSizeBytesCounter: prom.Counter<LabelKeys>;
+  #requestCountCounter: prom.Counter<LabelKeys>;
   #resolve?: () => void;
 
   constructor(page: Page) {
@@ -108,24 +110,27 @@ export class RequestsRecorder {
     }
 
     this.#requestsInFlight += 1;
-    const hostType = getHostType(response.url(), this.#documentUrl ?? '');
+    const host_type = getHostType(response.url(), this.#documentUrl ?? '');
+
+    const labels: prom.LabelValues<LabelKeys> = { type, host_type };
 
     // Attempting to get the body of an empty response results in an error, so guess if the response will be empty or not
     const statusCode = response.status();
     const noBodyStatusCode = statusCode <= 199 || statusCode === 204 || statusCode === 205 || statusCode === 304;
 
+    if (plugin_name) {
+      labels.plugin_name = plugin_name;
+    }
+
     if (!noBodyStatusCode) {
       const body = await response.body();
-      this.#inflatedSizeBytesCounter.inc({ type, host_type: hostType, plugin_name }, body.length);
+      this.#inflatedSizeBytesCounter.inc(labels, body.length);
     }
 
     const sizes = await response.request().sizes();
 
-    this.#transferSizeBytesCounter.inc(
-      { type, host_type: hostType, plugin_name },
-      sizes.responseBodySize + sizes.responseHeadersSize
-    );
-    this.#requestCountCounter.inc({ type, host_type: hostType, plugin_name });
+    this.#transferSizeBytesCounter.inc(labels, sizes.responseBodySize + sizes.responseHeadersSize);
+    this.#requestCountCounter.inc(labels);
 
     this.#requestsInFlight -= 1;
 
