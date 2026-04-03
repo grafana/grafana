@@ -959,7 +959,7 @@ var (
 		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
