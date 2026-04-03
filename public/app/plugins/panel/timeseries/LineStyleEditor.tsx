@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { type LineStyle } from '@grafana/schema';
 import { IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
@@ -54,10 +55,14 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
       label: t('timeseries.line-style-editor.line-fill-options.label-dots', 'Dots'),
       value: 'dot',
     },
-    {
-      label: t('timeseries.line-style-editor.line-fill-options.label-auto', 'Auto'),
-      value: 'auto',
-    },
+    ...(config.featureToggles.enableColorblindSafePanelOptions
+      ? [
+          {
+            label: t('timeseries.line-style-editor.line-fill-options.label-auto', 'Auto'),
+            value: 'auto' as LineFill,
+          },
+        ]
+      : []),
   ];
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
