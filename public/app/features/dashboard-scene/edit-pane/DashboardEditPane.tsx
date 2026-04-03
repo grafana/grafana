@@ -305,12 +305,13 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.updateSelection([]);
   }
 
-  public openPane(openPane: string) {
-    // if (openPane === this.state.openPane) {
-    //   this.setState({ openPane: undefined });
-    // } else {
-    //   this.setState({ openPane });
-    // }
+  public openPane(openPane: DashboardSidebarPane) {
+    if (this.state.openPane?.getId() === openPane.getId()) {
+      this.setState({ openPane: undefined });
+      return;
+    }
+
+    this.setState({ openPane });
   }
 
   public closePane() {
@@ -328,27 +329,33 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.setState({ isNewElement: true });
   }
 
-  public addNewPanel(targetElement?: SceneObject) {
+  public addNewPanel() {
+    const selectedObj = this.getSelection();
     const panel = getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
-    if (targetElement) {
-      const layout = getLayoutForObject(targetElement) ?? dashboard;
+
+    if (selectedObj) {
+      const layout = getLayoutForObject(selectedObj) ?? dashboard;
       layout.addPanel(panel);
     } else {
       dashboard.addPanel(panel);
     }
-    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(targetElement));
+
+    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(selectedObj));
   }
 
-  public pastePanel(targetElement?: SceneObject, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
+  public pastePanel(source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
     const dashboard = getDashboardSceneFor(this);
-    if (targetElement) {
-      const layout = getLayoutForObject(targetElement) ?? dashboard;
+    const selectedObj = this.getSelection();
+
+    if (selectedObj) {
+      const layout = getLayoutForObject(selectedObj) ?? dashboard;
       layout.pastePanel();
     } else {
       dashboard.pastePanel();
     }
-    DashboardInteractions.trackPastePanelClick(source, getLayoutType(targetElement), 'click');
+
+    DashboardInteractions.trackPastePanelClick(source, getLayoutType(selectedObj), 'click');
   }
 }
 
