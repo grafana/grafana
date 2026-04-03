@@ -416,8 +416,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting requester: %w", err)
 	}
 
-	// Validate folder existence if specified
+	// Validate folder access permissions and existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
+		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
+			return err
+		}
 		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return err
 		}
