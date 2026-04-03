@@ -419,12 +419,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	// A user with write permissions but without alert.provisioning.provenance:write.
-	// Used to verify that provisioned resources are protected from callers that lack the permission.
-	writer := helper.CreateUser("RoutingTreeProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("RoutingTreeWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
 				accesscontrol.ActionAlertingRoutesRead,
@@ -435,39 +431,80 @@ func TestIntegrationProvisioning(t *testing.T) {
 	writerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(writer.GetClientRegistry())
 	require.NoError(t, err)
 
-	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("RoutingTreeProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingRoutesRead,
+				accesscontrol.ActionAlertingRoutesWrite,
+				accesscontrol.ActionAlertingProvisioningSetStatus,
+			},
+		},
+	})
+	provisionerClient, err := v1beta1.NewRoutingTreeClientFromGenerator(provisioner.GetClientRegistry())
 	require.NoError(t, err)
-	require.Empty(t, current.GetProvenanceStatus())
 
-	t.Run("should not let update provenance if provisioned without set-status permission", func(t *testing.T) {
-		updated := current.Copy().(*v1beta1.RoutingTree)
-		updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+	t.Run("update", func(t *testing.T) {
+		current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+		require.NoError(t, err)
+		require.Empty(t, current.GetProvenanceStatus())
 
-		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		t.Run("writer cannot set provenance", func(t *testing.T) {
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(models.ProvenanceAPI), got.GetProvenanceStatus())
+		})
+
+		t.Run("writer cannot update provisioned tree", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "test-label")
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can update provisioned tree", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "region")
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
 	})
 
-	t.Run("should let update provenance if provisioned with set-status permission", func(t *testing.T) {
-		updated := current.Copy().(*v1beta1.RoutingTree)
-		updated.SetProvenanceStatus(string(models.ProvenanceAPI))
-
-		got, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+	t.Run("delete", func(t *testing.T) {
+		// Ensure tree is provisioned before delete tests.
+		current, err := provisionerClient.Get(ctx, defaultTreeIdentifier)
 		require.NoError(t, err)
-		require.Equal(t, string(models.ProvenanceAPI), got.GetProvenanceStatus())
-	})
+		if current.GetProvenanceStatus() != string(models.ProvenanceAPI) {
+			updated := current.Copy().(*v1beta1.RoutingTree)
+			updated.SetProvenanceStatus(string(models.ProvenanceAPI))
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		}
 
-	t.Run("should let update spec if provisioned without set-status permission", func(t *testing.T) {
-		updated := current.Copy().(*v1beta1.RoutingTree)
-		updated.SetProvenanceStatus(string(models.ProvenanceAPI))
-		updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "test-label")
+		t.Run("writer cannot delete provisioned tree", func(t *testing.T) {
+			err := writerClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
 
-		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.NoError(t, err)
-	})
-
-	t.Run("should let delete if provisioned without set-status permission", func(t *testing.T) {
-		err := writerClient.Delete(ctx, current.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.NoError(t, err)
+		t.Run("provisioner can delete provisioned tree", func(t *testing.T) {
+			err := provisionerClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
