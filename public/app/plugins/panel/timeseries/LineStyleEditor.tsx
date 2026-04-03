@@ -55,15 +55,14 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
       label: t('timeseries.line-style-editor.line-fill-options.label-dots', 'Dots'),
       value: 'dot',
     },
-    ...(config.featureToggles.enableColorblindSafePanelOptions
-      ? [
-          {
-            label: t('timeseries.line-style-editor.line-fill-options.label-auto', 'Auto'),
-            value: 'auto' as LineFill,
-          },
-        ]
-      : []),
   ];
+
+  if (config.featureToggles.enableColorblindSafePanelOptions) {
+    lineFillOptions.push({
+      label: t('timeseries.line-style-editor.line-fill-options.label-auto', 'Auto'),
+      value: 'auto',
+    });
+  }
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {
