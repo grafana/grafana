@@ -104,10 +104,10 @@ export const versionedComponents = {
   },
   VizLayout: {
     container: {
-      [MIN_GRAFANA_VERSION]: 'data-testid viz-layout',
+      ['13.1.0']: 'data-testid viz-layout',
     },
     legend: {
-      [MIN_GRAFANA_VERSION]: 'data-testid viz-layout-legend',
+      ['13.1.0']: 'data-testid viz-layout-legend',
     },
   },
   UPlotChart: {
@@ -526,10 +526,10 @@ export const versionedComponents = {
       },
       Histogram: {
         container: {
-          ['13.0.0']: 'data-testid viz-layout',
+          ['13.1.0']: 'data-testid viz-layout',
         },
         legend: {
-          ['13.0.0']: 'data-testid viz-layout-legend',
+          ['13.1.0']: 'data-testid viz-layout-legend',
         },
       },
       PieChart: {
