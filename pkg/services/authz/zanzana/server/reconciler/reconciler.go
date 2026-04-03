@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,6 +34,12 @@ type Reconciler struct {
 	leaderElector LeaderElector
 
 	workQueue chan string
+
+	// ensuredNamespaces caches namespaces that have been fully reconciled - the store for this namespace exists with up to date permissions - in this
+	// process lifetime so EnsureNamespace can short-circuit on subsequent calls
+	// without taking any lock or making any RPC.
+	ensuredNamespaces sync.Map
+	ensureSF          singleflight.Group
 
 	globalRoleMu sync.RWMutex
 	// resolved effective permissions per GlobalRole name (for Role composition)
@@ -242,6 +250,7 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			r.logger.Warn("Namespace deleted or archived, removing store from Zanzana", "namespace", namespace)
+			r.ensuredNamespaces.Delete(namespace)
 			if delErr := r.server.DeleteStore(ctx, namespace); delErr != nil {
 				r.logger.Error("Failed to delete orphaned store", "namespace", namespace, "error", delErr)
 			}
@@ -292,28 +301,42 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 // leader's background reconciliation loop is safe because reconcileNamespace
 // is idempotent.
 func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
-	ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
-	defer span.End()
-
-	store, err := r.server.GetStore(ctx, namespace)
-	if err != nil && !errors.Is(err, zanzana.ErrStoreNotFound) {
-		return fmt.Errorf("failed to get store: %w", err)
-	}
-
-	if store != nil {
+	if _, ok := r.ensuredNamespaces.Load(namespace); ok {
 		return nil
 	}
 
-	// Create store if it doesn't exist
-	_, err = r.server.GetOrCreateStore(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("failed to create store: %w", err)
-	}
+	_, err, _ := r.ensureSF.Do(namespace, func() (any, error) {
+		if _, ok := r.ensuredNamespaces.Load(namespace); ok {
+			return nil, nil
+		}
 
-	err = r.reconcileNamespace(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("failed to reconcile namespace: %w", err)
-	}
+		ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
+		defer span.End()
 
-	return nil
+		store, err := r.server.GetStore(ctx, namespace)
+		if err != nil && !errors.Is(err, zanzana.ErrStoreNotFound) {
+			return nil, fmt.Errorf("failed to get store: %w", err)
+		}
+
+		if store == nil {
+			if _, err = r.server.GetOrCreateStore(ctx, namespace); err != nil {
+				return nil, fmt.Errorf("failed to create store: %w", err)
+			}
+
+			if err = r.reconcileNamespace(ctx, namespace); err != nil {
+				return nil, fmt.Errorf("failed to reconcile namespace: %w", err)
+			}
+
+			// Verify the store still exists — reconcileNamespace may have
+			// deleted it if the namespace was removed while we were working.
+			store, err = r.server.GetStore(ctx, namespace)
+			if err != nil || store == nil {
+				return nil, fmt.Errorf("store disappeared during reconciliation for namespace %s", namespace)
+			}
+		}
+
+		r.ensuredNamespaces.Store(namespace, struct{}{})
+		return nil, nil
+	})
+	return err
 }

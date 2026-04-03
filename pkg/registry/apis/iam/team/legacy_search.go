@@ -26,9 +26,13 @@ const (
 	TeamResourceGroup = "iam.grafana.com"
 )
 
-var teamSortFieldMapping = map[string]string{
-	resource.SEARCH_FIELD_TITLE: "name",
-	fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
+// TeamSortFieldMapping returns a mapping of unified search field names to legacy SQL sort key names.
+// Used by both ConvertToSortOptions (unified→legacy) and ConvertToSortParams (legacy→unified).
+func TeamSortFieldMapping() map[string]string {
+	return map[string]string{
+		resource.SEARCH_FIELD_TITLE: "name",
+		fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
+	}
 }
 
 // LegacyTeamSearchClient is a client for searching for teams in the legacy search engine.
@@ -89,7 +93,7 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		UIDs:         uids,
 		TeamIds:      teamIds,
 		OrgID:        signedInUser.GetOrgID(),
-		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, teamSortFieldMapping, teamsortopts.SortOptionsByQueryParam),
+		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, TeamSortFieldMapping(), teamsortopts.SortOptionsByQueryParam),
 	}
 
 	res, err := c.teamService.SearchTeams(ctx, query)

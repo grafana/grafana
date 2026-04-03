@@ -4337,6 +4337,17 @@
       "title": "Anda belum membuat dasbor",
       "title-folder": "Folder ini belum memiliki dasbor"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Hapus folder ini",
       "delete-folder-error": "Terjadi kesalahan saat menghapus folder. Coba lagi nanti.",
@@ -5406,9 +5417,6 @@
         "title": {
           "proceed-to-external-site": "Lanjutkan ke situs eksternal?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Tampilkan sebagai Scene"
       }
     },
     "dashboard-links-menu": {
@@ -5955,12 +5963,20 @@
       "not-found": "Sumber data dengan UID \"{{datasourceUid}}\" tidak ditemukan."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Konfigurasikan",
       "configure-button-menu": "Alihkan tombol menu",
+      "configure-visualization": "",
       "empty-state-message": "Jalankan kueri untuk memvisualisasikannya di sini atau buka semua visualisasi untuk menambahkan jenis panel lainnya",
       "menu-open-panel-editor": "Konfigurasikan",
       "menu-use-library-panel": "Gunakan panel pustaka",
-      "missing-config": "Konfigurasi panel tidak ada"
+      "menu-use-saved-query": "",
+      "missing-config": "Konfigurasi panel tidak ada",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Panel baru",
     "on-create-new-row": {
@@ -6737,6 +6753,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6823,6 +6844,10 @@
       "constant-options": "Opsi konstan",
       "label-value": "Nilai",
       "placeholder-your-metric-prefix": "Awalan metrik Anda"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Tampilkan/sembunyikan aturan tidak akan berfungsi",
@@ -7149,6 +7174,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7464,6 +7495,7 @@
     "sharing": {
       "save-before-share": {
         "text": "Anda memiliki perubahan yang belum disimpan ke dasbor ini. Anda harus menyimpannya sebelum dapat membagikannya.",
+        "text-no-save": "",
         "title": "Perubahan belum tersimpan"
       }
     },
@@ -7597,6 +7629,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulir editor variabel",
       "back-to-list": "Kembali ke daftar",
@@ -7626,6 +7663,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Yakin ingin menghapus: {{variable}}?",
       "confirmText-delete-variable": "Hapus variabel",
+      "drag-handle-label": "",
       "title-delete-variable": "Hapus variabel",
       "tooltip-duplicate-variable": "Duplikatkan variabel",
       "tooltip-remove-variable": "Hapus variabel"
@@ -8191,6 +8229,7 @@
       "label-preview": "Pratinjau"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Duplikatkan pemetaan nilai",
       "duplicate-value-mapping-tooltip-duplicate": "Duplikasikan",
       "placeholder-exact-value-to-match": "Nilai pasti yang akan dicocokkan",
@@ -9997,6 +10036,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Tambahkan tautan",
+      "drag-handle-label": "",
       "edit-link": "Edit tautan",
       "one-click": "Satu klik",
       "one-click-enabled": "Satu klik diaktifkan",
@@ -12530,7 +12570,7 @@
       "name-required": "Nama wajib diisi",
       "save": "Simpan",
       "table-delete": "Hapus item daftar putar",
-      "table-drag": "Seret dan lepas untuk menyusun ulang",
+      "table-drag": "",
       "table-empty": "Daftar putar kosong. Tambahkan dasbor di bawah ini.",
       "table-heading": "Dasbor"
     },
@@ -15489,6 +15529,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Klik untuk mengedit",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Hapus baris enum",
       "remove-enum-row-tooltip-delete": "Hapus"
     },
@@ -16402,6 +16443,7 @@
       "variable": "Variabel"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Duplikatkan variabel",
       "tooltip-remove-variable": "Hapus variabel"
     },

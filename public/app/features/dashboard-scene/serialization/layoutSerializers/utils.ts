@@ -118,6 +118,8 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     });
   }
 
+  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
+
   return new VizPanel(vizPanelState);
 }
 
@@ -165,6 +167,8 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
       $behaviors: [panelMenuBehavior],
     });
   }
+
+  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   return new VizPanel(vizPanelState);
 }

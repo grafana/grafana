@@ -25,6 +25,12 @@ if [ -n "${GOARM:-}" ]; then
   ARCH_LABEL="${ARCH}-${GOARM}"
 fi
 
+# Match daggerbuild RPI flag: armv6 packages use a -rpi suffix (grafana-rpi, grafana-enterprise-rpi).
+DEB_PACKAGE_NAME="${TARGZ_PACKAGE_NAME}"
+if [ "${GOARM:-}" = "6" ]; then
+  DEB_PACKAGE_NAME="${TARGZ_PACKAGE_NAME}-rpi"
+fi
+
 # Match pkg/build/daggerbuild/backend.PackageArch: arm -> armhf.
 PKG_ARCH="${ARCH}"
 if [ "${ARCH}" = "arm" ]; then
@@ -51,7 +57,7 @@ PKG="${STAGING}/pkg"
 
 mkdir -p "${SRC}"
 
-echo "build deb: ${TARGZ_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
+echo "build deb: ${DEB_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
 
 tar --exclude=storybook --strip-components=1 -xf "${TARGZ}" -C "${SRC}"
 
@@ -79,7 +85,7 @@ cp "${SRC}/packaging/deb/default/grafana-server"              "${PKG}/etc/defaul
 cp "${SRC}/packaging/deb/init.d/grafana-server"               "${PKG}/etc/init.d/grafana-server"
 cp "${SRC}/packaging/deb/systemd/grafana-server.service"      "${PKG}/usr/lib/systemd/system/grafana-server.service"
 
-FILENAME="${TARGZ_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
+FILENAME="${DEB_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
 
 mkdir -p dist
 
@@ -101,7 +107,7 @@ fpm \
   --architecture="${PKG_ARCH}" \
   --description=Grafana \
   --license="${FPM_LICENSE:-AGPLv3}" \
-  --name="${TARGZ_PACKAGE_NAME}" \
+  --name="${DEB_PACKAGE_NAME}" \
   --deb-no-default-config-files \
   --deb-compression zst \
   .
