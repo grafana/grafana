@@ -8,9 +8,6 @@ on:
       - completed
   workflow_dispatch:
 
-env:
-  ARCH: linux-amd64
-
 permissions: {}
 
 jobs:

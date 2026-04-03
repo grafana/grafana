@@ -1,5 +1,5 @@
 import { contextSrv } from 'app/core/services/context_srv';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getRulesPermissions } from '../utils/access-control';

@@ -1,5 +1,5 @@
 import type { languages } from 'monaco-editor';
-import { Grammar } from 'prismjs';
+import { type Grammar } from 'prismjs';
 
 export const languageConfiguration: languages.LanguageConfiguration = {
   // the default separators except `@$`

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
 
 export interface Props {

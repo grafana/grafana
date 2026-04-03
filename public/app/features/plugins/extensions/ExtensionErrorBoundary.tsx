@@ -3,7 +3,7 @@ import * as React from 'react';
 import { PluginErrorBoundary } from '../components/PluginErrorBoundary';
 
 import { ExtensionErrorAlert } from './ExtensionErrorAlert';
-import { ExtensionsLog, log as baseLog } from './logs/log';
+import { type ExtensionsLog, log as baseLog } from './logs/log';
 import { isGrafanaDevMode } from './utils';
 
 export const ExtensionErrorBoundary = ({

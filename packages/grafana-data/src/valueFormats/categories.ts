@@ -31,7 +31,7 @@ import {
   scaledUnits,
   simpleCountUnit,
   toFixedUnit,
-  ValueFormatCategory,
+  type ValueFormatCategory,
   stringFormater,
   booleanValueFormatter,
 } from './valueFormats';

@@ -3,7 +3,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/ui';
 
 import { PromQueryField } from '../../components/PromQueryField';
-import { PromQueryEditorProps } from '../../components/types';
+import { type PromQueryEditorProps } from '../../components/types';
 
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 

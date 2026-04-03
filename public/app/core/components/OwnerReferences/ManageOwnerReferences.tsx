@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Stack } from '@grafana/ui';
-import { OwnerReference as OwnerReferenceType } from 'app/api/clients/folder/v1beta1';
+import { type OwnerReference as OwnerReferenceType } from 'app/api/clients/folder/v1beta1';
 import { extractErrorMessage } from 'app/api/utils';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -45,7 +45,7 @@ export const ManageOwnerReferences = ({
       setOwnerRef(null);
       onSave();
     } catch (error) {
-      const errorMessage = extractErrorMessage(error);
+      const errorMessage = extractErrorMessage(error, t('manage-owner-references.unknown-error', 'Unknown error'));
       setApiErrorMessage(errorMessage);
       notify.error(t('manage-owner-references.folder-owner-error', 'Error updating folder owner'));
     }

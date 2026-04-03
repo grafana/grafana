@@ -2,11 +2,11 @@ import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
+import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
+import { type DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 import { ReducerID, reduceField } from '../fieldReducer';
 
-import { GroupByFieldOptions, createGroupedFields, groupValuesByKey } from './groupBy';
+import { type GroupByFieldOptions, createGroupedFields, groupValuesByKey } from './groupBy';
 import { DataTransformerID } from './ids';
 import { findMaxFields } from './utils';
 

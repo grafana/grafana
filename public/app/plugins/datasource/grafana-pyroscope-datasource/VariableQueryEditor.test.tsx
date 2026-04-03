@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { VariableQueryEditor } from './VariableQueryEditor';
 import { PyroscopeDataSource } from './datasource';
-import { PyroscopeDataSourceOptions } from './types';
+import { type PyroscopeDataSourceOptions } from './types';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');

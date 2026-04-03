@@ -20,7 +20,6 @@ import (
 	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -67,7 +66,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboard := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		mockDashSvc := testutil.NewMockDashboardService(t)
+
+		dashboard := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
@@ -75,7 +76,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			}),
 		})
 
-		dashboard2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		dashboard2 := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
@@ -653,14 +654,14 @@ func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
 
 		l := log.New("annotation.test")
 
-		dashboard := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
-			UserID: 1,
-			OrgID:  1,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": "Test Skip Dashboard",
-				"uid":   "test-skip-uid",
-			}),
-		})
+		dashboard := &dashboards.Dashboard{
+			UID: "test-skip-uid", OrgID: 1, Title: "Test Skip Dashboard", Version: 1,
+			Created: time.Now(), Updated: time.Now(), Data: simplejson.New(),
+		}
+		require.NoError(t, sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Insert(dashboard)
+			return err
+		}))
 
 		tempStore := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql), nil)
 		annotation := &annotations.Item{
@@ -715,14 +716,14 @@ func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
 		cfg.Raw.Section("database").Key("skip_dashboard_uid_migration_on_startup").SetValue("false")
 		l := log.New("annotation.test")
 
-		dashboard := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
-			UserID: 1,
-			OrgID:  1,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": "Test Run Dashboard",
-				"uid":   "test-run-uid",
-			}),
-		})
+		dashboard := &dashboards.Dashboard{
+			UID: "test-run-uid", OrgID: 1, Title: "Test Run Dashboard", Version: 1,
+			Created: time.Now(), Updated: time.Now(), Data: simplejson.New(),
+		}
+		require.NoError(t, sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Insert(dashboard)
+			return err
+		}))
 
 		tempStore := NewXormStore(cfg, l, sql, tagimpl.ProvideService(sql), nil)
 		annotation := &annotations.Item{

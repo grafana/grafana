@@ -2,18 +2,18 @@ import { get, isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Alert, Field, Select, Space } from '@grafana/ui';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
 import { AzureQueryType } from '../../dataquery.gen';
-import DataSource from '../../datasource';
+import type DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorQuery } from '../../types/query';
-import { AzureMonitorOption } from '../../types/types';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorOption } from '../../types/types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
