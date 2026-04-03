@@ -89,7 +89,7 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 			Stage:           flag.Stage.String(),
 			Owner:           string(flag.Owner),
 			RequiresDevMode: flag.RequiresDevMode,
-			FrontendOnly:    flag.FrontendOnly,
+			FrontendOnly:    !flag.ShouldGenerate(GenerateLegacyGo),
 			RequiresRestart: flag.RequiresRestart,
 			HideFromDocs:    flag.HideFromDocs,
 			Expression:      flag.Expression,
@@ -196,6 +196,9 @@ func verifyFlagsConfiguration(t *testing.T) {
 		// Check camel case names
 		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
 			invalidNames = append(invalidNames, flag.Name)
+		}
+		if flag.Generate == 0 {
+			t.Errorf("feature %s does not have any generation targets. please set the `Generate` property to specify which clients should be generated for this feature", flag.Name)
 		}
 	}
 
@@ -338,7 +341,7 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
-		if flag.FrontendOnly {
+		if !flag.ShouldGenerate(GenerateLegacyGo) {
 			continue // no need to have the golang constant for frontend only flags
 		}
 
@@ -389,7 +392,7 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 			string(flag.Owner),
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresRestart),
-			strconv.FormatBool(flag.FrontendOnly),
+			strconv.FormatBool(!flag.ShouldGenerate(GenerateLegacyGo)),
 		})
 	}
 
