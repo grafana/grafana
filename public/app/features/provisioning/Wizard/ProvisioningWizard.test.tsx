@@ -593,8 +593,8 @@ describe('ProvisioningWizard', () => {
       expect(finishButton).toBeDisabled();
     });
 
-    it('shows an error alert and keeps the finish button disabled when the jobs watch stream errors', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('continues showing job progress when the watch stream errors (polling fallback)', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       try {
         setupWorkingJobHandlers();
 
@@ -605,11 +605,17 @@ describe('ProvisioningWizard', () => {
           getMockLiveSrv().emitWatchError('jobs', new Error('connection lost'));
         });
 
-        expect(await screen.findByText('Error running job')).toBeInTheDocument();
-        expect(screen.getByText('Error: connection lost')).toBeInTheDocument();
+        // The polling fallback intercepts the watch error and re-fetches the job.
+        // The UI continues showing real job progress instead of an error.
+        await waitFor(() => {
+          expect(screen.getByText('Pulling...')).toBeInTheDocument();
+        });
+
+        // No error is displayed — the fallback is transparent to the user.
+        expect(screen.queryByText('Error running job')).not.toBeInTheDocument();
         expect(finishButton).toBeDisabled();
       } finally {
-        consoleErrorSpy.mockRestore();
+        consoleWarnSpy.mockRestore();
       }
     });
 

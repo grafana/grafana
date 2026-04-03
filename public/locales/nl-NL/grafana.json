@@ -4364,6 +4364,17 @@
       "title": "Je hebt nog geen dashboards gemaakt",
       "title-folder": "Deze map heeft nog geen dashboards"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Deze map verwijderen",
       "delete-folder-error": "Fout bij verwijderen van map. Probeer het later opnieuw.",
@@ -5436,9 +5447,6 @@
         "title": {
           "proceed-to-external-site": "Doorgaan naar externe site?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Weergeven als scène"
       }
     },
     "dashboard-links-menu": {
@@ -5985,12 +5993,20 @@
       "not-found": "Gegevensbron met UID '{{datasourceUid}}' niet gevonden."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Configureren",
       "configure-button-menu": "Navigatiemenu",
+      "configure-visualization": "",
       "empty-state-message": "Voer een query uit om deze hier te visualiseren of ga naar alle visualisaties om andere paneeltypen toe te voegen",
       "menu-open-panel-editor": "Configureren",
       "menu-use-library-panel": "Bibliotheekpaneel gebruiken",
-      "missing-config": "Ontbrekende paneelconfiguratie"
+      "menu-use-saved-query": "",
+      "missing-config": "Ontbrekende paneelconfiguratie",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Nieuw paneel",
     "on-create-new-row": {
@@ -6769,6 +6785,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6855,6 +6876,10 @@
       "constant-options": "Constante opties",
       "label-value": "Waarde",
       "placeholder-your-metric-prefix": "Je metrisch voorvoegsel"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regels tonen/verbergen werkt niet",
@@ -7185,6 +7210,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7503,6 +7534,7 @@
     "sharing": {
       "save-before-share": {
         "text": "U hebt niet-opgeslagen wijzigingen in dit dashboard. U moet ze opslaan voordat u ze kunt delen.",
+        "text-no-save": "",
         "title": "Onopgeslagen wijzigingen"
       }
     },
@@ -7636,6 +7668,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulier variabele bewerker",
       "back-to-list": "Terug naar lijst",
@@ -7665,6 +7702,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Weet je zeker dat je {{variable}} wilt verwijderen?",
       "confirmText-delete-variable": "Variabele verwijderen",
+      "drag-handle-label": "",
       "title-delete-variable": "Variabele verwijderen",
       "tooltip-duplicate-variable": "Variabele dupliceren",
       "tooltip-remove-variable": "Variabele verwijderen"
@@ -8234,6 +8272,7 @@
       "label-preview": "Voorbeeld"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Waardemapping dupliceren",
       "duplicate-value-mapping-tooltip-duplicate": "Dupliceren",
       "placeholder-exact-value-to-match": "Exacte overeenkomende waarde",
@@ -10052,6 +10091,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Link toevoegen",
+      "drag-handle-label": "",
       "edit-link": "Link bewerken",
       "one-click": "Eén-klik",
       "one-click-enabled": "Eén-klik ingeschakeld",
@@ -12596,7 +12636,7 @@
       "name-required": "Naam is vereist",
       "save": "Opslaan",
       "table-delete": "Afspeellijstitem verwijderen",
-      "table-drag": "Versleep om opnieuw te rangschikken",
+      "table-drag": "",
       "table-empty": "De afspeellijst is leeg. Dashboards hieronder toevoegen.",
       "table-heading": "Dashboards"
     },
@@ -15577,6 +15617,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Klik om te bewerken",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Enum-rij verwijderen",
       "remove-enum-row-tooltip-delete": "Verwijderen"
     },
@@ -16490,6 +16531,7 @@
       "variable": "Variabele"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Variabele dupliceren",
       "tooltip-remove-variable": "Variabele verwijderen"
     },
