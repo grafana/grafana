@@ -1,13 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Icon, Input, Modal, MultiSelect, Pagination, Spinner, useStyles2 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../../../datasource';
-import { PromVisualQuery } from '../../types';
+import { type PrometheusDatasource } from '../../../datasource';
+import { type PromVisualQuery } from '../../types';
 
 import { FeedbackLink } from './FeedbackLink';
 import { MetricsModalContextProvider, useMetricsModal } from './MetricsModalContext';
@@ -15,7 +15,7 @@ import { ResultsTable } from './ResultsTable';
 import { getPlaceholders, getPromTypes } from './helpers';
 import { getMetricsModalStyles } from './styles';
 import { metricsModaltestIds } from './testIds';
-import { PromFilterOption } from './types';
+import { type PromFilterOption } from './types';
 
 interface MetricsModalProps {
   datasource: PrometheusDatasource;

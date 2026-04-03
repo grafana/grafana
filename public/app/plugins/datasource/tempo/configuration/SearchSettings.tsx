@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
 
-import { TempoJsonData } from '../types';
+import { type TempoJsonData } from '../types';
 
 import { getStyles } from './QuerySettings';
 

@@ -25,7 +25,3 @@ Grafana Mimir is an open source software project that provides a scalable long-t
 ### Grafana Pyroscope
 
 Grafana Pyroscope is an open source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that helps you understand your workload’s resources usage. For more information, refer to [Grafana Pyroscope documentation](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/).
-
-### Grafana Oncall
-
-Grafana OnCall is an open source incident response management tool built to help teams improve their collaboration and resolve incidents faster. For more information about Grafana OnCall, refer to [Grafana OnCall documentation](https://grafana.com/docs/oncall/<ONCALL_VERSION>/).

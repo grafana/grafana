@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Fragment, type JSX, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -25,7 +25,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import { ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
+import { type ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;

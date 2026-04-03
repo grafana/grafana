@@ -4,6 +4,7 @@ exports[`barchartPresetsSupplier preset count by data returns 3 presets when dat
 [
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -31,6 +32,7 @@ exports[`barchartPresetsSupplier preset count by data returns 3 presets when dat
   },
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -59,6 +61,7 @@ exports[`barchartPresetsSupplier preset count by data returns 3 presets when dat
   },
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -178,6 +181,7 @@ exports[`barchartPresetsSupplier preset count by data returns 4 presets when dat
 [
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -205,6 +209,7 @@ exports[`barchartPresetsSupplier preset count by data returns 4 presets when dat
   },
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -233,6 +238,7 @@ exports[`barchartPresetsSupplier preset count by data returns 4 presets when dat
   },
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -260,6 +266,7 @@ exports[`barchartPresetsSupplier preset count by data returns 4 presets when dat
   },
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -292,6 +299,7 @@ exports[`barchartPresetsSupplier preset structure each preset has name, options,
 [
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -319,6 +327,7 @@ exports[`barchartPresetsSupplier preset structure each preset has name, options,
   },
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {
@@ -347,6 +356,7 @@ exports[`barchartPresetsSupplier preset structure each preset has name, options,
   },
   {
     "cardOptions": {
+      "maxRows": undefined,
       "previewModifier": [Function],
     },
     "fieldConfig": {

@@ -2,13 +2,13 @@ import { Observable, of, lastValueFrom, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
-import { AppEvents, DataQueryErrorType, EventBusExtended, PathValidationError } from '@grafana/data';
-import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
+import { AppEvents, DataQueryErrorType, type EventBusExtended, PathValidationError } from '@grafana/data';
+import { type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
-import { BackendSrv, BackendSrvDependencies } from '../services/backend_srv';
-import { ContextSrv, User } from '../services/context_srv';
+import { BackendSrv, type BackendSrvDependencies } from '../services/backend_srv';
+import { type ContextSrv, type User } from '../services/context_srv';
 
 const getTestContext = (overides?: object, mockFromFetch = true) => {
   const defaults = {

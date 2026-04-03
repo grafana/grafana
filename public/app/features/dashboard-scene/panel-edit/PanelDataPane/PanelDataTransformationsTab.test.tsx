@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
-  DataTransformerConfig,
+  type DataTransformerConfig,
   FieldType,
-  LoadingState,
-  PanelData,
-  TimeRange,
+  type LoadingState,
+  type PanelData,
+  type TimeRange,
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
@@ -16,7 +16,7 @@ import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';

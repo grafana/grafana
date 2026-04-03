@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';

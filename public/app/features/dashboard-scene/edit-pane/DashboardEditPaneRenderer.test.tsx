@@ -35,6 +35,27 @@ jest.mock('@grafana/runtime', () => ({
   useChromeHeaderHeight: jest.fn().mockReturnValue(80),
 }));
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    isLoading: false,
+    openAssistant: jest.fn(),
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  }),
+}));
+
+jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider', () => ({
+  useExtensionSidebarContext: jest.fn().mockReturnValue({
+    isOpen: false,
+    dockedComponentId: undefined,
+    setDockedComponentId: jest.fn(),
+    availableComponents: new Map(),
+    extensionSidebarWidth: 400,
+    setExtensionSidebarWidth: jest.fn(),
+  }),
+}));
+
 export function buildTestScene() {
   const testScene = new DashboardScene({
     $variables: new SceneVariableSet({ variables: [] }),
@@ -71,15 +92,22 @@ describe('DashboardEditPaneRenderer', () => {
 
   it('Should sync sidebar docked state with edit pane state', async () => {
     const scene = buildTestScene();
-    render(<DashboardEditPaneSplitter dashboard={scene} />);
+
+    act(() => activateFullSceneTree(scene));
+
+    render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
 
     act(() => screen.getByLabelText('Outline').click());
 
     expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
 
+    // With defaultToDocked: true when editing, sidebar starts docked
+    expect(scene.state.editPane.state.isDocked).toBe(true);
+
+    // Clicking dock toggle should undock the sidebar
     act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
 
-    expect(scene.state.editPane.state.isDocked).toBe(true);
+    expect(scene.state.editPane.state.isDocked).toBe(false);
   });
 
   // describe('outline interactions tracking', () => {

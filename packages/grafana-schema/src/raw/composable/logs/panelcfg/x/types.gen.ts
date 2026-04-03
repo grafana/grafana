@@ -22,6 +22,7 @@ export interface Options {
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   fontSize?: ('default' | 'small');
+  grammar?: unknown;
   isFilterLabelActive?: unknown;
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;

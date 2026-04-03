@@ -2,7 +2,7 @@ import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType, toDat
 import { HeatmapCalculationMode, ScaleDistribution } from '@grafana/schema';
 
 import { prepareHeatmapData } from './fields';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const theme = createTheme();
 

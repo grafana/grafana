@@ -1,6 +1,6 @@
-import { Fragment, PureComponent, ReactNode } from 'react';
+import { Fragment, memo, type ReactNode } from 'react';
 
-import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
+import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Segment } from '@grafana/ui';
 
@@ -27,80 +27,79 @@ interface Props {
  * Note: There isn't API on datasource to suggest the operators here so that is hardcoded to use prometheus style
  * operators. Also filters are assumed to be joined with `AND` operator, which is also hardcoded.
  */
-export class AdHocFilter extends PureComponent<Props> {
-  private connectorLabel = t('variables.ad-hoc-filter.label-and', 'AND');
-  onChange = (index: number, prop: string) => (key: SelectableValue<string | null>) => {
-    const { filters } = this.props;
+export const AdHocFilter = memo(function AdHocFilter({
+  datasource,
+  filters,
+  baseFilters,
+  addFilter,
+  removeFilter,
+  changeFilter,
+  disabled,
+}: Props) {
+  const connectorLabel = t('variables.ad-hoc-filter.label-and', 'AND');
+
+  const getAllFilters = () => {
+    if (baseFilters) {
+      return baseFilters.concat(filters);
+    }
+    return filters;
+  };
+
+  const onChange = (index: number, prop: string) => (key: SelectableValue<string | null>) => {
     const { value } = key;
 
     if (key.value === REMOVE_FILTER_KEY) {
-      return this.props.removeFilter(index);
+      return removeFilter(index);
     }
 
-    return this.props.changeFilter(index, {
+    return changeFilter(index, {
       ...filters[index],
       [prop]: value,
     });
   };
 
-  appendFilterToVariable = (filter: AdHocVariableFilter) => {
-    this.props.addFilter(filter);
+  const renderFilterSegments = (filter: AdHocVariableFilter, index: number) => {
+    return (
+      <Fragment key={`filter-${index}`}>
+        <AdHocFilterRenderer
+          disabled={disabled}
+          datasource={datasource!}
+          filter={filter}
+          onKeyChange={onChange(index, 'key')}
+          onOperatorChange={onChange(index, 'operator')}
+          onValueChange={onChange(index, 'value')}
+          allFilters={getAllFilters()}
+        />
+      </Fragment>
+    );
   };
 
-  render() {
-    const { filters, disabled } = this.props;
-
-    return (
-      <div className="gf-form-inline">
-        {this.renderFilters(filters, disabled)}
-
-        {!disabled && (
-          <AdHocFilterBuilder
-            datasource={this.props.datasource!}
-            appendBefore={filters.length > 0 ? <ConditionSegment label={this.connectorLabel} /> : null}
-            onCompleted={this.appendFilterToVariable}
-            allFilters={this.getAllFilters()}
-          />
-        )}
-      </div>
-    );
-  }
-
-  getAllFilters() {
-    if (this.props.baseFilters) {
-      return this.props.baseFilters.concat(this.props.filters);
-    }
-
-    return this.props.filters;
-  }
-
-  renderFilters(filters: AdHocVariableFilter[], disabled?: boolean) {
+  const renderFilters = () => {
     if (filters.length === 0 && disabled) {
       return <Segment disabled={disabled} value="No filters" options={[]} onChange={() => {}} />;
     }
 
     return filters.reduce((segments: ReactNode[], filter, index) => {
       if (segments.length > 0) {
-        segments.push(<ConditionSegment label={this.connectorLabel} key={`condition-${index}`} />);
+        segments.push(<ConditionSegment label={connectorLabel} key={`condition-${index}`} />);
       }
-      segments.push(this.renderFilterSegments(filter, index, disabled));
+      segments.push(renderFilterSegments(filter, index));
       return segments;
     }, []);
-  }
+  };
 
-  renderFilterSegments(filter: AdHocVariableFilter, index: number, disabled?: boolean) {
-    return (
-      <Fragment key={`filter-${index}`}>
-        <AdHocFilterRenderer
-          disabled={disabled}
-          datasource={this.props.datasource!}
-          filter={filter}
-          onKeyChange={this.onChange(index, 'key')}
-          onOperatorChange={this.onChange(index, 'operator')}
-          onValueChange={this.onChange(index, 'value')}
-          allFilters={this.getAllFilters()}
+  return (
+    <div className="gf-form-inline">
+      {renderFilters()}
+
+      {!disabled && (
+        <AdHocFilterBuilder
+          datasource={datasource!}
+          appendBefore={filters.length > 0 ? <ConditionSegment label={connectorLabel} /> : null}
+          onCompleted={addFilter}
+          allFilters={getAllFilters()}
         />
-      </Fragment>
-    );
-  }
-}
+      )}
+    </div>
+  );
+});

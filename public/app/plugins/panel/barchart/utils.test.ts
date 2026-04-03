@@ -1,11 +1,17 @@
 import { assertIsDefined } from 'test/helpers/asserts';
 
-import { createDataFrame, createTheme, DataFrame, FieldConfigSource, FieldType } from '@grafana/data';
+import {
+  createDataFrame,
+  createTheme,
+  type DataFrame,
+  FieldColorModeId,
+  type FieldConfigSource,
+  FieldType,
+} from '@grafana/data';
 import {
   AxisColorMode,
   AxisPlacement,
   defaultTimeZone,
-  FieldColorModeId,
   GraphGradientMode,
   LegendDisplayMode,
   MappingType,
@@ -16,13 +22,13 @@ import {
   VisibilityMode,
   VizOrientation,
 } from '@grafana/schema';
-import { UPlotConfigBuilder } from '@grafana/ui';
+import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import type { BarsOptions } from './bars';
 import * as barsModule from './bars';
 import type { Options } from './panelcfg.gen';
 import { applyBarChartFieldDefaults } from './test-helpers';
-import { prepConfig, prepSeries, type PrepConfigOpts } from './utils';
+import { prepConfig, type PrepConfigOpts, prepSeries } from './utils';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
