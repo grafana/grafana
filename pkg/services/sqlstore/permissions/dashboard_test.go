@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -24,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -703,13 +701,19 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			SignedInUser: usr,
 		})
 		require.NoError(t, err)
-		_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-			OrgID: 1,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": str,
-				"uid":   folder.UID,
-			}),
-			IsFolder: true,
+		err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			now := time.Now()
+			_, err := sess.Insert(&dashboards.Dashboard{
+				OrgID:    1,
+				UID:      folder.UID,
+				Slug:     str,
+				Title:    str,
+				IsFolder: true,
+				Data:     simplejson.NewFromAny(map[string]any{"title": str, "uid": folder.UID}),
+				Created:  now,
+				Updated:  now,
+			})
+			return err
 		})
 		require.NoError(t, err)
 	}
@@ -717,29 +721,31 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 	// now create dashboards
 	for i := numFolders + 1; i <= numFolders+numDashboards; i++ {
 		str := strconv.Itoa(i)
-		folderID := 0
+		folderUID := ""
 		if i%(numFolders+1) != 0 {
-			folderID = i % (numFolders + 1)
+			folderUID = strconv.Itoa(i % (numFolders + 1))
 		}
 
-		cmd := dashboards.SaveDashboardCommand{
-			OrgID: 1,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": str,
-				"uid":   str,
-			}),
-			IsFolder: false,
-		}
-		if folderID != 0 {
-			cmd.FolderUID = strconv.Itoa(folderID)
-		}
-
-		_, err := dashStore.SaveDashboard(context.Background(), cmd)
+		err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			now := time.Now()
+			_, err := sess.Insert(&dashboards.Dashboard{
+				OrgID:     1,
+				UID:       str,
+				Slug:      str,
+				Title:     str,
+				IsFolder:  false,
+				FolderUID: folderUID,
+				Data:      simplejson.NewFromAny(map[string]any{"title": str, "uid": str}),
+				Created:   now,
+				Updated:   now,
+			})
+			return err
+		})
 		require.NoError(t, err)
 	}
 
 	// insert permissions
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		role := &accesscontrol.Role{
 			OrgID:   0,
 			UID:     "basic_viewer",
@@ -796,9 +802,6 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 
 	db, cfg := db.InitTestDBWithCfg(t)
 
-	// dashboard store commands that should be called.
-	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
-	require.NoError(t, err)
 	fStore := folderimpl.ProvideStore(db, cfg)
 	// create in both the folder & dashboard tables
 	parent, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
@@ -808,13 +811,19 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 		SignedInUser: usr,
 	})
 	require.NoError(t, err)
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID: orgID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "parent",
-			"uid":   parent.UID,
-		}),
-		IsFolder: true,
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		_, err := sess.Insert(&dashboards.Dashboard{
+			OrgID:    orgID,
+			UID:      parent.UID,
+			Slug:     "parent",
+			Title:    "parent",
+			IsFolder: true,
+			Data:     simplejson.NewFromAny(map[string]any{"title": "parent", "uid": parent.UID}),
+			Created:  now,
+			Updated:  now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 	subfolder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
@@ -825,42 +834,66 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 		SignedInUser: usr,
 	})
 	require.NoError(t, err)
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:     orgID,
-		FolderUID: parent.UID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "subfolder",
-			"uid":   subfolder.UID,
-		}),
-		IsFolder: true,
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		_, err := sess.Insert(&dashboards.Dashboard{
+			OrgID:     orgID,
+			UID:       subfolder.UID,
+			Slug:      "subfolder",
+			Title:     "subfolder",
+			IsFolder:  true,
+			FolderUID: parent.UID,
+			Data:      simplejson.NewFromAny(map[string]any{"title": "subfolder", "uid": subfolder.UID}),
+			Created:   now,
+			Updated:   now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 	// create a root level dashboard
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID: orgID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "dashboard under the root",
-		}),
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		_, err := sess.Insert(&dashboards.Dashboard{
+			OrgID:   orgID,
+			Slug:    "dashboard-under-the-root",
+			Title:   "dashboard under the root",
+			Data:    simplejson.NewFromAny(map[string]any{"title": "dashboard under the root"}),
+			Created: now,
+			Updated: now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 
 	// create dashboard under parent folder
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:     orgID,
-		FolderUID: parent.UID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "dashboard under parent folder",
-		}),
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		_, err := sess.Insert(&dashboards.Dashboard{
+			OrgID:     orgID,
+			Slug:      "dashboard-under-parent-folder",
+			Title:     "dashboard under parent folder",
+			FolderUID: parent.UID,
+			Data:      simplejson.NewFromAny(map[string]any{"title": "dashboard under parent folder"}),
+			Created:   now,
+			Updated:   now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 
 	// create dashboard under subfolder
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:     orgID,
-		FolderUID: subfolder.UID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "dashboard under subfolder",
-		}),
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		_, err := sess.Insert(&dashboards.Dashboard{
+			OrgID:     orgID,
+			Slug:      "dashboard-under-subfolder",
+			Title:     "dashboard under subfolder",
+			FolderUID: subfolder.UID,
+			Data:      simplejson.NewFromAny(map[string]any{"title": "dashboard under subfolder"}),
+			Created:   now,
+			Updated:   now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 

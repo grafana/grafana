@@ -129,7 +129,6 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 	}
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures()
 	fStore := folderimpl.ProvideStore(sql, cfgT)
 	searchMock := resource.NewMockResourceClient(t)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
