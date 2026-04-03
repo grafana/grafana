@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -53,6 +55,7 @@ type Server struct {
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]zanzana.StoreInfo
 	storesMU sync.RWMutex
+	storeSF  singleflight.Group
 	cache    *localcache.CacheService
 
 	mtReconciler zanzana.MTReconciler

@@ -57,7 +57,6 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*zanzana.S
 }
 
 func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.StoreInfo, error) {
-	// Fast path: concurrent reads without blocking writers.
 	s.storesMU.RLock()
 	info, ok := s.stores[namespace]
 	s.storesMU.RUnlock()
@@ -70,41 +69,42 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 		}, nil
 	}
 
-	// Cache miss: query OpenFGA without holding any lock so concurrent requests
-	// do not serialize on the DB call.
-	res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
-	if err != nil {
-		return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
-	}
-
-	for _, store := range res.GetStores() {
-		if store.GetName() == namespace {
-			newInfo := zanzana.StoreInfo{
-				ID:   store.GetId(),
-				Name: store.GetName(),
-			}
-
-			s.storesMU.Lock()
-			// Double-check: another goroutine may have written while we queried.
-			if existing, exists := s.stores[namespace]; exists {
-				s.storesMU.Unlock()
-				return &zanzana.StoreInfo{
-					ID:      existing.ID,
-					Name:    existing.Name,
-					ModelID: existing.ModelID,
-				}, nil
-			}
-			s.stores[namespace] = newInfo
-			s.storesMU.Unlock()
-
-			return &zanzana.StoreInfo{
-				ID:   newInfo.ID,
-				Name: newInfo.Name,
-			}, nil
+	v, err, _ := s.storeSF.Do(namespace, func() (any, error) {
+		// Re-check cache: another goroutine may have populated it while we waited.
+		s.storesMU.RLock()
+		info, ok := s.stores[namespace]
+		s.storesMU.RUnlock()
+		if ok {
+			return &info, nil
 		}
+
+		res, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{Name: namespace})
+		if err != nil {
+			return nil, fmt.Errorf("failed to load zanzana stores: %w", err)
+		}
+
+		for _, store := range res.GetStores() {
+			if store.GetName() == namespace {
+				newInfo := zanzana.StoreInfo{
+					ID:   store.GetId(),
+					Name: store.GetName(),
+				}
+
+				s.storesMU.Lock()
+				s.stores[namespace] = newInfo
+				s.storesMU.Unlock()
+
+				return &newInfo, nil
+			}
+		}
+
+		return nil, zanzana.ErrStoreNotFound
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, zanzana.ErrStoreNotFound
+	return v.(*zanzana.StoreInfo), nil
 }
 
 // DeleteStore removes a store from the local cache and deletes it from OpenFGA.
