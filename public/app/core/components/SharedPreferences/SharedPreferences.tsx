@@ -5,7 +5,7 @@ import SharedPreferencesOld from './SharedPreferencesOld';
 import { type Props } from './utils';
 
 export const SharedPreferences = (props: Props) => {
-  const newPrefsEnabled = useBooleanFlagValue('functionalSharedPreferences', false);
+  const newPrefsEnabled = useBooleanFlagValue('grafana.newPreferencesPage', false);
   return newPrefsEnabled ? <SharedPreferencesFunctional {...props} /> : <SharedPreferencesOld {...props} />;
 };
 

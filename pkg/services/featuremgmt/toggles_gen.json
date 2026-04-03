@@ -2384,7 +2384,22 @@
       "metadata": {
         "name": "functionalSharedPreferences",
         "resourceVersion": "1771763406238",
-        "creationTimestamp": "2026-02-22T12:30:06Z"
+        "creationTimestamp": "2026-02-22T12:30:06Z",
+        "deletionTimestamp": "2026-04-04T12:16:21Z"
+      },
+      "spec": {
+        "description": "Whether to use the new SharedPreferences functional component",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.newPreferencesPage",
+        "resourceVersion": "1775304981849",
+        "creationTimestamp": "2026-04-04T12:16:21Z"
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",

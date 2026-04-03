@@ -167,13 +167,18 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 	return all
 }
 
+func verifyFlagName(name string) error {
+	for part := range strings.SplitSeq(name, ".") {
+		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
+		if part != strcase.ToLowerCamel(part) {
+			return fmt.Errorf("flag name %q segment %q is not lowerCamelCase (expected %q)", name, part, strcase.ToLowerCamel(part))
+		}
+	}
+	return nil
+}
+
 // Check if all flags are configured properly
 func verifyFlagsConfiguration(t *testing.T) {
-	legacyNames := map[string]bool{
-		"live-service-web-worker": true,
-	}
-	invalidNames := make([]string, 0)
-
 	// Check that all flags set in code are valid
 	for _, flag := range standardFeatureFlags {
 		if flag.Expression == "true" && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStageDeprecated && flag.Stage != FeatureStagePublicPreview) {
@@ -201,17 +206,13 @@ func verifyFlagsConfiguration(t *testing.T) {
 			t.Errorf("the `Expression` property for %s is incorrect. Empty string values are not allowed. Please explicitly define the default value of the Feature Flag. Valid values include boolean, non-empty string, integer, float, and structured values in JSON format.", flag.Name)
 		}
 		// Check camel case names
-		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
-			invalidNames = append(invalidNames, flag.Name)
+		if err := verifyFlagName(flag.Name); err != nil {
+			t.Error(err)
 		}
 		if flag.Generate == 0 {
 			t.Errorf("feature %s does not have any generation targets. please set the `Generate` property to specify which clients should be generated for this feature", flag.Name)
 		}
 	}
-
-	// Make sure the names are valid
-	require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
-	// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
 }
 
 type flagDateInfo struct {

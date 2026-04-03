@@ -16,7 +16,7 @@ export const FlagKeys = {
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Whether to use the new SharedPreferences functional component */
-  FunctionalSharedPreferences: "functionalSharedPreferences",
+  GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -104,11 +104,11 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
 * Whether to use the new SharedPreferences functional component
 *
 * **Details:**
-* - flag key: `functionalSharedPreferences`
+* - flag key: `grafana.newPreferencesPage`
 * - default value: `false`
 */
-export const useFlagFunctionalSharedPreferences = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("functionalSharedPreferences", false, options).value;
+export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newPreferencesPage", false, options).value;
 };
 
 
