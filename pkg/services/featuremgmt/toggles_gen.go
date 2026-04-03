@@ -119,6 +119,10 @@ const (
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
 
+	// FlagSseExpressionErrorIsolation
+	// Isolate expression build errors to the broken expression&#39;s refID instead of failing the entire pipeline
+	FlagSseExpressionErrorIsolation = "sseExpressionErrorIsolation"
+
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
@@ -422,10 +426,6 @@ const (
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
-
-	// FlagAlertingFilterV2
-	// Enable the new alerting search experience
-	FlagAlertingFilterV2 = "alertingFilterV2"
 
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator

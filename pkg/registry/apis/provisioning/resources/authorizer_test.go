@@ -360,7 +360,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 				// Mock Config() for GetFolderID calls (may be called multiple times for parent)
 				rw.On("Config").Return(repo).Maybe()
 				// Return folder metadata with stable UID
-				folderMeta := NewFolderManifest("stable-uid-123", "my-folder")
+				folderMeta := NewFolderManifest("stable-uid-123", "my-folder", FolderKind)
 				data, _ := json.Marshal(folderMeta)
 				rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 					Return(&repository.FileInfo{Data: data}, nil)
@@ -451,7 +451,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 				// Mock Config() for GetFolderID calls (may be called multiple times)
 				rw.On("Config").Return(repo).Maybe()
 				// Parent folder metadata exists
-				parentMeta := NewFolderManifest("parent-stable-uid", "parent")
+				parentMeta := NewFolderManifest("parent-stable-uid", "parent", FolderKind)
 				data, _ := json.Marshal(parentMeta)
 				rw.On("Read", mock.Anything, "parent/_folder.json", "").
 					Return(&repository.FileInfo{Data: data}, nil)
@@ -532,13 +532,13 @@ func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 		rw.On("Config").Return(repo).Maybe()
 
 		// Source folder has metadata
-		sourceMeta := NewFolderManifest("source-stable-uid", "source")
+		sourceMeta := NewFolderManifest("source-stable-uid", "source", FolderKind)
 		sourceData, _ := json.Marshal(sourceMeta)
 		rw.On("Read", mock.Anything, "source/_folder.json", "").
 			Return(&repository.FileInfo{Data: sourceData}, nil)
 
 		// Target parent has metadata
-		targetParentMeta := NewFolderManifest("target-parent-stable-uid", "target-parent")
+		targetParentMeta := NewFolderManifest("target-parent-stable-uid", "target-parent", FolderKind)
 		targetParentData, _ := json.Marshal(targetParentMeta)
 		rw.On("Read", mock.Anything, "target-parent/_folder.json", "").
 			Return(&repository.FileInfo{Data: targetParentData}, nil)
@@ -839,7 +839,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(repo).Maybe()
-		parentMeta := NewFolderManifest("stable-folder-uid", "team-a")
+		parentMeta := NewFolderManifest("stable-folder-uid", "team-a", FolderKind)
 		data, _ := json.Marshal(parentMeta)
 		rw.On("Read", mock.Anything, "team-a/_folder.json", "").
 			Return(&repository.FileInfo{Data: data}, nil)

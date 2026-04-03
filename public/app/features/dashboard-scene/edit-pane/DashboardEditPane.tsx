@@ -160,9 +160,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     action.undo();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    /**
-     * Some edit actions also require clearing selection or selecting new objects
-     */
     if (action.addedObject) {
       this.clearSelection();
     }
@@ -193,7 +190,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
-    if (action.removedObject) {
+    if (action.removedObject && !action.addedObject) {
       this.clearSelection();
     }
   }
