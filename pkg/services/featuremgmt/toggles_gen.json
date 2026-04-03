@@ -1159,16 +1159,17 @@
     {
       "metadata": {
         "name": "cacheConfigUnifiedStorageMigration",
-        "resourceVersion": "1775236893766",
+        "resourceVersion": "1775237110442",
         "creationTimestamp": "2026-04-03T17:15:03Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-03 17:21:33.766219 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-03 17:25:10.442998 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables cache config data migration to migrate cache configs to unified storage",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
