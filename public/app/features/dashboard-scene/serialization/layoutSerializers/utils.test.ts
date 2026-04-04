@@ -7,6 +7,8 @@ import {
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+
 import { buildVizPanel, ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
 
 describe('getRuntimePanelDataSource', () => {
@@ -394,6 +396,9 @@ describe('buildVizPanel', () => {
       },
     };
     const viz = buildVizPanel(panel);
+    if (!(viz.state.$timeRange instanceof PanelTimeRange)) {
+      throw new Error('$timeRange must be PanelTimeRange');
+    }
     expect(viz.state.$timeRange).toBeDefined();
     expect(viz.state.$timeRange?.state.compareWith).toBe('1d');
   });
