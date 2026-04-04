@@ -250,6 +250,8 @@ func (m *SetDashboardUIDMigration) Exec(sess *xorm.Session, mg *Migrator) error 
 }
 
 func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log.Logger) error {
+	driverName = NewDialect(driverName).DriverName()
+
 	batchSize := 5000
 	if size := os.Getenv("ANNOTATION_DASHBOARD_UID_MIGRATION_BATCH_SIZE"); size != "" {
 		n, err := strconv.ParseInt(size, 10, 64)
