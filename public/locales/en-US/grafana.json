@@ -14685,6 +14685,7 @@
       "week-start-label": "Week start"
     },
     "save": "Save preferences",
+    "save-error": "Failed to save preferences",
     "theme": {
       "default-label": "Default",
       "experimental": "Experimental"
