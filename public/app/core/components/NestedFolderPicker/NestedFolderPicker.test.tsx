@@ -244,6 +244,24 @@ describe('NestedFolderPicker', () => {
     expect(await screen.findByLabelText('Team Folder One')).toBeInTheDocument();
   });
 
+  it('shows an error when team folders fail to load', async () => {
+    config.featureToggles.teamFolders = true;
+    useGetTeamFoldersMock.mockReturnValue({
+      foldersByTeam: [],
+      isLoading: false,
+      error: new Error('Team folders failed'),
+    });
+
+    const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+    expect(await screen.findByText('Error loading folders')).toBeInTheDocument();
+    expect(await screen.findByText('Team folders failed')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Dashboards')).toBeInTheDocument();
+    expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
+  });
+
   it('shows team folders at top level when root folder is hidden', async () => {
     config.featureToggles.teamFolders = true;
     const { user } = render(<NestedFolderPicker showRootFolder={false} onChange={mockOnChange} />);

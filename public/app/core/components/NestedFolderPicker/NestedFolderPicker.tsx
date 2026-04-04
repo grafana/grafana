@@ -102,10 +102,9 @@ export function NestedFolderPicker({
   const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({ [TEAM_FOLDERS_UID]: true });
   const overlayId = useId();
 
-  const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
-  const { teamFolderTreeItems, teamFolderOwnersByUid } = useTeamFolders(foldersOpenState, value, onChange);
+  const { teamFolderTreeItems, teamFolderOwnersByUid, error } = useTeamFolders(foldersOpenState, value, onChange);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -339,37 +338,38 @@ export function NestedFolderPicker({
         }}
         {...getFloatingProps()}
       >
-        {error ? (
-          <Alert
-            className={styles.error}
-            severity="warning"
-            title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
-          >
-            {error.message || error.toString?.() || t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
-          </Alert>
-        ) : (
-          <div>
-            {isLoading && (
-              <div className={styles.loader}>
-                <LoadingBar width={600} />
-              </div>
-            )}
+        <div>
+          {error && (
+            <Alert
+              className={styles.error}
+              severity="warning"
+              title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
+            >
+              {error.message ||
+                error.toString?.() ||
+                t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
+            </Alert>
+          )}
+          {isLoading && (
+            <div className={styles.loader}>
+              <LoadingBar width={600} />
+            </div>
+          )}
 
-            <NestedFolderList
-              items={flatTree}
-              selectedFolder={value}
-              focusedItemIndex={focusedItemIndex}
-              onFolderExpand={handleFolderExpand}
-              onFolderSelect={handleFolderSelect}
-              idPrefix={overlayId}
-              foldersAreOpenable={!(search && searchResults)}
-              isItemLoaded={isItemLoaded}
-              requestLoadMore={handleLoadMore}
-              emptyFolders={emptyFolders}
-              teamFolderOwnersByUid={teamFolderOwnersByUid}
-            />
-          </div>
-        )}
+          <NestedFolderList
+            items={flatTree}
+            selectedFolder={value}
+            focusedItemIndex={focusedItemIndex}
+            onFolderExpand={handleFolderExpand}
+            onFolderSelect={handleFolderSelect}
+            idPrefix={overlayId}
+            foldersAreOpenable={!(search && searchResults)}
+            isItemLoaded={isItemLoaded}
+            requestLoadMore={handleLoadMore}
+            emptyFolders={emptyFolders}
+            teamFolderOwnersByUid={teamFolderOwnersByUid}
+          />
+        </div>
       </fieldset>
     </>
   );
@@ -380,7 +380,7 @@ function useTeamFolders(
   value?: string,
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void
 ) {
-  const { foldersByTeam } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
+  const { foldersByTeam, error } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
   const teamFolders = useMemo(() => foldersByTeam.flatMap(({ folders }) => folders), [foldersByTeam]);
   const firstTeamFolder = teamFolders[0];
 
@@ -442,6 +442,7 @@ function useTeamFolders(
   return {
     teamFolderTreeItems,
     teamFolderOwnersByUid,
+    error,
   };
 }
 
