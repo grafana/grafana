@@ -40,7 +40,6 @@ export function SidebarPaneHeader({ children, title }: Props) {
       <Text weight="medium" variant="h6" truncate data-testid="sidebar-pane-header-title">
         {title}
       </Text>
-      <div className={styles.flexGrow} />
       {children}
     </div>
   );

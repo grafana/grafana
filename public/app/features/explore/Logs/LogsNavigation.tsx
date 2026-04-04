@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useCallback } from 'react';
 
 import { type GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, useTheme2 } from '@grafana/ui';
 import { getChromeHeaderLevelHeight } from 'app/core/components/AppChrome/TopBar/useChromeHeaderHeight';
 
@@ -15,8 +16,9 @@ type Props = {
 
 function LogsNavigation({ logsSortOrder, scrollToTopLogs }: Props) {
   const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
+  const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
   const theme = useTheme2();
-  const styles = getStyles(theme, oldestLogsFirst);
+  const styles = getStyles(theme, oldestLogsFirst, newLogsPanelEnabled);
 
   const onScrollToTopClick = useCallback(() => {
     reportInteraction('grafana_explore_logs_scroll_top_clicked');
@@ -40,13 +42,13 @@ function LogsNavigation({ logsSortOrder, scrollToTopLogs }: Props) {
 
 export default memo(LogsNavigation);
 
-const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
+const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean, newLogsPanelEnabled: boolean) => {
   const navContainerHeight = `calc(100vh - 2*${theme.spacing(2)} - 2*${getChromeHeaderLevelHeight()}px)`;
 
   return {
     navContainer: css({
       maxHeight: navContainerHeight,
-      width: oldestLogsFirst && !config.featureToggles.newLogsPanel ? '58px' : 'auto',
+      width: oldestLogsFirst && !newLogsPanelEnabled ? '58px' : 'auto',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'flex-end',

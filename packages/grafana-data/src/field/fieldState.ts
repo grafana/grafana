@@ -56,6 +56,9 @@ export function cacheFieldDisplayNames(frames: DataFrame[]) {
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       getFieldDisplayName(field, frame, frames);
+      if (field.type === FieldType.nestedFrames) {
+        field.values.forEach(cacheFieldDisplayNames);
+      }
     });
   });
 }
