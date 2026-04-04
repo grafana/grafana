@@ -42,6 +42,13 @@ import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, type Props } from './utils';
 
+const toUpdateTheme = (theme: string | undefined): 'light' | 'dark' | 'system' | undefined => {
+  if (theme === 'light' || theme === 'dark' || theme === 'system') {
+    return theme;
+  }
+  return undefined;
+};
+
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const { preferenceType, resourceUri } = props;
   const teamId = preferenceType === 'team' ? resourceUri.split('/')[1] : undefined;
@@ -100,7 +107,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       setState((prev) => ({
         ...prev,
         homeDashboardUID: prefs.homeDashboardUID ?? prev.homeDashboardUID,
-        theme: prefs.theme ?? prev.theme,
+        theme: toUpdateTheme(prefs.theme) ?? prev.theme,
         timezone: prefs.timezone ?? prev.timezone,
         weekStart: prefs.weekStart ?? prev.weekStart,
         language: prefs.language ?? prev.language,
@@ -149,7 +156,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
   };
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {
-    setState((prev: UpdatePrefsCmd) => ({ ...prev, theme: value.value }));
+    setState((prev: UpdatePrefsCmd) => ({ ...prev, theme: toUpdateTheme(value.value) }));
     reportInteraction('grafana_preferences_theme_changed', {
       toTheme: value.value,
       preferenceType: props.preferenceType,
