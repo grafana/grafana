@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo } from 'react';
 
 import {
   LogsDedupStrategy,
-  LogsMetaItem,
+  type LogsMetaItem,
   LogsMetaKind,
-  LogRowModel,
+  type LogRowModel,
   CoreApp,
-  Labels,
+  type Labels,
   store,
   shallowCompare,
 } from '@grafana/data';
@@ -15,11 +16,11 @@ import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/components/LogLabels';
+import { LogLabels, LogLabelsList, type Props as LogLabelsProps } from '../../logs/components/LogLabels';
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
-import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
+import { MetaInfoText, type MetaItemProps } from '../MetaInfoText';
 
-import { LogsVisualisationType } from './constants';
+import { type LogsVisualisationType } from './constants';
 import { SETTINGS_KEYS } from './utils/logs';
 
 const getStyles = () => ({
@@ -57,6 +58,8 @@ export const LogsMetaRow = memo(
     visualisationType,
   }: Props) => {
     const style = useStyles2(getStyles);
+    const logsPanelControlsEnabled = useBooleanFlagValue('logsPanelControls', true);
+    const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
@@ -133,15 +136,13 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!config.featureToggles.logsPanelControls &&
-              !config.featureToggles.newLogsPanel &&
-              !config.exploreHideLogsDownload && (
-                <Dropdown overlay={downloadMenu}>
-                  <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                    <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
-                  </ToolbarButton>
-                </Dropdown>
-              )}
+            {!logsPanelControlsEnabled && !newLogsPanelEnabled && !config.exploreHideLogsDownload && (
+              <Dropdown overlay={downloadMenu}>
+                <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
+                  <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
+                </ToolbarButton>
+              </Dropdown>
+            )}
           </div>
         )}
       </>

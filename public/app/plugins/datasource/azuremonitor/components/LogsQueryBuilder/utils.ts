@@ -1,20 +1,20 @@
 import { escapeRegExp } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 import {
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorGroupByExpression,
-  BuilderQueryEditorOrderByExpression,
-  BuilderQueryEditorPropertyExpression,
+  type BuilderQueryEditorGroupByExpression,
+  type BuilderQueryEditorOrderByExpression,
+  type BuilderQueryEditorPropertyExpression,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
+  type BuilderQueryEditorReduceExpression,
   BuilderQueryEditorReduceParameterTypes,
-  BuilderQueryEditorWhereExpression,
-  BuilderQueryExpression,
+  type BuilderQueryEditorWhereExpression,
+  type BuilderQueryExpression,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
 export const inputFieldSize = 20;

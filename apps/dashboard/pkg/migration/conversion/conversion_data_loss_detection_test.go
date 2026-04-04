@@ -403,7 +403,7 @@ func TestCountPanelsV2(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			count := countPanelsV2(tt.elements)
+			count := countPanelsV2alpha1(tt.elements)
 			assert.Equal(t, tt.expected, count)
 		})
 	}

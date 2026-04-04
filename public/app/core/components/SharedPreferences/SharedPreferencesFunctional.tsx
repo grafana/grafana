@@ -11,7 +11,7 @@ import {
 import {
   useGetUserPreferencesQuery,
   useUpdateUserPreferencesMutation,
-  UpdatePrefsCmd,
+  type UpdatePrefsCmd,
 } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -21,7 +21,7 @@ import {
   Box,
   Button,
   Combobox,
-  ComboboxOption,
+  type ComboboxOption,
   FeatureBadge,
   Field,
   FieldSet,
@@ -31,7 +31,7 @@ import {
   TextLink,
   TimeZonePicker,
   useStyles2,
-  WeekStart,
+  type WeekStart,
   WeekStartPicker,
 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
@@ -40,7 +40,7 @@ import { useAppNotification } from '../../../core/copy/appNotification';
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props } from './utils';
+import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, type Props } from './utils';
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const { preferenceType, resourceUri } = props;

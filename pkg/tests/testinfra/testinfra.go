@@ -690,6 +690,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_search", "false")
 		require.NoError(t, err)
 	}
+	if opts.SearchInjectFailuresPercent > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("search_inject_failures_percent", fmt.Sprintf("%d", opts.SearchInjectFailuresPercent))
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -700,6 +706,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("migration_parquet_buffer", "true")
+		require.NoError(t, err)
+	}
+	if opts.EnableSQLKVBackend {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -730,6 +742,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningFolderAPIVersion != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
 		require.NoError(t, err)
 	}
 	if opts.EnableSCIM {
@@ -844,12 +862,14 @@ type GrafanaOpts struct {
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 	UnifiedStorageDisableSearch           bool
+	SearchInjectFailuresPercent           int
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	ProvisioningAllowedTargets            []string
 	ProvisioningRepositoryTypes           []string
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
+	ProvisioningFolderAPIVersion          string
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
@@ -859,6 +879,7 @@ type GrafanaOpts struct {
 	DisableControllers                    bool
 	DisableDBCleanup                      bool
 	MigrationParquetBuffer                bool
+	EnableSQLKVBackend                    bool
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool

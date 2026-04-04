@@ -1,5 +1,5 @@
 import { PromQueryModeller } from '../PromQueryModeller';
-import { PromQueryModellerInterface } from '../types';
+import { type PromQueryModellerInterface } from '../types';
 
 /**
  * This singleton instance of the Prometheus query modeller is a central point

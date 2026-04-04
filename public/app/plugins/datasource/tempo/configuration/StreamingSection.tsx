@@ -1,8 +1,8 @@
 import React from 'react';
 
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/plugin-ui';

@@ -1,4 +1,4 @@
-import { MonitoringLogger } from '@grafana/runtime';
+import { type MonitoringLogger } from '@grafana/runtime';
 import { getAppPluginMetas, invalidateCache, setLogger } from '@grafana/runtime/internal';
 
 import { getPluginExtensionRegistries } from './setup';

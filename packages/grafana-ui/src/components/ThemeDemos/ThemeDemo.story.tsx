@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { ThemeDemo as NewThemeDemoComponent } from './ThemeDemo';
 
@@ -6,11 +6,11 @@ const meta: Meta = {
   title: 'Foundations/Theme',
   component: NewThemeDemoComponent,
   decorators: [],
+  tags: ['!autodocs'],
   parameters: {
     options: {
       showPanel: false,
     },
-    docs: {},
   },
 };
 

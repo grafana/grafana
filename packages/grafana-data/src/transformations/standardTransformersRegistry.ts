@@ -1,8 +1,8 @@
-import * as React from 'react';
+import type * as React from 'react';
 
-import { DataFrame } from '../types/dataFrame';
-import { DataTransformerInfo } from '../types/transformations';
-import { Registry, RegistryItem } from '../utils/Registry';
+import { type DataFrame } from '../types/dataFrame';
+import { type DataTransformerInfo } from '../types/transformations';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
 export interface TransformerUIProps<T> {
   /**

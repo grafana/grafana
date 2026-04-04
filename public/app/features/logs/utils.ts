@@ -1,20 +1,20 @@
 import saveAs from 'file-saver';
 import { countBy, chain } from 'lodash';
-import { MouseEvent } from 'react';
-import { lastValueFrom, map, Observable } from 'rxjs';
+import { type MouseEvent } from 'react';
+import { lastValueFrom, map, type Observable } from 'rxjs';
 
 import {
   LogLevel,
-  LogRowModel,
-  LogLabelStatsModel,
-  LogsModel,
+  type LogRowModel,
+  type LogLabelStatsModel,
+  type LogsModel,
   LogsSortOrder,
-  DataFrame,
-  FieldConfig,
+  type DataFrame,
+  type FieldConfig,
   FieldCache,
   FieldType,
   MutableDataFrame,
-  QueryResultMeta,
+  type QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
   getFieldDisplayName,
@@ -23,12 +23,12 @@ import {
   urlUtil,
   dateTime,
   dateTimeFormat,
-  DataTransformerConfig,
-  CustomTransformOperator,
+  type DataTransformerConfig,
+  type CustomTransformOperator,
   transformDataFrame,
   getTimeField,
-  Field,
-  LogsMetaItem,
+  type Field,
+  type LogsMetaItem,
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -39,7 +39,7 @@ import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/uti
 
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { getDataframeFields } from './components/logParser';
-import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
+import { type GetRowContextQueryFn } from './components/panel/LogLineMenu';
 import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } from './logsFrame';
 
 /**
