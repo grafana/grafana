@@ -151,6 +151,7 @@ export const handyTestingSchema: Spec = {
               timeFrom: '1h',
               maxDataPoints: 100,
               timeShift: '1h',
+              timeCompare: '1d',
               queryCachingTTL: 60,
               interval: '1m',
               cacheTimeout: '1m',
