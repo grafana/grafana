@@ -1,4 +1,4 @@
-# Feature toggle guide
+# Feature flags guide
 
 This guide helps you to add your feature behind a _feature flag_, code that lets you enable or disable a feature without redeploying Grafana.
 
@@ -18,11 +18,12 @@ Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https:
 
 The `Generate` field on a `FeatureFlag` is a bitmask that controls which clients are generated. The available targets are:
 
-| Target                   | Description                                                                                               |
-| ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `GenerateLegacyGo`       | Generates a Go constant in `toggles_gen.go`                                                               |
-| `GenerateLegacyFrontend` | Generates a TypeScript constant in `featureToggles.gen.ts` (legacy, prefer `GenerateReact` for new flags) |
-| `GenerateReact`          | Generates a typed React hook in `openfeature.gen.ts` via the OpenFeature CLI                              |
+| Target                   | Description                                                                                                             |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `GenerateLegacyGo`       | Generates a Go constant in `toggles_gen.go`, skipping new name requirements (legacy, prefer `GenerateGo` for new flags) |
+| `GenerateLegacyFrontend` | Generates a TypeScript constant in `featureToggles.gen.ts` (legacy, prefer `GenerateReact` for new flags)               |
+| `GenerateGo`             | Generates a Go constant in `toggles_gen.go`                                                                             |
+| `GenerateReact`          | Generates a typed React hook in `openfeature.gen.ts` via the OpenFeature CLI                                            |
 
 Targets can be combined with `|`, e.g.
 

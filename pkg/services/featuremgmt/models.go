@@ -134,6 +134,8 @@ const (
 	GenerateLegacyGo FlagGenerationTarget = 1 << iota
 	// GenerateLegacyFrontend generates the legacy frontend client (constants in featureToggles.gen.ts)
 	GenerateLegacyFrontend
+	// GenerateGo generates constants in feature_toggles.go. The same as GenerateLegacyGo but with new name requirements
+	GenerateGo
 	// GenerateReact generates the React client
 	GenerateReact
 )

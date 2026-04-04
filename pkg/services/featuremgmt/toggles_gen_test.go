@@ -361,8 +361,9 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
-		if !flag.ShouldGenerate(GenerateLegacyGo) {
-			continue // no need to have the golang constant for frontend only flags
+		// There's no OpenFeature-specific generation for Go yet, but `GenerateGo` is used to enforce new naming conventions
+		if !flag.ShouldGenerate(GenerateLegacyGo) && !flag.ShouldGenerate(GenerateGo) {
+			continue
 		}
 
 		data.CamelCase = strcase.ToCamel(flag.Name)
