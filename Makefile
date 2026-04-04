@@ -270,14 +270,6 @@ gen-feature-toggles:
 		go test ./pkg/services/featuremgmt/...; \
 	fi
 
-	@echo "generate openfeature react hooks"
-	$(openfeature) generate react \
-		--manifest ./pkg/services/featuremgmt/openfeature-manifest-react.gen.json \
-		--output ./packages/grafana-runtime/src/internal/openFeature \
-		--template ./pkg/services/featuremgmt/openfeature_react.tmpl \
-		--no-input
-	mv ./packages/grafana-runtime/src/internal/openFeature/openfeature.ts ./packages/grafana-runtime/src/internal/openFeature/openfeature.gen.ts
-	rm ./pkg/services/featuremgmt/openfeature-manifest-react.gen.json
 
 .PHONY: gen-go gen-enterprise-go
 ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
