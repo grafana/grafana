@@ -1010,23 +1010,3 @@ func TestUnstructuredToDashboardVersionSpec(t *testing.T) {
 		})
 	}
 }
-
-type FakeDashboardVersionStore struct {
-	ExpectedDashboardVersion *dashver.DashboardVersion
-	ExptectedDeletedVersions int64
-	ExpectedVersions         []any
-	ExpectedListVersions     []*dashver.DashboardVersion
-	ExpectedError            error
-}
-
-func newDashboardVersionStoreFake() *FakeDashboardVersionStore {
-	return &FakeDashboardVersionStore{}
-}
-
-func (f *FakeDashboardVersionStore) Get(_ context.Context, _ *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
-	return f.ExpectedDashboardVersion, f.ExpectedError
-}
-
-func (f *FakeDashboardVersionStore) List(_ context.Context, _ *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
-	return f.ExpectedListVersions, f.ExpectedError
-}
