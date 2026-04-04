@@ -14,6 +14,7 @@ export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, se
     series.refId = getCompareSeriesRefId(series.refId || '');
     series.meta = {
       ...series.meta,
+      // @ts-ignore Remove when https://github.com/grafana/grafana/pull/71129 is released
       timeCompare: {
         diffMs: diff,
         isTimeShiftQuery: true,
