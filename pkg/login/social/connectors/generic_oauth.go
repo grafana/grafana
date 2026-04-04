@@ -364,7 +364,7 @@ func (s *SocialGenericOAuth) extractUserGroups(userInfo *social.BasicUserInfo, d
 // postProcessUserInfo handles post-processing of user info (org roles, private email, etc.)
 func (s *SocialGenericOAuth) postProcessUserInfo(ctx context.Context, client *http.Client, userInfo *social.BasicUserInfo, externalOrgs []string) error {
 	if !s.info.SkipOrgRoleSync {
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, userInfo.Role)
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, externalOrgs, userInfo.Role)
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
