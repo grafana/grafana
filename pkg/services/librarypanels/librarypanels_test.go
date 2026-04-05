@@ -539,7 +539,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		_, err = usrSvc.Create(context.Background(), &cmd)
 		require.NoError(t, err)
 
-		mockDashboardService.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{}, nil)
+		mockDashboardService.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Maybe().Return([]*dashboards.DashboardRef{}, nil)
 
 		sc := scenarioContext{
 			user:           usr,

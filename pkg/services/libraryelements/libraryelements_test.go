@@ -201,17 +201,17 @@ func getCreateCommandWithModel(folderID int64, folderUID, name string, kind mode
 }
 
 type scenarioContext struct {
-	ctx                  *web.Context
-	service              *LibraryElementService
-	reqContext           *contextmodel.ReqContext
-	user                 user.SignedInUser
-	folder               *folder.Folder
-	initialResult        libraryElementResult
-	sqlStore             db.DB
-	log                  log.Logger
-	folderSvc            *foldertest.FakeService
-	dashboardSvc         *dashboards.FakeDashboardService
-	defaultGetDashByLP   *mock.Call
+	ctx                *web.Context
+	service            *LibraryElementService
+	reqContext         *contextmodel.ReqContext
+	user               user.SignedInUser
+	folder             *folder.Folder
+	initialResult      libraryElementResult
+	sqlStore           db.DB
+	log                log.Logger
+	folderSvc          *foldertest.FakeService
+	dashboardSvc       *dashboards.FakeDashboardService
+	defaultGetDashByLP *mock.Call
 }
 
 func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc *foldertest.FakeService) *folder.Folder {
