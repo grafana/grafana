@@ -53,6 +53,7 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
+			sc.defaultGetDashByLP.Unset()
 			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
 				{UID: "connected-dash", ID: 1},
 			}, nil)
@@ -106,7 +107,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 				return model.LibraryElementConnectionsResponse{
 					Result: []model.LibraryElementConnectionDTO{
 						{
-							ID:           res.Result[0].ID,
+							ID:           res.Result[0].ID, // nolint:staticcheck
 							Kind:         sc.initialResult.Result.Kind,
 							ElementID:    1,
 							ConnectionID: 1,
@@ -121,6 +122,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 				}
 			}
 
+			sc.defaultGetDashByLP.Unset()
 			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
 				{
 					ID:  1,
@@ -199,16 +201,17 @@ func getCreateCommandWithModel(folderID int64, folderUID, name string, kind mode
 }
 
 type scenarioContext struct {
-	ctx           *web.Context
-	service       *LibraryElementService
-	reqContext    *contextmodel.ReqContext
-	user          user.SignedInUser
-	folder        *folder.Folder
-	initialResult libraryElementResult
-	sqlStore      db.DB
-	log           log.Logger
-	folderSvc     *foldertest.FakeService
-	dashboardSvc  *dashboards.FakeDashboardService
+	ctx                  *web.Context
+	service              *LibraryElementService
+	reqContext           *contextmodel.ReqContext
+	user                 user.SignedInUser
+	folder               *folder.Folder
+	initialResult        libraryElementResult
+	sqlStore             db.DB
+	log                  log.Logger
+	folderSvc            *foldertest.FakeService
+	dashboardSvc         *dashboards.FakeDashboardService
+	defaultGetDashByLP   *mock.Call
 }
 
 func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc *foldertest.FakeService) *folder.Folder {
@@ -355,6 +358,8 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	_, err = usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 
+	defaultGetDashByLP := dashService.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Maybe().Return([]*dashboards.DashboardRef{}, nil)
+
 	sc := scenarioContext{
 		user:     usr,
 		ctx:      &webCtx,
@@ -364,8 +369,9 @@ func setupTestScenario(t *testing.T) scenarioContext {
 			Context:      &webCtx,
 			SignedInUser: &usr,
 		},
-		folderSvc:    folderSvc,
-		dashboardSvc: dashService,
+		folderSvc:          folderSvc,
+		dashboardSvc:       dashService,
+		defaultGetDashByLP: defaultGetDashByLP,
 	}
 
 	sc.folder = createFolder(t, sc, "ScenarioFolder", folderSvc)

@@ -50,6 +50,7 @@ func TestIntegration_DeleteLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a library panel that is connected, it should fail",
 		func(t *testing.T, sc scenarioContext) {
+			sc.defaultGetDashByLP.Unset()
 			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
 				{
 					UID: "dash-1",
@@ -64,6 +65,7 @@ func TestIntegration_DeleteLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When a non-admin user cannot see a connected dashboard, deletion should still be blocked",
 		func(t *testing.T, sc scenarioContext) {
+			sc.defaultGetDashByLP.Unset()
 			// Downgrade user to Editor, so they can delete library panels but cannot see all folders/dashboards
 			sc.reqContext.OrgRole = org.RoleEditor
 

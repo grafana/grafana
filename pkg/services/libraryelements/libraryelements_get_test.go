@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -143,5 +144,24 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":name": sc.initialResult.Result.Name})
 			resp = sc.service.getByNameHandler(sc.reqContext)
 			require.Equal(t, 404, resp.Status())
+		})
+
+	scenarioWithPanel(t, "When a library panel has connected dashboards, connectedDashboards should reflect the count",
+		func(t *testing.T, sc scenarioContext) {
+			sc.defaultGetDashByLP.Unset()
+			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
+				{UID: "dash-1", ID: 10},
+				{UID: "dash-2", ID: 20},
+			}, nil)
+
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
+			resp := sc.service.getHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementResult
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, int64(2), result.Result.Meta.ConnectedDashboards,
+				"connectedDashboards should match the number of dashboards returned by unified search")
 		})
 }
