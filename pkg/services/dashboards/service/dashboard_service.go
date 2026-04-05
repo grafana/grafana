@@ -544,6 +544,21 @@ func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID 
 	return resp.Stats[0].Count, nil
 }
 
+func (dr *DashboardServiceImpl) CountProvisionedDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.CountProvisionedDashboardsInOrg")
+	defer span.End()
+
+	dashs, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+		OrgId:     orgID,
+		ManagedBy: utils.ManagerKindClassicFP, // nolint:staticcheck
+	})
+	if err != nil {
+		return 0, err
+	}
+	span.SetAttributes(attribute.Int("provisioned_dashboards", len(dashs)))
+	return int64(len(dashs)), nil
+}
+
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 
