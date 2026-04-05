@@ -428,6 +428,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	if err != nil {
 		return model.LibraryElementSearchResult{}, err
 	}
+	retDTOs := make([]model.LibraryElementDTO, 0)
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		if folderFilter.includeGeneralFolder {
@@ -465,7 +466,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		}
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		retDTOs := make([]model.LibraryElementDTO, 0)
 		// Get the folder tree filtered by user permissions (cached per user per request)
 		folderTree, err := l.treeCache.get(c, signedInUser)
 		if err != nil {
@@ -513,10 +513,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					},
 				},
 			})
-		}
-
-		if err := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), retDTOs); err != nil {
-			return err
 		}
 
 		var libraryElements []model.LibraryElementWithMeta
@@ -569,8 +565,15 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 
 		return nil
 	})
+	if err != nil {
+		return result, err
+	}
 
-	return result, err
+	if err := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), result.Elements); err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, elementToPatch *model.LibraryElement,
@@ -722,33 +725,35 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
-			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return dashboards.ErrFolderNotFound
-			}
-			return err
+	if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return dashboards.ErrFolderNotFound
 		}
+		return err
+	}
 
-		var elements []struct {
-			UID string `xorm:"uid"`
-		}
-		err := session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).Find(&elements)
+	var elements []struct {
+		UID string `xorm:"uid"`
+	}
+	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
+		return session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).Find(&elements)
+	})
+	if err != nil {
+		return err
+	}
+
+	serviceCtx, _ := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
+	for _, elem := range elements {
+		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, signedInUser.GetOrgID())
 		if err != nil {
 			return err
 		}
-
-		serviceCtx, _ := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
-		for _, elem := range elements {
-			connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, signedInUser.GetOrgID())
-			if err != nil {
-				return err
-			}
-			if len(connectedDashboards) > 0 {
-				return model.ErrFolderHasConnectedLibraryElements
-			}
+		if len(connectedDashboards) > 0 {
+			return model.ErrFolderHasConnectedLibraryElements
 		}
+	}
 
+	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		if _, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()); err != nil {
 			return err
 		}
