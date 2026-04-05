@@ -11,7 +11,6 @@ import (
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	provisioningv1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -102,13 +101,6 @@ func (ss *sqlStatsService) getResourceCounts(ctx context.Context, orgs []*org.Or
 		}
 	}
 	return totals, nil
-}
-
-func (ss *sqlStatsService) playlistsSQL() string {
-	if ss.cfg.UnifiedStorageConfig(setting.PlaylistResource).DualWriterMode == rest.Mode5 {
-		return `0 AS playlists,`
-	}
-	return `(SELECT COUNT(*) FROM ` + ss.db.GetDialect().Quote("playlist") + `) AS playlists,`
 }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {
