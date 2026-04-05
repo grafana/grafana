@@ -395,7 +395,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 				Path:   "test.json",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false)
 		assert.NoError(t, err)
 		assert.True(t, got)
 	})
@@ -407,7 +407,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 				Path:   "test/.keep",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false)
 		assert.NoError(t, err)
 		assert.False(t, got)
 	})
@@ -1147,39 +1147,4 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	// The token patch must be present even though the repository is currently over quota.
 	_, found := patcher.findPatchOp("/status/token")
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
-}
-
-func TestIsPendingDelete(t *testing.T) {
-	tests := []struct {
-		name   string
-		labels map[string]string
-		want   bool
-	}{
-		{
-			name:   "label absent returns false",
-			labels: map[string]string{},
-			want:   false,
-		},
-		{
-			name:   "nil labels returns false",
-			labels: nil,
-			want:   false,
-		},
-		{
-			name:   "label set to false returns false",
-			labels: map[string]string{labelPendingDelete: "false"},
-			want:   false,
-		},
-		{
-			name:   "label set to true returns true",
-			labels: map[string]string{labelPendingDelete: "true"},
-			want:   true,
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := IsPendingDelete(tc.labels)
-			assert.Equal(t, tc.want, got)
-		})
-	}
 }

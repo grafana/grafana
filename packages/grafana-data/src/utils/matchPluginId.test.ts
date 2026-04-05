@@ -1,4 +1,4 @@
-import { PluginMeta, PluginType } from '../types/plugin';
+import { type PluginMeta, PluginType } from '../types/plugin';
 
 import { matchPluginId } from './matchPluginId';
 

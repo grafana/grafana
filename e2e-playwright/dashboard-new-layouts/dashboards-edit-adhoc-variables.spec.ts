@@ -39,6 +39,7 @@ test.describe(
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect)
         .click();
+      await page.keyboard.type(dataSource);
       await page.getByText(dataSource).click();
 
       // mock the API call to get the labels

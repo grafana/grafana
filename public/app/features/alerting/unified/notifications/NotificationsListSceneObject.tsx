@@ -5,19 +5,20 @@ import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
-  CreateNotificationqueryMatcher,
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationsqueryalertsNotificationEntryAlert,
+  type CreateNotificationqueryMatcher,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, TimeRange, dateTimeFormat } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
   sceneGraph,
 } from '@grafana/scenes';
@@ -213,7 +214,9 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
-      <div className={styles.viewCol}>{/* View link column */}</div>
+      {config.featureToggles.alertingNotificationHistoryDetail && (
+        <div className={styles.viewCol}>{/* View link column */}</div>
+      )}
     </div>
   );
 }
@@ -285,18 +288,20 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
             </Stack>
           </Tooltip>
         </div>
-        <div className={styles.viewCol}>
-          <LinkButton
-            href={createRelativeUrl(
-              `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
-            )}
-            size="sm"
-            variant="secondary"
-            icon="eye"
-          >
-            <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
-          </LinkButton>
-        </div>
+        {config.featureToggles.alertingNotificationHistoryDetail && (
+          <div className={styles.viewCol}>
+            <LinkButton
+              href={createRelativeUrl(
+                `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
+              )}
+              size="sm"
+              variant="secondary"
+              icon="eye"
+            >
+              <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
+            </LinkButton>
+          </div>
+        )}
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
@@ -382,7 +387,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
             <Stack direction="row" gap={1} alignItems="center">
               <Text variant="bodySmall" color="secondary">
                 <strong>
-                  <Trans i18nKey="alerting.notifications-scene.group-labels">Group Labels:</Trans>
+                  <Trans i18nKey="alerting.notifications-scene.labels">Labels:</Trans>
                 </strong>
               </Text>
               <AlertLabels labels={filteredLabels} size="sm" />

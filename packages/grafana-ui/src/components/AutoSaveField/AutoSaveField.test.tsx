@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme, SelectableValue } from '@grafana/data';
+import { createTheme, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Checkbox } from '../Forms/Checkbox';
@@ -11,7 +11,7 @@ import { SelectBase } from '../Select/SelectBase';
 import { Switch } from '../Switch/Switch';
 import { TextArea } from '../TextArea/TextArea';
 
-import { AutoSaveField, Props } from './AutoSaveField';
+import { AutoSaveField, type Props } from './AutoSaveField';
 
 const mockOnFinishChange = jest.fn().mockImplementation(() => Promise.resolve());
 const mockOnFinishChangeError = jest.fn().mockImplementation(() => Promise.reject());

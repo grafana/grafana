@@ -6,7 +6,7 @@ import {
   getRangeVectorParamDef,
 } from './operationUtils';
 import { addOperationWithRangeVector } from './operations';
-import { QueryBuilderOperation, QueryBuilderOperationDef } from './shared/types';
+import { type QueryBuilderOperation, type QueryBuilderOperationDef } from './shared/types';
 import { PromOperationId, PromVisualQueryOperationCategory } from './types';
 
 export function getAggregationOperations(): QueryBuilderOperationDef[] {

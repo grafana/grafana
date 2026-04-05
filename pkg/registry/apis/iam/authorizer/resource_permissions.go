@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/authlib/types"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -14,9 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
-
-// maxBatchCheckItems is the typical server limit for a single BatchCheck request.
-const maxBatchCheckItems = 50
 
 // TODO: Logs, Metrics, Traces?
 
@@ -106,6 +104,10 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 		}
 		targetGR := schema.GroupResource{Group: apiGroup, Resource: resource}
 		parent := ""
+
+		// Fetch the parent of the resource
+		// It's not efficient to do for every item in the list, but it's a good starting point.
+		// Access Policies have global scope, so no parent check needed
 		if !accessPolicy && r.parentProvider.HasParent(targetGR) {
 			var err error
 			parent, err = r.parentProvider.GetParent(ctx, targetGR, ns, name)
@@ -126,8 +128,8 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 	}
 
 	allowed := make([]bool, n)
-	for start := 0; start < len(checks); start += maxBatchCheckItems {
-		end := start + maxBatchCheckItems
+	for start := 0; start < len(checks); start += types.MaxBatchCheckItems {
+		end := start + types.MaxBatchCheckItems
 		if end > len(checks) {
 			end = len(checks)
 		}
@@ -201,14 +203,11 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 			return err
 		}
 		if !res.Allowed {
-			return fmt.Errorf(
-				"user cannot set permissions on resource %s/%s/%s: %w",
-				target.ApiGroup, target.Resource, target.Name, storewrapper.ErrUnauthorized,
-			)
+			return k8serrors.NewNotFound(targetGR, target.Name)
 		}
 		return nil
 	default:
-		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, storewrapper.ErrUnexpectedType)
+		return k8serrors.NewBadRequest(fmt.Sprintf("expected ResourcePermission, got %T", o))
 	}
 }
 
@@ -251,14 +250,11 @@ func (r *ResourcePermissionsAuthorizer) beforeWrite(ctx context.Context, obj run
 			return err
 		}
 		if !res.Allowed {
-			return fmt.Errorf(
-				"user cannot set permissions on resource %s/%s/%s: %w",
-				target.ApiGroup, target.Resource, target.Name, storewrapper.ErrUnauthorized,
-			)
+			return k8serrors.NewForbidden(targetGR, target.Name, fmt.Errorf("user cannot set permissions on this resource"))
 		}
 		return nil
 	default:
-		return fmt.Errorf("expected ResourcePermission, got %T: %w", o, storewrapper.ErrUnexpectedType)
+		return k8serrors.NewBadRequest(fmt.Sprintf("expected ResourcePermission, got %T", o))
 	}
 }
 
@@ -296,6 +292,6 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 		l.Items = filtered
 		return l, nil
 	default:
-		return nil, fmt.Errorf("expected ResourcePermissionList, got %T: %w", l, storewrapper.ErrUnexpectedType)
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("expected ResourcePermissionList, got %T", l))
 	}
 }

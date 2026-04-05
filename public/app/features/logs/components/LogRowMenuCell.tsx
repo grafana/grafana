@@ -1,23 +1,23 @@
 import {
   memo,
-  FocusEvent,
-  SyntheticEvent,
+  type FocusEvent,
+  type SyntheticEvent,
   useCallback,
-  ReactNode,
+  type ReactNode,
   useMemo,
   cloneElement,
   isValidElement,
-  MouseEvent,
+  type MouseEvent,
 } from 'react';
 
-import { LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
-import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { ClipboardButton, IconButton, type PopoverContent } from '@grafana/ui';
 
 import { handleOpenLogsContextClick } from '../utils';
 
-import { LogRowStyles } from './getLogRowStyles';
+import { type LogRowStyles } from './getLogRowStyles';
 
 interface Props {
   logText: string;

@@ -5,12 +5,12 @@ import { select } from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { PrometheusDatasource } from '../datasource';
-import { PrometheusLanguageProviderInterface } from '../language_provider';
+import { type PrometheusDatasource } from '../datasource';
+import { type PrometheusLanguageProviderInterface } from '../language_provider';
 import { migrateVariableEditorBackToVariableSupport } from '../migrations/variableMigration';
-import { PromVariableQuery, PromVariableQueryType, StandardPromVariableQuery } from '../types';
+import { type PromVariableQuery, PromVariableQueryType, type StandardPromVariableQuery } from '../types';
 
-import { PromVariableQueryEditor, Props, variableMigration } from './VariableQueryEditor';
+import { PromVariableQueryEditor, type Props, variableMigration } from './VariableQueryEditor';
 
 const refId = 'PrometheusVariableQueryEditor-VariableQuery';
 

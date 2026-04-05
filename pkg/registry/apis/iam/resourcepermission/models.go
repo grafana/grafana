@@ -72,12 +72,14 @@ type rbacAssignmentCreate struct {
 	SubjectID        any    // int64 for user/team, string for builtin_role
 	AssignmentTable  string // "user_role", "team_role", or "builtin_role"
 	AssignmentColumn string // "user_id", "team_id", or "role"
+	DatasourceType   string // e.g. "loki"
 }
 
 func (g *rbacAssignmentCreate) permission() accesscontrol.Permission {
 	p := accesscontrol.Permission{
-		Action: g.Action,
-		Scope:  g.Scope,
+		Action:         g.Action,
+		Scope:          g.Scope,
+		DatasourceType: g.DatasourceType,
 	}
 	p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(p.Scope)
 	return p
@@ -93,6 +95,7 @@ type rbacAssignment struct {
 	SubjectUID       string    `xorm:"subject_uid"`
 	SubjectType      string    `xorm:"subject_type"` // 'user', 'team', or 'builtin_role'
 	IsServiceAccount bool      `xorm:"is_service_account"`
+	DatasourceType   string    `xorm:"datasource_type"`
 }
 
 // newV0ResourcePermission creates a new v0alpha1.ResourcePermission from the given groupResourceName and permission specs.
@@ -143,14 +146,14 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 		specs               = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
 	)
 
-	grn, err := s.ParseScope(assignments[0].Scope)
+	grn, err := s.ParseScope(assignments[0].Scope, assignments[0].DatasourceType)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, assign := range assignments {
 		// Ensure all assignments belong to the same resource
-		parsedGrn, err := s.ParseScope(assign.Scope)
+		parsedGrn, err := s.ParseScope(assign.Scope, assign.DatasourceType)
 		if err != nil {
 			return nil, err
 		}
@@ -236,23 +239,18 @@ func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
 }
 
 // ParseScope parses a scope string (e.g. folders:uid:1) into a groupResourceName (e.g. {folder.grafana.app, folders, fold1}).
-func (s *ResourcePermSqlBackend) ParseScope(scope string) (*groupResourceName, error) {
-	parts := strings.SplitN(scope, ":", 3)
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
-	}
-	gr, ok := s.reverseMappers[parts[0]]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
-	}
-	return &groupResourceName{
-		Group:    gr.Group,
-		Resource: gr.Resource,
-		Name:     parts[2],
-	}, nil
+// If the scope is a datasource scope, the datasourceType is used to resolve the concrete group.
+func (s *ResourcePermSqlBackend) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
+	return s.mappers.ParseScope(scope, datasourceType)
 }
 
-// splitResourceName splits a resource name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components
+// splitResourceName splits a resource name in the format <group>-<resource>-<name>
+// (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components.
+//
+// FIXME: strings.SplitN(name, "-", 3) mangles groups that contain hyphens
+// (e.g. grafana-testdata-datasource.datasource.grafana.app). A delimiter-free
+// encoding (e.g. base64-encoded group, or a different separator) is needed
+// before datasource permissions can work with hyphenated plugin IDs.
 func splitResourceName(resourceName string) (*groupResourceName, error) {
 	// e.g. dashboard.grafana.app-dashboards-ad5rwqs
 	parts := strings.SplitN(resourceName, "-", 3)
@@ -269,12 +267,11 @@ func splitResourceName(resourceName string) (*groupResourceName, error) {
 	}, nil
 }
 
-// getResourceMapper returns the Mapper of the given group and resource to access levels and scope prefix for that resource.
+// getResourceMapper returns the Mapper for the given group and resource.
 func (s *ResourcePermSqlBackend) getResourceMapper(group, resource string) (Mapper, error) {
-	mapper, ok := s.mappers[schema.GroupResource{Group: group, Resource: resource}]
+	mapper, ok := s.mappers.Get(schema.GroupResource{Group: group, Resource: resource})
 	if !ok {
 		return nil, fmt.Errorf("%w: %s/%s", errUnknownGroupResource, group, resource)
 	}
-
 	return mapper, nil
 }

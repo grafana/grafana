@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -114,14 +114,14 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 	}
 
 	filters := []any{
-		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, authz.features, recursiveQueriesSupported, authz.db.GetDialect(), authz.maxDepth),
-		searchstore.OrgFilter{OrgId: query.OrgID},
+		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, model.TypeAnnotation, authz.features, recursiveQueriesSupported, authz.db.GetDialect(), authz.maxDepth),
+		model.OrgFilter{OrgId: query.OrgID},
 	}
 
 	var dashboardUIDs []string
 	if query.DashboardUID != "" {
 		dashboardUIDs = append(dashboardUIDs, query.DashboardUID)
-		filters = append(filters, searchstore.DashboardFilter{
+		filters = append(filters, model.DashboardFilter{
 			UIDs: []string{query.DashboardUID},
 		})
 	}
@@ -132,7 +132,7 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		Filters:       filters,
 		SignedInUser:  query.SignedInUser,
 		Page:          query.Page,
-		Type:          searchstore.TypeAnnotation,
+		Type:          model.TypeAnnotation,
 		Limit:         authz.searchDashboardsPageLimit,
 	})
 	if err != nil {

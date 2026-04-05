@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, useStyles2 } from '@grafana/ui';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';

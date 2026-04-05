@@ -2,17 +2,16 @@ import { useMemo } from 'react';
 
 import {
   DataTransformerID,
-  SelectableValue,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { LabelsToFieldsMode, LabelsToFieldsOptions } from '@grafana/data/internal';
+import { LabelsToFieldsMode, type LabelsToFieldsOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/labelsToFields.svg';
 import lightImage from '../images/light/labelsToFields.svg';
 
@@ -151,7 +150,6 @@ export const getLabelsToFieldsTransformerRegistryItem: () => TransformerRegistry
     'Group series by time and return labels or tags as fields.'
   ),
   categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.labelsToFields).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

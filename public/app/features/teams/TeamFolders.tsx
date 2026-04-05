@@ -3,9 +3,9 @@ import memoizeOne from 'memoize-one';
 import { Fragment } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { t } from '@grafana/i18n';
-import { Alert, Column, EmptyState, InteractiveTable, TextLink } from '@grafana/ui';
+import { Alert, type Column, EmptyState, InteractiveTable, TextLink } from '@grafana/ui';
 import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { useGetFolderParentsQuery } from 'app/api/clients/folder/v1beta1';
 import { GENERAL_FOLDER_TITLE, GENERAL_FOLDER_UID } from 'app/features/search/constants';

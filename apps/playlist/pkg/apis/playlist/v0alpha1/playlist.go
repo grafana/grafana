@@ -18,7 +18,6 @@ type (
 	PlaylistPlaylistItemType         = v1.PlaylistPlaylistItemType
 	PlayliststatusOperatorState      = v1.PlayliststatusOperatorState
 	PlaylistStatusOperatorStateState = v1.PlaylistStatusOperatorStateState
-	PlaylistClient                   = v1.PlaylistClient
 	PlaylistJSONCodec                = v1.PlaylistJSONCodec
 )
 
@@ -35,8 +34,6 @@ var (
 	NewPlaylistItem                = v1.NewPlaylistItem
 	NewPlaylistPlaylistItem        = v1.NewPlaylistPlaylistItem
 	NewPlayliststatusOperatorState = v1.NewPlayliststatusOperatorState
-	NewPlaylistClient              = v1.NewPlaylistClient
-	NewPlaylistClientFromGenerator = v1.NewPlaylistClientFromGenerator
 )
 
 var (

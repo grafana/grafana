@@ -2,25 +2,24 @@ import { useCallback } from 'react';
 
 import {
   DataTransformerID,
-  SelectableValue,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
+import { type JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { Combobox, InlineFieldRow, InlineField } from '@grafana/ui';
+import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/joinByField.svg';
 import lightImage from '../images/light/joinByField.svg';
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
   const names = useFieldDisplayNames(input);
-  const fieldNames = useSelectOptions(names);
+  const fieldNames = useMatcherSelectOptions(names);
 
   const modes = [
     {
@@ -56,7 +55,7 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
     });
 
   const onSelectField = useCallback(
-    (value: SelectableValue<string>) => {
+    (value: SelectableValue<string> | null) => {
       onChange({
         ...options,
         byField: value?.value,
@@ -83,7 +82,7 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
           labelWidth={8}
           grow
         >
-          <Select options={modes} value={options.mode ?? JoinMode.outer} onChange={onSetMode} />
+          <Combobox options={modes} value={options.mode ?? JoinMode.outer} onChange={onSetMode} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -92,7 +91,7 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
           labelWidth={8}
           grow
         >
-          <Select
+          <Combobox
             options={[...fieldNames, ...variables]}
             value={options.byField}
             onChange={onSelectField}
@@ -118,7 +117,6 @@ export const getJoinByFieldTransformerRegistryItem: () => TransformerRegistryIte
     'Combine rows from 2+ tables, based on a related field.'
   ),
   categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

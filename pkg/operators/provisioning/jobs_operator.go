@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -18,10 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
+	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
@@ -221,6 +224,7 @@ type jobsControllerConfig struct {
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
 	maxSyncWorkers       int
+	folderAPIVersion     string
 }
 
 func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
@@ -229,15 +233,19 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 		return nil, err
 	}
 
+	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	folderAPIVersion := operatorSec.Key("folders_api_version").MustString(folderv1beta1.APIVersion)
+
 	return &jobsControllerConfig{
 		ControllerConfig:     *controllerCfg,
-		historyExpiration:    cfg.SectionWithEnvOverrides("operator").Key("history_expiration").MustDuration(0),
-		concurrentDrivers:    cfg.SectionWithEnvOverrides("operator").Key("concurrent_drivers").MustInt(3),
-		maxSyncWorkers:       cfg.SectionWithEnvOverrides("operator").Key("max_sync_workers").MustInt(10),
-		maxJobTimeout:        cfg.SectionWithEnvOverrides("operator").Key("max_job_timeout").MustDuration(20 * time.Minute),
-		cleanupInterval:      cfg.SectionWithEnvOverrides("operator").Key("cleanup_interval").MustDuration(time.Minute),
-		jobInterval:          cfg.SectionWithEnvOverrides("operator").Key("job_interval").MustDuration(30 * time.Second),
-		leaseRenewalInterval: cfg.SectionWithEnvOverrides("operator").Key("lease_renewal_interval").MustDuration(30 * time.Second),
+		historyExpiration:    operatorSec.Key("history_expiration").MustDuration(0),
+		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
+		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
+		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
+		cleanupInterval:      operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
+		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
+		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(30 * time.Second),
+		folderAPIVersion:     folderAPIVersion,
 	}, nil
 }
 
@@ -252,6 +260,7 @@ func setupWorkers(
 	features := featuremgmt.ProvideToggles(featureManager)
 	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+	folderAPIVersion := controllerCfg.folderAPIVersion
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
@@ -270,7 +279,7 @@ func setupWorkers(
 		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	workers := make([]jobs.Worker, 0)
@@ -301,6 +310,7 @@ func setupWorkers(
 		stageIfPossible,
 		metrics,
 		exportEnabled,
+		folderAPIVersion,
 	)
 	workers = append(workers, exportWorker)
 
@@ -314,6 +324,7 @@ func setupWorkers(
 		stageIfPossible,
 		metrics,
 		exportEnabled,
+		folderAPIVersion,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -333,8 +344,16 @@ func setupWorkers(
 	workers = append(workers, moveWorker)
 
 	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker()
+	fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(folderAPIVersion))
 	workers = append(workers, fixMetadataWorker)
+
+	// Release Resources (orphan cleanup — removes ownership annotations)
+	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)
+	workers = append(workers, releaseResourcesWorker)
+
+	// Delete Resources (orphan cleanup — deletes managed resources)
+	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients, 10)
+	workers = append(workers, deleteResourcesWorker)
 
 	// PullRequest
 	urlProvider, err := controllerCfg.URLProvider()
