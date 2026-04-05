@@ -712,15 +712,17 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 		return nil
 	})
 
-	if err == nil {
-		dtos := []model.LibraryElementDTO{dto}
-		enrichErr := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), dtos)
-		// do not return the error, just log it, because at this point, the patch has succeeded
-		if enrichErr != nil {
-			l.log.Warn("Failed to enrich connected dashboards for library element", "uid", dto.UID, "error", enrichErr)
-		} else {
-			dto = dtos[0]
-		}
+	if err != nil {
+		return model.LibraryElementDTO{}, err
+	}
+
+	dtos := []model.LibraryElementDTO{dto}
+	enrichErr := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), dtos)
+	// do not return the error, just log it, because at this point, the patch has succeeded
+	if enrichErr != nil {
+		l.log.Warn("Failed to enrich connected dashboards for library element", "uid", dto.UID, "error", enrichErr)
+	} else {
+		dto = dtos[0]
 	}
 
 	return dto, nil
