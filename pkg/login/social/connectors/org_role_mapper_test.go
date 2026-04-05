@@ -212,6 +212,13 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			directlyMappedRole: "",
 			expected:           map[int64]org.RoleType{1: org.RoleAdmin},
 		},
+		{
+			name:               "should treat invalid regexps as regular strings with no match or expansion",
+			externalOrgs:       []string{"First_Editor"},
+			orgMappingSettings: []string{"*invalid(.*)_(.*):$1:$2"},
+			directlyMappedRole: "",
+			expected:           map[int64]org.RoleType{2: org.RoleViewer},
+		},
 	}
 	orgService := orgtest.NewOrgServiceFake()
 	cfg := setting.NewCfg()

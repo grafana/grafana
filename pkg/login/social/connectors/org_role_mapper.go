@@ -28,7 +28,7 @@ type OrgRoleMapper struct {
 }
 
 // MappingConfiguration represents the mapping configuration from external orgs to Grafana orgs and roles.
-// orgMapping: mapping from external orgs to Grafana orgs and roles
+// entries: a list of mappings associating a potential external org to a Grafana org and role
 // strictRoleMapping: if true, the mapper ensures that the evaluated role from orgMapping or the directlyMappedRole is a valid role, otherwise it will return nil.
 type MappingConfiguration struct {
 	entries           []MappingEntry
@@ -42,6 +42,15 @@ func NewMappingConfiguration(entries []MappingEntry, strictRoleMapping bool) Map
 	}
 }
 
+// MappingEntry represents a mapping from an external claim to a Grafana org and role
+// The source of the mapping can be a regexp, in which case the Grafana org and role will be expanded with
+// capture groups found by matching the source against the user informatoin during login
+// externalClaim: the external claim to associate. Kept as a string alongside the pattern in case
+// it is a special case or not a valid regexp
+// externalClaimPattern: a compiled regexp from the externalClaim. If not nit, it will be used to expand the associated
+// Grafana org and role
+// mappedOrgTemplate: the Grafana org that should be given in case of a match.
+// mappedRoleTemplate: the Grafana role that should be given in case of a match.
 type MappingEntry struct {
 	externalClaim        string
 	externalClaimPattern *regexp.Regexp
@@ -79,12 +88,12 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
 ) map[int64]org.RoleType {
-	if len(mappingCfg.entries) == 0 {
+	orgMapping := m.resolveOrgMappings(ctx, externalOrgs, mappingCfg)
+	if len(orgMapping) == 0 {
 		// Org mapping is not configured
 		return m.getDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
 	}
 
-	orgMapping := m.resolveOrgMappings(ctx, externalOrgs, mappingCfg)
 	userOrgRoles := getMappedOrgRoles(externalOrgs, orgMapping)
 
 	if err := m.handleGlobalOrgMapping(userOrgRoles); err != nil {
@@ -116,26 +125,24 @@ func (m *OrgRoleMapper) resolveOrgMappings(ctx context.Context, externalOrgs []s
 	for _, input := range externalOrgs {
 		for _, entry := range mappingConfiguration.entries {
 			source := entry.externalClaim
-			var mappedOrg string
-			var mappedRole string
+			mappedOrg := entry.mappedOrgTemplate
+			mappedRole := entry.mappedRoleTemplate
 
 			if entry.externalClaimPattern != nil {
 				match := entry.externalClaimPattern.FindStringSubmatchIndex(input)
-				mappedOrg = string(entry.externalClaimPattern.ExpandString(nil, entry.mappedOrgTemplate, input, match))
-				mappedRole = string(entry.externalClaimPattern.ExpandString(nil, entry.mappedRoleTemplate, input, match))
-				source = input
-			} else {
-				mappedOrg = entry.mappedOrgTemplate
-				mappedRole = entry.mappedRoleTemplate
+				if match != nil {
+					mappedOrg = string(entry.externalClaimPattern.ExpandString(nil, entry.mappedOrgTemplate, input, match))
+					mappedRole = string(entry.externalClaimPattern.ExpandString(nil, entry.mappedRoleTemplate, input, match))
+					source = input
+				}
 			}
-			fmt.Printf("mappedOrg: %s\n", mappedOrg)
-			fmt.Printf("mappedRole: %s\n", mappedRole)
 
 			orgId, err := m.getOrgIDForInternalMapping(ctx, mappedOrg)
 			if err != nil {
 				m.logger.Warn("Could not fetch OrgID. Skipping.", "err", err, "mapping", fmt.Sprintf("%v", entry), "org", mappedOrg)
 				if mappingConfiguration.strictRoleMapping {
 					// Return empty mapping if at least one org name cannot be resolved when roleStrict is enabled
+					m.logger.Warn("Skipping org mapping due to missing org role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", entry), "org", mappedOrg)
 					return map[string]map[int64]org.RoleType{}
 				}
 				continue
@@ -159,7 +166,6 @@ func (m *OrgRoleMapper) resolveOrgMappings(ctx context.Context, externalOrgs []s
 		}
 	}
 
-	fmt.Printf("%+v\n", res)
 	return res
 }
 
@@ -234,6 +240,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 
 		if len(kv) < 3 {
 			if roleStrict {
+				m.logger.Warn("Skipping org mapping due to missing role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
 				return NewMappingConfiguration([]MappingEntry{}, roleStrict)
 			}
 			roleTemplate = string(org.RoleViewer)
