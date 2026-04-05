@@ -242,10 +242,10 @@ var (
 		{
 			Name:            "provisioningFolderMetadata",
 			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "provisioningExport",
@@ -381,14 +381,6 @@ var (
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
 			Expression:   "false",
-		},
-		{
-			Name:            "kubernetesAlertingRules",
-			Description:     "Adds support for Kubernetes alerting and recording rules",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "false",
 		},
 		{
 			Name:            "kubernetesCorrelations",
@@ -627,10 +619,10 @@ var (
 		{
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables new dashboard layouts",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardDefaultLayoutSelector",
@@ -959,7 +951,7 @@ var (
 		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
@@ -1034,10 +1026,10 @@ var (
 		{
 			Name:         "newUnconfiguredPanel",
 			Description:  "Enables the new unconfigured panel experience",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "dashboardLibrary",
@@ -2138,10 +2130,10 @@ var (
 		{
 			Name:            "prometheusTypeMigration",
 			Description:     "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageDeprecated,
 			RequiresRestart: true,
 			Owner:           grafanaPartnerPluginsSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "pluginContainers",
@@ -2744,10 +2736,10 @@ var (
 		{
 			Name:         "splashScreen",
 			Description:  "Enables the splash screen modal for introducing new Grafana features on first session",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "streamingForwardTeamHeadersTempo",

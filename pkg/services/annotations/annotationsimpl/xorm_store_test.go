@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +18,6 @@ import (
 	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -69,7 +66,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboard := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		mockDashSvc := testutil.NewMockDashboardService(t)
+
+		dashboard := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
@@ -77,7 +76,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			}),
 		})
 
-		dashboard2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		dashboard2 := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
@@ -861,7 +860,6 @@ func TestIntegrationAnnotationsAlwaysOnMigrations(t *testing.T) {
 		assert.Equal(t, expectedUID, *result.DashboardUID)
 	})
 }
-
 func BenchmarkFindTags_10k(b *testing.B) {
 	benchmarkFindTags(b, 10000)
 }

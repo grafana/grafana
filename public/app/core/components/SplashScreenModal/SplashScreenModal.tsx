@@ -47,17 +47,19 @@ export function SplashScreenModal() {
         onNext={goToNext}
         onGoTo={setActiveIndex}
       />
-      <LinkButton
-        href={activeFeature.ctaUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        icon="external-link-alt"
-        variant="secondary"
-        fill="outline"
-        size="md"
-      >
-        {activeFeature.ctaText}
-      </LinkButton>
+      {activeFeature.ctaUrl && (
+        <LinkButton
+          href={activeFeature.ctaUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          icon="external-link-alt"
+          variant="secondary"
+          fill="outline"
+          size="md"
+        >
+          {activeFeature.ctaText}
+        </LinkButton>
+      )}
     </>
   );
 
