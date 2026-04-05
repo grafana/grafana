@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { dateTime, PanelData, TimeRange } from '@grafana/data';
@@ -67,12 +67,14 @@ describe('PromLink', () => {
         <PromLink datasource={getDataSource()} panelData={getPanelData()} query={{} as PromQuery} />
       </div>
     );
-    expect(screen.getByText('Prometheus')).toHaveAttribute(
-      'href',
-      `prom1/graph?g0.expr=up&g0.range_input=${intervalInSeconds}s&g0.end_input=${endInput}&g0.step_input=15&g0.tab=0`
-    );
+    await waitFor(() => {
+      expect(screen.getByText('Prometheus')).toHaveAttribute(
+        'href',
+        `prom1/graph?g0.expr=up&g0.range_input=${intervalInSeconds}s&g0.end_input=${endInput}&g0.step_input=15&g0.tab=0`
+      );
+    });
   });
-  it('should show different link when there are 2 components with the same panel data', () => {
+  it('should show different link when there are 2 components with the same panel data', async () => {
     render(
       <div>
         <PromLink datasource={getDataSource()} panelData={getPanelData()} query={{} as PromQuery} />
@@ -83,15 +85,17 @@ describe('PromLink', () => {
         />
       </div>
     );
-    const promLinkButtons = screen.getAllByText('Prometheus');
-    expect(promLinkButtons[0]).toHaveAttribute(
-      'href',
-      `prom1/graph?g0.expr=up&g0.range_input=${intervalInSeconds}s&g0.end_input=${endInput}&g0.step_input=15&g0.tab=0`
-    );
-    expect(promLinkButtons[1]).toHaveAttribute(
-      'href',
-      `prom2/graph?g0.expr=up&g0.range_input=${intervalInSeconds}s&g0.end_input=${endInput}&g0.step_input=15&g0.tab=0`
-    );
+    await waitFor(() => {
+      const promLinkButtons = screen.getAllByText('Prometheus');
+      expect(promLinkButtons[0]).toHaveAttribute(
+        'href',
+        `prom1/graph?g0.expr=up&g0.range_input=${intervalInSeconds}s&g0.end_input=${endInput}&g0.step_input=15&g0.tab=0`
+      );
+      expect(promLinkButtons[1]).toHaveAttribute(
+        'href',
+        `prom2/graph?g0.expr=up&g0.range_input=${intervalInSeconds}s&g0.end_input=${endInput}&g0.step_input=15&g0.tab=0`
+      );
+    });
   });
   it('should create sanitized link', async () => {
     render(
@@ -103,7 +107,9 @@ describe('PromLink', () => {
         />
       </div>
     );
-    expect(screen.getByText('Prometheus')).toHaveAttribute('href', 'about:blank');
+    await waitFor(() => {
+      expect(screen.getByText('Prometheus')).toHaveAttribute('href', 'about:blank');
+    });
   });
   it('should add custom query parameters when it is configured', async () => {
     render(
@@ -115,9 +121,11 @@ describe('PromLink', () => {
         />
       </div>
     );
-    expect(screen.getByText('Prometheus')).toHaveAttribute(
-      'href',
-      `prom3/graph?g0.foo=1&g0.expr=up&g0.range_input=${intervalInSeconds}s&g0.end_input=${endInput}&g0.step_input=20&g0.tab=0`
-    );
+    await waitFor(() => {
+      expect(screen.getByText('Prometheus')).toHaveAttribute(
+        'href',
+        `prom3/graph?g0.foo=1&g0.expr=up&g0.range_input=${intervalInSeconds}s&g0.end_input=${endInput}&g0.step_input=20&g0.tab=0`
+      );
+    });
   });
 });
