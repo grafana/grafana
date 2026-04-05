@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -116,7 +116,7 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 		OrgId:         query.SignedInUser.GetOrgID(),
 		SignedInUser:  query.SignedInUser,
 		Page:          query.Page,
-		Type:          searchstore.TypeAnnotation,
+		Type:          model.TypeAnnotation,
 		Limit:         authz.searchDashboardsPageLimit,
 	})
 	if err != nil {

@@ -383,14 +383,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:            "kubernetesAlertingRules",
-			Description:     "Adds support for Kubernetes alerting and recording rules",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
 			Name:            "kubernetesCorrelations",
 			Description:     "Adds support for Kubernetes correlations",
 			Stage:           FeatureStageExperimental,
@@ -2138,10 +2130,10 @@ var (
 		{
 			Name:            "prometheusTypeMigration",
 			Description:     "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageDeprecated,
 			RequiresRestart: true,
 			Owner:           grafanaPartnerPluginsSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "pluginContainers",

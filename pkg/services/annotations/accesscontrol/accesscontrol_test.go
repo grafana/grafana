@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -31,7 +30,7 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 	queryAllDashboards := &dashboards.FindPersistedDashboardsQuery{
 		OrgId:        1,
 		SignedInUser: signedInUser,
-		Type:         searchstore.TypeAnnotation,
+		Type:         model.TypeAnnotation,
 		Limit:        int64(100),
 		Page:         int64(1),
 	}
@@ -45,7 +44,7 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 		DashboardUIDs: []string{"uid1"},
 		OrgId:         1,
 		SignedInUser:  signedInUser,
-		Type:          searchstore.TypeAnnotation,
+		Type:          model.TypeAnnotation,
 		Limit:         int64(100),
 		Page:          int64(1),
 	}

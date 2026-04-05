@@ -254,11 +254,6 @@ export interface FeatureToggles {
   */
   useKubernetesShortURLsAPI?: boolean;
   /**
-  * Adds support for Kubernetes alerting and recording rules
-  * @default false
-  */
-  kubernetesAlertingRules?: boolean;
-  /**
   * Adds support for Kubernetes correlations
   * @default false
   */
@@ -1352,7 +1347,8 @@ export interface FeatureToggles {
   azureResourcePickerUpdates?: boolean;
   /**
   * Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
-  * @default false
+  * @deprecated
+  * @default true
   */
   prometheusTypeMigration?: boolean;
   /**
