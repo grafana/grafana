@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -682,35 +681,24 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) db.DB {
 	t.Helper()
 
-	db, cfg := db.InitTestDBWithCfg(t)
-	fStore := folderimpl.ProvideStore(db, cfg)
-
-	// Create a signed-in user for folder creation
-	usr := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Login:  "test",
-	}
+	db, _ := db.InitTestDBWithCfg(t)
 
 	// folders need to be created in both the folder and dashboard table
 	for i := 1; i <= numFolders; i++ {
 		str := strconv.Itoa(i)
-		folder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:        str,
-			OrgID:        1,
-			UID:          str,
-			SignedInUser: usr,
-		})
-		require.NoError(t, err)
-		err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			now := time.Now()
+			if _, err := sess.Exec("INSERT INTO folder(org_id, uid, title, created, updated) VALUES(?, ?, ?, ?, ?)",
+				1, str, str, now, now); err != nil {
+				return err
+			}
 			_, err := sess.Insert(&dashboards.Dashboard{
 				OrgID:    1,
-				UID:      folder.UID,
+				UID:      str,
 				Slug:     str,
 				Title:    str,
 				IsFolder: true,
-				Data:     simplejson.NewFromAny(map[string]any{"title": str, "uid": folder.UID}),
+				Data:     simplejson.NewFromAny(map[string]any{"title": str, "uid": str}),
 				Created:  now,
 				Updated:  now,
 			})
@@ -801,50 +789,42 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol.Permission, orgID int64, features featuremgmt.FeatureToggles) db.DB {
 	t.Helper()
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, _ := db.InitTestDBWithCfg(t)
 
-	fStore := folderimpl.ProvideStore(db, cfg)
 	// create in both the folder & dashboard tables
-	parent, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:        "parent",
-		OrgID:        orgID,
-		UID:          "parent",
-		SignedInUser: usr,
-	})
-	require.NoError(t, err)
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		now := time.Now()
+		if _, err := sess.Exec("INSERT INTO folder(org_id, uid, title, created, updated) VALUES(?, ?, ?, ?, ?)",
+			orgID, "parent", "parent", now, now); err != nil {
+			return err
+		}
 		_, err := sess.Insert(&dashboards.Dashboard{
 			OrgID:    orgID,
-			UID:      parent.UID,
+			UID:      "parent",
 			Slug:     "parent",
 			Title:    "parent",
 			IsFolder: true,
-			Data:     simplejson.NewFromAny(map[string]any{"title": "parent", "uid": parent.UID}),
+			Data:     simplejson.NewFromAny(map[string]any{"title": "parent", "uid": "parent"}),
 			Created:  now,
 			Updated:  now,
 		})
 		return err
 	})
 	require.NoError(t, err)
-	subfolder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:        "subfolder",
-		OrgID:        orgID,
-		UID:          "subfolder",
-		ParentUID:    parent.UID,
-		SignedInUser: usr,
-	})
-	require.NoError(t, err)
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		now := time.Now()
+		if _, err := sess.Exec("INSERT INTO folder(org_id, uid, parent_uid, title, created, updated) VALUES(?, ?, ?, ?, ?, ?)",
+			orgID, "subfolder", "parent", "subfolder", now, now); err != nil {
+			return err
+		}
 		_, err := sess.Insert(&dashboards.Dashboard{
 			OrgID:     orgID,
-			UID:       subfolder.UID,
+			UID:       "subfolder",
 			Slug:      "subfolder",
 			Title:     "subfolder",
 			IsFolder:  true,
-			FolderUID: parent.UID,
-			Data:      simplejson.NewFromAny(map[string]any{"title": "subfolder", "uid": subfolder.UID}),
+			FolderUID: "parent",
+			Data:      simplejson.NewFromAny(map[string]any{"title": "subfolder", "uid": "subfolder"}),
 			Created:   now,
 			Updated:   now,
 		})
@@ -875,7 +855,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 			OrgID:     orgID,
 			Slug:      "dashboard-under-parent-folder",
 			Title:     "dashboard under parent folder",
-			FolderUID: parent.UID,
+			FolderUID: "parent",
 			Data:      simplejson.NewFromAny(map[string]any{"title": "dashboard under parent folder"}),
 			Created:   now,
 			Updated:   now,
@@ -892,7 +872,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 			OrgID:     orgID,
 			Slug:      "dashboard-under-subfolder",
 			Title:     "dashboard under subfolder",
-			FolderUID: subfolder.UID,
+			FolderUID: "subfolder",
 			Data:      simplejson.NewFromAny(map[string]any{"title": "dashboard under subfolder"}),
 			Created:   now,
 			Updated:   now,
