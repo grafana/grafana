@@ -11,7 +11,6 @@ import {
 import {
   useGetUserPreferencesQuery,
   useUpdateUserPreferencesMutation,
-  type UpdatePrefsCmd,
 } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -40,14 +39,15 @@ import { useAppNotification } from '../../../core/copy/appNotification';
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, type Props } from './utils';
-
-const toUpdateTheme = (theme: string | undefined): 'light' | 'dark' | 'system' | undefined => {
-  if (theme === 'light' || theme === 'dark' || theme === 'system') {
-    return theme;
-  }
-  return undefined;
-};
+import {
+  getLanguageOptions,
+  getRegionalFormatOptions,
+  getStyles,
+  getTranslatedThemeName,
+  toUpdatePrefsCmd,
+  type PrefsState,
+  type Props,
+} from './utils';
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const { preferenceType, resourceUri } = props;
@@ -75,7 +75,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   const notify = useAppNotification();
 
-  const [state, setState] = useState<UpdatePrefsCmd>({
+  const [state, setState] = useState<PrefsState>({
     theme: undefined,
     timezone: '',
     weekStart: '',
@@ -107,7 +107,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       setState((prev) => ({
         ...prev,
         homeDashboardUID: prefs.homeDashboardUID ?? prev.homeDashboardUID,
-        theme: toUpdateTheme(prefs.theme) ?? prev.theme,
+        theme: prefs.theme ?? prev.theme,
         timezone: prefs.timezone ?? prev.timezone,
         weekStart: prefs.weekStart ?? prev.weekStart,
         language: prefs.language ?? prev.language,
@@ -130,16 +130,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       language: state.language,
     });
 
-    const prefsData = {
-      homeDashboardUID: state.homeDashboardUID,
-      theme: state.theme,
-      timezone: state.timezone,
-      weekStart: state.weekStart,
-      language: state.language,
-      regionalFormat: state.regionalFormat,
-      queryHistory: state.queryHistory,
-      navbar: state.navbar,
-    };
+    const prefsData = toUpdatePrefsCmd(state);
 
     try {
       if (preferenceType === 'user') {
@@ -156,7 +147,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
   };
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {
-    setState((prev: UpdatePrefsCmd) => ({ ...prev, theme: toUpdateTheme(value.value) }));
+    setState((prev) => ({ ...prev, theme: value.value }));
     reportInteraction('grafana_preferences_theme_changed', {
       toTheme: value.value,
       preferenceType: props.preferenceType,
