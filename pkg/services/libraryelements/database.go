@@ -714,13 +714,16 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 
 	if err == nil {
 		dtos := []model.LibraryElementDTO{dto}
-		if enrichErr := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), dtos); enrichErr != nil {
-			return model.LibraryElementDTO{}, enrichErr
+		enrichErr := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), dtos)
+		// do not return the error, just log it, because at this point, the patch has succeeded
+		if enrichErr != nil {
+			l.log.Warn("Failed to enrich connected dashboards for library element", "uid", dto.UID, "error", enrichErr)
+		} else {
+			dto = dtos[0]
 		}
-		dto = dtos[0]
 	}
 
-	return dto, err
+	return dto, nil
 }
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
