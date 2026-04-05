@@ -32,8 +32,7 @@ SELECT DISTINCT
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
 	, u2.login AS updated_by_name
-	, u2.email AS updated_by_email
-	, (SELECT COUNT(connection_id) FROM ` + model.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
+	, u2.email AS updated_by_email`
 )
 
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {
@@ -371,6 +370,10 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		}
 	}
 
+	if err := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), leDtos); err != nil {
+		return nil, err
+	}
+
 	return leDtos, nil
 }
 
@@ -510,6 +513,10 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					},
 				},
 			})
+		}
+
+		if err := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), retDTOs); err != nil {
+			return err
 		}
 
 		var libraryElements []model.LibraryElementWithMeta
@@ -702,154 +709,15 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 		return nil
 	})
 
-	return dto, err
-}
-
-// getConnectionIDs returns a map[string]int64 with the key as elementID:connectionUID and the value as connectionID
-func (l *LibraryElementService) getConnectionIDs(c context.Context, signedInUser identity.Requester, uid string) (map[string]int64, error) {
-	connections := map[string]int64{}
-	recursiveQueriesAreSupported, err := l.SQLStore.RecursiveQueriesAreSupported()
-	if err != nil {
-		return nil, err
+	if err == nil {
+		dtos := []model.LibraryElementDTO{dto}
+		if enrichErr := l.enrichConnectedDashboards(c, signedInUser.GetOrgID(), dtos); enrichErr != nil {
+			return model.LibraryElementDTO{}, enrichErr
+		}
+		dto = dtos[0]
 	}
 
-	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		var libraryElementConnections []model.LibraryElementConnectionWithMeta
-		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
-		builder.Write("SELECT lec.id, lec.element_id, lec.connection_id")
-		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec ")
-		builder.Write(" INNER JOIN " + model.LibraryElementTableName + " AS le ON le.id = element_id")
-		builder.Write(" WHERE le.org_id=? AND le.uid=?", signedInUser.GetOrgID(), uid)
-		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
-			return err
-		}
-		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
-		for _, connection := range libraryElementConnections {
-			connections[getConnectionKey(connection.ElementID, connection.ConnectionID)] = connection.ID
-		}
-
-		return nil
-	})
-
-	return connections, err
-}
-
-func getConnectionKey(elementID int64, connectionID int64) string {
-	return fmt.Sprintf("%d:%d", elementID, connectionID)
-}
-
-// getElementsForDashboardID gets all elements for a specific dashboard
-func (l *LibraryElementService) getElementsForDashboardID(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
-	libraryElementMap := make(map[string]model.LibraryElementDTO)
-	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		var libraryElements []model.LibraryElementWithMeta
-		sql := selectLibraryElementDTOWithMeta +
-			getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()) +
-			" INNER JOIN " + model.LibraryElementConnectionTableName + " AS lce ON lce.element_id = le.id AND lce.kind=1 AND lce.connection_id=?"
-		sess := session.SQL(sql, dashboardID)
-		err := sess.Find(&libraryElements)
-		if err != nil {
-			return err
-		}
-
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		for _, element := range libraryElements {
-			if element.FolderName == "" {
-				element.FolderName = dashboards.RootFolderName
-			}
-			if element.FolderUID == "" {
-				element.FolderUID = ac.GeneralFolderUID
-			}
-
-			libraryElementMap[element.UID] = model.LibraryElementDTO{
-				ID:          element.ID,
-				OrgID:       element.OrgID,
-				FolderID:    element.FolderID, // nolint:staticcheck
-				UID:         element.UID,
-				Name:        element.Name,
-				Kind:        element.Kind,
-				Type:        element.Type,
-				Description: element.Description,
-				Model:       element.Model,
-				Version:     element.Version,
-				Meta: model.LibraryElementDTOMeta{
-					FolderName:          element.FolderName,
-					FolderUID:           element.FolderUID,
-					ConnectedDashboards: element.ConnectedDashboards,
-					Created:             element.Created,
-					Updated:             element.Updated,
-					CreatedBy: model.LibraryElementDTOMetaUser{
-						Id:        element.CreatedBy,
-						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
-					},
-					UpdatedBy: model.LibraryElementDTOMetaUser{
-						Id:        element.UpdatedBy,
-						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
-					},
-				},
-			}
-		}
-
-		return nil
-	})
-
-	return libraryElementMap, err
-}
-
-// connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
-func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		_, err := session.Exec("DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
-		if err != nil {
-			return err
-		}
-		for _, elementUID := range elementUIDs {
-			element, err := l.GetLibraryElement(c, signedInUser, session, elementUID)
-			if err != nil {
-				return err
-			}
-			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-			// nolint:staticcheck
-			if err := l.requireViewPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
-				return err
-			}
-
-			var userID int64
-			if id, err := identity.UserIdentifier(signedInUser.GetID()); err == nil {
-				userID = id
-			}
-
-			connection := model.LibraryElementConnection{
-				ElementID:    element.ID,
-				Kind:         1,
-				ConnectionID: dashboardID,
-				Created:      time.Now(),
-				CreatedBy:    userID,
-			}
-			if _, err := session.Insert(&connection); err != nil {
-				if l.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-					return nil
-				}
-				return err
-			}
-		}
-		return nil
-	})
-
-	return err
-}
-
-// disconnectElementsFromDashboardID deletes connections for all Library Elements in a Dashboard.
-func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Context, dashboardID int64) error {
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		_, err := session.Exec("DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	return dto, err
 }
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
@@ -861,33 +729,26 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 			}
 			return err
 		}
-		var connectionIDs []struct {
-			ConnectionID int64 `xorm:"connection_id"`
+
+		var elements []struct {
+			UID string `xorm:"uid"`
 		}
-		sql := "SELECT lec.connection_id FROM library_element AS le"
-		sql += " INNER JOIN " + model.LibraryElementConnectionTableName + " AS lec on le.id = lec.element_id"
-		sql += " WHERE le.folder_uid=? AND le.org_id=?"
-		err := session.SQL(sql, folderUID, signedInUser.GetOrgID()).Find(&connectionIDs)
+		err := session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).Find(&elements)
 		if err != nil {
 			return err
-		}
-		if len(connectionIDs) > 0 {
-			return model.ErrFolderHasConnectedLibraryElements
 		}
 
-		var elementIDs []struct {
-			ID int64 `xorm:"id"`
-		}
-		err = session.SQL("SELECT id from library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).Find(&elementIDs)
-		if err != nil {
-			return err
-		}
-		for _, elementID := range elementIDs {
-			_, err := session.Exec("DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE element_id=?", elementID.ID)
+		serviceCtx, _ := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
+		for _, elem := range elements {
+			connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, signedInUser.GetOrgID())
 			if err != nil {
 				return err
 			}
+			if len(connectedDashboards) > 0 {
+				return model.ErrFolderHasConnectedLibraryElements
+			}
 		}
+
 		if _, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()); err != nil {
 			return err
 		}
@@ -917,4 +778,18 @@ func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, s
 		foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
 	}
 	return foldersWithMatchingTitles, nil
+}
+
+// enrichConnectedDashboards populates the ConnectedDashboards count on each
+// DTO by querying unified search.
+func (l *LibraryElementService) enrichConnectedDashboards(ctx context.Context, orgID int64, dtos []model.LibraryElementDTO) error {
+	serviceCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+	for i := range dtos {
+		dashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, dtos[i].UID, orgID)
+		if err != nil {
+			return err
+		}
+		dtos[i].Meta.ConnectedDashboards = int64(len(dashboards))
+	}
+	return nil
 }
