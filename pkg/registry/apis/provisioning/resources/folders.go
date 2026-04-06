@@ -151,8 +151,14 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 
 	// ParentID is only resolved during the walk below, so we skip it here
 	// to avoid a false mismatch against the already-resolved tree entry.
+	// Force walk is used to skip the early-return optimisation so that the full ancestor
+	// walk always runs. Use this when the caller knows that the tree entry may be
+	// stale (e.g. a folder was moved to a new path).
 	if !epCfg.forceWalk {
 		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
+
+			// When a folder is being relocated, its UID temporarily exists at both the old
+			// and new paths in the tree. Allow the duplicate UID only in that case.
 			if !epCfg.isRelocating(f.ID) &&
 				safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
 				return "", NewResourceValidationError(fmt.Errorf(
