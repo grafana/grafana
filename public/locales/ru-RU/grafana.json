@@ -4418,6 +4418,17 @@
       "title": "Вы еще не создали ни одного дашборда",
       "title-folder": "В этой папке еще нет дашбордов"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Удалить эту папку",
       "delete-folder-error": "Ошибка при удалении папки. Повторите попытку позже.",
@@ -5496,9 +5507,6 @@
         "title": {
           "proceed-to-external-site": "Перейти на внешний сайт?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Просмотр в виде сцены"
       }
     },
     "dashboard-links-menu": {
@@ -6045,12 +6053,20 @@
       "not-found": "Источник данных с UID «{{datasourceUid}}» не найден."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Настроить",
       "configure-button-menu": "Переключить меню",
+      "configure-visualization": "",
       "empty-state-message": "Выполните запрос, чтобы запустить визуализацию здесь, или перейдите ко всем визуализациям, чтобы добавить другие типы панелей",
       "menu-open-panel-editor": "Настроить",
       "menu-use-library-panel": "Использовать панель библиотеки",
-      "missing-config": "Отсутствует конфигурация панели"
+      "menu-use-saved-query": "",
+      "missing-config": "Отсутствует конфигурация панели",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Новая панель",
     "on-create-new-row": {
@@ -6833,6 +6849,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6919,6 +6940,10 @@
       "constant-options": "Параметры констант",
       "label-value": "Значение",
       "placeholder-your-metric-prefix": "Префикс метрик"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Правила отображения/скрытия не будут действовать",
@@ -7257,6 +7282,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7581,6 +7612,7 @@
     "sharing": {
       "save-before-share": {
         "text": "На дашборде есть несохраненные изменения. Сохраните их, чтобы предоставить общий доступ к дашборду.",
+        "text-no-save": "",
         "title": "Несохраненные изменения"
       }
     },
@@ -7714,6 +7746,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Форма редактора переменных",
       "back-to-list": "Назад к списку",
@@ -7743,6 +7780,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Вы действительно хотите удалить {{variable}}?",
       "confirmText-delete-variable": "Удалить переменную",
+      "drag-handle-label": "",
       "title-delete-variable": "Удаление переменной",
       "tooltip-duplicate-variable": "Дублировать переменную",
       "tooltip-remove-variable": "Удалить переменную"
@@ -8320,6 +8358,7 @@
       "label-preview": "Предварительный просмотр"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Сопоставление повторяющихся значений",
       "duplicate-value-mapping-tooltip-duplicate": "Дублировать",
       "placeholder-exact-value-to-match": "Точное значение для сопоставления",
@@ -10162,6 +10201,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Добавить ссылку",
+      "drag-handle-label": "",
       "edit-link": "Редактировать ссылку",
       "one-click": "Одно нажатие",
       "one-click-enabled": "Одно нажатие включено",
@@ -12728,7 +12768,7 @@
       "name-required": "Введите имя",
       "save": "Сохранить",
       "table-delete": "Удалить плейлист",
-      "table-drag": "Перетащить для изменения порядка",
+      "table-drag": "",
       "table-empty": "Плейлист пуст. Добавьте дашборды ниже.",
       "table-heading": "Дашборды"
     },
@@ -14904,6 +14944,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14911,13 +14952,14 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14925,15 +14967,13 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -15753,6 +15793,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Нажмите, чтобы редактировать",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Удалить перечислимую строку",
       "remove-enum-row-tooltip-delete": "Удалить"
     },
@@ -16666,6 +16707,7 @@
       "variable": "Переменная"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Дублировать переменную",
       "tooltip-remove-variable": "Удалить переменную"
     },

@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -377,50 +378,166 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
-	adminClient, err := v1beta1.NewTemplateGroupClientFromGenerator(admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
-
-	created, err := adminClient.Create(ctx, &v1beta1.TemplateGroup{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
+	// writer has resource write actions but NO provenance set-status permission.
+	writer := helper.CreateUser("TemplatesWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTemplatesRead,
+				accesscontrol.ActionAlertingNotificationsTemplatesWrite,
+				accesscontrol.ActionAlertingNotificationsTemplatesDelete,
+			},
 		},
-		Spec: v1beta1.TemplateGroupSpec{
-			Title:   "template-group-1",
-			Content: `{{ define "test" }} test {{ end }}`,
-			Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
-		},
-	}, resource.CreateOptions{})
+	})
+	writerClient, err := v1beta1.NewTemplateGroupClientFromGenerator(writer.GetClientRegistry())
 	require.NoError(t, err)
-	require.Equal(t, "none", created.GetProvenanceStatus())
 
-	t.Run("should provide provenance status", func(t *testing.T) {
-		require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{
-			Name: created.Spec.Title,
-		}, admin.Identity.GetOrgID(), "API"))
+	// provisioner has the same write actions PLUS provenance set-status permission.
+	provisioner := helper.CreateUser("TemplatesProvisioner", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTemplatesRead,
+				accesscontrol.ActionAlertingNotificationsTemplatesWrite,
+				accesscontrol.ActionAlertingNotificationsTemplatesDelete,
+				accesscontrol.ActionAlertingProvisioningSetStatus,
+			},
+		},
+	})
+	provisionerClient, err := v1beta1.NewTemplateGroupClientFromGenerator(provisioner.GetClientRegistry())
+	require.NoError(t, err)
 
-		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
+	newTemplate := func(title string) *v1beta1.TemplateGroup {
+		return &v1beta1.TemplateGroup{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.TemplateGroupSpec{
+				Title:   title,
+				Content: `{{ define "` + title + `" }} test {{ end }}`,
+				Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
+			},
+		}
+	}
+
+	t.Run("create", func(t *testing.T) {
+		t.Run("writer can create without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newTemplate("writer-create-no-prov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Empty(t, created.GetProvenanceStatus())
+			require.NoError(t, writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+
+		t.Run("writer cannot create with provenance set", func(t *testing.T) {
+			tmpl := newTemplate("writer-create-with-prov")
+			tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err := writerClient.Create(ctx, tmpl, resource.CreateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can create with provenance", func(t *testing.T) {
+			tmpl := newTemplate("provisioner-create-with-prov")
+			tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, tmpl, resource.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+			require.NoError(t, provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+		})
+	})
+
+	t.Run("update", func(t *testing.T) {
+		// Setup: one unprovisioned and one provisioned resource.
+		unprov, err := writerClient.Create(ctx, newTemplate("update-unprov"), resource.CreateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
-	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := created.Copy().(*v1beta1.TemplateGroup)
-		updated.Spec.Content = `{{ define "another-test" }} test {{ end }}`
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, unprov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		provTmpl := newTemplate("update-prov")
+		provTmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+		prov, err := provisionerClient.Create(ctx, provTmpl, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = provisionerClient.Delete(ctx, prov.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		t.Run("writer can update resource without provenance", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.Spec.Content = `{{ define "update-unprov-v2" }} updated {{ end }}`
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot set provenance on existing resource", func(t *testing.T) {
+			current, err := writerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("writer cannot update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.Spec.Content = `{{ define "update-prov-v2" }} updated {{ end }}`
+			_, err = writerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can set provenance on existing resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, unprov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			got, err := provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
+			// Reset provenance for subsequent subtests.
+			got.SetProvenanceStatus("")
+			_, err = provisionerClient.Update(ctx, got, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("provisioner can update provisioned resource", func(t *testing.T) {
+			current, err := provisionerClient.Get(ctx, prov.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			updated := current.Copy().(*v1beta1.TemplateGroup)
+			updated.Spec.Content = `{{ define "update-prov-v3" }} updated {{ end }}`
+			_, err = provisionerClient.Update(ctx, updated, resource.UpdateOptions{})
+			require.NoError(t, err)
+		})
 	})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	t.Run("delete", func(t *testing.T) {
+		t.Run("writer can delete resource without provenance", func(t *testing.T) {
+			created, err := writerClient.Create(ctx, newTemplate("delete-unprov"), resource.CreateOptions{})
+			require.NoError(t, err)
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("writer cannot delete provisioned resource", func(t *testing.T) {
+			tmpl := newTemplate("delete-prov-forbidden")
+			tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, tmpl, resource.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			})
+			err = writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+		})
+
+		t.Run("provisioner can delete provisioned resource", func(t *testing.T) {
+			tmpl := newTemplate("delete-prov-ok")
+			tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+			created, err := provisionerClient.Create(ctx, tmpl, resource.CreateOptions{})
+			require.NoError(t, err)
+			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 }
 
