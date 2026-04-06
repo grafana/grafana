@@ -19,22 +19,24 @@ var knownUnifiedStorageKeys = map[string]string{
 }
 
 const (
-	PlaylistResource    = "playlists.playlist.grafana.app"
-	FolderResource      = "folders.folder.grafana.app"
-	DashboardResource   = "dashboards.dashboard.grafana.app"
-	ShortURLResource    = "shorturls.shorturl.grafana.app"
-	StarsResource       = "stars.collections.grafana.app"
-	DataSourceResources = "datasources.*.datasource.grafana.app" // All datasources
+	PlaylistResource         = "playlists.playlist.grafana.app"
+	FolderResource           = "folders.folder.grafana.app"
+	DashboardResource        = "dashboards.dashboard.grafana.app"
+	ShortURLResource         = "shorturls.shorturl.grafana.app"
+	StarsResource            = "stars.collections.grafana.app"
+	DataSourceResources      = "datasources.*.datasource.grafana.app" // All datasources
+	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:    true,  // Only Mode5!
-	FolderResource:      true,  // Only Mode5!
-	DashboardResource:   true,  // Only Mode5!
-	ShortURLResource:    false, // Requires kubernetesShortURLs to be enabled by default
-	StarsResource:       false,
-	DataSourceResources: false,
+	PlaylistResource:         true,  // Only Mode5!
+	FolderResource:           true,  // Only Mode5!
+	DashboardResource:        true,  // Only Mode5!
+	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
+	StarsResource:            false,
+	DataSourceResources:      false,
+	QueryCacheConfigResource: false,
 }
 
 // applyUnifiedStorageEnvOverrides scans environment variables matching

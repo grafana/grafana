@@ -15,6 +15,7 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 | Playlists | `playlist.grafana.app` | `playlist` |
 | Short URLs | `shorturl.grafana.app` | `short_url` |
 | Datasources | `*.datasource.grafana.app` | `data_source` |
+| Query cache configs | `querycaching.grafana.app` | `data_source_cache` |
 
 ## Architecture
 
@@ -63,6 +64,7 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 - **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — playlists definition
 - **`pkg/registry/apps/shorturl/migration_registrar.go`**: `ShortURLMigration` — short URLs definition
 - **`pkg/registry/apis/datasource/migrator/registrar.go`**: `DataSourceMigration` — datasources definition
+- **`pkg/registry/apps/querycaching/migration_registrar.go`**: `QueryCacheConfigMigration` — query cache configs definition
 
 Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`).
 
@@ -378,5 +380,6 @@ Existing test cases:
 | `NewPlaylistsTestCase` | `testcases/playlists.go` | Playlists with dashboard UID, tag, and mixed items |
 | `NewShortURLTestCase` | `testcases/shorturls.go` | Short URL entries |
 | `NewDataSourceTestCase` | `testcases/datasources.go` | Datasource entries with secure JSON data |
+| `NewQueryCacheConfigsTestCase` | `testcases/querycacheconfigs.go` | Query cache config entries (enterprise) |
 
 Each resource owner is responsible for writing and maintaining a test case for their resource as part of the development process. When adding a new resource migration, create a corresponding test case in `testcases/` that sets up representative data via `Setup` and verifies it via `Verify`. Extend existing test cases to cover additional scenarios as needed (e.g., edge cases, specific field mappings, or error conditions).
