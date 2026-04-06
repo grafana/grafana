@@ -79,18 +79,6 @@ export function ExploreLogsTable(props: {
     }
   }, []);
 
-  const fieldConfig = useMemo(
-    () => ({
-      defaults: {
-        custom: {
-          filterable: true,
-        },
-      },
-      overrides: [],
-    }),
-    []
-  );
-
   const onOptionsChange = useCallback(
     (options: Options) => {
       if (options.wrapText !== undefined && options.wrapText !== wrapText) {
@@ -113,6 +101,19 @@ export function ExploreLogsTable(props: {
       wrapText,
     }),
     [props.buildLinkToLogLine, props.externalOptions, selectedLogInfo?.id, wrapText]
+  );
+
+  const fieldConfig = useMemo(
+    () => ({
+      defaults: {
+        custom: {
+          filterable: true,
+          wrapText,
+        },
+      },
+      overrides: [],
+    }),
+    [wrapText]
   );
 
   return (
