@@ -4,7 +4,7 @@ import { UnsupportedDataSourcesAlert } from 'app/features/dashboard/components/S
 import { UnsupportedTemplateVariablesAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/UnsupportedTemplateVariablesAlert';
 import {
   isEmailSharingEnabled,
-  PublicDashboard,
+  type PublicDashboard,
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { AccessControlAction } from 'app/types/accessControl';

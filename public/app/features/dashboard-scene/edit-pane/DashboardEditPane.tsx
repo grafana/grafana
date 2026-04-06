@@ -1,8 +1,8 @@
-import { SceneObject, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import { type SceneObject, SceneObjectBase, type SceneObjectState, sceneGraph } from '@grafana/scenes';
 import {
-  ElementSelectionContextItem,
-  ElementSelectionContextState,
-  ElementSelectionOnSelectOptions,
+  type ElementSelectionContextItem,
+  type ElementSelectionContextState,
+  type ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
@@ -15,14 +15,14 @@ import { ElementSelection } from './ElementSelection';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
-  DashboardEditActionEventPayload,
+  type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
   RepeatsUpdatedEvent,
 } from './shared';
-import { EditPaneSelectionActions } from './types';
+import { type EditPaneSelectionActions } from './types';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
@@ -160,9 +160,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     action.undo();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    /**
-     * Some edit actions also require clearing selection or selecting new objects
-     */
     if (action.addedObject) {
       this.clearSelection();
     }
@@ -193,7 +190,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
-    if (action.removedObject) {
+    if (action.removedObject && !action.addedObject) {
       this.clearSelection();
     }
   }

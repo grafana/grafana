@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_provider.test.ts
-import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
+import { AbstractLabelOperator, dateTime, type TimeRange } from '@grafana/data';
 
 import { getCacheDurationInMinutes } from './caching';
 import { DEFAULT_SERIES_LIMIT } from './constants';
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import {
   exportToAbstractQuery,
   importFromAbstractQuery,
@@ -11,7 +11,7 @@ import {
   PrometheusLanguageProvider,
 } from './language_provider';
 import { getPrometheusTime, getRangeSnapInterval } from './language_utils';
-import { PrometheusCacheLevel, PromQuery } from './types';
+import { PrometheusCacheLevel, type PromQuery } from './types';
 
 jest.mock('./language_utils', () => ({
   ...jest.requireActual('./language_utils'),

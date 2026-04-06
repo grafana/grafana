@@ -11,7 +11,7 @@ import {
   trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField,
   trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField,
 } from './tracking';
-import { Props } from './types';
+import { type Props } from './types';
 
 export const InfluxInfluxQLDBConnection = (props: Props) => {
   const { options } = props;

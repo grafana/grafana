@@ -19,7 +19,7 @@ PROVISIONING_CFG_DIR=$CONF_DIR/provisioning
 
 EXECUTABLE="$GRAFANA_HOME/bin/grafana"
 
-if [ ! -x $EXECUTABLE ]; then
+if [ ! -x "$EXECUTABLE" ]; then
  echo "$EXECUTABLE not installed or not executable"
  exit 5
 fi
@@ -29,21 +29,22 @@ if [ -f "$DEFAULT" ]; then
   . "$DEFAULT"
 fi
 
-OPTS="--homepath=${GRAFANA_HOME} \
-      --config=${CONF_FILE} \
-      --configOverrides='cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR \
-                        cfg:default.paths.data=${DATA_DIR} \
-                        cfg:default.paths.logs=${LOG_DIR} \
-                        cfg:default.paths.plugins=${PLUGINS_DIR}'"
-
-CMD="${1:-}"
-shift
-
-# special handling to pass --pluginsDir to cli
-# can remove once it fully supports cfg:default.paths.plugins
-if [ "$CMD" = cli ]; then
-  OPTS="$OPTS \
-       --pluginsDir=${PLUGINS_DIR}"
+# Package-specific paths apply only to cli/server. The bare `grafana` binary
+# does not accept --homepath etc. at the top level.
+if [ "$1" = cli ] || [ "$1" = server ]; then
+  CMD="$1"
+  shift
+  OPTS=(
+    "--homepath=${GRAFANA_HOME}"
+    "--config=${CONF_FILE}"
+    "--configOverrides=cfg:default.paths.provisioning=${PROVISIONING_CFG_DIR} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
+  )
+  # special handling to pass --pluginsDir to cli
+  # can remove once it fully supports cfg:default.paths.plugins
+  if [ "$CMD" = cli ]; then
+    OPTS+=("--pluginsDir=${PLUGINS_DIR}")
+  fi
+  exec "$EXECUTABLE" "$CMD" "${OPTS[@]}" "$@"
 fi
 
-eval $EXECUTABLE "$CMD" "$OPTS" "$@"
+exec "$EXECUTABLE" "$@"

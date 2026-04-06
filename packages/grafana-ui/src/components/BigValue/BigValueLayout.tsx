@@ -1,15 +1,21 @@
-import { CSSProperties, type JSX } from 'react';
+import { type CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { formattedValueToString, DisplayValue, FieldConfig, FieldType, ThemeVisualizationColors } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig, PercentChangeColorMode } from '@grafana/schema';
+import {
+  formattedValueToString,
+  type DisplayValue,
+  type FieldConfig,
+  FieldType,
+  type ThemeVisualizationColors,
+} from '@grafana/data';
+import { GraphDrawStyle, type GraphFieldConfig, PercentChangeColorMode } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../utils/colors';
 import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { BigValueColorMode, type Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 import { percentChangeString } from './PercentChange';
 
 const LINE_HEIGHT = 1.2;

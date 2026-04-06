@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { standardTransformersRegistry } from '@grafana/data';
-import { SceneDataTransformer } from '@grafana/scenes';
+import { type SceneDataTransformer } from '@grafana/scenes';
 
-import { Transformation } from '../types';
+import { type Transformation } from '../types';
 import { filterDataTransformerConfigs, getTransformId } from '../utils';
 
 /**
