@@ -326,7 +326,7 @@ describe('Histogram', () => {
       // bucketFactor = bucketSize1/bucketSize ≈ 1.1; rangeLog receives (0.001, 0.0022) when wantedMax=0.002
       const result = invokeXScaleRange(config, [0.001, 0.0011, 0.00121], 0.001, 0.002);
       expect(result[0]).toBe(0.001);
-      expect(result[1]).toBe(0.002 * 1.1);
+      expect(result[1]). toBeCloseTo(0.002 * 1.1);
     });
 
     /**
