@@ -988,14 +988,16 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
+	// Some clients still do not send RV when updating.
+	if req.ResourceVersion == 0 {
+		req.ResourceVersion = latest.ResourceVersion
+	}
+
 	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
-
-	event.Type = resourcepb.WatchEvent_MODIFIED
-	event.PreviousRV = req.ResourceVersion
 
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
@@ -1069,6 +1071,11 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 			Code: http.StatusForbidden,
 		}
 		return rsp, nil
+	}
+
+	// Some clients still do not send RV when updating.
+	if req.ResourceVersion == 0 {
+		req.ResourceVersion = latest.ResourceVersion
 	}
 
 	now := metav1.NewTime(time.UnixMilli(s.now()))
