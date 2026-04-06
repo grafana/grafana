@@ -1,5 +1,6 @@
 name: PR Checks
 on:
+  pull_request:
   pull_request_target:
     types:
       - opened
@@ -34,15 +35,14 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: "grafana/grafana-github-actions"
-          path: ./actions
           ref: main
           persist-credentials: false
       - name: Install Actions
         run: |
           corepack enable
-          yarn --cwd ./actions install --immutable
+          yarn install --immutable
       - name: Run PR Checks
-        uses: ./actions/pr-checks
+        uses: ./pr-checks
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-checks

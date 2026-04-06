@@ -1,5 +1,6 @@
 name: PR automation
 on:
+  pull_request:
   pull_request_target:
     types:
       - labeled
@@ -20,15 +21,14 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: "grafana/grafana-github-actions"
-          path: ./actions
           ref: main
           persist-credentials: false
       - name: Install Actions
         run: |
           corepack enable
-          yarn --cwd ./actions install --immutable
+          yarn install --immutable
       - name: Run Commands
-        uses: ./actions/commands
+        uses: ./commands
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           configPath: pr-commands
