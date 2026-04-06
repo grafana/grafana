@@ -49,7 +49,7 @@ func (result *rebuiltIncrementalDiffTracker) AppendReplaced(replaced replacedFol
 // even if they appear in the replaced list (the UID moved between paths
 // rather than being removed). The per-path mapping allows callers to pass
 // scoped allowlists to EnsureFolderPathExist so that only the intended target
-// path bypasses CheckIDConflict.
+// path bypasses the ID conflict check.
 func (result *rebuiltIncrementalDiffTracker) TrackRelocation(targetPath, uid string) {
 	result.activeUIDs[uid] = struct{}{}
 	result.relocations[targetPath] = append(result.relocations[targetPath], uid)

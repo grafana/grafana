@@ -239,7 +239,7 @@ func applyChange(
 		if change.Action == repository.FileActionUpdated && change.Existing != nil {
 			// Force the full ancestor walk so parent-only changes are not skipped
 			// by the early-return optimisation, and mark the old UID as relocating
-			// so CheckIDConflict is bypassed for it at the new path.
+			// so the ID conflict check is bypassed for it at the new path.
 			ensureOpts = append(ensureOpts,
 				resources.WithForceWalk(),
 				resources.WithRelocatingUIDs(change.Existing.Name),
@@ -377,10 +377,8 @@ func applyChanges(
 	}
 
 	if len(folderCreations) > 0 {
-		// Process folder creations/updates shallowest-first so that parent folders are
-		// set up (and their old tree entries removed) before children are walked. Without
-		// this, a child's EnsureFolderPathExist walk would encounter the parent's UID at
-		// its old path in the tree and trigger a spurious CheckIDConflict error.
+		// Process folder creations/updates shallowest-first so that parent folders are set up (and their old tree entries removed)
+		// before children are walked to ensure consistency in moves and renames.
 		safepath.SortByDepth(folderCreations, func(c ResourceFileChange) string { return c.Path }, true)
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
 			return applyFoldersSerially(ctx, folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)

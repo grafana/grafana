@@ -28,8 +28,6 @@ type FolderTree interface {
 	AddUnstructured(item *unstructured.Unstructured) error
 	Count() int
 	Walk(ctx context.Context, fn WalkFunc) error
-	// CheckIDConflict returns an error if id is already registered in the tree under a different path.
-	CheckIDConflict(id, path string) error
 }
 
 type folderTree struct {
@@ -144,22 +142,6 @@ func (t *folderTree) Add(folder Folder, parent string) {
 	if !exists {
 		t.count++
 	}
-}
-
-func (t *folderTree) CheckIDConflict(id, path string) error {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	existing, ok := t.folders[id]
-	if !ok {
-		return nil
-	}
-	if safepath.EnsureTrailingSlash(existing.Path) == safepath.EnsureTrailingSlash(path) {
-		return nil
-	}
-	return NewResourceValidationError(fmt.Errorf(
-		"folder UID %q defined in %q is already used by folder at path %q",
-		id, path, existing.Path,
-	))
 }
 
 // Remove deletes folderID and all its descendants from the tree.

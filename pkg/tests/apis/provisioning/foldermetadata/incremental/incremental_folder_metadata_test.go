@@ -1586,7 +1586,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 
 		// The incremental sync should succeed (with a warning for the
 		// now-missing _folder.json in src/). The file rename of move.json
-		// into dst/ must not fail with CheckIDConflict.
+		// into dst/ must not fail with an ID conflict error.
 		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
 
 		// dst/ should carry the stable UID.
@@ -1643,7 +1643,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 		require.NoError(t, err)
 
 		// The dashboard rename into teamC/ must not fail with
-		// CheckIDConflict for srcUID (registered at teamA/ in the tree).
+		// an ID conflict error for srcUID (registered at teamA/ in the tree).
 		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
 
 		// teamC/ should carry the stable UID from the moved _folder.json.
@@ -1697,7 +1697,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 		// allowlist for srcUID is registered at teamC/ but the immediate
 		// directory lookup in applyIncrementalChanges only checks
 		// teamC/nested/. Without propagating the ancestor relocation,
-		// CheckIDConflict rejects the valid move.
+		// the ID conflict check rejects the valid move.
 		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
 
 		// teamC/ should carry the stable UID.

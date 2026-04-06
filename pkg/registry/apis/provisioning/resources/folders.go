@@ -42,7 +42,7 @@ func (c *ensurePathConfig) isRelocating(uid string) bool {
 }
 
 // WithRelocatingUIDs marks UIDs as legitimately relocating to a new path so
-// that CheckIDConflict is bypassed for them during folder path resolution.
+// that the ID conflict check is bypassed for them during folder path resolution.
 // This avoids mutating the tree before the operation is confirmed to succeed.
 func WithRelocatingUIDs(uids ...string) EnsurePathOption {
 	return func(cfg *ensurePathConfig) {
@@ -153,10 +153,12 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 	// to avoid a false mismatch against the already-resolved tree entry.
 	if !epCfg.forceWalk {
 		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
-			if !epCfg.isRelocating(f.ID) {
-				if err := fm.tree.CheckIDConflict(f.ID, f.Path); err != nil {
-					return "", err
-				}
+			if !epCfg.isRelocating(f.ID) &&
+				safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
+				return "", NewResourceValidationError(fmt.Errorf(
+					"folder UID %q defined in %q is already used by folder at path %q",
+					f.ID, f.Path, existing.Path,
+				))
 			}
 			return f.ID, nil
 		}
@@ -169,15 +171,18 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 		}
 		f.ParentID = parent
 
-		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing) {
+		existing, existsInTree := fm.tree.Get(f.ID)
+		if existsInTree && f.Equal(existing) {
 			parent = f.ID
 			return nil
 		}
 
-		if !epCfg.isRelocating(f.ID) {
-			if err := fm.tree.CheckIDConflict(f.ID, f.Path); err != nil {
-				return err
-			}
+		if !epCfg.isRelocating(f.ID) && existsInTree &&
+			safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
+			return NewResourceValidationError(fmt.Errorf(
+				"folder UID %q defined in %q is already used by folder at path %q",
+				f.ID, f.Path, existing.Path,
+			))
 		}
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
@@ -412,9 +417,9 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		}
 	}
 
-	// Pass the old UID as relocating so CheckIDConflict does not reject the
-	// same stable UID appearing at a new path. The tree is only mutated after
-	// EnsureFolderPathExist succeeds, avoiding tree corruption on failure.
+	// Pass the old UID as relocating so the ID conflict check does not reject
+	// the same stable UID appearing at a new path. The tree is only mutated
+	// after EnsureFolderPathExist succeeds, avoiding tree corruption on failure.
 	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef, WithRelocatingUIDs(oldFolder.ID)); err != nil {
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}

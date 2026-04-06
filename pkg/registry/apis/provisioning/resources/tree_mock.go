@@ -102,53 +102,6 @@ func (_c *MockFolderTree_AddUnstructured_Call) RunAndReturn(run func(*unstructur
 	return _c
 }
 
-// CheckIDConflict provides a mock function with given fields: id, path
-func (_m *MockFolderTree) CheckIDConflict(id string, path string) error {
-	ret := _m.Called(id, path)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CheckIDConflict")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(id, path)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockFolderTree_CheckIDConflict_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckIDConflict'
-type MockFolderTree_CheckIDConflict_Call struct {
-	*mock.Call
-}
-
-// CheckIDConflict is a helper method to define mock.On call
-//   - id string
-//   - path string
-func (_e *MockFolderTree_Expecter) CheckIDConflict(id interface{}, path interface{}) *MockFolderTree_CheckIDConflict_Call {
-	return &MockFolderTree_CheckIDConflict_Call{Call: _e.mock.On("CheckIDConflict", id, path)}
-}
-
-func (_c *MockFolderTree_CheckIDConflict_Call) Run(run func(id string, path string)) *MockFolderTree_CheckIDConflict_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *MockFolderTree_CheckIDConflict_Call) Return(_a0 error) *MockFolderTree_CheckIDConflict_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockFolderTree_CheckIDConflict_Call) RunAndReturn(run func(string, string) error) *MockFolderTree_CheckIDConflict_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Count provides a mock function with no fields
 func (_m *MockFolderTree) Count() int {
 	ret := _m.Called()

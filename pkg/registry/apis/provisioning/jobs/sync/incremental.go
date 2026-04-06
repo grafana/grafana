@@ -77,8 +77,8 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		// metadata handling needs the current managed path->UID state before apply:
 		// - invalid `_folder.json` falls back to the existing folder at that path
 		// The tree is kept intact; relocated UIDs are passed as per-call allowlists
-		// to EnsureFolderPathExist so they bypass CheckIDConflict only at their
-		// intended target path.
+		// to EnsureFolderPathExist so they bypass the ID conflict check only at
+		// their intended target path.
 		tree := resources.NewFolderTreeFromResourceList(target)
 		repositoryResources.SetTree(tree)
 	}
