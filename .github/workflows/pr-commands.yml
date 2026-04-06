@@ -24,7 +24,9 @@ jobs:
           ref: main
           persist-credentials: false
       - name: Install Actions
-        run: npm install --production --prefix ./actions
+        run: |
+          corepack enable
+          yarn --cwd ./actions install --immutable
       - name: Run Commands
         uses: ./actions/commands
         with:
