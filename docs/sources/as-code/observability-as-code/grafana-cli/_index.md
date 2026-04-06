@@ -19,7 +19,7 @@ cards:
     - description: Overview of the Grafana Cloud CLI `gcx`, compatible with AI agents
       height: 24
       href: ./gcx
-      title: gcx Cloud CLI
+      title: gcx Cloud CLI (recommended)
     - description: Learn how to install, set up and use the Grafana CLI `grafanactl`
       height: 24
       href: ./grafanactl

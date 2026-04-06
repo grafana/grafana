@@ -17,10 +17,10 @@ title: Observability as code
 weight: 100
 cards:
   items:
-    - title: Grafana CLIs
+    - title: Grafana CLI
       height: 24
       href: ./grafana-cli/
-      description: The Grafana CLIs are command-line tools designed to simplify interaction with Grafana instances using the new REST APIs. You can authenticate, manage multiple environments, and perform administrative tasks from the terminal. It's suitable for CI/CD pipelines, local development, or free-form tasks.
+      description: Grafana CLI is a command-line tool designed to simplify interaction with Grafana instances using the new REST APIs. You can authenticate, manage multiple environments, and perform administrative tasks from the terminal. It's suitable for CI/CD pipelines, local development, or free-form tasks.
     - title: Foundation SDK
       height: 24
       href: ./foundation-sdk/

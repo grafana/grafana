@@ -22,7 +22,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code
 
 The Grafana CLI `gcx` is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud and Grafana OSS/Enterprise v12 or later. Older Grafana versions are not supported.
 
-**Grafana Cloud CLI is under development.** Documentation and support is available based on the different tiers but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+**The `gcx` CLI is under development.** Documentation and support is available based on the different tiers but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
 
 [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
