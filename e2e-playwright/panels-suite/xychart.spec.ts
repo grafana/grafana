@@ -31,9 +31,7 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
     await expect(page.getByRole('button', { name: 'USA' }), 'USA legend item is visible').toBeVisible();
 
     const report = await scanForA11yViolations();
-    expect(report).toHaveNoA11yViolations({
-      // ignoredRules: ['aria-prohibited-attr'],
-    });
+    expect(report).toHaveNoA11yViolations();
   });
 
   test('"no data" shows panel error message', async ({ gotoDashboardPage, selectors, page }) => {
