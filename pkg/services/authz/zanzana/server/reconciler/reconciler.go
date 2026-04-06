@@ -30,8 +30,8 @@ var _ zanzana.MTReconciler = (*Reconciler)(nil)
 // enabling rich completion logs for log-based table views (e.g., Loki/Grafana).
 type ReconcileResult struct {
 	ExpectedTuples int  // total tuples derived from CRDs
-	TuplesAdded    int  // tuples written to Zanzana
-	TuplesDeleted  int  // tuples removed from Zanzana
+	TuplesToAdd    int  // tuples scheduled for write (may differ from actual on partial batch failure)
+	TuplesToDelete int  // tuples scheduled for deletion (may differ from actual on partial batch failure)
 	InSync         bool // true if no changes were needed
 }
 
@@ -207,6 +207,7 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 		select {
 		case r.workQueue <- namespace:
 			r.metrics.workQueueDepth.Inc()
+			r.logger.Debug("Queued namespace for reconciliation", "namespace", namespace)
 		case <-ctx.Done():
 			return
 		}
@@ -251,8 +252,8 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 					if result != nil {
 						logFields = append(logFields,
 							"expectedTuples", result.ExpectedTuples,
-							"tuplesAdded", result.TuplesAdded,
-							"tuplesDeleted", result.TuplesDeleted,
+							"tuplesToAdd", result.TuplesToAdd,
+							"tuplesToDelete", result.TuplesToDelete,
 						)
 					}
 					r.logger.Error("Failed to reconcile namespace", logFields...)
@@ -266,8 +267,8 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 				if result != nil {
 					logFields = append(logFields,
 						"expectedTuples", result.ExpectedTuples,
-						"tuplesAdded", result.TuplesAdded,
-						"tuplesDeleted", result.TuplesDeleted,
+						"tuplesToAdd", result.TuplesToAdd,
+						"tuplesToDelete", result.TuplesToDelete,
 						"inSync", result.InSync,
 					)
 				}
@@ -316,16 +317,16 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) (
 		return result, fmt.Errorf("failed to compute diff: %w", err)
 	}
 
-	result.TuplesAdded = len(toAdd)
-	result.TuplesDeleted = len(toDelete)
+	result.TuplesToAdd = len(toAdd)
+	result.TuplesToDelete = len(toDelete)
 	result.InSync = len(toAdd) == 0 && len(toDelete) == 0
 
 	span.SetAttributes(
-		attribute.Int("reconcile.tuples_to_add", result.TuplesAdded),
-		attribute.Int("reconcile.tuples_to_delete", result.TuplesDeleted),
+		attribute.Int("reconcile.tuples_to_add", result.TuplesToAdd),
+		attribute.Int("reconcile.tuples_to_delete", result.TuplesToDelete),
 	)
-	r.metrics.diffTuples.WithLabelValues("add").Observe(float64(result.TuplesAdded))
-	r.metrics.diffTuples.WithLabelValues("delete").Observe(float64(result.TuplesDeleted))
+	r.metrics.diffTuples.WithLabelValues("add").Observe(float64(result.TuplesToAdd))
+	r.metrics.diffTuples.WithLabelValues("delete").Observe(float64(result.TuplesToDelete))
 
 	// 3. Apply changes if needed
 	if result.InSync {
@@ -346,16 +347,15 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) (
 // leader's background reconciliation loop is safe because reconcileNamespace
 // is idempotent.
 func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
-	start := time.Now()
-
 	if _, ok := r.ensuredNamespaces.Load(namespace); ok {
-		r.metrics.ensureNamespaceDurationSeconds.WithLabelValues("existing").Observe(time.Since(start).Seconds())
 		return nil
 	}
 
-	_, err, shared := r.ensureSF.Do(namespace, func() (any, error) {
+	start := time.Now()
+
+	val, err, shared := r.ensureSF.Do(namespace, func() (any, error) {
 		if _, ok := r.ensuredNamespaces.Load(namespace); ok {
-			return nil, nil
+			return false, nil
 		}
 
 		ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
@@ -366,24 +366,24 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 
 		store, err := r.server.GetStore(ctx, namespace)
 		if err != nil && !errors.Is(err, zanzana.ErrStoreNotFound) {
-			return nil, fmt.Errorf("failed to get store: %w", err)
+			return false, fmt.Errorf("failed to get store: %w", err)
 		}
 
 		if store == nil {
 			storeCreated = true
 			if _, err = r.server.GetOrCreateStore(ctx, namespace); err != nil {
-				return nil, fmt.Errorf("failed to create store: %w", err)
+				return false, fmt.Errorf("failed to create store: %w", err)
 			}
 
 			if _, err = r.reconcileNamespace(ctx, namespace); err != nil {
-				return nil, fmt.Errorf("failed to reconcile namespace: %w", err)
+				return false, fmt.Errorf("failed to reconcile namespace: %w", err)
 			}
 
 			// Verify the store still exists — reconcileNamespace may have
 			// deleted it if the namespace was removed while we were working.
 			store, err = r.server.GetStore(ctx, namespace)
 			if err != nil || store == nil {
-				return nil, fmt.Errorf("store disappeared during reconciliation for namespace %s", namespace)
+				return false, fmt.Errorf("store disappeared during reconciliation for namespace %s", namespace)
 			}
 		}
 
@@ -396,7 +396,7 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 		)
 
 		r.ensuredNamespaces.Store(namespace, struct{}{})
-		return nil, nil
+		return true, nil
 	})
 
 	elapsed := time.Since(start)
@@ -406,8 +406,11 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 		return err
 	}
 
-	status := "reconciled"
-	if shared {
+	reconciled, _ := val.(bool)
+	status := "existing"
+	if reconciled {
+		status = "reconciled"
+	} else if shared {
 		status = "waited"
 	}
 	r.metrics.ensureNamespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())

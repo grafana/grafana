@@ -85,7 +85,7 @@ func newReconcilerMetrics(reg prometheus.Registerer) *reconcilerMetrics {
 				Subsystem: metricsSubSystem,
 				Name:      "diff_tuples",
 				Help:      "Number of tuples in the reconciliation diff per direction",
-				Buckets:   []float64{0, 1, 5, 10, 50, 100, 500, 1000, 5000},
+				Buckets:   []float64{1, 5, 10, 50, 100, 500, 1000, 5000},
 			},
 			[]string{"direction"},
 		),

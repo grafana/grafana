@@ -39,8 +39,6 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 	ctx, span := r.tracer.Start(ctx, "reconciler.fetchGlobalRolePerms")
 	defer span.End()
 
-	start := time.Now()
-
 	gvr := iamv0.GlobalRoleInfo.GroupVersionResource()
 
 	clients, err := r.clientFactory.Clients(ctx, "")
@@ -72,14 +70,7 @@ func (r *Reconciler) fetchGlobalRolePerms(ctx context.Context) (
 		return nil, tracing.Errorf(span, "failed to resolve GlobalRole permissions: %w", err)
 	}
 
-	elapsed := time.Since(start)
-
 	span.SetAttributes(attribute.Int("global_roles.count", len(resolvedPerms)))
-
-	r.logger.Info("Fetched global role permissions",
-		"globalRolesCount", len(resolvedPerms),
-		"duration", elapsed,
-	)
 
 	return resolvedPerms, nil
 }
@@ -427,6 +418,10 @@ func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string,
 	}
 
 	span.SetAttributes(attribute.Int("write.failed_batches", failedBatches))
+
+	if failedBatches > 0 {
+		r.metrics.errorsTotal.WithLabelValues("write_tuples_partial").Inc()
+	}
 
 	r.logger.Info("Completed batched tuple writes",
 		"namespace", namespace,
