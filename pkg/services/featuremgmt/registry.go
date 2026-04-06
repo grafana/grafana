@@ -2807,7 +2807,7 @@ var (
 			Name:         "postgresqlSuperuserWarning",
 			Description:  "Add warning about a PostgreSQL data source using a superuser user",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
+			Owner:        grafanaDataSourcesPlugins,
 			FrontendOnly: false,
 			Expression:   "false",
 		},

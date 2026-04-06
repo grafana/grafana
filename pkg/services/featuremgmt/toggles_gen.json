@@ -4127,13 +4127,16 @@
     {
       "metadata": {
         "name": "postgresqlSuperuserWarning",
-        "resourceVersion": "1775461036132",
-        "creationTimestamp": "2026-04-06T07:37:16Z"
+        "resourceVersion": "1775463034826",
+        "creationTimestamp": "2026-04-06T07:37:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-06 08:10:34.826905076 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Add warning about a PostgreSQL data source using a superuser user",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
