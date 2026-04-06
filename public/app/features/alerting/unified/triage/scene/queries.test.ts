@@ -82,6 +82,8 @@ describe('alertRuleInstancesQuery group scoping', () => {
     expect(query).toContain('grafana_rule_uid="rule-1"');
     // cluster is a combined key -> expanded to cluster OR cluster_name branches
     expect(query).toContain('cluster="use2-cermak-ice-beeks"');
+    expect(query).toContain('cluster_name="use2-cermak-ice-beeks"');
+    expect(query).toContain(' or ');
     expect(query).toContain('environment="stg"');
   });
 

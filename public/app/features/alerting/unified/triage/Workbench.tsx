@@ -72,7 +72,7 @@ function renderWorkbenchRow(
     // EmptyLabelValue (instances missing this label) maps to "" which produces label="" in PromQL.
     const childGroupLabels = {
       ...groupLabels,
-      [row.metadata.label]: row.metadata.value === EmptyLabelValue ? '' : String(row.metadata.value),
+      [row.metadata.label]: row.metadata.value === EmptyLabelValue ? '' : row.metadata.value,
     };
 
     const children = row.rows.map((childRow, childIndex) =>

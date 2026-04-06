@@ -22,14 +22,14 @@ interface AlertRuleRowProps {
   groupLabels?: Record<string, string>;
 }
 
-export const AlertRuleRow = ({
+export function AlertRuleRow({
   row,
   leftColumnWidth,
   rowKey,
   depth = 0,
   enableFolderMeta = true,
   groupLabels,
-}: AlertRuleRowProps) => {
+}: AlertRuleRowProps) {
   const { ruleUID, folder, title } = row.metadata;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -79,4 +79,4 @@ export const AlertRuleRow = ({
       {isDrawerOpen && <RuleDetailsDrawer ruleUID={ruleUID} onClose={handleDrawerClose} />}
     </>
   );
-};
+}
