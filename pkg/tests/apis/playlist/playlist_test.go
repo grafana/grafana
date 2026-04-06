@@ -17,15 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	playlist "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -51,7 +46,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true, // do not start extra port 6443
 			DisableAnonymous:     true,
-			EnableFeatureToggles: []string{},
+			EnableFeatureToggles: []string{"playlistsRBAC"},
 		}))
 
 		// The accepted verbs will change when dual write is enabled
@@ -242,8 +237,8 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 				}
 				perm := accesscontrol.Permission{
 					RoleID:  role.ID,
-					Action:  playlistregistry.ActionPlaylistsRead,
-					Scope:   playlistregistry.ScopeAllPlaylists,
+					Action:  playlist.ActionPlaylistsRead,
+					Scope:   "playlists:*",
 					Created: time.Now(),
 					Updated: time.Now(),
 				}
