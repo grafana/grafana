@@ -31,6 +31,85 @@ type GetUserInternalIDResult struct {
 	ID int64
 }
 
+type GetUserUIDByIDQuery struct {
+	OrgID            int64
+	ID               int64
+	IsServiceAccount bool
+}
+
+type GetUserUIDByIDResult struct {
+	UID string
+}
+
+var sqlQueryUserUIDByIDTemplate = mustTemplate("user_uid_by_id.sql")
+
+func newGetUserUIDByID(sqlHelper *legacysql.LegacyDatabaseHelper, q *GetUserUIDByIDQuery) getUserUIDByIDQuery {
+	return getUserUIDByIDQuery{
+		SQLTemplate:  sqltemplate.New(sqlHelper.DialectForDriver()),
+		UserTable:    sqlHelper.Table("user"),
+		OrgUserTable: sqlHelper.Table("org_user"),
+		Query:        q,
+	}
+}
+
+type getUserUIDByIDQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable    string
+	OrgUserTable string
+	Query        *GetUserUIDByIDQuery
+}
+
+func (r getUserUIDByIDQuery) Validate() error { return nil }
+
+func (s *legacySQLStore) getUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sqlConn, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetUserUIDByID(sqlConn, &query)
+	q, err := sqltemplate.Execute(sqlQueryUserUIDByIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUserUIDByIDTemplate.Name(), err)
+	}
+
+	rows, err := sqlConn.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, errors.New("user not found")
+	}
+
+	var uid string
+	if err := rows.Scan(&uid); err != nil {
+		return nil, err
+	}
+
+	return &GetUserUIDByIDResult{UID: uid}, nil
+}
+
+func (s *legacySQLStore) GetUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.IsServiceAccount = false
+	return s.getUserUIDByID(ctx, ns, query)
+}
+
+func (s *legacySQLStore) GetServiceAccountUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.IsServiceAccount = true
+	return s.getUserUIDByID(ctx, ns, query)
+}
+
 var sqlQueryUserInternalIDTemplate = mustTemplate("user_internal_id.sql")
 
 func newGetUserInternalID(sql *legacysql.LegacyDatabaseHelper, q *GetUserInternalIDQuery) getUserInternalIDQuery {

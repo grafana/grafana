@@ -88,6 +88,76 @@ func (s *legacySQLStore) GetTeamInternalID(
 	}, nil
 }
 
+type GetTeamUIDByIDQuery struct {
+	OrgID int64
+	ID    int64
+}
+
+type GetTeamUIDByIDResult struct {
+	UID string
+}
+
+var sqlQueryTeamUIDByIDTemplate = mustTemplate("team_uid_by_id.sql")
+
+func newGetTeamUIDByID(sqlHelper *legacysql.LegacyDatabaseHelper, q *GetTeamUIDByIDQuery) getTeamUIDByIDQuery {
+	return getTeamUIDByIDQuery{
+		SQLTemplate: sqltemplate.New(sqlHelper.DialectForDriver()),
+		TeamTable:   sqlHelper.Table("team"),
+		Query:       q,
+	}
+}
+
+type getTeamUIDByIDQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	Query     *GetTeamUIDByIDQuery
+}
+
+func (r getTeamUIDByIDQuery) Validate() error { return nil }
+
+func (s *legacySQLStore) GetTeamUIDByID(
+	ctx context.Context,
+	ns claims.NamespaceInfo,
+	query GetTeamUIDByIDQuery,
+) (*GetTeamUIDByIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sqlConn, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetTeamUIDByID(sqlConn, &query)
+	q, err := sqltemplate.Execute(sqlQueryTeamUIDByIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamUIDByIDTemplate.Name(), err)
+	}
+
+	rows, err := sqlConn.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, errors.New("team not found")
+	}
+
+	var uid string
+	if err := rows.Scan(&uid); err != nil {
+		return nil, err
+	}
+
+	return &GetTeamUIDByIDResult{UID: uid}, nil
+}
+
 type ListTeamQuery struct {
 	OrgID int64
 	UID   string

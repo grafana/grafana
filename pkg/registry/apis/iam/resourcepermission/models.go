@@ -43,6 +43,10 @@ type IdentityStore interface {
 	GetServiceAccountInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetServiceAccountInternalIDQuery) (*idStore.GetServiceAccountInternalIDResult, error)
 	GetTeamInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetTeamInternalIDQuery) (*idStore.GetTeamInternalIDResult, error)
 	GetUserInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetUserInternalIDQuery) (*idStore.GetUserInternalIDResult, error)
+	// reverse lookups: id → uid, used when reading id-scoped permissions back from the legacy table
+	GetTeamUIDByID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetTeamUIDByIDQuery) (*idStore.GetTeamUIDByIDResult, error)
+	GetUserUIDByID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetUserUIDByIDQuery) (*idStore.GetUserUIDByIDResult, error)
+	GetServiceAccountUIDByID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetUserUIDByIDQuery) (*idStore.GetUserUIDByIDResult, error)
 }
 
 type PageQuery struct {
@@ -128,8 +132,9 @@ func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePe
 }
 
 // toV0ResourcePermissions translates a list of rbacAssignments into a list of v0alpha1.ResourcePermissions.
-// it is assumed that assignments are sorted by scope
-func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssignment, namespace string) ([]v0alpha1.ResourcePermission, error) {
+// it is assumed that assignments are sorted by scope.
+// for id-scoped resources (teams, users, service accounts), translates id→uid in the scope.
+func (s *ResourcePermSqlBackend) toV0ResourcePermissions(ctx context.Context, ns types.NamespaceInfo, assignments []rbacAssignment) ([]v0alpha1.ResourcePermission, error) {
 	if len(assignments) == 0 {
 		return nil, nil
 	}
@@ -141,16 +146,30 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 
 		resourcePermissions = make([]v0alpha1.ResourcePermission, 0, 8)
 		specs               = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
+		// scopeCache avoids repeated DB lookups for the same id-scoped scope within a single list response.
+		scopeCache = make(map[string]*groupResourceName, len(assignments))
 	)
 
-	grn, err := s.ParseScope(assignments[0].Scope)
+	parseScopeCtxCached := func(scope string) (*groupResourceName, error) {
+		if grn, ok := scopeCache[scope]; ok {
+			return grn, nil
+		}
+		grn, err := s.mappers.ParseScopeCtx(ctx, ns, scope)
+		if err != nil {
+			return nil, err
+		}
+		scopeCache[scope] = grn
+		return grn, nil
+	}
+
+	grn, err := parseScopeCtxCached(assignments[0].Scope)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, assign := range assignments {
 		// Ensure all assignments belong to the same resource
-		parsedGrn, err := s.ParseScope(assign.Scope)
+		parsedGrn, err := parseScopeCtxCached(assign.Scope)
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +177,7 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 		if *parsedGrn != *grn {
 			resourcePermissions = append(
 				resourcePermissions,
-				newV0ResourcePermission(grn, specs, created, updated, namespace),
+				newV0ResourcePermission(grn, specs, created, updated, ns.Value),
 			)
 
 			// Reset for the new resource
@@ -211,7 +230,7 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 	// Flush the final resource
 	resourcePermissions = append(
 		resourcePermissions,
-		newV0ResourcePermission(grn, specs, created, updated, namespace),
+		newV0ResourcePermission(grn, specs, created, updated, ns.Value),
 	)
 
 	return resourcePermissions, nil

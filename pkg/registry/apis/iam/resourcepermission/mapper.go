@@ -1,11 +1,16 @@
 package resourcepermission
 
 import (
+	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 )
 
 // Mapper translates between K8s GroupResource and legacy RBAC scopes/action sets.
@@ -204,6 +209,157 @@ func (m *MappersRegistry) EnabledActionSets() []string {
 		out = append(out, e.mapper.ActionSets()...)
 	}
 	return out
+}
+
+// ContextMapper extends Mapper with context-aware scope resolution for id-scoped resources
+// (teams, users, service accounts). These resources are stored with id-based scopes in the
+// legacy permission table (e.g. teams:id:1) but exposed as uid-based in the K8s API.
+// The default uid-scoped mapper (folders, dashboards) does not implement this interface.
+type ContextMapper interface {
+	Mapper
+	// ScopeCtx translates a uid to the legacy db scope, resolving uid→id for id-scoped resources.
+	// e.g. "t1" -> "teams:id:1"
+	ScopeCtx(ctx context.Context, ns types.NamespaceInfo, name string) (string, error)
+	// NameFromScope translates a legacy db scope back to a uid, resolving id→uid for id-scoped resources.
+	// e.g. "teams:id:1" -> "t1"
+	NameFromScope(ctx context.Context, ns types.NamespaceInfo, scope string) (string, error)
+}
+
+type idScopedKind int
+
+const (
+	kindTeam idScopedKind = iota
+	kindUser
+	kindServiceAccount
+)
+
+// idScopedMapper implements ContextMapper for resources stored with id-based scopes
+// in the legacy permission table. Used for teams, users, and service accounts.
+type idScopedMapper struct {
+	resource  string
+	kind      idScopedKind
+	store     IdentityStore
+	actionSets []string
+}
+
+func newIDScopedMapper(resource string, levels []string, kind idScopedKind, store IdentityStore) ContextMapper {
+	sets := make([]string, 0, len(levels))
+	for _, level := range levels {
+		sets = append(sets, resource+":"+level)
+	}
+	return &idScopedMapper{
+		resource:   resource,
+		kind:       kind,
+		store:      store,
+		actionSets: sets,
+	}
+}
+
+func (m *idScopedMapper) ActionSets() []string { return m.actionSets }
+
+func (m *idScopedMapper) ActionSet(level string) (string, error) {
+	actionSet := m.resource + ":" + strings.ToLower(level)
+	if !slices.Contains(m.actionSets, actionSet) {
+		return "", fmt.Errorf("invalid level (%s): %w", level, errInvalidSpec)
+	}
+	return actionSet, nil
+}
+
+// Scope returns a uid-based scope as a fallback. callers with context should use ScopeCtx instead.
+func (m *idScopedMapper) Scope(name string) string {
+	return m.resource + ":uid:" + name
+}
+
+// ScopePattern returns the id-based pattern used when querying the legacy permission table.
+func (m *idScopedMapper) ScopePattern() string {
+	return m.resource + ":id:%"
+}
+
+func (m *idScopedMapper) ScopeCtx(ctx context.Context, ns types.NamespaceInfo, name string) (string, error) {
+	switch m.kind {
+	case kindTeam:
+		result, err := m.store.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{UID: name})
+		if err != nil {
+			return "", fmt.Errorf("resolving team uid %q to internal id: %w", name, err)
+		}
+		return fmt.Sprintf("%s:id:%d", m.resource, result.ID), nil
+	case kindUser:
+		result, err := m.store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{UID: name})
+		if err != nil {
+			return "", fmt.Errorf("resolving user uid %q to internal id: %w", name, err)
+		}
+		return fmt.Sprintf("%s:id:%d", m.resource, result.ID), nil
+	case kindServiceAccount:
+		result, err := m.store.GetServiceAccountInternalID(ctx, ns, legacy.GetServiceAccountInternalIDQuery{UID: name})
+		if err != nil {
+			return "", fmt.Errorf("resolving service account uid %q to internal id: %w", name, err)
+		}
+		return fmt.Sprintf("%s:id:%d", m.resource, result.ID), nil
+	}
+	return "", fmt.Errorf("unknown id-scoped kind")
+}
+
+func (m *idScopedMapper) NameFromScope(ctx context.Context, ns types.NamespaceInfo, scope string) (string, error) {
+	parts := strings.SplitN(scope, ":", 3)
+	if len(parts) != 3 {
+		return "", fmt.Errorf("invalid scope: %s", scope)
+	}
+	id, err := strconv.ParseInt(parts[2], 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid id in scope %s: %w", scope, err)
+	}
+	switch m.kind {
+	case kindTeam:
+		result, err := m.store.GetTeamUIDByID(ctx, ns, legacy.GetTeamUIDByIDQuery{ID: id})
+		if err != nil {
+			return "", fmt.Errorf("resolving team id %d to uid: %w", id, err)
+		}
+		return result.UID, nil
+	case kindUser:
+		result, err := m.store.GetUserUIDByID(ctx, ns, legacy.GetUserUIDByIDQuery{ID: id})
+		if err != nil {
+			return "", fmt.Errorf("resolving user id %d to uid: %w", id, err)
+		}
+		return result.UID, nil
+	case kindServiceAccount:
+		result, err := m.store.GetServiceAccountUIDByID(ctx, ns, legacy.GetUserUIDByIDQuery{ID: id})
+		if err != nil {
+			return "", fmt.Errorf("resolving service account id %d to uid: %w", id, err)
+		}
+		return result.UID, nil
+	}
+	return "", fmt.Errorf("unknown id-scoped kind")
+}
+
+// ParseScopeCtx parses an RBAC scope string into a groupResourceName, resolving id→uid for
+// id-scoped resources (teams, users, service accounts) using the provided context and namespace.
+// For uid-scoped resources (folders, dashboards) it behaves identically to ParseScope.
+func (m *MappersRegistry) ParseScopeCtx(ctx context.Context, ns types.NamespaceInfo, scope string) (*groupResourceName, error) {
+	parts := strings.SplitN(scope, ":", 3)
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
+	}
+	gr, ok := m.reverse[parts[0]]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
+	}
+
+	entry := m.entries[gr]
+	group := gr.Group
+	if strings.HasPrefix(group, "*.") {
+		group = "unknown" + group[1:]
+	}
+
+	name := parts[2]
+	if cm, ok := entry.mapper.(ContextMapper); ok {
+		uid, err := cm.NameFromScope(ctx, ns, scope)
+		if err != nil {
+			return nil, err
+		}
+		name = uid
+	}
+
+	return &groupResourceName{Group: group, Resource: gr.Resource, Name: name}, nil
 }
 
 // EnabledScopePatterns returns the scope patterns for all currently-enabled mappers.

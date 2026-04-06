@@ -680,6 +680,36 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
 }
 
+// GetTeamUIDByID implements IdentityStore.
+func (f *fakeIdentityStore) GetTeamUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetTeamUIDByIDQuery) (*legacy.GetTeamUIDByIDResult, error) {
+	for uid, id := range f.teams {
+		if id == query.ID {
+			return &legacy.GetTeamUIDByIDResult{UID: uid}, nil
+		}
+	}
+	return nil, errors.New("not found")
+}
+
+// GetUserUIDByID implements IdentityStore.
+func (f *fakeIdentityStore) GetUserUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	for uid, id := range f.users {
+		if id == query.ID {
+			return &legacy.GetUserUIDByIDResult{UID: uid}, nil
+		}
+	}
+	return nil, errors.New("not found")
+}
+
+// GetServiceAccountUIDByID implements IdentityStore.
+func (f *fakeIdentityStore) GetServiceAccountUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	for uid, id := range f.serviceAccounts {
+		if id == query.ID {
+			return &legacy.GetUserUIDByIDResult{UID: uid}, nil
+		}
+	}
+	return nil, errors.New("not found")
+}
+
 func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

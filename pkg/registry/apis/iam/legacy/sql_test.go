@@ -145,6 +145,18 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	getTeamUIDByID := func(q *GetTeamUIDByIDQuery) sqltemplate.SQLTemplate {
+		v := newGetTeamUIDByID(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getUserUIDByID := func(q *GetUserUIDByIDQuery) sqltemplate.SQLTemplate {
+		v := newGetUserUIDByID(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -636,6 +648,33 @@ func TestIdentityQueries(t *testing.T) {
 						UserID:  123,
 						Role:    "Admin",
 						Updated: legacysql.NewDBTime(time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlQueryTeamUIDByIDTemplate: {
+				{
+					Name: "team_uid_by_id",
+					Data: getTeamUIDByID(&GetTeamUIDByIDQuery{
+						OrgID: 1,
+						ID:    42,
+					}),
+				},
+			},
+			sqlQueryUserUIDByIDTemplate: {
+				{
+					Name: "user_uid_by_id",
+					Data: getUserUIDByID(&GetUserUIDByIDQuery{
+						OrgID:            1,
+						ID:               99,
+						IsServiceAccount: false,
+					}),
+				},
+				{
+					Name: "service_account_uid_by_id",
+					Data: getUserUIDByID(&GetUserUIDByIDQuery{
+						OrgID:            1,
+						ID:               55,
+						IsServiceAccount: true,
 					}),
 				},
 			},

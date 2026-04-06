@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/stretchr/testify/require"
@@ -22,7 +23,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 	backend := setupBackendNoDB(t)
 
 	t.Run("empty permissions", func(t *testing.T) {
-		result, err := backend.toV0ResourcePermissions([]rbacAssignment{}, "default")
+		result, err := backend.toV0ResourcePermissions(context.Background(), types.NamespaceInfo{Value: "default"}, []rbacAssignment{})
 		require.NoError(t, err)
 		require.Nil(t, result)
 	})
@@ -76,7 +77,7 @@ func TestToV0ResourcePermissions(t *testing.T) {
 			},
 		}
 
-		result, err := backend.toV0ResourcePermissions(permissions, "default")
+		result, err := backend.toV0ResourcePermissions(context.Background(), types.NamespaceInfo{Value: "default"}, permissions)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
