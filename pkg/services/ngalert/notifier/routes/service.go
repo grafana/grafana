@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,17 +36,45 @@ type alertmanagerConfigStore interface {
 	Save(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64) error
 }
 
-type provenanceValidator func(from, to models.Provenance) error
+type routeAccessControl interface {
+	FilterRead(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) ([]*legacy_storage.ManagedRoute, error)
+	AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error
+	AuthorizeCreate(ctx context.Context, user identity.Requester) error
+	AuthorizeUpdateByUID(ctx context.Context, user identity.Requester, uid string) error
+	AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, uid string) error
+	SetDefaultPermissions(ctx context.Context, user identity.Requester, route *legacy_storage.ManagedRoute) error
+	DeleteAllPermissions(ctx context.Context, orgID int64, route *legacy_storage.ManagedRoute) error
+	Access(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) (map[string]models.RoutePermissionSet, error)
+}
 
 type Service struct {
-	configStore     alertmanagerConfigStore
-	provenanceStore routeProvenanceStore
-	xact            transactionManager
-	log             log.Logger
-	settings        setting.UnifiedAlertingSettings
-	validator       provenanceValidator
-	FeatureToggles  featuremgmt.FeatureToggles
-	tracer          tracing.Tracer
+	configStore                         alertmanagerConfigStore
+	provenanceStore                     routeProvenanceStore
+	xact                                transactionManager
+	log                                 log.Logger
+	settings                            setting.UnifiedAlertingSettings
+	provenanceStatusTransitionValidator validation.ProvenanceStatusTransitionValidator
+	FeatureToggles                      featuremgmt.FeatureToggles
+	tracer                              tracing.Tracer
+	routeAccess                         routeAccessControl
+}
+
+func (nps *Service) AccessControlMetadata(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) (map[string]models.RoutePermissionSet, error) {
+	permissions, err := nps.routeAccess.Access(ctx, user, routes...)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range routes {
+		if m.Origin == models.ResourceOriginGrafana {
+			continue
+		}
+		perms := permissions[m.GetUID()]
+		perms.Set(models.RoutePermissionAdmin, false)
+		perms.Set(models.RoutePermissionWrite, false)
+		perms.Set(models.RoutePermissionDelete, false)
+		permissions[m.GetUID()] = perms
+	}
+	return permissions, nil
 }
 
 func NewService(
@@ -55,18 +84,20 @@ func NewService(
 	settings setting.UnifiedAlertingSettings,
 	features featuremgmt.FeatureToggles,
 	log log.Logger,
-	validator provenanceValidator,
+	validator validation.ProvenanceStatusTransitionValidator,
 	tracer tracing.Tracer,
+	routeAccess routeAccessControl,
 ) *Service {
 	return &Service{
-		configStore:     am,
-		provenanceStore: prov,
-		xact:            xact,
-		log:             log,
-		settings:        settings,
-		FeatureToggles:  features,
-		validator:       validator,
-		tracer:          tracer,
+		configStore:                         am,
+		provenanceStore:                     prov,
+		xact:                                xact,
+		log:                                 log,
+		settings:                            settings,
+		FeatureToggles:                      features,
+		provenanceStatusTransitionValidator: validator,
+		tracer:                              tracer,
+		routeAccess:                         routeAccess,
 	}
 }
 
@@ -84,6 +115,9 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
+	if err := nps.routeAccess.AuthorizeReadByUID(ctx, user, name); err != nil {
+		return legacy_storage.ManagedRoute{}, err
+	}
 	rev, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return legacy_storage.ManagedRoute{}, err
@@ -167,6 +201,11 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 		attribute.Int("count", len(managedRoutes)),
 	))
 
+	managedRoutes, err = nps.routeAccess.FilterRead(ctx, user, managedRoutes...)
+	if err != nil {
+		return nil, err
+	}
+
 	managedRoutes.Sort()
 	return managedRoutes, nil
 }
@@ -182,6 +221,10 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
+	}
+
+	if err := nps.routeAccess.AuthorizeUpdateByUID(ctx, user, name); err != nil {
+		return nil, err
 	}
 
 	err := subtree.Validate()
@@ -221,7 +264,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	if err := nps.validator(storedProvenance, p); err != nil {
+	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, p); err != nil {
 		return nil, err
 	}
 
@@ -229,7 +272,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	updated.Provenance = storedProvenance
+	updated.Provenance = p
 
 	_, err = revision.Config.GetMergedAlertmanagerConfig()
 	if err != nil {
@@ -271,6 +314,10 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		return models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
+	if err := nps.routeAccess.AuthorizeDeleteByUID(ctx, user, name); err != nil {
+		return err
+	}
+
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -301,7 +348,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return err
 	}
-	if err := nps.validator(storedProvenance, p); err != nil {
+	if err := nps.provenanceStatusTransitionValidator(ctx, storedProvenance, p); err != nil {
 		return err
 	}
 
@@ -330,6 +377,11 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
+		if name != legacy_storage.UserDefinedRoutingTreeName { // do not delete permissions on reset of default route
+			if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
+				return err
+			}
+		}
 		return nps.provenanceStore.DeleteProvenance(ctx, existing, orgID)
 	})
 	if err != nil {
@@ -353,6 +405,14 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	// Backwards compatibility when managed routes FF is disabled. This is not allowed.
 	if !nps.managedRoutesEnabled() {
 		return nil, models.ErrMultipleRoutesNotSupported.Errorf("")
+	}
+
+	if err := nps.routeAccess.AuthorizeCreate(ctx, user); err != nil {
+		return nil, err
+	}
+
+	if err := nps.provenanceStatusTransitionValidator(ctx, models.ProvenanceNone, p); err != nil {
+		return nil, err
 	}
 
 	err := subtree.Validate()
@@ -380,6 +440,9 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
+		}
+		if err := nps.routeAccess.SetDefaultPermissions(ctx, user, created); err != nil {
 			return err
 		}
 		return nps.provenanceStore.SetProvenance(ctx, created, orgID, p)

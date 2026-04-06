@@ -9,6 +9,7 @@ import {
   PluginType,
   locationUtil,
 } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { DataSourceModal, type DataSourceModalProps } from './DataSourceModal';
 
@@ -43,6 +44,10 @@ const mockDS2 = createDS('mock.datasource.2', 2, false);
 const mockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
 const mockDSList = [mockDS1, mockDS2, mockDSBuiltIn];
+
+beforeAll(() => {
+  mockBoundingClientRect();
+});
 
 const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
   window.HTMLElement.prototype.scrollIntoView = function () {};
@@ -82,6 +87,10 @@ beforeEach(() => {
   getListMock.mockReturnValue(mockDSList);
   getInstanceSettingsMock.mockReturnValue(mockDS1);
 });
+
+function createMockDSList(count: number) {
+  return Array.from({ length: count }, (_, i) => createDS(`datasource-${i}`, i, false));
+}
 
 describe('DataSourceDropdown', () => {
   it('should render', () => {
@@ -164,5 +173,61 @@ describe('DataSourceDropdown', () => {
       await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
       expect(onChange.mock.lastCall[0].name).toEqual(mockDS2.name);
     });
+  });
+});
+
+describe('DataSourceDropdown with virtualized list', () => {
+  const largeMockDSList = createMockDSList(100);
+
+  beforeEach(() => {
+    getListMock.mockReturnValue(largeMockDSList);
+    getInstanceSettingsMock.mockReturnValue(largeMockDSList[0]);
+  });
+
+  it('should render without errors', () => {
+    expect(() => setup({ current: largeMockDSList[0] })).not.toThrow();
+  });
+
+  it('should render only a subset of items in the DOM', async () => {
+    setup({ current: largeMockDSList[0] });
+    const cards = await screen.findAllByTestId('data-source-card');
+    expect(cards.length).toBeGreaterThan(0);
+    expect(cards.length).toBeLessThan(100);
+  });
+
+  it('should call onChange when a visible data source is clicked', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    setup({ onChange, current: largeMockDSList[0] });
+
+    const cards = await screen.findAllByTestId('data-source-card');
+    const button = cards[1].querySelector('button')!;
+    await user.click(button);
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('should be searchable', async () => {
+    const user = userEvent.setup();
+    setup({ current: largeMockDSList[0] });
+    const searchBox = await screen.findByRole('searchbox');
+    await user.click(searchBox);
+
+    await user.keyboard('datasource-50');
+
+    expect(await screen.findByText('datasource-50', { selector: 'span' })).toBeInTheDocument();
+    const cards = screen.getAllByTestId('data-source-card');
+    // Search should narrow the list significantly
+    expect(cards.length).toBeLessThan(10);
+  });
+
+  it('should display empty state when search has no results', async () => {
+    const user = userEvent.setup();
+    setup({ current: largeMockDSList[0] });
+    const searchBox = await screen.findByRole('searchbox');
+    await user.click(searchBox);
+
+    await user.keyboard('nonexistent-datasource-xyz');
+
+    expect(await screen.findByText('No data sources found')).toBeInTheDocument();
   });
 });

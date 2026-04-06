@@ -102,4 +102,44 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 		assert.Equal(t, []string{"*"}, config.AllowEmbeddingHosts)
 	})
+
+	t.Run("should override form_action_additional_hosts from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			FormActionAdditionalHosts: nil,
+		}
+
+		iniFile := ini.Empty()
+		securitySection, _ := iniFile.NewSection("security")
+		_, _ = securitySection.NewKey("form_action_additional_hosts", "login.example.com auth.example.com")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"login.example.com", "auth.example.com"}, config.FormActionAdditionalHosts)
+	})
+
+	t.Run("should override form_action_additional_hosts with wildcard from settings service", func(t *testing.T) {
+		config := FSRequestConfig{
+			FormActionAdditionalHosts: nil,
+		}
+
+		iniFile := ini.Empty()
+		securitySection, _ := iniFile.NewSection("security")
+		_, _ = securitySection.NewKey("form_action_additional_hosts", "*")
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"*"}, config.FormActionAdditionalHosts)
+	})
+
+	t.Run("should preserve form_action_additional_hosts when not overridden", func(t *testing.T) {
+		config := FSRequestConfig{
+			FormActionAdditionalHosts: []string{"base.example.com"},
+		}
+
+		iniFile := ini.Empty()
+
+		config.ApplyOverrides(iniFile, log.New("test"))
+
+		assert.Equal(t, []string{"base.example.com"}, config.FormActionAdditionalHosts)
+	})
 }

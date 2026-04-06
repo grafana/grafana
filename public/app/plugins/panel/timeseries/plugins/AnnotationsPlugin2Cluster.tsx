@@ -19,7 +19,12 @@ import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
 import { type AnnotationVals, type XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
-import { ANNOTATION_LANE_SIZE, getAnnoRegionBoxStyle } from './utils';
+import {
+  ANNOTATION_LANE_SIZE,
+  getAnnoRegionBoxStyle,
+  shouldRenderAnnotationLine,
+  shouldRenderAnnotationRegion,
+} from './utils';
 
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
@@ -53,7 +58,6 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
 
   return vals;
 }
-
 /**
  * Refactored version of the AnnotationsPlugin2 behind `annotationsClustering` feature flag.
  * @param annotations
@@ -90,13 +94,14 @@ export const AnnotationsPlugin2Cluster = ({
 
   const { xAnnos, xyAnnos } = useAnnotations({ annotations, newRange });
 
-  const clusteredAnnos = useAnnotationClustering({
+  const { annotations: clusteredAnnos } = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
     plotWidth: plotRef.current?.bbox.width,
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
     timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
   });
+
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
   }, [setNewRange]);
@@ -133,10 +138,10 @@ export const AnnotationsPlugin2Cluster = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
+      const shouldRenderRegion = shouldRenderAnnotationRegion(options?.regions?.opacity, options?.multiLane);
+      const shouldRenderLine = shouldRenderAnnotationLine(options?.lines?.width, options?.multiLane);
       const regionOpacity = options?.regions?.opacity;
       const lineWidth = options?.lines?.width;
-      const shouldRenderRegion = (regionOpacity !== undefined ? regionOpacity > 0 : undefined) ?? !options?.multiLane;
-      const shouldRenderLine = (lineWidth !== undefined ? lineWidth > 0 : undefined) ?? !options?.multiLane;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
@@ -226,19 +231,12 @@ export const AnnotationsPlugin2Cluster = ({
     annotations?.length,
   ]);
 
-  // ensure xAnnos are re-drawn whenever they change
+  // ensure clusteredAnnos are re-drawn whenever they change
   useEffect(() => {
     if (plotRef.current) {
-      plotRef.current.redraw();
-
-      // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
-      // and ensures the anno marker positions in the dom are re-rendered in correct places
-      // (this is temp fix until uPlot integration is refactored)
-      setTimeout(() => {
-        forceUpdate();
-      }, 0);
+      plotRef.current.redraw(false, true);
     }
-  }, [xAnnos]);
+  }, [clusteredAnnos]);
 
   if (plotRef.current && xAxisRef.current) {
     const plot = plotRef.current;
@@ -336,11 +334,8 @@ export const AnnotationsPlugin2Cluster = ({
  */
 const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
   return (
-    // We don't currently cluster region annotations
-    !vals.isRegion?.[i] &&
     // We use the clusterIdx to define when an annotation is a cluster
-    vals.clusterIdx?.[i] != null &&
-    vals.clusterIdx?.[i] >= 0
+    !vals.isCluster?.[i] && vals.clusterIdx?.[i] != null && vals.clusterIdx?.[i] >= 0
   );
 };
 

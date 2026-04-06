@@ -33,6 +33,7 @@ import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -390,6 +391,9 @@ export function createDashboardSceneFromDashboardModel(
     // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
     behaviorList.push(dashboardAnalyticsInitializer);
   }
+
+  behaviorList.push(new DefaultControlsBehavior());
+
   // Will be enabled in the dashboard creation below
 
   let body: DashboardLayoutManager;
@@ -409,7 +413,6 @@ export function createDashboardSceneFromDashboardModel(
 
   const dashboardScene = new DashboardScene(
     {
-      id: oldModel.id,
       uid,
       description: oldModel.description,
       editable: oldModel.editable,
@@ -492,7 +495,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $data: createPanelDataProvider(panel),
     titleItems,
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction:
+        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     subHeader: new VizPanelSubHeader({
       hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
@@ -539,6 +543,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
       ),
     });
   }
+
+  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   const body = new VizPanel(vizPanelState);
 
