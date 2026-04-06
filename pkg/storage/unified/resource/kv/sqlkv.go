@@ -11,9 +11,13 @@ import (
 	"strings"
 	"time"
 
+	mysql "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 const (
@@ -680,6 +684,7 @@ func (k *SqlKV) keyExists(ctx context.Context, conn dbtx, qb *queryBuilder, keyP
 
 // batchInsert inserts a new row. For DataSection it includes the extra NOT NULL columns with defaults.
 // Uses plain INSERT (no upsert) so the DB's unique constraint rejects concurrent duplicates.
+// If a concurrent insert wins the race, the duplicate-key DB error is mapped to ErrKeyAlreadyExists.
 func (k *SqlKV) batchInsert(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
 	var query string
 	var args []interface{}
@@ -688,8 +693,38 @@ func (k *SqlKV) batchInsert(ctx context.Context, conn dbtx, qb *queryBuilder, ke
 	} else {
 		query, args = qb.buildInsertQuery(keyPath, value)
 	}
-	_, err := conn.ExecContext(ctx, query, args...)
-	return err
+	if _, err := conn.ExecContext(ctx, query, args...); err != nil {
+		if isDuplicateKeyError(err) {
+			return ErrKeyAlreadyExists
+		}
+		return err
+	}
+	return nil
+}
+
+// isDuplicateKeyError reports whether the error is a unique-constraint violation
+// from any of the supported SQL drivers (SQLite, PostgreSQL, MySQL).
+func isDuplicateKeyError(err error) bool {
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
+	}
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23505"
+	}
+
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		return pqErr.Code == "23505"
+	}
+
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) {
+		return mysqlErr.Number == 1062
+	}
+
+	return false
 }
 
 // batchUpdate updates the value for an existing key_path.
