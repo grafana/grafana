@@ -6,11 +6,11 @@ import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/da
 import { Trans, t } from '@grafana/i18n';
 import { type CorrelationExternal, type CorrelationQueryTimeRange } from '@grafana/runtime';
 import {
-  Checkbox,
   Field,
   FieldSet,
   InlineField,
   InlineFieldRow,
+  InlineSwitch,
   Input,
   Label,
   RelativeTimeRangePicker,
@@ -54,6 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 export const ConfigureCorrelationTargetForm = () => {
   const {
     control,
+    register,
     formState: { errors },
   } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
@@ -67,6 +68,8 @@ export const ConfigureCorrelationTargetForm = () => {
   const [enableTimeRange, setEnableTimeRange] = useState(
     timeRange?.field !== undefined || timeRange?.range !== undefined
   );
+
+  const LABEL_WIDTH = 10;
 
   return (
     <>
@@ -166,8 +169,11 @@ export const ConfigureCorrelationTargetForm = () => {
                   {t('correlations.target-form.target-time-range-label', 'Custom Time Range')}
                 </Label>
                 <InlineFieldRow>
-                  <InlineField label={t('correlations.target-form.target-time-range-enable', 'Enable')}>
-                    <Checkbox
+                  <InlineField
+                    labelWidth={LABEL_WIDTH}
+                    label={t('correlations.target-form.target-time-range-enable', 'Enable')}
+                  >
+                    <InlineSwitch
                       value={enableTimeRange}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setEnableTimeRange(e.target.checked)}
                     />
@@ -177,6 +183,7 @@ export const ConfigureCorrelationTargetForm = () => {
                   <>
                     <InlineFieldRow>
                       <InlineField
+                        labelWidth={LABEL_WIDTH}
                         label={t('correlations.target-form.target-time-range-field-label', 'Field')}
                         tooltip={t(
                           'correlations.target-form.target-time-range-field-tooltip',
@@ -184,30 +191,31 @@ export const ConfigureCorrelationTargetForm = () => {
                         )}
                         htmlFor="timerange-field"
                       >
-                        <Input
-                          id="timerange-field"
-                          value={timeRange?.field || ''}
-                          onChange={(e) => {
-                            console.log(e.currentTarget.value);
-                          }}
-                        />
+                        <Input id="timerange-field" {...register('config.timeRange.field')} />
                       </InlineField>
                     </InlineFieldRow>
                     <InlineFieldRow>
                       <InlineField
+                        labelWidth={LABEL_WIDTH}
                         label={t('correlations.target-form.target-time-range-range-label', 'Range')}
                         tooltip={t(
                           'correlations.target-form.target-time-range-range-tooltip',
                           'Specify the offset to use against the range. If not specified while a custom range is enabled, the range will be +- 24 hours'
                         )}
                       >
-                        <RelativeTimeRangePicker
-                          timeRange={timeRange?.range || { from: 86400, to: -86400 }}
-                          onChange={(e) => {
-                            console.log(e);
-                          }}
-                          customQuickOptions={getQuickOptionsForCorrelation()}
-                          isRelativeToNow={false}
+                        <Controller
+                          control={control}
+                          name="config.timeRange.range"
+                          render={({ field: { onChange, value } }) => (
+                            <RelativeTimeRangePicker
+                              timeRange={{ from: value.from ?? 86400, to: value.to ?? -86400 }}
+                              onChange={(e) => {
+                                onChange(e);
+                              }}
+                              customQuickOptions={getQuickOptionsForCorrelation()}
+                              isRelativeToNow={false}
+                            />
+                          )}
                         />
                       </InlineField>
                     </InlineFieldRow>

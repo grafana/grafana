@@ -4,10 +4,13 @@ const getRegex = (relativeToNow = true) => {
   return relativeToNow ? /^now$|^now(\-|\+)(\d{1,10})([wdhms])$/ : /^field$|^field(\-|\+)(\d{1,10})([wdhms])$/;
 };
 
-export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRange | undefined => {
+export const mapOptionToRelativeTimeRange = (
+  option: TimeOption,
+  isRelativeToNow = true
+): RelativeTimeRange | undefined => {
   return {
-    from: relativeToSeconds(option.from),
-    to: relativeToSeconds(option.to),
+    from: relativeToSeconds(option.from, isRelativeToNow),
+    to: relativeToSeconds(option.to, isRelativeToNow),
   };
 };
 

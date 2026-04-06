@@ -1,5 +1,3 @@
-import { intervalToSeconds } from 'src/datetime/rangeutil';
-
 import { dateTime, rangeUtil } from '@grafana/data';
 import { isCustomVariableValue } from '@grafana/scenes';
 

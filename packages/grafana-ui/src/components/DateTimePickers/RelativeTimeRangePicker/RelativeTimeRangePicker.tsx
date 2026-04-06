@@ -91,7 +91,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   const styles = useStyles2(getStyles(from.validation.errorMessage, to.validation.errorMessage));
 
   const onChangeTimeOption = (option: TimeOption) => {
-    const relativeTimeRange = mapOptionToRelativeTimeRange(option);
+    const relativeTimeRange = mapOptionToRelativeTimeRange(option, isRelativeToNow);
     if (!relativeTimeRange) {
       return;
     }
