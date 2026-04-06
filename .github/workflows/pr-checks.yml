@@ -17,7 +17,7 @@ on:
       - demilestoned
 
 concurrency:
-  group: pr-checks-${{ github.event.number }}
+  group: pr-checks-${{ github.event.number }}-new
 
 permissions:
   statuses: write
