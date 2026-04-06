@@ -15,19 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -140,7 +138,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		{
 			desc:       "Should return folders that users can read alerts from",
 			permission: dashboardaccess.PERMISSION_VIEW,
-			queryType:  searchstore.TypeAlertFolder,
+			queryType:  model.TypeAlertFolder,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
 				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
@@ -152,7 +150,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		{
 			desc:       "Should return folders that users can read alerts when user has read wildcard",
 			permission: dashboardaccess.PERMISSION_VIEW,
-			queryType:  searchstore.TypeAlertFolder,
+			queryType:  model.TypeAlertFolder,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "*"},
 				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
@@ -314,7 +312,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 		{
 			desc:       "Should return folders that users can read alerts from",
 			permission: dashboardaccess.PERMISSION_VIEW,
-			queryType:  searchstore.TypeAlertFolder,
+			queryType:  model.TypeAlertFolder,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
 				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
@@ -326,7 +324,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 		{
 			desc:       "Should return folders that users can read alerts when user has read wildcard",
 			permission: dashboardaccess.PERMISSION_VIEW,
-			queryType:  searchstore.TypeAlertFolder,
+			queryType:  model.TypeAlertFolder,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "*"},
 				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
@@ -386,14 +384,14 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 	}{
 		{
 			desc:           "Should not be able to view dashboards under inherited folders with no permissions if nested folders are enabled",
-			queryType:      searchstore.TypeDashboard,
+			queryType:      model.TypeDashboard,
 			permission:     dashboardaccess.PERMISSION_VIEW,
 			permissions:    nil,
 			expectedResult: nil,
 		},
 		{
 			desc:           "Should not be able to view inherited folders with no permissions if nested folders are enabled",
-			queryType:      searchstore.TypeFolder,
+			queryType:      model.TypeFolder,
 			permission:     dashboardaccess.PERMISSION_VIEW,
 			permissions:    nil,
 			expectedResult: nil,
@@ -406,7 +404,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should be able to view dashboards under inherited folders with wildcard scope if nested folders are enabled",
-			queryType:  searchstore.TypeDashboard,
+			queryType:  model.TypeDashboard,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
@@ -415,7 +413,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should be able to view inherited folders if nested folders are enabled",
-			queryType:  searchstore.TypeFolder,
+			queryType:  model.TypeFolder,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
@@ -480,14 +478,14 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 	}{
 		{
 			desc:                    "Should not be able to view dashboards under inherited folders with no permissions if nested folders are enabled",
-			queryType:               searchstore.TypeDashboard,
+			queryType:               model.TypeDashboard,
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
 			expectedResult:          nil,
 		},
 		{
 			desc:                    "Should not be able to view inherited folders with no permissions if nested folders are enabled",
-			queryType:               searchstore.TypeFolder,
+			queryType:               model.TypeFolder,
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
 			expectedResult:          nil,
@@ -500,7 +498,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 		},
 		{
 			desc:       "Should be able to view dashboards under inherited folders with wildcard scope if nested folders are enabled",
-			queryType:  searchstore.TypeDashboard,
+			queryType:  model.TypeDashboard,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
@@ -509,7 +507,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 		},
 		{
 			desc:       "Should be able to view inherited folders if nested folders are enabled",
-			queryType:  searchstore.TypeFolder,
+			queryType:  model.TypeFolder,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
@@ -593,7 +591,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 		},
 		{
 			desc:       "Should be able to view folders if user has `folders:read` access to them",
-			queryType:  searchstore.TypeFolder,
+			queryType:  model.TypeFolder,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
@@ -602,7 +600,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 		},
 		{
 			desc:       "Should be able to view folders if user has action set access to them",
-			queryType:  searchstore.TypeFolder,
+			queryType:  model.TypeFolder,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: "folders:view", Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
@@ -611,7 +609,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 		},
 		{
 			desc:       "Should be able to view only the subfolder if user has action set access to it",
-			queryType:  searchstore.TypeFolder,
+			queryType:  model.TypeFolder,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: "folders:admin", Scope: "folders:uid:subfolder", Kind: "folders", Identifier: "subfolder"},
@@ -620,7 +618,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 		},
 		{
 			desc:       "Should be able to filter for folders that user has write access to",
-			queryType:  searchstore.TypeFolder,
+			queryType:  model.TypeFolder,
 			permission: dashboardaccess.PERMISSION_EDIT,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: "folders:edit", Scope: "folders:uid:subfolder", Kind: "folders", Identifier: "subfolder"},
@@ -683,35 +681,28 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) db.DB {
 	t.Helper()
 
-	db, cfg := db.InitTestDBWithCfg(t)
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
-	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db, cfg)
-
-	// Create a signed-in user for folder creation
-	usr := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Login:  "test",
-	}
+	db, _ := db.InitTestDBWithCfg(t)
 
 	// folders need to be created in both the folder and dashboard table
 	for i := 1; i <= numFolders; i++ {
 		str := strconv.Itoa(i)
-		folder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:        str,
-			OrgID:        1,
-			UID:          str,
-			SignedInUser: usr,
-		})
-		require.NoError(t, err)
-		_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-			OrgID: 1,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": str,
-				"uid":   folder.UID,
-			}),
-			IsFolder: true,
+		err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			now := time.Now()
+			if _, err := sess.Exec("INSERT INTO folder(org_id, uid, title, created, updated) VALUES(?, ?, ?, ?, ?)",
+				1, str, str, now, now); err != nil {
+				return err
+			}
+			_, err := sess.Insert(&dashboards.Dashboard{
+				OrgID:    1,
+				UID:      str,
+				Slug:     str,
+				Title:    str,
+				IsFolder: true,
+				Data:     simplejson.NewFromAny(map[string]any{"title": str, "uid": str}),
+				Created:  now,
+				Updated:  now,
+			})
+			return err
 		})
 		require.NoError(t, err)
 	}
@@ -719,29 +710,31 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 	// now create dashboards
 	for i := numFolders + 1; i <= numFolders+numDashboards; i++ {
 		str := strconv.Itoa(i)
-		folderID := 0
+		folderUID := ""
 		if i%(numFolders+1) != 0 {
-			folderID = i % (numFolders + 1)
+			folderUID = strconv.Itoa(i % (numFolders + 1))
 		}
 
-		cmd := dashboards.SaveDashboardCommand{
-			OrgID: 1,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": str,
-				"uid":   str,
-			}),
-			IsFolder: false,
-		}
-		if folderID != 0 {
-			cmd.FolderUID = strconv.Itoa(folderID)
-		}
-
-		_, err := dashStore.SaveDashboard(context.Background(), cmd)
+		err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			now := time.Now()
+			_, err := sess.Insert(&dashboards.Dashboard{
+				OrgID:     1,
+				UID:       str,
+				Slug:      str,
+				Title:     str,
+				IsFolder:  false,
+				FolderUID: folderUID,
+				Data:      simplejson.NewFromAny(map[string]any{"title": str, "uid": str}),
+				Created:   now,
+				Updated:   now,
+			})
+			return err
+		})
 		require.NoError(t, err)
 	}
 
 	// insert permissions
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		role := &accesscontrol.Role{
 			OrgID:   0,
 			UID:     "basic_viewer",
@@ -796,73 +789,95 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol.Permission, orgID int64, features featuremgmt.FeatureToggles) db.DB {
 	t.Helper()
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, _ := db.InitTestDBWithCfg(t)
 
-	// dashboard store commands that should be called.
-	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
-	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db, cfg)
 	// create in both the folder & dashboard tables
-	parent, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:        "parent",
-		OrgID:        orgID,
-		UID:          "parent",
-		SignedInUser: usr,
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		if _, err := sess.Exec("INSERT INTO folder(org_id, uid, title, created, updated) VALUES(?, ?, ?, ?, ?)",
+			orgID, "parent", "parent", now, now); err != nil {
+			return err
+		}
+		_, err := sess.Insert(&dashboards.Dashboard{
+			OrgID:    orgID,
+			UID:      "parent",
+			Slug:     "parent",
+			Title:    "parent",
+			IsFolder: true,
+			Data:     simplejson.NewFromAny(map[string]any{"title": "parent", "uid": "parent"}),
+			Created:  now,
+			Updated:  now,
+		})
+		return err
 	})
 	require.NoError(t, err)
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID: orgID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "parent",
-			"uid":   parent.UID,
-		}),
-		IsFolder: true,
-	})
-	require.NoError(t, err)
-	subfolder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:        "subfolder",
-		OrgID:        orgID,
-		UID:          "subfolder",
-		ParentUID:    parent.UID,
-		SignedInUser: usr,
-	})
-	require.NoError(t, err)
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:     orgID,
-		FolderUID: parent.UID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "subfolder",
-			"uid":   subfolder.UID,
-		}),
-		IsFolder: true,
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		if _, err := sess.Exec("INSERT INTO folder(org_id, uid, parent_uid, title, created, updated) VALUES(?, ?, ?, ?, ?, ?)",
+			orgID, "subfolder", "parent", "subfolder", now, now); err != nil {
+			return err
+		}
+		_, err := sess.Insert(&dashboards.Dashboard{
+			OrgID:     orgID,
+			UID:       "subfolder",
+			Slug:      "subfolder",
+			Title:     "subfolder",
+			IsFolder:  true,
+			FolderUID: "parent",
+			Data:      simplejson.NewFromAny(map[string]any{"title": "subfolder", "uid": "subfolder"}),
+			Created:   now,
+			Updated:   now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 	// create a root level dashboard
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID: orgID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "dashboard under the root",
-		}),
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		_, err := sess.Insert(&dashboards.Dashboard{
+			UID:     util.GenerateShortUID(),
+			OrgID:   orgID,
+			Slug:    "dashboard-under-the-root",
+			Title:   "dashboard under the root",
+			Data:    simplejson.NewFromAny(map[string]any{"title": "dashboard under the root"}),
+			Created: now,
+			Updated: now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 
 	// create dashboard under parent folder
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:     orgID,
-		FolderUID: parent.UID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "dashboard under parent folder",
-		}),
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		_, err := sess.Insert(&dashboards.Dashboard{
+			UID:       util.GenerateShortUID(),
+			OrgID:     orgID,
+			Slug:      "dashboard-under-parent-folder",
+			Title:     "dashboard under parent folder",
+			FolderUID: "parent",
+			Data:      simplejson.NewFromAny(map[string]any{"title": "dashboard under parent folder"}),
+			Created:   now,
+			Updated:   now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 
 	// create dashboard under subfolder
-	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:     orgID,
-		FolderUID: subfolder.UID,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": "dashboard under subfolder",
-		}),
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		now := time.Now()
+		_, err := sess.Insert(&dashboards.Dashboard{
+			UID:       util.GenerateShortUID(),
+			OrgID:     orgID,
+			Slug:      "dashboard-under-subfolder",
+			Title:     "dashboard under subfolder",
+			FolderUID: "subfolder",
+			Data:      simplejson.NewFromAny(map[string]any{"title": "dashboard under subfolder"}),
+			Created:   now,
+			Updated:   now,
+		})
+		return err
 	})
 	require.NoError(t, err)
 
