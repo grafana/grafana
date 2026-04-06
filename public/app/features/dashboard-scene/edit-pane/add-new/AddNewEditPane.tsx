@@ -156,6 +156,10 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         opacity: 1,
       },
+      img: {
+        display: 'block',
+        width: '100%',
+      },
     }),
     pasteButton: css({
       width: '100%',
