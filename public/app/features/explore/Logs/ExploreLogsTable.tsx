@@ -4,7 +4,6 @@ import {
   type AbsoluteTimeRange,
   type DataFrame,
   type EventBus,
-  EventBusSrv,
   type FieldConfigSource,
   type PanelData,
   urlUtil,
