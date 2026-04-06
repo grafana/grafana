@@ -172,7 +172,7 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -180,7 +180,7 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
 			}
 
 			var ctx context.Context
@@ -218,8 +218,6 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 		query          *team.GetTeamByIDQuery
 		requesterOrgID int64
 		ctxUID         string
-		legacyResult   *team.TeamDTO
-		legacyErr      error
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
 		noReqContext   bool
@@ -295,28 +293,15 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			},
 		},
 		{
-			name:           "successfully gets a team by ID",
+			name:           "successfully gets a team by ID using label selector",
 			requesterOrgID: 1,
 			query: &team.GetTeamByIDQuery{
 				ID: 42,
 			},
-			legacyResult: &team.TeamDTO{ID: 42, UID: "team-uid-42", OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				resp := iamv0alpha1.Team{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-						Kind:       "Team",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "team-uid-42",
-						Namespace: "org-1",
-					},
-					Spec: iamv0alpha1.TeamSpec{
-						Title: "Team From ID",
-						Email: "id@example.com",
-					},
-				}
 				w.Header().Set("Content-Type", "application/json")
+				assert.Equal(t, "grafana.app/deprecatedInternalID=42", r.URL.Query().Get("labelSelector"))
+				resp := teamListResponse("team-uid-42", "org-1", "Team From ID", "id@example.com")
 				_ = json.NewEncoder(w).Encode(resp)
 			},
 			expectDTO: &team.TeamDTO{
@@ -327,12 +312,21 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			},
 		},
 		{
-			name:           "returns error when team not found in legacy",
+			name:           "returns error when team not found via label selector",
 			requesterOrgID: 1,
 			query: &team.GetTeamByIDQuery{
 				ID: 999,
 			},
-			legacyErr: team.ErrTeamNotFound,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				resp := map[string]any{
+					"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+					"kind":       "TeamList",
+					"metadata":   map[string]any{},
+					"items":      []any{},
+				}
+				_ = json.NewEncoder(w).Encode(resp)
+			},
 			expectErr: true,
 		},
 		{
@@ -406,15 +400,10 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockLegacyService{
-				getTeamByIDResult: tt.legacyResult,
-				getTeamByIDErr:    tt.legacyErr,
-			}
-
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, mock)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if tt.serverResponse != nil {
@@ -426,7 +415,7 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, mock)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
 			}
 
 			var ctx context.Context
@@ -467,15 +456,13 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 		name           string
 		cmd            *team.UpdateTeamCommand
 		requesterOrgID int64
-		legacyResult   *team.TeamDTO
-		legacyErr      error
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
 		noReqContext   bool
 		expectErr      bool
 	}{
 		{
-			name:           "successfully updates a team",
+			name:           "successfully updates a team via label selector",
 			requesterOrgID: 1,
 			cmd: &team.UpdateTeamCommand{
 				ID:          1,
@@ -483,35 +470,21 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				Email:       "updated@example.com",
 				ExternalUID: "ext-uid-1",
 			},
-			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				switch r.Method {
-				case http.MethodGet:
-					resp := iamv0alpha1.Team{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-							Kind:       "Team",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "team-uid-1",
-							Namespace: "org-1",
-						},
-						Spec: iamv0alpha1.TeamSpec{
-							Title: "Old Team",
-							Email: "old@example.com",
-						},
-					}
+				if r.URL.Query().Get("labelSelector") != "" {
+					resp := teamListResponse("team-uid-1", "org-1", "Old Team", "old@example.com")
 					_ = json.NewEncoder(w).Encode(resp)
-				case http.MethodPut:
-					var body map[string]any
-					_ = json.NewDecoder(r.Body).Decode(&body)
-					spec := body["spec"].(map[string]any)
-					assert.Equal(t, "Updated Team", spec["title"])
-					assert.Equal(t, "updated@example.com", spec["email"])
-					assert.Equal(t, "ext-uid-1", spec["externalUID"])
-					_ = json.NewEncoder(w).Encode(body)
+					return
 				}
+				assert.Equal(t, http.MethodPut, r.Method)
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				spec := body["spec"].(map[string]any)
+				assert.Equal(t, "Updated Team", spec["title"])
+				assert.Equal(t, "updated@example.com", spec["email"])
+				assert.Equal(t, "ext-uid-1", spec["externalUID"])
+				_ = json.NewEncoder(w).Encode(body)
 			},
 		},
 		{
@@ -522,58 +495,50 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				Name:  "Updated Provisioned Team",
 				Email: "updated@example.com",
 			},
-			legacyResult: &team.TeamDTO{ID: 2, UID: "team-uid-2", OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				switch r.Method {
-				case http.MethodGet:
-					resp := iamv0alpha1.Team{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-							Kind:       "Team",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "team-uid-2",
-							Namespace: "org-1",
-						},
-						Spec: iamv0alpha1.TeamSpec{
-							Title:       "Provisioned Team",
-							Email:       "old@example.com",
-							Provisioned: true,
-						},
-					}
+				if r.URL.Query().Get("labelSelector") != "" {
+					resp := teamListResponseWithProvisioned("team-uid-2", "org-1", "Provisioned Team", "old@example.com")
 					_ = json.NewEncoder(w).Encode(resp)
-				case http.MethodPut:
-					var body map[string]any
-					_ = json.NewDecoder(r.Body).Decode(&body)
-					spec := body["spec"].(map[string]any)
-					assert.Equal(t, "Updated Provisioned Team", spec["title"])
-					assert.Equal(t, "updated@example.com", spec["email"])
-					assert.Equal(t, true, spec["provisioned"])
-					_ = json.NewEncoder(w).Encode(body)
+					return
 				}
+				assert.Equal(t, http.MethodPut, r.Method)
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				spec := body["spec"].(map[string]any)
+				assert.Equal(t, "Updated Provisioned Team", spec["title"])
+				assert.Equal(t, "updated@example.com", spec["email"])
+				assert.Equal(t, true, spec["provisioned"])
+				_ = json.NewEncoder(w).Encode(body)
 			},
 		},
 		{
-			name:           "returns error when team not found in legacy",
+			name:           "returns error when team not found via label selector",
 			requesterOrgID: 1,
 			cmd: &team.UpdateTeamCommand{
 				ID:   999,
 				Name: "Any",
 			},
-			legacyErr: team.ErrTeamNotFound,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(emptyTeamListResponse())
+			},
 			expectErr: true,
 		},
 		{
-			name:           "propagates error from k8s client",
+			name:           "propagates error from k8s client on update",
 			requesterOrgID: 1,
 			cmd: &team.UpdateTeamCommand{
 				ID:   1,
 				Name: "Any",
 			},
-			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
+				if r.URL.Query().Get("labelSelector") != "" {
+					resp := teamListResponse("team-uid-1", "org-1", "Team", "")
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
 					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
@@ -588,23 +553,20 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			name:           "returns error when config provider not initialized",
 			requesterOrgID: 1,
 			cmd:            &team.UpdateTeamCommand{ID: 1, Name: "Any"},
-			legacyResult:   &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
 			nilProvider:    true,
 			expectErr:      true,
 		},
 		{
 			name:         "returns error when no request context",
 			cmd:          &team.UpdateTeamCommand{ID: 1, Name: "Any"},
-			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
 			noReqContext: true,
 			expectErr:    true,
 		},
 		{
-			name:         "returns error when requester is not set in context",
-			cmd:          &team.UpdateTeamCommand{ID: 1, Name: "Any"},
-			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
-			nilProvider:  true,
-			expectErr:    true,
+			name:        "returns error when requester is not set in context",
+			cmd:         &team.UpdateTeamCommand{ID: 1, Name: "Any"},
+			nilProvider: true,
+			expectErr:   true,
 		},
 		{
 			name:           "uses orgId from context instead of command",
@@ -614,44 +576,28 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				OrgID: 99,
 				Name:  "Updated Team",
 			},
-			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				assert.Contains(t, r.URL.Path, "org-5")
 				w.Header().Set("Content-Type", "application/json")
-				switch r.Method {
-				case http.MethodGet:
-					resp := iamv0alpha1.Team{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-							Kind:       "Team",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "team-uid-1",
-							Namespace: "org-5",
-						},
-						Spec: iamv0alpha1.TeamSpec{Title: "Old Team"},
-					}
+				if r.URL.Query().Get("labelSelector") != "" {
+					resp := teamListResponse("team-uid-1", "org-5", "Old Team", "")
 					_ = json.NewEncoder(w).Encode(resp)
-				case http.MethodPut:
-					var body map[string]any
-					_ = json.NewDecoder(r.Body).Decode(&body)
-					_ = json.NewEncoder(w).Encode(body)
+					return
 				}
+				assert.Equal(t, http.MethodPut, r.Method)
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				_ = json.NewEncoder(w).Encode(body)
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockLegacyService{
-				getTeamByIDResult: tt.legacyResult,
-				getTeamByIDErr:    tt.legacyErr,
-			}
-
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, mock)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -659,7 +605,7 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, mock)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
 			}
 
 			var ctx context.Context
@@ -986,21 +932,12 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockLegacyService{
-				searchTeamsResult: team.SearchTeamQueryResult{
-					TotalCount: 1,
-					Teams: []*team.TeamDTO{
-						{ID: 1, UID: "legacy-uid", OrgID: 1, Name: "Legacy Team"},
-					},
-				},
-			}
-
 			var svc *TeamK8sService
 
 			cfg := setting.NewCfg()
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), cfg, nil, mock)
+				svc = NewTeamK8sService(log.NewNopLogger(), cfg, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if tt.serverResponse != nil {
@@ -1012,7 +949,7 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), cfg, provider, mock)
+				svc = NewTeamK8sService(log.NewNopLogger(), cfg, provider)
 			}
 
 			var ctx context.Context
@@ -1055,23 +992,24 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 		name           string
 		cmd            *team.DeleteTeamCommand
 		requesterOrgID int64
-		ctxUID         string
-		legacyResult   *team.TeamDTO
-		legacyErr      error
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
 		noReqContext   bool
 		expectErr      bool
 	}{
 		{
-			name:           "successfully deletes a team using UID from context",
+			name:           "successfully deletes a team",
 			requesterOrgID: 1,
-			cmd:            &team.DeleteTeamCommand{ID: 42, OrgID: 1},
-			ctxUID:         "team-uid-42",
+			cmd:            &team.DeleteTeamCommand{ID: 1, OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodDelete, r.Method)
-				assert.Contains(t, r.URL.Path, "team-uid-42")
 				w.Header().Set("Content-Type", "application/json")
+				if r.URL.Query().Get("labelSelector") != "" {
+					resp := teamListResponse("team-uid-1", "org-1", "Team", "")
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
+				assert.Equal(t, http.MethodDelete, r.Method)
+				assert.Contains(t, r.URL.Path, "team-uid-1")
 				w.WriteHeader(http.StatusOK)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
 					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
@@ -1080,35 +1018,26 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 			},
 		},
 		{
-			name:           "successfully deletes a team by resolving UID from legacy",
-			requesterOrgID: 1,
-			cmd:            &team.DeleteTeamCommand{ID: 42, OrgID: 1},
-			legacyResult:   &team.TeamDTO{ID: 42, UID: "team-uid-42", OrgID: 1},
-			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodDelete, r.Method)
-				assert.Contains(t, r.URL.Path, "team-uid-42")
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusSuccess,
-				})
-			},
-		},
-		{
-			name:           "returns error when team not found in legacy",
+			name:           "returns error when team not found via label selector",
 			requesterOrgID: 1,
 			cmd:            &team.DeleteTeamCommand{ID: 999, OrgID: 1},
-			legacyErr:      team.ErrTeamNotFound,
-			expectErr:      true,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(emptyTeamListResponse())
+			},
+			expectErr: true,
 		},
 		{
 			name:           "returns ErrTeamNotFound when k8s returns 404",
 			requesterOrgID: 1,
-			cmd:            &team.DeleteTeamCommand{ID: 42, OrgID: 1},
-			ctxUID:         "nonexistent-uid",
+			cmd:            &team.DeleteTeamCommand{ID: 1, OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
+				if r.URL.Query().Get("labelSelector") != "" {
+					resp := teamListResponse("team-uid-1", "org-1", "Team", "")
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
 				w.WriteHeader(http.StatusNotFound)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
 					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
@@ -1123,10 +1052,14 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 		{
 			name:           "propagates error from k8s client",
 			requesterOrgID: 1,
-			cmd:            &team.DeleteTeamCommand{ID: 42, OrgID: 1},
-			ctxUID:         "team-uid-42",
+			cmd:            &team.DeleteTeamCommand{ID: 1, OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
+				if r.URL.Query().Get("labelSelector") != "" {
+					resp := teamListResponse("team-uid-1", "org-1", "Team", "")
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
 					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
@@ -1138,27 +1071,35 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name:           "returns error when config provider not initialized",
-			requesterOrgID: 1,
-			cmd:            &team.DeleteTeamCommand{ID: 42, OrgID: 1},
-			ctxUID:         "team-uid-42",
-			nilProvider:    true,
-			expectErr:      true,
+			name:        "returns error when config provider not initialized",
+			cmd:         &team.DeleteTeamCommand{ID: 1, OrgID: 1},
+			nilProvider: true,
+			expectErr:   true,
 		},
 		{
 			name:         "returns error when no request context",
-			cmd:          &team.DeleteTeamCommand{ID: 42, OrgID: 1},
+			cmd:          &team.DeleteTeamCommand{ID: 1, OrgID: 1},
 			noReqContext: true,
 			expectErr:    true,
 		},
 		{
+			name:        "returns error when requester is not set in context",
+			cmd:         &team.DeleteTeamCommand{ID: 1, OrgID: 1},
+			nilProvider: true,
+			expectErr:   true,
+		},
+		{
 			name:           "uses orgId from context instead of command",
 			requesterOrgID: 5,
-			cmd:            &team.DeleteTeamCommand{ID: 42, OrgID: 99},
-			ctxUID:         "team-uid-42",
+			cmd:            &team.DeleteTeamCommand{ID: 1, OrgID: 99},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				assert.Contains(t, r.URL.Path, "org-5")
 				w.Header().Set("Content-Type", "application/json")
+				if r.URL.Query().Get("labelSelector") != "" {
+					resp := teamListResponse("team-uid-1", "org-5", "Team", "")
+					_ = json.NewEncoder(w).Encode(resp)
+					return
+				}
 				w.WriteHeader(http.StatusOK)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
 					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
@@ -1170,27 +1111,18 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockLegacyService{
-				getTeamByIDResult: tt.legacyResult,
-				getTeamByIDErr:    tt.legacyErr,
-			}
-
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, mock)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
 			} else {
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if tt.serverResponse != nil {
-						tt.serverResponse(w, r)
-					}
-				}))
+				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
 
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, mock)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
 			}
 
 			var ctx context.Context
@@ -1202,10 +1134,6 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 
 			if tt.requesterOrgID != 0 {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
-			}
-
-			if tt.ctxUID != "" {
-				ctx = context.WithValue(ctx, team.TeamUIDCtxKey{}, tt.ctxUID)
 			}
 
 			err := svc.DeleteTeam(ctx, tt.cmd)
@@ -1277,6 +1205,16 @@ func membershipTestServer(t *testing.T) *httptest.Server {
 		case r.Method == http.MethodGet && contains(path, "/users/user-uid-42"):
 			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &userObj))
 
+		// Team list by label selector (resolveTeamUID)
+		case r.Method == http.MethodGet && contains(path, "/teams") && !contains(path, "/teams/") && r.URL.Query().Get("labelSelector") != "":
+			list := map[string]any{
+				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+				"kind":       "TeamList",
+				"metadata":   map[string]any{"resourceVersion": "1"},
+				"items":      []any{mustToUnstructured(t, &teamObj)},
+			}
+			_ = json.NewEncoder(w).Encode(list)
+
 		// Team get by UID
 		case r.Method == http.MethodGet && contains(path, "/teams/team-uid-1"):
 			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &teamObj))
@@ -1339,10 +1277,9 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 	ts := membershipTestServer(t)
 	defer ts.Close()
 
-	mock := &mockLegacyService{}
 	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
 	cfg := setting.NewCfg()
-	svc := NewTeamK8sService(log.NewNopLogger(), cfg, provider, mock)
+	svc := NewTeamK8sService(log.NewNopLogger(), cfg, provider)
 
 	ctx := contextWithReqContext()
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
@@ -1358,9 +1295,8 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 	ts := membershipTestServer(t)
 	defer ts.Close()
 
-	mock := &mockLegacyService{}
 	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-	svc := NewTeamK8sService(log.NewNopLogger(), nil, provider, mock)
+	svc := NewTeamK8sService(log.NewNopLogger(), nil, provider)
 
 	ctx := contextWithReqContext()
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
@@ -1375,11 +1311,8 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 	ts := membershipTestServer(t)
 	defer ts.Close()
 
-	mock := &mockLegacyService{
-		getTeamByIDResult: &team.TeamDTO{ID: 10, UID: "team-uid-1", OrgID: 1},
-	}
 	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-	svc := NewTeamK8sService(log.NewNopLogger(), nil, provider, mock)
+	svc := NewTeamK8sService(log.NewNopLogger(), nil, provider)
 
 	ctx := contextWithReqContext()
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
@@ -1438,9 +1371,8 @@ func TestTeamK8sService_RemoveUsersMemberships(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	mock := &mockLegacyService{}
 	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-	svc := NewTeamK8sService(log.NewNopLogger(), nil, provider, mock)
+	svc := NewTeamK8sService(log.NewNopLogger(), nil, provider)
 
 	ctx := contextWithReqContext()
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
@@ -1454,10 +1386,9 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 	ts := membershipTestServer(t)
 	defer ts.Close()
 
-	mock := &mockLegacyService{}
 	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
 	cfg := setting.NewCfg()
-	svc := NewTeamK8sService(log.NewNopLogger(), cfg, provider, mock)
+	svc := NewTeamK8sService(log.NewNopLogger(), cfg, provider)
 
 	ctx := contextWithReqContext()
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
@@ -1477,12 +1408,9 @@ func TestTeamK8sService_GetTeamMembers(t *testing.T) {
 	ts := membershipTestServer(t)
 	defer ts.Close()
 
-	mock := &mockLegacyService{
-		getTeamByIDResult: &team.TeamDTO{ID: 10, UID: "team-uid-1", OrgID: 1},
-	}
 	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
 	cfg := setting.NewCfg()
-	svc := NewTeamK8sService(log.NewNopLogger(), cfg, provider, mock)
+	svc := NewTeamK8sService(log.NewNopLogger(), cfg, provider)
 
 	ctx := contextWithReqContext()
 	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
@@ -1518,20 +1446,59 @@ func splitPath(path string) []string {
 	return parts
 }
 
-type mockLegacyService struct {
-	team.Service
-	getTeamByIDResult *team.TeamDTO
-	getTeamByIDErr    error
-	searchTeamsResult team.SearchTeamQueryResult
-	searchTeamsErr    error
+
+func teamListResponse(name, namespace, title, email string) map[string]any {
+	return map[string]any{
+		"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+		"kind":       "TeamList",
+		"metadata":   map[string]any{},
+		"items": []any{
+			map[string]any{
+				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+				"kind":       "Team",
+				"metadata": map[string]any{
+					"name":      name,
+					"namespace": namespace,
+				},
+				"spec": map[string]any{
+					"title": title,
+					"email": email,
+				},
+			},
+		},
+	}
 }
 
-func (m *mockLegacyService) GetTeamByID(_ context.Context, _ *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	return m.getTeamByIDResult, m.getTeamByIDErr
+func teamListResponseWithProvisioned(name, namespace, title, email string) map[string]any {
+	return map[string]any{
+		"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+		"kind":       "TeamList",
+		"metadata":   map[string]any{},
+		"items": []any{
+			map[string]any{
+				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+				"kind":       "Team",
+				"metadata": map[string]any{
+					"name":      name,
+					"namespace": namespace,
+				},
+				"spec": map[string]any{
+					"title":       title,
+					"email":       email,
+					"provisioned": true,
+				},
+			},
+		},
+	}
 }
 
-func (m *mockLegacyService) SearchTeams(_ context.Context, _ *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	return m.searchTeamsResult, m.searchTeamsErr
+func emptyTeamListResponse() map[string]any {
+	return map[string]any{
+		"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+		"kind":       "TeamList",
+		"metadata":   map[string]any{},
+		"items":      []any{},
+	}
 }
 
 type mockDirectRestConfigProvider struct {

@@ -53,18 +53,16 @@ type TeamK8sService struct {
 	cfg             *setting.Cfg
 	namespaceMapper request.NamespaceMapper
 	configProvider  apiserver.DirectRestConfigProvider
-	legacyService   team.Service
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, legacyService team.Service) *TeamK8sService {
+func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
 		cfg:             cfg,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		configProvider:  configProvider,
-		legacyService:   legacyService,
 	}
 }
 
@@ -90,19 +88,27 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	return s.getDynamicClient(ctx, namespace, teamGVR)
 }
 
-// resolveTeamUID gets team UID from context or falls back to legacy service for ID→UID resolution.
-func (s *TeamK8sService) resolveTeamUID(ctx context.Context, teamID int64, orgID int64) (string, error) {
+// resolveTeamUID gets team UID from context or falls back to label-selector lookup by deprecated internal ID.
+func (s *TeamK8sService) resolveTeamUID(ctx context.Context, namespace string, teamID int64) (string, error) {
 	if uid, ok := ctx.Value(team.TeamUIDCtxKey{}).(string); ok && uid != "" {
 		return uid, nil
 	}
-	legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-		ID:    teamID,
-		OrgID: orgID,
-	})
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return "", err
 	}
-	return legacyTeam.UID, nil
+	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(teamID, 10)
+	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return "", err
+	}
+	if len(list.Items) == 0 {
+		return "", team.ErrTeamNotFound
+	}
+	if len(list.Items) > 1 {
+		return "", errors.New("multiple teams found with same deprecated internal ID")
+	}
+	return list.Items[0].GetName(), nil
 }
 
 // resolveUserUID finds a user's K8s UID by their deprecated internal ID label.
@@ -250,33 +256,50 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	}
 	orgID := requester.GetOrgID()
 
-	uid, _ := ctx.Value(team.TeamUIDCtxKey{}).(string)
-	if uid == "" {
-		legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-			ID:    cmd.ID,
-			OrgID: orgID,
-		})
-		if err != nil {
-			return err
-		}
-		uid = legacyTeam.UID
-	}
-
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return err
 	}
 
-	result, err := client.Get(ctx, uid, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return team.ErrTeamNotFound
+	uid, _ := ctx.Value(team.TeamUIDCtxKey{}).(string)
+	if uid != "" {
+		result, err := client.Get(ctx, uid, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return team.ErrTeamNotFound
+			}
+			return err
 		}
+
+		updated := result.DeepCopy()
+		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+			return err
+		}
+		if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
+			return err
+		}
+		if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
+			return err
+		}
+
+		_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
 		return err
 	}
 
-	updated := result.DeepCopy()
+	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(cmd.ID, 10)
+	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return err
+	}
+	if len(list.Items) == 0 {
+		return team.ErrTeamNotFound
+	}
+	if len(list.Items) > 1 {
+		return errors.New("multiple teams found with same deprecated internal ID")
+	}
+
+	updated := list.Items[0].DeepCopy()
 	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
 		return err
 	}
@@ -298,12 +321,13 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 	}
 	orgID := requester.GetOrgID()
 
-	uid, err := s.resolveTeamUID(ctx, cmd.ID, orgID)
+	namespace := s.namespaceMapper(orgID)
+
+	uid, err := s.resolveTeamUID(ctx, namespace, cmd.ID)
 	if err != nil {
 		return err
 	}
 
-	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return err
@@ -426,34 +450,58 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 	}
 	orgID := requester.GetOrgID()
 
-	uid := query.UID
-	if uid == "" {
-		uid, _ = ctx.Value(team.TeamUIDCtxKey{}).(string)
-	}
-	if uid == "" && query.ID != 0 {
-		teamDTO, err := s.legacyService.GetTeamByID(ctx, query)
-		if err != nil {
-			return nil, err
-		}
-		uid = teamDTO.UID
-	}
-
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := client.Get(ctx, uid, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, team.ErrTeamNotFound
+	uid := query.UID
+	if uid == "" {
+		uid, _ = ctx.Value(team.TeamUIDCtxKey{}).(string)
+	}
+
+	// Fast path: direct Get by UID when available
+	if uid != "" {
+		result, err := client.Get(ctx, uid, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil, team.ErrTeamNotFound
+			}
+			return nil, err
 		}
+
+		var fetched iamv0alpha1.Team
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &fetched); err != nil {
+			return nil, err
+		}
+
+		return &team.TeamDTO{
+			ID:            getResourceID(fetched.ObjectMeta),
+			UID:           fetched.Name,
+			OrgID:         orgID,
+			Name:          fetched.Spec.Title,
+			Email:         fetched.Spec.Email,
+			ExternalUID:   fetched.Spec.ExternalUID,
+			IsProvisioned: fetched.Spec.Provisioned,
+		}, nil
+	}
+
+	// Fallback: look up by deprecated internal ID via label selector
+	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(query.ID, 10)
+	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
 		return nil, err
+	}
+	if len(list.Items) == 0 {
+		return nil, team.ErrTeamNotFound
+	}
+	if len(list.Items) > 1 {
+		return nil, errors.New("multiple teams found with same deprecated internal ID")
 	}
 
 	var fetched iamv0alpha1.Team
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &fetched); err != nil {
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, &fetched); err != nil {
 		return nil, err
 	}
 
@@ -551,7 +599,7 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
 	namespace := s.namespaceMapper(orgId)
 
-	teamUID, err := s.resolveTeamUID(ctx, teamId, orgId)
+	teamUID, err := s.resolveTeamUID(ctx, namespace, teamId)
 	if err != nil {
 		return false, err
 	}
@@ -673,7 +721,7 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 	teamUID := query.TeamUID
 	if teamUID == "" {
-		teamUID, err = s.resolveTeamUID(ctx, query.TeamID, orgID)
+		teamUID, err = s.resolveTeamUID(ctx, namespace, query.TeamID)
 		if err != nil {
 			return nil, err
 		}
