@@ -105,7 +105,7 @@ export function ExploreLogsTable(props: {
     <PanelContextProvider
       value={{
         eventsScope: 'explore',
-        eventBus: props.eventBus ?? new EventBusSrv(),
+        eventBus: props.eventBus,
         onAddAdHocFilter: onCellFilterAdded,
       }}
     >
