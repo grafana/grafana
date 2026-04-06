@@ -371,6 +371,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 	if c.IsSignedIn {
 		showPlaylist := c.HasRole(org.RoleViewer)
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
 			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
 		}
