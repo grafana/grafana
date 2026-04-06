@@ -2011,6 +2011,60 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 		require.Contains(t, deleteResp.Error.Message, "requested RV does not match current RV")
 	})
 
+	t.Run("update without resource version returns 400", func(t *testing.T) {
+		name := "no-rv-update"
+		key := &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     group,
+			Resource:  res,
+			Name:      name,
+		}
+
+		createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: makeValue(name),
+		})
+		require.NoError(t, err)
+		require.Nil(t, createResp.Error)
+
+		// Attempt to update without sending a resource version.
+		updateResp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:   key,
+			Value: makeValue(name),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updateResp.Error, "expected error for missing RV update")
+		require.Equal(t, int32(http.StatusBadRequest), updateResp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonBadRequest), updateResp.Error.Reason)
+	})
+
+	t.Run("delete without resource version returns 400", func(t *testing.T) {
+		name := "no-rv-delete"
+		key := &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     group,
+			Resource:  res,
+			Name:      name,
+		}
+
+		// Create the resource.
+		createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: makeValue(name),
+		})
+		require.NoError(t, err)
+		require.Nil(t, createResp.Error)
+
+		// Attempt to delete without sending a resource version.
+		deleteResp, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+			Key: key,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, deleteResp.Error, "expected error for missing RV delete")
+		require.Equal(t, int32(http.StatusBadRequest), deleteResp.Error.Code)
+		require.Equal(t, string(metav1.StatusReasonBadRequest), deleteResp.Error.Reason)
+	})
+
 	t.Run("update nonexistent resource returns 404", func(t *testing.T) {
 		resp, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key: &resourcepb.ResourceKey{

@@ -688,7 +688,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 		return 0, fmt.Errorf("storage backend is not enabled")
 	}
 	if err := event.Validate(); err != nil {
-		return 0, fmt.Errorf("invalid event: %w", err)
+		return 0, apierrors.NewBadRequest(err.Error())
 	}
 
 	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
