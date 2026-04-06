@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 import { contextSrv } from '../../core/services/context_srv';
