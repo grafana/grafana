@@ -1,6 +1,5 @@
 name: PR automation
 on:
-  pull_request:
   pull_request_target:
     types:
       - labeled
@@ -23,6 +22,8 @@ jobs:
           repository: "grafana/grafana-github-actions"
           ref: main
           persist-credentials: false
+      # Note: this action checks out the grafana/grafana-github-actions repo, not Grafana.
+      # So this `yarn install` is installing dependencies for the actions, not for Grafana.
       - name: Install Actions
         run: |
           corepack enable
