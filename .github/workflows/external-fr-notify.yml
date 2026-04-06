@@ -2,7 +2,7 @@ name: External FR Notify
 
 on:
   issues:
-    types: [labeled]
+    types: [labeled, typed]
 
 permissions:
   contents: read
@@ -18,8 +18,11 @@ jobs:
     name: Notify team about new FR
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.issue.labels.*.name, 'type/feature-request') &&
-      !contains(github.event.issue.labels.*.name, 'fr/auto-triaged')
+      !contains(github.event.issue.labels.*.name, 'fr/auto-triaged') &&
+      (
+        (github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'type/feature-request'))
+        || github.event.action == 'typed'
+      )
 
     steps:
       - name: Checkout repository
@@ -50,6 +53,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: node --experimental-strip-types .github/workflows/scripts/fr-notify.mts metadata
 
       - name: Match teams and send notifications
