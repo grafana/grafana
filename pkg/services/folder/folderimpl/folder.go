@@ -45,7 +45,6 @@ var (
 )
 
 type Service struct {
-	store                  folder.Store
 	unifiedStore           folder.Store
 	db                     db.DB
 	log                    *slog.Logger
@@ -66,7 +65,6 @@ type Service struct {
 }
 
 func ProvideService(
-	store *FolderStoreImpl,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 	userService user.Service,
@@ -84,7 +82,6 @@ func ProvideService(
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
-		store:                  store,
 		features:               features,
 		accessControl:          ac,
 		bus:                    bus,

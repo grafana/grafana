@@ -46,4 +46,27 @@ func TestService(t *testing.T) {
 		assert.Equal(t, []byte("grafana"), decrypted)
 		// We'll let the provider deal with testing details.
 	})
+
+	t.Run("decrypt payload missing algorithm delimiter should return error not panic", func(t *testing.T) {
+		t.Parallel()
+
+		svc := newGcmService(t)
+
+		// A payload with a leading delimiter byte but no closing delimiter.
+		// Previously this caused a panic via slice bounds out of range
+		// because bytes.Index returned -1 and it was used as a slice bound.
+		malformed := []byte("*no-closing-delimiter")
+		_, err := svc.Decrypt(t.Context(), malformed, "1234")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "missing algorithm delimiter")
+	})
+
+	t.Run("decrypt single-byte payload should return error not panic", func(t *testing.T) {
+		t.Parallel()
+
+		svc := newGcmService(t)
+		_, err := svc.Decrypt(t.Context(), []byte("x"), "1234")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "missing algorithm delimiter")
+	})
 }
