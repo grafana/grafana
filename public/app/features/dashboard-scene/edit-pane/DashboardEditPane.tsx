@@ -285,6 +285,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   private updateSelection(selected: ElementSelectionContextItem[]) {
+    // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
+    // This make sure they fire before unmounting
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selected.length === 0 ? undefined : 'element',
