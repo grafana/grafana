@@ -38,7 +38,7 @@ const UTM = 'src=grafana-oss&cnt=whats-new-modal';
 
 export function getSplashScreenConfig(): SplashScreenConfig {
   return {
-    version: '13.0.1',
+    version: '13.0.0',
     features: [
       {
         id: 'assistant',
