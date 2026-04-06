@@ -39,7 +39,7 @@ export function AppChrome({ children }: Props) {
   } = useExtensionSidebarContext();
   const state = chrome.useState();
   const scopes = useScopes();
-  const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
+  const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', true);
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
