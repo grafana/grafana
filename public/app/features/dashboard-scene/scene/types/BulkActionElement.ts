@@ -1,4 +1,4 @@
-import { EditableDashboardElement } from './EditableDashboardElement';
+import { type EditableDashboardElement } from './EditableDashboardElement';
 
 export interface BulkActionElement extends EditableDashboardElement {
   /**

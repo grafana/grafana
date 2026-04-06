@@ -257,7 +257,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
-    if (obj.getRoot() !== this.getRoot()) {
+    if (obj.getRoot() !== this.getRoot() || obj.parent === this) {
       this.setState({
         openPaneTempHack: obj,
         selectionContext: { ...this.state.selectionContext, selected: [{ id: obj.state.key! }] },
