@@ -1,5 +1,6 @@
 name: PR Checks
 on:
+  pull_request:
   pull_request_target:
     types:
       - opened
@@ -30,21 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
-
-      - name: Checkout Actions
-        uses: actions/checkout@v5
-        with:
-          repository: "grafana/grafana-github-actions"
-          ref: main
-          persist-credentials: false
-      # Note: this action checks out the grafana/grafana-github-actions repo, not Grafana.
-      # So this `yarn install` is installing dependencies for the actions, not for Grafana.
-      - name: Install Actions
-        run: |
-          corepack enable
-          yarn install --immutable
       - name: Run PR Checks
-        uses: ./pr-checks
+        uses: grafana/grafana-github-actions/pr-checks@jh/pr-checks-refactor
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-checks
