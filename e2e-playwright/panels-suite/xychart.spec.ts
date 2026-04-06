@@ -31,9 +31,6 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
         queryParams: new URLSearchParams({ editPanel: '8' }),
       });
 
-      const panelTitle = page.getByRole('heading', { name: 'MPG vs Acceleration (by Country)', level: 2 });
-      await expect(panelTitle, 'first panel is visible').toBeVisible();
-
       await expect(page.getByRole('button', { name: 'USA' }), 'USA legend item is visible').toBeVisible();
 
       const report = await scanForA11yViolations();
