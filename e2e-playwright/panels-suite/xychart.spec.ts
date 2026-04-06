@@ -101,23 +101,15 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
     await xyChartUplot.waitFor({ state: 'visible', timeout: 5000 });
 
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+    await expect(tooltip, 'tooltip appears on click').not.toBeVisible();
 
-    const box = await xyChartUplot.boundingBox();
-    expect(box).not.toBeNull();
-
-    const step = Math.max(50, box!.width / 10);
-    for (let x = box!.x + 10; x < box!.x + box!.width; x += step) {
-      for (let y = box!.y + 10; y < box!.y + box!.height; y += step) {
-        await page.mouse.move(x, y);
-        if (await tooltip.isVisible()) {
-          await page.mouse.click(box!.x + box!.width + 200, box!.y + box!.height + 200);
-          await expect(tooltip, 'tooltip hides after clicking away').toBeHidden({ timeout: 3000 });
-          return;
-        }
-      }
-    }
-
-    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    const panel = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Panel.title('MPG vs Acceleration (by Country)')
+    );
+    // assert panel is visible and `u-over` is in the document
+    await expect(panel.locator('.u-over')).toBeVisible();
+    // Click a known element position within the panel
+    panel.locator('.u-over').click({ position: { x: 100, y: 100 } });
     await expect(tooltip, 'tooltip appears on click').toBeVisible({ timeout: 3000 });
   });
 });
