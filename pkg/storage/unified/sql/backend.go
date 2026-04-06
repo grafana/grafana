@@ -912,10 +912,6 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv int64) error {
-	if rv == 0 {
-		return nil
-	}
-
 	// The RV is part of the update request, and it may no longer be the most recent
 	rows, err := res.RowsAffected()
 	if err != nil {
