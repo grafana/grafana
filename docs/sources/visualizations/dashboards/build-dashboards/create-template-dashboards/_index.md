@@ -63,7 +63,7 @@ To create a dashboard from a template, follow these steps:
 Suggested dashboards can be helpful when you have a data source configured, but you're not sure how to most effectively visualize your data.
 The process of creating a dashboard from a suggestion starts from the **Data sources** feature, so the suggestions are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch).
 
-The dashboards suggested can either have the data source provided or come from the Grafana Community, and they are labeled to indicate this:
+The dashboards suggested are either provided by the data source plugin (provisioned) or come from the Grafana Community, and they are labeled to indicate this:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-suggested-dashboards-v13.0.png" max-width="750px" alt="Suggested dashboards dialog box" >}}
 
