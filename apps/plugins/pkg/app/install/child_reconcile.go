@@ -3,6 +3,7 @@ package install
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -14,8 +15,18 @@ import (
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
-var (
-	requeueAfter = 10 * time.Second
+const (
+	requeueAfter  = 10 * time.Second
+	requeueJitter = 5 * time.Second
+
+	// childProcessingBatchSize is the maximum number of child plugins to register or
+	// unregister in a single reconciliation cycle. Larger child sets are split across
+	// multiple cycles using ReconcileResult.State to track progress, so that each
+	// cycle holds a bounded number of in-flight API objects in memory.
+	childProcessingBatchSize = 20
+
+	// stateKeyChildIndex is the ReconcileResult.State key used to resume a multi-cycle batch.
+	stateKeyChildIndex = "childIndex"
 )
 
 func actionLabel(action operator.ReconcileAction) string {
@@ -31,6 +42,15 @@ func actionLabel(action operator.ReconcileAction) string {
 	default:
 		return "unknown"
 	}
+}
+
+func requeueAfterWithJitter() time.Duration {
+	return requeueAfter + time.Duration(rand.Int63n(int64(requeueJitter)))
+}
+
+// childState returns a ReconcileResult.State map that resumes processing from idx.
+func childState(idx int) map[string]any {
+	return map[string]any{stateKeyChildIndex: idx}
 }
 
 // ChildPluginReconciler reconciles Plugin resources and creates child plugin records.
@@ -75,6 +95,14 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		return operator.ReconcileResult{}, nil
 	}
 
+	// Resume from prior batch cycle if state is present.
+	startIdx := 0
+	if req.State != nil {
+		if v, ok := req.State[stateKeyChildIndex].(int); ok {
+			startIdx = v
+		}
+	}
+
 	result, err := r.metaManager.GetMeta(ctx, meta.PluginRef{
 		ID:      plugin.Spec.Id,
 		Version: plugin.Spec.Version,
@@ -82,21 +110,25 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	if err != nil {
 		logger.Error("Failed to get plugin metadata", "error", err)
 		metrics.ChildReconciliationTotal.WithLabelValues("error", actionLabel(req.Action)).Inc()
+		d := requeueAfterWithJitter()
 		return operator.ReconcileResult{
-			RequeueAfter: &requeueAfter,
+			RequeueAfter: &d,
 		}, nil
 	}
 
 	metrics.ChildrenCountPerReconcile.Observe(float64(len(result.Meta.Children)))
 
-	if len(result.Meta.Children) == 0 {
-		logger.Debug("Plugin has no children, skipping child plugin reconciliation")
+	if len(result.Meta.Children) == 0 || startIdx >= len(result.Meta.Children) {
+		if len(result.Meta.Children) == 0 {
+			logger.Debug("Plugin has no children, skipping child plugin reconciliation")
+		}
 		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action)).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
 	logger.Debug("Plugin has children, reconciling child plugins",
 		"childCount", len(result.Meta.Children),
+		"startIdx", startIdx,
 		"action", req.Action,
 	)
 
@@ -105,17 +137,19 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 
 	switch req.Action {
 	case operator.ReconcileActionCreated, operator.ReconcileActionUpdated, operator.ReconcileActionResynced:
-		reconcileResult, reconcileErr = r.registerChildren(ctx, plugin, result.Meta.Children)
+		reconcileResult, reconcileErr = r.registerChildren(ctx, plugin, result.Meta.Children, startIdx)
 	case operator.ReconcileActionDeleted:
-		reconcileResult, reconcileErr = r.unregisterChildren(ctx, plugin.Namespace, result.Meta.Children)
+		reconcileResult, reconcileErr = r.unregisterChildren(ctx, plugin.Namespace, result.Meta.Children, startIdx)
 	case operator.ReconcileActionUnknown:
 		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
 	default:
 		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
 	}
 
+	// A zero RequeueAfter with no error means we're continuing to the next batch — count as success.
+	// A positive RequeueAfter means an error retry is queued — count as error.
 	status := "success"
-	if reconcileErr != nil || reconcileResult.RequeueAfter != nil {
+	if reconcileErr != nil || (reconcileResult.RequeueAfter != nil && *reconcileResult.RequeueAfter > 0) {
 		status = "error"
 	}
 	metrics.ChildReconciliationTotal.WithLabelValues(status, actionLabel(req.Action)).Inc()
@@ -123,27 +157,47 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	return reconcileResult, reconcileErr
 }
 
-func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespace string, children []string) (operator.ReconcileResult, error) {
+func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespace string, children []string, startIdx int) (operator.ReconcileResult, error) {
 	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace)
+
+	end := min(startIdx+childProcessingBatchSize, len(children))
+
 	retry := false
-	for _, childID := range children {
+	for _, childID := range children[startIdx:end] {
+		if ctx.Err() != nil {
+			d := requeueAfterWithJitter()
+			return operator.ReconcileResult{RequeueAfter: &d, State: childState(startIdx)}, nil
+		}
 		err := r.registrar.Unregister(ctx, namespace, childID, SourceChildPluginReconciler)
 		if err != nil && !errorsK8s.IsNotFound(err) {
 			logger.Error("Failed to unregister child plugin", "error", err, "pluginId", childID)
 			retry = true
 		}
 	}
+
 	result := operator.ReconcileResult{}
 	if retry {
-		result.RequeueAfter = &requeueAfter
+		d := requeueAfterWithJitter()
+		result.RequeueAfter = &d
+		result.State = childState(startIdx)
+	} else if end < len(children) {
+		result.RequeueAfter = new(time.Duration)
+		result.State = childState(end)
 	}
 	return result, nil
 }
 
-func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pluginsv0alpha1.Plugin, children []string) (operator.ReconcileResult, error) {
+func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pluginsv0alpha1.Plugin, children []string, startIdx int) (operator.ReconcileResult, error) {
 	logger := r.logger.WithContext(ctx).With("requestNamespace", parent.Namespace)
+
+	end := min(startIdx+childProcessingBatchSize, len(children))
+
 	retry := false
-	for _, childID := range children {
+	for _, childID := range children[startIdx:end] {
+		if ctx.Err() != nil {
+			d := requeueAfterWithJitter()
+			return operator.ReconcileResult{RequeueAfter: &d, State: childState(startIdx)}, nil
+		}
 		childInstall := &PluginInstall{
 			ID:       childID,
 			Version:  parent.Spec.Version,
@@ -156,9 +210,15 @@ func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pl
 			retry = true
 		}
 	}
+
 	result := operator.ReconcileResult{}
 	if retry {
-		result.RequeueAfter = &requeueAfter
+		d := requeueAfterWithJitter()
+		result.RequeueAfter = &d
+		result.State = childState(startIdx)
+	} else if end < len(children) {
+		result.RequeueAfter = new(time.Duration)
+		result.State = childState(end)
 	}
 	return result, nil
 }

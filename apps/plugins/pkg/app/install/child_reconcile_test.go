@@ -3,6 +3,7 @@ package install
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -217,19 +218,16 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 
 func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
 	tests := []struct {
-		name             string
-		metaErr          error
-		wantRequeueAfter *time.Duration
+		name    string
+		metaErr error
 	}{
 		{
-			name:             "Meta not found",
-			metaErr:          meta.ErrMetaNotFound,
-			wantRequeueAfter: func() *time.Duration { d := 10 * time.Second; return &d }(),
+			name:    "Meta not found",
+			metaErr: meta.ErrMetaNotFound,
 		},
 		{
-			name:             "Provider error",
-			metaErr:          errors.New("provider error"),
-			wantRequeueAfter: func() *time.Duration { d := 10 * time.Second; return &d }(),
+			name:    "Provider error",
+			metaErr: errors.New("provider error"),
 		},
 	}
 
@@ -265,7 +263,9 @@ func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, result.RequeueAfter)
-			require.Equal(t, *tt.wantRequeueAfter, *result.RequeueAfter)
+			// RequeueAfter includes jitter so check it's within the expected range.
+			require.GreaterOrEqual(t, *result.RequeueAfter, requeueAfter)
+			require.Less(t, *result.RequeueAfter, requeueAfter+requeueJitter)
 
 			// Verify no children were registered
 			require.Empty(t, mockReg.registered)
@@ -292,7 +292,7 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 			children:          []string{"child-plugin-1", "child-plugin-2", "child-plugin-3"},
 			failOnPlugin:      "child-plugin-2",
 			failureErr:        errors.New("registration failed"),
-			wantRequeueAfter:  func() *time.Duration { d := 10 * time.Second; return &d }(),
+			wantRequeueAfter:  func() *time.Duration { d := requeueAfter; return &d }(),
 			wantRegistered:    []string{"child-plugin-1", "child-plugin-3"},
 			wantNotRegistered: []string{"child-plugin-2"},
 		},
@@ -302,7 +302,7 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 			children:            []string{"child-plugin-1", "child-plugin-2", "child-plugin-3"},
 			failOnPlugin:        "child-plugin-2",
 			failureErr:          errors.New("unregistration failed"),
-			wantRequeueAfter:    func() *time.Duration { d := 10 * time.Second; return &d }(),
+			wantRequeueAfter:    func() *time.Duration { d := requeueAfter; return &d }(),
 			wantUnregistered:    []string{"child-plugin-1", "child-plugin-3"},
 			wantNotUnregistered: []string{"child-plugin-2"},
 		},
@@ -378,7 +378,9 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 			require.NoError(t, err)
 			if tt.wantRequeueAfter != nil {
 				require.NotNil(t, result.RequeueAfter)
-				require.Equal(t, *tt.wantRequeueAfter, *result.RequeueAfter)
+				// RequeueAfter includes jitter so check it's within the expected range.
+				require.GreaterOrEqual(t, *result.RequeueAfter, *tt.wantRequeueAfter)
+				require.Less(t, *result.RequeueAfter, *tt.wantRequeueAfter+requeueJitter)
 			} else {
 				require.Nil(t, result.RequeueAfter)
 			}
@@ -406,6 +408,219 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestChildPluginReconciler_BatchProcessing(t *testing.T) {
+	// Build a child list larger than one batch to verify multi-cycle processing.
+	total := childProcessingBatchSize + 5
+	children := buildChildList(total)
+
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			return &meta.Result{
+				Meta: pluginsv0alpha1.MetaSpec{Children: children},
+				TTL:  5 * time.Minute,
+			}, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-plugin", Namespace: "default"},
+		Spec:       pluginsv0alpha1.PluginSpec{Id: "test-plugin", Version: "1.0.0"},
+	}
+
+	// First cycle: should process the first batch and request an immediate requeue.
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionCreated,
+		Object: plugin,
+	}
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result.RequeueAfter, "first cycle should request requeue for remaining children")
+	require.Equal(t, time.Duration(0), *result.RequeueAfter, "continuation requeue should be immediate")
+	require.NotNil(t, result.State)
+	require.Equal(t, childProcessingBatchSize, result.State[stateKeyChildIndex])
+	require.Len(t, mockReg.registered, childProcessingBatchSize)
+
+	// Second cycle: resume from where we left off.
+	req.State = result.State
+	result, err = reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result, "final cycle should return empty result")
+	require.Len(t, mockReg.registered, total)
+}
+
+func TestChildPluginReconciler_BatchProcessingUnregister(t *testing.T) {
+	total := childProcessingBatchSize + 5
+	children := buildChildList(total)
+
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			return &meta.Result{
+				Meta: pluginsv0alpha1.MetaSpec{Children: children},
+				TTL:  5 * time.Minute,
+			}, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-plugin", Namespace: "default"},
+		Spec:       pluginsv0alpha1.PluginSpec{Id: "test-plugin", Version: "1.0.0"},
+	}
+
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionDeleted,
+		Object: plugin,
+	}
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result.RequeueAfter)
+	require.Equal(t, time.Duration(0), *result.RequeueAfter)
+	require.Equal(t, childProcessingBatchSize, result.State[stateKeyChildIndex])
+	require.Len(t, mockReg.unregistered, childProcessingBatchSize)
+
+	req.State = result.State
+	result, err = reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.Len(t, mockReg.unregistered, total)
+}
+
+func TestChildPluginReconciler_StaleStateAfterChildrenShrink(t *testing.T) {
+	// Simulate a second batch cycle where the children list has shrunk since the
+	// first cycle (e.g. plugin was updated). startIdx past end should be a no-op.
+	children := buildChildList(5)
+
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			return &meta.Result{
+				Meta: pluginsv0alpha1.MetaSpec{Children: children},
+				TTL:  5 * time.Minute,
+			}, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-plugin", Namespace: "default"},
+		Spec:       pluginsv0alpha1.PluginSpec{Id: "test-plugin", Version: "1.0.0"},
+	}
+
+	// Resume with a startIdx beyond the current children list length.
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionCreated,
+		Object: plugin,
+		State:  map[string]any{stateKeyChildIndex: 100},
+	}
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result, "stale state past end of children should be a no-op")
+	require.Empty(t, mockReg.registered)
+}
+
+func TestChildPluginReconciler_PartialFailureRetainsStateIndex(t *testing.T) {
+	// When a batch has errors, State must point back to startIdx so the whole
+	// batch is retried — not advanced to the next one.
+	total := childProcessingBatchSize + 5
+	children := buildChildList(total)
+
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			return &meta.Result{
+				Meta: pluginsv0alpha1.MetaSpec{Children: children},
+				TTL:  5 * time.Minute,
+			}, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+	mockReg := newMockPluginRegistrar()
+	mockReg.registerFunc = func(ctx context.Context, namespace string, install *PluginInstall) error {
+		if install.ID == children[3] {
+			return errors.New("transient error")
+		}
+		mockReg.registered[install.ID] = install
+		return nil
+	}
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-plugin", Namespace: "default"},
+		Spec:       pluginsv0alpha1.PluginSpec{Id: "test-plugin", Version: "1.0.0"},
+	}
+
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionCreated,
+		Object: plugin,
+	}
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result.RequeueAfter)
+	require.Greater(t, *result.RequeueAfter, time.Duration(0), "error requeue should be non-zero")
+	require.NotNil(t, result.State)
+	require.Equal(t, 0, result.State[stateKeyChildIndex], "state should point back to start of failed batch, not advance")
+}
+
+func TestChildPluginReconciler_ContextCancellation(t *testing.T) {
+	children := buildChildList(childProcessingBatchSize)
+
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			return &meta.Result{
+				Meta: pluginsv0alpha1.MetaSpec{Children: children},
+				TTL:  5 * time.Minute,
+			}, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	callCount := 0
+	cancelAfter := 3 // small enough to cancel mid-batch, leaving remaining children unprocessed
+	mockReg := newMockPluginRegistrar()
+	mockReg.registerFunc = func(_ context.Context, namespace string, install *PluginInstall) error {
+		callCount++
+		if callCount == cancelAfter {
+			cancel()
+		}
+		mockReg.registered[install.ID] = install
+		return nil
+	}
+
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-plugin", Namespace: "default"},
+		Spec:       pluginsv0alpha1.PluginSpec{Id: "test-plugin", Version: "1.0.0"},
+	}
+
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionCreated,
+		Object: plugin,
+	}
+	result, err := reconciler.reconcile(ctx, req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result.RequeueAfter, "cancelled context should trigger requeue")
+	require.Greater(t, *result.RequeueAfter, time.Duration(0))
+	require.NotNil(t, result.State)
+	require.Equal(t, 0, result.State[stateKeyChildIndex], "should resume from start of interrupted batch")
+	// At most cancelAfter children should have been processed before cancellation was detected.
+	require.LessOrEqual(t, len(mockReg.registered), cancelAfter)
 }
 
 func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
@@ -495,4 +710,13 @@ func (m *mockPluginRegistrar) Unregister(ctx context.Context, namespace string, 
 	m.unregistered[name] = true
 	delete(m.registered, name)
 	return nil
+}
+
+// buildChildList returns a slice of n child plugin IDs for use in tests.
+func buildChildList(n int) []string {
+	children := make([]string, n)
+	for i := range children {
+		children[i] = fmt.Sprintf("child-plugin-%d", i)
+	}
+	return children
 }
