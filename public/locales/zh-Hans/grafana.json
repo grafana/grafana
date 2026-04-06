@@ -4337,6 +4337,17 @@
       "title": "您还没有创建任何数据面板",
       "title-folder": "此文件夹尚无任何数据面板"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "删除此文件夹",
       "delete-folder-error": "删除文件夹时出错。请稍后重试。",
@@ -5406,9 +5417,6 @@
         "title": {
           "proceed-to-external-site": "继续前往外部网站？"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "作为场景查看"
       }
     },
     "dashboard-links-menu": {
@@ -5955,12 +5963,20 @@
       "not-found": "未找到 UID 为“{{datasourceUid}}”的数据源。"
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "配置",
       "configure-button-menu": "切换菜单",
+      "configure-visualization": "",
       "empty-state-message": "运行查询以在此处可视化，或转到所有可视化以添加其他面板类型",
       "menu-open-panel-editor": "配置",
       "menu-use-library-panel": "使用库面板",
-      "missing-config": "缺少面板配置"
+      "menu-use-saved-query": "",
+      "missing-config": "缺少面板配置",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "新面板",
     "on-create-new-row": {
@@ -6737,6 +6753,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6823,6 +6844,10 @@
       "constant-options": "常量选项",
       "label-value": "值",
       "placeholder-your-metric-prefix": "您的指标前缀"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "显示/隐藏规则将不起作用",
@@ -7149,6 +7174,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7464,6 +7495,7 @@
     "sharing": {
       "save-before-share": {
         "text": "此数据面板有未保存的更改。您需要先保存它们，然后才能共享。",
+        "text-no-save": "",
         "title": "未保存的更改"
       }
     },
@@ -7597,6 +7629,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "变量编辑器表单",
       "back-to-list": "回到列表",
@@ -7626,6 +7663,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "您确定要删除{{variable}}吗？",
       "confirmText-delete-variable": "删除变量",
+      "drag-handle-label": "",
       "title-delete-variable": "删除变量",
       "tooltip-duplicate-variable": "复制变量",
       "tooltip-remove-variable": "移除变量"
@@ -8191,6 +8229,7 @@
       "label-preview": "预览"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "重复值映射",
       "duplicate-value-mapping-tooltip-duplicate": "复制",
       "placeholder-exact-value-to-match": "要匹配的精确值",
@@ -9997,6 +10036,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "添加链接",
+      "drag-handle-label": "",
       "edit-link": "编辑链接",
       "one-click": "一次点击",
       "one-click-enabled": "已启用一次点击",
@@ -12530,7 +12570,7 @@
       "name-required": "姓名是必填项",
       "save": "保存",
       "table-delete": "删除播放列表项",
-      "table-drag": "拖放以重新排序",
+      "table-drag": "",
       "table-empty": "播放列表为空。请在下方添加仪表板。",
       "table-heading": "仪表板"
     },
@@ -14643,6 +14683,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14650,13 +14691,14 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14664,15 +14706,13 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -15489,6 +15529,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "点击以编辑",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "删除枚举行",
       "remove-enum-row-tooltip-delete": "删除"
     },
@@ -16402,6 +16443,7 @@
       "variable": "变量"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "复制变量",
       "tooltip-remove-variable": "移除变量"
     },

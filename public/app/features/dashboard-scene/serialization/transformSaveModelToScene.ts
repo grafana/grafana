@@ -413,7 +413,6 @@ export function createDashboardSceneFromDashboardModel(
 
   const dashboardScene = new DashboardScene(
     {
-      id: oldModel.id,
       uid,
       description: oldModel.description,
       editable: oldModel.editable,
@@ -544,6 +543,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
       ),
     });
   }
+
+  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   const body = new VizPanel(vizPanelState);
 

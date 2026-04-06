@@ -16,13 +16,10 @@ import (
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -312,13 +309,10 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
 	service.QueryDataService = fakeQueryService
-
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, service.cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
 
 	publicDashboardQueryDTO := PublicDashboardQueryDTO{
 		IntervalMs:    int64(1),
@@ -344,7 +338,7 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 				"targets": []interface{}{hiddenQuery},
 			}}
 
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, "", true, []map[string]interface{}{}, customPanels)
+		dashboard := createTestDashboard(t, "testDashWithHiddenQuery", 1, "", true, []map[string]any{}, customPanels)
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 		isEnabled := true
@@ -725,10 +719,8 @@ func TestIntegrationFindAnnotations(t *testing.T) {
 func TestIntegrationGetMetricRequest(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, nil, nil)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, nil, nil)
+	dashboard := createTestDashboard(t, "testDashie", 1, "", true, []map[string]any{}, nil)
 
 	publicDashboard := &PublicDashboard{
 		Uid:          "1",
@@ -767,12 +759,10 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
-	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
-	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
+	publicDashboard := createTestDashboard(t, "testDashie", 1, "", true, []map[string]any{}, nil)
+	nonPublicDashboard := createTestDashboard(t, "testNonPublicDashie", 1, "", true, []map[string]any{}, nil)
 	from, to := internal.GetTimeRangeFromDashboard(t, publicDashboard.Data)
 
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(publicDashboard, nil)
@@ -893,7 +883,7 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 				"targets": []interface{}{hiddenQuery, nonHiddenQuery},
 			}}
 
-		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, "", true, []map[string]interface{}{}, customPanels)
+		publicDashboard := createTestDashboard(t, "testDashWithHiddenQuery", 1, "", true, []map[string]any{}, customPanels)
 
 		reqDTO, err := service.buildMetricRequest(
 			publicDashboard,

@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 // maximum possible capacity for recursive queries array: one query for folder and one for dashboard actions
@@ -62,14 +62,14 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 	var folderActionSets []string
 	var dashboardActionSets []string
 	switch queryType {
-	case searchstore.TypeFolder:
+	case model.TypeFolder:
 		folderAction = dashboards.ActionFoldersRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		if needEdit {
 			folderAction = dashboards.ActionDashboardsCreate
 			folderActionSets = []string{"folders:edit", "folders:admin"}
 		}
-	case searchstore.TypeDashboard:
+	case model.TypeDashboard:
 		dashboardAction = dashboards.ActionDashboardsRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
@@ -78,14 +78,14 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 			folderActionSets = []string{"folders:edit", "folders:admin"}
 			dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
 		}
-	case searchstore.TypeAlertFolder:
+	case model.TypeAlertFolder:
 		folderAction = accesscontrol.ActionAlertingRuleRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		if needEdit {
 			folderAction = accesscontrol.ActionAlertingRuleCreate
 			folderActionSets = []string{"folders:edit", "folders:admin"}
 		}
-	case searchstore.TypeAnnotation:
+	case model.TypeAnnotation:
 		dashboardAction = accesscontrol.ActionAnnotationsRead
 		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}

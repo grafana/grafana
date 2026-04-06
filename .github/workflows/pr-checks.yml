@@ -1,5 +1,6 @@
 name: PR Checks
 on:
+  pull_request:
   pull_request_target:
     types:
       - opened
@@ -38,7 +39,9 @@ jobs:
           ref: main
           persist-credentials: false
       - name: Install Actions
-        run: npm install --production --prefix ./actions
+        run: |
+          corepack enable
+          yarn --cwd ./actions install --immutable
       - name: Run PR Checks
         uses: ./actions/pr-checks
         with:

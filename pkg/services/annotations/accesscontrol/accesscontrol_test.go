@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -31,11 +30,11 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 	}
 
 	// Create permission filters
-	p1 := permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, featuremgmt.WithFeatures(), true, store.GetDialect(), cfg.MaxNestedFolderDepth)
-	p2 := searchstore.OrgFilter{OrgId: 1}
+	p1 := permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, model.TypeAnnotation, featuremgmt.WithFeatures(), true, store.GetDialect(), cfg.MaxNestedFolderDepth)
+	p2 := model.OrgFilter{OrgId: 1}
 
 	// If DashboardUID is provided, it should be added as a filter
-	p3 := searchstore.DashboardFilter{UIDs: []string{"uid1"}}
+	p3 := model.DashboardFilter{UIDs: []string{"uid1"}}
 
 	dashSvc := &dashboards.FakeDashboardService{}
 
