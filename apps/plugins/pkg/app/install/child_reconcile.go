@@ -2,8 +2,9 @@ package install
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -45,7 +46,11 @@ func actionLabel(action operator.ReconcileAction) string {
 }
 
 func requeueAfterWithJitter() time.Duration {
-	return requeueAfter + time.Duration(rand.Int63n(int64(requeueJitter)))
+	n, err := rand.Int(rand.Reader, big.NewInt(int64(requeueJitter)))
+	if err != nil {
+		return requeueAfter
+	}
+	return requeueAfter + time.Duration(n.Int64())
 }
 
 // childState returns a ReconcileResult.State map that resumes processing from idx.
