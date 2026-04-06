@@ -21,6 +21,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -679,7 +680,7 @@ func conflictError(event WriteEvent, message string) error {
 //nolint:gocyclo
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
-		return 0, fmt.Errorf("invalid event: %w", err)
+		return 0, apierrors.NewBadRequest(err.Error())
 	}
 
 	rv := k.snowflake.Generate().Int64()

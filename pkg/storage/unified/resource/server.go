@@ -660,17 +660,17 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	}
 
 	event := &WriteEvent{
-		Value:      value,
-		Key:        key,
-		Object:     obj,
-		GUID:       uuid.New().String(),
-		PreviousRV: rv,
+		Value:  value,
+		Key:    key,
+		Object: obj,
+		GUID:   uuid.New().String(),
 	}
 
 	if oldValue == nil {
 		event.Type = resourcepb.WatchEvent_ADDED
 	} else {
 		event.Type = resourcepb.WatchEvent_MODIFIED
+		event.PreviousRV = rv
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -755,10 +755,6 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
-	}
-
-	if err := event.Validate(); err != nil {
-		return nil, NewBadRequestError(fmt.Sprintf("invalid event: %v", err))
 	}
 
 	return event, nil
@@ -1073,7 +1069,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
-	// Some clients still do not send RV when updating.
+	// Some clients still do not send RV when deleting.
 	if req.ResourceVersion == 0 {
 		req.ResourceVersion = latest.ResourceVersion
 	}
@@ -1113,11 +1109,6 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable creating deletion marker, %v", err))
-	}
-
-	if err := event.Validate(); err != nil {
-		rsp.Error = NewBadRequestError(fmt.Sprintf("invalid event: %v", err))
-		return rsp, nil
 	}
 
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
