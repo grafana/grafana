@@ -145,11 +145,11 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 	}
 }
 
-// gcomAllowsTenantDeletion returns true when GCOM is not configured, or when
-// GCOM returns 200 with Status "deleted". Otherwise it returns false and logs.
+// gcomAllowsTenantDeletion returns true when GCOM returns 200 with Status "deleted" for the given
+// tenant name. Otherwise it returns false and logs.
 func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantName string) bool {
 	if td.gcom == nil {
-		return true
+		return false
 	}
 
 	info, err := types.ParseNamespace(tenantName)
