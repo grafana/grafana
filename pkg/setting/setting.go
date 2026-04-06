@@ -490,10 +490,10 @@ type Cfg struct {
 	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
 	SQLExpressionTimeout time.Duration
 
-	// MathExpressionMemoryLimit is the maximum estimated memory (in bytes) that a
-	// single math expression binary operation is allowed to allocate for its output.
-	// When the estimated cost exceeds this limit, evaluation fails with a descriptive
-	// error. A value of 0 disables the limit. Default: 1 GiB.
+	// MathExpressionMemoryLimit is the maximum estimated memory (in bytes) for a
+	// single math expression binary operation. Memory usage is estimated before
+	// the expression runs. When the estimate exceeds this limit, evaluation fails
+	// with a descriptive error. A value of 0 disables the limit. Default: 1 GiB.
 	MathExpressionMemoryLimit int64
 
 	ImageUploadProvider string
