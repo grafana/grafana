@@ -4418,6 +4418,17 @@
       "title": "Dosud jste nevytvořili žádné nástěnky",
       "title-folder": "Tento složka zatím nemá žádné nástěnky"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Odstranit tuto složku",
       "delete-folder-error": "Chyba při odstraňování složky. Zkuste to znovu později.",
@@ -5496,9 +5507,6 @@
         "title": {
           "proceed-to-external-site": "Přejít na externí stránku?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Zobrazit jako scénu"
       }
     },
     "dashboard-links-menu": {
@@ -6045,12 +6053,20 @@
       "not-found": "Zdroj dat s UID „{{datasourceUid}}“ nebyl nalezen."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Konfigurovat",
       "configure-button-menu": "Přepnout nabídku",
+      "configure-visualization": "",
       "empty-state-message": "Spusťte dotaz a vizualizujte jej zde nebo přejděte na všechny vizualizace a přidejte další typy panelů",
       "menu-open-panel-editor": "Konfigurovat",
       "menu-use-library-panel": "Použít panel knihovny",
-      "missing-config": "Chybějící konfigurace panelu"
+      "menu-use-saved-query": "",
+      "missing-config": "Chybějící konfigurace panelu",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Nový panel",
     "on-create-new-row": {
@@ -6833,6 +6849,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6919,6 +6940,10 @@
       "constant-options": "Možnosti konstanty",
       "label-value": "Hodnota",
       "placeholder-your-metric-prefix": "Předpona metriky"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Pravidla pro zobrazení/skrytí nebudou fungovat",
@@ -7257,6 +7282,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7581,6 +7612,7 @@
     "sharing": {
       "save-before-share": {
         "text": "Máte neuložené změny této nástěnky. Před sdílením musíte změny uložit.",
+        "text-no-save": "",
         "title": "Neuložené změny"
       }
     },
@@ -7714,6 +7746,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulář editoru proměnné",
       "back-to-list": "Zpět na seznam",
@@ -7743,6 +7780,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Opravdu chcete odstranit: {{variable}}?",
       "confirmText-delete-variable": "Odstranit proměnnou",
+      "drag-handle-label": "",
       "title-delete-variable": "Odstranit proměnnou",
       "tooltip-duplicate-variable": "Duplikovat proměnnou",
       "tooltip-remove-variable": "Odebrat proměnnou"
@@ -8320,6 +8358,7 @@
       "label-preview": "Náhled"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Duplikovat mapování hodnoty",
       "duplicate-value-mapping-tooltip-duplicate": "Duplikovat",
       "placeholder-exact-value-to-match": "Přesná hodnota pro shodu",
@@ -10162,6 +10201,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Přidat odkaz",
+      "drag-handle-label": "",
       "edit-link": "Upravit odkaz",
       "one-click": "Jedno kliknutí",
       "one-click-enabled": "Jedno kliknutí povoleno",
@@ -12728,7 +12768,7 @@
       "name-required": "Název je povinný",
       "save": "Uložit",
       "table-delete": "Odstranit položku playlistu",
-      "table-drag": "Přetažením změníte pořadí",
+      "table-drag": "",
       "table-empty": "Playlist je prázdný. Přidejte nástěnky dole.",
       "table-heading": "Nástěnky"
     },
@@ -14904,6 +14944,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14911,13 +14952,14 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14925,15 +14967,13 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -15753,6 +15793,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Klikněte pro úpravu",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Odstranit řádek výčtu",
       "remove-enum-row-tooltip-delete": "Odstranit"
     },
@@ -16666,6 +16707,7 @@
       "variable": "Proměnná"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Duplikovat proměnnou",
       "tooltip-remove-variable": "Odebrat proměnnou"
     },
