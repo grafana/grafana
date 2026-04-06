@@ -38,7 +38,7 @@ jobs:
           ref: main
           persist-credentials: false
       - name: Install Actions
-        run: npm install --production --prefix ./actions
+        run: npm install --production --prefix ./actions --loglevel verbose
       - name: Run PR Checks
         uses: ./actions/pr-checks
         with:
