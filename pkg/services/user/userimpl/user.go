@@ -25,6 +25,7 @@ type Service struct {
 	legacyService     user.Service
 	k8sService        user.Service
 	openFeatureClient *openfeature.Client
+	logger            log.Logger
 }
 
 var _ user.Service = (*Service)(nil)
@@ -47,6 +48,7 @@ func ProvideService(db db.DB,
 		legacyService:     legacyService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		logger:            log.New("user"),
 	}, nil
 }
 
@@ -80,13 +82,10 @@ func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64)
 
 func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		// UserK8sService.GetByLogin resolves the k8s namespace from the requester's org ID.
-		// During password authentication the requester has not been established yet, so we
-		// fall back to the legacy service for that call. All other callers carry a requester
-		// and are correctly routed to the k8s service.
-		if _, err := identity.GetRequester(ctx); err == nil {
+		if hasOrgID(ctx) {
 			return s.k8sService.GetByLogin(ctx, cmd)
 		}
+		s.logger.Warn("kubernetesUsersRedirect is enabled but no orgID found in context, falling back to legacy service")
 	}
 
 	return s.legacyService.GetByLogin(ctx, cmd)
@@ -94,10 +93,10 @@ func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery)
 
 func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		// Same as GetByLogin: fall back to legacy when there is no requester in the context.
-		if _, err := identity.GetRequester(ctx); err == nil {
+		if hasOrgID(ctx) {
 			return s.k8sService.GetByEmail(ctx, cmd)
 		}
+		s.logger.Warn("kubernetesUsersRedirect is enabled but no orgID found in context, falling back to legacy service")
 	}
 
 	return s.legacyService.GetByEmail(ctx, cmd)
@@ -141,4 +140,12 @@ func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
 	}
 
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+func hasOrgID(ctx context.Context) bool {
+	if _, err := identity.GetRequester(ctx); err == nil {
+		return true
+	}
+	_, ok := identity.OrgIDFrom(ctx)
+	return ok
 }
