@@ -80,7 +80,7 @@
     "rollup": "4.59.0",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
-    "typescript": "6.0.1-rc"
+    "typescript": "6.0.2"
   },
   "peerDependencies": {
     "@grafana/data": ">=10.4.0",
