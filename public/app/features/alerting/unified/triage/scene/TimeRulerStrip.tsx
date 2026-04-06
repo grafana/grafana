@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { FieldType, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
-import { useTimeRange, VizPanel } from '@grafana/scenes-react';
+import { VizPanel, useTimeRange } from '@grafana/scenes-react';
 import { AxisPlacement, GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 
