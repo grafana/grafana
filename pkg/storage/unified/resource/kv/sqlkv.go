@@ -32,6 +32,25 @@ type DataImportRow struct {
 	GUID    string
 	KeyPath string
 	Value   []byte
+
+	// Legacy stores temporary sql/backend compatibility fields for resource_history.
+	// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
+	Legacy *DataImportLegacyFields
+}
+
+// DataImportLegacyFields stores the temporary legacy resource_history columns
+// needed to keep sqlkv compatible with the old SQL backend during bulk import.
+// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
+type DataImportLegacyFields struct {
+	Group           string
+	Resource        string
+	Namespace       string
+	Name            string
+	Action          int64
+	Folder          string
+	ResourceVersion int64
+	PreviousRV      int64
+	Generation      int64
 }
 
 type SqlKV struct {
@@ -178,7 +197,10 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 			end = len(rows)
 		}
 
-		query, args := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
+		if err != nil {
+			return fmt.Errorf("failed to build data import batch query: %w", err)
+		}
 		if _, err = conn.ExecContext(ctx, query, args...); err != nil {
 			sqlKVLog.Error("sqlkv bulk import insert failed",
 				"error", err,
@@ -456,14 +478,9 @@ func (w *sqlWriteCloser) Close() error {
 		return fmt.Errorf("failed to parse key for GUID: %w", err)
 	}
 
-	var action int64
-	switch dataKey.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
+	action, err := LegacyActionValue(dataKey.Action)
+	if err != nil {
+		return err
 	}
 
 	query, args := qb.buildInsertDatastoreBackwardCompatQuery(value, dataKey.GUID, dataKey.Group, dataKey.Resource, dataKey.Namespace, dataKey.Name, dataKey.Folder, action)

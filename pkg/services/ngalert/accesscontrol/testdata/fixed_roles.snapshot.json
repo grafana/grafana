@@ -152,9 +152,6 @@
         "action": "alert.notifications.time-intervals:read"
       },
       {
-        "action": "alert.notifications:read"
-      },
-      {
         "action": "notifications.alerting.grafana.app/routingtrees:get",
         "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
@@ -252,12 +249,6 @@
         "action": "alert.notifications.time-intervals:write"
       },
       {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
-      },
-      {
         "action": "notifications.alerting.grafana.app/routingtrees:create"
       },
       {
@@ -314,9 +305,6 @@
       },
       {
         "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications:read"
       },
       {
         "action": "alert.rules.external:read",
@@ -449,12 +437,6 @@
       },
       {
         "action": "alert.notifications.time-intervals:write"
-      },
-      {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
       },
       {
         "action": "alert.rules.external:read",
@@ -639,12 +621,6 @@
         "action": "alert.notifications.time-intervals:write"
       },
       {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
-      },
-      {
         "action": "alert.rules.external:read",
         "scope": "datasources:*"
       },
@@ -826,59 +802,8 @@
     ]
   },
   {
-    "name": "fixed:alerting.legacy:reader",
-    "displayName": "Alerting legacy read permissions (DO NOT USE)",
-    "description": "",
-    "group": "Alerting",
-    "hidden": true,
-    "permissions": [
-      {
-        "action": "alert.notifications:read"
-      }
-    ],
-    "grants": [
-      "Viewer"
-    ]
-  },
-  {
     "name": "fixed:alerting.legacy:writer",
-    "displayName": "Alerting legacy write permissions (DO NOT USE)",
-    "description": "",
-    "group": "Alerting",
-    "hidden": true,
-    "permissions": [
-      {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
-      }
-    ],
-    "grants": [
-      "Editor"
-    ]
-  },
-  {
-    "name": "fixed:alerting.legacy.config:reader",
-    "displayName": "Alerting legacy config read permission (deprecated, admin only)",
-    "description": "",
-    "group": "Alerting",
-    "hidden": true,
-    "permissions": [
-      {
-        "action": "alert.notifications.config-history:read"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      }
-    ],
-    "grants": [
-      "Admin"
-    ]
-  },
-  {
-    "name": "fixed:alerting.legacy.config:writer",
-    "displayName": "Alerting legacy config write permission (deprecated, admin only)",
+    "displayName": "Alerting legacy permissions (deprecated, admin only)",
     "description": "",
     "group": "Alerting",
     "hidden": true,
@@ -894,6 +819,12 @@
       },
       {
         "action": "alert.notifications.routes:write"
+      },
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications:write"
       }
     ],
     "grants": [
