@@ -212,7 +212,6 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 			return
 		}
 	}
-
 }
 
 // runWorker processes namespaces from the work queue.
@@ -408,10 +407,10 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 
 	reconciled, _ := val.(bool)
 	status := "existing"
-	if reconciled {
-		status = "reconciled"
-	} else if shared {
+	if shared {
 		status = "waited"
+	} else if reconciled {
+		status = "reconciled"
 	}
 	r.metrics.ensureNamespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
 	return nil

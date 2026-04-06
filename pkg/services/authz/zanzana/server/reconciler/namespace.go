@@ -256,7 +256,9 @@ func (r *Reconciler) computeDiffStreaming(
 	ctx context.Context, namespace string,
 	expectedMap map[string]*openfgav1.TupleKey,
 ) (toAdd, toDelete []*openfgav1.TupleKey, err error) {
-	ctx, span := r.tracer.Start(ctx, "reconciler.computeDiffStreaming")
+	ctx, span := r.tracer.Start(ctx, "reconciler.computeDiffStreaming", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
 	defer span.End()
 
 	pagesRead := 0
@@ -325,7 +327,9 @@ func (r *Reconciler) computeDiffStreaming(
 // If a batch fails, it logs the error and continues with the next batch.
 // Uses the server's WriteTuples method directly to avoid authzextv1 ↔ openfgav1 conversions.
 func (r *Reconciler) writeTuplesToZanzana(ctx context.Context, namespace string, toAdd, toDelete []*openfgav1.TupleKey) error {
-	ctx, span := r.tracer.Start(ctx, "reconciler.writeTuplesToZanzana")
+	ctx, span := r.tracer.Start(ctx, "reconciler.writeTuplesToZanzana", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
 	defer span.End()
 
 	// Get store info for the namespace
