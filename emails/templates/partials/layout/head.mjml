@@ -1,5 +1,4 @@
 <!-- various styles and attributes -->
-<mj-font name="Inter" href="https://fonts.googleapis.com/css?family=Inter" />
 
 <mj-attributes>
   <mj-text css-class="txt" align="left" line-height="150%" />
