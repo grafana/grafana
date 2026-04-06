@@ -352,88 +352,104 @@ func labelBytes(labels data.Labels) int {
 	return n
 }
 
-// resultStats holds the pre-computed statistics for one side of a binary operation
-// used for memory estimation.
-type resultStats struct {
-	count         int // total number of Values
-	seriesCount   int // number of Values that are Series
-	maxDatapoints int // longest series length
-	maxLabelBytes int // largest label set in bytes
+// binaryMemoryEstimate holds the result of estimateBinaryMemory.
+type binaryMemoryEstimate struct {
+	unions int   // actual number of unions label matching would produce
+	bytes  int64 // estimated total output allocation in bytes
+	aCount int   // number of Values on the A side
+	bCount int   // number of Values on the B side
 }
 
-// computeResultStats computes stats for a Results set in O(n) with zero heap allocation.
-func computeResultStats(r Results) resultStats {
-	var s resultStats
-	s.count = len(r.Values)
-	for _, v := range r.Values {
-		if series, ok := v.(Series); ok {
-			s.seriesCount++
-			if l := series.Len(); l > s.maxDatapoints {
-				s.maxDatapoints = l
+// seriesLen returns the datapoint count for a Value if it is a Series, or 0.
+func seriesLen(v Value) int {
+	if s, ok := v.(Series); ok {
+		return s.Len()
+	}
+	return 0
+}
+
+// estimateBinaryMemory replays the label matching logic from union() to count
+// the exact number of unions and accumulate a per-pair memory estimate, without
+// allocating Union structs or output frames.
+//
+// For each matching pair, the estimate accounts for the actual types and sizes
+// of both values (Series length, label bytes). The only remaining
+// over-estimation is using max(aLen, bLen) for the output series length instead
+// of the timestamp intersection, which is not knowable without scanning
+// datapoints.
+func estimateBinaryMemory(aResults, bResults Results) binaryMemoryEstimate {
+	est := binaryMemoryEstimate{
+		aCount: len(aResults.Values),
+		bCount: len(bResults.Values),
+	}
+	if est.aCount == 0 || est.bCount == 0 {
+		return est
+	}
+
+	addPair := func(a, b Value) {
+		est.unions++
+
+		aDP := seriesLen(a)
+		bDP := seriesLen(b)
+		outputDP := max(aDP, bDP)
+
+		aLB := labelBytes(a.GetLabels())
+		bLB := labelBytes(b.GetLabels())
+		outputLB := max(aLB, bLB)
+
+		pairCost := int64(outputDP)*bytesPerDatapoint +
+			int64(outputLB) +
+			frameOverhead
+		// biSeriesSeries builds a bPoints map from one side.
+		if aDP > 0 && bDP > 0 {
+			pairCost += int64(outputDP) * bytesPerBPoint
+		}
+
+		est.bytes += pairCost
+	}
+
+	if est.aCount == 1 || est.bCount == 1 {
+		aNoData := aResults.Values[0].Type() == parse.TypeNoData
+		bNoData := bResults.Values[0].Type() == parse.TypeNoData
+		if aNoData || bNoData {
+			addPair(aResults.Values[0], bResults.Values[0])
+			return est
+		}
+	}
+
+	for _, a := range aResults.Values {
+		for _, b := range bResults.Values {
+			aLabels := a.GetLabels()
+			bLabels := b.GetLabels()
+			switch {
+			case aLabels.Equals(bLabels) || len(aLabels) == 0 || len(bLabels) == 0:
+				addPair(a, b)
+			case len(aLabels) == len(bLabels):
+				// skip: invalid union
+			case aLabels.Contains(bLabels):
+				addPair(a, b)
+			case bLabels.Contains(aLabels):
+				addPair(a, b)
 			}
 		}
-		if lb := labelBytes(v.GetLabels()); lb > s.maxLabelBytes {
-			s.maxLabelBytes = lb
-		}
 	}
-	return s
+
+	// Mirror the fallback in union(): if nothing matched and both sides have
+	// exactly one value, they get combined anyway.
+	if est.unions == 0 && est.aCount == 1 && est.bCount == 1 {
+		addPair(aResults.Values[0], bResults.Values[0])
+	}
+
+	return est
 }
 
-// estimateBinaryOutputBytes computes an upper-bound estimate of the memory that
-// walkBinary would allocate for its output, given the stats from both sides.
-//
-// The estimate is deliberately conservative (over-estimates) in several ways:
-//   - It assumes worst-case label matching: every A pairs with every B. In
-//     practice, union() filters by label compatibility, producing far fewer
-//     pairs when labels match. This means the estimate can be orders of
-//     magnitude higher than actual allocation for well-matched label sets.
-//   - It uses the max datapoints from either side for every union, even though
-//     biSeriesSeries only emits points at matching timestamps (an intersection).
-//   - It charges bPoints map cost for all unions whenever any Series exists on
-//     both sides, even if most unions are Number x Number.
-//
-// These over-estimates are acceptable because the limit is a safety mechanism
-// against cartesian explosions (where labels don't match). Operators who hit
-// false rejections on legitimate high-cardinality expressions can raise the
-// configured limit.
-func estimateBinaryOutputBytes(a, b resultStats) int64 {
-	if a.count == 0 || b.count == 0 {
-		return 0
-	}
-
-	worstCaseUnions := int64(a.count) * int64(b.count)
-
-	// Output cost per union depends on the types involved. We use the worst
-	// case: both sides are Series (the most expensive combination).
-	maxDatapoints := a.maxDatapoints
-	if b.maxDatapoints > maxDatapoints {
-		maxDatapoints = b.maxDatapoints
-	}
-
-	maxLabels := a.maxLabelBytes
-	if b.maxLabelBytes > maxLabels {
-		maxLabels = b.maxLabelBytes
-	}
-
-	// For Series x Series, we also pay for the bPoints map.
-	perUnion := int64(maxDatapoints)*bytesPerDatapoint +
-		int64(maxLabels) +
-		frameOverhead
-	if a.seriesCount > 0 && b.seriesCount > 0 {
-		perUnion += int64(maxDatapoints) * bytesPerBPoint
-	}
-
-	return worstCaseUnions * perUnion
-}
-
-// checkBinaryMemoryLimit estimates the output cost of a binary operation and
-// returns a descriptive error if it exceeds the configured memory limit.
+// checkBinaryMemoryLimit estimates the output cost of a binary operation by
+// replaying the label matching logic and computing per-pair costs. Returns a
+// descriptive error if the estimate exceeds the configured memory limit.
 func (e *State) checkBinaryMemoryLimit(ar, br Results, node *parse.BinaryNode) error {
-	aStats := computeResultStats(ar)
-	bStats := computeResultStats(br)
-	estimated := estimateBinaryOutputBytes(aStats, bStats)
+	est := estimateBinaryMemory(ar, br)
 
-	if estimated <= e.MemoryLimit {
+	if est.bytes <= e.MemoryLimit {
 		return nil
 	}
 
@@ -442,17 +458,17 @@ func (e *State) checkBinaryMemoryLimit(ar, br Results, node *parse.BinaryNode) e
 
 	return fmt.Errorf(
 		"expression %q attempted to combine %d series from %s with %d series from %s, "+
-			"producing up to %d series pairs (estimated memory: %s, limit: %s). "+
+			"producing %d series pairs (estimated memory: %s, limit: %s). "+
 			"This usually means the label sets returned by your queries are no longer compatible. "+
 			"When labels match, this expression would produce ~%d pairs. "+
 			"Check that the queries for %s and %s return series with the same label names and values",
 		node.String(),
-		aStats.count, aVar,
-		bStats.count, bVar,
-		int64(aStats.count)*int64(bStats.count),
-		formatBytes(estimated),
+		est.aCount, aVar,
+		est.bCount, bVar,
+		est.unions,
+		formatBytes(est.bytes),
 		formatBytes(e.MemoryLimit),
-		max(aStats.count, bStats.count),
+		max(est.aCount, est.bCount),
 		aVar, bVar,
 	)
 }
