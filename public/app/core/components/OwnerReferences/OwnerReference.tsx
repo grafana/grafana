@@ -1,4 +1,4 @@
-import { Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { type Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { reportInteraction } from '@grafana/runtime';
 import { Text, Link } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';

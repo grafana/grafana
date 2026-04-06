@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { useQueryRunner } from '@grafana/scenes-react';
 import { Box, ErrorBoundaryAlert, Icon, Text, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';

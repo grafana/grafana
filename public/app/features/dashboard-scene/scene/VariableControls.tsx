@@ -1,23 +1,30 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { VariableHide, GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
-  sceneGraph,
-  useSceneObjectState,
-  SceneVariable,
-  SceneVariableState,
   ControlsLabel,
-  ControlsLayout,
+  type ControlsLayout,
+  sceneGraph,
   sceneUtils,
+  type SceneVariable,
+  type SceneVariables,
+  SceneVariableSet,
+  type SceneVariableState,
   SceneVariableValueChangedEvent,
+  useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { dashboardEditActions } from '../edit-pane/shared';
+import { filterSectionRepeatLocalVariables } from '../variables/utils';
+
+import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
+import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
@@ -53,8 +60,6 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
 
   return (
     <>
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
-
       {variablesToRender.length > 0 &&
         variablesToRender.map((variable) => (
           <VariableValueSelectWrapper
@@ -63,6 +68,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
+      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
@@ -74,10 +80,27 @@ interface VariableSelectProps {
 }
 
 export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayouts }: VariableSelectProps) {
-  const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
-  const { isSelected, onSelect, isSelectable } = useElementSelection(variable.state.key);
-  const isHidden = state.hide === VariableHide.hideVariable;
   const styles = useStyles2(getStyles);
+  const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
+  const { isSelected, isSelectable } = useElementSelection(variable.state.key);
+  const isHidden = state.hide === VariableHide.hideVariable;
+
+  const onClickEditVariable = useCallback(() => {
+    const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
+    dashboard.state.editPane.selectObject(variable, variable.state.key!);
+  }, [variable]);
+
+  const onClickDeleteVariable = useCallback(() => {
+    const set = variable.parent;
+    if (set instanceof SceneVariableSet) {
+      dashboardEditActions.removeVariable({ source: set, removedObject: variable });
+    }
+  }, [variable]);
+
+  const editActions = useMemo(
+    () => <ControlEditActions onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />,
+    [onClickDeleteVariable, onClickEditVariable]
+  );
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
   if (isHidden && variable.UNSAFE_renderAsHidden) {
@@ -88,84 +111,67 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     return null;
   }
 
-  const onPointerDown = (evt: React.PointerEvent) => {
-    if (!isSelectable) {
-      return;
-    }
-
-    // Ignore click if it's inside the value control
-    if (evt.target instanceof Element) {
-      // multi variable options contain label element so we need a more specific
-      //  condition to target variable label to prevent edit pane selection on option click
-      const forAttribute = evt.target.closest('label[for]')?.getAttribute('for');
-
-      if (!(forAttribute === `var-${variable.state.key || ''}`)) {
-        // Prevent clearing selection when clicking inside value
-        evt.stopPropagation();
-        return;
-      }
-    }
-
-    if (isSelectable && onSelect) {
-      evt.stopPropagation();
-      onSelect(evt);
-    }
-  };
-
   // For switch variables in menu, we want to show the switch on the left and the label on the right
   if (inMenu && sceneUtils.isSwitchVariable(variable)) {
     return (
-      <div
-        className={cx(
-          styles.switchMenuContainer,
-          isSelected && 'dashboard-selected-element',
-          isSelectable && !isSelected && 'dashboard-selectable-element'
-        )}
-        onPointerDown={onPointerDown}
-        data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-      >
-        <div className={styles.switchControl}>
-          <variable.Component model={variable} />
+      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+        <div
+          className={cx(
+            styles.switchMenuContainer,
+            isSelected && 'dashboard-selected-element',
+            isSelectable && !isSelected && 'dashboard-selectable-element'
+          )}
+          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+        >
+          <div className={styles.switchControl}>
+            <variable.Component model={variable} />
+          </div>
+          <VariableLabel
+            variable={variable}
+            layout={'vertical'}
+            className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
+          />
         </div>
-        <VariableLabel
-          variable={variable}
-          layout={'vertical'}
-          className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
-        />
-      </div>
+      </ControlActionsPopover>
     );
   }
 
   if (inMenu) {
     return (
-      <div
-        className={cx(
-          styles.verticalContainer,
-          isSelected && 'dashboard-selected-element',
-          isSelectable && !isSelected && 'dashboard-selectable-element'
-        )}
-        onPointerDown={onPointerDown}
-        data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-      >
-        <VariableLabel variable={variable} layout={'vertical'} className={cx(isSelectable && styles.labelSelectable)} />
-        <variable.Component model={variable} />
-      </div>
+      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+        <div
+          className={cx(
+            styles.verticalContainer,
+            isSelected && 'dashboard-selected-element',
+            isSelectable && !isSelected && 'dashboard-selectable-element'
+          )}
+          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+        >
+          <VariableLabel
+            variable={variable}
+            layout={'vertical'}
+            className={cx(isSelectable && styles.labelSelectable)}
+          />
+          <variable.Component model={variable} />
+        </div>
+      </ControlActionsPopover>
     );
   }
 
   return (
-    <div
-      className={cx(
-        styles.container,
-        isSelected && 'dashboard-selected-element',
-        isSelectable && !isSelected && 'dashboard-selectable-element'
-      )}
-      onPointerDown={onPointerDown}
-      data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-    >
-      <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
-      <variable.Component model={variable} />
-    </div>
+    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+      <div
+        className={cx(
+          styles.container,
+          isSelected && 'dashboard-selected-element',
+          isSelectable && !isSelected && 'dashboard-selectable-element'
+        )}
+        data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+      >
+        <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
+        <variable.Component model={variable} />
+      </div>
+    </ControlActionsPopover>
   );
 }
 
@@ -186,6 +192,14 @@ function VariableLabel({
   }
 
   const labelOrName = state.label || state.name;
+  const controlsLayout = layout ?? 'horizontal';
+  const descriptionSuffix =
+    state.description != null && state.description !== '' ? (
+      <VariableDescriptionTooltip
+        description={state.description}
+        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
+      />
+    ) : undefined;
 
   return (
     <ControlsLabel
@@ -194,12 +208,44 @@ function VariableLabel({
       onCancel={() => variable.onCancel?.()}
       label={labelOrName}
       error={state.error}
-      layout={layout ?? 'horizontal'}
-      description={state.description ?? undefined}
+      layout={controlsLayout}
+      description={undefined}
+      suffix={descriptionSuffix}
       className={className}
     />
   );
 }
+
+export function SectionVariableControls({ variableSet }: { variableSet: SceneVariables }) {
+  const { variables } = variableSet.useState();
+  const styles = useStyles2(getSectionVariableStyles);
+
+  const visibleVariables = filterSectionRepeatLocalVariables(variables, variableSet).filter(
+    (v) => v.state.hide !== VariableHide.hideVariable
+  );
+
+  if (visibleVariables.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.sectionVariables}>
+      {visibleVariables.map((variable) => (
+        <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+      ))}
+    </div>
+  );
+}
+
+const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+  sectionVariables: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  }),
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({

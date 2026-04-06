@@ -10,12 +10,12 @@ import {
   rangeRendererRightWithParams,
 } from './operationUtils';
 import {
-  QueryBuilderOperation,
-  QueryBuilderOperationDef,
-  QueryWithOperations,
-  VisualQueryModeller,
+  type QueryBuilderOperation,
+  type QueryBuilderOperationDef,
+  type QueryWithOperations,
+  type VisualQueryModeller,
 } from './shared/types';
-import { PromOperationId, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { PromOperationId, type PromVisualQuery, PromVisualQueryOperationCategory } from './types';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const list: QueryBuilderOperationDef[] = [

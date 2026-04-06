@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type CoreApp, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
-import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { config, type FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Stack, Select, useStyles2, TextLink } from '@grafana/ui';
 
 import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
-import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
+import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { type TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { traceqlGrammar } from '../traceql/traceql';
-import { TempoQuery } from '../types';
+import { type TempoQuery } from '../types';
 
 import { AggregateByAlert } from './AggregateByAlert';
 import DurationInput from './DurationInput';

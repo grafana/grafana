@@ -23,7 +23,7 @@ import { Page } from '../../core/components/Page/Page';
 
 import { FieldRenderer } from './FieldRenderer';
 import { getSectionFields } from './fields';
-import { SSOProvider, SSOProviderDTO } from './types';
+import { type SSOProvider, type SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 
 const appEvents = getAppEvents();
@@ -246,7 +246,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       {resetConfig && (
         <ConfirmModal
           isOpen
-          icon="trash-alt"
           title={t('auth-config.provider-config-form.title-reset', 'Reset')}
           body={
             <Stack direction={'column'} gap={3}>

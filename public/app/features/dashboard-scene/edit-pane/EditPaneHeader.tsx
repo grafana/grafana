@@ -5,10 +5,10 @@ import { Button, Menu, Stack, Dropdown, Icon, Sidebar } from '@grafana/ui';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
@@ -36,7 +36,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
   return (
     <Sidebar.PaneHeader title={elementInfo.typeName}>
-      <Stack direction="row" gap={1}>
+      <Stack direction="row" gap={1} grow={1} justifyContent={'flex-end'}>
         {element.renderActions && element.renderActions()}
         {(onCopy || onDuplicate) && (
           <Dropdown

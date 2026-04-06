@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dropdown, Icon, IconButton, Menu, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { InlineRenameInput } from './InlineRenameInput';
-import { SavedSearch } from './savedSearchesSchema';
+import { type SavedSearch } from './savedSearchesSchema';
 
 // ============================================================================
 // Saved Search Item

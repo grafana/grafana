@@ -1,4 +1,4 @@
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 
 export function findCreateActions(navTree: NavModelItem[]): NavModelItem[] {
   const results: NavModelItem[] = [];
