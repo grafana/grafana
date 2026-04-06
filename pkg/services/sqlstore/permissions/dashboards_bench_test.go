@@ -74,12 +74,11 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		nestingLevel = cfg.MaxNestedFolderDepth
 	}
 
-	fStore := folderimpl.ProvideStore(store, cfg)
 	searchMock := resource.NewMockResourceClient(b)
 	searchMock.On("Search", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 	searchMock.On("GetStats", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 	folderSvc := folderimpl.ProvideService(
-		fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
+		mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
 		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	rootFolders := make([]*folder.Folder, 0, numFolders)
