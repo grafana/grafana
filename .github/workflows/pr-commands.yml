@@ -1,6 +1,5 @@
 name: PR automation
 on:
-  pull_request:
   pull_request_target:
     types:
       - labeled
@@ -21,15 +20,16 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: "grafana/grafana-github-actions"
-          path: ./actions
           ref: main
           persist-credentials: false
+      # Note: this action checks out the grafana/grafana-github-actions repo, not Grafana.
+      # So this `yarn install` is installing dependencies for the actions, not for Grafana.
       - name: Install Actions
         run: |
           corepack enable
-          yarn --cwd ./actions install --immutable
+          yarn install --immutable
       - name: Run Commands
-        uses: ./actions/commands
+        uses: ./commands
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           configPath: pr-commands
