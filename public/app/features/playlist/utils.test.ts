@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { canReadPlaylists, canWritePlaylists } from './utils';
+import { canWritePlaylists } from './utils';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -44,36 +44,6 @@ describe('canWritePlaylists', () => {
     it('returns false when user lacks playlists:write, even if isEditor', () => {
       (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
       expect(canWritePlaylists()).toBe(false);
-    });
-  });
-});
-
-describe('canReadPlaylists', () => {
-  beforeEach(() => {
-    jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
-    config.featureToggles.playlistsRBAC = false;
-  });
-
-  describe('with playlistsRBAC toggle off (legacy)', () => {
-    it('returns true for all users', () => {
-      expect(canReadPlaylists()).toBe(true);
-    });
-  });
-
-  describe('with playlistsRBAC toggle on', () => {
-    beforeEach(() => {
-      config.featureToggles.playlistsRBAC = true;
-    });
-
-    it('returns true when user has playlists:read', () => {
-      jest
-        .mocked(contextSrv.hasPermission)
-        .mockImplementation((action) => action === AccessControlAction.PlaylistsRead);
-      expect(canReadPlaylists()).toBe(true);
-    });
-
-    it('returns false when user lacks playlists:read', () => {
-      expect(canReadPlaylists()).toBe(false);
     });
   });
 });

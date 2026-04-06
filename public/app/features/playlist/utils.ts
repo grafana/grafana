@@ -2,7 +2,6 @@ import { config } from '@grafana/runtime';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 import { contextSrv } from '../../core/services/context_srv';
-import { AccessControlAction } from '../../types/accessControl';
 import { getGrafanaSearcher } from '../search/service/searcher';
 import { type SearchQuery } from '../search/service/types';
 
@@ -12,10 +11,6 @@ export function canWritePlaylists(): boolean {
   return config.featureToggles.playlistsRBAC
     ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)
     : contextSrv.isEditor;
-}
-
-export function canReadPlaylists(): boolean {
-  return config.featureToggles.playlistsRBAC ? contextSrv.hasPermission(AccessControlAction.PlaylistsRead) : true;
 }
 
 /** Returns a copy with the dashboards loaded */
