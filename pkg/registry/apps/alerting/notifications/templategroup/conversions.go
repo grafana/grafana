@@ -49,13 +49,17 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 	return result
 }
 
-func convertToDomainModel(template *model.TemplateGroup) definitions.NotificationTemplate {
+func convertToDomainModel(template *model.TemplateGroup) (definitions.NotificationTemplate, error) {
+	prov, err := ngmodels.ProvenanceFromString(template.GetProvenanceStatus())
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
 	return definitions.NotificationTemplate{
 		UID:             template.Name,
 		Name:            template.Spec.Title,
 		Template:        template.Spec.Content,
 		ResourceVersion: template.ResourceVersion,
-		Provenance:      definitions.Provenance(ngmodels.ProvenanceNone),
+		Provenance:      definitions.Provenance(prov),
 		Kind:            definition.TemplateKind(template.Spec.Kind),
-	}
+	}, nil
 }
