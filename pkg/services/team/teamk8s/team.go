@@ -38,8 +38,8 @@ type TeamK8sService struct {
 	logger          log.Logger
 	cfg             *setting.Cfg
 	namespaceMapper request.NamespaceMapper
-	configProvider apiserver.RestConfigProvider
-	legacyService  team.Service
+	configProvider  apiserver.RestConfigProvider
+	legacyService   team.Service
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
