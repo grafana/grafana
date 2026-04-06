@@ -5,6 +5,7 @@ import { type GrafanaTheme2, LogsSortOrder, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { DownloadFormat } from '../../utils';
 
@@ -19,6 +20,8 @@ type Props = {
   logOptionsStorageKey: string;
   sortOrder: LogsSortOrder;
   downloadLogs: (format: DownloadFormat) => void;
+  onOptionsChange: (options: Options) => void;
+  options: Options;
 };
 
 export const LogTableControls = ({
@@ -28,6 +31,8 @@ export const LogTableControls = ({
   setSortOrder,
   sortOrder,
   downloadLogs,
+  options,
+  onOptionsChange,
 }: Props) => {
   const styles = useStyles2(getStyles, controlsExpanded);
 
@@ -43,6 +48,13 @@ export const LogTableControls = ({
     });
     setSortOrder(sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending);
   }, [setSortOrder, sortOrder]);
+
+  const onWrapTextClick = useCallback(() => {
+    onOptionsChange({
+      ...options,
+      wrapText: !options.wrapText,
+    });
+  }, [onOptionsChange, options]);
 
   const downloadMenu = useMemo(
     () => (
@@ -81,24 +93,23 @@ export const LogTableControls = ({
 
   return (
     <div className={styles.navContainer}>
-      <>
-        <LogListControlsOption
-          expanded={controlsExpanded}
-          name="arrow-from-right"
-          className={cx(styles.controlButton, styles.controlsExpandedButton)}
-          variant="secondary"
-          onClick={onExpandControlsClick}
-          label={
-            controlsExpanded
-              ? t('logs.logs-controls.label.collapse', 'Expanded')
-              : t('logs.logs-controls.label.expand', 'Collapsed')
-          }
-          tooltip={
-            controlsExpanded ? t('logs.logs-controls.collapse', 'Collapse') : t('logs.logs-controls.expand', 'Expand')
-          }
-          size="lg"
-        />
-      </>
+      <LogListControlsOption
+        expanded={controlsExpanded}
+        name="arrow-from-right"
+        className={cx(styles.controlButton, styles.controlsExpandedButton)}
+        variant="secondary"
+        onClick={onExpandControlsClick}
+        label={
+          controlsExpanded
+            ? t('logs.logs-controls.label.collapse', 'Expanded')
+            : t('logs.logs-controls.label.expand', 'Collapsed')
+        }
+        tooltip={
+          controlsExpanded ? t('logs.logs-controls.collapse', 'Collapse') : t('logs.logs-controls.expand', 'Expand')
+        }
+        size="lg"
+      />
+
       <LogListControlsOption
         expanded={controlsExpanded}
         name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-up' : 'sort-amount-down'}
@@ -115,6 +126,24 @@ export const LogTableControls = ({
             : t('logs.logs-controls.oldest-first', 'Sorted by oldest logs first - Click to show newest first')
         }
         size="lg"
+      />
+
+      <LogListControlsOption
+        expanded={controlsExpanded}
+        name="wrap-text"
+        className={options.wrapText ? styles.controlButtonActive : styles.controlButton}
+        aria-pressed={options.wrapText}
+        onClick={onWrapTextClick}
+        tooltip={
+          options.wrapText
+            ? t('logs.logs-controls.table-wrap-text.disable', 'Disable text wrapping')
+            : t('logs.logs-controls.table-wrap-text.enable', 'Enable text wrapping')
+        }
+        label={
+          options.wrapText
+            ? t('logs.logs-controls.table-wrap-text.enabled', 'Wrapping enabled')
+            : t('logs.logs-controls.table-wrap-text.disabled', 'Wrapping disabled')
+        }
       />
 
       {!config.exploreHideLogsDownload && (
@@ -159,6 +188,22 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
       margin: 0,
       color: theme.colors.text.secondary,
       height: theme.spacing(2),
+    }),
+    controlButtonActive: css({
+      margin: 0,
+      color: theme.colors.text.secondary,
+      height: theme.spacing(2),
+      '&:after': {
+        display: 'block',
+        content: '" "',
+        position: 'absolute',
+        height: 2,
+        borderRadius: theme.shape.radius.default,
+        bottom: theme.spacing(-1),
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+        width: theme.spacing(2.25),
+        opacity: 1,
+      },
     }),
     divider: css({
       borderTop: `solid 1px ${theme.colors.border.medium}`,

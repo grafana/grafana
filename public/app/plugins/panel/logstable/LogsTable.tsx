@@ -186,6 +186,16 @@ export const LogsTable = ({
     return data;
   }, [organizedFrame, data, frameIndex]);
 
+  const tableOptions = useMemo(
+    () => ({
+      sortOrder: LogsSortOrder.Descending,
+      sortBy: [{ displayName: timeFieldName, desc: true }],
+      fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
+      ...options,
+    }),
+    [options, timeFieldName]
+  );
+
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
 
@@ -228,12 +238,7 @@ export const LogsTable = ({
             height={height}
             id={id}
             timeZone={timeZone}
-            options={{
-              sortOrder: LogsSortOrder.Descending,
-              sortBy: [{ displayName: timeFieldName, desc: true }],
-              fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
-              ...options,
-            }}
+            options={tableOptions}
             transparent={transparent}
             fieldConfig={fieldConfig}
             renderCounter={renderCounter}

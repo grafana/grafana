@@ -110,6 +110,8 @@ export function TableNGWrap({
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
             downloadLogs={downloadLogs}
+            onOptionsChange={onTableOptionsChange}
+            options={options}
           />
         </div>
       )}
@@ -123,7 +125,7 @@ export function TableNGWrap({
         height={height}
         id={id}
         timeZone={timeZone}
-        options={{ ...options }}
+        options={options}
         transparent={transparent}
         fieldConfig={fieldConfig}
         renderCounter={renderCounter}
