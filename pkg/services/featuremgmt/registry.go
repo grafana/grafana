@@ -2813,7 +2813,7 @@ var (
 		},
 		{
 			Name:            "cacheConfigUnifiedStorageMigration",
-			Description:     "Enables cache config data migration to migrate cache configs to unified storage",
+			Description:     "Enables cache configs data migration to unified storage",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaOperatorExperienceSquad,
 			Expression:      "false",
