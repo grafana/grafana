@@ -14770,6 +14770,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14777,13 +14778,14 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14791,15 +14793,13 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
-      "cta": "",
       "subtitle": "",
       "title": ""
     },

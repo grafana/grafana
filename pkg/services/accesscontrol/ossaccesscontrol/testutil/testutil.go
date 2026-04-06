@@ -44,14 +44,6 @@ func ProvideFolderPermissions(
 
 	quotaService := quotatest.New(false, nil)
 
-	fStore := folderimpl.ProvideStore(sqlStore, cfg)
-	searchMock := &resource.MockResourceClient{}
-	searchMock.On("Search", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
-	searchMock.On("GetStats", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
-	fService := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
 	acSvc := acimpl.ProvideOSSService(
 		cfg, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sqlStore, permreg.ProvidePermissionRegistry(),
@@ -82,6 +74,13 @@ func ProvideFolderPermissions(
 	if err != nil {
 		return nil, err
 	}
+
+	searchMock := &resource.MockResourceClient{}
+	searchMock.On("Search", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+	searchMock.On("GetStats", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
+	fService := folderimpl.ProvideService(
+		ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
+		userSvc, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	return ossaccesscontrol.ProvideFolderPermissions(
 		cfg,

@@ -52,7 +52,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -1678,7 +1677,7 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
 	dashes, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: u,
-		Type:         searchstore.TypeDashboard,
+		Type:         model.TypeDashboard,
 		Limit:        100000,
 		OrgId:        orgID,
 		FolderUIDs:   folderUIDs,
@@ -1920,7 +1919,6 @@ func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.Fi
 	if len(query.FolderUIDs) > 0 {
 		// Grafana frontend issues a call to search for dashboards in "general" folder. General folder doesn't exists and
 		// should return all dashboards without a parent folder.
-		// We do something similar in the old sql search query https://github.com/grafana/grafana/blob/a58564a35efe8c05a21d8190b283af5bc0979d2a/pkg/services/sqlstore/searchstore/filters.go#L103
 		for i := range query.FolderUIDs {
 			if query.FolderUIDs[i] == folder.GeneralFolderUID {
 				query.FolderUIDs[i] = ""
@@ -2024,9 +2022,9 @@ func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.Fi
 		if err == nil {
 			federate, err = resource.AsResourceKey(namespace, folderv1.RESOURCE)
 		}
-	case searchstore.TypeDashboard, searchstore.TypeAnnotation:
+	case model.TypeDashboard, model.TypeAnnotation:
 		request.Options.Key, err = resource.AsResourceKey(namespace, dashboardv0.DASHBOARD_RESOURCE)
-	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
+	case model.TypeFolder, model.TypeAlertFolder:
 		request.Options.Key, err = resource.AsResourceKey(namespace, folderv1.RESOURCE)
 	default:
 		err = fmt.Errorf("bad type request")
@@ -2099,7 +2097,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 
 	ctx, _ = identity.WithServiceIdentity(ctx, query.OrgId)
 
-	query.Type = searchstore.TypeDashboard
+	query.Type = model.TypeDashboard
 
 	searchResults, err := dr.searchAllDashboardsThroughK8sRaw(ctx, query)
 	if err != nil {
@@ -2134,7 +2132,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 	if query == nil {
 		return nil, errors.New("query cannot be nil")
 	}
-	query.Type = searchstore.TypeDashboard
+	query.Type = model.TypeDashboard
 
 	response, err := dr.searchAllDashboardsThroughK8sRaw(ctx, query)
 	if err != nil {

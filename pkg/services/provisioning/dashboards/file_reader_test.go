@@ -129,13 +129,12 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 	}
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
-	fStore := folderimpl.ProvideStore(sql, cfgT)
 	searchMock := resource.NewMockResourceClient(t)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
-	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, sql, featuremgmt.WithFeatures(),
+	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {
