@@ -19,6 +19,60 @@ There are two options to use the IconButton:
 
 The IconButton used to have a property called `ariaLabel` which got deprecated. You can now use the regular property `aria-label` instead.
 
+### Do's
+
+- Always include the button's label in a tooltip.
+- In exceptional cases where the tooltip does not make sense and the icon is unambiguous (e.g., angle-down for expanding a folder), add an aria-label and the tooltip will be removed.
+- When using an `IconButton` together with text, ensure they are aligned by adding a wrapper with `display: flex` and `align-items: center`.
+- Use in areas that are limited in space and are in a low-context environment.
+- Make sure the icon's significance is clear and unambiguous.
+- Use `IconButton` instead of a [Button](/docs/inputs-button--docs) when only an icon is needed.
+
+### Don'ts
+
+- Avoid using it in high-context situations.
+
+## Variants
+
+| Type            | Style | Purpose                                                                                                                                           |
+| --------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Primary**     | Ghost | Used for primary-based actions. Only use one per section. If there is no primary action, all Button components should be secondary.               |
+| **Secondary**   | Ghost | This is the default-styling for buttons. It is used most frequently within Grafana and can trigger a variety of actions.                          |
+| **Destructive** | Ghost | This is used for delete actions.                                                                                                                  |
+| **Disabled**    | Ghost | Use this if the functionality the IconButton provides is not currently available, but the IconButton needs to indicate that this function exists. |
+
+## Anatomy
+
+- Icon
+- Container (on hover)
+
+## Placement
+
+`IconButton`s are best used in areas that are limited in space and are action-heavy. These could be toolbars or in areas that provide inline editing such as tables or cards.
+
+## Button Sizes
+
+| Icon size | Name and size in Figma | Name and size in code |
+| --------- | ---------------------- | --------------------- |
+| 12px      | **small:** 20px        | **xs:** 20px          |
+| 14px      |                        | **sm:** 22px          |
+| 16px      | **medium:** 28px       | **md:** 24px          |
+| 18px      |                        | **lg:** 26px          |
+| 24px      | **large:** 48px        | **xl:** 32px          |
+| 24px      |                        | **xxl:** 32px         |
+| 24px      |                        | **xxxl:** 32px        |
+
+## Accessibility
+
+- Add a text for tooltip (it will also be used as the aria-label).
+- In exceptional cases where the tooltip does not make sense add the aria-label.
+
+## Behaviours
+
+### Hover
+
+On hover, the `IconButton` displays a tooltip that includes the IconButton's label.
+
 <Alert severity="warning" title={'Please note:'}>
   After reviewing this component we would like you to know that there are only 5 sizes available (sizes xs to xl). Sizes
   xxl and xxxl are now shown in size xl as well and will be deprecated in the future.

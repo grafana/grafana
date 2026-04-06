@@ -204,7 +204,7 @@ export function TableNG(props: TableNGProps) {
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
 
-  const { rows: filteredRows, filter, setFilter } = useFilteredRows(rows, data.fields, hasNestedFrames);
+  const { rows: filteredRows, filter, setFilter, filterResult } = useFilteredRows(rows, data.fields, hasNestedFrames);
 
   const {
     rows: sortedRows,
@@ -296,6 +296,17 @@ export function TableNG(props: TableNGProps) {
   );
 
   const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
+
+  const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
+  const nestedHeaderHeight = useHeaderHeight({
+    columnWidths: nestedFieldWidths,
+    fields: nestedVisibleFields,
+    enabled: hasNestedHeaders,
+    sortColumns,
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx,
+  });
+
   const defaultRowHeight = useMemo(
     () => getDefaultRowHeight(theme, visibleFields, cellHeight),
     [theme, visibleFields, cellHeight]
@@ -333,7 +344,7 @@ export function TableNG(props: TableNGProps) {
     width: availableWidth,
     height,
     footerHeight,
-    headerHeight: hasHeader ? TABLE.HEADER_HEIGHT : 0,
+    headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
     hasNestedFrames,
   });
@@ -426,7 +437,7 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows: hasFooter ? [{}] : undefined,
         summaryRowHeight: footerHeight,
         headerRowClass: styles.headerRow,
-        headerRowHeight: noHeader ? 0 : TABLE.HEADER_HEIGHT,
+        headerRowHeight: noHeader ? 0 : headerHeight,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
       enableVirtualization,
@@ -439,6 +450,7 @@ export function TableNG(props: TableNGProps) {
       setSortColumns,
       onSortByChange,
       footerHeight,
+      headerHeight,
     ]
   );
 
@@ -446,6 +458,7 @@ export function TableNG(props: TableNGProps) {
     (
       nestedColumnsMatrix: FromFieldsResult[],
       hasNestedHeaders: boolean,
+      nestedHeaderHeightPx: number,
       renderers: Renderers<TableRow, TableSummaryRow>
     ): TableColumn => ({
       key: EXPANDED_COLUMN_KEY,
@@ -508,7 +521,7 @@ export function TableNG(props: TableNGProps) {
               {...commonDataGridProps}
               className={clsx(styles.grid, styles.gridNested)}
               headerRowClass={clsx(styles.headerRow, hasNestedHeaders ? '' : styles.displayNone)}
-              headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
+              headerRowHeight={hasNestedHeaders ? nestedHeaderHeightPx : 0}
               columns={nestedColumns}
               rows={expandedRecords}
               renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
@@ -552,6 +565,13 @@ export function TableNG(props: TableNGProps) {
         columns: [],
         cellRootRenderers: {},
       };
+
+      // Reuse pre-computed filter results — no re-scanning of rows needed.
+      // Top-level tables use filterResult from useFilteredRows; nested tables use the
+      // filterResult stored on their NestedRowEntry by useNestedRows.
+      const parentIndex = visibleRows[0]?.__parentIndex;
+      const { crossFilterRows, crossFilterTailRows } =
+        parentIndex == null ? filterResult : nestedRows[parentIndex].filterResult;
 
       let lastRowIdx = -1;
       // shared when whole row will be styled by a single cell's color
@@ -824,7 +844,9 @@ export function TableNG(props: TableNGProps) {
               disableKeyboardEvents={disableKeyboardEvents}
               direction={sortDirection}
               showTypeIcons={showTypeIcons}
-              parentIndex={visibleRows[0]?.__parentIndex}
+              parentIndex={parentIndex}
+              crossFilterRows={crossFilterRows}
+              crossFilterTailRows={crossFilterTailRows}
               selectFirstCell={() => {
                 gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
               }}
@@ -847,25 +869,27 @@ export function TableNG(props: TableNGProps) {
       return result;
     },
     [
-      theme,
+      applyToRowBgFn,
+      disableKeyboardEvents,
+      disableSanitizeHtml,
+      filter,
+      filterResult,
+      footers,
+      frozenColumns,
+      getCellActions,
+      getCellColorInlineStyles,
+      getTextColorForBackground,
+      isUniformFooter,
+      maxRowHeight,
+      nestedRows,
+      numFrozenColsFullyInView,
       onCellFilterAdded,
       rowHeight,
-      maxRowHeight,
-      applyToRowBgFn,
-      frozenColumns,
-      numFrozenColsFullyInView,
-      getCellColorInlineStyles,
       rowHeightFn,
-      timeRange,
-      getCellActions,
-      disableSanitizeHtml,
-      getTextColorForBackground,
-      filter,
       setFilter,
-      disableKeyboardEvents,
       showTypeIcons,
-      footers,
-      isUniformFooter,
+      theme,
+      timeRange,
     ]
   );
 
@@ -900,7 +924,6 @@ export function TableNG(props: TableNGProps) {
     }
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
@@ -908,7 +931,7 @@ export function TableNG(props: TableNGProps) {
 
     // If we have nested frames, we need to add a column for the row expansion
     result.columns.unshift(
-      buildNestedTableExpanderColumn(nestedColumnsMatrix, hasNestedHeaders, {
+      buildNestedTableExpanderColumn(nestedColumnsMatrix, hasNestedHeaders, nestedHeaderHeight, {
         renderRow,
         renderCell: (key, props) =>
           nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props),
@@ -923,7 +946,9 @@ export function TableNG(props: TableNGProps) {
     expandedRows,
     firstRowNestedData,
     fromFields,
+    hasNestedHeaders,
     nestedColumnsMatrix,
+    nestedHeaderHeight,
     panelContext,
     rows,
     sortedRows,

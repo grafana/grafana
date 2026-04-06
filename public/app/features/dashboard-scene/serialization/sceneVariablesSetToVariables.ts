@@ -229,9 +229,19 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         // @ts-expect-error
         baseFilters: variable.state.baseFilters || [],
-        filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
+        filters: [
+          ...validateFiltersOrigin(variable.getOriginalFilters()).map(
+            ({ key, operator, value, values, keyLabel, valueLabels, origin }) => {
+              return { key, origin, value, values, valueLabels, keyLabel, operator };
+            }
+          ),
+          ...validateFiltersOrigin(variable.state.filters),
+        ],
         defaultKeys: variable.state.defaultKeys,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
+        enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+          ? (variable.state.enableGroupBy ?? false)
+          : false,
       };
       variables.push(adhocVariable);
     } else if (sceneUtils.isSwitchVariable(variable)) {

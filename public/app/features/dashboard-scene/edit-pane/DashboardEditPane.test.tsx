@@ -1,6 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
+  ConstantVariable,
   type MultiValueVariable,
   SceneGridLayout,
   SceneTimeRange,
@@ -26,6 +27,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
+import { dashboardEditActions } from './shared';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -90,6 +92,48 @@ describe('DashboardEditPane', () => {
 
     expect(cloned.state.redoStack).toHaveLength(0);
     expect(cloned.state.undoStack).toHaveLength(0);
+  });
+
+  it('keeps the variable selected when undoing and redoing variable type changes', () => {
+    const variable = new TestVariable({
+      name: 'service',
+      delayMs: 0,
+      value: 'prod',
+      text: 'prod',
+      optionsToReturn: [{ label: 'prod', value: 'prod' }],
+    });
+    const variableSet = new SceneVariableSet({ variables: [variable] });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      $variables: variableSet,
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+    });
+
+    activateFullSceneTree(dashboard);
+
+    const editPane = dashboard.state.editPane;
+    editPane.selectObject(variable, variable.state.key!, { force: true });
+
+    const changedVariable = new ConstantVariable({ name: 'service' });
+    dashboardEditActions.changeVariableType({
+      source: variableSet,
+      oldVariable: variable,
+      newVariable: changedVariable,
+    });
+
+    expect(variableSet.state.variables[0]).toBe(changedVariable);
+    expect(editPane.getSelection()).toBe(changedVariable);
+
+    editPane.undoAction();
+
+    expect(variableSet.state.variables[0]).toBe(variable);
+    expect(editPane.getSelection()).toBe(variable);
+
+    editPane.redoAction();
+
+    expect(variableSet.state.variables[0]).toBe(changedVariable);
+    expect(editPane.getSelection()).toBe(changedVariable);
   });
 
   describe('Selecting repeated elements', () => {

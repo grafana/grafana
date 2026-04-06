@@ -523,7 +523,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 						switch version.Name {
 						case "v0alpha1":
 							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
-						case "v1beta1":
+						case "v1beta1", "v1":
 							targetVersions[filename] = &dashv1.Dashboard{TypeMeta: typeMeta}
 						case "v2alpha1":
 							targetVersions[filename] = &dashv2alpha1.Dashboard{TypeMeta: typeMeta}
@@ -640,8 +640,9 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 
 			// Get all Dashboard versions from the manifest
 			for _, version := range manifest.ManifestData.Versions {
-				// Skip v1beta1 since that's our source version
-				if version.Name == "v1beta1" {
+				// Skip v1beta1 and v1 since v1beta1 is our source version
+				// and v1 uses the same Go type (identity conversion not supported)
+				if version.Name == "v1beta1" || version.Name == "v1" {
 					continue
 				}
 				for _, kind := range version.Kinds {
@@ -658,6 +659,8 @@ func TestMigratedDashboardsConversion(t *testing.T) {
 						switch version.Name {
 						case "v0alpha1":
 							targetVersions[filename] = &dashv0.Dashboard{TypeMeta: typeMeta}
+						case "v1beta1", "v1":
+							targetVersions[filename] = &dashv1.Dashboard{TypeMeta: typeMeta}
 						case "v2alpha1":
 							targetVersions[filename] = &dashv2alpha1.Dashboard{TypeMeta: typeMeta}
 						case "v2beta1":

@@ -30,7 +30,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard, type DashboardLink, type LibraryPanel } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { type ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
@@ -49,7 +49,6 @@ import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisi
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
@@ -76,7 +75,10 @@ import {
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
-import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+import {
+  createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
+  transformSaveModelSchemaV2ToScene,
+} from '../serialization/transformSaveModelSchemaV2ToScene';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
@@ -88,6 +90,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -119,6 +122,7 @@ export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
 type PanelStyles = {
   fieldConfig?: { defaults: Partial<FieldConfig> };
+  options?: Record<string, unknown>;
 };
 
 type CopiedPanelStyles = {
@@ -126,14 +130,32 @@ type CopiedPanelStyles = {
   styles: PanelStyles;
 };
 
+function copyFieldConfigPropIfDefined<K extends keyof FieldConfig>(
+  source: FieldConfig,
+  target: Partial<FieldConfig>,
+  key: K
+): void {
+  const value = source[key];
+  if (value !== undefined) {
+    target[key] = value;
+  }
+}
+
+function extractOptionProps(source: Record<string, unknown>, props: readonly string[]): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (props.includes(key) && value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
 }
 
 export interface DashboardSceneState extends SceneObjectState {
-  /** @deprecated */
-  id?: number | undefined;
-
   /** Dashboard-specific preferences **/
   preferences?: DashboardScenePreferences;
 
@@ -187,6 +209,10 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator: DashboardLayoutOrchestrator;
+  /** True while default variables from datasources are being loaded */
+  defaultVariablesLoading?: boolean;
+  /** True while default links from datasources are being loaded */
+  defaultLinksLoading?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -308,6 +334,37 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
+  public setDefaultVariables(defaultVariables: VariableKind[]) {
+    const variableSet = sceneGraph.getVariables(this);
+    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    const defaultVarObjects = defaultVariables
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModelV2(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      .filter((v): v is SceneVariable => Boolean(v));
+
+    variableSet.setState({ variables: [...defaultVarObjects, ...userVars] });
+  }
+
+  public setDefaultLinks(defaultLinks: DashboardLink[]) {
+    const userLinks = this.state.links.filter((l) => !l.origin);
+    this.setState({ links: [...defaultLinks, ...userLinks] });
+  }
+
+  public clearDefaultControls() {
+    const variableSet = sceneGraph.getVariables(this);
+    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    variableSet.setState({ variables: nonDefaultVars });
+
+    const nonDefaultLinks = this.state.links.filter((l) => !l.origin);
+    this.setState({ links: nonDefaultLinks });
+  }
+
   public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
@@ -362,6 +419,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (config.featureToggles.dashboardNewLayouts) {
+      const canSave = Boolean(this.state.meta.canSave);
+
       appEvents.publish(
         new ShowConfirmModalEvent({
           title: t('dashboard-scene.dashboard-scene.modal.title.unsaved-changes', 'Unsaved changes'),
@@ -369,17 +428,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             'dashboard-scene.dashboard-scene.modal.text.save-changes-question',
             'Do you want to save your changes?'
           ),
-          altActionText: t('dashboard-scene.dashboard-scene.modal.save', 'Save'),
+          altActionText: canSave ? t('dashboard-scene.dashboard-scene.modal.save', 'Save') : undefined,
           noText: t('dashboard-scene.dashboard-scene.modal.cancel', 'Cancel'),
           yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
           yesButtonVariant: 'destructive',
-          onAltAction: () => {
-            this.openSaveDrawer({
-              onSaveSuccess: () => {
-                this.exitEditModeConfirmed(false);
-              },
-            });
-          },
+          onAltAction: canSave
+            ? () => {
+                this.openSaveDrawer({
+                  onSaveSuccess: () => {
+                    this.exitEditModeConfirmed(false);
+                  },
+                });
+              }
+            : undefined,
           onConfirm: () => {
             this.exitEditModeConfirmed();
           },
@@ -682,11 +743,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     store.delete(LS_PANEL_COPY_KEY);
   }
 
-  /**
-   * Hardcoded to Timeseries for this PoC
-   * @internal
-   */
-  private static extractPanelStyles(panel: VizPanel): PanelStyles {
+  /** @internal */
+  private static extractPanelStyles(panel: VizPanel, styleConfig: PanelStyleConfig): PanelStyles {
     const styles: PanelStyles = {};
 
     if (!panel.state.fieldConfig?.defaults) {
@@ -699,21 +757,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const panelDefaults = panel.state.fieldConfig.defaults;
 
     // default props (color)
-    if (defaultGraphStyleConfig.fieldConfig?.defaultsProps) {
-      for (const key of defaultGraphStyleConfig.fieldConfig.defaultsProps) {
-        const value = panelDefaults[key];
-        if (value !== undefined) {
-          defaults[key] = value;
-        }
-      }
+    for (const key of styleConfig.fieldConfig.defaultsProps) {
+      copyFieldConfigPropIfDefined(panelDefaults, defaults, key);
     }
 
     // custom props (lineWidth, fillOpacity, etc.)
-    if (panel.state.fieldConfig.defaults.custom && defaultGraphStyleConfig.fieldConfig?.defaults) {
+    if (panel.state.fieldConfig.defaults.custom) {
       const customDefaults: Record<string, unknown> = {};
       const panelCustom: Record<string, unknown> = panel.state.fieldConfig.defaults.custom;
 
-      for (const key of defaultGraphStyleConfig.fieldConfig.defaults) {
+      for (const key of styleConfig.fieldConfig.customProps) {
         const value = panelCustom[key];
         if (value !== undefined) {
           customDefaults[key] = value;
@@ -721,6 +774,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
 
       defaults.custom = customDefaults;
+    }
+
+    // panel-level options (colorMode, graphMode, textMode, etc.)
+    if (styleConfig.options?.props && panel.state.options) {
+      const extracted = extractOptionProps(panel.state.options, styleConfig.options.props);
+      if (Object.keys(extracted).length > 0) {
+        styles.options = extracted;
+      }
     }
 
     return styles;
@@ -733,14 +794,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     const panelType = vizPanel.state.pluginId;
+    const styleConfig = getPanelStyleConfig(panelType);
 
-    if (panelType !== 'timeseries') {
+    if (!styleConfig) {
       return;
     }
 
     const stylesToCopy: CopiedPanelStyles = {
       panelType,
-      styles: DashboardScene.extractPanelStyles(vizPanel),
+      styles: DashboardScene.extractPanelStyles(vizPanel, styleConfig),
     };
 
     store.set(LS_STYLES_COPY_KEY, JSON.stringify(stylesToCopy));
@@ -786,27 +848,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         return;
       }
 
-      if (!stylesCopy.styles.fieldConfig?.defaults) {
-        return;
-      }
-
-      const newDefaults = {
-        ...vizPanel.state.fieldConfig?.defaults,
-        ...stylesCopy.styles.fieldConfig.defaults,
-      };
-
-      if (stylesCopy.styles.fieldConfig.defaults.custom) {
-        newDefaults.custom = {
-          ...vizPanel.state.fieldConfig?.defaults?.custom,
-          ...stylesCopy.styles.fieldConfig.defaults.custom,
+      if (stylesCopy.styles.fieldConfig?.defaults) {
+        const newDefaults = {
+          ...vizPanel.state.fieldConfig?.defaults,
+          ...stylesCopy.styles.fieldConfig.defaults,
         };
+
+        if (stylesCopy.styles.fieldConfig.defaults.custom) {
+          newDefaults.custom = {
+            ...vizPanel.state.fieldConfig?.defaults?.custom,
+            ...stylesCopy.styles.fieldConfig.defaults.custom,
+          };
+        }
+
+        vizPanel.onFieldConfigChange({
+          ...vizPanel.state.fieldConfig,
+          defaults: newDefaults,
+        });
       }
 
-      const newFieldConfig = {
-        ...vizPanel.state.fieldConfig,
-        defaults: newDefaults,
-      };
-      vizPanel.onFieldConfigChange(newFieldConfig);
+      if (stylesCopy.styles.options) {
+        vizPanel.onOptionsChange({
+          ...vizPanel.state.options,
+          ...stylesCopy.styles.options,
+        });
+      }
 
       appEvents.emit('alert-success', ['Panel styles applied.']);
     } catch (e) {

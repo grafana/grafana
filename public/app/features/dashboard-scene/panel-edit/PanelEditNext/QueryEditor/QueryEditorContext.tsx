@@ -60,10 +60,13 @@ export interface QueryOptionsState {
   focusedField: QueryOptionField | null;
 }
 
-interface TransformationToggles {
+export interface TransformationToggleState {
   showHelp: boolean;
-  toggleHelp: () => void;
   showDebug: boolean;
+}
+
+interface TransformationToggles extends TransformationToggleState {
+  toggleHelp: () => void;
   toggleDebug: () => void;
 }
 
@@ -71,6 +74,16 @@ export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
+  /**
+   * Ordered selection array. The last element is the primary (editor-visible) item.
+   * Single-select is always a single-element array; multi-select adds to the end.
+   */
+  selectedQueryRefIds: readonly string[];
+  /**
+   * Ordered selection array. The last element is the primary (editor-visible) item.
+   * Single-select is always a single-element array; multi-select adds to the end.
+   */
+  selectedTransformationIds: readonly string[];
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;

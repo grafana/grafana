@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { useMeasure } from 'react-use';
+import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
+import { useLocalStorage, useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
@@ -43,6 +43,7 @@ const SQLEditor = lazy(() =>
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
+const SCHEMA_INSPECTOR_OPEN_KEY = 'grafana.sql-expression.schema-inspector-open';
 
 export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
@@ -81,7 +82,8 @@ LIMIT
   10`;
 
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
-  const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
+  const [isSchemaInspectorOpen = true, setIsSchemaInspectorOpen] = useLocalStorage(SCHEMA_INSPECTOR_OPEN_KEY, true);
+
   const styles = useStyles2((theme) => getStyles(theme));
   const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
     useSQLSuggestions();
