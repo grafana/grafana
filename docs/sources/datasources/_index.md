@@ -118,7 +118,7 @@ After you've configured a data source, you can start creating a dashboard direct
 To do, click the **Build a dashboard** drop-down list and select one of the following:
 
 - **From suggestions**: Opens a dialog box with suggested dashboards based on the data source type.
-- **Blank**: Opens an empty dashboard with your data source preselected.
+- **+ Blank**: Opens an empty dashboard with your data source preselected.
 
 For more information on suggested dashboards, refer to [Create dashboards from suggestions](hhttps://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/#create-dashboards-from-suggestions).
 
