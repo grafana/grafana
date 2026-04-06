@@ -162,16 +162,19 @@ func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantNam
 
 	reqID := tracing.TraceIDFromContext(ctx, false)
 	inst, err := td.gcom.GetInstanceByID(ctx, reqID, instanceID)
-	if err == nil {
-		if inst.Status == "deleted" {
-			return true
-		}
+	if err != nil {
+		td.log.Error("GCOM instance check failed; skipping local data deletion", "tenant", tenantName, "gcom_instance_id", instanceID, "err", err)
+		return false
+	}
+
+	if inst.Status != "deleted" {
 		td.log.Warn("stack still active in GCOM; skipping local data deletion",
 			"tenant", tenantName, "gcom_instance_id", instanceID, "gcom_status", inst.Status)
 		return false
 	}
-	td.log.Error("GCOM instance check failed; skipping local data deletion", "tenant", tenantName, "gcom_instance_id", instanceID, "err", err)
-	return false
+
+	// If we get here, the stack is deleted in GCOM.
+	return true
 }
 
 // deleteTenant removes all resource data for the given tenant from the data
