@@ -113,10 +113,8 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
     for (let x = box!.x + 10; x < box!.x + box!.width; x += step) {
       for (let y = box!.y + 10; y < box!.y + box!.height; y += step) {
         await page.mouse.move(x, y);
-        await page.waitForTimeout(50);
         if (await tooltip.isVisible()) {
           await page.mouse.click(box!.x + box!.width + 200, box!.y + box!.height + 200);
-          await page.waitForTimeout(200);
           await expect(tooltip, 'tooltip hides after clicking away').toBeHidden({ timeout: 3000 });
           return;
         }
@@ -124,7 +122,6 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
     }
 
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    await page.waitForTimeout(200);
     await expect(tooltip, 'tooltip appears on click').toBeVisible({ timeout: 3000 });
   });
 });
