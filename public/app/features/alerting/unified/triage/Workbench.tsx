@@ -30,7 +30,7 @@ import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
-import { type Domain, type Filter, type WorkbenchRow } from './types';
+import { type Domain, EmptyLabelValue, type Filter, type WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
@@ -52,7 +52,8 @@ function renderWorkbenchRow(
   domain: Domain,
   key: React.Key,
   enableFolderMeta: boolean,
-  depth = 0
+  depth = 0,
+  groupLabels: Record<string, string> = {}
 ): React.ReactElement {
   if (row.type === 'alertRule') {
     return (
@@ -63,9 +64,17 @@ function renderWorkbenchRow(
         rowKey={key}
         depth={depth}
         enableFolderMeta={enableFolderMeta}
+        groupLabels={groupLabels}
       />
     );
   } else {
+    // Accumulate this group's label=value so child AlertRuleRows can scope their instance queries.
+    // EmptyLabelValue (instances missing this label) maps to "" which produces label="" in PromQL.
+    const childGroupLabels = {
+      ...groupLabels,
+      [row.metadata.label]: row.metadata.value === EmptyLabelValue ? '' : String(row.metadata.value),
+    };
+
     const children = row.rows.map((childRow, childIndex) =>
       renderWorkbenchRow(
         childRow,
@@ -73,7 +82,8 @@ function renderWorkbenchRow(
         domain,
         `${key}-${generateRowKey(childRow, childIndex)}`,
         enableFolderMeta,
-        depth + 1
+        depth + 1,
+        childGroupLabels
       )
     );
 
