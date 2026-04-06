@@ -46,7 +46,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-07-31,kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
-2025-07-31,kubernetesAlertingRules,experimental,@grafana/alerting-squad,false,true,false
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 2025-12-09,kubernetesUnifiedStorageQuotas,experimental,@grafana/search-and-storage,false,true,false
 2025-10-16,kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
@@ -265,7 +264,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,alertingAlertsActivityBanner,experimental,@grafana/alerting-squad,false,false,true
 2025-07-31,graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,false
 2025-07-31,azureResourcePickerUpdates,GA,@grafana/partner-datasources,false,false,true
-2025-07-31,prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
+2025-07-31,prometheusTypeMigration,deprecated,@grafana/partner-datasources,false,true,false
 2025-07-31,pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
 2025-08-29,cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-08-29,cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -349,3 +348,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-01,clearPreviousFieldValues,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-01,enableDatasourceMetaApiPluginLoading,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
+2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
