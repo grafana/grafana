@@ -66,47 +66,17 @@ Grafana Cloud includes built-in support for images in notifications using its ow
 
 ### Grafana OSS and Enterprise
 
-After setting up Grafana to use the image renderer service, configure the `[unified_alerting.screenshots]` section. The following settings are available:
+After setting up Grafana to use the image renderer service, configure the `[unified_alerting.screenshots]` section:
 
     [unified_alerting.screenshots]
-    # Enable screenshots in notifications. You must have either installed the Grafana image rendering
-    # plugin, or set up Grafana to use a remote rendering service.
-    # For more information on configuration options, refer to [rendering].
     capture = true
-
-    # The timeout for capturing screenshots. If a screenshot can't be captured within the timeout
-    # then the notification is sent without a screenshot. The maximum duration is 30 seconds.
-    # This timeout should be less than the minimum Interval of all Evaluation Groups to avoid
-    # back pressure on alert rule evaluation.
     capture_timeout = 10s
-
-    # The maximum number of screenshots that can be taken at the same time. This option is different
-    # from concurrent_render_request_limit as max_concurrent_screenshots sets the number of concurrent
-    # screenshots that can be taken at the same time for all firing alerts where as
-    # concurrent_render_request_limit sets the total number of concurrent screenshots across all
-    # Grafana services. We recommend that this value is less than or equal to
-    # concurrent_render_request_limit.
     max_concurrent_screenshots = 5
-
-    # Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS.
-    # Refer to [external_image_storage] for further configuration options. If this option is false,
-    # screenshots are persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = true
 
 If `upload_external_image_storage` is set to `true`, you must also configure the `[external_image_storage]` section to specify which cloud storage provider to use. Set the `provider` option to one of `s3`, `gcs`, `azure_blob`, `webdav`, or `local`, and then configure the corresponding provider-specific section.
 
-For example, to use Amazon S3:
-
-    [external_image_storage]
-    provider = s3
-
-    [external_image_storage.s3]
-    bucket = <BUCKET_NAME>
-    region = <REGION>
-    access_key = <ACCESS_KEY>
-    secret_key = <SECRET_KEY>
-
-For the full list of provider-specific options, refer to the [`[external_image_storage]`](/docs/grafana/latest/setup-grafana/configure-grafana/#external-image-store) section in the Grafana configuration documentation.
+For the full list of options, refer to [`[unified_alerting.screenshots]`](/docs/grafana/latest/setup-grafana/configure-grafana/#unified_alertingscreenshots) and [`[external_image_storage]`](/docs/grafana/latest/setup-grafana/configure-grafana/#external-image-store) in the Grafana configuration documentation.
 
 Restart Grafana for the changes to take effect.
 
