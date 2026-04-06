@@ -17,19 +17,19 @@ jest.mock('../../utils/date');
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame, DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { createDataFrame, type DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
-import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
+import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
-import { TraceSpanReference } from '../../types/trace';
+import { type TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
 
 import DetailState from './DetailState';
 
-import SpanDetail, { getAbsoluteTime, SpanDetailProps } from './index';
+import SpanDetail, { getAbsoluteTime, type SpanDetailProps } from './index';
 
 describe('<SpanDetail>', () => {
   // use `transformTraceData` on a fake trace to get a fully processed span

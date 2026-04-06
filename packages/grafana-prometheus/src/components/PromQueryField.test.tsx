@@ -3,13 +3,13 @@ import { getByTestId, render, screen } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, DataFrame, dateTime, LoadingState, PanelData } from '@grafana/data';
+import { CoreApp, type DataFrame, dateTime, LoadingState, type PanelData } from '@grafana/data';
 
-import { PrometheusDatasource } from '../datasource';
+import { type PrometheusDatasource } from '../datasource';
 import * as queryHints from '../query_hints';
 
 import { PromQueryField } from './PromQueryField';
-import { Props } from './monaco-query-field/MonacoQueryFieldProps';
+import { type Props } from './monaco-query-field/MonacoQueryFieldProps';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related

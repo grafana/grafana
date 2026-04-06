@@ -1,8 +1,8 @@
 import {
-  AutoGridLayoutKind,
-  GridLayoutKind,
-  RowsLayoutKind,
-  TabsLayoutKind,
+  type AutoGridLayoutKind,
+  type GridLayoutKind,
+  type RowsLayoutKind,
+  type TabsLayoutKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 type Layout = GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;

@@ -113,7 +113,9 @@ func (m *mockStorageBackend) ReadResource(ctx context.Context, req *resourcepb.R
 }
 
 func (m *mockStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
-	return nil, nil
+	ch := make(chan *WrittenEvent)
+	context.AfterFunc(ctx, func() { close(ch) })
+	return ch, nil
 }
 
 func (m *mockStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
@@ -429,6 +431,12 @@ func TestCombineBuildRequests(t *testing.T) {
 			expOK: true,
 			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour), minBuildVersion: semver.MustParse("12.10.99")},
 		},
+		"merge selectable fields": {
+			a:     rebuildRequest{selectableFields: []string{"team", "title"}},
+			b:     rebuildRequest{selectableFields: []string{"folder", "team"}},
+			expOK: true,
+			exp:   rebuildRequest{selectableFields: []string{"folder", "team", "title"}},
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			res1, ok := combineRebuildRequests(tc.a, tc.b)
@@ -449,10 +457,11 @@ func TestCombineBuildRequests(t *testing.T) {
 
 func TestShouldRebuildIndex(t *testing.T) {
 	type testcase struct {
-		buildInfo       IndexBuildInfo
-		minTime         time.Time
-		lastImportTime  time.Time
-		minBuildVersion *semver.Version
+		buildInfo        IndexBuildInfo
+		minTime          time.Time
+		lastImportTime   time.Time
+		minBuildVersion  *semver.Version
+		selectableFields []string
 
 		expected bool
 	}
@@ -509,9 +518,44 @@ func TestShouldRebuildIndex(t *testing.T) {
 			minBuildVersion: semver.MustParse("10.15.20"),
 			expected:        false,
 		},
+		"index with no previous selectable fields, and no new selectable fields": {
+			buildInfo:        IndexBuildInfo{},
+			selectableFields: nil,
+			expected:         false,
+		},
+		"index with no previous selectable fields, with new selectable fields": {
+			buildInfo:        IndexBuildInfo{},
+			selectableFields: []string{"title"},
+			expected:         true,
+		},
+		"index with existing fields, and no new selectable fields": {
+			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
+			selectableFields: nil,
+			expected:         false,
+		},
+		"index with existing fields, and subset of fields": {
+			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
+			selectableFields: []string{"title"},
+			expected:         false,
+		},
+		"index with existing fields, and same selectable fields": {
+			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
+			selectableFields: []string{"title", "team"},
+			expected:         false,
+		},
+		"index with existing fields, and different selectable fields": {
+			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
+			selectableFields: []string{"new.title", "new.team"},
+			expected:         true,
+		},
+		"index with existing fields, and additional selectable fields": {
+			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
+			selectableFields: []string{"title", "team", "new.field"},
+			expected:         true,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.minTime, tc.lastImportTime, nil)
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, nil)
 			require.Equal(t, tc.expected, res)
 		})
 	}

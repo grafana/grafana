@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, DraggableProvided, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, type DraggableProvided, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, IconButton, useStyles2 } from '@grafana/ui';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { LogLineDetailsMode } from './LogLineDetails';
+import { type LogLineDetailsMode } from './LogLineDetails';
 import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
 import { getNormalizedFieldName } from './processing';

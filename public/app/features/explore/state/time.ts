@@ -1,13 +1,13 @@
-import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction } from '@reduxjs/toolkit';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   AppEvents,
   dateTimeForTimeZone,
   LoadingState,
   rangeUtil,
-  RawTimeRange,
-  TimeRange,
+  type RawTimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -23,8 +23,8 @@ import {
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { ExploreItemState } from 'app/types/explore';
-import { ThunkDispatch, ThunkResult } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { syncTimesAction } from './main';
 import { runLoadMoreLogsQueries, runQueries } from './query';

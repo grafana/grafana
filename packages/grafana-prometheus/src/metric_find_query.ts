@@ -1,10 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/metric_find_query.ts
 import { map as _map } from 'lodash';
 
-import { MetricFindValue, TimeRange } from '@grafana/data';
+import { type MetricFindValue, type TimeRange } from '@grafana/data';
 
 import { METRIC_LABEL } from './constants';
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
 import {
   PrometheusLabelNamesRegex,

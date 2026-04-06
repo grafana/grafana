@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSet } from 'react-use';
 
-import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Button, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
@@ -21,7 +21,7 @@ import {
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';

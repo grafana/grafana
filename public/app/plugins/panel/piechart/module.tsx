@@ -8,7 +8,7 @@ import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';
-import { Options, FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
+import { type Options, type FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
 import { piechartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)

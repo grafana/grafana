@@ -1,4 +1,4 @@
-import { merge, Observable, timer } from 'rxjs';
+import { merge, type Observable, timer } from 'rxjs';
 import { mapTo, takeUntil } from 'rxjs/operators';
 
 /**

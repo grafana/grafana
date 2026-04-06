@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersVariable, GroupByVariable } from '@grafana/scenes';
+import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes';
 import { Box, IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';

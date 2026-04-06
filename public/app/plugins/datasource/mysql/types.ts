@@ -1,4 +1,4 @@
-import { SQLOptions, SQLQuery } from '@grafana/sql';
+import { type SQLOptions, type SQLQuery } from '@grafana/sql';
 
 export interface MySQLOptions extends SQLOptions {
   allowCleartextPasswords?: boolean;

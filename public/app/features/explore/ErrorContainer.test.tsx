@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { ErrorContainer, ErrorContainerProps } from './ErrorContainer';
+import { ErrorContainer, type ErrorContainerProps } from './ErrorContainer';
 
 describe('ErrorContainer', () => {
   it('should render component and show message', () => {

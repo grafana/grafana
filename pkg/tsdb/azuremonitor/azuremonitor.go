@@ -180,7 +180,7 @@ func (s *Service) getDataSourceFromPluginReq(ctx context.Context, req *backend.Q
 	if !ok {
 		return types.DatasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
 	}
-	dsInfo.OrgID = req.PluginContext.OrgID
+	dsInfo.OrgID = req.PluginContext.OrgID // nolint:staticcheck
 
 	dsInfo.DatasourceName = req.PluginContext.DataSourceInstanceSettings.Name
 	dsInfo.DatasourceUID = req.PluginContext.DataSourceInstanceSettings.UID
