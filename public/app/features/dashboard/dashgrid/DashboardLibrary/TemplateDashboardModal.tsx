@@ -249,18 +249,20 @@ export const TemplateDashboardModal = () => {
           </Trans>
         </Text>
         {showOrgTemplates && (
-          <TabsBar>
-            <Tab
-              label={t('dashboard-library.template-dashboard-modal.tab-custom', 'Custom templates')}
-              active={activeTab === 'custom'}
-              onChangeTab={() => setActiveTab('custom')}
-            />
-            <Tab
-              label={t('dashboard-library.template-dashboard-modal.tab-grafana', 'Grafana-provisioned')}
-              active={activeTab === 'grafana'}
-              onChangeTab={() => setActiveTab('grafana')}
-            />
-          </TabsBar>
+          <Box marginTop={2}>
+            <TabsBar>
+              <Tab
+                label={t('dashboard-library.template-dashboard-modal.tab-custom', 'Custom templates')}
+                active={activeTab === 'custom'}
+                onChangeTab={() => setActiveTab('custom')}
+              />
+              <Tab
+                label={t('dashboard-library.template-dashboard-modal.tab-grafana', 'Grafana-provisioned')}
+                active={activeTab === 'grafana'}
+                onChangeTab={() => setActiveTab('grafana')}
+              />
+            </TabsBar>
+          </Box>
         )}
       </div>
       <Box direction="column" gap={4} display="flex">

@@ -71,7 +71,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
             {config.featureToggles.orgDashboardTemplates && (
               <Menu.Item
                 label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
-                icon="bookmark"
+                icon="gf-grid"
                 onClick={() => {
                   dashboard.openSaveDrawer({ saveAsTemplate: true });
                 }}

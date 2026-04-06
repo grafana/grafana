@@ -4414,6 +4414,9 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
+    "org-templates-banner": {
+      "body": "To manage org-defined templates, view all templates in the <2>template gallery</2>."
+    },
     "quota-banner": {
       "at-limit-body": "Clean up unused resources to free up space.",
       "at-limit-title": "You've hit your storage limits",
