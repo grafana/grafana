@@ -16577,6 +16577,10 @@
   },
   "xychart": {
     "category-xychart": "XY Chart",
+    "errors": {
+      "nodata": "No data",
+      "unknown": "Unknown error"
+    },
     "name-fill-opacity": "Fill opacity",
     "name-line-style": "Line style",
     "name-line-width": "Line width",
