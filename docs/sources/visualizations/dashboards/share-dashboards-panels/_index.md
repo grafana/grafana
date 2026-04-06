@@ -172,7 +172,7 @@ To export a dashboard in its current state as a PDF, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down in the sidebar and select **Export as PDF**.
+1. Click the **Export** drop-down in the toolbar and select **Export as PDF**.
 1. In the **Export dashboard PDF** drawer that opens, select either **Landscape** or **Portrait** for the PDF orientation.
 1. Select either **Grid** or **Simple** for the PDF layout.
 1. Set the **Zoom** level; zoom in to enlarge text, or zoom out to see more data (like table columns) per panel.
@@ -189,7 +189,7 @@ To export a JSON file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the sidebar and select **Export as code**.
+1. Click the **Export** drop-down list in the toolbar and select **Export as code**.
 
    The **Export dashboard** drawer opens.
 
@@ -206,14 +206,14 @@ The generated file uses one of the following schema models:
 ### Export a dashboard as an image
 
 {{< admonition type="note">}}
-You must have the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer/) installed to export a dashboard as an image.
+You must have the [Grafana Image Renderer service](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/) configured to export a dashboard as an image.
 {{< /admonition >}}
 
 To export a dashboard in its current state as a PNG image file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the sidebar and select **Export as image**.
+1. Click the **Export** drop-down list in the toolbar and select **Export as image**.
 
    The **Export as image** drawer opens.
 
@@ -256,7 +256,7 @@ To share a personalized, direct link to your panel within your organization, fol
    - **Height** - In pixels. The default is 500.
    - **Scale factor** - The default is 1.
 
-   There are maximums for [width](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width), [height](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height), and [scale factor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor) in the image renderer configuration that you can customize if needed.
+   There are maximums for width, height, and scale factor in the image renderer [configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/troubleshooting/#available-configuration-options) that you can customize if needed.
 
 1. (Optional) Click **Generate image** to see a preview of the panel image.
 1. (Optional) Click **Download image**.
@@ -284,7 +284,7 @@ You can also update these parameters in the [image rendering configuration](http
 The following example shows a link to a server-side rendered PNG:
 
 ```bash
-https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&__feature.dashboardScene&width=1000&height=500&tz=UTC
+https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&width=1000&height=500&tz=UTC
 ```
 
 ### Share an embed

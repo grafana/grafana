@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
 
 import { FOOTER_HEIGHT, getQueryEditorColors, TIME_OPTION_PLACEHOLDER } from '../../constants';
+import { trackQueryOptionsToggle } from '../../tracking';
 import { useDatasourceContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
@@ -71,10 +72,13 @@ export function QueryEditorFooter() {
 
     // Don't focus interval since it's read-only
     if (fieldId && fieldId !== QueryOptionField.interval) {
+      trackQueryOptionsToggle(true);
       openSidebar(fieldId);
     } else if (!isQueryOptionsOpen) {
+      trackQueryOptionsToggle(true);
       openSidebar();
     } else {
+      trackQueryOptionsToggle(false);
       closeSidebar();
     }
   };

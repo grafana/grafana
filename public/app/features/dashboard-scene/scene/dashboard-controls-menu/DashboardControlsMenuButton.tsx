@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 import { DashboardControlsMenu } from './DashboardControlsMenu';
 import { useDashboardControls } from './utils';
@@ -34,6 +34,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
           annotations={annotations}
           dashboardUID={uid}
           isEditing={isEditing}
+          dashboard={dashboard}
         />
       }
     >

@@ -1,10 +1,10 @@
 import { cx } from '@emotion/css';
 import { memo, type MouseEventHandler } from 'react';
 
-import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
-import { PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';
+import { type DisplayValue, type DisplayValueAlignmentFactors, type FieldSparkline } from '@grafana/data';
+import { type PercentChangeColorMode, type VizTextDisplayOptions } from '@grafana/schema';
 
-import { Themeable2 } from '../../types/theme';
+import { type Themeable2 } from '../../types/theme';
 import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 

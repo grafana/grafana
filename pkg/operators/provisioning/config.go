@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -91,6 +92,7 @@ type ControllerConfig struct {
 // provisioning_server_public_url =
 // dashboards_server_url =
 // folders_server_url =
+// folders_api_version =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =
@@ -363,7 +365,11 @@ func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 		return c.tracer, nil
 	}
 
-	tracingConfig, err := tracing.ProvideTracingConfig(c.Settings)
+	cfgProvider, err := configprovider.ProvideService(c.Settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide config: %w", err)
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
 	}
@@ -529,7 +535,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
-	decrypter := repository.ProvideDecrypter(decryptSvc)
+	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
@@ -549,7 +555,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, resources.IsFolderMetadataEnabled(c.Settings)))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
@@ -588,7 +594,7 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
-	decrypter := connection.ProvideDecrypter(decryptSvc)
+	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(c.Registry()))
 
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),

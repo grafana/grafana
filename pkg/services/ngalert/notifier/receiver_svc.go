@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -99,6 +100,7 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	provenanceValidator validation.ProvenanceStatusTransitionValidator,
 	includeStaged bool,
 ) *ReceiverService {
 	return &ReceiverService{
@@ -110,7 +112,7 @@ func NewReceiverService(
 		encryptionService:      encryptionService,
 		xact:                   xact,
 		log:                    log,
-		provenanceValidator:    validation.ValidateProvenanceRelaxed,
+		provenanceValidator:    provenanceValidator,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
 		includeImported:        includeStaged,
@@ -306,7 +308,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, callerProvenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, callerProvenance); err != nil {
 		return err
 	}
 
@@ -354,6 +356,10 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
+	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
+		return nil, err
+	}
+
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -464,7 +470,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, r.Provenance); err != nil {
+	if err := rs.provenanceValidator(ctx, existing.Provenance, r.Provenance); err != nil {
 		return nil, err
 	}
 
@@ -546,7 +552,7 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name st
 		return nil, err
 	}
 
-	return maps.Keys(keys), nil
+	return slices.Collect(maps.Keys(keys)), nil
 }
 
 // AccessControlMetadata returns access control metadata for the given Receivers.

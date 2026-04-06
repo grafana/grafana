@@ -5,7 +5,7 @@
 // in that case please add the attribute data-testid={selector} in the component and
 // prefix your selector string with 'data-testid' so that when we create the selectors we know to search for it on the right attribute
 
-import { VersionedSelectorGroup } from '../types';
+import { type VersionedSelectorGroup } from '../types';
 
 import { MIN_GRAFANA_VERSION } from './constants';
 
@@ -52,6 +52,11 @@ export const versionedComponents = {
       '12.1.0': 'data-testid CanvasGridAddActions paste-panel',
     },
   },
+  Card: {
+    heading: {
+      '13.0.0': 'data-testid Card heading',
+    },
+  },
   DashboardEditPaneSplitter: {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
@@ -70,6 +75,9 @@ export const versionedComponents = {
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
     },
+    showHideToggle: {
+      '12.4.0': 'data-testid sidebar-show-hide-toggle',
+    },
     newPanelButton: {
       '12.4.0': 'data-testid sidebar add new panel',
     },
@@ -87,9 +95,25 @@ export const versionedComponents = {
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
     },
+    paste: {
+      '12.1.0': 'data-testid EditPaneHeader paste',
+    },
   },
   LayoutContainer: {
     '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
+  },
+  VizLayout: {
+    container: {
+      ['13.1.0']: 'data-testid viz-layout',
+    },
+    legend: {
+      ['13.1.0']: 'data-testid viz-layout-legend',
+    },
+  },
+  UPlotChart: {
+    container: {
+      [MIN_GRAFANA_VERSION]: 'uplot-main-div',
+    },
   },
   TimePicker: {
     moveBackwardButton: {
@@ -500,6 +524,14 @@ export const versionedComponents = {
           [MIN_GRAFANA_VERSION]: 'data-testid Bar gauge value',
         },
       },
+      Histogram: {
+        container: {
+          ['13.1.0']: 'data-testid viz-layout',
+        },
+        legend: {
+          ['13.1.0']: 'data-testid viz-layout-legend',
+        },
+      },
       PieChart: {
         svgSlice: {
           '10.3.0': 'data testid Pie Chart Slice',
@@ -692,11 +724,17 @@ export const versionedComponents = {
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
       },
+      changeVariableType: {
+        '12.7.0': 'data-testid change variable type',
+      },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
+      },
+      addLinkButton: {
+        '12.6.0': 'data-testid add link button',
       },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',

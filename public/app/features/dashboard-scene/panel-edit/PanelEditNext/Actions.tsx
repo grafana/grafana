@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
+import { type AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_COLORS, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from './constants';
-import { trackCardAction } from './tracking';
+import { trackCardAction, type CardActionSource } from './tracking';
 
 export interface ActionItem {
   name: string;
@@ -38,6 +38,16 @@ interface ActionsProps {
   };
 }
 
+const getToggleLabel = (item: ActionItem, labels: Record<string, string>) => {
+  const isTransformation = item.type === QueryEditorType.Transformation;
+  const isHidden = item.isHidden;
+
+  if (isTransformation) {
+    return isHidden ? labels.enable : labels.disable;
+  }
+  return isHidden ? labels.show : labels.hide;
+};
+
 export function Actions({
   contentHeader = false,
   handleResetFocus,
@@ -52,6 +62,7 @@ export function Actions({
   const config = QUERY_EDITOR_TYPE_CONFIG[item.type];
   const typeLabel = config.getLabel();
   const requiresDeleteConfirmation = config.deleteConfirmation;
+  const cardActionSource: CardActionSource = contentHeader ? 'content_header' : 'sidebar_card';
 
   const labels = useMemo(
     () => ({
@@ -59,6 +70,8 @@ export function Actions({
       remove: t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel }),
       show: t('query-editor-next.action.show', 'Show {{type}}', { type: typeLabel }),
       hide: t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeLabel }),
+      enable: t('query-editor-next.action.enable', 'Enable {{type}}', { type: typeLabel }),
+      disable: t('query-editor-next.action.disable', 'Disable {{type}}', { type: typeLabel }),
     }),
     [typeLabel]
   );
@@ -74,11 +87,11 @@ export function Actions({
       if (requiresDeleteConfirmation) {
         setShowDeleteConfirmation(true);
       } else {
-        trackCardAction('delete', item.type);
+        trackCardAction('delete', item.type, cardActionSource);
         onDelete();
       }
     },
-    [requiresDeleteConfirmation, onDelete, handleResetFocus, item.type]
+    [requiresDeleteConfirmation, onDelete, handleResetFocus, item.type, cardActionSource]
   );
 
   const handleConfirmDelete = useCallback(() => {
@@ -86,11 +99,11 @@ export function Actions({
       return;
     }
 
-    trackCardAction('delete', item.type);
+    trackCardAction('delete', item.type, cardActionSource);
     onDelete();
     setShowDeleteConfirmation(false);
     handleResetFocus?.();
-  }, [onDelete, handleResetFocus, item.type]);
+  }, [onDelete, handleResetFocus, item.type, cardActionSource]);
 
   const handleDismissModal = useCallback(() => {
     setShowDeleteConfirmation(false);
@@ -111,7 +124,7 @@ export function Actions({
         label: labels.duplicate,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
-          trackCardAction('duplicate', item.type);
+          trackCardAction('duplicate', item.type, cardActionSource);
           onDuplicate();
         },
       },
@@ -124,29 +137,17 @@ export function Actions({
       onToggleHide && {
         id: 'hide',
         icon: item.isHidden ? 'eye-slash' : 'eye',
-        label: item.isHidden ? labels.show : labels.hide,
+        label: getToggleLabel(item, labels),
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
-          trackCardAction('toggle_hide', item.type);
+          trackCardAction('toggle_hide', item.type, cardActionSource);
           onToggleHide();
         },
       },
     ]
       .filter((btn): btn is ActionButtonConfig => Boolean(btn))
       .sort((a, b) => (orderMap[a.id] ?? 0) - (orderMap[b.id] ?? 0));
-  }, [
-    onDuplicate,
-    labels.duplicate,
-    labels.show,
-    labels.hide,
-    labels.remove,
-    onToggleHide,
-    item.isHidden,
-    item.type,
-    onDelete,
-    handleDelete,
-    order,
-  ]);
+  }, [order, onDuplicate, labels, onDelete, handleDelete, onToggleHide, item, cardActionSource]);
 
   return (
     <>

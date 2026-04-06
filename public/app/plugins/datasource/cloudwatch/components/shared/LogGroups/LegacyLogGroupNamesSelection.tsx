@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { CloudWatchDatasource } from '../../../datasource';
+import { type CloudWatchDatasource } from '../../../datasource';
 
 import { LogGroupSelector } from './LegacyLogGroupSelector';
 

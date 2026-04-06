@@ -5,10 +5,10 @@ import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
 import { PromQueryModellerBase } from './shared/PromQueryModellerBase';
 import {
-  PromQueryPattern,
+  type PromQueryPattern,
   PromQueryPatternType,
   PromVisualQueryOperationCategory,
-  PromQueryModellerInterface,
+  type PromQueryModellerInterface,
 } from './types';
 
 export class PromQueryModeller extends PromQueryModellerBase implements PromQueryModellerInterface {

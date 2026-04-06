@@ -3,7 +3,7 @@ import { orderBy } from 'lodash';
 import { Fragment, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2, Labels } from '@grafana/data';
+import { type GrafanaTheme2, type Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
@@ -19,15 +19,16 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
-import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
+import { type AlertQuery, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
-import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
+import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { labelsToMatchersParam } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
 import { groups, rulesNav } from '../../utils/navigation';
 import { useWorkbenchContext } from '../WorkbenchContext';
@@ -40,16 +41,14 @@ import { QueryVisualization } from './QueryVisualization';
 import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
-import { dateFormatter, noop } from './timelineUtils';
+import { formatTimelineDate, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
 
 function calculateDrawerWidth(rightColumnWidth: number): number {
-  //first add the padding from the Page (32px)
   const calculatedWidth = rightColumnWidth + 32;
-  // now clamp the width to a max of 1400px
-  return Math.min(calculatedWidth, 1400);
+  return Math.max(700, Math.min(calculatedWidth, 1400));
 }
 
 interface InstanceDetailsDrawerProps {
@@ -81,7 +80,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     isError: stateHistoryError,
   } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
-    labels: instanceLabels,
+    matchers: labelsToMatchersParam(instanceLabels),
     from: timeRange.from.unix(),
     to: timeRange.to.unix(),
   });
@@ -269,7 +268,7 @@ function InstanceStateTransitions({
       {sortedRecords.map((record, index) => (
         <Fragment key={`${record.timestamp}-${index}`}>
           <Text color="secondary" variant="bodySmall">
-            {dateFormatter.format(new Date(record.timestamp))}
+            {formatTimelineDate(record.timestamp)}
           </Text>
           <EventState state={record.line.previous} showLabel addFilter={noop} type="from" />
           <Icon name="arrow-right" size="sm" />

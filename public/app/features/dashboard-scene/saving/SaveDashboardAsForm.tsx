@@ -1,5 +1,5 @@
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { UseFormSetValue, useForm } from 'react-hook-form';
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -8,9 +8,9 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
+import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {

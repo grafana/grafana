@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LocalValueVariable, SceneObject, sceneGraph } from '@grafana/scenes';
-import { Combobox, ComboboxOption, Select } from '@grafana/ui';
+import { LocalValueVariable, type SceneObject, sceneGraph } from '@grafana/scenes';
+import { Combobox, type ComboboxOption, Select } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';

@@ -8,10 +8,10 @@ import {
   StringLiteral,
 } from '@prometheus-io/lezer-promql';
 
-import { CoreApp, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { CoreApp, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { PromQuery } from './types';
+import { type PromQuery } from './types';
 
 const tagsToObscure = [
   StringLiteral,

@@ -1,9 +1,9 @@
-import { TimeRange } from '@grafana/data';
-import { BackendSrvRequest } from '@grafana/runtime';
+import { type TimeRange } from '@grafana/data';
+import { type BackendSrvRequest } from '@grafana/runtime';
 
 import { getDefaultCacheHeaders } from './caching';
 import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, MATCH_ALL_LABELS, METRIC_LABEL } from './constants';
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import { getRangeSnapInterval, processHistogramMetrics, removeQuotesIfExist } from './language_utils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel } from './types';

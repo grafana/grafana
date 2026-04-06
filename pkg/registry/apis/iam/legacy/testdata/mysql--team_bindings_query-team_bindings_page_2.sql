@@ -5,5 +5,5 @@ INNER JOIN `grafana`.`user` u ON tm.user_id  = u.id
 WHERE
   tm.org_id = 1
     AND tm.id > 2
-ORDER BY t.id ASC
+ORDER BY tm.id ASC
 LIMIT 1;

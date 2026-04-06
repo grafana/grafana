@@ -56,10 +56,12 @@ func ProvideUnifiedStorageMigrationService(
 }
 
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
-	// skip migrations if disabled in config
-	if p.cfg.DisableDataMigrations {
+	if !p.cfg.ShouldRunMigrations() {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
-		logger.Info("Data migrations are disabled, skipping")
+		logger.Info("Data migrations are disabled, skipping",
+			"unifiedStorageType", p.cfg.UnifiedStorageType(),
+			"target", p.cfg.Target,
+		)
 		return nil
 	}
 
@@ -70,6 +72,14 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 
 // EnsureMigrationLogTable creates the unifiedstorage_migration_log table if it doesn't exist.
 func EnsureMigrationLogTable(ctx context.Context, sqlStore db.DB, cfg *setting.Cfg) error {
+	exists, err := sqlStore.GetEngine().IsTableExist(migrationLogTableName)
+	if err != nil {
+		return fmt.Errorf("failed to check migration log table existence: %w", err)
+	}
+	if exists {
+		return nil
+	}
+
 	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
 	mg.AddCreateMigration()
 	sec := cfg.Raw.Section("database")
