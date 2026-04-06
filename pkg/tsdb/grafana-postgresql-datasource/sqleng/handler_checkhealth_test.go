@@ -50,10 +50,10 @@ func (m *mockSuperuserDetector) DetectSuperuser(_ context.Context) (bool, error)
 
 func TestCheckHealthSuccess(t *testing.T) {
 	tests := []struct {
-		name              string
-		detector          superuserDetector
-		superuserWarning  bool
-		wantDetails       string
+		name             string
+		detector         superuserDetector
+		superuserWarning bool
+		wantDetails      string
 	}{
 		{
 			name:             "not a superuser",
