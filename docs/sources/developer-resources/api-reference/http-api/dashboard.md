@@ -779,6 +779,10 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access denied
 
+## List dashboard history
+
+You can retrieve the full version history of a dashboard using the List endpoint with specific query parameters. For details and examples, refer to [Resource history HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/resource-history/).
+
 ## Delete Dashboard
 
 `DELETE /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`

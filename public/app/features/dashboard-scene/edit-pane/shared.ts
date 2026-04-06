@@ -271,8 +271,8 @@ export const dashboardEditActions = {
     dashboardEditActions.edit({
       description: t('dashboard.variable.type.action', 'Change variable type'),
       source,
-      selectedObjectOnPerform: newVariable,
-      selectedObjectOnUndo: oldVariable,
+      addedObject: newVariable,
+      removedObject: oldVariable,
       perform() {
         source.setState({ variables: varsAfterChange });
       },

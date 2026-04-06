@@ -83,16 +83,17 @@ type GetTeamsByUserQuery struct {
 }
 
 type SearchTeamsQuery struct {
-	Query        string
-	Name         string
-	Limit        int
-	Page         int
-	OrgID        int64 `xorm:"org_id"`
-	SortOpts     []model.SortOption
-	TeamIds      []int64
-	UIDs         []string
-	SignedInUser identity.Requester
-	HiddenUsers  map[string]struct{}
+	Query             string
+	Name              string
+	Limit             int
+	Page              int
+	OrgID             int64 `xorm:"org_id"`
+	SortOpts          []model.SortOption
+	TeamIds           []int64
+	UIDs              []string
+	SignedInUser      identity.Requester
+	HiddenUsers       map[string]struct{}
+	WithAccessControl bool
 }
 
 type TeamDTO struct {

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -52,7 +54,8 @@ type Server struct {
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]zanzana.StoreInfo
-	storesMU *sync.Mutex
+	storesMU sync.RWMutex
+	storeSF  singleflight.Group
 	cache    *localcache.CacheService
 
 	mtReconciler zanzana.MTReconciler
@@ -91,7 +94,6 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		openFGAServer: openfga,
 		openFGAClient: openFGAClient,
 		store:         store,
-		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]zanzana.StoreInfo),
 		cfg:           zanzanaCfg,
 		cache:         localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
