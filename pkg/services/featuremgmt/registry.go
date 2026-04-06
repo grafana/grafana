@@ -2803,6 +2803,14 @@ var (
 			FrontendOnly: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "postgresqlSuperuserWarning",
+			Description:  "Add warning about a PostgreSQL data source using a superuser user",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOSSBigTent,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
 	}
 )
 

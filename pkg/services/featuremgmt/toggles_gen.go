@@ -921,4 +921,8 @@ const (
 	// FlagQueryServiceQueryCaching
 	// Enables the query service to do query caching
 	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
+
+	// FlagPostgresqlSuperuserWarning
+	// Add warning about a PostgreSQL data source using a superuser user
+	FlagPostgresqlSuperuserWarning = "postgresqlSuperuserWarning"
 )

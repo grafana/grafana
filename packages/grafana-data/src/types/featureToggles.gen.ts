@@ -1766,4 +1766,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableColorblindSafePanelOptions?: boolean;
+  /**
+  * Add warning about a PostgreSQL data source using a superuser user
+  * @default false
+  */
+  postgresqlSuperuserWarning?: boolean;
 }
