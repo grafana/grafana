@@ -3,8 +3,8 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
-
-	"golang.org/x/exp/maps"
+	"maps"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -361,7 +361,7 @@ func (s SilenceService) withFolders(ctx context.Context, orgID int64, silences .
 		return result, nil
 	}
 
-	namespaceByRuleUID, err := s.store.GetNamespacesByRuleUID(ctx, orgID, maps.Keys(ruleUIDs)...)
+	namespaceByRuleUID, err := s.store.GetNamespacesByRuleUID(ctx, orgID, slices.Collect(maps.Keys(ruleUIDs))...)
 	if err != nil {
 		return nil, err
 	}

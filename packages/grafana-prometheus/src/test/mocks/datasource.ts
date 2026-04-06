@@ -2,15 +2,15 @@ import { merge } from 'lodash';
 
 import {
   CoreApp,
-  DataQueryRequest,
-  DataSourceJsonData,
-  DataSourceSettings,
+  type DataQueryRequest,
+  type DataSourceJsonData,
+  type DataSourceSettings,
   dateTime,
   rangeUtil,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 
-import { PromOptions, PromQuery } from '../../types';
+import { type PromOptions, type PromQuery } from '../../types';
 
 const getMockDataSource = <T extends DataSourceJsonData>(
   overrides?: Partial<DataSourceSettings<T>>

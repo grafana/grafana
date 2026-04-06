@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { type SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -14,11 +14,11 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardEditPane } from './DashboardEditPane';
+import { type DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
 import { ElementSelection } from './ElementSelection';
 

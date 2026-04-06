@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { toDataFrame, FieldType, ReducerID, FieldValueMatcherConfig } from '@grafana/data';
+import { toDataFrame, FieldType, ReducerID, type FieldValueMatcherConfig } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { FieldNameByRegexMatcherEditor, getFieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';
@@ -94,6 +94,23 @@ describe('MatcherScopeSelector', () => {
   });
 });
 
+const frameWithSeriesAndNestedScopes = (() => {
+  const nestedFrame = toDataFrame({
+    fields: [{ name: 'NestedField', type: FieldType.string, values: ['n'] }],
+  });
+  return toDataFrame({
+    fields: [
+      { name: 'SeriesField', type: FieldType.string, values: ['s'] },
+      {
+        name: 'nested',
+        type: FieldType.nestedFrames,
+        values: [[nestedFrame]],
+        config: {},
+      },
+    ],
+  });
+})();
+
 describe('FieldNameMatcherEditor', () => {
   const mockOnChange = jest.fn();
   const matcher = getFieldNameMatcherItem().matcher;
@@ -135,6 +152,37 @@ describe('FieldNameMatcherEditor', () => {
     // Selecting the same value again might not fire onChange with a different path; ensure we only
     // accept options that are in the names set (covered by frameHasName in the component).
     expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+  it('only shows series-scoped fields and calls onChange with "series" when nested field scope is present ("series" is the default)', async () => {
+    // Regression test: getFieldOverrideElements passes scope={override.matcher.scope ?? 'series'}.
+    // Before the fix, a new override (scope=undefined) was passed through as-is, causing the
+    // by-name matcher to show options in grouped mode (grouped by "Dataframe" / "Nested") even
+    // though the scope selector defaulted to "series". The fix ensures 'series' is always the
+    // fallback, so options are filtered to series-scoped fields and onChange receives 'series'.
+    const user = userEvent.setup();
+    render(
+      <FieldNameMatcherEditor
+        data={[frameWithSeriesAndNestedScopes]}
+        options=""
+        onChange={mockOnChange}
+        matcher={matcher}
+      />
+    );
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    // SeriesField is the first (and only) series-scoped field; selecting it should yield scope 'series'
+    await user.keyboard('{ArrowDown}{Enter}');
+    expect(mockOnChange).toHaveBeenCalledWith('SeriesField', 'series');
+
+    // NestedField must not be present in the filtered options: type its name to narrow the list,
+    // then press Enter — frameHasName will reject it and onChange must not fire again.
+    mockOnChange.mockClear();
+    await user.clear(combobox);
+    await user.type(combobox, 'NestedField');
+    await user.keyboard('{Enter}');
+    expect(mockOnChange).not.toHaveBeenCalled();
   });
 });
 

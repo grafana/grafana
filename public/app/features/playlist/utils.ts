@@ -1,12 +1,12 @@
 import { config } from '@grafana/runtime';
 
-import { Playlist } from '../../api/clients/playlist/v1';
+import { type Playlist } from '../../api/clients/playlist/v1';
 import { contextSrv } from '../../core/services/context_srv';
 import { AccessControlAction } from '../../types/accessControl';
 import { getGrafanaSearcher } from '../search/service/searcher';
-import { SearchQuery } from '../search/service/types';
+import { type SearchQuery } from '../search/service/types';
 
-import { PlaylistItemUI } from './types';
+import { type PlaylistItemUI } from './types';
 
 export function canWritePlaylists(): boolean {
   return config.featureToggles.playlistsRBAC

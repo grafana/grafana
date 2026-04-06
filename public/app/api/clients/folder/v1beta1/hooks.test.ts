@@ -17,6 +17,7 @@ import {
   useDeleteMultipleFoldersMutationFacade,
   useMoveMultipleFoldersMutationFacade,
   getFolderByUidFacade,
+  getFolderUrl,
 } from './hooks';
 import { setupCreateFolder, setupUpdateFolder } from './test-utils';
 
@@ -328,5 +329,51 @@ describe('getFolderByUidFacade', () => {
       .mockResolvedValueOnce({ data: undefined });
 
     await expect(getFolderByUidFacade('some-folder-uid')).rejects.toThrow('One of the folder responses is undefined');
+  });
+});
+
+describe('getFolderUrl', () => {
+  const originalAppSubUrl = String(config.appSubUrl);
+
+  beforeEach(() => {
+    config.appSubUrl = '/grafana';
+  });
+
+  afterEach(() => {
+    config.appSubUrl = originalAppSubUrl;
+  });
+
+  it('returns a slug derived from a Latin title', () => {
+    expect(getFolderUrl('abc123', 'My Folder')).toBe('/grafana/dashboards/f/abc123/my-folder');
+  });
+
+  it('falls back to uid when title is CJK-only', () => {
+    expect(getFolderUrl('abc123', 'テストフォルダ')).toBe('/grafana/dashboards/f/abc123/abc123');
+  });
+
+  it('falls back to uid when title is Cyrillic-only', () => {
+    expect(getFolderUrl('abc123', 'Тест')).toBe('/grafana/dashboards/f/abc123/abc123');
+  });
+
+  it('falls back to uid when title is Arabic-only', () => {
+    expect(getFolderUrl('abc123', 'مجلد')).toBe('/grafana/dashboards/f/abc123/abc123');
+  });
+
+  it('uses the Latin portion of a mixed title', () => {
+    expect(getFolderUrl('abc123', 'テスト Folder')).toBe('/grafana/dashboards/f/abc123/folder');
+  });
+
+  it('falls back to uid when title is empty', () => {
+    expect(getFolderUrl('abc123', '')).toBe('/grafana/dashboards/f/abc123/abc123');
+  });
+
+  it('respects appSubUrl', () => {
+    config.appSubUrl = '/custom';
+    expect(getFolderUrl('uid1', 'Test')).toBe('/custom/dashboards/f/uid1/test');
+  });
+
+  it('works with empty appSubUrl', () => {
+    config.appSubUrl = '';
+    expect(getFolderUrl('uid1', 'Test')).toBe('/dashboards/f/uid1/test');
   });
 });

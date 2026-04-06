@@ -7,19 +7,19 @@ import { EmptyState, Stack } from '@grafana/ui';
 
 import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
-import { RulesFilter } from '../search/rulesSearchParser';
+import { type RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
 import { DataSourceRuleLoader } from './DataSourceRuleLoader';
-import { FilterProgressState, FilterStatus } from './FilterViewStatus';
+import { type FilterProgressState, FilterStatus } from './FilterViewStatus';
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import {
-  GrafanaRuleWithOrigin,
-  PromRuleWithOrigin,
-  RuleWithOrigin,
+  type GrafanaRuleWithOrigin,
+  type PromRuleWithOrigin,
+  type RuleWithOrigin,
   useFilteredRulesIteratorProvider,
 } from './hooks/useFilteredRulesIterator';
 import { FRONTEND_LIST_PAGE_SIZE, getFilteredRulesLimits } from './paginationLimits';

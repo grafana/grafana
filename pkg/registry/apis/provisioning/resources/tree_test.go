@@ -124,6 +124,34 @@ func TestFolderTree(t *testing.T) {
 		assert.Equal(t, "New Title", id.Title)
 	})
 
+	t.Run("get by path returns folder with normalized path", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")
+
+		ft := tree.(*folderTree)
+		byPath, ok := ft.GetByPath("a")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
+
+		byPath, ok = ft.GetByPath("a/")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
+	})
+
+	t.Run("updating folder path removes the previous path lookup", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "old/"}, "")
+		tree.Add(Folder{ID: "a", Title: "A", Path: "new/"}, "")
+
+		ft := tree.(*folderTree)
+		_, ok := ft.GetByPath("old")
+		require.False(t, ok)
+
+		byPath, ok := ft.GetByPath("new")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
+	})
+
 	t.Run("remove existing folder decrements count and removes from tree", func(t *testing.T) {
 		tree := NewEmptyFolderTree()
 		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")

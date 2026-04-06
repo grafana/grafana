@@ -1,15 +1,15 @@
 import { isFunction } from 'lodash';
-import { ComponentType, FC } from 'react';
+import { type ComponentType, type FC } from 'react';
 import * as React from 'react';
 
 import {
-  GrafanaPlugin,
-  PluginExtensionAddedComponentConfig,
-  PluginExtensionExposedComponentConfig,
+  type GrafanaPlugin,
+  type PluginExtensionAddedComponentConfig,
+  type PluginExtensionExposedComponentConfig,
   PluginType,
 } from '@grafana/data';
 
-import { SandboxPluginMeta, SandboxedPluginObject } from './types';
+import { type SandboxPluginMeta, type SandboxedPluginObject } from './types';
 import { isSandboxedPluginObject } from './utils';
 
 /**

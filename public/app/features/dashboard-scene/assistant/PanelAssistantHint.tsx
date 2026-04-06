@@ -1,17 +1,20 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { type MouseEvent, useCallback, useContext, useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   isSceneObject,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
-  SceneObject,
+  type SceneObjectState,
+  type SceneObject,
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
+
+import { AssistantPopoverContext } from './AssistantPopoverContext';
 
 const HINT_KEY_PREFIX = 'assistant-hint-';
 
@@ -23,14 +26,44 @@ export class PanelAssistantHintItem extends SceneObjectBase<SceneObjectState> {
   static Component = PanelAssistantHintRenderer;
 }
 
-function PanelAssistantHintRenderer(_props: SceneComponentProps<PanelAssistantHintItem>) {
+function PanelAssistantHintRenderer({ model }: SceneComponentProps<PanelAssistantHintItem>) {
   const styles = useStyles2(getHintStyles);
+  const popoverContext = useContext(AssistantPopoverContext);
+
+  const handleClick = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Walk up the scene object tree to find the parent VizPanel
+      let current: SceneObject | undefined = model.parent;
+      while (current && !(current instanceof VizPanel)) {
+        current = current.parent;
+      }
+
+      if (current instanceof VizPanel && popoverContext) {
+        // Pass the button element — ViewModePanelPromptCard will walk up the DOM
+        // from it to find the panel container for positioning.
+        const target: HTMLElement | null = e.currentTarget instanceof HTMLElement ? e.currentTarget : null;
+        if (target) {
+          popoverContext.openPopover(current, target, e.shiftKey);
+        }
+      }
+    },
+    [model, popoverContext]
+  );
 
   return (
-    <span className={styles.hintIcon} data-testid="panel-assistant-hint">
+    <button
+      className={styles.hintButton}
+      onClick={handleClick}
+      data-testid="panel-assistant-hint"
+      aria-label={t('dashboard.panel-assistant.hint.aria-label', 'Open assistant for this panel')}
+      type="button"
+    >
       <span className={styles.hintCircle} />
       <Icon name="ai-sparkle" size="xs" className={styles.hintSparkle} />
-    </span>
+    </button>
   );
 }
 
@@ -111,7 +144,7 @@ export function useAssistantPanelHints(dashboard: SceneObject, isEditing: boolea
 
 function getHintStyles(theme: GrafanaTheme2) {
   return {
-    hintIcon: css({
+    hintButton: css({
       label: 'panel-assistant-hint',
       display: 'inline-flex',
       alignItems: 'center',
@@ -121,11 +154,19 @@ function getHintStyles(theme: GrafanaTheme2) {
       height: 20,
       cursor: 'pointer',
       opacity: 0,
+      // Reset button styles
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      margin: 0,
       [theme.transitions.handleMotion('no-preference')]: {
         transition: 'opacity 150ms ease-in-out',
       },
 
-      '.dashboard-selectable-element:hover &, [class*="panel-container"]:hover &': {
+      // Only show when the individual panel's <section> is hovered.
+      // Using `section[class*="panel-container"]` prevents matching parent
+      // wrappers in repeated rows/panels that may also contain "panel-container".
+      'section[class*="panel-container"]:hover &': {
         opacity: 1,
       },
     }),

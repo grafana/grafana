@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -234,16 +235,14 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Notification Policies, Contact Points and Templates
 
 	// Grafana Paths
-	case http.MethodDelete + "/api/alertmanager/grafana/config/api/v1/alerts": // reset alertmanager config to the default
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsConfigHistoryRead)
 	case http.MethodGet + "/api/alertmanager/grafana/config/history":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsConfigHistoryRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/status":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationSystemStatus)
 	case http.MethodPost + "/api/alertmanager/grafana/config/history/{id}/_activate":
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsWrite))
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsConfigHistoryWrite)
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/receivers":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
@@ -363,6 +362,7 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 			ac.EvalPermission(ac.ActionAlertingRoutesRead),
+			ac.EvalPermission(ac.ActionAlertingManagedRoutesRead, models.ScopeRoutesProvider.GetResourceScopeUID(models.DefaultRoutingTreeName)),
 		)
 	case http.MethodGet + "/api/v1/provisioning/contact-points":
 		eval = ac.EvalAny(
@@ -450,8 +450,7 @@ func (api *API) authorize(method, path string) web.Handler {
 			),
 		)
 
-	case http.MethodPut + "/api/v1/provisioning/policies",
-		http.MethodDelete + "/api/v1/provisioning/policies":
+	case http.MethodPut + "/api/v1/provisioning/policies":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
@@ -459,6 +458,20 @@ func (api *API) authorize(method, path string) web.Handler {
 				ac.EvalAny(
 					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
 					ac.EvalPermission(ac.ActionAlertingRoutesWrite),
+					ac.EvalPermission(ac.ActionAlertingManagedRoutesWrite, models.ScopeRoutesProvider.GetResourceScopeUID(models.DefaultRoutingTreeName)),
+				),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodDelete + "/api/v1/provisioning/policies":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
+			ac.EvalAll(
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingRoutesWrite),
+					ac.EvalPermission(ac.ActionAlertingManagedRoutesDelete, models.ScopeRoutesProvider.GetResourceScopeUID(models.DefaultRoutingTreeName)),
 				),
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 			),

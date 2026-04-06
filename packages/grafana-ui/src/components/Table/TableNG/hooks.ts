@@ -1,21 +1,30 @@
 import { debounce } from 'lodash';
-import { useState, useMemo, useCallback, useRef, useLayoutEffect, RefObject, CSSProperties, useEffect } from 'react';
-import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useLayoutEffect,
+  type RefObject,
+  type CSSProperties,
+  useEffect,
+} from 'react';
+import { type Column, type DataGridHandle, type DataGridProps, type SortColumn } from 'react-data-grid';
 
-import { DataFrame, Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, formattedValueToString, reduceField, ReducerID } from '@grafana/data';
 
-import { TableColumnResizeActionCallback } from '../types';
+import { type TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
 import {
-  FilterType,
-  FooterFieldState,
-  NestedRowEntry,
-  SortByBehavior,
-  TableRow,
-  TableSortByFieldState,
-  TableSummaryRow,
-  TypographyCtx,
+  type FilterType,
+  type FooterFieldState,
+  type NestedRowEntry,
+  type SortByBehavior,
+  type TableRow,
+  type TableSortByFieldState,
+  type TableSummaryRow,
+  type TypographyCtx,
 } from './types';
 import {
   getDisplayName,
@@ -36,11 +45,11 @@ export interface FilteredRowsOptions {
 
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
   const [filter, setFilter] = useState<FilterType>({});
-  const filteredRows = useMemo(
+  const filterResult = useMemo(
     () => applyFilter(rows, filter, fields, hasNestedFrames),
     [rows, filter, fields, hasNestedFrames]
   );
-  return { rows: filteredRows, filter, setFilter };
+  return { rows: filterResult.filteredRows, filter, setFilter, filterResult };
 }
 
 export interface SortedRowsOptions {
@@ -290,9 +299,14 @@ export const useNestedRows = (
       }
 
       const rawRows = frameToRecords(nestedFrame, parentRow.__index);
-      const filteredRows = applyFilter(rawRows, filter, nestedFrame.fields);
-      const sortedRows = applySort(filteredRows, nestedFrame.fields, sortColumns, getColumnTypes(nestedFrame.fields));
-      result[parentRow.__index] = { raw: rawRows, final: sortedRows };
+      const filterResult = applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
+      const sortedRows = applySort(
+        filterResult.filteredRows,
+        nestedFrame.fields,
+        sortColumns,
+        getColumnTypes(nestedFrame.fields)
+      );
+      result[parentRow.__index] = { raw: rawRows, final: sortedRows, filterResult };
     }
 
     return result;
@@ -498,7 +512,7 @@ export function useRowHeight({
           return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
         }
 
-        const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultHeight;
+        const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultNestedHeight;
         const nestedRowsHeight = nestedRows[row.__index].final.reduce(
           (acc, row) => acc + getNestedRowHeightWithCache(row),
           0

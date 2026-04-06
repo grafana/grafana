@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
 
-import { InstructionAvailability } from '../Wizard/types';
+import { type InstructionAvailability } from '../Wizard/types';
 
 export function TokenPermissionsInfo({ type }: { type: InstructionAvailability }) {
   const styles = useStyles2(getStyles);

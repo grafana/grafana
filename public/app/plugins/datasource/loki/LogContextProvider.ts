@@ -3,18 +3,18 @@ import { catchError, lastValueFrom, of, switchMap } from 'rxjs';
 
 import {
   CoreApp,
-  DataFrame,
-  DataQueryError,
-  DataQueryResponse,
+  type DataFrame,
+  type DataQueryError,
+  type DataQueryResponse,
   FieldCache,
   FieldType,
-  LogRowModel,
-  TimeRange,
+  type LogRowModel,
+  type TimeRange,
   toUtc,
   LogRowContextQueryDirection,
-  LogRowContextOptions,
+  type LogRowContextOptions,
   dateTime,
-  ScopedVars,
+  type ScopedVars,
   store,
 } from '@grafana/data';
 import {
@@ -31,7 +31,7 @@ import {
 
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
-import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
+import { type LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import { escapeLabelValueInExactSelector, getLokiLabelTypeFromFrame } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import {
@@ -41,7 +41,7 @@ import {
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { ContextFilter, LabelType, LokiQuery } from './types';
+import { type ContextFilter, LabelType, type LokiQuery } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';

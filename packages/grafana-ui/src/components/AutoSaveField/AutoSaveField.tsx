@@ -6,7 +6,7 @@ import * as React from 'react';
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Field, FieldProps } from '../Forms/Field';
+import { Field, type FieldProps } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
 
 import { EllipsisAnimated } from './EllipsisAnimated';
