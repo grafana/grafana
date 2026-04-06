@@ -100,7 +100,9 @@ func resolveAllGlobalRolePermissions(
 // namespace Role are added standalone. GlobalRoles that ARE referenced already have their
 // permissions inlined into the namespace Role's tuples via translateRoleToTuples composition.
 func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string) (map[string]*openfgav1.TupleKey, error) {
-	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateTuples")
+	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateTuples", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
 	defer span.End()
 
 	globalRolePerms := r.getGlobalRolePerms()
