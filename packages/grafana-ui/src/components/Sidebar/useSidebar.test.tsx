@@ -1,8 +1,25 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 import { store } from '@grafana/data';
 
-import { useSidebarSavedState } from './useSidebar';
+import { useSidebar, useSidebarSavedState } from './useSidebar';
+
+function mockMatchMedia(shouldMatchMobile: boolean) {
+  const original = window.matchMedia;
+  window.matchMedia = jest.fn().mockImplementation((query: string) => ({
+    matches: shouldMatchMobile && query.includes('max-width'),
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  }));
+  return () => {
+    window.matchMedia = original;
+  };
+}
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -108,6 +125,81 @@ describe('useSidebarSavedState(persistanceKey, subKey, defaultValue)', () => {
       rerender({ ...initialProps, persistanceKey: 'persistanceKey7', subKey: 'subKeyB' });
 
       expect(result.current[0]).toBe(30);
+    });
+  });
+});
+
+describe('useSidebar', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedStore.getBool.mockImplementation((_key: string, defaultValue: boolean) => defaultValue);
+    mockedStore.get.mockReturnValue(undefined);
+  });
+
+  test('defaults isHidden to false', () => {
+    const { result } = renderHook(() => useSidebar({}));
+    expect(result.current.isHidden).toBe(false);
+  });
+
+  test('respects defaultIsHidden', () => {
+    const { result } = renderHook(() => useSidebar({ defaultIsHidden: true }));
+    expect(result.current.isHidden).toBe(true);
+  });
+
+  test('toggles isHidden via onToggleIsHidden', () => {
+    const { result } = renderHook(() => useSidebar({ defaultIsHidden: true }));
+
+    expect(result.current.isHidden).toBe(true);
+
+    act(() => result.current.onToggleIsHidden());
+    expect(result.current.isHidden).toBe(false);
+
+    act(() => result.current.onToggleIsHidden());
+    expect(result.current.isHidden).toBe(true);
+  });
+
+  test('returns empty outerWrapperProps when hidden', () => {
+    const { result } = renderHook(() => useSidebar({ defaultIsHidden: true }));
+    expect(result.current.outerWrapperProps).toEqual({});
+  });
+
+  test('returns outerWrapperProps with style when not hidden', () => {
+    const { result } = renderHook(() => useSidebar({}));
+    expect(result.current.outerWrapperProps).toHaveProperty('style');
+  });
+
+  describe('on mobile viewport', () => {
+    let restore: () => void;
+
+    beforeEach(() => {
+      restore = mockMatchMedia(true);
+    });
+
+    afterEach(() => {
+      restore();
+    });
+
+    test('forces isDocked to true regardless of defaultToDocked', () => {
+      const { result } = renderHook(() => useSidebar({ defaultToDocked: false }));
+      expect(result.current.isDocked).toBe(true);
+    });
+
+    test('keeps isDocked true even after onToggleDock is called', () => {
+      const { result } = renderHook(() => useSidebar({ defaultToDocked: false }));
+
+      expect(result.current.isDocked).toBe(true);
+
+      act(() => result.current.onToggleDock());
+
+      expect(result.current.isDocked).toBe(true);
+    });
+
+    test('includes pane width in outerWrapperProps when a pane is open', () => {
+      const { result } = renderHook(() => useSidebar({ hasOpenPane: true }));
+
+      const style = result.current.outerWrapperProps.style as Record<string, number>;
+      const paneWidth = result.current.paneWidth;
+      expect(style?.paddingRight).toBeGreaterThan(paneWidth);
     });
   });
 });

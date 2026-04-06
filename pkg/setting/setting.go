@@ -38,11 +38,15 @@ import (
 type Scheme string
 
 const (
-	HTTPScheme        Scheme = "http"
-	HTTPSScheme       Scheme = "https"
-	HTTP2Scheme       Scheme = "h2"
-	SocketScheme      Scheme = "socket"
-	SocketHTTP2Scheme Scheme = "socket_h2"
+	HTTPScheme                           Scheme = "http"
+	HTTPSScheme                          Scheme = "https"
+	HTTP2Scheme                          Scheme = "h2"
+	SocketScheme                         Scheme = "socket"
+	SocketHTTP2Scheme                    Scheme = "socket_h2"
+	DefaultSQLExpressionCellLimit               = 100000
+	DefaultSQLExpressionOutputCellLimit         = 100000
+	DefaultSQLExpressionTimeout                 = time.Second * 10
+	DefaultSQLExpressionQueryLengthLimit        = 10000
 )
 
 const (
@@ -153,8 +157,9 @@ type Cfg struct {
 	ProvisioningLokiUser                  string
 	ProvisioningLokiPassword              string
 	ProvisioningLokiTenantID              string
-	ProvisioningMaxResourcesPerRepository int64 // 0 = unlimited
-	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
+	ProvisioningMaxResourcesPerRepository int64  // 0 = unlimited
+	ProvisioningMaxRepositories           int64  // default 10, 0 in config = unlimited (converted to -1 internally)
+	ProvisioningFolderAPIVersion          string // "v1" (default for on-prem) or "v1beta1"
 	DataPath                              string
 	LogsPath                              string
 	EnterpriseLicensePath                 string
@@ -207,7 +212,10 @@ type Cfg struct {
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
-	CSPReportOnlyTemplate           string
+	CSPReportOnlyTemplate string
+	// FormActionAdditionalHosts is the list of additional hostnames for the CSP form-action directive.
+	// These are appended to the template; 'self' should be in the template itself.
+	FormActionAdditionalHosts       []string
 	EnableFrontendSandboxForPlugins []string
 	DisableGravatar                 bool
 	DataProxyWhiteList              map[string]bool
@@ -1000,10 +1008,10 @@ func (cfg *Cfg) readAnnotationSettings() error {
 func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
-	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(100000)
-	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(100000)
-	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(time.Second * 10)
-	cfg.SQLExpressionQueryLengthLimit = expressions.Key("sql_expression_query_length_limit").MustInt64(10000)
+	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(DefaultSQLExpressionCellLimit)
+	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(DefaultSQLExpressionOutputCellLimit)
+	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(DefaultSQLExpressionTimeout)
+	cfg.SQLExpressionQueryLengthLimit = expressions.Key("sql_expression_query_length_limit").MustInt64(DefaultSQLExpressionQueryLengthLimit)
 }
 
 type AnnotationCleanupSettings struct {
@@ -1883,6 +1891,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
+	cfg.FormActionAdditionalHosts = security.Key("form_action_additional_hosts").Strings(" ")
 
 	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
 	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
@@ -2386,6 +2395,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
+	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
