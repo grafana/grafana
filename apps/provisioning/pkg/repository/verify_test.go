@@ -30,6 +30,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 		existingRepos   []provisioning.Repository
 		wantErr         bool
 		wantErrContains string
+		maxRepositories int64
 	}{
 		{
 			name: "allows first repository with instance sync",
@@ -39,8 +40,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
 				},
 			},
-			existingRepos: []provisioning.Repository{},
-			wantErr:       false,
+			existingRepos:   []provisioning.Repository{},
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "forbids instance sync when other repos exist",
@@ -55,6 +57,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: "Instance repository can only be created when no other repositories exist",
+			maxRepositories: 10,
 		},
 		{
 			name: "forbids folder sync when instance repo exists",
@@ -74,6 +77,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: "Cannot create folder repository when instance repository exists",
+			maxRepositories: 10,
 		},
 		{
 			name: "allows folder sync when no instance repo exists",
@@ -91,14 +95,16 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
-			name: "forbids duplicate git path",
+			name: "forbids duplicate git path when sync is enabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: true},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:  "https://github.com/org/repo",
 						Path: "grafana/",
@@ -119,6 +125,35 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: ErrRepositoryDuplicatePath.Error(),
+			maxRepositories: 10,
+		},
+		{
+			name: "allows duplicate git path when sync is disabled",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: false},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:  "https://github.com/org/repo",
+						Path: "grafana/",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:  "https://github.com/org/repo",
+							Path: "grafana/",
+						},
+					},
+				},
+			},
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "allows duplicate empty paths in same repo",
@@ -126,6 +161,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: true},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:  "https://github.com/org/repo",
 						Path: "",
@@ -147,11 +183,12 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "forbids parent folder conflict",
+			name: "forbids parent folder conflict when sync is enabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: true},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:  "https://github.com/org/repo",
 						Path: "grafana/dashboards/",
@@ -172,6 +209,63 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
+			maxRepositories: 10,
+		},
+		{
+			name: "allows parent folder path when sync is disabled",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: false},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:  "https://github.com/org/repo",
+						Path: "grafana/dashboards/",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:  "https://github.com/org/repo",
+							Path: "grafana/",
+						},
+					},
+				},
+			},
+			wantErr:         false,
+			maxRepositories: 10,
+		},
+		{
+			name: "allows empty path when sync is disabled (wizard onboarding flow)",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: false},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:  "https://github.com/org/repo",
+						Path: "",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:  "https://github.com/org/repo",
+							Path: "grafana/",
+						},
+					},
+				},
+			},
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "allows different paths in same repo",
@@ -179,6 +273,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: true},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:  "https://github.com/org/repo",
 						Path: "other/",
@@ -197,7 +292,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "allows same path in different repos",
@@ -205,6 +301,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: true},
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:  "https://github.com/org/repo2",
 						Path: "grafana/",
@@ -223,7 +320,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 10,
 		},
 		{
 			name: "forbids more than 10 repositories",
@@ -242,6 +340,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			}(),
 			wantErr:         true,
 			wantErrContains: "Maximum number of 10 repositories reached",
+			maxRepositories: 10,
 		},
 		{
 			name: "allows updating existing repo (doesn't count self)",
@@ -261,7 +360,31 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				}
 				return repos
 			}(),
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 10,
+		},
+		{
+			name: "allows updating existing repo even when quota is surpassed",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "existing-repo", Namespace: "default"},
+				Spec:       provisioning.RepositorySpec{},
+			},
+			existingRepos: func() []provisioning.Repository {
+				// 15 repos exist but the limit is 5 — quota was lowered after creation
+				repos := make([]provisioning.Repository, 15)
+				for i := 0; i < 15; i++ {
+					repos[i] = provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
+					}
+				}
+				// replace one entry with the repo being updated
+				repos[7] = provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+				}
+				return repos
+			}(),
+			wantErr:         false,
+			maxRepositories: 5,
 		},
 		{
 			name: "allows unlimited repositories when maxRepositories is 0",
@@ -278,7 +401,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				}
 				return repos
 			}(),
-			wantErr: false,
+			wantErr:         false,
+			maxRepositories: 0,
 		},
 		{
 			name: "enforces custom maxRepositories limit",
@@ -297,6 +421,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			}(),
 			wantErr:         true,
 			wantErrContains: "Maximum number of 5 repositories reached",
+			maxRepositories: 5,
 		},
 	}
 
@@ -304,17 +429,9 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
-			// Default quota limits: MaxRepositories = 10
-			quotaLimits := quotas.QuotaLimits{MaxRepositories: 10}
-			// Set quota limits for tests that expect a different limit
-			switch tt.name {
-			case "allows unlimited repositories when maxRepositories is 0":
-				// 0 means unlimited
-				quotaLimits = quotas.QuotaLimits{MaxRepositories: 0}
-			case "enforces custom maxRepositories limit":
-				quotaLimits = quotas.QuotaLimits{MaxRepositories: 5}
-			}
-			validatorRaw := NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister, quotaLimits)
+			quotaStatus := provisioning.QuotaStatus{MaxRepositories: tt.maxRepositories}
+			quotaGetter := quotas.NewFixedQuotaGetter(quotaStatus)
+			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister, quotaGetter)
 			errList := validatorRaw.Validate(context.Background(), tt.cfg)
 
 			if tt.wantErr {

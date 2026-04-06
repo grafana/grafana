@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math/rand"
 	"slices"
 	"sync"
@@ -21,7 +22,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	alertingModels "github.com/grafana/alerting/models"
 
@@ -34,6 +34,7 @@ import (
 var (
 	RuleMuts     = AlertRuleMutators{}
 	NSMuts       = NotificationSettingsMutators{}
+	CPRMuts      = ContactPointRoutingMutators{}
 	InstanceMuts = AlertInstanceMutators{}
 	RuleGen      = &AlertRuleGenerator{
 		mutators: []AlertRuleMutator{
@@ -97,9 +98,14 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		panelID = &p
 	}
 
-	var ns []NotificationSettings
+	var ns *NotificationSettings
 	if rand.Int63()%2 == 0 {
-		ns = append(ns, NotificationSettingsGen()())
+		ns = util.Pointer(NotificationSettingsGen()())
+		if rand.Int63()%2 == 0 {
+			// Use PolicyRouting instead.
+			ns.ContactPointRouting = nil
+			ns.PolicyRouting = util.Pointer(PolicyRoutingGen()())
+		}
 	}
 
 	var updatedBy *UserUID
@@ -545,12 +551,25 @@ func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int6
 
 func (a *AlertRuleMutators) WithNotificationSettingsGen(ns func() NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = []NotificationSettings{ns()}
+		rule.NotificationSettings = util.Pointer(ns())
 	}
 }
+
 func (a *AlertRuleMutators) WithNotificationSettings(ns NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = []NotificationSettings{ns}
+		rule.NotificationSettings = &ns
+	}
+}
+
+func (a *AlertRuleMutators) WithContactPointRouting(ns ContactPointRouting) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = util.Pointer(NotificationSettingsFromContact(ns))
+	}
+}
+
+func (a *AlertRuleMutators) WithPolicyRouting(pr PolicyRouting) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = util.Pointer(NotificationSettingsFromPolicy(pr.Policy))
 	}
 }
 
@@ -993,9 +1012,9 @@ func (a AlertInstanceMutators) WithLastResult(lastResult LastResult) AlertInstan
 
 type Mutator[T any] func(*T)
 
-// CopyNotificationSettings creates a deep copy of NotificationSettings.
-func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
-	c := NotificationSettings{
+// CopyContactPointRouting creates a deep copy of ContactPointRouting.
+func CopyContactPointRouting(ns ContactPointRouting, mutators ...Mutator[ContactPointRouting]) ContactPointRouting {
+	c := ContactPointRouting{
 		Receiver: ns.Receiver,
 	}
 	if ns.GroupWait != nil {
@@ -1025,10 +1044,10 @@ func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[Notif
 	return c
 }
 
-// NotificationSettingsGen generates NotificationSettings using a base and mutators.
-func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
-	return func() NotificationSettings {
-		c := NotificationSettings{
+// ContactPointRoutingGen generates ContactPointRouting using a base and mutators.
+func ContactPointRoutingGen(mutators ...Mutator[ContactPointRouting]) func() ContactPointRouting {
+	return func() ContactPointRouting {
+		c := ContactPointRouting{
 			Receiver:            util.GenerateShortUID(),
 			GroupBy:             []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
 			GroupWait:           util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
@@ -1044,16 +1063,16 @@ func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() N
 	}
 }
 
-type NotificationSettingsMutators struct{}
+type ContactPointRoutingMutators struct{}
 
-func (n NotificationSettingsMutators) WithReceiver(receiver string) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
+func (n ContactPointRoutingMutators) WithReceiver(receiver string) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
 		ns.Receiver = receiver
 	}
 }
 
-func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
+func (n ContactPointRoutingMutators) WithGroupWait(groupWait *time.Duration) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
 		if groupWait == nil {
 			ns.GroupWait = nil
 			return
@@ -1063,8 +1082,8 @@ func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mu
 	}
 }
 
-func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
+func (n ContactPointRoutingMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
 		if groupInterval == nil {
 			ns.GroupInterval = nil
 			return
@@ -1074,8 +1093,8 @@ func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Dura
 	}
 }
 
-func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[NotificationSettings] {
-	return func(ns *NotificationSettings) {
+func (n ContactPointRoutingMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
 		if repeatInterval == nil {
 			ns.RepeatInterval = nil
 			return
@@ -1085,21 +1104,137 @@ func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Du
 	}
 }
 
+func (n ContactPointRoutingMutators) WithGroupBy(groupBy ...string) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
+		ns.GroupBy = groupBy
+	}
+}
+
+func (n ContactPointRoutingMutators) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
+		ns.MuteTimeIntervals = muteTimeIntervals
+	}
+}
+
+func (n ContactPointRoutingMutators) WithActiveTimeIntervals(activeTimeIntervals ...string) Mutator[ContactPointRouting] {
+	return func(ns *ContactPointRouting) {
+		ns.ActiveTimeIntervals = activeTimeIntervals
+	}
+}
+
+// PolicyRoutingGen generates PolicyRouting using a base and mutators.
+func PolicyRoutingGen(mutators ...Mutator[PolicyRouting]) func() PolicyRouting {
+	return func() PolicyRouting {
+		c := PolicyRouting{
+			Policy: util.GenerateShortUID(),
+		}
+		for _, mutator := range mutators {
+			mutator(&c)
+		}
+		return c
+	}
+}
+
+// CopyNotificationSettings creates a deep copy of NotificationSettings.
+func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
+	c := NotificationSettings{}
+	if ns.ContactPointRouting != nil {
+		c.ContactPointRouting = util.Pointer(CopyContactPointRouting(*ns.ContactPointRouting))
+	}
+	if ns.PolicyRouting != nil {
+		c.PolicyRouting = &PolicyRouting{Policy: ns.PolicyRouting.Policy}
+	}
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
+	return c
+}
+
+// NotificationSettingsGen generates NotificationSettings using a base and mutators.
+func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
+	return func() NotificationSettings {
+		c := ContactPointRoutingGen()()
+		ns := NotificationSettings{
+			ContactPointRouting: &c,
+		}
+		for _, mutator := range mutators {
+			mutator(&ns)
+		}
+		return ns
+	}
+}
+
+type NotificationSettingsMutators struct{}
+
+func (n NotificationSettingsMutators) WithReceiver(receiver string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithReceiver(receiver)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithGroupWait(groupWait)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithGroupInterval(groupInterval)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithRepeatInterval(repeatInterval)(ns.ContactPointRouting)
+	}
+}
+
 func (n NotificationSettingsMutators) WithGroupBy(groupBy ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		ns.GroupBy = groupBy
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithGroupBy(groupBy...)(ns.ContactPointRouting)
 	}
 }
 
 func (n NotificationSettingsMutators) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		ns.MuteTimeIntervals = muteTimeIntervals
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithMuteTimeIntervals(muteTimeIntervals...)(ns.ContactPointRouting)
 	}
 }
 
 func (n NotificationSettingsMutators) WithActiveTimeIntervals(activeTimeIntervals ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
-		ns.ActiveTimeIntervals = activeTimeIntervals
+		if ns.ContactPointRouting == nil {
+			ns.ContactPointRouting = &ContactPointRouting{}
+		}
+		CPRMuts.WithActiveTimeIntervals(activeTimeIntervals...)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithPolicy(policy string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.PolicyRouting == nil {
+			ns.PolicyRouting = &PolicyRouting{}
+		}
+		ns.PolicyRouting.Policy = policy
 	}
 }
 

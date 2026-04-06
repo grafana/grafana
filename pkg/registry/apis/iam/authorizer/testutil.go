@@ -32,10 +32,12 @@ var _ types.AccessClient = (*fakeAccessClient)(nil)
 
 // fakeAccessClient is a mock implementation of claims.AccessClient
 type fakeAccessClient struct {
-	checkCalled   bool
-	checkFunc     func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error)
-	compileCalled bool
-	compileFunc   func(id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error)
+	checkCalled      bool
+	checkFunc        func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error)
+	compileCalled    bool
+	compileFunc      func(id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error)
+	batchCheckCalled bool
+	batchCheckFunc   func(ctx context.Context, id types.AuthInfo, req types.BatchCheckRequest) (types.BatchCheckResponse, error)
 }
 
 func (m *fakeAccessClient) Check(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
@@ -49,5 +51,9 @@ func (m *fakeAccessClient) Compile(ctx context.Context, id types.AuthInfo, req t
 }
 
 func (m *fakeAccessClient) BatchCheck(ctx context.Context, id types.AuthInfo, req types.BatchCheckRequest) (types.BatchCheckResponse, error) {
+	m.batchCheckCalled = true
+	if m.batchCheckFunc != nil {
+		return m.batchCheckFunc(ctx, id, req)
+	}
 	return types.BatchCheckResponse{}, errors.New("not implemented")
 }

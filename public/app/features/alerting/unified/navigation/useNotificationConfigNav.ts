@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -19,31 +19,70 @@ export function getNotificationConfigNavId(): string {
 }
 
 /**
- * Check if user has permission to view contact points
+ * Check if user has permission to view contact points.
+ * Accepts both the legacy broad permission and the granular permission,
+ * matching the pattern used in useAbilities.ts toAbility().
  */
 function canViewContactPoints(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead)
+  );
 }
 
 /**
- * Check if user has permission to view notification policies
+ * Check if user has permission to view notification policies.
+ * Accepts both the legacy broad permission and the granular permission.
  */
 function canViewNotificationPolicies(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead) ||
+    contextSrv.hasPermission(AccessControlAction.ActionAlertingManagedRoutesRead)
+  );
 }
 
 /**
- * Check if user has permission to view templates
+ * Check if user has permission to view templates.
+ * Accepts both the legacy broad permission and the granular permission.
  */
 function canViewTemplates(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingTemplatesRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingTemplatesRead)
+  );
 }
 
 /**
- * Check if user has permission to view time intervals (mute timings)
+ * Check if user has permission to view time intervals (mute timings).
+ * Accepts both the legacy broad permission and the granular permission.
  */
 function canViewTimeIntervals(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.AlertingTimeIntervalsRead);
+  return (
+    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+    contextSrv.hasPermission(AccessControlAction.AlertingTimeIntervalsRead)
+  );
+}
+
+function isSubPathOf(child: string, parent: string): boolean {
+  return child !== parent && child.startsWith(parent + '/');
+}
+
+/**
+ * Checks if a tab should be active for the given location.
+ *
+ * Some tab paths are sub-paths of others (e.g. /alerting/routes/mute-timing
+ * is under /alerting/routes). A naive startsWith would activate both tabs.
+ * This function ensures only the most specific matching tab is active.
+ */
+export function isTabActive(currentLocation: string, tabPath: string): boolean {
+  if (currentLocation !== tabPath && !currentLocation.startsWith(tabPath + '/')) {
+    return false;
+  }
+  const hasMoreSpecificMatch = Object.values(ALERTING_PATHS).some(
+    (other) => isSubPathOf(other, tabPath) && (currentLocation === other || currentLocation.startsWith(other + '/'))
+  );
+  return !hasMoreSpecificMatch;
 }
 
 /**
@@ -77,7 +116,7 @@ export function useNotificationConfigNav() {
         id: 'notification-config-contact-points',
         text: t('alerting.navigation.contact-points', 'Contact points'),
         url: ALERTING_PATHS.NOTIFICATIONS,
-        active: location.pathname === ALERTING_PATHS.NOTIFICATIONS,
+        active: isTabActive(location.pathname, ALERTING_PATHS.NOTIFICATIONS),
         parentItem: notificationConfigNav,
       });
     }
@@ -87,7 +126,7 @@ export function useNotificationConfigNav() {
         id: 'notification-config-policies',
         text: t('alerting.navigation.notification-policies', 'Notification policies'),
         url: ALERTING_PATHS.ROUTES,
-        active: location.pathname === ALERTING_PATHS.ROUTES,
+        active: isTabActive(location.pathname, ALERTING_PATHS.ROUTES),
         parentItem: notificationConfigNav,
       });
     }
@@ -97,7 +136,7 @@ export function useNotificationConfigNav() {
         id: 'notification-config-templates',
         text: t('alerting.navigation.templates', 'Templates'),
         url: ALERTING_PATHS.TEMPLATES,
-        active: location.pathname.startsWith(ALERTING_PATHS.TEMPLATES),
+        active: isTabActive(location.pathname, ALERTING_PATHS.TEMPLATES),
         parentItem: notificationConfigNav,
       });
     }
@@ -107,7 +146,7 @@ export function useNotificationConfigNav() {
         id: 'notification-config-time-intervals',
         text: t('alerting.navigation.time-intervals', 'Time intervals'),
         url: ALERTING_PATHS.TIME_INTERVALS,
-        active: location.pathname.startsWith(ALERTING_PATHS.TIME_INTERVALS),
+        active: isTabActive(location.pathname, ALERTING_PATHS.TIME_INTERVALS),
         parentItem: notificationConfigNav,
       });
     }

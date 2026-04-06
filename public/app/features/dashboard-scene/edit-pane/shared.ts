@@ -4,25 +4,38 @@ import { useSessionStorage } from 'react-use';
 import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  dataLayers,
   LocalValueVariable,
   SceneGridRow,
-  SceneObject,
-  SceneVariable,
+  type SceneObject,
+  type SceneVariable,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
+import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
+import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
-import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
+import {
+  SectionVariableAdd,
+  SectionVariableAddEditableElement,
+  VariableAdd,
+  VariableAddEditableElement,
+  VariableTypeChange,
+  VariableTypeChangeEditableElement,
+} from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
 
-import { DashboardEditableElement } from './DashboardEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
+import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
 export function useEditPaneCollapsed() {
   return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
@@ -65,6 +78,26 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
     return new VariableAddEditableElement(sceneObj);
   }
 
+  if (sceneObj instanceof SectionVariableAdd) {
+    return new SectionVariableAddEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof VariableTypeChange) {
+    return new VariableTypeChangeEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof LinkEdit) {
+    return new LinkEditEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof DashboardDataLayerSet) {
+    return new AnnotationSetEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof dataLayers.AnnotationsDataLayer) {
+    return new AnnotationEditableElement(sceneObj);
+  }
+
   return undefined;
 }
 
@@ -88,26 +121,7 @@ export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
   static type = 'repeats-updated';
 }
 
-export interface DashboardEditActionEventPayload {
-  removedObject?: SceneObject;
-  addedObject?: SceneObject;
-  movedObject?: SceneObject;
-  source: SceneObject;
-  description?: string;
-  perform: () => void;
-  undo: () => void;
-}
-
-export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditActionEventPayload> {
-  static type = 'dashboard-edit-action';
-}
-
-/**
- * Emitted after DashboardEditActionEvent has been processed (or undone)
- */
-export class DashboardStateChangedEvent extends BusEventWithPayload<{ source: SceneObject }> {
-  static type = 'dashboard-state-changed';
-}
+export { DashboardEditActionEvent, DashboardStateChangedEvent, type DashboardEditActionEventPayload } from './events';
 
 export interface AddElementActionHelperProps {
   addedObject: SceneObject;
@@ -130,6 +144,12 @@ export interface AddVariableActionHelperProps {
 
 export interface RemoveVariableActionHelperProps {
   removedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
+export interface ChangeVariableTypeActionHelperProps {
+  oldVariable: SceneVariable;
+  newVariable: SceneVariable;
   source: SceneVariableSet;
 }
 
@@ -237,6 +257,30 @@ export const dashboardEditActions = {
       },
     });
   },
+  changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
+    const varsBeforeChange = [...source.state.variables];
+    const variableIndex = varsBeforeChange.indexOf(oldVariable);
+
+    if (variableIndex === -1) {
+      throw new Error('Variable not found in source set');
+    }
+
+    const varsAfterChange = [...varsBeforeChange];
+    varsAfterChange[variableIndex] = newVariable;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.variable.type.action', 'Change variable type'),
+      source,
+      addedObject: newVariable,
+      removedObject: oldVariable,
+      perform() {
+        source.setState({ variables: varsAfterChange });
+      },
+      undo() {
+        source.setState({ variables: varsBeforeChange });
+      },
+    });
+  },
   changeVariableName: makeEditAction<SceneVariable, 'name'>({
     description: t('dashboard.variable.name.action', 'Change variable name'),
     prop: 'name',
@@ -304,7 +348,7 @@ interface EditActionProps<Source extends SceneObject, T extends keyof Source['st
   newValue: Source['state'][T];
 }
 
-function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {

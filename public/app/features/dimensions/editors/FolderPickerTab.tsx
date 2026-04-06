@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, FilterInput, Select, useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { type FileElement, type GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
 import { MediaType, ResourceFolderName } from '../types';
 

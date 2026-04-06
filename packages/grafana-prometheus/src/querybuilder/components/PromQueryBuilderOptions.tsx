@@ -1,17 +1,17 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderOptions.tsx
 import { map } from 'lodash';
-import { SyntheticEvent } from 'react';
+import { type SyntheticEvent } from 'react';
 import * as React from 'react';
 
-import { CoreApp, SelectableValue } from '@grafana/data';
+import { CoreApp, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorSwitch } from '@grafana/plugin-ui';
 import { AutoSizeInput, Box, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
-import { PromQueryFormat } from '../../dataquery';
-import { PromQuery } from '../../types';
+import { type PromQueryFormat } from '../../dataquery';
+import { type PromQuery } from '../../types';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
@@ -80,7 +80,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
     const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryTypeValue)!.label;
 
     return (
-      <Box backgroundColor={'secondary'}>
+      <Box backgroundColor={'secondary'} borderRadius="default">
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options}>
           <QueryOptionGroup
             title={t('grafana-prometheus.querybuilder.prom-query-builder-options.title-options', 'Options')}

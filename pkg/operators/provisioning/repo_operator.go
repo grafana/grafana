@@ -120,7 +120,9 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
 		controllerCfg.ResyncInterval(),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
+		controllerCfg.DrainTimeout(),
 		quotaGetter,
+		resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
@@ -131,6 +133,12 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to sync informer cache")
 	}
 
-	controller.Run(ctx, controllerCfg.NumberOfWorkers())
+	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+		logger.Info("repository operator is ready")
+		deps.HealthNotifier.SetReady()
+	}, func() {
+		logger.Info("repository operator shutting down")
+		deps.HealthNotifier.SetNotReady()
+	})
 	return nil
 }

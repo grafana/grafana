@@ -1,42 +1,42 @@
 import { defaults } from 'lodash';
 import { tz } from 'moment-timezone';
-import { lastValueFrom, Observable, throwError } from 'rxjs';
+import { lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { gte } from 'semver';
 
 import {
-  AbstractQuery,
-  AdHocVariableFilter,
+  type AbstractQuery,
+  type AdHocVariableFilter,
   CoreApp,
-  CustomVariableModel,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
-  DataSourceInstanceSettings,
-  DataSourceWithQueryExportSupport,
-  DataSourceWithQueryImportSupport,
+  type CustomVariableModel,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceInstanceSettings,
+  type DataSourceWithQueryExportSupport,
+  type DataSourceWithQueryImportSupport,
   dateTime,
   getDefaultTimeRange,
-  LegacyMetricFindQueryOptions,
-  MetricFindValue,
-  QueryFixAction,
-  QueryVariableModel,
+  type LegacyMetricFindQueryOptions,
+  type MetricFindValue,
+  type QueryFixAction,
+  type QueryVariableModel,
   rangeUtil,
-  ScopedVars,
+  type ScopedVars,
   scopeFilterOperatorMap,
-  ScopeSpecFilter,
-  TimeRange,
+  type ScopeSpecFilter,
+  type TimeRange,
 } from '@grafana/data';
 import {
-  BackendSrvRequest,
+  type BackendSrvRequest,
   config,
   DataSourceWithBackend,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
   isFetchError,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
 
 import { addLabelToQuery } from './add_label_to_query';
@@ -48,25 +48,25 @@ import {
   importFromAbstractQuery,
   populateMatchParamsFromQueries,
   PrometheusLanguageProvider,
-  PrometheusLanguageProviderInterface,
+  type PrometheusLanguageProviderInterface,
 } from './language_provider';
 import { expandRecordingRules, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 import { getQueryHints } from './query_hints';
 import { renderLabelsWithoutBrackets } from './querybuilder/shared/rendering/labels';
-import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
-import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
+import { type QueryBuilderLabelFilter, type QueryEditorMode } from './querybuilder/shared/types';
+import { type CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
-  ExemplarTraceIdDestination,
+  type ExemplarTraceIdDestination,
   PromApplication,
   PrometheusCacheLevel,
-  PromOptions,
-  PromQuery,
-  PromQueryRequest,
-  RawRecordingRules,
-  RuleQueryMapping,
+  type PromOptions,
+  type PromQuery,
+  type PromQueryRequest,
+  type RawRecordingRules,
+  type RuleQueryMapping,
 } from './types';
 import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
@@ -99,7 +99,7 @@ export class PrometheusDatasource
   defaultEditor?: QueryEditorMode;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<PromOptions>,
+    public readonly instanceSettings: DataSourceInstanceSettings<PromOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
     languageProvider?: PrometheusLanguageProviderInterface
   ) {
@@ -435,7 +435,7 @@ export class PrometheusDatasource
       }));
     }
 
-    if (config.featureToggles.groupByVariable) {
+    if (config.featureToggles.groupByVariable || config.featureToggles.dashboardUnifiedDrilldownControls) {
       processedTarget.groupByKeys = request.groupByKeys;
     }
 
@@ -563,6 +563,12 @@ export class PrometheusDatasource
     return labelKeys
       .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
       .map((k) => ({ value: k, text: k }));
+  }
+
+  // By implementing getGroupByKeys we add group by variable support independently from adhoc filters.
+  // It delegates to getTagKeys
+  async getGroupByKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    return this.getTagKeys(options);
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
@@ -745,7 +751,7 @@ export class PrometheusDatasource
       return expr;
     }
 
-    const finalQuery = filters.reduce((acc, filter) => {
+    const finalQuery = filters.map(remapOneOf).reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -915,3 +921,17 @@ export const extractResourceMatcher = (
   // Create a matcher using metric names and label filters
   return `{${[...metricMatch, ...labelsMatch].join(',')}}`;
 };
+
+export function remapOneOf(filter: AdHocVariableFilter) {
+  let { operator, value, values } = filter;
+  if (operator === '=|' || operator === '!=|') {
+    operator = operator === '=|' ? '=~' : '!~';
+    value = values?.map(prometheusRegularEscape).join('|') ?? '';
+  }
+
+  return {
+    ...filter,
+    operator,
+    value,
+  };
+}

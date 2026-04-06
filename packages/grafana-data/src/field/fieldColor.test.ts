@@ -1,8 +1,8 @@
 import { createTheme } from '../themes/createTheme';
-import { DataFrame, Field, FieldType } from '../types/dataFrame';
+import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 
-import { fieldColorModeRegistry, FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
+import { fieldColorModeRegistry, type FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
 import { cacheFieldDisplayNames } from './fieldState';
 
 function getTestField(mode: string, fixedColor?: string, name = 'name'): Field {

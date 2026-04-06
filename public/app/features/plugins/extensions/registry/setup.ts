@@ -1,10 +1,11 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
+import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
 import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
+import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -12,7 +13,7 @@ import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
-import { PluginExtensionRegistries } from './types';
+import { type PluginExtensionRegistries } from './types';
 
 function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   const addedComponentsRegistry = new AddedComponentsRegistry(apps);
@@ -44,6 +45,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Add to dashboard form',
         description: 'Add to dashboard form',
         component: AddToDashboardFormExposedComponent,
+      },
+      {
+        id: PluginExtensionExposedComponents.PrometheusQueryResultsV1,
+        title: 'Prometheus query results',
+        description: 'Display Prometheus query results with Table/Raw toggle',
+        component: PrometheusQueryResultsContainer,
       },
       {
         id: PluginExtensionExposedComponents.CreateAlertFromPanelV1,

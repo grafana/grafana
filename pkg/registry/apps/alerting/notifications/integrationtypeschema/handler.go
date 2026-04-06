@@ -9,15 +9,16 @@ import (
 	"slices"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // AccessControlService provides access control for receivers.
@@ -79,20 +80,20 @@ func (h *Handler) HandleGetSchemas(ctx context.Context, writer app.CustomRouteRe
 	})
 
 	// Wrap each schema with K8s-style metadata for future-proofing migration
-	items := make([]v0alpha1.IntegrationTypeSchemaResource, 0, len(schemas))
+	items := make([]v1beta1.GetIntegrationtypeschemasIntegrationTypeSchemaResource, 0, len(schemas))
 	for _, s := range schemas {
 		// Marshal to JSON and unmarshal to spec type for conversion
 		data, err := json.Marshal(s)
 		if err != nil {
 			continue
 		}
-		var spec v0alpha1.IntegrationTypeSchema
+		var spec v1beta1.GetIntegrationtypeschemasIntegrationTypeSchema
 		if err := json.Unmarshal(data, &spec); err != nil {
 			continue
 		}
 
-		item := v0alpha1.IntegrationTypeSchemaResource{
-			Metadata: v0alpha1.V0alpha1IntegrationTypeSchemaResourceMetadata{
+		item := v1beta1.GetIntegrationtypeschemasIntegrationTypeSchemaResource{
+			Metadata: v1beta1.GetIntegrationtypeschemasV1beta1IntegrationTypeSchemaResourceMetadata{
 				Name:      string(s.Type),
 				Namespace: req.ResourceIdentifier.Namespace,
 			},
@@ -103,7 +104,7 @@ func (h *Handler) HandleGetSchemas(ctx context.Context, writer app.CustomRouteRe
 
 	// Return as items array in K8s list format
 	response := map[string]interface{}{
-		"apiVersion": v0alpha1.GroupVersion.String(),
+		"apiVersion": v1beta1.GroupVersion.String(),
 		"kind":       "IntegrationTypeSchemaList",
 		"metadata":   map[string]any{},
 		"items":      items,

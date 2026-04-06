@@ -1,8 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
-
-import { getErrorMessage } from '../utils/httpUtils';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionList } from './ConnectionList';
 

@@ -2,19 +2,24 @@ package legacy
 
 import (
 	"context"
+	stdsql "database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type GetUserInternalIDQuery struct {
@@ -54,7 +59,7 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +98,9 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 type ListUserQuery struct {
 	OrgID int64
 	UID   string
+	ID    int64
+	Email string
+	Login string
 
 	Pagination common.Pagination
 }
@@ -127,6 +135,9 @@ func (r listUsersQuery) Validate() error {
 
 // ListUsers implements LegacyIdentityStore.
 func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
 	// for continue
 	limit := int(query.Pagination.Limit)
 	query.Pagination.Limit += 1
@@ -136,7 +147,7 @@ func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -167,13 +178,25 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 		var lastID int64
 		for rows.Next() {
 			u := common.UserWithRole{}
-			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
-				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin, &u.EmailVerified,
-				&u.IsProvisioned, &u.LastSeenAt, &u.Role,
+			var name, email, role stdsql.NullString
+			var emailVerified stdsql.NullBool
+			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &email, &name,
+				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin, &emailVerified,
+				&u.IsProvisioned, &u.LastSeenAt, &role,
 			)
 			if err != nil {
 				return res, err
 			}
+			if name.Valid {
+				u.Name = name.String
+			}
+			if email.Valid {
+				u.Email = email.String
+			}
+			if role.Valid {
+				u.Role = role.String
+			}
+			u.EmailVerified = emailVerified.Valid && emailVerified.Bool
 
 			lastID = u.ID
 			res.Items = append(res.Items, u)
@@ -204,6 +227,7 @@ type UserTeam struct {
 	UID        string
 	Name       string
 	Permission team.PermissionType
+	External   bool
 }
 
 var sqlQueryUserTeamsTemplate = mustTemplate("user_teams_query.sql")
@@ -237,7 +261,7 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -264,10 +288,11 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 	for rows.Next() {
 		t := UserTeam{}
 
-		// regression: team_member.permission has been nulled in some instances
-		// Team memberships created before the permission column was added will have a NULL value
+		// regression: team_member.permission and team_member.external have been nulled in some instances
+		// Team memberships created before the permission/external columns were added will have NULL values
 		var nullablePermission *int64
-		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission)
+		var nullableExternal stdsql.NullBool
+		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission, &nullableExternal)
 		if err != nil {
 			return nil, err
 		}
@@ -277,6 +302,10 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 		} else {
 			// treat NULL as member permission
 			t.Permission = team.PermissionType(0)
+		}
+
+		if nullableExternal.Valid {
+			t.External = nullableExternal.Bool
 		}
 
 		res.Items = append(res.Items, t)
@@ -399,7 +428,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	cmd.Updated = legacysql.NewDBTime(now)
 	cmd.LastSeenAt = legacysql.NewDBTime(lastSeenAt)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -463,10 +492,34 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
 	}
 
 	return &CreateUserResult{User: createdUser}, nil
+}
+
+// toUserConflictError converts a UNIQUE constraint violation on user.email or
+// user.login into a 409 Conflict API error. All other errors are returned as-is.
+// It uses the DB dialect to detect the violation across SQLite, MySQL and PostgreSQL.
+func toUserConflictError(dialect migrator.Dialect, err error, uid string) error {
+	if err == nil {
+		return nil
+	}
+	if dialect != nil && dialect.IsUniqueConstraintViolation(err) {
+		msg := dialect.ErrorMessage(err)
+		switch {
+		case strings.Contains(msg, "email"):
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("email is already taken"))
+		case strings.Contains(msg, "login"):
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("login is already taken"))
+		default:
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("user already exists"))
+		}
+	}
+	return err
 }
 
 func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteUserCommand) deleteUserQuery {
@@ -514,7 +567,7 @@ func (r deleteOrgUserQuery) Validate() error {
 
 // DeleteUser implements LegacyIdentityStore.
 func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
 	}
@@ -664,7 +717,7 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	now := time.Now().UTC()
 	cmd.Updated = legacysql.NewDBTime(now)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -724,7 +777,7 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
 	}
 
 	return &UpdateUserResult{User: updatedUser}, nil

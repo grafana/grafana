@@ -20,6 +20,14 @@
         "timeStep": 1000
       },
       "scenarioId": "predictable_pulse"
+    },
+    {
+      "refId": "C",
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
+      "scenarioId": "random_walk",
+      "seriesCount": 10,
+      "spread": 0.2
     }
   ]
 }

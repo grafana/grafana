@@ -1,7 +1,6 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2';
+import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -12,31 +11,37 @@ import {
   AnnoKeyGrantPermissions,
   AnnoKeyMessage,
   DeprecatedInternalId,
-  Resource,
-  ResourceClient,
-  ResourceForCreate,
+  type Resource,
+  type ResourceClient,
+  type ResourceForCreate,
+  type ResourceList,
 } from 'app/features/apiserver/types';
+import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
-import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
-import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
+import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import {
-  DashboardAPI,
+  type DashboardAPI,
   DashboardVersionError,
-  DashboardWithAccessInfo,
-  ListDashboardHistoryOptions,
-  ListDeletedDashboardsOptions,
+  type DashboardWithAccessInfo,
+  type ListDashboardHistoryOptions,
+  type ListDeletedDashboardsOptions,
 } from './types';
 import { isV0V1StoredVersion } from './utils';
 
-export const K8S_V2_DASHBOARD_API_CONFIG = {
-  group: 'dashboard.grafana.app',
-  version: 'v2beta1',
-  resource: 'dashboards',
-};
+export function getK8sV2DashboardApiConfig() {
+  return {
+    group: 'dashboard.grafana.app',
+    version: dashboardAPIVersionResolver.getV2(),
+    resource: 'dashboards',
+  };
+}
 
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
@@ -44,12 +49,12 @@ export class K8sDashboardV2API
   private client: ResourceClient<DashboardV2Spec, Status>;
 
   constructor() {
-    this.client = new ScopedResourceClient<DashboardV2Spec>(K8S_V2_DASHBOARD_API_CONFIG);
+    this.client = new ScopedResourceClient<DashboardV2Spec>(getK8sV2DashboardApiConfig());
   }
 
-  async getDashboardDTO(uid: string) {
+  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
+      const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto', params);
       // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
       // This could come as conversion error from v0 or v2 to V1.
@@ -108,7 +113,7 @@ export class K8sDashboardV2API
   }
 
   async saveDashboard(options: SaveDashboardCommand<DashboardV2Spec>): Promise<SaveDashboardResponseDTO> {
-    const dashboard = options.dashboard;
+    const dashboard = convertSpecToWireFormat(options.dashboard);
 
     const obj: ResourceForCreate<DashboardV2Spec> = {
       // the metadata will have the name that's the uid
@@ -145,12 +150,7 @@ export class K8sDashboardV2API
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
-      // if the uid changed from the original k8s metadata (e.g., when editing JSON),
-      // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
-      const originalUid = options?.k8s?.name;
-      if (originalUid && obj.metadata.name !== originalUid && obj.metadata.labels) {
-        delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
-      }
+      delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -158,9 +158,7 @@ export class K8sDashboardV2API
       [AnnoKeyGrantPermissions]: 'default',
     };
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
-    if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
-      delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
-    }
+    delete obj.metadata.labels?.[DeprecatedInternalId];
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
@@ -176,28 +174,37 @@ export class K8sDashboardV2API
       })
     );
 
-    let dashId = 0;
-    if (v.metadata.labels?.[DeprecatedInternalId]) {
-      dashId = parseInt(v.metadata.labels[DeprecatedInternalId], 10);
-    }
-
     return {
       uid: v.metadata.name,
       version: v.metadata.generation ?? 0,
-      id: dashId,
       status: 'success',
       url,
       slug,
     };
   }
 
-  async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
-    return this.client.list({
-      labelSelector: 'grafana.app/get-history=true',
-      fieldSelector: `metadata.name=${uid}`,
-      limit: options?.limit ?? 10,
-      continue: options?.continueToken,
-    });
+  async listDashboardHistory(
+    uid: string,
+    options?: ListDashboardHistoryOptions
+  ): Promise<ResourceList<DashboardV2Spec>> {
+    const limit = options?.limit ?? VERSIONS_FETCH_LIMIT;
+    let continueToken = options?.continueToken;
+    const items: Array<Resource<DashboardV2Spec>> = [];
+
+    let lastPage: ResourceList<DashboardV2Spec> | undefined;
+
+    do {
+      lastPage = await this.client.list({
+        labelSelector: 'grafana.app/get-history=true',
+        fieldSelector: `metadata.name=${uid}`,
+        limit: limit - items.length,
+        continue: continueToken,
+      });
+      items.push(...lastPage.items);
+      continueToken = lastPage.metadata.continue;
+    } while (items.length < limit && continueToken);
+
+    return { ...lastPage!, metadata: { ...lastPage!.metadata, continue: continueToken }, items };
   }
 
   async getDashboardHistoryVersions(uid: string, versions: number[]) {
@@ -233,6 +240,7 @@ export class K8sDashboardV2API
         name: uid,
       },
       message: `Restored from version ${version}`,
+      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 
@@ -243,6 +251,10 @@ export class K8sDashboardV2API
   restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
     // reset the resource version to create a new resource
     dashboard.metadata.resourceVersion = '';
+    dashboard.metadata.annotations = {
+      ...dashboard.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
     return this.client.create(dashboard);
   }
 }

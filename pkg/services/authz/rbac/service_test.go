@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
@@ -324,7 +325,8 @@ func TestService_checkPermission(t *testing.T) {
 
 			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
-			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check)
+			ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -430,7 +432,8 @@ func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
 		Namespace:    types.NamespaceInfo{Value: "default", OrgID: 1},
 	}
 
-	got, err := s.checkPermission(ctx, userPermissions, &check)
+	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+	got, err := s.checkPermission(ctx, userPermissions, &check, s.newFolderTreeGetter(ctx, ns, false))
 	require.NoError(t, err)
 	assert.True(t, got)
 
@@ -1005,18 +1008,6 @@ func TestService_Check(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name: "should error if an unknown group is provided",
-			req: &authzv1.CheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "unknown.grafana.app",
-				Resource:  "unknown",
-				Verb:      "get",
-				Name:      "u1",
-			},
-			expectErr: true,
-		},
-		{
 			name: "should error if an unknown verb is provided",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -1262,7 +1253,9 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "should deny rendering access to another app resources",
+			// Unregistered groups fall back to the K8s-native mapping. The renderer has no
+			// permissions for K8s-native actions, so the check is denied without an error.
+			name: "should deny rendering access to unregistered app resources",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
 				Subject:   "render:0",
@@ -1271,8 +1264,7 @@ func TestService_Check(t *testing.T) {
 				Verb:      "get",
 				Name:      "dash1",
 			},
-			expected:  false,
-			expectErr: true,
+			expected: false,
 		},
 	}
 	t.Run("Rendering permission check", func(t *testing.T) {
@@ -1290,6 +1282,102 @@ func TestService_Check(t *testing.T) {
 				assert.Equal(t, tc.expected, resp.Allowed)
 			})
 		}
+	})
+}
+
+func TestService_K8sNativeFallback(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	setup := func(permissions []accesscontrol.Permission) *Service {
+		s := setupService()
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fStore := &fakeStore{userID: userID, userPermissions: permissions}
+		s.store = fStore
+		s.permissionStore = fStore
+		s.identityStore = &fakeIdentityStore{}
+		return s
+	}
+
+	ctx := types.WithAuthInfo(context.Background(), callingService)
+
+	t.Run("Check: unregistered group denied when no permissions", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{})
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+			Name:      "w1",
+		})
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed)
+	})
+
+	t.Run("Check: unregistered group allowed with K8s-native action", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w1"},
+		})
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+			Name:      "w1",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
+	})
+
+	t.Run("Check: unknown verb still errors", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{})
+		_, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "unknownverb",
+			Name:      "w1",
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("List: unregistered group returns empty without error", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{})
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+		})
+		require.NoError(t, err)
+		assert.Empty(t, resp.Items)
+		assert.Empty(t, resp.Folders)
+		assert.False(t, resp.All)
+	})
+
+	t.Run("List: unregistered group returns items with K8s-native action", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w1"},
+			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w2"},
+		})
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "get",
+		})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"w1", "w2"}, resp.Items)
 	})
 }
 
@@ -1486,17 +1574,6 @@ func TestService_List(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name: "should error if an unknown group is provided",
-			req: &authzv1.ListRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "unknown.grafana.app",
-				Resource:  "unknown",
-				Verb:      "get",
-			},
-			expectErr: true,
-		},
-		{
 			name: "should error if an unknown verb is provided",
 			req: &authzv1.ListRequest{
 				Namespace: "org-12",
@@ -1683,7 +1760,9 @@ func TestService_List(t *testing.T) {
 			},
 		},
 		{
-			name: "should deny rendering access to another app resources",
+			// Unregistered groups fall back to the K8s-native mapping. The renderer has no
+			// permissions for K8s-native actions, so the list is empty rather than an error.
+			name: "should deny rendering access to unregistered app resources",
 			req: &authzv1.ListRequest{
 				Namespace: "org-12",
 				Subject:   "render:0",
@@ -1691,7 +1770,7 @@ func TestService_List(t *testing.T) {
 				Resource:  "dashboards",
 				Verb:      "get",
 			},
-			expectErr: true,
+			expected: &authzv1.ListResponse{},
 		},
 	}
 	t.Run("Rendering permission list", func(t *testing.T) {
@@ -1923,11 +2002,14 @@ func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceIn
 
 type fakeIdentityStore struct {
 	legacy.LegacyIdentityStore
-	userTeams      []int64
-	teams          []team.Team
-	disableNsCheck bool
-	err            bool
-	calls          int
+	userTeams       []int64
+	teams           []team.Team
+	serviceAccounts []legacy.ServiceAccount
+	users           []common.UserWithRole
+	pageSize        int // if > 0, simulates pagination with this page size
+	disableNsCheck  bool
+	err             bool
+	calls           int
 }
 
 func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
@@ -1956,7 +2038,113 @@ func (f *fakeIdentityStore) ListTeams(ctx context.Context, namespace types.Names
 	if f.err {
 		return nil, fmt.Errorf("identity store error")
 	}
-	return &legacy.ListTeamResult{Teams: f.teams}, nil
+	if query.Pagination.Limit < 1 && f.pageSize > 0 {
+		query.Pagination.Limit = int64(f.pageSize)
+	}
+	return paginateTeams(f.teams, query.Pagination), nil
+}
+
+func (f *fakeIdentityStore) ListServiceAccounts(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListServiceAccountsQuery) (*legacy.ListServiceAccountResult, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
+	f.calls++
+	if f.err {
+		return nil, fmt.Errorf("identity store error")
+	}
+	if query.Pagination.Limit < 1 && f.pageSize > 0 {
+		query.Pagination.Limit = int64(f.pageSize)
+	}
+	return paginateServiceAccounts(f.serviceAccounts, query.Pagination), nil
+}
+
+func (f *fakeIdentityStore) ListUsers(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserQuery) (*legacy.ListUserResult, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
+	f.calls++
+	if f.err {
+		return nil, fmt.Errorf("identity store error")
+	}
+	if query.Pagination.Limit < 1 && f.pageSize > 0 {
+		query.Pagination.Limit = int64(f.pageSize)
+	}
+	return paginateUsers(f.users, query.Pagination), nil
+}
+
+// paginateTeams simulates cursor-based pagination over a slice of teams.
+func paginateTeams(items []team.Team, p common.Pagination) *legacy.ListTeamResult {
+	limit := int(p.Limit)
+	if limit < 1 {
+		limit = len(items) // no limit = return all
+	}
+	start := 0
+	if p.Continue > 0 {
+		for i, t := range items {
+			if t.ID >= p.Continue {
+				start = i
+				break
+			}
+		}
+	}
+	end := start + limit
+	if end >= len(items) {
+		return &legacy.ListTeamResult{Teams: items[start:]}
+	}
+	return &legacy.ListTeamResult{
+		Teams:    items[start:end],
+		Continue: items[end].ID,
+	}
+}
+
+// paginateServiceAccounts simulates cursor-based pagination over a slice of service accounts.
+func paginateServiceAccounts(items []legacy.ServiceAccount, p common.Pagination) *legacy.ListServiceAccountResult {
+	limit := int(p.Limit)
+	if limit < 1 {
+		limit = len(items)
+	}
+	start := 0
+	if p.Continue > 0 {
+		for i, sa := range items {
+			if sa.ID >= p.Continue {
+				start = i
+				break
+			}
+		}
+	}
+	end := start + limit
+	if end >= len(items) {
+		return &legacy.ListServiceAccountResult{Items: items[start:]}
+	}
+	return &legacy.ListServiceAccountResult{
+		Items:    items[start:end],
+		Continue: items[end].ID,
+	}
+}
+
+// paginateUsers simulates cursor-based pagination over a slice of users.
+func paginateUsers(items []common.UserWithRole, p common.Pagination) *legacy.ListUserResult {
+	limit := int(p.Limit)
+	if limit < 1 {
+		limit = len(items)
+	}
+	start := 0
+	if p.Continue > 0 {
+		for i, u := range items {
+			if u.ID >= p.Continue {
+				start = i
+				break
+			}
+		}
+	}
+	end := start + limit
+	if end >= len(items) {
+		return &legacy.ListUserResult{Items: items[start:]}
+	}
+	return &legacy.ListUserResult{
+		Items:    items[start:end],
+		Continue: items[end].ID,
+	}
 }
 
 func TestService_BatchCheck(t *testing.T) {
@@ -2255,7 +2443,9 @@ func TestService_BatchCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "should handle invalid group in one check",
+			// An unregistered group falls back to the K8s-native mapping and is denied
+			// (no permissions in the store) rather than returning an error.
+			name: "should handle unregistered group in one check",
 			req: &authzv1.BatchCheckRequest{
 				Namespace: "org-12",
 				Subject:   "user:test-uid",
@@ -2269,10 +2459,10 @@ func TestService_BatchCheck(t *testing.T) {
 					},
 					{
 						CorrelationId: "check2",
-						Group:         "invalid.grafana.app",
-						Resource:      "invalid",
+						Group:         "unregistered.grafana.app",
+						Resource:      "widgets",
 						Verb:          "get",
-						Name:          "invalid1",
+						Name:          "widget1",
 					},
 				},
 			},
@@ -2281,9 +2471,7 @@ func TestService_BatchCheck(t *testing.T) {
 			},
 			expected: map[string]bool{
 				"check1": true,
-			},
-			expectErr: map[string]bool{
-				"check2": true,
+				"check2": false, // denied: no permissions granted for this group/resource
 			},
 		},
 		{
@@ -2413,9 +2601,9 @@ func TestService_BatchCheck(t *testing.T) {
 		require.True(t, resp.Results["check2"].Allowed)
 		require.True(t, resp.Results["check3"].Allowed)
 
-		// Should have called GetUserPermissions only once (plus GetBasicRoles and GetUserIdentifiers once each)
-		// Total calls should be 3: GetUserIdentifiers(1), GetBasicRoles(1), GetUserPermissions(1)
-		assert.LessOrEqual(t, fStore.calls, 3, "Should batch permission lookups efficiently")
+		// Should have called GetUserPermissions only once (plus GetBasicRoles, GetUserIdentifiers, and GetFolders once each)
+		// Total calls should be 4: GetUserIdentifiers(1), GetBasicRoles(1), GetUserPermissions(1), GetFolders(1)
+		assert.LessOrEqual(t, fStore.calls, 4, "Should batch permission lookups efficiently")
 	})
 
 	t.Run("should skip cache when freshness_timestamp is recent", func(t *testing.T) {

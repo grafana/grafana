@@ -8,10 +8,15 @@ import (
 	"iter"
 	"math"
 	"math/rand"
+	"net/http"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/dgraph-io/badger/v4"
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,10 +29,17 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -38,13 +50,27 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 
 const defaultPollingInterval = 100 * time.Millisecond
+
+// newTenantDeleterGcomClient returns a GCOM client for tenant-deleter verification when
+// [grafana_com] sso_api_token and api_url are configured.
+func newTenantDeleterGcomClient(cfg *setting.Cfg) gcom.Service {
+	token := strings.TrimSpace(cfg.GrafanaComSSOAPIToken)
+	apiURL := strings.TrimSpace(cfg.GrafanaComAPIURL)
+	if token == "" || apiURL == "" {
+		return nil
+	}
+	hc := &http.Client{Timeout: 30 * time.Second}
+	return gcom.New(gcom.Config{ApiURL: apiURL, Token: token}, hc)
+}
+
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
-const defaultPrunerHistoryLimit = 20
+const defaultGarbageCollectionBatchWait = 1 * time.Second
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
+	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
 }
@@ -59,8 +85,151 @@ func ProvideStorageBackend(
 
 type Backend interface {
 	resource.StorageBackend
-	resourcepb.DiagnosticsServer
-	resource.LifecycleHooks
+	resourcepb.DiagnosticsServer //nolint:staticcheck
+}
+
+// tmpDir returns a writable temp directory under dataPath for Parquet bulk
+// migration files. Returns "" (OS default) when dataPath is empty.
+func tmpDir(dataPath string) string {
+	if dataPath == "" {
+		return ""
+	}
+	return filepath.Join(dataPath, "tmp")
+}
+
+// NewStorageBackend creates the unified storage backend based on options.StorageType.
+// It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
+// Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
+// For all other storage types a SQL backend will be created.
+func NewStorageBackend(
+	cfg *setting.Cfg,
+	db infraDB.DB,
+	reg prometheus.Registerer,
+	storageMetrics *resource.StorageMetrics,
+	tracer trace.Tracer,
+	disableStorageServices bool,
+) (resource.StorageBackend, error) {
+	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
+		MustString(string(options.StorageTypeUnified)))
+	switch storageType {
+	case options.StorageTypeFile:
+		return NewFileBackend(cfg)
+	case options.StorageTypeUnifiedGrpc:
+		return nil, nil
+	default: // fall back to SQL backend
+	}
+	// create default unified backend
+	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
+	if err != nil {
+		return nil, err
+	}
+
+	isHA := isHighAvailabilityEnabled(cfg.SectionWithEnvOverrides("database"),
+		cfg.SectionWithEnvOverrides("resource_api"))
+
+	if !cfg.EnableSQLKVBackend {
+		return NewBackend(BackendOptions{
+			DBProvider:           eDB,
+			Reg:                  reg,
+			IsHA:                 isHA,
+			storageMetrics:       storageMetrics,
+			LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+			GarbageCollection: GarbageCollectionConfig{
+				Enabled:          cfg.EnableGarbageCollection,
+				Interval:         cfg.GarbageCollectionInterval,
+				BatchSize:        cfg.GarbageCollectionBatchSize,
+				BatchWait:        cfg.GarbageCollectionBatchWait,
+				MaxAge:           cfg.GarbageCollectionMaxAge,
+				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+			},
+			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
+			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
+			TmpDir:                  tmpDir(cfg.DataPath),
+			DisableStorageServices:  disableStorageServices,
+			DisablePruner:           cfg.DisablePruner,
+			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		})
+	}
+
+	ctx := context.Background()
+	dbConn, err := eDB.Init(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing DB: %w", err)
+	}
+	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+	if dialect == nil {
+		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+	}
+
+	sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	if err != nil {
+		return nil, fmt.Errorf("error creating sqlkv: %s", err)
+	}
+
+	tenantDeleterCfg := resource.NewTenantDeleterConfig(cfg)
+	if tenantDeleterCfg != nil {
+		if gcomClient := newTenantDeleterGcomClient(cfg); gcomClient != nil {
+			tenantDeleterCfg.Gcom = gcomClient
+		}
+	}
+
+	kvBackendOpts := resource.KVBackendOptions{
+		KvStore:              sqlkv,
+		Tracer:               tracer,
+		Reg:                  reg,
+		UseChannelNotifier:   !isHA,
+		Log:                  log.New("storage-backend"),
+		DBKeepAlive:          eDB,
+		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:  tenantDeleterCfg,
+		GarbageCollection: resource.GarbageCollectionConfig{
+			Enabled:          cfg.EnableGarbageCollection,
+			DryRun:           cfg.GarbageCollectionDryRun,
+			Interval:         cfg.GarbageCollectionInterval,
+			BatchSize:        cfg.GarbageCollectionBatchSize,
+			BatchWait:        cfg.GarbageCollectionBatchWait,
+			MaxAge:           cfg.GarbageCollectionMaxAge,
+			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+		},
+		EventRetentionPeriod:    cfg.EventRetentionPeriod,
+		EventPruningInterval:    cfg.EventPruningInterval,
+		SearchLookback:          cfg.SearchLookback,
+		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+	}
+
+	if cfg.EnableSQLKVCompatibilityMode {
+		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+			Dialect: dialect,
+			DB:      dbConn,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+		}
+
+		kvBackendOpts.RvManager = rvManager
+	}
+
+	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	dataPath := apiserverCfg.Key("storage_path").
+		MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
+	db, err := badger.Open(badger.DefaultOptions(filepath.Join(dataPath, "badger")).
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kvStore := resource.NewBadgerKV(db)
+	return resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore:                 kvStore,
+		Log:                     log.New("storage-backend"),
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+	})
 }
 
 type BackendOptions struct {
@@ -73,6 +242,17 @@ type BackendOptions struct {
 	GarbageCollection GarbageCollectionConfig
 
 	DisableStorageServices bool
+	DisablePruner          bool
+
+	DashboardVersionsToKeep int
+
+	// When true, bulk migrations buffer data through a temporary Parquet file
+	MigrationParquetBuffer bool
+
+	// Directory for temporary Parquet files during bulk migration.
+	// Defaults to the OS temp dir when empty. Set to cfg.DataPath/tmp to
+	// support containers with readonlyRootFilesystem enabled.
+	TmpDir string
 
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
@@ -93,9 +273,15 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
-	return &backend{
+	garbageCollection := opts.GarbageCollection
+	if garbageCollection.BatchWait <= 0 {
+		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
+	}
+	backend := &backend{
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
+		disablePruner:           opts.DisablePruner,
+		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
@@ -106,12 +292,24 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
+		migrationParquetBuffer:  opts.MigrationParquetBuffer,
+		tmpDir:                  opts.TmpDir,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		garbageCollection:       opts.GarbageCollection,
-	}, nil
+		garbageCollection:       garbageCollection,
+	}
+	if err := backend.Init(ctx); err != nil {
+		return nil, err
+	}
+	backend.Service = services.NewIdleService(nil, func(_ error) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return backend.Stop(ctx)
+	})
+	return backend, nil
 }
 
 type backend struct {
+	services.Service
 	//general
 	isHA                   bool
 	disableStorageServices bool
@@ -147,9 +345,17 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
-	historyPruner resource.Pruner
+	disablePruner           bool
+	dashboardVersionsToKeep int
+	historyPruner           resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
+
+	// When true, bulk migrations buffer data through a temporary Parquet file
+	migrationParquetBuffer bool
+
+	// tmpDir is the directory for temporary Parquet files; empty means OS default.
+	tmpDir string
 
 	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
@@ -226,6 +432,12 @@ func (b *backend) initLocked(ctx context.Context) error {
 }
 
 func (b *backend) initPruner(ctx context.Context) error {
+	if b.disablePruner {
+		b.log.Debug("pruner disabled, using noop pruner")
+		b.historyPruner = &resource.NoopPruner{}
+		return nil
+	}
+
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
@@ -237,7 +449,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 			return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryPrune, &sqlPruneHistoryRequest{
 					SQLTemplate:  sqltemplate.New(b.dialect),
-					HistoryLimit: defaultPrunerHistoryLimit,
+					HistoryLimit: int64(resource.LookupPrunerHistoryLimit(key.Group, key.Resource, b.dashboardVersionsToKeep)),
 					Key: &resourcepb.ResourceKey{
 						Namespace: key.Namespace,
 						Group:     key.Group,
@@ -347,7 +559,7 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 				select {
 				case <-b.done:
 					return deletedByKey
-				case <-time.After(time.Second):
+				case <-time.After(b.garbageCollection.BatchWait):
 				}
 			}
 			if totalDeleted > 0 {
@@ -425,6 +637,7 @@ func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckReques
 	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
+// Stop cancels the background context to stop the pruner, GC and other goroutines
 func (b *backend) Stop(_ context.Context) error {
 	b.cancel()
 	return nil
@@ -825,7 +1038,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 
 // ListModifiedSince will return all resources that have changed since the given resource version.
 // If a resource has changes, only the latest change will be returned.
-func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
 	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 

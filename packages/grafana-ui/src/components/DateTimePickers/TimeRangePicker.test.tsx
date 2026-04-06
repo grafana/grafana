@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTime, makeTimeRange, TimeRange, BootData } from '@grafana/data';
+import { dateTime, makeTimeRange, type TimeRange, type BootData } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { TimeRangeProvider } from './TimeRangeContext';
@@ -145,9 +145,11 @@ it('does not submit wrapping forms', async () => {
     </form>
   );
 
-  const clicks = screen.getAllByRole('button').map((button) => userEvent.click(button));
+  const buttons = screen.getAllByRole('button');
 
-  await Promise.all(clicks);
+  for (const button of buttons) {
+    await userEvent.click(button);
+  }
 
   expect(onSubmit).not.toHaveBeenCalled();
 });

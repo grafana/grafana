@@ -18,102 +18,11 @@ labels:
 menuTitle: Configure
 title: Configure the Microsoft SQL Server data source
 weight: 200
-refs:
-  query-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-  table:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
-  configure-standard-options-display-name:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-  configure-pdc:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-  provision-grafana:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
-  add-template-variables-interval-ms:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
-  add-template-variables-interval:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-  data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-  configure-grafana-azure-auth:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
-  configure-grafana-azure:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
-  configure-grafana-azure-auth-scopes:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
-  mssql-query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
-  mssql-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
-  mssql-troubleshoot:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
 ---
 
 # Configure the Microsoft SQL Server data source
 
-This document provides instructions for configuring the Microsoft SQL Server data source and explains available configuration options. For general information on adding and managing data sources, refer to [Grafana data sources](ref:data-sources) and [Data source management](ref:data-source-management).
+This document provides instructions for configuring the Microsoft SQL Server data source and explains available configuration options. For general information on adding and managing data sources, refer to [Grafana data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) and [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 
 ## Before you begin
 
@@ -137,7 +46,7 @@ Grafana ships with a built-in Microsoft SQL Server data source plugin. No additi
 {{< /admonition >}}
 
 {{< admonition type="tip" >}}
-**Grafana Cloud users:** If your SQL Server is in a private network, you can configure [Private data source connect](ref:private-data-source-connect) to establish connectivity.
+**Grafana Cloud users:** If your SQL Server is in a private network, you can configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish connectivity.
 {{< /admonition >}}
 
 ## Add the MSSQL data source
@@ -228,7 +137,7 @@ Additional settings are optional settings you configure for more control over yo
 
 **Private data source connect** - _Only for Grafana Cloud users._
 
-Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](ref:configure-pdc) for instructions on setting up a PDC connection.
+Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for instructions on setting up a PDC connection.
 
 Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
 
@@ -251,7 +160,7 @@ The Azure SQL Server that you are connecting to should support Azure Entra authe
 
 This is the recommended authentication mechanism when working with SQL Server instances that are hosted in Azure. It allows users to be authenticated to and query the database using their own credentials rather than long-lived credentials.
 
-This authentication method requires your Grafana instance to be configured with Azure Entra ID (formerly Active Directory) authentication for login. With Azure Entra ID login, this method can be used to forward the currently logged in user’s credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation](ref:configure-grafana-azure-auth).
+This authentication method requires your Grafana instance to be configured with Azure Entra ID (formerly Active Directory) authentication for login. With Azure Entra ID login, this method can be used to forward the currently logged in user’s credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/).
 
 {{< admonition type="note" >}}
 Additional configuration is required to ensure that the App Registration used to login a user via Azure provides an access token with the permissions required by the data source.
@@ -278,7 +187,7 @@ This method of authentication doesn't inherently support all backend functionali
 
 **To enable current user authentication for Grafana:**
 
-1. Set the `user_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration](ref:configure-grafana-azure).
+1. Set the `user_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure).
 
    ```ini
    [azure]
@@ -316,7 +225,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
 **To enable managed identity for Grafana:**
 
-1. Set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration](ref:configure-grafana-azure).
+1. Set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure).
 
    ```ini
    [azure]
@@ -327,7 +236,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
    This hides the directory ID, application ID, and client secret fields, and the data source uses managed identity to authenticate to SQL Server.
 
-3. You can set the `managed_identity_client_id` field in the `[azure]` section of the [Grafana server configuration](ref:configure-grafana-azure) to allow a user-assigned managed identity to be used instead of the default system-assigned identity.
+3. You can set the `managed_identity_client_id` field in the `[azure]` section of the [Grafana server configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure) to allow a user-assigned managed identity to be used instead of the default system-assigned identity.
 
 Ensure that the managed identity used is added to your Azure SQL instance as a user.
 
@@ -341,7 +250,7 @@ You can connect to an Azure SQL database using the username and password of a us
 
 **To enable Azure Entra password for Grafana:**
 
-1. Set the `azure_entra_password_credentials_enabled` flag in the `[azure]` section of the [Grafana server configuration](ref:configure-grafana-azure).
+1. Set the `azure_entra_password_credentials_enabled` flag in the `[azure]` section of the [Grafana server configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure).
 
    ```ini
    [azure]
@@ -355,7 +264,7 @@ You can connect to an Azure SQL database using the username and password of a us
 
 ### Min time interval
 
-The **Min time interval** setting defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`][add-template-variables-interval_ms] variables.
+The **Min time interval** setting defines a lower limit for the [`$__interval`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval) and [`$__interval_ms`][add-template-variables-interval_ms] variables.
 
 This value _must_ be formatted as a number followed by a valid time identifier:
 
@@ -394,7 +303,7 @@ Grafana recommends that you use the latest available service pack for optimal co
 
 ### Provision the data source
 
-You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provision-grafana).
+You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
 #### Provisioning example
 
@@ -457,8 +366,8 @@ For all available configuration options, refer to the [Grafana provider data sou
 
 After configuring your Microsoft SQL Server data source, you can:
 
-- [Write queries](ref:mssql-query-editor) using the query editor to explore and visualize your data
-- [Create template variables](ref:mssql-template-variables) to build dynamic, reusable dashboards
-- [Add annotations](ref:annotate-visualizations) to overlay SQL Server events on your graphs
-- [Set up alerting](ref:alerting) to create alert rules based on your SQL Server data
-- [Troubleshoot issues](ref:mssql-troubleshoot) if you encounter problems with your data source
+- [Write queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/) using the query editor to explore and visualize your data
+- [Create template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/) to build dynamic, reusable dashboards
+- [Add annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) to overlay SQL Server events on your graphs
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) to create alert rules based on your SQL Server data
+- [Troubleshoot issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/) if you encounter problems with your data source

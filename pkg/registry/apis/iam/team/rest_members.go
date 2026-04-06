@@ -2,19 +2,21 @@ package team
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/types"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -74,22 +76,20 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
-			http.Error(w, "functionality not available", http.StatusForbidden)
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
+				name, errors.New("functionality not available")))
 			return
 		}
 
 		ctx, span := s.tracer.Start(r.Context(), "team.members")
 		defer span.End()
 
+		// Authorization is handled by the TeamAuthorizer at the K8s authorizer level.
+		// This handler assumes the request has already been authorized.
+
 		queryParams, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
 			responder.Error(err)
-			return
-		}
-
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			responder.Error(fmt.Errorf("no identity found for request: %w", err))
 			return
 		}
 
@@ -109,12 +109,19 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			offset = (page - 1) * limit
 		}
 
+		// Get namespace from the request context
+		authInfo, ok := types.AuthInfoFrom(ctx)
+		if !ok {
+			responder.Error(apierrors.NewUnauthorized("no identity found"))
+			return
+		}
+
 		searchRequest := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     iamv0alpha1.TeamBindingResourceInfo.GroupResource().Group,
 					Resource:  iamv0alpha1.TeamBindingResourceInfo.GroupResource().Resource,
-					Namespace: requester.GetNamespace(),
+					Namespace: authInfo.GetNamespace(),
 				},
 				Fields: []*resourcepb.Requirement{
 					{
@@ -136,22 +143,23 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			},
 		}
 
-		result, err := s.client.Search(ctx, searchRequest)
+		searchResult, err := s.client.Search(ctx, searchRequest)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		searchResults, err := parseResults(result, searchRequest.Offset)
+		parsedResult, err := parseResults(searchResult)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		if err := json.NewEncoder(w).Encode(searchResults); err != nil {
-			responder.Error(err)
-			return
+		result := &iamv0alpha1.GetTeamMembersResponse{
+			GetTeamMembersBody: parsedResult,
 		}
+
+		responder.Object(http.StatusOK, result)
 	}), nil
 }
 
@@ -165,15 +173,15 @@ func (s *TeamMembersREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetMembersBody, error) {
+func parseResults(result *resourcepb.ResourceSearchResponse) (iamv0alpha1.GetTeamMembersBody, error) {
 	if result == nil {
-		return iamv0alpha1.GetMembersBody{}, nil
+		return iamv0alpha1.GetTeamMembersBody{}, nil
 	}
 	if result.Error != nil {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
 	}
 	if result.Results == nil {
-		return iamv0alpha1.GetMembersBody{}, nil
+		return iamv0alpha1.GetTeamMembersBody{}, nil
 	}
 
 	subjectNameIDX := -1
@@ -199,28 +207,28 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 	}
 
 	if subjectNameIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
 	}
 	if teamRefIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
 	}
 	if permissionIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
 	}
 	if externalIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
 	}
 
-	body := iamv0alpha1.GetMembersBody{
-		Items: make([]iamv0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser, len(result.Results.Rows)),
+	body := iamv0alpha1.GetTeamMembersBody{
+		Items: make([]iamv0alpha1.GetTeamMembersTeamUser, len(result.Results.Rows)),
 	}
 
 	for i, row := range result.Results.Rows {
 		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0alpha1.GetMembersBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
+			return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
 		}
 
-		body.Items[i] = iamv0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser{
+		body.Items[i] = iamv0alpha1.GetTeamMembersTeamUser{
 			User:       string(row.Cells[subjectNameIDX]),
 			Team:       string(row.Cells[teamRefIDX]),
 			Permission: string(row.Cells[permissionIDX]),

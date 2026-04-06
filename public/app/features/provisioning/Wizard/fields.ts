@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { RepoType } from './types';
+import { type RepoType } from './types';
 
 export interface FieldConfig {
   label: string;
@@ -37,6 +37,12 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
     url: {
       label: t('provisioning.shared.url-label', 'Repository URL'),
+      validation: {
+        pattern: {
+          value: /^https:\/\/[^\/]+\/[^\/]+\/[^\/]+\/?$/,
+          message: t('provisioning.shared.url-pattern', 'Must be a valid repository URL (https://hostname/owner/repo)'),
+        },
+      },
     },
     tokenUser: {
       label: t('provisioning.shared.token-user-label', 'Username'),
@@ -67,11 +73,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://github.com/owner/repository',
         required: true,
         validation: {
+          ...shared.url.validation,
           required: t('provisioning.github.url-required', 'Repository URL is required'),
-          pattern: {
-            value: /^https:\/\/github\.com\/[^\/]+\/[^\/]+\/?$/,
-            message: t('provisioning.github.url-pattern', 'Must be a valid GitHub repository URL'),
-          },
         },
       },
       branch: {
@@ -88,7 +91,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       prWorkflow: {
         label: t('provisioning.github.pr-workflow-label', 'Enable pull request option when saving'),
         description: t(
-          'provisioning.github.pr-workflow-description',
+          'provisioning.github.pr-workflow-description', // trufflehog:ignore
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
@@ -101,7 +104,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'GitLab Project Access Token with repository permissions'
         ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'glpat-xxxxxxxxxxxxxxxxxxxx',
+        placeholder: 'glpat-xxxxxxxxxxxxxxxxxxx',
         required: true,
         validation: {
           required: t('provisioning.gitlab.token-required', 'GitLab token is required'),
@@ -114,11 +117,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://gitlab.com/owner/repository',
         required: true,
         validation: {
+          ...shared.url.validation,
           required: t('provisioning.gitlab.url-required', 'Repository URL is required'),
-          pattern: {
-            value: /^https:\/\/gitlab\.com\/[^\/]+\/[^\/]+\/?$/,
-            message: t('provisioning.gitlab.url-pattern', 'Must be a valid GitLab repository URL'),
-          },
         },
       },
       branch: {
@@ -142,13 +142,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
     bitbucket: {
       token: {
-        label: t('provisioning.bitbucket.token-label', 'App Password'),
-        description: t(
-          'provisioning.bitbucket.token-description',
-          'Bitbucket App Password with repository permissions'
-        ),
+        label: t('provisioning.bitbucket.token-label', 'API Token'),
+        description: t('provisioning.bitbucket.token-description', 'Bitbucket API Token with repository permissions'),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'ATBBxxxxxxxxxxxxxxxx',
+        placeholder: 'ATATTxxxxxxxxxxxxxxxx',
         required: true,
         validation: {
           required: t('provisioning.bitbucket.token-required', 'Bitbucket token is required'),
@@ -158,7 +155,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ...shared.tokenUser,
         description: t(
           'provisioning.bitbucket.token-user-description',
-          'The username that will be used to access the repository with the app password'
+          'The username that will be used to access the repository with the API token'
         ),
         required: true,
         validation: {
@@ -172,11 +169,8 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         placeholder: 'https://bitbucket.org/owner/repository',
         required: true,
         validation: {
+          ...shared.url.validation,
           required: t('provisioning.bitbucket.url-required', 'Repository URL is required'),
-          pattern: {
-            value: /^https:\/\/bitbucket\.org\/[^\/]+\/[^\/]+\/?$/,
-            message: t('provisioning.bitbucket.url-pattern', 'Must be a valid Bitbucket repository URL'),
-          },
         },
       },
       branch: {
@@ -215,14 +209,14 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'provisioning.git.token-user-description',
           'The username that will be used to access the repository with the access token'
         ),
-        required: true,
-        validation: {
-          required: t('provisioning.git.token-user-required', 'Username is required'),
-        },
+        required: false,
       },
       url: {
         ...shared.url,
-        description: t('provisioning.git.url-description', 'The Git repository URL'),
+        description: t(
+          'provisioning.git.url-description',
+          'The Git repository URL. Most servers require the URL to end with .git (e.g. https://host/owner/repo.git).'
+        ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder: 'https://git.example.com/owner/repository.git',
         required: true,

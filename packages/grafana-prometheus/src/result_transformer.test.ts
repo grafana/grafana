@@ -15,7 +15,7 @@ import {
   transformToHistogramOverTime,
   transformV2,
 } from './result_transformer';
-import { PromQuery } from './types';
+import { type PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
@@ -194,6 +194,119 @@ describe('Prometheus Result Transformer', () => {
               {
                 config: { displayNameFromDS: 'up' },
                 labels: { __name__: 'up' },
+                name: 'up',
+                values: [1],
+              },
+            ],
+            length: 1,
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+              preferredVisualisationType: 'graph',
+            },
+            refId: 'A',
+          },
+        ],
+        state: 'Done',
+      });
+    });
+
+    it('legendFormat auto removes common labels', () => {
+      const request = {
+        targets: [
+          {
+            format: 'time_series',
+            refId: 'A',
+            legendFormat: '__auto',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                name: 'up',
+                labels: { __name__: 'up', varying: 'A', common: 'common' },
+                config: {},
+                values: [1],
+              },
+            ],
+            length: 1,
+            refId: 'A',
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+            },
+          },
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                name: 'up',
+                labels: { __name__: 'up', varying: 'B', common: 'common' },
+                config: {},
+                values: [1],
+              },
+            ],
+            length: 1,
+            refId: 'A',
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+            },
+          },
+        ],
+      } as unknown as DataQueryResponse;
+      const series = transformV2(response, request, {});
+      expect(series).toEqual({
+        data: [
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                config: { displayNameFromDS: '{varying="A"}' },
+                labels: { __name__: 'up', varying: 'A', common: 'common' },
+                name: 'up',
+                values: [1],
+              },
+            ],
+            length: 1,
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+              preferredVisualisationType: 'graph',
+            },
+            refId: 'A',
+          },
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                config: { displayNameFromDS: '{varying="B"}' },
+                labels: { __name__: 'up', varying: 'B', common: 'common' },
                 name: 'up',
                 values: [1],
               },

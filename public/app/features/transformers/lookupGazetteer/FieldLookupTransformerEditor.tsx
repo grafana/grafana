@@ -2,24 +2,26 @@ import { useCallback } from 'react';
 
 import {
   DataTransformerID,
-  FieldNamePickerConfigSettings,
+  type FieldNamePickerConfigSettings,
   PluginState,
-  StandardEditorsRegistryItem,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type StandardEditorsRegistryItem,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   FieldType,
   TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
-import { GazetteerPathEditor, GazetteerPathEditorConfigSettings } from 'app/features/geo/editor/GazetteerPathEditor';
+import {
+  GazetteerPathEditor,
+  type GazetteerPathEditorConfigSettings,
+} from 'app/features/geo/editor/GazetteerPathEditor';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/fieldLookup.svg';
 import lightImage from '../images/light/fieldLookup.svg';
 
-import { FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
+import { type FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
 
 const fieldLookupSettings = {
   settings: {},
@@ -103,7 +105,6 @@ export const getFieldLookupTransformRegistryItem: () => TransformerRegistryItem<
   ),
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.PerformSpatialOperations]),
-  help: getTransformationContent(DataTransformerID.fieldLookup).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

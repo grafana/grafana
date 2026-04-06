@@ -1,6 +1,6 @@
-import { LogContext } from '@grafana/faro-web-sdk';
+import { type LogContext } from '@grafana/faro-web-sdk';
 
-import { createMonitoringLogger, MonitoringLogger } from './logging';
+import { createMonitoringLogger, type MonitoringLogger } from './logging';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const cache: Map<string, Promise<any>> = new Map();
@@ -16,6 +16,7 @@ type PromiseFunction<T> = () => Promise<T>;
 interface CachedPromiseOptions<T> {
   cacheKey?: string;
   defaultValue?: T;
+  invalidate?: boolean;
   onError?: (args: OnErrorArgs) => Promise<T>;
 }
 
@@ -120,15 +121,20 @@ function cachePromiseWithCallback<T>({ key, promise, onError }: CachePromiseWith
  * @param options - Options object for error behaviors
  * @param options.cacheKey - Optional cache key to use as key instead of the function name
  * @param options.defaultValue - Optional default value to return if the promise rejects
+ * @param options.invalidate - Optionally invalidates the cache for the given function name or cacheKey
  * @param options.onError - Optional error handler that receives the error and an invalidate function
  * @returns A promise that resolves to the cached or newly computed value
  */
 export function getCachedPromise<T>(promise: PromiseFunction<T>, options?: CachedPromiseOptions<T>): Promise<T> {
-  const { cacheKey, defaultValue, onError } = options ?? {};
+  const { cacheKey, defaultValue, onError, invalidate = false } = options ?? {};
   const key = cacheKey ?? promise.name;
 
   if (!key) {
     return Promise.reject(new Error(`getCachedPromise function must be invoked with a named function or cacheKey`));
+  }
+
+  if (invalidate) {
+    cache.delete(key);
   }
 
   const cached = cache.get(key);

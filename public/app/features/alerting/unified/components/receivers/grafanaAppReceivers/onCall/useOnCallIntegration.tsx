@@ -1,14 +1,18 @@
 import { produce } from 'immer';
 import { useCallback, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
-import { NotificationChannelOption, NotifierDTO, NotifierType } from 'app/features/alerting/unified/types/alerting';
+import {
+  type NotificationChannelOption,
+  type NotifierDTO,
+  type NotifierType,
+} from 'app/features/alerting/unified/types/alerting';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
-import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
+import { type Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { useIrmPlugin } from '../../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../../types/pluginBridges';
@@ -263,7 +267,8 @@ export function useOnCallIntegration() {
 
         return {
           ...notifier,
-          options: enhanceOptions(notifier.options),
+          // Only spread options if they exist (legacy API has them, new API doesn't)
+          ...(notifier.options && { options: enhanceOptions(notifier.options) }),
           // Also enhance versions[].options so getOptionsForVersion() returns the enhanced options
           versions: notifier.versions?.map((version) => ({
             ...version,

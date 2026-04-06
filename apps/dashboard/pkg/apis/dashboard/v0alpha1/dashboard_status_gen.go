@@ -24,6 +24,11 @@ func NewDashboardConversionStatus() *DashboardConversionStatus {
 	return &DashboardConversionStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for DashboardConversionStatus.
+func (DashboardConversionStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardConversionStatus"
+}
+
 // +k8s:openapi-gen=true
 type DashboardStatus struct {
 	// Optional conversion status.
@@ -33,4 +38,9 @@ type DashboardStatus struct {
 // NewDashboardStatus creates a new DashboardStatus object.
 func NewDashboardStatus() *DashboardStatus {
 	return &DashboardStatus{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardStatus.
+func (DashboardStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.DashboardStatus"
 }

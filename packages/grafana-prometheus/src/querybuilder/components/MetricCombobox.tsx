@@ -1,15 +1,16 @@
+import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
-import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
+import { EditorField, EditorFieldGroup } from '@grafana/plugin-ui';
+import { Button, InlineField, InlineFieldRow, Combobox, type ComboboxOption, useTheme2 } from '@grafana/ui';
 
 import { METRIC_LABEL } from '../../constants';
-import { PrometheusDatasource } from '../../datasource';
-import { QueryBuilderLabelFilter } from '../shared/types';
-import { PromVisualQuery } from '../types';
+import { type PrometheusDatasource } from '../../datasource';
+import { type QueryBuilderLabelFilter } from '../shared/types';
+import { type PromVisualQuery } from '../types';
 
 import { formatKeyValueStrings } from './formatter';
 import { MetricsModal } from './metrics-modal/MetricsModal';
@@ -36,6 +37,7 @@ export function MetricCombobox({
   timeRange,
 }: Readonly<MetricComboboxProps>) {
   const [metricsModalOpen, setMetricsModalOpen] = useState(false);
+  const styles = getStyles(useTheme2());
 
   /**
    * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
@@ -77,7 +79,7 @@ export function MetricCombobox({
 
   const asyncSelect = () => {
     return (
-      <InputGroup>
+      <div className={styles.wrapper}>
         <Combobox
           placeholder={t(
             'grafana-prometheus.querybuilder.metric-combobox.async-select.placeholder-select-metric',
@@ -102,9 +104,10 @@ export function MetricCombobox({
           )}
           variant="secondary"
           icon="book-open"
+          className={styles.button}
           onClick={() => setMetricsModalOpen(true)}
         />
-      </InputGroup>
+      </div>
     );
   };
 
@@ -146,3 +149,19 @@ export function MetricCombobox({
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      display: 'flex',
+      input: {
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
+      },
+    }),
+    button: css({
+      borderTopLeftRadius: 'unset',
+      borderBottomLeftRadius: 'unset',
+    }),
+  };
+};

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 import { DashboardControlsMenu } from './DashboardControlsMenu';
 import { useDashboardControls } from './utils';
@@ -15,7 +15,7 @@ export const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
 
 export function DashboardControlsButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
-  const { uid } = dashboard.useState();
+  const { uid, isEditing } = dashboard.useState();
   const { variables, links, annotations } = useDashboardControls(dashboard);
   const dashboardControlsCount = variables.length + links.length + annotations.length;
   const hasDashboardControls = dashboardControlsCount > 0;
@@ -28,7 +28,14 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
     <Dropdown
       placement="bottom-start"
       overlay={
-        <DashboardControlsMenu variables={variables} links={links} annotations={annotations} dashboardUID={uid} />
+        <DashboardControlsMenu
+          variables={variables}
+          links={links}
+          annotations={annotations}
+          dashboardUID={uid}
+          isEditing={isEditing}
+          dashboard={dashboard}
+        />
       }
     >
       <ToolbarButton

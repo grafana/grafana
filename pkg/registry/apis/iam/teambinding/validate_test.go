@@ -28,6 +28,7 @@ func TestValidateOnCreate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -39,6 +40,46 @@ func TestValidateOnCreate(t *testing.T) {
 			want: nil,
 		},
 		{
+			name: "invalid team binding - invalid subject kind",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "ServiceAccount",
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+				},
+			},
+			want: apierrors.NewBadRequest("subject kind must be User"),
+		},
+		{
+			name: "invalid team binding - empty subject kind",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "",
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+				},
+			},
+			want: apierrors.NewBadRequest("subject kind must be User"),
+		},
+		{
 			name: "invalid team binding - invalid permission",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
@@ -47,6 +88,7 @@ func TestValidateOnCreate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -66,6 +108,7 @@ func TestValidateOnCreate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -85,6 +128,7 @@ func TestValidateOnCreate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -101,6 +145,7 @@ func TestValidateOnCreate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -139,6 +184,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -151,6 +197,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -163,7 +210,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "valid update - no changes",
+			name: "invalid update - invalid subject kind",
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
 				OrgRole: identity.RoleAdmin,
@@ -171,6 +218,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -183,6 +231,41 @@ func TestValidateOnUpdate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "ServiceAccount",
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			want: apierrors.NewBadRequest("subject kind must be User"),
+		},
+		{
+			name: "valid update - no changes",
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			old: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
+						Name: "test-user",
+					},
+					TeamRef: iamv0alpha1.TeamBindingTeamRef{
+						Name: "test-team",
+					},
+					Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+					External:   false,
+				},
+			},
+			obj: &iamv0alpha1.TeamBinding{
+				Spec: iamv0alpha1.TeamBindingSpec{
+					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -203,6 +286,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -215,6 +299,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -235,6 +320,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -247,6 +333,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user-updated",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -267,6 +354,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -279,6 +367,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -299,6 +388,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -311,6 +401,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -327,6 +418,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			old: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -339,6 +431,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			obj: &iamv0alpha1.TeamBinding{
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "test-user",
 					},
 					TeamRef: iamv0alpha1.TeamBindingTeamRef{

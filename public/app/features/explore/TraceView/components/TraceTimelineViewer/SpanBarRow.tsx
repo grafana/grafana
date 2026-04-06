@@ -16,23 +16,24 @@ import { css, keyframes } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanBarOptions } from '../settings/SpanBarSettings';
-import TNil from '../types/TNil';
-import { SpanLinkFunc } from '../types/links';
-import { TraceSpan, CriticalPathSection } from '../types/trace';
+import { type SpanBarOptions } from '../settings/SpanBarSettings';
+import type TNil from '../types/TNil';
+import { type SpanLinkFunc } from '../types/links';
+import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
+import { getServiceDisplayName } from '../utils/service-name';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
-import { ViewedBoundsFunctionType } from './utils';
+import { type ViewedBoundsFunctionType } from './utils';
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';
@@ -386,12 +387,8 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
     onChildrenToggled,
   } = props;
 
-  const {
-    duration,
-    hasChildren: isParent,
-    operationName,
-    process: { serviceName },
-  } = span;
+  const { duration, hasChildren: isParent, operationName, process } = span;
+  const serviceDisplayName = getServiceDisplayName(process);
   const label = formatDuration(duration);
 
   const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
@@ -399,7 +396,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
   const viewEnd = viewBounds.end;
   const styles = getStyles(theme, showSpanFilterMatchesOnly, color);
 
-  const labelDetail = `${serviceName}::${operationName}`;
+  const labelDetail = `${serviceDisplayName}::${operationName}`;
   let longLabel;
   let hintClassName;
   if (viewStart > 1 - viewEnd) {
@@ -508,7 +505,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
                   [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
                 })}
               >
-                {`${serviceName} `}
+                {`${serviceDisplayName} `}
               </span>
             )}
             {rpc && (

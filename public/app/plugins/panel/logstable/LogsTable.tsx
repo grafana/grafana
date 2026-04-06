@@ -1,44 +1,54 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   CoreApp,
-  DataFrame,
-  FieldConfigSource,
-  GrafanaTheme2,
+  type DataFrame,
+  type FieldConfigSource,
+  type GrafanaTheme2,
   LoadingState,
-  PanelData,
-  PanelProps,
+  LogsSortOrder,
+  type PanelData,
+  type PanelProps,
 } from '@grafana/data';
-import type { Options as TableOptions } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { useStyles2 } from '@grafana/ui';
-import { FIELD_SELECTOR_DEFAULT_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
+import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
+import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import {
+  DATAPLANE_SEVERITY_NAME,
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
-  LogsFrame,
+  type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
+import { detectLevelField } from './fields/logs';
 import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
-import { Options } from './options/types';
-import { getLogsTablePanelState } from './panelState/getLogsTablePanelState';
-import type { Options as LogsTableOptions } from './panelcfg.gen';
-import { BuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
+import { onSortOrderChange } from './options/onSortOrderChange';
+import { type Options } from './options/types';
+import { type Options as LogsTableOptions } from './panelcfg.gen';
+import { getInitialRowIndex } from './props/getInitialRowIndex';
+import {
+  type BuildLinkToLogLine,
+  isBuildLinkToLogLine,
+  isOnLogsTableOptionsChange,
+  type OnLogsTableOptionsChange,
+} from './types';
 
-interface LogsTablePanelProps extends PanelProps<Options> {}
+interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
 
 export const LogsTable = ({
   data,
   width,
   height,
-  timeRange,
   fieldConfig,
   options,
   eventBus,
@@ -53,8 +63,7 @@ export const LogsTable = ({
   renderCounter,
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
-  const sidebarWidth = options.fieldSelectorWidth ?? FIELD_SELECTOR_DEFAULT_WIDTH;
-  const styles = useStyles2(getStyles, sidebarWidth, height, width);
+  const styles = useStyles2(getStyles, height, width);
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
   const logsFrame: LogsFrame | null = useMemo(
@@ -62,23 +71,27 @@ export const LogsTable = ({
     [rawTableFrame]
   );
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
-  // @todo otelLogsFormatting
+  const levelFieldName = logsFrame?.severityField?.name ?? detectLevelField(logsFrame) ?? DATAPLANE_SEVERITY_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
-  const permalinkedLogId = getLogsTablePanelState()?.logs?.id ?? undefined;
-  const initialRowIndex = permalinkedLogId
-    ? logsFrame?.idField?.values?.findIndex((id) => id === permalinkedLogId)
-    : undefined;
+  const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
+  const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
 
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
     : undefined;
 
+  const [containerElement, setContainerElement] = useState<HTMLDivElement | null>(null);
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    setContainerElement(node);
+  }, []);
+
   // Callbacks
   const handleTableOptionsChange = useCallback(
-    (options: TableOptions) => {
-      onLogsTableOptionsChange?.(options);
+    (newOptions: Options) => {
+      const pendingOptions = onSortOrderChange(newOptions, options.sortOrder, timeFieldName);
+      onLogsTableOptionsChange?.(pendingOptions);
     },
-    [onLogsTableOptionsChange]
+    [onLogsTableOptionsChange, options.sortOrder, timeFieldName]
   );
 
   const handleLogsTableOptionsChange = useCallback(
@@ -95,6 +108,32 @@ export const LogsTable = ({
     [handleLogsTableOptionsChange, options]
   );
 
+  const transformDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      return displayedFields.map((displayedField) => {
+        if (displayedField === bodyFieldName) {
+          return LOG_LINE_BODY_FIELD_NAME;
+        }
+
+        return displayedField;
+      });
+    },
+    [bodyFieldName]
+  );
+
+  const untransformDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      return displayedFields.map((displayedField) => {
+        if (displayedField === LOG_LINE_BODY_FIELD_NAME) {
+          return bodyFieldName;
+        }
+
+        return displayedField;
+      });
+    },
+    [bodyFieldName]
+  );
+
   const handleTableOnFieldConfigChange = useCallback(
     (fieldConfig: FieldConfigSource) => {
       onFieldConfigChange(fieldConfig);
@@ -103,12 +142,15 @@ export const LogsTable = ({
   );
 
   const supportsPermalink = useCallback(() => {
-    return !(
-      data?.request?.app !== CoreApp.Dashboard &&
-      data?.request?.app !== CoreApp.PanelEditor &&
-      data?.request?.app !== CoreApp.PanelViewer
+    return (
+      !!options.buildLinkToLogLine ||
+      !(
+        data?.request?.app !== CoreApp.Dashboard &&
+        data?.request?.app !== CoreApp.PanelEditor &&
+        data?.request?.app !== CoreApp.PanelViewer
+      )
     );
-  }, [data?.request?.app]);
+  }, [data?.request?.app, options.buildLinkToLogLine]);
 
   const onPermalinkClick: BuildLinkToLogLine = useCallback(
     (logId: string) => {
@@ -124,11 +166,13 @@ export const LogsTable = ({
   const { organizedFrame } = useOrganizeFields({
     extractedFrame,
     timeFieldName,
+    levelFieldName,
     bodyFieldName,
-    options,
     logsFrame,
     supportsPermalink: supportsPermalink(),
-    onPermalinkClick,
+    onPermalinkClick: isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : onPermalinkClick,
+    options,
+    fieldConfig,
   });
 
   // Build panel data
@@ -142,58 +186,76 @@ export const LogsTable = ({
     return data;
   }, [organizedFrame, data, frameIndex]);
 
+  const noSeries = data.series.length === 0;
+  const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
+
+  // Logs frame be null for non logs frames
+  const noLogsFrame = !logsFrame;
+
   // Show no data state if query returns nothing
-  if (data.series.length === 0 && data.state === LoadingState.Done) {
+  if ((noSeries || noValues || noLogsFrame) && data.state === LoadingState.Done) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 
-  // We're rendering before the hooks have transformed the required data, we return null to prevent the panel data error view from flashing
-  if (!timeFieldName || !bodyFieldName || !logsFrame || !organizedFrame || !extractedFrame) {
-    return null;
-  }
+  // Don't render the table if we don't have the required data to show the visualization
+  const renderTable = timeFieldName && bodyFieldName && logsFrame && organizedFrame && extractedFrame;
 
   return (
-    <div className={styles.wrapper}>
-      <LogsTableFields
-        tableWidth={width}
-        sidebarWidth={options.fieldSelectorWidth}
-        displayedFields={getDisplayedFields(options, timeFieldName, bodyFieldName)}
-        height={height}
-        logsFrame={logsFrame}
-        timeFieldName={timeFieldName}
-        bodyFieldName={bodyFieldName}
-        dataFrame={extractedFrame}
-        onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
-        onSidebarWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
-      />
+    <div className={styles.wrapper} ref={containerRef}>
+      {renderTable && containerElement && (
+        <>
+          <LogsTableFields
+            tableWidth={width}
+            fieldSelectorWidth={options.fieldSelectorWidth}
+            displayedFields={untransformDisplayedFields(getDisplayedFields(options, timeFieldName, levelFieldName))}
+            height={height}
+            logsFrame={logsFrame}
+            timeFieldName={timeFieldName}
+            levelFieldName={levelFieldName}
+            bodyFieldName={bodyFieldName}
+            dataFrame={extractedFrame}
+            onDisplayedFieldsChange={(displayedFields: string[]) =>
+              handleLogsTableOptionChange({ displayedFields: transformDisplayedFields(displayedFields) })
+            }
+            onFieldSelectorWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
+          />
 
-      <TableNGWrap
-        initialRowIndex={initialRowIndex}
-        data={panelData}
-        width={width}
-        height={height}
-        id={id}
-        timeRange={timeRange}
-        timeZone={timeZone}
-        options={options}
-        transparent={transparent}
-        fieldConfig={fieldConfig}
-        renderCounter={renderCounter}
-        title={title}
-        eventBus={eventBus}
-        onOptionsChange={handleTableOptionsChange}
-        onFieldConfigChange={handleTableOnFieldConfigChange}
-        replaceVariables={replaceVariables}
-        onChangeTimeRange={onChangeTimeRange}
-        fieldSelectorWidth={options.fieldSelectorWidth}
-      />
+          <TableNGWrap
+            containerElement={containerElement}
+            initialRowIndex={initialRowIndex}
+            data={panelData}
+            width={width}
+            height={height}
+            id={id}
+            timeZone={timeZone}
+            options={{
+              sortOrder: LogsSortOrder.Descending,
+              sortBy: [{ displayName: timeFieldName, desc: true }],
+              fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
+              ...options,
+            }}
+            transparent={transparent}
+            fieldConfig={fieldConfig}
+            renderCounter={renderCounter}
+            title={title}
+            eventBus={eventBus}
+            onOptionsChange={handleTableOptionsChange}
+            onFieldConfigChange={handleTableOnFieldConfigChange}
+            replaceVariables={replaceVariables}
+            onChangeTimeRange={onChangeTimeRange}
+            logOptionsStorageKey={SETTING_KEY_ROOT}
+          />
+        </>
+      )}
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, width: number) => {
+const getStyles = (theme: GrafanaTheme2, height: number, width: number) => {
   return {
     wrapper: css({
+      // prevent overflow in the tiny suggestions preview
+      overflow: 'hidden',
       height,
       width,
     }),

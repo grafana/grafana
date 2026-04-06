@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { type SceneVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-interface VariableValuesPreviewProps {
+export interface VariableValuesPreviewProps {
   options: VariableValueOption[];
   staticOptions: VariableValueOption[];
 }
@@ -58,8 +58,8 @@ export const useGetPropertiesFromOptions = (
     const staticValues = new Set(staticOptions?.map((s) => s.value) ?? []);
     const queryOption = options.find((o) => o.value !== ALL_VARIABLE_VALUE && !staticValues.has(o.value));
     const flattened = flattenProperties(queryOption?.properties);
-    const keys = Object.keys(flattened).filter((p) => !['text', 'value'].includes(p));
-    return ['text', 'value', ...keys];
+    const keys = Object.keys(flattened).filter((p) => !['value', 'text'].includes(p));
+    return ['value', 'text', ...keys];
   }, [options, staticOptions]);
 
 export const VariableValuesPreview = ({ options, staticOptions }: VariableValuesPreviewProps) => {
@@ -110,13 +110,15 @@ function VariableValuesWithPropsPreview({
   }, [options, properties]);
 
   return (
-    <InteractiveTable
-      className={styles.table}
-      columns={columns}
-      data={data}
-      getRowId={(r) => String(r.value)}
-      pageSize={8}
-    />
+    <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable}>
+      <InteractiveTable
+        className={styles.table}
+        columns={columns}
+        data={data}
+        getRowId={(r) => JSON.stringify(r)}
+        pageSize={8}
+      />
+    </div>
   );
 }
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');

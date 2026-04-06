@@ -22,13 +22,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	zServer "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -84,7 +87,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 }
 
 // ProvideEmbeddedZanzanaServer creates and registers embedded ZanzanaServer.
-func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Server, error) {
+func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, storeProvider zStore.StoreProvider) (zanzana.Server, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zServer.NewNoopServer(), nil
@@ -92,7 +95,12 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 
 	logger := log.New("zanzana.server")
 
-	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, db, logger, tracer, reg)
+	store, err := storeProvider.NewEmbeddedStore(cfg, db, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zanzana store: %w", err)
+	}
+
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -101,20 +109,48 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 }
 
 // ProvideEmbeddedZanzanaService creates a background service wrapper for the embedded zanzana server
-// to ensure proper cleanup when Grafana shuts down.
-func ProvideEmbeddedZanzanaService(server zanzana.Server) *EmbeddedZanzanaService {
+// to ensure proper cleanup when Grafana shuts down, and optionally starts the MT reconciler.
+func ProvideEmbeddedZanzanaService(
+	cfg *setting.Cfg,
+	server zanzana.Server,
+	tracer tracing.Tracer,
+) *EmbeddedZanzanaService {
 	return &EmbeddedZanzanaService{
+		cfg:    cfg,
 		server: server,
+		tracer: tracer,
+		logger: log.New("zanzana.server"),
 	}
 }
 
 // EmbeddedZanzanaService wraps the embedded zanzana server as a background service
 // to ensure Close() is called during shutdown.
 type EmbeddedZanzanaService struct {
+	cfg    *setting.Cfg
 	server zanzana.Server
+	tracer tracing.Tracer
+	logger log.Logger
 }
 
 func (s *EmbeddedZanzanaService) Run(ctx context.Context) error {
+	if s.cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
+		srv, ok := s.server.(*zServer.Server)
+		if !ok {
+			// noop server, reconciler can't run
+			<-ctx.Done()
+			if s.server != nil {
+				s.server.Close()
+			}
+			return nil
+		}
+
+		go func() {
+			if err := srv.RunReconciler(ctx); err != nil {
+				s.logger.Error("MT reconciler stopped with error", "error", err)
+			}
+		}()
+	}
+
 	// The zanzana server doesn't have a blocking Run method,
 	// so we just wait for shutdown
 	<-ctx.Done()
@@ -210,9 +246,13 @@ type ZanzanaService interface {
 
 var _ ZanzanaService = (*Zanzana)(nil)
 
-// ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (*Zanzana, error) {
-	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
+// ProvideZanzanaService is used to register zanzana as a module so we can run it separately from grafana.
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider) (*Zanzana, error) {
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide config: %w", err)
+	}
+	tracingCfg, err := tracing.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
 	}
@@ -225,11 +265,12 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 	}
 
 	s := &Zanzana{
-		cfg:      cfg,
-		features: features,
-		logger:   log.New("zanzana.server"),
-		reg:      reg,
-		tracer:   tracer,
+		cfg:           cfg,
+		features:      features,
+		logger:        log.New("zanzana.server"),
+		reg:           reg,
+		tracer:        tracer,
+		storeProvider: storeProvider,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -241,16 +282,22 @@ type Zanzana struct {
 	*services.BasicService
 
 	cfg           *setting.Cfg
-	zanzanaServer zanzana.Server
+	zanzanaServer zanzana.ServerInternal
 	logger        log.Logger
 	tracer        tracing.Tracer
 	handle        grpcserver.Provider
 	features      featuremgmt.FeatureToggles
 	reg           prometheus.Registerer
+	storeProvider zStore.StoreProvider
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, z.logger, z.tracer, z.reg)
+	store, err := z.storeProvider.NewStandaloneStore(z.cfg, z.logger)
+	if err != nil {
+		return fmt.Errorf("failed to create zanzana store: %w", err)
+	}
+
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -314,6 +361,14 @@ func (z *Zanzana) running(ctx context.Context) error {
 		go func() {
 			if err := z.runHTTPServer(); err != nil {
 				z.logger.Error("failed to run OpenFGA HTTP server", "error", err)
+			}
+		}()
+	}
+
+	if z.cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
+		go func() {
+			if err := z.zanzanaServer.RunReconciler(ctx); err != nil {
+				z.logger.Error("reconciler stopped with error", "error", err)
 			}
 		}()
 	}

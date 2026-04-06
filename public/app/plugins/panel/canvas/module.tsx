@@ -1,16 +1,16 @@
-import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, type PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
+import { TooltipDisplayMode } from '@grafana/schema';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
-import { CanvasPanel, InstanceState } from './CanvasPanel';
+import { CanvasPanel, type InstanceState } from './CanvasPanel';
 import { getConnectionEditor } from './editor/connectionEditor';
 import { getElementEditor } from './editor/element/elementEditor';
 import { getLayerEditor } from './editor/layer/layerEditor';
 import { PanZoomHelp } from './editor/panZoomHelp';
 import { canvasMigrationHandler } from './migrations';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
   let category = [t('canvas.category-canvas', 'Canvas')];

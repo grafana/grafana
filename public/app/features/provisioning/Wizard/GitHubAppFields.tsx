@@ -1,9 +1,10 @@
+import { useEffect } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Combobox, Field, RadioButtonGroup, Stack } from '@grafana/ui';
-import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
@@ -11,12 +12,12 @@ import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFie
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
-import { ConnectionFormData } from '../types';
+import { type ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { useStepStatus } from './StepStatusContext';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
-import { ConnectionCreationResult, WizardFormData } from './types';
+import { type ConnectionCreationResult, type WizardFormData } from './types';
 
 interface GitHubAppFieldsProps {
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
@@ -26,6 +27,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
   const {
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
@@ -50,6 +52,14 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     connections: githubConnections,
     error: connectionListError,
   } = useConnectionOptions(true);
+
+  const hasNoConnections = !isLoading && !connectionListError && githubConnections.length === 0;
+
+  useEffect(() => {
+    if (hasNoConnections) {
+      setValue('githubAppMode', 'new');
+    }
+  }, [hasNoConnections, setValue]);
 
   const [githubAppMode, githubAppConnectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
   const { connection: selectedConnection } = useConnectionStatus(githubAppConnectionName);

@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types/store';
-import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -25,6 +25,7 @@ import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRul
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 
+import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import { RuleListActionButtons } from './components/RuleListActionButtons';
 
@@ -128,6 +129,7 @@ const RuleListV1 = () => {
       actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}
     >
       <Stack direction="column">
+        <AlertsActivityBanner />
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (

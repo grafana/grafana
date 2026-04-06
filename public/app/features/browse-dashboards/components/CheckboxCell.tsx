@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSelectionRepoValidation } from 'app/features/provisioning/hooks/useSelectionRepoValidation';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { useSelector } from 'app/types/store';
 
 import { canEditItemType } from '../permissions';
-import { DashboardsTreeCellProps, SelectionState } from '../types';
-import { isSharedWithMe } from '../utils/dashboards';
+import { type DashboardsTreeCellProps, SelectionState } from '../types';
+import { isSharedWithMe, isUnderTeamFolders, isVirtualTeamFolder } from '../utils/dashboards';
 
 export default function CheckboxCell({
   row: { original: row },
@@ -28,6 +28,7 @@ export default function CheckboxCell({
   const isProvisionedInstance = useIsProvisionedInstance();
 
   // Early returns for cases where we should show a spacer instead of checkbox
+  // If no isSelected fn passed in, return spacer
   if (!isSelected) {
     return <CheckboxSpacer />;
   }
@@ -40,7 +41,7 @@ export default function CheckboxCell({
     }
   }
 
-  if (isSharedWithMe(item.uid)) {
+  if (isSharedWithMe(item.uid) || isVirtualTeamFolder(item.uid) || isUnderTeamFolders(item.uid)) {
     return <CheckboxSpacer />;
   }
 

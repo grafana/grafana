@@ -11,14 +11,14 @@ import { Portal } from '../Portal/Portal';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { ComboboxBaseProps, AutoSizeConditionals } from './Combobox';
+import { type ComboboxBaseProps, type AutoSizeConditionals } from './Combobox';
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { ValuePill } from './ValuePill';
 import { itemToString } from './filter';
 import { getComboboxStyles } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
-import { ALL_OPTION_VALUE, ComboboxOption } from './types';
+import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
@@ -160,6 +160,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     inputId: id,
     inputValue,
     selectedItem: null,
+    isItemDisabled: (item) => !!item?.infoOption,
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
       let { changes } = actionAndChanges;
@@ -301,7 +302,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   </>
                 }
               >
-                <div className={multiStyles.restNumber}>{selectedItems.length - shownItems}</div>
+                <div className={multiStyles.restNumber}>{selectedItems.length - visibleItems.length}</div>
               </Tooltip>
             </Box>
           )}

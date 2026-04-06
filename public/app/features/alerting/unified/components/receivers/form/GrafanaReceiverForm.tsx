@@ -14,11 +14,14 @@ import {
   canModifyProtectedEntity,
   isProvisionedResource,
 } from 'app/features/alerting/unified/utils/k8s/utils';
-import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
+} from 'app/plugins/datasource/alertmanager/types';
 
-import { alertmanagerApi } from '../../../api/alertmanagerApi';
+import { useIntegrationTypeSchemas } from '../../../api/integrationSchemasApi';
 import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
-import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { type GrafanaChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
 import { hasLegacyIntegrations } from '../../../utils/notifier-versions';
 import { formValuesToGrafanaReceiver, grafanaReceiverToFormValues } from '../../../utils/receiver-form';
 import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
@@ -28,7 +31,7 @@ import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallInt
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 import { TestContactPointModal } from './TestContactPointModal';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   __id: '',
@@ -47,8 +50,6 @@ interface Props {
   editMode?: boolean;
 }
 
-const { useGrafanaNotifiersQuery } = alertmanagerApi;
-
 export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
@@ -66,7 +67,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     hasOnCallError,
   } = useOnCallIntegration();
 
-  const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
+  const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useIntegrationTypeSchemas();
   const [testChannelData, setTestChannelData] = useState<{
     channelValues: GrafanaChannelValues;
     existingIntegration?: GrafanaManagedReceiverConfig;

@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import {
   API_GROUP,
   API_VERSION,
-  DeleteReceiverApiResponse,
+  type DeleteReceiverApiResponse,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';

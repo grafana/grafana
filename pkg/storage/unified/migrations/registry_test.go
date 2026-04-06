@@ -5,9 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -28,10 +26,10 @@ func testGroupResource(group, resource string) schema.GroupResource {
 }
 
 // Test helper to create a ResourceInfo
-func testResourceInfo(group, resource, lockTable string) ResourceInfo {
+func testResourceInfo(group, resource string, lockTables ...string) ResourceInfo {
 	return ResourceInfo{
 		GroupResource: schema.GroupResource{Group: group, Resource: resource},
-		LockTable:     lockTable,
+		LockTables:    lockTables,
 	}
 }
 
@@ -90,13 +88,13 @@ func TestMigrationRegistry_Register(t *testing.T) {
 	t.Run("stores definition with all fields", func(t *testing.T) {
 		r := NewMigrationRegistry()
 		gr := testGroupResource("test.grafana.app", "widgets")
-		ri := ResourceInfo{GroupResource: gr, LockTable: "widgets"}
+		ri := ResourceInfo{GroupResource: gr, LockTables: []string{"widgets"}}
 		def := MigrationDefinition{
 			ID:          "widgets-migration",
 			MigrationID: "widgets migration log id",
 			Resources:   []ResourceInfo{ri},
 			Migrators: map[schema.GroupResource]MigratorFunc{
-				gr: func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 					return nil
 				},
 			},
@@ -243,7 +241,7 @@ func TestMigrationRegistry_All(t *testing.T) {
 }
 
 func TestMigrationRegistry_HasResource(t *testing.T) {
-	noopMigrator := func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	noopMigrator := func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 		return nil
 	}
 
@@ -322,7 +320,7 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("formats single resource correctly", func(t *testing.T) {
 		def := MigrationDefinition{
 			Resources: []ResourceInfo{
-				{GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, LockTable: "dashboard"},
+				{GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, LockTables: []string{"dashboard"}},
 			},
 		}
 
@@ -335,9 +333,9 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("formats multiple resources correctly", func(t *testing.T) {
 		def := MigrationDefinition{
 			Resources: []ResourceInfo{
-				{GroupResource: schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, LockTable: "folder"},
-				{GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, LockTable: "dashboard"},
-				{GroupResource: schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}, LockTable: "playlist"},
+				{GroupResource: schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, LockTables: []string{"folder"}},
+				{GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, LockTables: []string{"dashboard"}},
+				{GroupResource: schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}, LockTables: []string{"playlist"}},
 			},
 		}
 
@@ -363,7 +361,7 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("handles empty group", func(t *testing.T) {
 		def := MigrationDefinition{
 			Resources: []ResourceInfo{
-				{GroupResource: schema.GroupResource{Group: "", Resource: "configmaps"}, LockTable: "configmaps"},
+				{GroupResource: schema.GroupResource{Group: "", Resource: "configmaps"}, LockTables: []string{"configmaps"}},
 			},
 		}
 
@@ -376,7 +374,7 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("handles empty resource", func(t *testing.T) {
 		def := MigrationDefinition{
 			Resources: []ResourceInfo{
-				{GroupResource: schema.GroupResource{Group: "some.group", Resource: ""}, LockTable: ""},
+				{GroupResource: schema.GroupResource{Group: "some.group", Resource: ""}, LockTables: nil},
 			},
 		}
 
@@ -393,7 +391,7 @@ func TestMigrationDefinition_GetMigratorFunc(t *testing.T) {
 		called := false
 		def := MigrationDefinition{
 			Migrators: map[schema.GroupResource]MigratorFunc{
-				gr: func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 					called = true
 					return nil
 				},
@@ -403,7 +401,7 @@ func TestMigrationDefinition_GetMigratorFunc(t *testing.T) {
 		result := def.GetMigratorFunc(gr)
 
 		require.NotNil(t, result)
-		err := result(context.Background(), 1, legacy.MigrateOptions{}, nil)
+		err := result(context.Background(), 1, MigrateOptions{}, nil)
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -412,7 +410,7 @@ func TestMigrationDefinition_GetMigratorFunc(t *testing.T) {
 		existingGR := testGroupResource("existing.group", "widgets")
 		def := MigrationDefinition{
 			Migrators: map[schema.GroupResource]MigratorFunc{
-				existingGR: func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				existingGR: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 					return nil
 				},
 			},
@@ -436,7 +434,7 @@ func TestMigrationDefinition_GetMigratorFunc(t *testing.T) {
 }
 
 func TestMigrationRegistry_GetMigratorFunc(t *testing.T) {
-	noopMigrator := func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	noopMigrator := func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 		return nil
 	}
 
@@ -496,7 +494,7 @@ func TestMigrationRegistry_GetMigratorFunc(t *testing.T) {
 }
 
 func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
-	noopMigrator := func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	noopMigrator := func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 		return nil
 	}
 
@@ -596,96 +594,4 @@ func TestMigrationRegistry_ConcurrentAccess(t *testing.T) {
 
 		wg.Wait()
 	})
-}
-
-func TestBuildMigrationRegistry(t *testing.T) {
-	t.Run("builds registry with folders-dashboards migration", func(t *testing.T) {
-		accessor := &mockMigrationAccessor{}
-		registry := BuildMigrationRegistry(accessor)
-
-		def, ok := registry.Get("folders-dashboards")
-		require.True(t, ok)
-		require.Equal(t, "folders-dashboards", def.ID)
-		require.Equal(t, "folders and dashboards migration", def.MigrationID)
-		require.Len(t, def.Resources, 2)
-	})
-
-	t.Run("builds registry with playlists migration", func(t *testing.T) {
-		accessor := &mockMigrationAccessor{}
-		registry := BuildMigrationRegistry(accessor)
-
-		def, ok := registry.Get("playlists")
-		require.True(t, ok)
-		require.Equal(t, "playlists", def.ID)
-		require.Equal(t, "playlists migration", def.MigrationID)
-		require.Len(t, def.Resources, 1)
-	})
-
-	t.Run("builds registry with definitions in order", func(t *testing.T) {
-		accessor := &mockMigrationAccessor{}
-		registry := BuildMigrationRegistry(accessor)
-
-		all := registry.All()
-
-		foldersIdx := -1
-		playlistsIdx := -1
-		for i, def := range all {
-			if def.ID == "folders-dashboards" {
-				foldersIdx = i
-			}
-			if def.ID == "playlists" {
-				playlistsIdx = i
-			}
-		}
-
-		require.NotEqual(t, -1, foldersIdx, "folders-dashboards should be registered")
-		require.NotEqual(t, -1, playlistsIdx, "playlists should be registered")
-		assert.Less(t, foldersIdx, playlistsIdx, "folders-dashboards should come before playlists")
-	})
-
-	t.Run("migrators are bound to accessor methods", func(t *testing.T) {
-		accessor := &mockMigrationAccessor{}
-		registry := BuildMigrationRegistry(accessor)
-
-		def, ok := registry.Get("folders-dashboards")
-		require.True(t, ok)
-
-		for gr, migrator := range def.Migrators {
-			require.NotNil(t, migrator, "migrator for %v should not be nil", gr)
-		}
-	})
-
-	t.Run("validators are created from configs", func(t *testing.T) {
-		accessor := &mockMigrationAccessor{}
-		registry := BuildMigrationRegistry(accessor)
-
-		def, ok := registry.Get("folders-dashboards")
-		require.True(t, ok)
-		require.Len(t, def.Validators, 3)
-
-		validators := def.CreateValidators(nil, "sqlite3")
-		require.Len(t, validators, 3)
-	})
-}
-
-type mockMigrationAccessor struct{}
-
-func (m *mockMigrationAccessor) CountResources(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
-	return nil, nil
-}
-
-func (m *mockMigrationAccessor) MigrateDashboards(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-	return nil
-}
-
-func (m *mockMigrationAccessor) MigrateFolders(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-	return nil
-}
-
-func (m *mockMigrationAccessor) MigrateLibraryPanels(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-	return nil
-}
-
-func (m *mockMigrationAccessor) MigratePlaylists(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-	return nil
 }

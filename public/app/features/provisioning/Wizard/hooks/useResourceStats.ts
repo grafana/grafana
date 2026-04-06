@@ -3,11 +3,11 @@ import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import {
-  GetRepositoryFilesApiResponse,
-  GetResourceStatsApiResponse,
-  ManagerStats,
-  RepositoryView,
-  ResourceCount,
+  type GetRepositoryFilesApiResponse,
+  type GetResourceStatsApiResponse,
+  type ManagerStats,
+  type RepositoryView,
+  type ResourceCount,
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
@@ -121,7 +121,7 @@ export function useResourceStats(
     refetchOnMountOrArgChange: true,
   });
 
-  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading || Boolean(repoName && healthStatusNotReady);
+  const isLoading = resourceStatsQuery.isFetching || filesQuery.isFetching || Boolean(healthStatusNotReady);
 
   const { resourceCount, resourceCountString, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),

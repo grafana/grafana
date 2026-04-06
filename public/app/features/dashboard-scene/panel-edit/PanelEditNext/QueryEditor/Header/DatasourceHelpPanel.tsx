@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
@@ -37,10 +37,10 @@ export function DatasourceHelpPanel() {
       <IconButton
         name="times"
         size="md"
-        tooltip={t('query-editor.help.close', 'Close help')}
+        tooltip={t('query-editor-next.help.close', 'Close help')}
         onClick={toggleDatasourceHelp}
         className={styles.closeButton}
-        aria-label={t('query-editor.help.close-aria', 'Close help panel')}
+        aria-label={t('query-editor-next.help.close-aria', 'Close help panel')}
       />
       <DatasourceCheatsheet query={selectedQuery} datasource={datasource} onClickExample={onClickExample} />
     </div>

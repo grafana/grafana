@@ -79,6 +79,9 @@ export interface QueryBreakdown {
 	// Calculated as: (foundMetrics / totalMetrics) * 100
 	// 100 = query will work perfectly, 0 = query will return no data.
 	compatibilityScore: number;
+	// Optional error message for queries that failed to parse.
+	// When present, the query is treated as 0% compatible.
+	parseError?: string;
 }
 
 export const defaultQueryBreakdown = (): QueryBreakdown => ({

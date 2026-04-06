@@ -1,6 +1,6 @@
 // Generates Redux Toolkit API slices for certain APIs from the OpenAPI spec
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
-import { OpenAPIV3 } from 'openapi-types';
+import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 // Grafana root path - navigate up from this script's directory
@@ -30,7 +30,7 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
   const filePath = `../clients/rtkq/${app}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
-      schemaFile: path.join(basePath, `data/openapi/${app}.grafana.app-${version}.json`),
+      schemaFile: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`),
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
       filterEndpoints,
       tag: true,
@@ -105,16 +105,18 @@ const config: ConfigFile = {
     ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('folder', 'v1beta1'),
     ...createAPIConfig('iam', 'v0alpha1'),
-    ...createAPIConfig('playlist', 'v0alpha1'),
+    ...createAPIConfig('playlist', 'v1'),
     ...createAPIConfig('collections', 'v1alpha1'),
     ...createAPIConfig('preferences', 'v1alpha1'),
     ...createAPIConfig('provisioning', 'v0alpha1'),
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
+    ...createAPIConfig('notifications.alerting', 'v1beta1'),
     ...createAPIConfig('rules.alerting', 'v0alpha1'),
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
     ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
+    ...createAPIConfig('quotas', 'v0alpha1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };

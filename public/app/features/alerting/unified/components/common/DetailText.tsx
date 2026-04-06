@@ -1,9 +1,9 @@
+import { css } from '@emotion/css';
 import type { JSX } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, ClipboardButton, Stack, Text, Tooltip } from '@grafana/ui';
-
-import ConditionalWrap from '../ConditionalWrap';
+import { Box, ClipboardButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 type DetailTextProps = {
   id: string;
@@ -28,6 +28,18 @@ type ConditionalProps =
     }
   | { showCopyButton?: never; copyValue?: never };
 
+const Value = ({ children }: { children: React.ReactNode }) => {
+  const styles = useStyles2(getStyles);
+  return <span className={styles.value}>{children}</span>;
+};
+
+const getStyles = (_theme: GrafanaTheme2) => ({
+  value: css({
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+  }),
+});
+
 export const DetailText = ({
   id,
   label,
@@ -45,12 +57,15 @@ export const DetailText = ({
           {label}
         </Text>
         <Text aria-labelledby={id} color="primary" variant={monospace ? 'code' : 'body'}>
-          <ConditionalWrap
-            shouldWrap={Boolean(tooltipValue)}
-            wrap={(children) => <Tooltip content={tooltipValue!}>{children}</Tooltip>}
-          >
-            <span>{value}</span>
-          </ConditionalWrap>
+          {tooltipValue ? (
+            <Tooltip content={tooltipValue}>
+              <span>
+                <Value>{value}</Value>
+              </span>
+            </Tooltip>
+          ) : (
+            <Value>{value}</Value>
+          )}
           {showCopyButton && (
             <ClipboardButton
               aria-label={copyToClipboardLabel}

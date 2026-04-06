@@ -100,13 +100,22 @@ To create a dashboard, follow these steps:
    [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
    {{< /admonition >}}
 
-1. In the visualization list, select a visualization type.
+1. Click **Refresh** to query the data source.
+1. Select a suggested visualization or click **All visualizations** and select one from the full list.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-select-visualization-v12.png" max-width="350px" alt="Visualization selector" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestion-2-v13.0.png" max-width="350px" alt="Visualization selector" >}}
 
    Grafana displays a preview of your query results with the visualization applied.
 
    For more information about configuring individual visualizations, refer to [Visualizations options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/).
+
+1. (Optional) If the panel supports it, choose an option from the **Panel styles** section in the panel editor sidebar. Each style shows a live preview of how it changes the visualization. Clicking a style applies it to the panel.
+
+   {{< admonition type="note" >}}
+   Panel styles is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `vizPresets` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to use this feature.
+   {{< /admonition >}}
+
+   For more information about Panel styles, refer to the [Panel editor documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-editor-overview/#panel-styles).
 
 1. Click **Refresh** to query the data source.
 1. Under **Panel options**, enter a title and description for the panel or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).

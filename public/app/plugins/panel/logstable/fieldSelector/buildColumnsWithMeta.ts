@@ -1,5 +1,6 @@
-import { DataFrame, FieldWithIndex, getFieldDisplayName } from '@grafana/data';
-import { FieldNameMeta, FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type DataFrame, type FieldWithIndex, getFieldDisplayName } from '@grafana/data';
+import { type FieldNameMeta, type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 
 type FieldName = string;
 
@@ -10,8 +11,6 @@ export interface LogsFrameFields {
   timeField: FieldWithIndex;
 }
 
-// @todo adapted from the deprecated table
-// @todo LOG_LINE_BODY_FIELD_NAME, ___OTEL_LOG_ATTRIBUTES___
 export const buildColumnsWithMeta = (
   logsFrameFields: LogsFrameFields,
   dataFrame: DataFrame,
@@ -52,7 +51,6 @@ export const buildColumnsWithMeta = (
         return acc;
       }, 0);
 
-      // @todo rename percentOfLinesWithLabel before normalization
       labelCardinality.set(fieldName, {
         percentOfLinesWithLabel: countOfValues,
         active: false,
@@ -102,6 +100,9 @@ export const buildColumnsWithMeta = (
     if (pendingLabelState[fieldName]) {
       pendingLabelState[fieldName].active = true;
       pendingLabelState[fieldName].index = idx;
+    } else if (fieldName === LOG_LINE_BODY_FIELD_NAME && logsFrameFields?.bodyField?.name) {
+      pendingLabelState[logsFrameFields.bodyField?.name].active = true;
+      pendingLabelState[logsFrameFields.bodyField?.name].index = idx;
     } else {
       console.error(`Unknown field ${fieldName}`, { pendingLabelState, displayedFields });
     }
@@ -110,9 +111,11 @@ export const buildColumnsWithMeta = (
   // If nothing is selected, then select the default columns
   if (displayedFields.length === 0) {
     if (logsFrameFields?.bodyField?.name) {
+      pendingLabelState[logsFrameFields.bodyField.name].index = 1;
       pendingLabelState[logsFrameFields.bodyField.name].active = true;
     }
     if (logsFrameFields?.timeField?.name) {
+      pendingLabelState[logsFrameFields.timeField.name].index = 0;
       pendingLabelState[logsFrameFields.timeField.name].active = true;
     }
   }

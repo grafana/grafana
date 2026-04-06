@@ -1,20 +1,20 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data';
+import { type DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data';
 import { defaultDashboard, FieldColorModeId } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultQueryVariableSpec,
   defaultDataQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { PanelModel } from '../../../dashboard/state/PanelModel';
-import { LibraryElementDTO } from '../../../library-panels/types';
-import { DashboardJson, DataSourceInput, ImportDashboardDTO, InputType } from '../../types';
+import { type LibraryElementDTO } from '../../../library-panels/types';
+import { type DashboardJson, type DataSourceInput, type ImportDashboardDTO, InputType } from '../../types';
 import { getLibraryPanelInputs } from '../utils/inputs';
 import { validateDashboardJson } from '../utils/validation';
 

@@ -1,19 +1,26 @@
-import { AnnotationQuery, getDataSourceRef, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
+import {
+  type AnnotationQuery,
+  getDataSourceRef,
+  type NavModel,
+  type NavModelItem,
+  PageLayoutType,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
-import { DashboardScene } from '../scene/DashboardScene';
+import { NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { AnnotationSettingsEdit, newAnnotationName } from './annotations/AnnotationSettingsEdit';
+import { AnnotationSettingsEdit } from './annotations/AnnotationSettingsEdit';
 import { AnnotationSettingsList } from './annotations/AnnotationSettingsList';
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export enum MoveDirection {
   UP = -1,
@@ -66,7 +73,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
   public onNew = async () => {
     const newAnnotationQuery: AnnotationQuery = {
-      name: newAnnotationName,
+      name: NEW_ANNOTATION_NAME,
       enable: true,
       datasource: this.getDataSourceRefForAnnotation(),
       iconColor: 'red',

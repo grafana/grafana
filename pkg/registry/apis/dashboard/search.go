@@ -20,7 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -29,7 +29,6 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -44,10 +43,9 @@ type SearchHandler struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher, features)
+func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
 	return &SearchHandler{
-		client:   searchClient,
+		client:   resourceClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
 		tracer:   tracer,
 		features: features,
@@ -55,8 +53,8 @@ func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboa
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
-	sortableFields := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SortableFields"].Schema
+	searchResults := defs[dashboardv0alpha1.SearchResults{}.OpenAPIModelName()].Schema
+	sortableFields := defs[dashboardv0alpha1.SortableFields{}.OpenAPIModelName()].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -212,26 +210,35 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "ownerReference", // singular
 										In:          "query",
-										Description: "filter by owner reference in the format {Group}/{Kind}/{Name}",
+										Description: "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
 										Required:    false,
-										Schema:      spec.StringProperty(),
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
 										Examples: map[string]*spec3.Example{
 											"": {
 												ExampleProps: spec3.ExampleProps{},
 											},
 											"team": {
 												ExampleProps: spec3.ExampleProps{
-													Summary: "Team owner reference",
-													Value:   "iam.grafana.app/Team/xyz",
+													Summary: "Owner references of team xyz or abc",
+													Value:   []string{"iam.grafana.app/Team/xyz", "iam.grafana.app/Team/abc"},
 												},
 											},
 											"user": {
 												ExampleProps: spec3.ExampleProps{
 													Summary: "User owner reference",
-													Value:   "iam.grafana.app/User/abc",
+													Value:   []string{"iam.grafana.app/User/abc"},
 												},
 											},
 										},
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "createdBy",
+										In:          "query",
+										Description: "filter by the user who created the resource (format: user:<uid>)",
+										Required:    false,
+										Schema:      spec.StringProperty(),
 									},
 								},
 								{
@@ -562,6 +569,14 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 			Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
 			Operator: operator,
 			Values:   vals,
+		})
+	}
+
+	if v := queryParams.Get("createdBy"); v != "" {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_CREATED_BY,
+			Operator: "=",
+			Values:   []string{v},
 		})
 	}
 

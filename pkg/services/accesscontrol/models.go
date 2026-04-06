@@ -209,9 +209,10 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 
-	Kind       string `json:"-"`
-	Attribute  string `json:"-"`
-	Identifier string `json:"-"`
+	Kind           string `json:"-"`
+	Attribute      string `json:"-"`
+	Identifier     string `json:"-"`
+	DatasourceType string `json:"-" xorm:"datasource_type"`
 
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
@@ -235,6 +236,12 @@ type GetUserPermissionsQuery struct {
 	Roles        []string
 	TeamIDs      []int64
 	RolePrefixes []string
+	// ExcludeRedundantManagedPermissions filters out individual dashboard/folder action permissions
+	// from managed roles when action sets are enabled. These permissions are redundant because
+	// ExpandActionSets expands action set permissions (e.g. dashboards:view) into the individual
+	// actions (e.g. dashboards:read) in memory. Excluding them from the SQL query significantly
+	// reduces the number of rows loaded for large installations.
+	ExcludeRedundantManagedPermissions bool
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -443,6 +450,16 @@ const (
 	// Alerting Notification actions (legacy)
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
+	// ActionAlertingNotificationsConfigHistoryRead gates read access to the raw Alertmanager config blob
+	// (GET /config/api/v1/alerts) and config history (GET /config/history).
+	// Restricted to admin-only in v13; endpoints will be removed in v14.
+	ActionAlertingNotificationsConfigHistoryRead = "alert.notifications.config-history:read"
+	// ActionAlertingNotificationsConfigHistoryWrite gates write access to config history
+	// (POST /config/history/{id}/_activate).
+	// Restricted to admin-only in v13; endpoint will be removed in v14.
+	ActionAlertingNotificationsConfigHistoryWrite = "alert.notifications.config-history:write"
+	// ActionAlertingNotificationSystemStatus gates access to alertmanager status API
+	ActionAlertingNotificationSystemStatus = "alert.notifications.system-status:read"
 
 	// Alerting notifications template actions
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
@@ -454,6 +471,11 @@ const (
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
 	ActionAlertingNotificationsTimeIntervalsWrite  = "alert.notifications.time-intervals:write"
 	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"
+
+	// Alerting notifications inhibition rules actions
+	ActionAlertingNotificationsInhibitionRulesRead   = "alert.notifications.inhibition-rules:read"
+	ActionAlertingNotificationsInhibitionRulesWrite  = "alert.notifications.inhibition-rules:write"
+	ActionAlertingNotificationsInhibitionRulesDelete = "alert.notifications.inhibition-rules:delete"
 
 	// Alerting receiver actions
 	ActionAlertingReceiversList             = "alert.notifications.receivers:list"
@@ -468,9 +490,20 @@ const (
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
-	// Alerting routes policies actions
+	// Alerting routes policies actions (legacy, unscoped - kept for backward compatibility)
 	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
 	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
+
+	AlertingNotificationsApiGroup = "notifications.alerting.grafana.app"
+	AlertingRoutesResource        = "routingtrees"
+	AlertingRoutesKind            = AlertingNotificationsApiGroup + "/" + AlertingRoutesResource
+	// Alerting managed routes actions (new, scoped per-resource)
+	ActionAlertingManagedRoutesRead      = AlertingRoutesKind + ":get"
+	ActionAlertingManagedRoutesWrite     = AlertingRoutesKind + ":update"
+	ActionAlertingManagedRoutesCreate    = AlertingRoutesKind + ":create"
+	ActionAlertingManagedRoutesDelete    = AlertingRoutesKind + ":delete"
+	ActionAlertingRoutesPermissionsRead  = AlertingRoutesKind + ":set_permissions"
+	ActionAlertingRoutesPermissionsWrite = AlertingRoutesKind + ":get_permissions"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
@@ -508,6 +541,9 @@ const (
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"
+
+	// Live (Grafana Live) actions
+	ActionLivePush = "live:push"
 )
 
 var (

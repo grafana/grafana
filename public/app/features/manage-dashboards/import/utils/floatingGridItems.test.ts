@@ -1,12 +1,12 @@
 import {
-  GridLayoutKind,
-  RowsLayoutKind,
-  TabsLayoutKind,
+  type GridLayoutKind,
+  type RowsLayoutKind,
+  type TabsLayoutKind,
   defaultGridLayoutKind,
   defaultRowsLayoutKind,
   defaultTabsLayoutKind,
   defaultAutoGridLayoutKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { truncateFloatGridItems } from './floatingGridItems';
 

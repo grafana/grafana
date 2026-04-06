@@ -1,8 +1,8 @@
-import { Playlist } from '../../api/clients/playlist/v0alpha1';
+import { type Playlist } from '../../api/clients/playlist/v1';
 import { getGrafanaSearcher } from '../search/service/searcher';
-import { SearchQuery } from '../search/service/types';
+import { type SearchQuery } from '../search/service/types';
 
-import { PlaylistItemUI } from './types';
+import { type PlaylistItemUI } from './types';
 
 /** Returns a copy with the dashboards loaded */
 export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistItemUI[]> {
@@ -48,7 +48,7 @@ export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistI
 
 export function getDefaultPlaylist(): Playlist {
   return {
-    apiVersion: 'playlist.grafana.app/v0alpha1',
+    apiVersion: 'playlist.grafana.app/v1',
     kind: 'Playlist',
     spec: {
       items: [],
