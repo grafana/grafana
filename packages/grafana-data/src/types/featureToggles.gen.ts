@@ -1771,7 +1771,7 @@ export interface FeatureToggles {
   */
   enableColorblindSafePanelOptions?: boolean;
   /**
-  * Enables cache config data migration to migrate cache configs to unified storage
+  * Enables cache configs data migration to unified storage
   * @default false
   */
   cacheConfigUnifiedStorageMigration?: boolean;

@@ -927,6 +927,6 @@ const (
 	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
 
 	// FlagCacheConfigUnifiedStorageMigration
-	// Enables cache config data migration to migrate cache configs to unified storage
+	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
 )
