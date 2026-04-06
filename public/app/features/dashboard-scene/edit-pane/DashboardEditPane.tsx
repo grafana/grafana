@@ -293,16 +293,25 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     });
   }
 
-  public getSelection(): SceneObject | undefined {
+  /**
+   * Look-up selected object by key. If key is not provided, will return object based on current selection.
+   * @param key of the object
+   * @returns
+   */
+  public getSelectedObject(key?: string): SceneObject | null {
+    if (key) {
+      return sceneGraph.findObject(this, (obj) => obj.state.key === key);
+    }
+
     if (this.state.openPaneTempHack) {
       return this.state.openPaneTempHack;
     }
 
     if (this.state.selectionContext.selected.length === 0) {
-      return undefined;
+      return null;
     }
 
-    return sceneGraph.findByKey(this, this.state.selectionContext.selected[0].id);
+    return sceneGraph.findObject(this, (obj) => obj.state.key === this.state.selectionContext.selected[0].id);
   }
 
   /**
@@ -318,7 +327,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     // Unless the user explicitly closes pane
     if (this.state.isDocked && !force) {
       const dashboard = getDashboardSceneFor(this);
-      if (this.getSelection() !== dashboard) {
+      if (this.getSelectedObject() !== dashboard) {
         this.selectObject(dashboard);
       }
       return;

@@ -146,7 +146,7 @@ describe('VariableEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
+    expect(dashboard.state.editPane.getSelectedObject()).toBeInstanceOf(VariableTypeChange);
     expect(screen.getByText('Choose variable type')).toBeInTheDocument();
   });
 });
@@ -154,7 +154,7 @@ describe('VariableEditableElement', () => {
 function VariableEditPaneHarness({ dashboard }: { dashboard: DashboardScene }) {
   const editPane = dashboard.state.editPane;
   const { selectionContext, isNewElement } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
-  const selectedObject = editPane.getSelection();
+  const selectedObject = editPane.getSelectedObject();
   const editableElement = useMemo(
     () => getEditableElementForSelection(editPane, selectionContext.selected),
     [editPane, selectionContext.selected]

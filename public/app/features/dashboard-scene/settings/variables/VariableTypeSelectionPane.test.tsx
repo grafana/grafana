@@ -122,7 +122,7 @@ describe('VariableTypeChangeEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
+    expect(dashboard.state.editPane.getSelectedObject()).toBeInstanceOf(VariableTypeChange);
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('constant'))).getByRole(
@@ -137,7 +137,7 @@ describe('VariableTypeChangeEditableElement', () => {
     expect(updatedVariable.state.type).toBe('constant');
     expect(updatedVariable.state.name).toBe('service');
     expect(updatedVariable.state.label).toBe('Service');
-    expect(dashboard.state.editPane.getSelection()).toBe(updatedVariable);
+    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
     expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableNameInput)).toHaveValue(
       'service'
     );
@@ -154,7 +154,7 @@ describe('VariableTypeChangeEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
+    expect(dashboard.state.editPane.getSelectedObject()).toBeInstanceOf(VariableTypeChange);
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('textbox'))).getByRole(
@@ -170,7 +170,7 @@ describe('VariableTypeChangeEditableElement', () => {
     expect(updatedVariable.state.name).toBe('shared');
     expect(updatedVariable.state.label).toBe('Section variable');
     expect(dashboardVariable.state.name).toBe('shared');
-    expect(dashboard.state.editPane.getSelection()).toBe(updatedVariable);
+    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
   });
 });
 
@@ -220,7 +220,7 @@ function VariableEditPaneHarness({ dashboard }: { dashboard: DashboardScene }) {
   const { selectionContext, isNewElement, openPaneTempHack } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
-  const selectedObject = editPane.getSelection();
+  const selectedObject = editPane.getSelectedObject();
   const editableElement = useMemo(
     () => getEditableElementForSelection(editPane, selectionContext.selected, openPaneTempHack),
     [editPane, selectionContext.selected, openPaneTempHack]

@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import {
   dataLayers,
   LocalValueVariable,
-  sceneGraph,
   SceneGridRow,
   type SceneObject,
   type SceneVariable,
@@ -56,14 +55,14 @@ export function getEditableElementForSelection(
   }
 
   if (selected.length === 1) {
-    const obj = sceneGraph.findByKey(editPane, selected[0].id);
+    const obj = editPane.getSelectedObject(selected[0].id);
     if (obj) {
       return getEditableElementFor(obj);
     }
   }
 
   if (selected.length > 1) {
-    const objects = selected.map((s) => sceneGraph.findByKey(editPane, s.id));
+    const objects = selected.map((s) => editPane.getSelectedObject(s.id));
     const elements: BulkActionElement[] = objects
       .map((obj) => getEditableElementFor(obj))
       .filter((e): e is BulkActionElement => Boolean(e) && isBulkActionElement(e!));
@@ -81,7 +80,7 @@ export function getEditableElementForSelection(
   return undefined;
 }
 
-export function getEditableElementFor(sceneObj: SceneObject | undefined): EditableDashboardElement | undefined {
+export function getEditableElementFor(sceneObj: SceneObject | undefined | null): EditableDashboardElement | undefined {
   if (!sceneObj) {
     return undefined;
   }

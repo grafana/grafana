@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -42,7 +42,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
-  const selectedObject = editPane.getSelection();
+  const selectedObject = editPane.getSelectedObject();
   // the layout element that was selected when opening the 'add' pane
   // used when adding new panel from the sidebar
   const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject>(dashboard);
@@ -65,6 +65,16 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     },
     [sidebarContext]
   );
+
+  /**
+   * Clear selection if the object no longer exists
+   */
+  useEffect(() => {
+    if (!selectedObject && selectionContext.selected.length > 0) {
+      editPane.clearSelection();
+      return;
+    }
+  }, [selectedObject, selectionContext.selected, editPane]);
 
   return (
     <>
