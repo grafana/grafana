@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,6 +36,18 @@ var teamGVR = schema.GroupVersionResource{
 	Resource: "teams",
 }
 
+var teamBindingGVR = schema.GroupVersionResource{
+	Group:    iamv0alpha1.APIGroup,
+	Version:  iamv0alpha1.APIVersion,
+	Resource: "teambindings",
+}
+
+var userGVR = schema.GroupVersionResource{
+	Group:    iamv0alpha1.APIGroup,
+	Version:  iamv0alpha1.APIVersion,
+	Resource: "users",
+}
+
 type TeamK8sService struct {
 	logger          log.Logger
 	cfg             *setting.Cfg
@@ -55,7 +68,7 @@ func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apise
 	}
 }
 
-func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+func (s *TeamK8sService) getDynamicClient(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
 	if s.configProvider == nil {
 		return nil, errors.New("config provider not initialized")
 	}
@@ -70,7 +83,105 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 		return nil, err
 	}
 
-	return dyn.Resource(teamGVR).Namespace(namespace), nil
+	return dyn.Resource(gvr).Namespace(namespace), nil
+}
+
+func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+	return s.getDynamicClient(ctx, namespace, teamGVR)
+}
+
+// resolveTeamUID gets team UID from context or falls back to legacy service for ID→UID resolution.
+func (s *TeamK8sService) resolveTeamUID(ctx context.Context, teamID int64, orgID int64) (string, error) {
+	if uid, ok := ctx.Value(team.TeamUIDCtxKey{}).(string); ok && uid != "" {
+		return uid, nil
+	}
+	legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		ID:    teamID,
+		OrgID: orgID,
+	})
+	if err != nil {
+		return "", err
+	}
+	return legacyTeam.UID, nil
+}
+
+// resolveUserUID finds a user's K8s UID by their deprecated internal ID label.
+func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, userID int64) (string, error) {
+	client, err := s.getDynamicClient(ctx, namespace, userGVR)
+	if err != nil {
+		return "", err
+	}
+
+	labelSelector := fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, userID) // nolint:staticcheck
+	result, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return "", err
+	}
+
+	if len(result.Items) == 0 {
+		return "", fmt.Errorf("user with ID %d not found", userID)
+	}
+
+	return result.Items[0].GetName(), nil
+}
+
+// getUserByUID fetches a K8s user resource by UID and returns identity details.
+func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace string, userUID string) (*iamv0alpha1.User, error) {
+	client, err := s.getDynamicClient(ctx, namespace, userGVR)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := client.Get(ctx, userUID, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var user iamv0alpha1.User
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &user); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// listTeamBindings lists TeamBinding resources with optional field selectors.
+func (s *TeamK8sService) listTeamBindings(ctx context.Context, namespace string, fieldSelector string) ([]iamv0alpha1.TeamBinding, error) {
+	client, err := s.getDynamicClient(ctx, namespace, teamBindingGVR)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := client.List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	if err != nil {
+		return nil, err
+	}
+
+	bindings := make([]iamv0alpha1.TeamBinding, 0, len(result.Items))
+	for _, item := range result.Items {
+		var binding iamv0alpha1.TeamBinding
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &binding); err != nil {
+			return nil, err
+		}
+		bindings = append(bindings, binding)
+	}
+	return bindings, nil
+}
+
+func permissionFromBinding(p iamv0alpha1.TeamBindingTeamPermission) team.PermissionType {
+	if p == iamv0alpha1.TeamBindingTeamPermissionAdmin {
+		return team.PermissionTypeAdmin
+	}
+	return team.PermissionTypeMember
+}
+
+func getResourceID(obj metav1.ObjectMeta) int64 {
+	if idStr, ok := obj.Labels[utils.LabelKeyDeprecatedInternalID]; ok { // nolint:staticcheck
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err == nil {
+			return id
+		}
+	}
+	return 0
 }
 
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
@@ -120,7 +231,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 	}
 
 	return team.Team{
-		ID:            getTeamID(&created),
+		ID:            getResourceID(created.ObjectMeta),
 		UID:           created.Name,
 		OrgID:         orgID,
 		Name:          created.Spec.Title,
@@ -181,7 +292,32 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 }
 
 func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	return errors.New("not implemented")
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	orgID := requester.GetOrgID()
+
+	uid, err := s.resolveTeamUID(ctx, cmd.ID, orgID)
+	if err != nil {
+		return err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	err = client.Delete(ctx, uid, metav1.DeleteOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return team.ErrTeamNotFound
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, error) {
@@ -322,7 +458,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 	}
 
 	return &team.TeamDTO{
-		ID:            getTeamID(&fetched),
+		ID:            getResourceID(fetched.ObjectMeta),
 		UID:           fetched.Name,
 		OrgID:         orgID,
 		Name:          fetched.Spec.Title,
@@ -333,34 +469,255 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 }
 
 func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
-	return nil, errors.New("not implemented")
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	orgID := requester.GetOrgID()
+	namespace := s.namespaceMapper(orgID)
+
+	userUID, err := s.resolveUserUID(ctx, namespace, query.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	bindings, err := s.listTeamBindings(ctx, namespace, fmt.Sprintf("spec.subject.name=%s", userUID))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(bindings) == 0 {
+		return []*team.TeamDTO{}, nil
+	}
+
+	teamUIDs := make([]string, 0, len(bindings))
+	for _, b := range bindings {
+		teamUIDs = append(teamUIDs, b.Spec.TeamRef.Name)
+	}
+
+	searchResult, err := s.SearchTeams(ctx, &team.SearchTeamsQuery{
+		OrgID: orgID,
+		UIDs:  teamUIDs,
+		Limit: len(teamUIDs),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return searchResult.Teams, nil
 }
 
 func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
-	return nil, errors.New("not implemented")
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	orgID := requester.GetOrgID()
+	namespace := s.namespaceMapper(orgID)
+
+	userUID, err := s.resolveUserUID(ctx, namespace, query.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	bindings, err := s.listTeamBindings(ctx, namespace, fmt.Sprintf("spec.subject.name=%s", userUID))
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]int64, 0, len(bindings))
+	for _, b := range bindings {
+		teamUID := b.Spec.TeamRef.Name
+		client, err := s.getClient(ctx, namespace)
+		if err != nil {
+			return nil, err
+		}
+		result, err := client.Get(ctx, teamUID, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+			return nil, err
+		}
+		id := getResourceID(metav1.ObjectMeta{Labels: result.GetLabels()})
+		if id != 0 {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids, nil
 }
 
 func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	return false, errors.New("not implemented")
+	namespace := s.namespaceMapper(orgId)
+
+	teamUID, err := s.resolveTeamUID(ctx, teamId, orgId)
+	if err != nil {
+		return false, err
+	}
+
+	userUID, err := s.resolveUserUID(ctx, namespace, userId)
+	if err != nil {
+		return false, err
+	}
+
+	fieldSelector := fmt.Sprintf("spec.teamRef.name=%s,spec.subject.name=%s", teamUID, userUID)
+	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
+	if err != nil {
+		return false, err
+	}
+
+	return len(bindings) > 0, nil
 }
 
 func (s *TeamK8sService) RemoveUsersMemberships(ctx context.Context, userID int64) error {
-	return errors.New("not implemented")
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	orgID := requester.GetOrgID()
+	namespace := s.namespaceMapper(orgID)
+
+	userUID, err := s.resolveUserUID(ctx, namespace, userID)
+	if err != nil {
+		return err
+	}
+
+	bindings, err := s.listTeamBindings(ctx, namespace, fmt.Sprintf("spec.subject.name=%s", userUID))
+	if err != nil {
+		return err
+	}
+
+	bindingClient, err := s.getDynamicClient(ctx, namespace, teamBindingGVR)
+	if err != nil {
+		return err
+	}
+
+	for _, b := range bindings {
+		if err := bindingClient.Delete(ctx, b.Name, metav1.DeleteOptions{}); err != nil {
+			if !apierrors.IsNotFound(err) {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
-	return nil, errors.New("not implemented")
+	namespace := s.namespaceMapper(orgID)
+
+	userUID, err := s.resolveUserUID(ctx, namespace, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	fieldSelector := fmt.Sprintf("spec.subject.name=%s", userUID)
+	if external {
+		fieldSelector += ",spec.external=true"
+	}
+
+	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch user details once since all bindings are for the same user
+	var k8sUser *iamv0alpha1.User
+	if len(bindings) > 0 {
+		k8sUser, err = s.getUserByUID(ctx, namespace, userUID)
+		if err != nil {
+			s.logger.Warn("Failed to fetch user details for team membership", "userUID", userUID, "error", err)
+		}
+	}
+
+	members := make([]*team.TeamMemberDTO, 0, len(bindings))
+	for _, b := range bindings {
+		dto := &team.TeamMemberDTO{
+			OrgID:      orgID,
+			TeamUID:    b.Spec.TeamRef.Name,
+			UserID:     userID,
+			UserUID:    userUID,
+			External:   b.Spec.External,
+			Permission: permissionFromBinding(b.Spec.Permission),
+		}
+
+		if k8sUser != nil {
+			dto.Email = k8sUser.Spec.Email
+			dto.Name = k8sUser.Spec.Title
+			dto.Login = k8sUser.Spec.Login
+			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, k8sUser.Spec.Email, k8sUser.Spec.Login)
+		}
+
+		// Resolve team ID from the team resource
+		teamClient, err := s.getClient(ctx, namespace)
+		if err == nil {
+			if teamResult, err := teamClient.Get(ctx, b.Spec.TeamRef.Name, metav1.GetOptions{}); err == nil {
+				dto.TeamID = getResourceID(metav1.ObjectMeta{Labels: teamResult.GetLabels()})
+			}
+		}
+
+		members = append(members, dto)
+	}
+
+	return members, nil
 }
 
 func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
-	return nil, errors.New("not implemented")
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	orgID := requester.GetOrgID()
+	namespace := s.namespaceMapper(orgID)
+
+	teamUID := query.TeamUID
+	if teamUID == "" {
+		teamUID, err = s.resolveTeamUID(ctx, query.TeamID, orgID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	fieldSelector := fmt.Sprintf("spec.teamRef.name=%s", teamUID)
+	if query.External {
+		fieldSelector += ",spec.external=true"
+	}
+
+	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	members := make([]*team.TeamMemberDTO, 0, len(bindings))
+	for _, b := range bindings {
+		userUID := b.Spec.Subject.Name
+
+		dto := &team.TeamMemberDTO{
+			OrgID:      orgID,
+			TeamID:     query.TeamID,
+			TeamUID:    teamUID,
+			UserUID:    userUID,
+			External:   b.Spec.External,
+			Permission: permissionFromBinding(b.Spec.Permission),
+		}
+
+		// Enrich with user details
+		k8sUser, err := s.getUserByUID(ctx, namespace, userUID)
+		if err == nil {
+			dto.UserID = getResourceID(k8sUser.ObjectMeta)
+			dto.Email = k8sUser.Spec.Email
+			dto.Name = k8sUser.Spec.Title
+			dto.Login = k8sUser.Spec.Login
+			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, k8sUser.Spec.Email, k8sUser.Spec.Login)
+		} else {
+			s.logger.Warn("Failed to fetch user details for team member", "userUID", userUID, "error", err)
+		}
+
+		members = append(members, dto)
+	}
+
+	return members, nil
 }
 
 func (s *TeamK8sService) RegisterDelete(query string) {}
-
-func getTeamID(team *iamv0alpha1.Team) int64 {
-	if meta, err := utils.MetaAccessor(team); err == nil {
-		return meta.GetDeprecatedInternalID() // nolint:staticcheck
-	}
-	return 0
-}
