@@ -117,6 +117,10 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 }
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		return s.k8sService.UpdateLastSeenAt(ctx, cmd)
+	}
+
 	return s.legacyService.UpdateLastSeenAt(ctx, cmd)
 }
 

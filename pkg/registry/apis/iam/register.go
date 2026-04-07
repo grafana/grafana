@@ -563,7 +563,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 			b.features,
 		)
 
-		storage[userResource.StoragePath("status")] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
+		unifiedStatus := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
+		if b.userLegacyStore != nil {
+			storage[userResource.StoragePath("status")] = user.NewStatusDualWriter(b.store, b.userLegacyStore, unifiedStatus)
+		} else {
+			storage[userResource.StoragePath("status")] = unifiedStatus
+		}
 		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamBindingSearchClient, b.tracing, b.features)
 	}
 

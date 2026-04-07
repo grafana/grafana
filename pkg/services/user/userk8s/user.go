@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -352,7 +353,79 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 }
 
 func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
-	return errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.updateLastSeenAt", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	namespace := s.namespaceMapper(cmd.OrgID)
+	span.SetAttributes(attribute.Int64("orgID", cmd.OrgID))
+
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(cmd.UserID, 10)
+	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		ctxLogger.Error("k8s user list failed", "namespace", namespace, "userID", cmd.UserID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	if len(list.Items) == 0 {
+		span.RecordError(user.ErrUserNotFound)
+		span.SetStatus(codes.Error, user.ErrUserNotFound.Error())
+		return user.ErrUserNotFound
+	}
+
+	if len(list.Items) > 1 {
+		ctxLogger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", cmd.UserID, "count", len(list.Items))
+		err := errors.New("multiple users found")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	var existing iamv0alpha1.User
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, &existing); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	if existing.Status.LastSeenAt != 0 {
+		lastSeen := time.UnixMilli(existing.Status.LastSeenAt)
+		if time.Since(lastSeen) <= s.config.UserLastSeenUpdateInterval {
+			return user.ErrLastSeenUpToDate
+		}
+	}
+
+	existing.Status.LastSeenAt = time.Now().UnixMilli()
+
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&existing)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	_, err = client.UpdateStatus(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.UpdateOptions{})
+	if err != nil {
+		ctxLogger.Error("k8s user update status failed", "namespace", namespace, "orgID", cmd.OrgID, "userID", cmd.UserID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
@@ -414,5 +487,6 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		IsProvisioned: u.Spec.Provisioned,
 		Created:       u.CreationTimestamp.Time,
 		Updated:       u.GetUpdateTimestamp(),
+		LastSeenAt:    time.UnixMilli(u.Status.LastSeenAt),
 	}
 }

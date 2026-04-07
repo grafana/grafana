@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -938,6 +939,158 @@ func TestUserK8sService_Update(t *testing.T) {
 
 			if tt.expectErr {
 				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
+	makeListResponse := func(userID int64, lastSeenAtMs int64) func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch {
+			case r.Method == http.MethodGet:
+				resp := map[string]any{
+					"apiVersion": v0alpha1.GroupVersion.Identifier(),
+					"kind":       "UserList",
+					"items": []any{
+						map[string]any{
+							"apiVersion": v0alpha1.GroupVersion.Identifier(),
+							"kind":       "User",
+							"metadata": map[string]any{
+								"name":      "some-uid",
+								"namespace": "org-1",
+								"labels":    map[string]any{"grafana.app/deprecatedInternalID": strconv.FormatInt(userID, 10)},
+							},
+							"spec":   map[string]any{"login": "jdoe"},
+							"status": map[string]any{"lastSeenAt": lastSeenAtMs},
+						},
+					},
+				}
+				_ = json.NewEncoder(w).Encode(resp)
+			case r.Method == http.MethodPut:
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"apiVersion": v0alpha1.GroupVersion.Identifier(),
+					"kind":       "User",
+					"metadata":   map[string]any{"name": "some-uid", "namespace": "org-1"},
+					"spec":       map[string]any{"login": "jdoe"},
+					"status":     map[string]any{"lastSeenAt": time.Now().UnixMilli()},
+				})
+			}
+		}
+	}
+
+	tests := []struct {
+		name         string
+		cmd          *user.UpdateUserLastSeenAtCommand
+		cfg          *setting.Cfg
+		noReqContext bool
+		nilProvider  bool
+		serverFn     func(http.ResponseWriter, *http.Request)
+		expectErr    bool
+		expectErrIs  error
+	}{
+		{
+			name:     "successfully updates last seen at",
+			cmd:      &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1},
+			cfg:      &setting.Cfg{UserLastSeenUpdateInterval: 5 * time.Minute},
+			serverFn: makeListResponse(42, 0),
+		},
+		{
+			name:        "skips update when last seen is within the interval",
+			cmd:         &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1},
+			cfg:         &setting.Cfg{UserLastSeenUpdateInterval: 1 * time.Hour},
+			serverFn:    makeListResponse(42, time.Now().UnixMilli()), // just seen
+			expectErr:   true,
+			expectErrIs: user.ErrLastSeenUpToDate,
+		},
+		{
+			name: "returns ErrUserNotFound when no user matches the label selector",
+			cmd:  &user.UpdateUserLastSeenAtCommand{UserID: 99, OrgID: 1},
+			cfg:  &setting.Cfg{UserLastSeenUpdateInterval: 5 * time.Minute},
+			serverFn: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"apiVersion": v0alpha1.GroupVersion.Identifier(),
+					"kind":       "UserList",
+					"items":      []any{},
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserNotFound,
+		},
+		{
+			name: "returns error when multiple users found with same internal ID",
+			cmd:  &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1},
+			cfg:  &setting.Cfg{UserLastSeenUpdateInterval: 5 * time.Minute},
+			serverFn: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				item := map[string]any{
+					"apiVersion": v0alpha1.GroupVersion.Identifier(),
+					"kind":       "User",
+					"metadata": map[string]any{
+						"name":      "uid-1",
+						"namespace": "org-1",
+						"labels":    map[string]any{"grafana.app/deprecatedInternalID": "42"},
+					},
+					"spec":   map[string]any{"login": "user1"},
+					"status": map[string]any{"lastSeenAt": 0},
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"apiVersion": v0alpha1.GroupVersion.Identifier(),
+					"kind":       "UserList",
+					"items":      []any{item, item},
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name: "returns error when k8s list fails",
+			cmd:  &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1},
+			cfg:  &setting.Cfg{UserLastSeenUpdateInterval: 5 * time.Minute},
+			serverFn: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Code:     http.StatusInternalServerError,
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name:         "returns error when no request context",
+			cmd:          &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1},
+			noReqContext: true,
+			expectErr:    true,
+		},
+		{
+			name:        "returns error when config provider not initialized",
+			cmd:         &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1},
+			nilProvider: true,
+			expectErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				noReqContext:   tt.noReqContext,
+				nilProvider:    tt.nilProvider,
+				cfg:            tt.cfg,
+				serverResponse: tt.serverFn,
+			})
+
+			err := svc.UpdateLastSeenAt(ctx, tt.cmd)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				if tt.expectErrIs != nil {
+					require.ErrorIs(t, err, tt.expectErrIs)
+				}
 				return
 			}
 			require.NoError(t, err)

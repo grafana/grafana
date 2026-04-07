@@ -139,6 +139,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	updateUserLastSeenAt := func(uid string, lastSeenAt time.Time) sqltemplate.SQLTemplate {
+		v := newUpdateUserLastSeenAt(nodb, uid, lastSeenAt)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	updateOrgUser := func(cmd *UpdateOrgUserCommand) sqltemplate.SQLTemplate {
 		v := newUpdateOrgUser(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -635,6 +641,13 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlUpdateUserLastSeenAtTemplate: {
+				{
+					Name: "update_user_last_seen_at",
+					Data: updateUserLastSeenAt("user-1", time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
+				},
+			},
+
 			sqlUpdateOrgUserTemplate: {
 				{
 					Name: "update_org_user_basic",
