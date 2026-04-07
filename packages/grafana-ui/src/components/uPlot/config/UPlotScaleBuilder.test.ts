@@ -32,6 +32,12 @@ describe('UPlotScaleBuilder', () => {
       expect(result[1]).toBeCloseTo(0.0000001, 7);
     });
 
+    it('does not round range deltas +/- 0.000001', () => {
+      const result = rangeFn(mockUPlot(scaleKey, 1), 0.999999, 1.000001, scaleKey);
+      expect(result[0]).toBeCloseTo(0.99999, 4);
+      expect(result[1]).toBeCloseTo(1.000001, 4);
+    });
+
     it('rounds range deltas less than 0.0000001', () => {
       const result = rangeFn(mockUPlot(scaleKey, 1), 0.9999999, 1, scaleKey);
       expect(result).toEqual([0, 2]);
