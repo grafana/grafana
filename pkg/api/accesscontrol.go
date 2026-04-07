@@ -6,7 +6,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -530,7 +529,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create snapshots",
 			Group:       "Snapshots",
 			Permissions: []ac.Permission{
-				{Action: dashboardsnapshots.ActionSnapshotsCreate},
+				{Action: dashboards.ActionSnapshotsCreate},
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
@@ -543,7 +542,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Delete snapshots",
 			Group:       "Snapshots",
 			Permissions: []ac.Permission{
-				{Action: dashboardsnapshots.ActionSnapshotsDelete},
+				{Action: dashboards.ActionSnapshotsDelete},
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
@@ -556,7 +555,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Read snapshots",
 			Group:       "Snapshots",
 			Permissions: []ac.Permission{
-				{Action: dashboardsnapshots.ActionSnapshotsRead},
+				{Action: dashboards.ActionSnapshotsRead},
 			},
 		},
 		Grants: []string{string(org.RoleViewer)},

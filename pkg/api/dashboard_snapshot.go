@@ -90,7 +90,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 	}
 
 	// Regular mode: check permissions
-	evaluator := ac.EvalAll(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsCreate), ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid"))))
+	evaluator := ac.EvalAll(ac.EvalPermission(dashboards.ActionSnapshotsCreate), ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid"))))
 	if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
 		c.JsonApiErr(http.StatusForbidden, "forbidden", err)
 		return
