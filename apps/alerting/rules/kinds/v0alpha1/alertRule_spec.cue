@@ -35,10 +35,12 @@ AlertRuleSpec: #RuleSpec & {
 	repeatInterval?: #PromDuration
 	muteTimeIntervals?: [...#TimeIntervalRef]
 	activeTimeIntervals?: [...#TimeIntervalRef]
+	type: "ContactPoint"
 }
 
 #PolicyRouting: {
 	policy: string
+	type:   "Policy"
 }
 
 // TODO(@moustafab): this should be imported from the notifications package
