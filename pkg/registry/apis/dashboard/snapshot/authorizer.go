@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 // NewSnapshotAuthorizer returns an authorizer that maps k8s verbs to snapshot RBAC actions.
@@ -28,9 +28,9 @@ func NewSnapshotAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 				var action string
 				switch attr.GetSubresource() {
 				case "dashboard":
-					action = dashboardsnapshots.ActionSnapshotsRead
+					action = dashboards.ActionSnapshotsRead
 				case "deletekey":
-					action = dashboardsnapshots.ActionSnapshotsDelete
+					action = dashboards.ActionSnapshotsDelete
 				default:
 					return authorizer.DecisionDeny, "unsupported subresource", nil
 				}
@@ -45,11 +45,11 @@ func NewSnapshotAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 			var action string
 			switch attr.GetVerb() {
 			case "get", "list":
-				action = dashboardsnapshots.ActionSnapshotsRead
+				action = dashboards.ActionSnapshotsRead
 			case "create":
-				action = dashboardsnapshots.ActionSnapshotsCreate
+				action = dashboards.ActionSnapshotsCreate
 			case "delete":
-				action = dashboardsnapshots.ActionSnapshotsDelete
+				action = dashboards.ActionSnapshotsDelete
 			default:
 				return authorizer.DecisionDeny, "unsupported verb", nil
 			}
