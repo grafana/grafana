@@ -2801,17 +2801,23 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 const LabelPendingDelete = "cloud.grafana.com/pending-delete"
 
 // SetPendingDeleteLabel adds the pending-delete label to the named resource.
+// It retries on 409 Conflict to handle concurrent status updates from the controller.
 func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, name string) {
 	t.Helper()
-	obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
-	require.NoError(t, err)
-	labels := obj.GetLabels()
-	if labels == nil {
-		labels = make(map[string]string)
-	}
-	labels[LabelPendingDelete] = "true"
-	obj.SetLabels(labels)
-	_, err = resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+	err := RetryOnConflict(func() error {
+		obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		labels := obj.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		labels[LabelPendingDelete] = "true"
+		obj.SetLabels(labels)
+		_, err = resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+		return err
+	})
 	require.NoError(t, err, "setting the pending-delete label on %q should be allowed", name)
 }
 
