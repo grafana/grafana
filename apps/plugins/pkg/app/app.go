@@ -48,6 +48,7 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "plugins",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
+			InformerSupplier: simple.OptimizedInformerSupplier,
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
 					logger.Error("Child plugin informer failed", "error", err)
