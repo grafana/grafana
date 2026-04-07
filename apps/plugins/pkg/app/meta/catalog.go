@@ -156,4 +156,3 @@ func (p *CatalogProvider) findChildMeta(ctx context.Context, childID string, par
 	)
 	return nil, ErrMetaNotFound
 }
-
