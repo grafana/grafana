@@ -798,11 +798,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/VizLegend/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -1888,9 +1883,6 @@
     }
   },
   "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
     "@grafana/require-no-margin": {
       "count": 1
     },
@@ -1912,9 +1904,6 @@
     }
   },
   "public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
     "@grafana/require-no-margin": {
       "count": 1
     }
@@ -1937,19 +1926,9 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard/components/SaveDashboard/SaveDashboardButton.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 4
-    }
-  },
-  "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 3
     }
   },
   "public/app/features/dashboard/components/SaveDashboard/useDashboardSave.tsx": {
@@ -2038,9 +2017,6 @@
     }
   },
   "public/app/features/dashboard/containers/DashboardPage.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     },
@@ -2170,11 +2146,6 @@
   },
   "public/app/features/datasources/components/DataSourceTestingStatus.tsx": {
     "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/features/datasources/components/DataSourceTypeCard.tsx": {
-    "@grafana/no-aria-label-selectors": {
       "count": 1
     }
   },
@@ -2433,22 +2404,11 @@
     }
   },
   "public/app/features/inspector/InspectDataTab.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
-  "public/app/features/inspector/InspectStatsTab.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    }
-  },
   "public/app/features/inspector/QueryInspector.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 2
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     },
@@ -2537,9 +2497,6 @@
     }
   },
   "public/app/features/playlist/PlaylistForm.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 2
-    },
     "@grafana/require-no-margin": {
       "count": 4
     }
@@ -2631,9 +2588,6 @@
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
     "@grafana/no-gf-form": {
       "count": 1
     },
@@ -2647,20 +2601,12 @@
       "count": 1
     }
   },
-  "public/app/features/query/components/QueryEditorRowHeader.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    }
-  },
   "public/app/features/query/components/QueryEditorRows.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
   "public/app/features/query/components/QueryGroup.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 2
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -2921,16 +2867,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/editor/VariableEditorList.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 2
-    }
-  },
-  "public/app/features/variables/editor/VariableEditorListRow.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 4
-    }
-  },
   "public/app/features/variables/editor/getVariableQueryEditor.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -2969,11 +2905,6 @@
   },
   "public/app/features/variables/pickers/shared/VariableInput.tsx": {
     "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/features/variables/pickers/shared/VariableOptions.tsx": {
-    "@grafana/no-aria-label-selectors": {
       "count": 1
     }
   },

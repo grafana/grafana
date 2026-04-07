@@ -6,19 +6,14 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	"k8s.io/apimachinery/pkg/selection"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -357,13 +352,6 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.getChildrenFromApiServer")
 	defer span.End()
-	defer func(t time.Time) {
-		parent := q.UID
-		if q.UID != folder.SharedWithMeFolderUID {
-			parent = "folder"
-		}
-		s.metrics.foldersGetChildrenRequestsDuration.WithLabelValues(parent).Observe(time.Since(t).Seconds())
-	}(time.Now())
 
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
@@ -572,14 +560,6 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 		return nil, err
 	}
 
-	if cmd.NewTitle != nil {
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-
-		if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, folder.Updated, cmd.OrgID, cmd.UID); err != nil {
-			return nil, err
-		}
-	}
-
 	// always expose the dashboard store sequential ID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
@@ -729,43 +709,7 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to move folder: %w", err)
 	}
-
-	if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, f.Updated, cmd.OrgID, cmd.UID); err != nil {
-		return nil, err
-	}
-
 	return f, nil
-}
-
-func (s *Service) publishFolderFullPathUpdatedEventViaApiServer(ctx context.Context, timestamp time.Time, orgID int64, folderUID string) error {
-	ctx, span := s.tracer.Start(ctx, "folder.publishFolderFullPathUpdatedEventViaApiServer")
-	defer span.End()
-
-	descFolders, err := s.unifiedStore.GetDescendants(ctx, orgID, folderUID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
-		return err
-	}
-
-	uids := make([]string, 0, len(descFolders)+1)
-	uids = append(uids, folderUID)
-	for _, f := range descFolders {
-		uids = append(uids, f.UID)
-	}
-	span.AddEvent("found folder descendants", trace.WithAttributes(
-		attribute.Int64("folders", int64(len(uids))),
-	))
-
-	if err := s.bus.Publish(ctx, &events.FolderFullPathUpdated{
-		Timestamp: timestamp,
-		UIDs:      uids,
-		OrgID:     orgID,
-	}); err != nil {
-		s.log.ErrorContext(ctx, "Failed to publish FolderFullPathUpdated event", "folderUID", folderUID, "orgID", orgID, "descendantsUIDs", uids, "error", err)
-		return err
-	}
-
-	return nil
 }
 
 func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {

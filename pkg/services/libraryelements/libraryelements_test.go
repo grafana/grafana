@@ -53,10 +53,12 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 1)
-			require.NoError(t, err)
+			sc.defaultGetDashByLP.Unset()
+			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
+				{UID: "connected-dash", ID: 1},
+			}, nil)
 
-			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
 			require.EqualError(t, err, model.ErrFolderHasConnectedLibraryElements.Error())
 		})
 
@@ -101,18 +103,11 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 1)
-			require.NoError(t, err)
-
-			// add a connection where the dashboard doesn't exist. Shouldn't be returned in the list
-			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 99999999)
-			require.NoError(t, err)
-
 			var expected = func(res model.LibraryElementConnectionsResponse) model.LibraryElementConnectionsResponse {
 				return model.LibraryElementConnectionsResponse{
 					Result: []model.LibraryElementConnectionDTO{
 						{
-							ID:           sc.initialResult.Result.ID,
+							ID:           res.Result[0].ID, // nolint:staticcheck
 							Kind:         sc.initialResult.Result.Kind,
 							ElementID:    1,
 							ConnectionID: 1,
@@ -127,6 +122,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 				}
 			}
 
+			sc.defaultGetDashByLP.Unset()
 			sc.dashboardSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Return([]*dashboards.DashboardRef{
 				{
 					ID:  1,
@@ -141,33 +137,6 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 			if diff := cmp.Diff(expected(result), result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
-		})
-
-	scenarioWithPanel(t, "When an admin tries to create a connection with an element that exists, but the original folder does not, it should still succeed",
-		func(t *testing.T, sc scenarioContext) {
-			b, err := json.Marshal(map[string]string{"test": "test"})
-			require.NoError(t, err)
-			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
-			_, err = sc.service.CreateElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
-				FolderID:  newFolder.ID, // nolint:staticcheck
-				FolderUID: &newFolder.UID,
-				Name:      "Testing Library Panel With Deleted Folder",
-				Kind:      1,
-				Model:     b,
-				UID:       "panel-with-deleted-folder",
-			})
-			require.NoError(t, err)
-			err = sc.service.folderService.Delete(sc.reqContext.Req.Context(), &folder.DeleteFolderCommand{
-				UID:          newFolder.UID,
-				OrgID:        sc.reqContext.OrgID,
-				SignedInUser: sc.reqContext.SignedInUser,
-			})
-			require.NoError(t, err)
-
-			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 1)
-			require.NoError(t, err)
 		})
 }
 
@@ -232,16 +201,17 @@ func getCreateCommandWithModel(folderID int64, folderUID, name string, kind mode
 }
 
 type scenarioContext struct {
-	ctx           *web.Context
-	service       *LibraryElementService
-	reqContext    *contextmodel.ReqContext
-	user          user.SignedInUser
-	folder        *folder.Folder
-	initialResult libraryElementResult
-	sqlStore      db.DB
-	log           log.Logger
-	folderSvc     *foldertest.FakeService
-	dashboardSvc  *dashboards.FakeDashboardService
+	ctx                *web.Context
+	service            *LibraryElementService
+	reqContext         *contextmodel.ReqContext
+	user               user.SignedInUser
+	folder             *folder.Folder
+	initialResult      libraryElementResult
+	sqlStore           db.DB
+	log                log.Logger
+	folderSvc          *foldertest.FakeService
+	dashboardSvc       *dashboards.FakeDashboardService
+	defaultGetDashByLP *mock.Call
 }
 
 func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc *foldertest.FakeService) *folder.Folder {
@@ -388,6 +358,8 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	_, err = usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 
+	defaultGetDashByLP := dashService.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).Maybe().Return([]*dashboards.DashboardRef{}, nil)
+
 	sc := scenarioContext{
 		user:     usr,
 		ctx:      &webCtx,
@@ -397,8 +369,9 @@ func setupTestScenario(t *testing.T) scenarioContext {
 			Context:      &webCtx,
 			SignedInUser: &usr,
 		},
-		folderSvc:    folderSvc,
-		dashboardSvc: dashService,
+		folderSvc:          folderSvc,
+		dashboardSvc:       dashService,
+		defaultGetDashByLP: defaultGetDashByLP,
 	}
 
 	sc.folder = createFolder(t, sc, "ScenarioFolder", folderSvc)

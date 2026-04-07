@@ -15,7 +15,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -66,18 +65,12 @@ func (m *MockResourceIndex) UpdateIndex(_ context.Context) (int64, error) {
 	return 0, m.updateIndexError
 }
 
-var _ DocumentBuilder = &MockDocumentBuilder{}
+// fakeDocumentBuilder implements DocumentBuilder for testing.
+// BuildDocument is never called in these tests — the struct is only used as a cache entry.
+type fakeDocumentBuilder struct{}
 
-type MockDocumentBuilder struct {
-	mock.Mock
-}
-
-func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, resourceVersion int64, value []byte) (*IndexableDocument, error) {
-	args := m.Called(ctx, key, resourceVersion, value)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*IndexableDocument), nil
+func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.ResourceKey, _ int64, _ []byte) (*IndexableDocument, error) {
+	return nil, fmt.Errorf("not expected")
 }
 
 // mockStorageBackend implements StorageBackend for testing
@@ -759,7 +752,7 @@ func TestRebuildIndexes(t *testing.T) {
 	t.Run("Rebuild dashboard index (it has no build info), verify that builders cache was emptied.", func(t *testing.T) {
 		dashKey := NamespacedResource{Namespace: "idx3", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}
 
-		support.builders.ns.Add(dashKey, &MockDocumentBuilder{})
+		support.builders.ns.Add(dashKey, &fakeDocumentBuilder{})
 		_, ok := support.builders.ns.Get(dashKey)
 		require.True(t, ok)
 

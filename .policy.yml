@@ -14,11 +14,9 @@ policy:
             - Workflow .github/workflows/build-go-matrix.yml succeeded or skipped
             - Workflow .github/workflows/check-frontend-test-coverage.yml succeeded or skipped
             - Workflow .github/workflows/codeowners-validator.yml succeeded or skipped
-            - Workflow .github/workflows/create-security-patch-from-security-mirror.yml succeeded or skipped
             - Workflow .github/workflows/deploy-pr-preview.yml succeeded or skipped
             - Workflow .github/workflows/deploy-storybook-preview.yml succeeded or skipped
             - Workflow .github/workflows/detect-breaking-changes-levitate.yml succeeded or skipped
-            - Workflow .github/workflows/detect-plugin-extension-changes.yml succeeded or skipped
             - Workflow .github/workflows/documentation-ci.yml succeeded or skipped
             - Workflow .github/workflows/feature-toggles-ci.yml succeeded or skipped
             - Workflow .github/workflows/frontend-lint.yml succeeded or skipped
@@ -214,25 +212,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/detect-breaking-changes-levitate.yml
-  - name: Workflow .github/workflows/detect-plugin-extension-changes.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^packages\/(?:(?:[^/]*(?:/|$))*)$
-          - ^public\/(?:(?:[^/]*(?:/|$))*)$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/detect-plugin-extension-changes\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/detect-plugin-extension-changes.yml
   - name: Workflow .github/workflows/documentation-ci.yml succeeded or skipped
     if:
       changed_files:
@@ -329,6 +308,7 @@ approval_rules:
           - ^\.policy\.yml$
           - ^\.policy\.yml\.tmpl$
           - ^justfile$
+          - ^\.github\/workflows\/(?:[^/]*)$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/policybot\.yml$

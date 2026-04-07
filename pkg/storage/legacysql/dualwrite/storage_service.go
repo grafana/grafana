@@ -35,7 +35,7 @@ func (m *storageService) getStorageMode(ctx context.Context, gr schema.GroupReso
 
 // NewStorage creates a storage instance based on the 3-mode concept:
 //   - ModeLegacy    → return legacy
-//   - ModeDualWrite → best-effort dual write, read from legacy (Mode1 behaviour)
+//   - ModeDualWrite → dualWriter that checks mode dynamically on every request
 //   - ModeUnified   → return unified
 func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
 	switch m.getStorageMode(context.Background(), gr) {
@@ -43,7 +43,17 @@ func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:
 		m.metrics.initResource(gr.String())
-		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true, gr: gr, metrics: m.metrics}, nil
+		return &dualWriter{
+			legacy:  legacy,
+			unified: unified,
+			getMode: func(ctx context.Context) (bool, bool) {
+				mode := m.getStorageMode(ctx, gr)
+				return mode == unifiedmigrations.StorageModeUnified,
+					mode == unifiedmigrations.StorageModeDualWrite
+			},
+			gr:      gr,
+			metrics: m.metrics,
+		}, nil
 	default:
 		return legacy, nil
 	}
@@ -64,16 +74,6 @@ func storageModeFromConfigMode(mode rest.DualWriterMode) unifiedmigrations.Stora
 // ReadFromUnified implements Service.
 func (m *storageService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	return m.getStorageMode(ctx, gr) == unifiedmigrations.StorageModeUnified, nil
-}
-
-// ShouldManage implements Service.
-func (m *storageService) ShouldManage(gr schema.GroupResource) bool {
-	return false
-}
-
-// StartMigration implements Service.
-func (m *storageService) StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error) {
-	return StorageStatus{}, fmt.Errorf("not implemented")
 }
 
 // Status implements Service.
