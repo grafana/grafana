@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
-import { ThemeRegistryItem } from '@grafana/data';
+import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type ThemeRegistryItem } from '@grafana/data';
 import { LANGUAGES, PSEUDO_LOCALE, t } from '@grafana/i18n';
-import { ComboboxOption } from '@grafana/ui';
+import { type ComboboxOption } from '@grafana/ui';
 import { LOCALES } from 'app/core/internationalization/locales';
 
 export interface Props {

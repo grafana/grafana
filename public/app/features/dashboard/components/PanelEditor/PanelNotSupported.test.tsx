@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { locationService } from '@grafana/runtime';
 
-import { PanelNotSupported, Props } from './PanelNotSupported';
+import { PanelNotSupported, type Props } from './PanelNotSupported';
 import { PanelEditorTabId } from './types';
 
 const setupTestContext = (options: Partial<Props>) => {

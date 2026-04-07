@@ -6,26 +6,20 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	"k8s.io/apimachinery/pkg/selection"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -216,12 +210,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 		request.Limit = query.Limit
 	}
 
-	res, err := s.k8sclient.Search(ctx, query.OrgID, request)
-	if err != nil {
-		return nil, err
-	}
-
-	parsedResults, err := dashboardsearch.ParseResults(res, 0)
+	parsedResults, err := dashboardsearch.SearchAll(ctx, query.OrgID, request, s.k8sclient.Search)
 	if err != nil {
 		return nil, err
 	}
@@ -363,13 +352,6 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.getChildrenFromApiServer")
 	defer span.End()
-	defer func(t time.Time) {
-		parent := q.UID
-		if q.UID != folder.SharedWithMeFolderUID {
-			parent = "folder"
-		}
-		s.metrics.foldersGetChildrenRequestsDuration.WithLabelValues(parent).Observe(time.Since(t).Seconds())
-	}(time.Now())
 
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
@@ -578,14 +560,6 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 		return nil, err
 	}
 
-	if cmd.NewTitle != nil {
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-
-		if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, folder.Updated, cmd.OrgID, cmd.UID); err != nil {
-			return nil, err
-		}
-	}
-
 	// always expose the dashboard store sequential ID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 
@@ -676,15 +650,11 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			},
 			Limit: folderSearchLimit}
 
-		res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
+		hits, err := dashboardsearch.SearchAll(ctx, cmd.OrgID, request, s.dashboardK8sClient.Search)
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 		}
 
-		hits, err := dashboardsearch.ParseResults(res, 0)
-		if err != nil {
-			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-		}
 		dashboardUIDs := make([]string, len(hits.Hits))
 		for i, dashboard := range hits.Hits {
 			dashboardUIDs[i] = dashboard.Name
@@ -739,43 +709,7 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to move folder: %w", err)
 	}
-
-	if err := s.publishFolderFullPathUpdatedEventViaApiServer(ctx, f.Updated, cmd.OrgID, cmd.UID); err != nil {
-		return nil, err
-	}
-
 	return f, nil
-}
-
-func (s *Service) publishFolderFullPathUpdatedEventViaApiServer(ctx context.Context, timestamp time.Time, orgID int64, folderUID string) error {
-	ctx, span := s.tracer.Start(ctx, "folder.publishFolderFullPathUpdatedEventViaApiServer")
-	defer span.End()
-
-	descFolders, err := s.unifiedStore.GetDescendants(ctx, orgID, folderUID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "Failed to get descendants of the folder", "folderUID", folderUID, "orgID", orgID, "error", err)
-		return err
-	}
-
-	uids := make([]string, 0, len(descFolders)+1)
-	uids = append(uids, folderUID)
-	for _, f := range descFolders {
-		uids = append(uids, f.UID)
-	}
-	span.AddEvent("found folder descendants", trace.WithAttributes(
-		attribute.Int64("folders", int64(len(uids))),
-	))
-
-	if err := s.bus.Publish(ctx, &events.FolderFullPathUpdated{
-		Timestamp: timestamp,
-		UIDs:      uids,
-		OrgID:     orgID,
-	}); err != nil {
-		s.log.ErrorContext(ctx, "Failed to publish FolderFullPathUpdated event", "folderUID", folderUID, "orgID", orgID, "descendantsUIDs", uids, "error", err)
-		return err
-	}
-
-	return nil
 }
 
 func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolderCommand) (bool, error) {
@@ -862,31 +796,5 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagK8SFolderCounts) {
-		return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
-	}
-
-	folders := []string{*q.UID}
-	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
-	descendantFolders, err := s.unifiedStore.GetDescendants(ctx, q.OrgID, *q.UID)
-	if err != nil {
-		s.log.ErrorContext(ctx, "failed to get descendant folders", "error", err)
-		return nil, err
-	}
-
-	for _, f := range descendantFolders {
-		folders = append(folders, f.UID)
-	}
-	countsMap[entity.StandardKindFolder] = int64(len(descendantFolders))
-
-	for _, v := range s.registry {
-		c, err := v.CountInFolders(ctx, q.OrgID, folders, q.SignedInUser)
-		if err != nil {
-			s.log.ErrorContext(ctx, "failed to count folder descendants", "error", err)
-			return nil, err
-		}
-		countsMap[v.Kind()] = c
-	}
-	return countsMap, nil
+	return s.unifiedStore.(*FolderUnifiedStoreImpl).CountFolderContent(ctx, q.OrgID, *q.UID)
 }

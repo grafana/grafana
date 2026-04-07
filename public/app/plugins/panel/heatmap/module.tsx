@@ -1,5 +1,5 @@
 import {
-  DataFrame,
+  type DataFrame,
   DataFrameType,
   FieldConfigProperty,
   FieldType,
@@ -10,9 +10,9 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   AxisPlacement,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   ScaleDistribution,
-  ScaleDistributionConfig,
+  type ScaleDistributionConfig,
   HeatmapCellLayout,
 } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
@@ -27,7 +27,7 @@ import { YBucketScaleEditor } from './YBucketScaleEditor';
 import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { colorSchemes, quantizeScheme } from './palettes';
-import { Options, HeatmapColorMode, HeatmapColorScale } from './panelcfg.gen';
+import { type Options, HeatmapColorMode, HeatmapColorScale } from './panelcfg.gen';
 import { heatmapSuggestionsSupplier } from './suggestions';
 import { defaultOptions } from './types';
 

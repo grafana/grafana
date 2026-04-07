@@ -151,6 +151,10 @@ export interface VariableModel {
    */
   description?: string;
   /**
+   * Whether the group-by operator is enabled in the ad hoc filter combobox.
+   */
+  enableGroupBy?: boolean;
+  /**
    * Visibility configuration for the variable
    */
   hide?: VariableHide;
@@ -219,6 +223,7 @@ export interface VariableModel {
 
 export const defaultVariableModel: Partial<VariableModel> = {
   allowCustomValue: true,
+  enableGroupBy: false,
   includeAll: false,
   multi: false,
   options: [],
@@ -1123,7 +1128,7 @@ export interface FieldConfig {
   /**
    * An explicit path to the field in the datasource.  When the frame meta includes a path,
    * This will default to `${frame.meta.path}/${field.name}
-   *
+   * 
    * When defined, this value can be used as an identifier within the datasource scope, and
    * may be used to update the results
    */

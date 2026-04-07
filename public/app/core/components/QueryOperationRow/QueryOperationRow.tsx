@@ -4,11 +4,11 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ReactUtils, useStyles2 } from '@grafana/ui';
 
-import { QueryOperationRowHeader, ExpanderMessages } from './QueryOperationRowHeader';
+import { QueryOperationRowHeader, type ExpanderMessages } from './QueryOperationRowHeader';
 
 export interface QueryOperationRowProps {
   index: number;

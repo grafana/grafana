@@ -1,20 +1,17 @@
-import { css } from '@emotion/css';
-import clsx from 'clsx';
-import { createElement, useId, ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 
 import {
-  DisplayValueAlignmentFactors,
+  type DisplayValueAlignmentFactors,
   FALLBACK_COLOR,
-  FieldDisplay,
-  GrafanaTheme2,
+  type FieldDisplay,
   ThresholdsMode,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFormattedThresholds } from '../Gauge/utils';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { Box } from '../Layout/Box/Box';
 
 import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';
@@ -22,11 +19,11 @@ import { RadialScaleLabels } from './RadialScaleLabels';
 import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
-import { buildGradientColors } from './colors';
+import { buildGradientColors, colorAtGradientPercent } from './colors';
 import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
-import { RadialShape, RadialTextMode } from './types';
-import { calculateDimensions, getValueAngleForValue } from './utils';
+import { type RadialShape, type RadialTextMode } from './types';
+import { calculateDimensions, getValueAngleForValue, getFormattedThresholds } from './utils';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -81,8 +78,6 @@ export interface RadialGaugeProps {
    * this is most useful when you need to show positive and negative values on a gauge.
    */
   neutral?: number;
-  /** For data links */
-  onClick?: React.MouseEventHandler<HTMLElement>;
   timeRange?: TimeRange;
 }
 
@@ -107,16 +102,16 @@ export function RadialGauge(props: RadialGaugeProps) {
     showScaleLabels = false,
     neutral,
     endpointMarker,
-    onClick,
     values,
   } = props;
   const theme = useTheme2();
   const gaugeId = useId();
-  const styles = useStyles2(getStyles);
 
   let effectiveTextMode = textMode;
   if (effectiveTextMode === 'auto') {
-    effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
+    const firstValue: FieldDisplay | undefined = values[0];
+    // in auto mode, we should show value_and_name if there are multiple values or the first value has a display name
+    effectiveTextMode = vizCount > 1 || firstValue?.field?.displayName != null ? 'value_and_name' : 'value';
   }
 
   const startAngle = shape === 'gauge' ? ARC_START : 0;
@@ -127,18 +122,19 @@ export function RadialGauge(props: RadialGaugeProps) {
   let sparklineElement: ReactNode | null = null;
 
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
-    const displayValue = values[barIndex];
+    const fieldDisplay = values[barIndex];
+
     // if min === max, the min and max thresholds will also be equal, which causes visual bugs.
-    const thresholdsBar = rawThresholdsBar && displayValue.field.min !== displayValue.field.max;
+    const thresholdsBar = rawThresholdsBar && fieldDisplay.field.min !== fieldDisplay.field.max;
     const { startValueAngle, endValueAngle, angleRange } = getValueAngleForValue(
-      displayValue,
+      fieldDisplay,
       startAngle,
       endAngle,
       neutral
     );
 
-    const gradientStops = gradient ? buildGradientColors(theme, displayValue) : undefined;
-    const color = displayValue.display.color ?? FALLBACK_COLOR;
+    const gradientStops = gradient ? buildGradientColors(theme, fieldDisplay) : undefined;
+    const color = fieldDisplay.display.color ?? FALLBACK_COLOR;
     const dimensions = calculateDimensions(
       width,
       height,
@@ -159,6 +155,9 @@ export function RadialGauge(props: RadialGaugeProps) {
     const glowFilterRef = glowBar ? `url(#${glowFilterId})` : undefined;
 
     if (endpointMarker === 'glow') {
+      const endpointColor = gradientStops
+        ? colorAtGradientPercent(gradientStops, fieldDisplay.display.percent ?? 1).toHexString()
+        : color;
       defs.push(
         <SpotlightGradient
           key={spotlightGradientId}
@@ -167,6 +166,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           dimensions={dimensions}
           roundedBars={roundedBars}
           theme={theme}
+          color={endpointColor}
         />
       );
     }
@@ -176,7 +176,7 @@ export function RadialGauge(props: RadialGaugeProps) {
         <RadialBarSegmented
           key={`radial-bar-segmented-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
-          fieldDisplay={displayValue}
+          fieldDisplay={fieldDisplay}
           angleRange={angleRange}
           startAngle={startAngle}
           startValueAngle={startValueAngle}
@@ -202,7 +202,7 @@ export function RadialGauge(props: RadialGaugeProps) {
           endpointMarkerGlowFilter={spotlightGradientRef}
           shape={shape}
           gradient={gradientStops}
-          fieldDisplay={displayValue}
+          fieldDisplay={fieldDisplay}
           endpointMarker={endpointMarker}
         />
       );
@@ -215,27 +215,29 @@ export function RadialGauge(props: RadialGaugeProps) {
       }
 
       if (glowCenter) {
-        graphics.push(<MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} />);
+        graphics.push(
+          <MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} shape={shape} />
+        );
       }
 
       graphics.push(
         <RadialText
           key="radial-text"
           textMode={effectiveTextMode}
-          displayValue={displayValue.display}
+          displayValue={fieldDisplay.display}
           dimensions={dimensions}
           theme={theme}
           valueManualFontSize={props.valueManualFontSize}
           nameManualFontSize={props.nameManualFontSize}
           shape={shape}
-          sparkline={displayValue.sparkline}
+          sparkline={fieldDisplay.sparkline}
         />
       );
 
       if (showScaleLabels || thresholdsBar) {
         const thresholds = getFormattedThresholds(
-          displayValue.field.decimals ?? DEFAULT_DECIMALS,
-          displayValue.field,
+          fieldDisplay.field.decimals ?? DEFAULT_DECIMALS,
+          fieldDisplay.field,
           theme
         );
 
@@ -244,8 +246,8 @@ export function RadialGauge(props: RadialGaugeProps) {
             <RadialScaleLabels
               key="radial-scale-labels"
               thresholds={thresholds}
-              thresholdsMode={displayValue.field.thresholds?.mode ?? ThresholdsMode.Absolute}
-              fieldDisplay={displayValue}
+              thresholdsMode={fieldDisplay.field.thresholds?.mode ?? ThresholdsMode.Absolute}
+              fieldDisplay={fieldDisplay}
               angleRange={angleRange}
               theme={theme}
               dimensions={dimensions}
@@ -260,9 +262,9 @@ export function RadialGauge(props: RadialGaugeProps) {
             <ThresholdsBar
               key="thresholds-bar"
               thresholds={thresholds}
-              thresholdsMode={displayValue.field.thresholds?.mode}
+              thresholdsMode={fieldDisplay.field.thresholds?.mode}
               dimensions={dimensions}
-              fieldDisplay={displayValue}
+              fieldDisplay={fieldDisplay}
               startAngle={startAngle}
               endAngle={endAngle}
               angleRange={angleRange}
@@ -275,10 +277,10 @@ export function RadialGauge(props: RadialGaugeProps) {
         }
       }
 
-      if (displayValue.sparkline) {
+      if (fieldDisplay.sparkline) {
         sparklineElement = (
           <RadialSparkline
-            sparkline={displayValue.sparkline}
+            sparkline={fieldDisplay.sparkline}
             dimensions={dimensions}
             theme={theme}
             color={color}
@@ -290,8 +292,14 @@ export function RadialGauge(props: RadialGaugeProps) {
     }
   }
 
-  const body = (
-    <>
+  return (
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      position="relative"
+      data-testid={selectors.components.Panels.Visualization.Gauge.Container}
+    >
       <svg
         viewBox={`0 0 ${width} ${height}`}
         width={width}
@@ -303,33 +311,6 @@ export function RadialGauge(props: RadialGaugeProps) {
         {graphics}
       </svg>
       {sparklineElement}
-    </>
+    </Box>
   );
-
-  const containerProps = {
-    style: { width, height },
-    'data-testid': selectors.components.Panels.Visualization.Gauge.Container,
-    className: clsx(styles.vizWrapper, onClick ? styles.clearButton : ''),
-    onClick,
-  };
-
-  return createElement(onClick ? 'button' : 'div', containerProps, body);
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    vizWrapper: css({
-      position: 'relative',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }),
-    clearButton: css({
-      background: 'transparent',
-      color: theme.colors.text.primary,
-      border: 'none',
-      padding: 0,
-      cursor: 'context-menu',
-    }),
-  };
 }

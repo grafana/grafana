@@ -1,4 +1,4 @@
-import { TestScope } from './scope-helpers';
+import { type TestScope } from './scope-helpers';
 
 export const testScopes = (scopeBindingSetting?: { uid: string; title: string }): TestScope[] => {
   return [

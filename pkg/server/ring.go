@@ -71,6 +71,10 @@ func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 		if err != nil {
 			return fmt.Errorf("failed to start the ring: %s", err)
 		}
+		err = searchServerRing.AwaitRunning(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to start the ring: %s", err)
+		}
 		err = pool.StartAsync(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to start the ring client pool: %s", err)

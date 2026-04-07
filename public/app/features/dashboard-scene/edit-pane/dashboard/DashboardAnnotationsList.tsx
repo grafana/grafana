@@ -1,22 +1,21 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneDataLayerProvider } from '@grafana/scenes';
-import { Box, Button, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
+import { type SceneDataLayerProvider } from '@grafana/scenes';
+import { Box, Button, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 import { dashboardEditActions } from '../shared';
 
+import { DraggableList } from './DraggableList';
 import { partitionSceneObjects } from './helpers';
-import { getDraggableListStyles } from './styles';
 
 const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
@@ -29,7 +28,6 @@ const DROPPABLE_TO_PLACEMENT: Record<string, { isHidden: boolean; placement?: 'i
 };
 
 export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
-  const styles = useStyles2(getDraggableListStyles);
   const { annotationLayers } = dataLayerSet.useState();
   const { visible, controlsMenu, hidden } = useMemo(
     () => partitionAnnotationsByDisplay(annotationLayers),
@@ -38,10 +36,8 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
 
   const onClickAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
     const { editPane } = getDashboardSceneFor(a).state;
-    editPane.selectObject(a, a.state.key!);
+    editPane.selectObject(a);
   }, []);
-
-  const onClickAddAnnotation = useBuildAddAnnotation(dataLayerSet);
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -100,28 +96,22 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
   );
 
   return (
-    <Stack direction="column" gap={1}>
+    <>
       <DragDropContext onDragEnd={onDragEnd}>
-        <OptionsPaneCategory
-          id={ID_VISIBLE_LIST}
-          className={styles.sectionContainer}
+        <DraggableList
+          items={visible}
+          droppableId={ID_VISIBLE_LIST}
           title={t(
             'dashboard-scene.dashboard-annotations-list.title-above-dashboard-count',
             'Above dashboard ({{count}})',
-            {
-              count: visible.length,
-            }
+            { count: visible.length }
           )}
-        >
-          <AnnotationsSection
-            annotations={visible}
-            droppableId={ID_VISIBLE_LIST}
-            onClickAnnotation={onClickAnnotation}
-          />
-        </OptionsPaneCategory>
-        <OptionsPaneCategory
-          id={ID_CONTROLS_MENU_LIST}
-          className={styles.sectionContainer}
+          onClickItem={onClickAnnotation}
+          renderItemLabel={renderItemLabel}
+        />
+        <DraggableList
+          items={controlsMenu}
+          droppableId={ID_CONTROLS_MENU_LIST}
           title={t(
             'dashboard-scene.dashboard-annotations-list.title-controls-menu-count',
             'Controls menu ({{count}})',
@@ -129,101 +119,25 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
               count: controlsMenu.length,
             }
           )}
-        >
-          <AnnotationsSection
-            annotations={controlsMenu}
-            droppableId={ID_CONTROLS_MENU_LIST}
-            onClickAnnotation={onClickAnnotation}
-          />
-        </OptionsPaneCategory>
-        <OptionsPaneCategory
-          id={ID_HIDDEN_LIST}
-          className={styles.sectionContainer}
+          onClickItem={onClickAnnotation}
+          renderItemLabel={renderItemLabel}
+        />
+        <DraggableList
+          items={hidden}
+          droppableId={ID_HIDDEN_LIST}
           title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
             count: hidden.length,
           })}
-        >
-          <AnnotationsSection annotations={hidden} droppableId={ID_HIDDEN_LIST} onClickAnnotation={onClickAnnotation} />
-        </OptionsPaneCategory>
+          onClickItem={onClickAnnotation}
+          renderItemLabel={renderItemLabel}
+        />
       </DragDropContext>
-      <Box display="flex" paddingTop={0} paddingBottom={2}>
-        <Button
-          fullWidth
-          icon="plus"
-          size="sm"
-          variant="secondary"
-          onClick={onClickAddAnnotation}
-          data-testid={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
-        >
-          <Trans i18nKey="dashboard-scene.dashboard-annotations-list.add-annotation-query">Add annotation query</Trans>
-        </Button>
-      </Box>
-    </Stack>
+      <AddAnnotationButton dataLayerSet={dataLayerSet} />
+    </>
   );
 }
 
-function AnnotationsSection({
-  annotations,
-  droppableId,
-  onClickAnnotation,
-}: {
-  annotations: DashboardAnnotationsDataLayer[];
-  droppableId: string;
-  onClickAnnotation: (a: DashboardAnnotationsDataLayer) => void;
-}) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <Droppable droppableId={droppableId} direction="vertical">
-      {(provided) => (
-        <ul ref={provided.innerRef} {...provided.droppableProps} className={styles.list} data-testid={droppableId}>
-          {annotations.map((annotation, index) => (
-            <Draggable
-              key={annotation.state.key ?? annotation.state.name}
-              draggableId={annotation.state.key ?? annotation.state.name}
-              index={index}
-            >
-              {(draggableProvided) => (
-                <li ref={draggableProvided.innerRef} {...draggableProvided.draggableProps} className={styles.listItem}>
-                  <div {...draggableProvided.dragHandleProps} className={styles.dragHandle}>
-                    <Tooltip
-                      content={t('dashboard-scene.annotations-section.content-drag-to-reorder', 'Drag to reorder')}
-                      placement="top"
-                    >
-                      <Icon name="draggabledots" size="md" />
-                    </Tooltip>
-                  </div>
-                  <div
-                    className={styles.itemName}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onClickAnnotation(annotation)}
-                    onKeyDown={(event: React.KeyboardEvent) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        onClickAnnotation(annotation);
-                      }
-                    }}
-                  >
-                    <div data-testid={`${droppableId}-annotation-name`}>
-                      <AnnotationName annotation={annotation} />
-                    </div>
-                    <Stack direction="row" gap={1} alignItems="center">
-                      <Button variant="primary" size="sm" fill="outline">
-                        <Trans i18nKey="dashboard-scene.annotations-section.select">Select</Trans>
-                      </Button>
-                    </Stack>
-                  </div>
-                </li>
-              )}
-            </Draggable>
-          ))}
-          {provided.placeholder}
-        </ul>
-      )}
-    </Droppable>
-  );
-}
+const renderItemLabel = (a: DashboardAnnotationsDataLayer) => <AnnotationName annotation={a} />;
 
 function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLayer }) {
   const theme = useTheme2();
@@ -253,15 +167,34 @@ function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLa
   }, [annoName, query.builtIn, query.enable, styles.muted]);
 
   return (
-    <div>
+    <>
       <span
         className={styles.color}
         style={{
           backgroundColor: theme.visualization.getColorByName(query.iconColor),
         }}
       />
-      {name}
-    </div>
+      <span data-testid="annotation-name">{name}</span>
+    </>
+  );
+}
+
+function AddAnnotationButton({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+  const onClickAddAnnotation = useBuildAddAnnotation(dataLayerSet);
+
+  return (
+    <Box display="flex" paddingTop={1} paddingBottom={1}>
+      <Button
+        fullWidth
+        icon="plus"
+        size="sm"
+        variant="secondary"
+        onClick={onClickAddAnnotation}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
+      >
+        <Trans i18nKey="dashboard-scene.dashboard-annotations-list.add-annotation-query">Add annotation query</Trans>
+      </Button>
+    </Box>
   );
 }
 
@@ -287,7 +220,6 @@ export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerPr
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    ...getDraggableListStyles(theme),
     color: css({
       display: 'inline-block',
       width: theme.spacing(1),

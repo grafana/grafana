@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
@@ -50,9 +50,12 @@ async function renderAnnotationsList(annotationLayers: DashboardAnnotationsDataL
     elements: {
       dashboardScene,
       dataLayerSet,
-      aboveListItems: () => renderResult.getAllByTestId('annotations-list-visible-annotation-name'),
-      controlsMenuListItems: () => renderResult.getAllByTestId('annotations-list-controls-menu-annotation-name'),
-      hiddenListItems: () => renderResult.getAllByTestId('annotations-list-hidden-annotation-name'),
+      aboveListItems: () =>
+        within(renderResult.getByTestId('annotations-list-visible')).getAllByTestId('annotation-name'),
+      controlsMenuListItems: () =>
+        within(renderResult.getByTestId('annotations-list-controls-menu')).getAllByTestId('annotation-name'),
+      hiddenListItems: () =>
+        within(renderResult.getByTestId('annotations-list-hidden')).getAllByTestId('annotation-name'),
       addAnnotationButton: () => renderResult.getByRole('button', { name: /add annotation query/i }),
     },
   };
@@ -185,10 +188,7 @@ describe('User interactions', () => {
 
       await user.click(getByText(visibleEnabled.state.name));
 
-      expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(
-        visibleEnabled,
-        visibleEnabled.state.key
-      );
+      expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleEnabled);
     });
   });
 
