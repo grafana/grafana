@@ -306,6 +306,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
    */
   public getSelectedObject(key?: string): SceneObject | null {
     if (key) {
+      // Not using findByKey here as it requires try catch in case object is not found
       return sceneGraph.findObject(this, (obj) => obj.state.key === key);
     }
 
@@ -317,6 +318,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       return null;
     }
 
+    // Not using findByKey here as it requires try catch in case object is not found
     return sceneGraph.findObject(this, (obj) => obj.state.key === this.state.selectionContext.selected[0].id);
   }
 
