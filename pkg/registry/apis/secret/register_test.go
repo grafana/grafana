@@ -92,4 +92,3 @@ func TestIntegrationRegisterDependencies(t *testing.T) {
 		require.NoError(t, err, "second call should also succeed (idempotent)")
 	})
 }
-
