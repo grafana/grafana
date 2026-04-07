@@ -162,7 +162,6 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 	// stale (e.g. a folder was moved to a new path).
 	if !epCfg.forceWalk {
 		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
-
 			// When a folder is being relocated, its UID temporarily exists at both the old
 			// and new paths in the tree. Allow the duplicate UID only in that case.
 			if !epCfg.isRelocating(f.ID) &&
