@@ -16,7 +16,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
-	"k8s.io/klog/v2"
 
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
@@ -36,9 +35,9 @@ func New(cfg app.Config) (app.App, error) {
 	pluginKind := simple.AppManagedKind{
 		Kind: pluginsv0alpha1.PluginKind(),
 	}
+	logger := logging.DefaultLogger.With("app", "plugins.app")
 
 	if specificConfig.EnableChildReconciler {
-		logger := logging.DefaultLogger.With("app", "plugins.app")
 		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
 		registrar := install.NewInstallRegistrar(logger, clientGenerator)
 		pluginKind.Reconciler = install.NewChildPluginReconciler(logger, specificConfig.MetaProviderManager, registrar)
@@ -50,7 +49,7 @@ func New(cfg app.Config) (app.App, error) {
 		InformerConfig: simple.AppInformerConfig{
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
-					klog.ErrorS(err, "Informer processing error")
+					logger.Error("Child plugin informer failed", "error", err)
 				},
 			},
 		},
