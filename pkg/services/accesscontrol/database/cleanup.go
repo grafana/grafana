@@ -58,7 +58,7 @@ func cleanupPlugin(ctx context.Context, sql db.DB, pluginID string) error {
 		if err := sess.SQL(
 			`SELECT id FROM role WHERE org_id = ? AND name LIKE ?`,
 			accesscontrol.GlobalOrgID,
-			"plugins:"+pluginID+":%",
+			accesscontrol.PluginRolePrefix+pluginID+":%",
 		).Find(&rows); err != nil {
 			return err
 		}
