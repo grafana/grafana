@@ -185,7 +185,7 @@ You can clear this selection by clearing the following keys in your local storag
 - For view mode: `grafana.ui.sidebar.dashboard-view.docked`
 - For edit mode: `grafana.ui.sidebar.dashboard.docked`
 
-{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-edit-side-v12.4.mp4" >}}
+{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-sidebar-toolbar-v13.0.mp4" >}}
 
 You can also resize the sidebar and toolbar.
 You can only resize the toolbar when the sidebar is closed, however, you can do so in view or edit mode.
