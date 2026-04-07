@@ -270,6 +270,13 @@ func NewAPIService(
 					return resourceAuthorizer.Authorize(ctx, a)
 				}
 
+				if a.GetResource() == iamv0.ServiceAccountResourceInfo.GetName() {
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
+					return resourceAuthorizer.Authorize(ctx, a)
+				}
+
 				return authorizer.DecisionDeny, "access denied", nil
 			}),
 	}
