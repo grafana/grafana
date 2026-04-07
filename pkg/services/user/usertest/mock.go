@@ -170,7 +170,7 @@ func (_m *MockService) GetByID(_a0 context.Context, _a1 *user.GetUserByIDQuery) 
 	return r0, r1
 }
 
-// GetByLogin provides a mock function with given fields: _a0, _a1
+// GetByLoginWithPassword provides a mock function with given fields: _a0, _a1
 func (_m *MockService) GetByLoginWithPassword(_a0 context.Context, _a1 *user.GetUserByLoginQuery) (*user.User, error) {
 	ret := _m.Called(_a0, _a1)
 
