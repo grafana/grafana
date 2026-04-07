@@ -165,7 +165,7 @@ export interface FeatureToggles {
   provisioning?: boolean;
   /**
   * Allow setting folder metadata for provisioned folders
-  * @default false
+  * @default true
   */
   provisioningFolderMetadata?: boolean;
   /**
@@ -209,6 +209,11 @@ export interface FeatureToggles {
   */
   reportingHeaderSettings?: boolean;
   /**
+  * Enables the configurable footer settings for PDF reports
+  * @default false
+  */
+  reportingFooterSettings?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   * @default false
   */
@@ -248,11 +253,6 @@ export interface FeatureToggles {
   * @default false
   */
   useKubernetesShortURLsAPI?: boolean;
-  /**
-  * Adds support for Kubernetes alerting and recording rules
-  * @default false
-  */
-  kubernetesAlertingRules?: boolean;
   /**
   * Adds support for Kubernetes correlations
   * @default false
@@ -405,7 +405,7 @@ export interface FeatureToggles {
   dashboardScene?: boolean;
   /**
   * Enables new dashboard layouts
-  * @default false
+  * @default true
   */
   dashboardNewLayouts?: boolean;
   /**
@@ -655,7 +655,7 @@ export interface FeatureToggles {
   newSavedQueriesExperience?: boolean;
   /**
   * Enables the new unconfigured panel experience
-  * @default false
+  * @default true
   */
   newUnconfiguredPanel?: boolean;
   /**
@@ -1347,7 +1347,8 @@ export interface FeatureToggles {
   azureResourcePickerUpdates?: boolean;
   /**
   * Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
-  * @default false
+  * @deprecated
+  * @default true
   */
   prometheusTypeMigration?: boolean;
   /**
@@ -1722,7 +1723,7 @@ export interface FeatureToggles {
   frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default false
+  * @default true
   */
   splashScreen?: boolean;
   /**
@@ -1765,4 +1766,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableColorblindSafePanelOptions?: boolean;
+  /**
+  * Enables cache configs data migration to unified storage
+  * @default false
+  */
+  cacheConfigUnifiedStorageMigration?: boolean;
 }

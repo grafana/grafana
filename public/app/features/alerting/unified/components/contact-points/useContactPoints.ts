@@ -10,7 +10,7 @@ import {
   API_VERSION,
   type Receiver as K8sReceiver,
   generatedAPI,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';

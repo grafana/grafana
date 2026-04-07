@@ -80,6 +80,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 - [Preferences API](preferences/)
 - [Shared dashboards API](dashboard_public/)
 - [Query history API](query_history/)
+- [Resource history API](resource-history/)
 - [Service account API](serviceaccount/)
 - [Short URL API](short_url/)
 - [Snapshot API](snapshot/)

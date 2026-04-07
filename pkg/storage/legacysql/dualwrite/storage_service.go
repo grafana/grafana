@@ -1,0 +1,101 @@
+package dualwrite
+
+import (
+	"context"
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
+)
+
+type storageService struct {
+	cfg          *setting.Cfg
+	statusReader unifiedmigrations.MigrationStatusReader
+	metrics      *dualWriterMetrics
+}
+
+// getStorageMode returns the StorageMode for a resource.
+// Without a statusReader or on error, the config-mode is used directly.
+func (m *storageService) getStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
+	resource := gr.String()
+	if m.statusReader == nil {
+		m.metrics.statusReaderNull.WithLabelValues(resource).Inc()
+		return storageModeFromConfigMode(m.cfg.UnifiedStorage[resource].DualWriterMode)
+	}
+	mode, err := m.statusReader.GetStorageMode(ctx, gr)
+	if err != nil {
+		m.metrics.statusReaderErrors.WithLabelValues(resource).Inc()
+		return mode
+	}
+	return mode
+}
+
+// NewStorage creates a storage instance based on the 3-mode concept:
+//   - ModeLegacy    → return legacy
+//   - ModeDualWrite → best-effort dual write, read from legacy (Mode1 behaviour)
+//   - ModeUnified   → return unified
+func (m *storageService) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
+	switch m.getStorageMode(context.Background(), gr) {
+	case unifiedmigrations.StorageModeUnified:
+		return unified, nil
+	case unifiedmigrations.StorageModeDualWrite:
+		m.metrics.initResource(gr.String())
+		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true, gr: gr, metrics: m.metrics}, nil
+	default:
+		return legacy, nil
+	}
+}
+
+// storageModeFromConfigMode maps a DualWriterMode config value to a StorageMode.
+func storageModeFromConfigMode(mode rest.DualWriterMode) unifiedmigrations.StorageMode {
+	switch {
+	case mode >= rest.Mode4:
+		return unifiedmigrations.StorageModeUnified
+	case mode >= rest.Mode1:
+		return unifiedmigrations.StorageModeDualWrite
+	default:
+		return unifiedmigrations.StorageModeLegacy
+	}
+}
+
+// ReadFromUnified implements Service.
+func (m *storageService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
+	return m.getStorageMode(ctx, gr) == unifiedmigrations.StorageModeUnified, nil
+}
+
+// ShouldManage implements Service.
+func (m *storageService) ShouldManage(gr schema.GroupResource) bool {
+	return false
+}
+
+// StartMigration implements Service.
+func (m *storageService) StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error) {
+	return StorageStatus{}, fmt.Errorf("not implemented")
+}
+
+// Status implements Service.
+func (m *storageService) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error) {
+	status := StorageStatus{
+		Group:    gr.Group,
+		Resource: gr.Resource,
+	}
+	switch m.getStorageMode(ctx, gr) {
+	case unifiedmigrations.StorageModeUnified:
+		status.WriteUnified = true
+		status.ReadUnified = true
+	case unifiedmigrations.StorageModeDualWrite:
+		status.WriteLegacy = true
+		status.WriteUnified = true
+	default: // Legacy
+		status.WriteLegacy = true
+	}
+	return status, nil
+}
+
+// Update implements Service.
+func (m *storageService) Update(ctx context.Context, status StorageStatus) (StorageStatus, error) {
+	return StorageStatus{}, fmt.Errorf("not implemented")
+}
