@@ -57,6 +57,7 @@ describe('getFieldOverrideCategories', () => {
         makeItem('custom.visible1'),
         makeItem('custom.hidden', { hideFromOverrides: true }),
         makeItem('custom.visible2'),
+        makeItem('custom.hidden2', { excludeFromPicker: true }),
       ]);
 
       const fieldConfig: FieldConfigSource = {
@@ -80,6 +81,7 @@ describe('getFieldOverrideCategories', () => {
       expect(optionValues).toContain('custom.visible1');
       expect(optionValues).toContain('custom.visible2');
       expect(optionValues).not.toContain('custom.hidden');
+      expect(optionValues).not.toContain('custom.hidden2');
     });
 
     it('includes all items when none have hideFromOverrides set', () => {
