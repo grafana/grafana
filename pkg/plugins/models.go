@@ -147,6 +147,65 @@ type ExtensionsDependencies struct {
 	ExposedComponents []string `json:"exposedComponents"`
 }
 
+// ConditionalNav represents an addToNav value that is either a literal boolean
+// or the name of a feature flag. When a feature flag name is provided, the nav
+// item is included only when that flag is enabled; an unrecognised flag name is
+// treated as disabled (fail-closed).
+type ConditionalNav struct {
+	Enabled     *bool  // non-nil when a literal true/false was provided
+	FeatureFlag string // non-empty when a feature flag name was provided
+}
+
+// IsEnabled resolves the final boolean value. featureEnabled is called only
+// when the value refers to a feature flag.
+func (c ConditionalNav) IsEnabled(featureEnabled func(string) bool) bool {
+	if c.Enabled != nil {
+		return *c.Enabled
+	}
+	if c.FeatureFlag != "" {
+		return featureEnabled(c.FeatureFlag)
+	}
+	return false
+}
+
+func (c *ConditionalNav) UnmarshalJSON(data []byte) error {
+	// Try bool first
+	var b bool
+	if err := json.Unmarshal(data, &b); err == nil {
+		c.Enabled = &b
+		c.FeatureFlag = ""
+		return nil
+	}
+	// Try string (feature flag name)
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		c.FeatureFlag = s
+		c.Enabled = nil
+		return nil
+	}
+	return fmt.Errorf("addToNav must be a boolean or a feature flag name (string), got: %s", string(data))
+}
+
+func (c ConditionalNav) MarshalJSON() ([]byte, error) {
+	if c.FeatureFlag != "" {
+		return json.Marshal(c.FeatureFlag)
+	}
+	if c.Enabled != nil {
+		return json.Marshal(*c.Enabled)
+	}
+	return json.Marshal(false)
+}
+
+// AddToNavBool creates a ConditionalNav with a literal boolean value.
+func AddToNavBool(v bool) ConditionalNav {
+	return ConditionalNav{Enabled: &v}
+}
+
+// AddToNavFeatureFlag creates a ConditionalNav that defers to the named feature flag.
+func AddToNavFeatureFlag(flag string) ConditionalNav {
+	return ConditionalNav{FeatureFlag: flag}
+}
+
 type Includes struct {
 	Name       string            `json:"name"`
 	Path       string            `json:"path"`
@@ -154,7 +213,7 @@ type Includes struct {
 	Component  string            `json:"component"`
 	Role       identity.RoleType `json:"role"`
 	Action     string            `json:"action,omitempty"`
-	AddToNav   bool              `json:"addToNav"`
+	AddToNav   ConditionalNav    `json:"addToNav"`
 	DefaultNav bool              `json:"defaultNav"`
 	Slug       string            `json:"slug"`
 	Icon       string            `json:"icon"`

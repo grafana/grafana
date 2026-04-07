@@ -454,7 +454,7 @@ func TestLoader_Load(t *testing.T) {
 						},
 						Includes: []*plugins.Includes{
 							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
-							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: plugins.AddToNavBool(true), Slug: "root-page-react"},
 						},
 						Backend: false,
 					},
@@ -1341,7 +1341,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Type:       "page",
 						Role:       org.RoleViewer,
 						Action:     plugins.ActionAppAccess,
-						AddToNav:   true,
+						AddToNav:   plugins.AddToNavBool(true),
 						DefaultNav: true,
 						Slug:       "root-page-react",
 					},
@@ -1351,7 +1351,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Type:     "page",
 						Role:     org.RoleViewer,
 						Action:   plugins.ActionAppAccess,
-						AddToNav: true,
+						AddToNav: plugins.AddToNavBool(true),
 						Slug:     "root-page-tab-b",
 					},
 					{
@@ -1359,7 +1359,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Path:     "/plugins/myorgid-simple-app/?page=page2",
 						Type:     "page",
 						Role:     org.RoleAdmin,
-						AddToNav: true,
+						AddToNav: plugins.AddToNavBool(true),
 						Slug:     "react-config",
 					},
 					{

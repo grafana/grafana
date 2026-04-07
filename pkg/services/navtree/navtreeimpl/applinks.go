@@ -107,6 +107,11 @@ func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, inc
 
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
+	isAddedToNav := func(nav plugins.ConditionalNav) bool {
+		return nav.IsEnabled(func(flag string) bool {
+			return s.features.IsEnabled(c.Req.Context(), flag) //nolint:staticcheck // not yet migrated to OpenFeature
+		})
+	}
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -136,7 +141,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 			if len(include.Path) > 0 {
 				link.Url = s.cfg.AppSubURL + include.Path
-				if include.DefaultNav && include.AddToNav {
+				if include.DefaultNav && isAddedToNav(include.AddToNav) {
 					appLink.Url = link.Url
 				}
 			} else {
@@ -174,12 +179,12 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				}
 
 				// Register the page under the app
-			} else if include.AddToNav {
+			} else if isAddedToNav(include.AddToNav) {
 				appLink.Children = append(appLink.Children, link)
 			}
 		}
 
-		if include.Type == "dashboard" && include.AddToNav {
+		if include.Type == "dashboard" && isAddedToNav(include.AddToNav) {
 			dboardURL := include.DashboardURLPath()
 			if dboardURL != "" {
 				link := &navtree.NavLink{

@@ -151,7 +151,7 @@ metaV0Alpha1: {
 	role?:       "Admin" | "Editor" | "Viewer" | "None"
 	action?:     string
 	path?:       string
-	addToNav?:   bool
+	addToNav?:   bool | string
 	defaultNav?: bool
 	icon?:       string
 }

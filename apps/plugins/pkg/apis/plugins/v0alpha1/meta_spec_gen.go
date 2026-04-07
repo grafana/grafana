@@ -2,6 +2,11 @@
 
 package v0alpha1
 
+import (
+	json "encoding/json"
+	errors "errors"
+)
+
 // JSON configuration schema for Grafana plugins
 // Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
 // +k8s:openapi-gen=true
@@ -136,16 +141,16 @@ func (MetaEnterpriseFeatures) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type MetaInclude struct {
-	Uid        *string          `json:"uid,omitempty"`
-	Type       *MetaIncludeType `json:"type,omitempty"`
-	Name       *string          `json:"name,omitempty"`
-	Component  *string          `json:"component,omitempty"`
-	Role       *MetaIncludeRole `json:"role,omitempty"`
-	Action     *string          `json:"action,omitempty"`
-	Path       *string          `json:"path,omitempty"`
-	AddToNav   *bool            `json:"addToNav,omitempty"`
-	DefaultNav *bool            `json:"defaultNav,omitempty"`
-	Icon       *string          `json:"icon,omitempty"`
+	Uid        *string           `json:"uid,omitempty"`
+	Type       *MetaIncludeType  `json:"type,omitempty"`
+	Name       *string           `json:"name,omitempty"`
+	Component  *string           `json:"component,omitempty"`
+	Role       *MetaIncludeRole  `json:"role,omitempty"`
+	Action     *string           `json:"action,omitempty"`
+	Path       *string           `json:"path,omitempty"`
+	AddToNav   *MetaBoolOrString `json:"addToNav,omitempty"`
+	DefaultNav *bool             `json:"defaultNav,omitempty"`
+	Icon       *string           `json:"icon,omitempty"`
 }
 
 // NewMetaInclude creates a new MetaInclude object.
@@ -843,4 +848,64 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1SpecSignatureType.
 func (MetaV0alpha1SpecSignatureType) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1SpecSignatureType"
+}
+
+// +k8s:openapi-gen=true
+type MetaBoolOrString struct {
+	Bool   *bool   `json:"Bool,omitempty"`
+	String *string `json:"String,omitempty"`
+}
+
+// NewMetaBoolOrString creates a new MetaBoolOrString object.
+func NewMetaBoolOrString() *MetaBoolOrString {
+	return &MetaBoolOrString{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `MetaBoolOrString` as JSON.
+func (resource MetaBoolOrString) MarshalJSON() ([]byte, error) {
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `MetaBoolOrString` from JSON.
+func (resource *MetaBoolOrString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Bool
+	var Bool bool
+	if err := json.Unmarshal(raw, &Bool); err != nil {
+		errList = append(errList, err)
+		resource.Bool = nil
+	} else {
+		resource.Bool = &Bool
+		return nil
+	}
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaBoolOrString.
+func (MetaBoolOrString) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaBoolOrString"
 }

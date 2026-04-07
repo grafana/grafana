@@ -229,7 +229,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 					Role:       identity.RoleAdmin,
 					Action:     "read",
 					Path:       "/dashboards/1",
-					AddToNav:   true,
+					AddToNav:   plugins.AddToNavBool(true),
 					DefaultNav: true,
 					Icon:       "dashboard",
 				},

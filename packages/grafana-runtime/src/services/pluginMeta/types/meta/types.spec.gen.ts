@@ -144,7 +144,7 @@ export interface Include {
 	role?: "Admin" | "Editor" | "Viewer" | "None";
 	action?: string;
 	path?: string;
-	addToNav?: boolean;
+	addToNav?: boolean | string;
 	defaultNav?: boolean;
 	icon?: string;
 }
