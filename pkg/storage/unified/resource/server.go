@@ -637,15 +637,12 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 
-	l := s.log.FromContext(ctx)
 	if obj.GetUID() == "" {
-		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
-		// return nil, NewBadRequestError("object is missing UID")
-		l.Error("object is missing UID", "key", key)
+		return nil, NewBadRequestError("object is missing UID")
 	}
 
 	if obj.GetResourceVersion() != "" {
-		l.Error("object must not include a resource version", "key", key)
+		return nil, NewBadRequestError("object must not include a resource version")
 	}
 
 	// Make sure the command labels are not saved
@@ -656,7 +653,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	}
 
 	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
-		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
+		return nil, NewBadRequestError("cannot save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
 	event := &WriteEvent{
