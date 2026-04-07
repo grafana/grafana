@@ -88,6 +88,18 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		return nil, false, err
 	}
 
+	getUser := func(getter rest.Getter) (*iamv0alpha1.User, error) {
+		obj, err := getter.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		u, ok := obj.(*iamv0alpha1.User)
+		if !ok {
+			return nil, fmt.Errorf("expected User but got %T", obj)
+		}
+		return u, nil
+	}
+
 	// Resolve the incoming object to extract the lastSeenAt value from the request
 	oldObj, err := s.legacy.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
@@ -125,29 +137,16 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 	}
 
 	// Re-fetch from legacy to get the authoritative state after the update
-	legacyObj, err := s.legacy.Get(ctx, name, &metav1.GetOptions{})
+	legacyUser, err := getUser(s.legacy)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "failed to re-fetch user from legacy store")
 		return nil, false, err
 	}
-	legacyUser, ok := legacyObj.(*iamv0alpha1.User)
-	if !ok {
-		err := fmt.Errorf("expected User but got %T", legacyObj)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "unexpected object type after re-fetch")
-		return nil, false, err
-	}
 
-	// Sync the status to unified store
-	unifiedObj, err := s.status.Get(ctx, name, &metav1.GetOptions{})
+	unified, err := getUser(s.status)
 	if err != nil {
 		ctxLogger.Warn("unable to read unified status", "error", err)
-		return legacyUser, false, nil
-	}
-	unified, ok := unifiedObj.(*iamv0alpha1.User)
-	if !ok {
-		ctxLogger.Warn("unexpected type from unified status", "type", fmt.Sprintf("%T", unifiedObj))
 		return legacyUser, false, nil
 	}
 

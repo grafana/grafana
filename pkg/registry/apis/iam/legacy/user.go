@@ -805,6 +805,9 @@ type updateUserLastSeenAtQuery struct {
 }
 
 func (r updateUserLastSeenAtQuery) Validate() error {
+	if r.Command.UID == "" {
+		return fmt.Errorf("UID is required")
+	}
 	return nil
 }
 
@@ -830,7 +833,7 @@ func (s *legacySQLStore) UpdateLastSeenAt(ctx context.Context, ns claims.Namespa
 		return err
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("user not found: %s", cmd.UID)
+		return apierrors.NewNotFound(iamv0.UserResourceInfo.GroupResource(), cmd.UID)
 	}
 	return nil
 }
