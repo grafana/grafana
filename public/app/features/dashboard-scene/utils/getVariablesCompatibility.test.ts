@@ -1,6 +1,5 @@
 import { CustomVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
-import { ElementSelection } from '../edit-pane/ElementSelection';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -82,8 +81,7 @@ describe('getVariablesCompatibility', () => {
         body: new RowsLayoutManager({ rows: [row1, row2] }),
       });
 
-      const selection = new ElementSelection([[sectionVar.state.key!, sectionVar.getRef()]]);
-      dashboard.state.editPane.setState({ selection });
+      dashboard.state.editPane.selectObject(sectionVar);
 
       const result = getVariablesCompatibility(dashboard);
       const names = result.map((v) => v.name);
