@@ -67,6 +67,10 @@ export function getEditableElementForSelection(
       .map((obj) => getEditableElementFor(obj))
       .filter((e): e is BulkActionElement => Boolean(e) && isBulkActionElement(e!));
 
+    if (elements.length === 0) {
+      return undefined;
+    }
+
     const first = elements[0];
     const allSameType = elements.every((e) => e.constructor.name === first.constructor.name);
 
