@@ -2,7 +2,7 @@ import type { DrilldownsApplicability } from '@grafana/data';
 import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
-  GroupByVariable,
+  GROUP_BY_OPERATOR,
   SceneQueryRunner,
   SceneDataTransformer,
   SceneVariableSet,
@@ -27,7 +27,6 @@ jest.mock('@grafana/runtime', () => {
 
 const getDataSourceSrvMock = getDataSourceSrv as jest.MockedFunction<typeof getDataSourceSrv>;
 
-// Helper to create partial DataSourceSrv mock
 const createMockDataSourceSrv = (overrides: Partial<DataSourceSrv> = {}): DataSourceSrv => ({
   get: jest.fn(),
   getList: jest.fn(),
@@ -113,9 +112,9 @@ describe('getDrilldownApplicability', () => {
       })
     );
 
-    const { queryRunner, groupByVariable } = buildScene();
+    const { queryRunner, adhocFiltersVariable } = buildScene();
 
-    const result = await getDrilldownApplicability(queryRunner, undefined, groupByVariable);
+    const result = await getDrilldownApplicability(queryRunner, adhocFiltersVariable);
 
     expect(result).toBeUndefined();
   });
@@ -129,19 +128,18 @@ describe('getDrilldownApplicability', () => {
       })
     );
 
-    const { queryRunner, adhocFiltersVariable, groupByVariable } = buildScene({
+    const { queryRunner, adhocFiltersVariable } = buildScene({
       datasourceUid: 'ds-query',
       filtersDatasourceUid: 'ds-other',
-      groupByDatasourceUid: 'ds-other',
     });
 
-    const result = await getDrilldownApplicability(queryRunner, adhocFiltersVariable, groupByVariable);
+    const result = await getDrilldownApplicability(queryRunner, adhocFiltersVariable);
 
     expect(result).toBeUndefined();
     expect(applicabilityFn).not.toHaveBeenCalled();
   });
 
-  it('returns applicability data when datasource and variables align', async () => {
+  it('returns applicability data with both filters and groupBy keys from AdHocFiltersVariable', async () => {
     const applicability: DrilldownsApplicability[] = [{ key: 'region', applicable: true }];
     const getApplicability = jest.fn().mockResolvedValue(applicability);
     getDataSourceSrvMock.mockReturnValue(
@@ -151,20 +149,18 @@ describe('getDrilldownApplicability', () => {
       })
     );
 
-    const { queryRunner, adhocFiltersVariable, groupByVariable } = buildScene({
+    const { queryRunner, adhocFiltersVariable } = buildScene({
       datasourceUid: 'ds-apply',
       filtersDatasourceUid: 'ds-apply',
-      groupByDatasourceUid: 'ds-apply',
-      groupValues: ['region', 'instance'],
+      groupByKeys: ['region', 'instance'],
     });
 
-    const result = await getDrilldownApplicability(queryRunner, adhocFiltersVariable, groupByVariable);
+    const result = await getDrilldownApplicability(queryRunner, adhocFiltersVariable);
 
     expect(getApplicability).toHaveBeenCalledTimes(1);
     const payload = getApplicability.mock.calls[0][0];
     expect(payload.groupByKeys).toEqual(['region', 'instance']);
     expect(payload.filters).toEqual([]);
-    // Falls back to queryRunner.state.queries when request.targets is undefined
     expect(payload.queries).toBe(queryRunner.state.queries);
     expect(payload.timeRange).toBeDefined();
     expect(result).toBe(applicability);
@@ -173,16 +169,14 @@ describe('getDrilldownApplicability', () => {
 
 interface BuildSceneOptions {
   datasourceUid?: string;
-  groupByDatasourceUid?: string;
   filtersDatasourceUid?: string;
-  groupValues?: Array<string | number>;
+  groupByKeys?: string[];
 }
 
 function buildScene({
   datasourceUid = 'ds-1',
-  groupByDatasourceUid = datasourceUid,
   filtersDatasourceUid = datasourceUid,
-  groupValues = ['groupBy'],
+  groupByKeys = ['groupBy'],
 }: BuildSceneOptions = {}) {
   const subHeader = new VizPanelSubHeader({});
 
@@ -191,22 +185,20 @@ function buildScene({
     queries: [{ refId: 'A', datasource: { uid: datasourceUid } }],
   });
 
+  const groupByFilters = groupByKeys.map((key) => ({
+    key,
+    operator: GROUP_BY_OPERATOR,
+    value: '',
+    condition: '',
+  }));
+
   const adhocFiltersVariable = new AdHocFiltersVariable({
     name: 'adhoc',
     label: 'adhoc',
-    filters: [],
+    filters: groupByFilters,
     datasource: { uid: filtersDatasourceUid },
     applicabilityEnabled: true,
-  });
-
-  const groupByVariable = new GroupByVariable({
-    name: 'group',
-    label: 'group',
-    value: groupValues,
-    text: groupValues.map((val) => String(val)),
-    options: [],
-    applicabilityEnabled: true,
-    datasource: { uid: groupByDatasourceUid },
+    enableGroupBy: true,
   });
 
   const dataProvider = new SceneDataTransformer({
@@ -228,10 +220,10 @@ function buildScene({
 
   new DashboardScene({
     $variables: new SceneVariableSet({
-      variables: [groupByVariable, adhocFiltersVariable],
+      variables: [adhocFiltersVariable],
     }),
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
 
-  return { queryRunner, adhocFiltersVariable, groupByVariable };
+  return { queryRunner, adhocFiltersVariable };
 }

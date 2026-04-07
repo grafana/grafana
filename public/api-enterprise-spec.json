@@ -4953,6 +4953,29 @@
         }
       }
     },
+    "FooterItem": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "string"
+        },
+        "fontStyle": {
+          "type": "string"
+        },
+        "fontWeight": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "Frame": {
       "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
       "type": "object",
@@ -7057,6 +7080,15 @@
         },
         "embeddedImageTheme": {
           "type": "string"
+        },
+        "footerFontFamily": {
+          "type": "string"
+        },
+        "footerItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FooterItem"
+          }
         },
         "id": {
           "type": "integer",
