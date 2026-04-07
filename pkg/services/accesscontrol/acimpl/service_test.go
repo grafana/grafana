@@ -1402,3 +1402,44 @@ func TestIntegrationService_GetRoleByName(t *testing.T) {
 		require.Equal(t, roleName, role.Name)
 	})
 }
+
+func TestIntegrationCleanupPluginRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	svc := setupTestEnv(t, false)
+
+	pluginID := "test-plugin"
+	otherPluginID := "other-plugin"
+
+	for _, id := range []string{pluginID, otherPluginID} {
+		require.NoError(t, svc.DeclarePluginRoles(ctx, id, id, []plugins.RoleRegistration{
+			{
+				Role:   plugins.Role{Name: "Admin", Permissions: []plugins.Permission{{Action: id + ".dashboards:read"}}},
+				Grants: []string{"Admin"},
+			},
+		}))
+	}
+	require.NoError(t, svc.RegisterFixedRoles(ctx))
+
+	require.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+pluginID+":%"))
+	require.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+otherPluginID+":%"))
+
+	require.NoError(t, svc.CleanupPluginRoles(ctx, []string{pluginID}))
+
+	assert.Zero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+pluginID+":%"), "plugin role should be deleted")
+	assert.Zero(t, countDBRows(t, ctx, svc.sql, "permission", "action LIKE ?", pluginID+".%"), "plugin permissions should be deleted")
+	assert.NotZero(t, countDBRows(t, ctx, svc.sql, "role", "name LIKE ?", "plugins:"+otherPluginID+":%"), "other plugin role should survive")
+	assert.NotZero(t, countDBRows(t, ctx, svc.sql, "permission", "action LIKE ?", otherPluginID+".%"), "other plugin permissions should survive")
+}
+
+func countDBRows(t testing.TB, ctx context.Context, store db.DB, table, where string, args ...any) int64 {
+	t.Helper()
+	var count int64
+	require.NoError(t, store.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		count, err = sess.Table(table).Where(where, args...).Count()
+		return err
+	}))
+	return count
+}
