@@ -30,7 +30,7 @@ func unaryRetryInterceptor(cfg retryConfig) grpc.UnaryClientInterceptor {
 	return grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(cfg.Max),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(cfg.Backoff, cfg.BackoffJitter)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
 	)
 }
 
