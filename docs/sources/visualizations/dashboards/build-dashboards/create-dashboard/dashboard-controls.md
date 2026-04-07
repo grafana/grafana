@@ -19,7 +19,7 @@ weight: 200
 
 In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
 
-<!-- screenshot here? -->
+<!-- screenshot TBA after filters work is added on separate PR -->
 
 ## Add variables
 
@@ -168,7 +168,7 @@ To add a filter, follow these steps:
 After you add dashboard controls, you can manage them from the dashboard options.
 The sidebar includes collapsible sections for variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
 
-<!-- screenshot here -->
+<!-- screenshot TBA here after filters work is done -->
 
 To manage dashboard controls, follow these steps:
 
