@@ -28,7 +28,6 @@ import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
-import { SummaryStatsReact } from './scene/SummaryStats';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
 import { type Domain, type Filter, type WorkbenchRow } from './types';
 
@@ -43,7 +42,7 @@ type WorkbenchProps = {
   hasActiveFilters?: boolean;
 };
 
-const initialSize = 1 / 2;
+const initialSize = 2 / 3;
 
 // Helper function to recursively render WorkbenchRow items with children pattern
 function renderWorkbenchRow(
@@ -164,7 +163,7 @@ export function Workbench({
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
-    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
+    // if Grafana Alertmanager, split 2/3 : 1/3, otherwise 100/0 because there is no payload editor
     initialSize: initialSize,
     dragPosition: 'middle',
   });
@@ -224,7 +223,7 @@ export function Workbench({
           ) : (
             <>
               <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-                <SummaryStatsReact />
+                <div />
                 <SummaryChartReact />
               </div>
               {groupBy && groupBy.length > 0 && (
@@ -314,6 +313,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden', // Let AutoSizer handle the overflow
     }),
     summaryContainer: css({
+      height: theme.spacing(20),
       marginBottom: theme.spacing(2),
       alignItems: 'stretch',
     }),
