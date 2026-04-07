@@ -331,7 +331,8 @@
       "metadata": {
         "name": "alertingFilterV2",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-09-11T11:29:26Z"
+        "creationTimestamp": "2024-09-11T11:29:26Z",
+        "deletionTimestamp": "2026-04-02T16:22:01Z"
       },
       "spec": {
         "description": "Enable the new alerting search experience",
@@ -416,29 +417,35 @@
     {
       "metadata": {
         "name": "alertingListViewV2",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-05-24T14:40:49Z"
+        "resourceVersion": "1775156199126",
+        "creationTimestamp": "2024-05-24T14:40:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 18:56:39.126496 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new alert list view design",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingListViewV2PreviewToggle",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-22T08:50:34Z"
+        "resourceVersion": "1775152842792",
+        "creationTimestamp": "2025-04-22T08:50:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 18:00:42.792501 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the alerting list view v2 preview toggle",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -740,7 +747,8 @@
       "metadata": {
         "name": "alertingSavedSearches",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-19T14:32:27Z"
+        "creationTimestamp": "2025-12-19T14:32:27Z",
+        "deletionTimestamp": "2026-04-02T16:22:01Z"
       },
       "spec": {
         "description": "Enables saved searches for alert rules list",
@@ -798,7 +806,8 @@
       "metadata": {
         "name": "alertingTriageSavedSearches",
         "resourceVersion": "1769704033471",
-        "creationTimestamp": "2026-01-29T16:27:13Z"
+        "creationTimestamp": "2026-01-29T16:27:13Z",
+        "deletionTimestamp": "2026-04-02T16:22:01Z"
       },
       "spec": {
         "description": "Enables saved searches for the Alert Activity page",
@@ -942,15 +951,15 @@
     {
       "metadata": {
         "name": "annotationsClustering",
-        "resourceVersion": "1773352347788",
+        "resourceVersion": "1775140656883",
         "creationTimestamp": "2026-03-12T21:45:54Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-03-12 21:52:27.788294 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-02 14:37:36.883749 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables annotation clustering and switches to refactored annotation code",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
@@ -1135,6 +1144,23 @@
     },
     {
       "metadata": {
+        "name": "cacheConfigUnifiedStorageMigration",
+        "resourceVersion": "1775482512500",
+        "creationTimestamp": "2026-04-03T17:15:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-06 13:35:12.500052 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables cache configs data migration to unified storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-10-12T16:56:49Z"
@@ -1199,6 +1225,21 @@
         "description": "Enable loading plugins via declarative URLs",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "clearPreviousFieldValues",
+        "resourceVersion": "1775070445977",
+        "creationTimestamp": "2026-04-01T19:07:25Z"
+      },
+      "spec": {
+        "description": "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -1372,15 +1413,18 @@
     {
       "metadata": {
         "name": "dashboardDefaultLayoutSelector",
-        "resourceVersion": "1773923636566",
-        "creationTimestamp": "2026-03-19T12:33:56Z"
+        "resourceVersion": "1775132912690",
+        "creationTimestamp": "2026-03-19T12:33:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 12:28:32.690679 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables default layout selector in dashboard settings",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1454,14 +1498,17 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-10-23T08:55:45Z"
+        "resourceVersion": "1775209187023",
+        "creationTimestamp": "2024-10-23T08:55:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-03 09:39:47.02364 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables new dashboard layouts",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1550,12 +1597,15 @@
     {
       "metadata": {
         "name": "dashboardUnifiedDrilldownControls",
-        "resourceVersion": "1773081615691",
-        "creationTimestamp": "2026-03-09T18:40:15Z"
+        "resourceVersion": "1775213461656",
+        "creationTimestamp": "2026-03-09T18:40:15Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-03 10:51:01.656487 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Renders ad hoc filters and group by in a single unified control",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
@@ -1922,6 +1972,20 @@
     },
     {
       "metadata": {
+        "name": "enableColorblindSafePanelOptions",
+        "resourceVersion": "1775147722376",
+        "creationTimestamp": "2026-04-02T16:35:22Z"
+      },
+      "spec": {
+        "description": "Enables new colorblind safe palette and line fill patterns for panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDashboardEmptyExtensions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-13T07:03:13Z"
@@ -1932,6 +1996,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "enableDatasourceMetaApiPluginLoading",
+        "resourceVersion": "1775045310507",
+        "creationTimestamp": "2026-04-01T12:08:30Z"
+      },
+      "spec": {
+        "description": "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -3727,18 +3805,18 @@
     {
       "metadata": {
         "name": "newUnconfiguredPanel",
-        "resourceVersion": "1775046318180",
+        "resourceVersion": "1775140423960",
         "creationTimestamp": "2026-03-31T20:51:37Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-01 12:25:18.180841 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-02 14:33:43.960018 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the new unconfigured panel experience",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4148,16 +4226,19 @@
     {
       "metadata": {
         "name": "prometheusTypeMigration",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1775228314916",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-03 14:58:34.916384748 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
-        "stage": "experimental",
+        "stage": "deprecated",
         "codeowner": "@grafana/partner-datasources",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4194,18 +4275,18 @@
     {
       "metadata": {
         "name": "provisioningFolderMetadata",
-        "resourceVersion": "1771843876800",
+        "resourceVersion": "1775153228871",
         "creationTimestamp": "2026-02-23T10:49:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-02-23 10:51:16.80095 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-02 18:07:08.87157 +0000 UTC"
         }
       },
       "spec": {
         "description": "Allow setting folder metadata for provisioned folders",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4253,12 +4334,15 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1775058514147",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 15:48:34.147548 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"
@@ -4534,6 +4618,20 @@
     },
     {
       "metadata": {
+        "name": "reportingFooterSettings",
+        "resourceVersion": "1774457609263",
+        "creationTimestamp": "2026-03-25T16:53:29Z"
+      },
+      "spec": {
+        "description": "Enables the configurable footer settings for PDF reports",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingHeaderSettings",
         "resourceVersion": "1773744562248",
         "creationTimestamp": "2026-03-17T10:49:22Z"
@@ -4778,31 +4876,31 @@
     {
       "metadata": {
         "name": "splashScreen",
-        "resourceVersion": "1774461556169",
-        "creationTimestamp": "2026-03-25T17:59:16Z"
+        "resourceVersion": "1775046571105",
+        "creationTimestamp": "2026-03-25T17:59:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-01 12:29:31.105103 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the splash screen modal for introducing new Grafana features on first session",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1774365185266",
-        "creationTimestamp": "2024-02-27T21:16:00Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-03-24 15:13:05.266575305 +0000 UTC"
-        }
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2024-02-27T21:16:00Z"
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "GA",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-datasources-core-services",
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -4816,6 +4914,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sseExpressionErrorIsolation",
+        "resourceVersion": "1774386001085",
+        "creationTimestamp": "2026-03-24T21:00:01Z"
+      },
+      "spec": {
+        "description": "Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
       }
     },

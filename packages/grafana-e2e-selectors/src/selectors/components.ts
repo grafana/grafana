@@ -102,6 +102,19 @@ export const versionedComponents = {
   LayoutContainer: {
     '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
   },
+  VizLayout: {
+    container: {
+      ['13.1.0']: 'data-testid viz-layout',
+    },
+    legend: {
+      ['13.1.0']: 'data-testid viz-layout-legend',
+    },
+  },
+  UPlotChart: {
+    container: {
+      [MIN_GRAFANA_VERSION]: 'uplot-main-div',
+    },
+  },
   TimePicker: {
     moveBackwardButton: {
       '12.4.0': 'data-testid explore-toolbar-timepicker-move-backward-button',
@@ -511,6 +524,14 @@ export const versionedComponents = {
           [MIN_GRAFANA_VERSION]: 'data-testid Bar gauge value',
         },
       },
+      Histogram: {
+        container: {
+          ['13.1.0']: 'data-testid viz-layout',
+        },
+        legend: {
+          ['13.1.0']: 'data-testid viz-layout-legend',
+        },
+      },
       PieChart: {
         svgSlice: {
           '10.3.0': 'data testid Pie Chart Slice',
@@ -702,6 +723,9 @@ export const versionedComponents = {
     ElementEditPane: {
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
+      },
+      changeVariableType: {
+        '12.7.0': 'data-testid change variable type',
       },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',

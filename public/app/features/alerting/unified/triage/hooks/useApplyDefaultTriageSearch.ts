@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { shouldUseTriageSavedSearches } from '../../featureToggles';
 import { useAsync } from '../../hooks/useAsync';
 import { applySavedSearch, serializeCurrentSearchState } from '../scene/triageSavedSearchUtils';
 
@@ -43,7 +42,6 @@ function hasActiveTriageFilters(): boolean {
  * Hook that automatically applies the default saved search on first visit to the triage page.
  *
  * This hook:
- * - Checks if the saved searches feature is enabled (alertingTriageSavedSearches toggle)
  * - Detects if this is the first visit in the current session
  * - Only applies default if no filters/groupBy are currently active
  * - Loads and applies the default saved search if one exists
@@ -70,7 +68,6 @@ function hasActiveTriageFilters(): boolean {
  * ```
  */
 export function useApplyDefaultTriageSearch(): { isApplying: boolean } {
-  const savedSearchesEnabled = shouldUseTriageSavedSearches();
   const hasActiveFilters = hasActiveTriageFilters();
 
   // Use the internal useAsync hook which doesn't auto-execute
@@ -90,7 +87,7 @@ export function useApplyDefaultTriageSearch(): { isApplying: boolean } {
   }, []);
 
   const isFirstVisit = isFirstVisitInSession();
-  const shouldLoadDefault = savedSearchesEnabled && !hasActiveFilters && isFirstVisit;
+  const shouldLoadDefault = !hasActiveFilters && isFirstVisit;
 
   // Mark as visited on first visit, regardless of whether we load defaults
   if (isFirstVisit && state.status === 'not-executed') {

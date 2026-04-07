@@ -8,10 +8,18 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func newStaticStorage(gr schema.GroupResource, mode grafanarest.DualWriterMode, legacy grafanarest.Storage, unified grafanarest.Storage) (grafanarest.Storage, error) {
+	cfg := NewFakeConfig()
+	cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{DualWriterMode: mode}
+	return ProvideStaticServiceForTests(cfg).NewStorage(gr, legacy, unified)
+}
 
 type storageMock struct {
 	*mock.Mock

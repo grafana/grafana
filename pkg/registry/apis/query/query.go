@@ -196,6 +196,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			false,
 			openfeature.TransactionContext(ctx),
 		)
+		connectLogger.Debug("raw-mode-feature-flag evaluated", "result", rawOutputMode)
 		if rawOutputMode {
 			responder = newRawResponderWrapper(ctx, w, responderOnObjectFn, responderOnErrorFn)
 		} else {

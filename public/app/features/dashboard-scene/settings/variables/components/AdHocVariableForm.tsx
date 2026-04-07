@@ -135,11 +135,13 @@ export function AdHocVariableForm({
         )}
 
       {datasourceSupported && onDefaultGroupByChange && (
-        <DefaultGroupByValueEditor
-          values={defaultGroupByValues ?? []}
-          options={defaultGroupByOptions}
-          onChange={onDefaultGroupByChange}
-        />
+        <div className={!inline ? styles.originFiltersWrapper : undefined}>
+          <DefaultGroupByValueEditor
+            values={defaultGroupByValues ?? []}
+            options={defaultGroupByOptions}
+            onChange={onDefaultGroupByChange}
+          />
+        </div>
       )}
 
       {datasourceSupported && onDefaultKeysChange && (

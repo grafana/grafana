@@ -260,14 +260,6 @@ type GetChildrenQuery struct {
 	FolderUIDs []string `json:"-"`
 }
 
-type HasEditPermissionInFoldersQuery struct {
-	SignedInUser identity.Requester
-}
-
-type HasAdminPermissionInDashboardsOrFoldersQuery struct {
-	SignedInUser identity.Requester
-}
-
 // GetDescendantCountsQuery captures the information required by the folder service
 // to return the count of descendants (direct and indirect) in a folder.
 type GetDescendantCountsQuery struct {

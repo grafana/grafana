@@ -337,7 +337,7 @@ update-workspace: gen-go
 
 .PHONY: build-go
 build-go: pkg/services/preference/themes_generated.go
-	@echo "build go binaries ($(OS)/$(ARCH))"
+	@echo "compiling backend ($(OS)/$(ARCH))"
 	$(GO_BUILD_ENV) \
 	$(GO) build $(GO_BUILD_ARGS)
 	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
@@ -354,7 +354,7 @@ build-air: build-go
 
 .PHONY: build-js
 build-js: ## Build frontend assets.
-	@echo "build frontend"
+	@echo "building frontend"
 	yarn run build
 
 public/build:
@@ -375,8 +375,18 @@ build-plugin-go: ## Build decoupled plugins
 .PHONY: build
 build: build-go build-js ## Build backend and frontend.
 
-# Tar.gz packaging variables (artifact / file naming).
+# Packaging variables (artifact / file naming).
 TARGZ_PACKAGE_NAME ?= grafana
+FPM_LICENSE        ?= AGPLv3
+ARCH_LABEL         := $(if $(ARM),$(ARCH)-$(ARM),$(ARCH))
+# armv6 debs use a -rpi suffix to match daggerbuild behavior (grafana-rpi, grafana-enterprise-rpi).
+DEB_PACKAGE_NAME   := $(if $(filter 6,$(ARM)),$(TARGZ_PACKAGE_NAME)-rpi,$(TARGZ_PACKAGE_NAME))
+TARGZ_FILE         := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).tar.gz
+DEB_FILE           := dist/$(DEB_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).deb
+RPM_FILE           := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).rpm
+DOCKER_FILE        := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).docker.tar.gz
+DOCKER_UBUNTU_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).ubuntu.docker.tar.gz
+DOCKER_TAG         ?= $(TARGZ_PACKAGE_NAME):$(BUILD_VERSION)
 
 # Default catalog plugins under data/plugins-bundled. Stamp encodes OS/ARCH so cross-builds refresh.
 DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
@@ -384,6 +394,7 @@ DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
 $(DATA_PLUGINS_BUNDLED_STAMP): package.json \
 		scripts/download-catalog-plugins.sh \
 		scripts/catalog-plugins-defaults
+	@echo "bundling plugins ($(OS)/$(ARCH))"
 	@rm -rf data/plugins-bundled
 	@mkdir -p data/plugins-bundled
 	@bash scripts/download-catalog-plugins.sh \
@@ -400,7 +411,10 @@ data/plugins-bundled: $(DATA_PLUGINS_BUNDLED_STAMP)
 build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plugins into data/plugins-bundled (network; alias).
 
 .PHONY: build-targz
-build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
+build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
+
+$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build
+	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
 	BUILD_NUMBER="$(BUILD_NUMBER)" \
@@ -409,6 +423,64 @@ build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Bu
 	$(if $(ARM),GOARM="$(ARM)") \
 	GO="$(GO)" \
 	bash scripts/build-targz.sh
+
+.PHONY: build-deb
+build-deb: $(DEB_FILE) ## Build a .deb package from a tar.gz (requires fpm)
+
+$(DEB_FILE): $(TARGZ_FILE)
+	@echo "building deb"
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	FPM_LICENSE="$(FPM_LICENSE)" \
+	$(if $(ARM),GOARM="$(ARM)") \
+	bash scripts/build-deb.sh
+
+.PHONY: build-rpm
+build-rpm: $(RPM_FILE) ## Build an .rpm package from a tar.gz (requires fpm)
+
+$(RPM_FILE): $(TARGZ_FILE)
+	@echo "building rpm"
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	FPM_LICENSE="$(FPM_LICENSE)" \
+	$(if $(ARM),GOARM="$(ARM)") \
+	bash scripts/build-rpm.sh
+
+.PHONY: build-docker
+build-docker: $(DOCKER_FILE) ## Build a Docker image (alpine) from a tar.gz
+
+$(DOCKER_FILE): $(TARGZ_FILE)
+	@echo "building docker image (alpine)"
+	docker buildx build \
+	--platform $(OS)/$(ARCH) \
+	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
+	--build-arg GO_SRC=tgz-builder \
+	--build-arg JS_SRC=tgz-builder \
+	--target=final-alpine \
+	--tag $(DOCKER_TAG) \
+	--output type=docker,dest=$@ \
+	.
+
+.PHONY: build-docker-ubuntu
+build-docker-ubuntu: $(DOCKER_UBUNTU_FILE) ## Build a Docker image (ubuntu) from a tar.gz
+
+$(DOCKER_UBUNTU_FILE): $(TARGZ_FILE)
+	@echo "building docker image (ubuntu)"
+	docker buildx build \
+	--platform $(OS)/$(ARCH) \
+	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
+	--build-arg GO_SRC=tgz-builder \
+	--build-arg JS_SRC=tgz-builder \
+	--target=final-ubuntu \
+	--tag $(DOCKER_TAG) \
+	--output type=docker,dest=$@ \
+	.
 
 .PHONY: run
 run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
@@ -576,6 +648,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--target=final-alpine \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
 	$(DOCKER_BUILD_ARGS) \
 	.
@@ -593,8 +666,8 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--build-arg BASE_IMAGE=ubuntu:24.04 \
 	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
+	--target=final-ubuntu \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS) \
 	.
@@ -697,3 +770,29 @@ help: ## Display this help.
 # container/check-licenses target)
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
+
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+define generate-policy-yml
+	docker run -u "$(shell id -u):$(shell id -g)" \
+	--quiet \
+	--rm \
+	--volume "$(shell git rev-parse --show-toplevel)":/work \
+	--workdir /work \
+	ghcr.io/grafana/generate-policy-bot-config@${GENERATE_POLICY_BOT_CONFIG_SHA} \
+		--output $(1) \
+		--log-level=debug \
+		--merge-with=.policy.yml.tmpl \
+		.
+endef
+
+.PHONY: .policy.yml
+.policy.yml:
+	@$(call generate-policy-yml,$@)
+
+check-policy.yml:
+	# We redirect stderr to stdout because the tool logs to stderr using proper
+	# Actions log levels (to avoid interfering with `diff`), but those log
+	# commands only work on stdout.
+	@bash -c 'diff -u .policy.yml <($(call generate-policy-yml,-))' 2>&1 && \
+		( echo "No drift detected: .policy.yml is up-to-date." >&2; exit 0 ) || \
+		( echo "Drift detected: .policy.yml is out-of-date. Run \`make .policy.yml\` to update it, and then commit the result." >&2; exit 1 )

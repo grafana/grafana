@@ -1,9 +1,12 @@
+import { useId } from 'react';
+
 import { type SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { type EditorProps } from '../QueryEditor';
 
 export const CSVFileEditor = ({ onChange, query }: EditorProps) => {
+  const id = useId();
   const onChangeFileName = ({ value }: SelectableValue<string>) => {
     onChange({ ...query, csvFileName: value });
   };
@@ -21,8 +24,9 @@ export const CSVFileEditor = ({ onChange, query }: EditorProps) => {
 
   return (
     <InlineFieldRow>
-      <InlineField label="File" labelWidth={14}>
+      <InlineField label="File" labelWidth={14} htmlFor={id}>
         <Select
+          inputId={id}
           width={32}
           onChange={onChangeFileName}
           placeholder="Select csv file"

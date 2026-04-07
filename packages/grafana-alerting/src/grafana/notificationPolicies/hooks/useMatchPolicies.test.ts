@@ -1,6 +1,6 @@
-import { API_VERSION, type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { API_VERSION, type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
-import { LabelMatcherFactory, RouteFactory } from '../../api/notifications/v1beta1/mocks/fakes/Routes';
+import { LabelMatcherFactory, RouteFactory } from '../../api/notifications/v0alpha1/mocks/fakes/Routes';
 import { type Label } from '../../matchers/types';
 
 import { matchInstancesToRouteTrees } from './useMatchPolicies';

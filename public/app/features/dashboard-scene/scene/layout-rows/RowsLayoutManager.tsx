@@ -159,10 +159,6 @@ export class RowsLayoutManager
     this.addNewRow(row);
   }
 
-  public shouldUngroup(): boolean {
-    return this.state.rows.length === 1;
-  }
-
   public getOutlineChildren() {
     const outlineChildren: SceneObject[] = [];
 
