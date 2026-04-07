@@ -490,7 +490,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		return section, err
 	}
 
-	queryRetries := 10
 	if opts.EnableCSP {
 		securitySect, err := cfg.NewSection("security")
 		require.NoError(t, err)
@@ -615,9 +614,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = logSection.NewKey("address", opts.GRPCServerAddress)
 		require.NoError(t, err)
 	}
-	// retry queries 3 times by default
+
+	// retry queries 10 times by default
+	queryRetries := 10
 	if opts.QueryRetries != 0 {
-		queryRetries = int(opts.QueryRetries)
+		queryRetries = opts.QueryRetries
+	}
+	transactionRetries := 10
+	if opts.TransactionRetries != 0 {
+		transactionRetries = opts.TransactionRetries
 	}
 
 	if opts.NGAlertSchedulerBaseInterval > 0 {
@@ -802,6 +807,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
+	_, err = dbSection.NewKey("transaction_retries", fmt.Sprintf("%d", transactionRetries))
+	require.NoError(t, err)
 	maxConns := opts.DBMaxConns
 	if maxConns <= 0 {
 		maxConns = 2
@@ -858,7 +865,8 @@ type GrafanaOpts struct {
 	UnifiedAlertingDisabledOrgs           []int64
 	EnableLog                             bool
 	GRPCServerAddress                     string
-	QueryRetries                          int64
+	QueryRetries                          int
+	TransactionRetries                    int
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 	UnifiedStorageDisableSearch           bool

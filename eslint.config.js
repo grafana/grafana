@@ -208,6 +208,7 @@ module.exports = [
       ],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
+      '@grafana/define-feature-events': 'error',
       '@grafana/no-plain-links': 'error',
     },
   },
