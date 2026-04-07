@@ -100,7 +100,7 @@ type AzureMetricTimeseriesData struct {
 
 // AzureMetricTimeseries is one labelled timeseries within a metric value.
 type AzureMetricTimeseries struct {
-	Metadatavalues []AzureMetricMetadataValue `json:"metadatavalues"`
+	Metadatavalues []AzureMetricMetadataValue  `json:"metadatavalues"`
 	Data           []AzureMetricTimeseriesData `json:"data"`
 }
 

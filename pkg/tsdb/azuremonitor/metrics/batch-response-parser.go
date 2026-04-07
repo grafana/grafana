@@ -114,8 +114,8 @@ func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types
 					Value:          []types.AzureMetricValue{metric.AzureMetricValue},
 				}
 				// Use query.Subscription so that {{subscription}} resolves to the
-			// per-resource subscription rather than the datasource default.
-			displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, query.Subscription)
+				// per-resource subscription rather than the datasource default.
+				displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, query.Subscription)
 				if dataField.Config != nil {
 					dataField.Config.DisplayName = displayName
 				} else {

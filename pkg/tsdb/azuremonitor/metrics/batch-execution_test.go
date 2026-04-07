@@ -52,8 +52,8 @@ func makeBatchDsInfo(srv *httptest.Server) types.DatasourceInfo {
 			SubscriptionId:  "sub-123",
 		},
 		Routes: map[string]types.AzRoute{
-			"Azure Monitor":              {URL: srv.URL},
-			"Azure Portal":               {URL: "https://portal.azure.com"},
+			"Azure Monitor":               {URL: srv.URL},
+			"Azure Portal":                {URL: "https://portal.azure.com"},
 			"Azure Monitor Batch Metrics": {URL: srv.URL},
 		},
 		Services: map[string]types.DatasourceService{
@@ -102,8 +102,8 @@ func makeBatchQuery(refID, sub, region string, resources []dataquery.AzureMonito
 // resource IDs, all reporting Percentage CPU = avg.
 func batchSuccessResponse(resourceIDs []string, avg float64) []byte {
 	type tsData struct {
-		TimeStamp time.Time  `json:"timeStamp"`
-		Average   *float64   `json:"average"`
+		TimeStamp time.Time `json:"timeStamp"`
+		Average   *float64  `json:"average"`
 	}
 	type tseries struct {
 		Data []tsData `json:"data"`
@@ -128,7 +128,7 @@ func batchSuccessResponse(resourceIDs []string, avg float64) []byte {
 	}
 
 	ts := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	var values []value
+	values := make([]value, 0, len(resourceIDs))
 	for _, id := range resourceIDs {
 		values = append(values, value{
 			ResourceID: id,

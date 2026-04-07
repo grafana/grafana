@@ -112,7 +112,7 @@ func executeBatchRequest(ctx context.Context, batch Batch, cli *http.Client) (*b
 	if err != nil {
 		return nil, backend.DownstreamError(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBatchResponseBodyBytes))
 	if err != nil {

@@ -67,7 +67,9 @@ const MetricsQueryEditor = ({
 
     if (batchAPIEnabled) {
       // Resources must share the same metric namespace to be queried together via the batch API
-      return rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase();
+      return (
+        rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase()
+      );
     }
 
     // Without the batch API, resources must also share the same subscription, region,
