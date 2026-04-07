@@ -48,6 +48,11 @@ describe('UPlotScaleBuilder', () => {
       expect(result).toEqual([0, 2]);
     });
 
+    it('rounds range deltas 10 +/- 0.0000001', () => {
+      const result = rangeFn(mockUPlot(scaleKey, 1), 9.9999999, 10.0000001, scaleKey);
+      expect(result).toEqual([0, 20]);
+    });
+
     it('rounds negative deltas', () => {
       const result = rangeFn(mockUPlot(scaleKey, 1), -1, -0.9999999, scaleKey);
       expect(result).toEqual([-2, 0]);

@@ -255,8 +255,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
       // for tiny ranges like 0.999999999811111, 1, uPlot's rangeNum may return [1,1]
       if (minMax[0]! === minMax[1]! && minMax[0]! !== 0) {
-        // fix linear and asinh scales only
-        if (scale.distr !== 3) {
+        // only applies to linear scales
+        if (scale.distr === 1) {
           if (minMax[0] < 0) {
             minMax[0] *= 2;
             minMax[1] = 0;
