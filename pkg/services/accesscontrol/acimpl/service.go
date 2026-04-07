@@ -81,8 +81,8 @@ func ProvideService(
 	}
 
 	// Clean up plugin RBAC data for configured plugins
-	if len(cfg.RBAC.PluginCleanup) > 0 {
-		if err := service.CleanupPluginRoles(context.Background(), cfg.RBAC.PluginCleanup); err != nil {
+	if len(cfg.RBAC.PluginsCleanup) > 0 {
+		if err := service.CleanupPluginRoles(context.Background(), cfg.RBAC.PluginsCleanup); err != nil {
 			return nil, err
 		}
 	}
