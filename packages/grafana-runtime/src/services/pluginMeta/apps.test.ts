@@ -9,7 +9,7 @@ import {
   isAppPluginInstalled,
   setAppPluginMetas,
 } from './apps';
-import { setLogger } from './logging';
+import { setPluginMetaLogger } from './logging';
 import { initPluginMetas } from './plugins';
 import { app, apps as testApps } from './test-fixtures/config.apps';
 import { v0alpha1Response } from './test-fixtures/v0alpha1Response';
@@ -32,7 +32,7 @@ describe('when useMTPlugins flag is enabled', () => {
       logMeasurement: jest.fn(),
       logWarning: jest.fn(),
     };
-    setLogger(logger);
+    setPluginMetaLogger(logger);
   });
 
   afterAll(() => {

@@ -101,6 +101,41 @@ describe('Unified Storage Searcher', () => {
     // expect(response.view.get(0).description).toBe(null);
     // expect(response.view.get(1).description).toBe('foobar');
   });
+
+  it('should filter search results by ownerReference', async () => {
+    server.use(
+      getCustomSearchHandler([
+        {
+          name: 'team-owned-dashboard',
+          title: 'Team owned dashboard',
+          resource: 'dashboard',
+          ownerReferences: ['iam.grafana.app/Team/team-a'],
+        },
+        {
+          name: 'other-team-dashboard',
+          title: 'Other team dashboard',
+          resource: 'dashboard',
+          ownerReferences: ['iam.grafana.app/Team/team-b'],
+        },
+        {
+          name: 'unowned-dashboard',
+          title: 'Unowned dashboard',
+          resource: 'dashboard',
+        },
+      ])
+    );
+
+    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+
+    const response = await searcher.search({
+      query: '*',
+      ownerReference: ['iam.grafana.app/Team/team-a', 'iam.grafana.app/Team/test-team'],
+    });
+
+    expect(response.view.length).toBe(1);
+    expect(response.view.get(0).name).toBe('Team owned dashboard');
+    expect(response.view.get(0).uid).toBe('team-owned-dashboard');
+  });
 });
 
 describe('toDashboardResults', () => {

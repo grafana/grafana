@@ -1,6 +1,6 @@
 import { type AngularMeta, PluginLoadingStrategy } from '@grafana/data';
 
-import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
+import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 export function angularMapper(spec: v0alpha1Spec): AngularMeta {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

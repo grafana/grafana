@@ -3,7 +3,7 @@
 exports[`new receiver should be able to test and save a receiver 1`] = `
 [
   {
-    "apiVersion": "notifications.alerting.grafana.app/v1beta1",
+    "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
     "kind": "Receiver",
     "metadata": {},
     "spec": {

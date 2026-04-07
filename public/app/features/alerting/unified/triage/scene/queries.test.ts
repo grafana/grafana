@@ -37,6 +37,14 @@ describe('triage queries service combined filter', () => {
     expect(query).toContain('service_name="payments"');
   });
 
+  it('keeps service alias expansion when sidebar filter value came from service_name', () => {
+    const query = summaryChartQuery('service="auth",alertname="login-errors"').expr;
+
+    expect(query).toContain('alertname="login-errors",service="auth"');
+    expect(query).toContain('alertname="login-errors",service_name="auth"');
+    expect(query).toContain(' or ');
+  });
+
   it('expands cluster key to cluster OR cluster_name', () => {
     const query = summaryChartQuery('cluster="prod-a"').expr;
 
@@ -51,6 +59,19 @@ describe('triage queries service combined filter', () => {
     expect(query).toContain('namespace="payments"');
     expect(query).toContain('exported_namespace="payments"');
     expect(query).toContain('namespace_extracted="payments"');
+    expect(query).toContain(' or ');
+  });
+
+  it('expands severity key across severity-adjacent label keys', () => {
+    const query = summaryChartQuery('severity=~"(?i)critical|crit|fatal"').expr;
+
+    expect(query).toContain('severity=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('priority=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('level=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('loglevel=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('logLevel=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('lvl=~"(?i)critical|crit|fatal"');
+    expect(query).toContain('detected_level=~"(?i)critical|crit|fatal"');
     expect(query).toContain(' or ');
   });
 });

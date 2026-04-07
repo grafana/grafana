@@ -88,7 +88,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -363,12 +362,8 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
 	dashboardservice.ProvideDashboardAccessService,
-	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
 	wire.Bind(new(folder.Service), new(*folderimpl.Service)),
-	wire.Bind(new(folder.LegacyService), new(*folderimpl.Service)),
-	folderimpl.ProvideStore,
-	wire.Bind(new(folder.Store), new(*folderimpl.FolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,

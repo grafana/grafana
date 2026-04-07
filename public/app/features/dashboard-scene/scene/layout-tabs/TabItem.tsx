@@ -155,13 +155,6 @@ export class TabItem
   }
 
   public onConfirmDelete() {
-    const layout = this.getParentLayout();
-
-    if (layout.shouldUngroup()) {
-      layout.removeTab(this);
-      return;
-    }
-
     if (this.getLayout().getVizPanels().length === 0) {
       this.onDelete();
       return;
