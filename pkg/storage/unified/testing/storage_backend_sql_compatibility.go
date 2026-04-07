@@ -119,15 +119,15 @@ func newIntegrationTestContext(t *testing.T) context.Context {
 }
 
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	ctx := testutil.NewDefaultTestContext(t)
-
 	// Test SQL backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL Backend Operations", func(t *testing.T) {
+		ctx := testutil.NewDefaultTestContext(t)
 		runKeyPathTest(t, sqlBackend, nsPrefix+"-sql", db, ctx)
 	})
 
 	// Test SQL KV backend with 3 writes, 3 updates, 3 deletes
 	t.Run("SQL KV Backend Operations", func(t *testing.T) {
+		ctx := testutil.NewDefaultTestContext(t)
 		runKeyPathTest(t, kvBackend, nsPrefix+"-kv", db, ctx)
 	})
 }
@@ -289,18 +289,18 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 
 // runTestSQLBackendFieldsCompatibility tests that KV backend with RvManager populates all SQL backend legacy fields
 func runTestSQLBackendFieldsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	ctx := testutil.NewDefaultTestContext(t)
-
 	// Create unique namespace for isolation
 	namespace := nsPrefix + "-fields-test"
 
 	// Test SQL backend with 3 resources through complete lifecycle
 	t.Run("SQL Backend Operations", func(t *testing.T) {
+		ctx := testutil.NewDefaultTestContext(t)
 		runSQLBackendFieldsTest(t, sqlBackend, namespace+"-sql", db, ctx)
 	})
 
 	// Test KV backend with 3 resources through complete lifecycle
 	t.Run("KV Backend Operations", func(t *testing.T) {
+		ctx := testutil.NewDefaultTestContext(t)
 		runSQLBackendFieldsTest(t, kvBackend, namespace+"-kv", db, ctx)
 	})
 }

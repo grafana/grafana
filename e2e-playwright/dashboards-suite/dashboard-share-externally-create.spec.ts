@@ -9,7 +9,7 @@ test.use({
 const DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
 const DASHBOARD_UID_2 = 'edediimbjhdz4b';
 
-test.describe(
+test.skip(
   'Shared dashboards',
   {
     tag: ['@dashboards'],

@@ -143,10 +143,6 @@ const (
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
-	// FlagKubernetesAlertingRules
-	// Adds support for Kubernetes alerting and recording rules
-	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
-
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
@@ -925,4 +921,8 @@ const (
 	// FlagQueryServiceQueryCaching
 	// Enables the query service to do query caching
 	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
+
+	// FlagCacheConfigUnifiedStorageMigration
+	// Enables cache configs data migration to unified storage
+	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
 )
