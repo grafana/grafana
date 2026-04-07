@@ -10,7 +10,7 @@ import {
   shouldAlignTimeCompare,
   useDataLinksContext,
 } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { config, PanelDataErrorView, reportInteraction } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
   EventBusPlugin,
@@ -204,11 +204,22 @@ export const TimeSeriesPanel = ({
                         groupingFilters.length &&
                         onAddAdHocFilters
                           ? {
-                              onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
-                              onFilterOutGroupedLabels: () =>
+                              onFilterForGroupedLabels: () => {
+                                onAddAdHocFilters(groupingFilters);
+                                reportInteraction('grafana_unified_drilldown_tooltip_filter_for', {
+                                  filtersCount: groupingFilters.length,
+                                  keys: groupingFilters.map((f) => f.key),
+                                });
+                              },
+                              onFilterOutGroupedLabels: () => {
                                 onAddAdHocFilters(
                                   groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                ),
+                                );
+                                reportInteraction('grafana_unified_drilldown_tooltip_filter_out', {
+                                  filtersCount: groupingFilters.length,
+                                  keys: groupingFilters.map((f) => f.key),
+                                });
+                              },
                             }
                           : undefined
                       }
