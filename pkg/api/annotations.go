@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -545,10 +544,10 @@ func canEditDashboard(c *contextmodel.ReqContext, ac accesscontrol.AccessControl
 	return ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 }
 
-func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *user.SignedInUser) (*annotations.ItemDTO, response.Response) {
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user identity.Requester) (*annotations.ItemDTO, response.Response) {
 	query := &annotations.ItemQuery{
 		AnnotationID: annotationID,
-		OrgID:        user.OrgID,
+		OrgID:        user.GetOrgID(),
 		SignedInUser: user,
 	}
 	items, err := repo.Find(ctx, query)
@@ -608,30 +607,9 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		// tempUser is used to resolve annotation type.
-		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
-		tempUser := &user.SignedInUser{
-			OrgID: orgID,
-			Permissions: map[int64]map[string][]string{
-				orgID: {
-					dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
-					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
-				},
-			},
-		}
+		tmpCtx, tempUser := identity.WithServiceIdentity(ctx, orgID)
 
-		if features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-			tempUser = &user.SignedInUser{
-				OrgID: orgID,
-				Permissions: map[int64]map[string][]string{
-					orgID: {
-						accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeDashboardsAll},
-					},
-				},
-			}
-		}
-
-		annotation, resp := findAnnotationByID(ctx, annotationsRepo, int64(annotationId), tempUser)
+		annotation, resp := findAnnotationByID(tmpCtx, annotationsRepo, int64(annotationId), tempUser)
 		if resp != nil {
 			return nil, errors.New("could not resolve annotation type")
 		}
