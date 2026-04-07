@@ -21,6 +21,7 @@ import {
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { KioskMode } from 'app/types/dashboard';
@@ -199,13 +200,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
               </div>
             </div>
           </div>
-          {renderHiddenVariables(dashboard)}
+          <RenderHiddenVariables dashboard={dashboard} />
         </>
       );
     }
 
     // To still have spacing when no controls are rendered
-    return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
+    return (
+      <Box padding={1}>
+        <RenderHiddenVariables dashboard={dashboard} />
+      </Box>
+    );
   }
 
   // When dashboardAdHocAndGroupByWrapper is enabled, use the new layout with topRow
@@ -332,6 +337,8 @@ function DashboardControlActions({
   }
 
   const canEditDashboard = dashboard.canEditDashboard();
+  const canSave = Boolean(meta.canSave);
+  const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const hasUid = Boolean(uid);
   const isSnapshot = Boolean(meta.isSnapshot);
   const isEmbedded = meta.isEmbedded;
@@ -341,7 +348,7 @@ function DashboardControlActions({
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
-      {isEditing && <SaveDashboard dashboard={dashboard} />}
+      {isEditing && (canSave || canSaveAs) && <SaveDashboard dashboard={dashboard} />}
       {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
       {!isPlaying && canEditDashboard && !isEditable && !isEditing && (
         <MakeDashboardEditableButton dashboard={dashboard} />
@@ -379,7 +386,7 @@ function DashboardControlActions({
   );
 }
 
-function renderHiddenVariables(dashboard: DashboardScene) {
+function RenderHiddenVariables({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard).useState();
   const renderAsHiddenVariables = variables.filter((v) => v.UNSAFE_renderAsHidden);
   if (renderAsHiddenVariables && renderAsHiddenVariables.length > 0) {

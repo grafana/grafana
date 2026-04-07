@@ -215,12 +215,7 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 		request.Limit = query.Limit
 	}
 
-	res, err := s.k8sclient.Search(ctx, query.OrgID, request)
-	if err != nil {
-		return nil, err
-	}
-
-	parsedResults, err := dashboardsearch.ParseResults(res, 0)
+	parsedResults, err := dashboardsearch.SearchAll(ctx, query.OrgID, request, s.k8sclient.Search)
 	if err != nil {
 		return nil, err
 	}
@@ -675,15 +670,11 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 			},
 			Limit: folderSearchLimit}
 
-		res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
+		hits, err := dashboardsearch.SearchAll(ctx, cmd.OrgID, request, s.dashboardK8sClient.Search)
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 		}
 
-		hits, err := dashboardsearch.ParseResults(res, 0)
-		if err != nil {
-			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-		}
 		dashboardUIDs := make([]string, len(hits.Hits))
 		for i, dashboard := range hits.Hits {
 			dashboardUIDs[i] = dashboard.Name

@@ -74,9 +74,13 @@ func convertLabelsMatchersToK8s(matchers config.Matchers) []model.InhibitionRule
 }
 
 func convertToDomainModel(rule *model.InhibitionRule) (definitions.InhibitionRule, error) {
+	prov, err := ngmodels.ProvenanceFromString(rule.GetProvenanceStatus())
+	if err != nil {
+		return definitions.InhibitionRule{}, ngmodels.MakeErrInhibitionRuleInvalid(err)
+	}
 	result := definitions.InhibitionRule{
 		Name:       rule.Name,
-		Provenance: definitions.Provenance(ngmodels.ProvenanceNone),
+		Provenance: definitions.Provenance(prov),
 	}
 
 	// Convert source matchers from K8s format to prometheus format

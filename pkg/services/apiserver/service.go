@@ -289,6 +289,13 @@ func (s *service) start(ctx context.Context) error {
 	}
 	groupVersions = append(groupVersions, additionalGroupVersions...)
 
+	// reorder so the preferred version, if set in the config.ini, is first in the slice.
+	// this will impact what version is stored in unified storage.
+	groupVersions, err = ReorderGroupVersionsForLegacyCodec(s.log, s.cfg, s.scheme, groupVersions)
+	if err != nil {
+		return fmt.Errorf("preferred_api_version: %w", err)
+	}
+
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
 
 	// Register authorizers from app installers
