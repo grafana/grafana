@@ -38,6 +38,7 @@ require (
 	dagger.io/dagger v0.18.8
 	github.com/Masterminds/semver v1.5.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
+	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v3 v3.5.0
 )
 
@@ -65,6 +66,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.39.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
