@@ -18,7 +18,6 @@ var (
 	requeueAfter = 10 * time.Second
 )
 
-// actionLabel converts a ReconcileAction to a stable string for use as a metric label.
 func actionLabel(action operator.ReconcileAction) string {
 	switch action {
 	case operator.ReconcileActionCreated:

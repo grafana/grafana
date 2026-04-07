@@ -157,7 +157,6 @@ func (p *CatalogProvider) findChildMeta(ctx context.Context, childID string, par
 	return nil, ErrMetaNotFound
 }
 
-// httpStatusToErrType maps an HTTP status code to a stable error type label for metrics.
 func httpStatusToErrType(status int) string {
 	switch status {
 	case http.StatusNotFound:

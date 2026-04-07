@@ -34,7 +34,7 @@ var (
 		prometheus.HistogramOpts{
 			Namespace: namespace,
 			Name:      "plugin_children_count_per_reconcile",
-			Help:      "Number of child plugins found per reconciliation cycle. Useful for validating batch size assumptions and understanding work distribution across plugins.",
+			Help:      "Number of child plugins found per reconciliation cycle.",
 			Buckets:   []float64{0, 1, 2, 3, 5, 7, 10},
 		},
 	)
@@ -100,7 +100,7 @@ var (
 		prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "meta_fetch_errors_total",
-			Help:      "Total number of metadata fetch errors by provider and error type. error_type: not_found, timeout, network, rate_limited, server_error, client_error, decode.",
+			Help:      "Total number of metadata fetch errors by provider and error type.",
 		},
 		[]string{"provider", "error_type"},
 	)
