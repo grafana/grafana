@@ -2,7 +2,6 @@ import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
@@ -44,16 +43,25 @@ describe('Connections', () => {
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
 
-  test('shows the "Connections Homepage" page by default when edition is Cloud', async () => {
-    config.pluginAdminExternalManageEnabled = true;
+  test('shows the "Connections Homepage" page by default', async () => {
     renderPage();
 
-    // Add new connection card
+    // Cards are derived from the nav tree (navIndex mock)
     expect(await screen.findByText('Add new connection')).toBeVisible();
     expect(await screen.findByText('Collector')).toBeVisible();
     expect(await screen.findByText('Data sources')).toBeVisible();
     expect(await screen.findByText('Integrations')).toBeVisible();
     expect(await screen.findByText('Private data source connect')).toBeVisible();
+
+    // Metadata enrichment: icons and descriptions come from CardMetadata
+    expect(
+      await screen.findByText('Connect data to Grafana through data sources, integrations and apps')
+    ).toBeVisible();
+    expect(
+      await screen.findByText(
+        'Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector'
+      )
+    ).toBeVisible();
 
     // Heading
     expect(await screen.findByText('Welcome to Connections')).toBeVisible();
@@ -64,21 +72,32 @@ describe('Connections', () => {
     ).toBeVisible();
   });
 
-  test('shows the OSS "Connections Homepage" page by default when edition is OpenSource', async () => {
-    config.pluginAdminExternalManageEnabled = false;
-    renderPage();
+  test('only shows cards for nav items present in the connections nav section', async () => {
+    // Store with a minimal connections nav (e.g. OSS - only core items)
+    const minimalStore = configureStore({
+      navIndex: {
+        ...navIndex,
+        connections: {
+          ...navIndex.connections,
+          children: [
+            {
+              id: 'connections-add-new-connection',
+              text: 'Add new connection',
+              url: '/connections/add-new-connection',
+            },
+            { id: 'connections-datasources', text: 'Data sources', url: '/connections/datasources' },
+          ],
+        },
+      },
+      plugins: getPluginsStateMock([]),
+    });
+    renderPage(ROUTES.Base, minimalStore);
 
-    // Add new connection card
     expect(await screen.findByText('Add new connection')).toBeVisible();
-    expect(await screen.findByText('View configured data sources')).toBeVisible();
-
-    // Heading
-    expect(await screen.findByText('Welcome to Connections')).toBeVisible();
-    expect(
-      await screen.findByText(
-        'Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections.'
-      )
-    ).toBeVisible();
+    expect(await screen.findByText('Data sources')).toBeVisible();
+    expect(screen.queryByText('Collector')).not.toBeInTheDocument();
+    expect(screen.queryByText('Integrations')).not.toBeInTheDocument();
+    expect(screen.queryByText('Private data source connect')).not.toBeInTheDocument();
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {

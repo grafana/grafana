@@ -1,20 +1,41 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useSelector } from 'app/types/store';
 
-import { getCloudCardData, getOssCardData } from '../components/PageCard/CardData';
+import { getConnectionsCardMetadata } from '../components/PageCard/CardMetadata';
 import PageCard from '../components/PageCard/PageCard';
+
+const cardMetadata = getConnectionsCardMetadata();
+const FALLBACK_ICON: IconName = 'plug';
+
+function resolveIcon(metaIcon: IconName | undefined, navIcon: string | undefined): IconName {
+  if (metaIcon) {
+    return metaIcon;
+  }
+  if (navIcon && isIconName(navIcon)) {
+    return navIcon;
+  }
+  return FALLBACK_ICON;
+}
 
 export default function ConnectionsHomePage() {
   const styles = useStyles2(getStyles);
 
-  const isOnPrem = !config.pluginAdminExternalManageEnabled;
-
-  let cardsData = isOnPrem ? getOssCardData() : getCloudCardData();
+  const navIndex = useSelector((state) => state.navIndex);
+  const cardsData = (navIndex['connections']?.children ?? [])
+    .filter((item) => item.url)
+    .map((item) => {
+      const meta = cardMetadata[item.url!];
+      return {
+        ...item,
+        icon: resolveIcon(meta?.icon, item.icon),
+        subTitle: meta?.subTitle || item.subTitle || '',
+      };
+    });
 
   return (
     <Page
@@ -30,27 +51,20 @@ export default function ConnectionsHomePage() {
             <Trans i18nKey="connections.connections-home-page.welcome-to-connections">Welcome to Connections</Trans>
           </h1>
           <p className={styles.subTitle}>
-            {isOnPrem ? (
-              <Trans i18nKey="connections.oss.connections-home-page.subtitle">
-                Manage your data source connections in one place. Use this page to add a new data source or manage your
-                existing connections.
-              </Trans>
-            ) : (
-              <Trans i18nKey="connections.cloud.connections-home-page.subtitle">
-                Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to
-                add to manage everything from data ingestion to private connections and telemetry pipelines.
-              </Trans>
-            )}
+            <Trans i18nKey="connections.cloud.connections-home-page.subtitle">
+              Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to
+              add to manage everything from data ingestion to private connections and telemetry pipelines.
+            </Trans>
           </p>
-          {cardsData && cardsData.length > 0 && (
+          {cardsData.length > 0 && (
             <section className={styles.cardsSection}>
-              {cardsData?.map((child, index) => (
+              {cardsData.map((child, index) => (
                 <PageCard
-                  key={index}
+                  key={child.id ?? index}
                   title={child.text}
                   description={child.subTitle}
                   icon={child.icon}
-                  url={child.url}
+                  url={child.url!}
                   index={index}
                 />
               ))}
