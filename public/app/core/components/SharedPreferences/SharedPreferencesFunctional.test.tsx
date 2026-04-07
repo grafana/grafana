@@ -1,8 +1,8 @@
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within, testWithFeatureToggles } from 'test/test-utils';
 
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -47,7 +47,7 @@ beforeAll(() => {
     },
   });
   comboboxTestSetup();
-  config.featureToggles.grafanaconThemes = true;
+  testWithFeatureToggles({ enable: ['grafanaconThemes'] });
 });
 
 afterAll(() => {
@@ -55,7 +55,7 @@ afterAll(() => {
     writable: true,
     value: original,
   });
-  config.featureToggles.grafanaconThemes = false;
+  testWithFeatureToggles({ disable: ['grafanaconThemes'] });
 });
 
 describe('SharedPreferencesFunctional', () => {
