@@ -82,6 +82,12 @@ export function useSelectionState({
   const onClearSideEffectsRef = useRef(onClearSideEffects);
   onClearSideEffectsRef.current = onClearSideEffects;
 
+  const queriesRef = useRef(queries);
+  queriesRef.current = queries;
+
+  const transformationsRef = useRef(transformations);
+  transformationsRef.current = transformations;
+
   const selectedQueryRefIdsRef = useRef(selectedQueryRefIds);
   selectedQueryRefIdsRef.current = selectedQueryRefIds;
 
@@ -101,41 +107,38 @@ export function useSelectionState({
     setSelectedQueryRefIds((current) => current.map((id) => (id === originalRefId ? updatedRefId : id)));
   }, []);
 
-  const toggleQuerySelection = useCallback(
-    (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
-      // Query selection always clears transformations (cross-type exclusivity).
-      setSelectedTransformationIds([]);
+  const toggleQuerySelection = useCallback((query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
+    // Query selection always clears transformations (cross-type exclusivity).
+    setSelectedTransformationIds([]);
 
-      const currentSelection = selectedQueryRefIdsRef.current;
-      if (modifiers?.range && currentSelection.length > 0) {
-        // Shift+Click: range-select from the anchor to this query (inclusive).
-        const anchorRefId = currentSelection.at(-1)!;
-        const rangeSelection = computeRangeSelection(
-          queries.map(({ refId }) => refId),
-          currentSelection,
-          anchorRefId,
-          query.refId
-        );
-        if (rangeSelection) {
-          setSelectedQueryRefIds(rangeSelection);
-          return;
-        }
+    const currentSelection = selectedQueryRefIdsRef.current;
+    if (modifiers?.range && currentSelection.length > 0) {
+      // Shift+Click: range-select from the anchor to this query (inclusive).
+      const anchorRefId = currentSelection.at(-1)!;
+      const rangeSelection = computeRangeSelection(
+        queriesRef.current.map(({ refId }) => refId),
+        currentSelection,
+        anchorRefId,
+        query.refId
+      );
+      if (rangeSelection) {
+        setSelectedQueryRefIds(rangeSelection);
+        return;
       }
+    }
 
-      if (modifiers?.multi) {
-        // Ctrl/Cmd+Click: toggle this query in/out of the selection.
-        setSelectedQueryRefIds((prev) => {
-          const idx = prev.indexOf(query.refId);
-          return idx === -1 ? [...prev, query.refId] : prev.filter((id) => id !== query.refId);
-        });
-      } else {
-        // Plain click: replace entire selection with just this card.
-        setSelectedQueryRefIds([query.refId]);
-        onClearSideEffectsRef.current?.();
-      }
-    },
-    [queries]
-  );
+    if (modifiers?.multi) {
+      // Ctrl/Cmd+Click: toggle this query in/out of the selection.
+      setSelectedQueryRefIds((prev) => {
+        const idx = prev.indexOf(query.refId);
+        return idx === -1 ? [...prev, query.refId] : prev.filter((id) => id !== query.refId);
+      });
+    } else {
+      // Plain click: replace entire selection with just this card.
+      setSelectedQueryRefIds([query.refId]);
+      onClearSideEffectsRef.current?.();
+    }
+  }, []);
 
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
@@ -147,7 +150,7 @@ export function useSelectionState({
         // Shift+Click: range-select from the last selected transformation to this one.
         const anchorId = currentSelection.at(-1)!;
         const rangeSelection = computeRangeSelection(
-          transformations.map((t) => t.transformId),
+          transformationsRef.current.map((t) => t.transformId),
           currentSelection,
           anchorId,
           transformation.transformId
@@ -170,7 +173,7 @@ export function useSelectionState({
         onClearSideEffectsRef.current?.();
       }
     },
-    [transformations]
+    []
   );
 
   const clearSelection = useCallback(() => {
