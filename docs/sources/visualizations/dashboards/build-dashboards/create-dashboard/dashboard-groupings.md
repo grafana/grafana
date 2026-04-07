@@ -207,8 +207,6 @@ To remove groupings, follow these steps:
 In dashboards that include multiple rows with nested tabs, you can drag and drop nested tabs between rows.
 To do this, the receiving row just needs to have one nested tab already:
 
-<!-- video here maybe -->
-
 You can also move tabs to a row that has no nested tabs as long as:
 
 - It previously had nested tabs.
