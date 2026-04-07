@@ -25,57 +25,39 @@ image_maps:
       - x_coord: 101
         y_coord: 13
         content: |
-          **Add new element icon**
-
-          Click the icon to open the sidebar. Edit mode only.
+          **Add new element**: Click to open the sidebar. Edit mode only.
       - x_coord: 101
         y_coord: 20
         content: |
-          **Dashboard options**
-
-          Click the icon to open the sidebar and access dashboard options. Edit mode only.
+          **Dashboard options**: Click the icon to open the sidebar and access dashboard options. Edit mode only.
       - x_coord: 101
         y_coord: 27
         content: |
-          **Feedback**
-
-          Submit feedback on the new editing experience. Edit mode only.
+          **Feedback**: Submit feedback on the new editing experience. Edit mode only.
       - x_coord: 101
         y_coord: 34
         content: |
-          **Edit as code**
-
-          Edit the dashboard JSON. Edit mode only.
+          **Edit as code**: Edit the dashboard JSON. Edit mode only.
       - x_coord: 101
         y_coord: 43
         content: |
-          **Export**
-
-          Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
+          **Export**: Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 101
         y_coord: 50
         content: |
-          **Content outline**
-
-          Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
+          **Content outline**: Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
       - x_coord: 101
         y_coord: 57
         content: |
-          **Filters overview**
-
-          Open the filters overview drawer.
+          **Filters overview**: Open the filters overview drawer.
       - x_coord: 101
         y_coord: 64
         content: |
-          **Dashboard insights**
-
-          View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
+          **Dashboard insights**: View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
       - x_coord: 101
         y_coord: 93
         content: |
-          **Dock/Undock**
-
-          Click to dock or undock the sidebar.
+          **Dock/Undock**: Click to dock or undock the sidebar.
 ---
 
 # Create dashboards
