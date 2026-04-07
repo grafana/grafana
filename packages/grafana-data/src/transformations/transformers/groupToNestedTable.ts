@@ -56,7 +56,7 @@ export interface GroupToNestedTableTransformerOptionsV2 {
 /**
  * Returns true if the options object is in the legacy V1 shape (field-name keyed record).
  */
-export function isV1Options(
+export function isV1GroupToNestedTableOptions(
   opts: GroupToNestedTableTransformerOptions | GroupToNestedTableTransformerOptionsV2
 ): opts is GroupToNestedTableTransformerOptions {
   // A config is V1 only if it has `fields` but NOT `rules`.
@@ -174,7 +174,7 @@ export const groupToNestedTable: DataTransformerInfo<
     source.pipe(
       map((data) => {
         // Normalise to V2 — migrate in-memory if V1 config is detected
-        const options: GroupToNestedTableTransformerOptionsV2 = isV1Options(rawOptions)
+        const options: GroupToNestedTableTransformerOptionsV2 = isV1GroupToNestedTableOptions(rawOptions)
           ? migrateGroupToNestedTableOptions(rawOptions)
           : rawOptions;
 
