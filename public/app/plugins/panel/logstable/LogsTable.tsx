@@ -178,11 +178,12 @@ export const LogsTable = ({
         },
       };
       onFieldConfigChange(nextFieldConfig);
+    } else {
+      onOptionsChange({
+        ...options,
+        wrapText: nextWrapText,
+      });
     }
-    onOptionsChange({
-      ...options,
-      wrapText: nextWrapText,
-    });
   }, [fieldConfigProp, onFieldConfigChange, onOptionsChange, options, wrapText]);
 
   const fieldConfig = useMemo(

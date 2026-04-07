@@ -181,7 +181,7 @@ describe('LogsTable', () => {
       expect(onFieldConfigChange).not.toHaveBeenCalled();
     });
 
-    it('when wrap text is set via field config, toggling calls both onOptionsChange and onFieldConfigChange', async () => {
+    it('when wrap text is set via field config, toggling calls onFieldConfigChange but not onOptionsChange', async () => {
       const onOptionsChange = jest.fn();
       const onFieldConfigChange = jest.fn();
       const fieldConfigWithWrapText: FieldConfigSource = {
@@ -195,8 +195,7 @@ describe('LogsTable', () => {
 
       await userEvent.click(screen.getByLabelText('Enable text wrapping'));
 
-      expect(onOptionsChange).toHaveBeenCalledTimes(1);
-      expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ wrapText: true }));
+      expect(onOptionsChange).not.toHaveBeenCalled();
       expect(onFieldConfigChange).toHaveBeenCalledTimes(1);
       expect(onFieldConfigChange).toHaveBeenCalledWith(
         expect.objectContaining({
