@@ -49,7 +49,7 @@ jobs:
           private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
       - name: Run commands
-        uses: grafana/grafana-github-actions/commands@joshhunt/bundle-commands-action
+        uses: grafana/grafana-github-actions/commands@main
         with:
           metricsWriteAPIKey: ""
           token: ${{ steps.generate_token.outputs.token }}

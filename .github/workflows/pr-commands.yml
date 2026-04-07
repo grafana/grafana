@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run PR Commands
-        uses: grafana/grafana-github-actions/commands@joshhunt/bundle-commands-action
+        uses: grafana/grafana-github-actions/commands@main
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-commands
