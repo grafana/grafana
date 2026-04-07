@@ -53,6 +53,8 @@ type ExternalAMcfg struct {
 	TLSClientCert string
 	// TLSClientKey specifies the private key associated with the TLS client certificate for secure communication.
 	TLSClientKey string
+	// DatasourceUID is the UID of the datasource this alertmanager config was derived from.
+	DatasourceUID string
 }
 
 type ExternalAMOptions struct {
@@ -159,8 +161,6 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 	}
 
 	s.manager = NewManager(
-		// Injecting a new registry here means these metrics are not exported.
-		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
 		&options.Options,
 		toSlogLogger(s.logger),
 	)

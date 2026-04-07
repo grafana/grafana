@@ -143,6 +143,7 @@ func NewAlertmanager(
 	store stateStore,
 	crypto Crypto,
 	metrics *metrics.RemoteAlertmanager,
+	senderMetrics *metrics.Sender,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 ) (*Alertmanager, error) {
@@ -186,9 +187,15 @@ func NewAlertmanager(
 		return c.Do(req.WithContext(ctx))
 	}
 	senderLogger := log.New("ngalert.sender.external-alertmanager")
+	var reg prometheus.Registerer
+	if senderMetrics != nil {
+		reg = senderMetrics.GetOrCreateRegistry(cfg.OrgID, "remote-alertmanager")
+	} else {
+		reg = prometheus.NewRegistry()
+	}
 	s, err := sender.NewExternalAlertmanagerSender(
 		senderLogger,
-		prometheus.NewRegistry(),
+		reg,
 		sender.WithDoFunc(doFunc),
 		sender.WithUTF8Labels(),
 	)
