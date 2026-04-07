@@ -4364,6 +4364,17 @@
       "title": "Még nem hozott létre irányítópultokat",
       "title-folder": "Ehhez a mappához még nem tartoznak irányítópultok"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "A mappa törlése",
       "delete-folder-error": "Hiba történt a mappa törlése során. Próbálja meg később.",
@@ -5436,9 +5447,6 @@
         "title": {
           "proceed-to-external-site": "Tovább a külső webhelyre?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Megtekintés jelenetként"
       }
     },
     "dashboard-links-menu": {
@@ -5985,12 +5993,20 @@
       "not-found": "A(z) „{{datasourceUid}}” UID-vel rendelkező adatforrás nem található."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Konfigurálás",
       "configure-button-menu": "Menü átkapcsolása",
+      "configure-visualization": "",
       "empty-state-message": "Futtasson egy lekérdezést, hogy itt megjelenítse, vagy lépjen az összes megjelenítéshez, hogy hozzáadjon más paneltípusokat",
       "menu-open-panel-editor": "Konfigurálás",
       "menu-use-library-panel": "Könyvtárpanel használata",
-      "missing-config": "Hiányzó panelkonfiguráció"
+      "menu-use-saved-query": "",
+      "missing-config": "Hiányzó panelkonfiguráció",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Új panel",
     "on-create-new-row": {
@@ -6769,6 +6785,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6855,6 +6876,10 @@
       "constant-options": "Konstansbeállítások",
       "label-value": "Érték",
       "placeholder-your-metric-prefix": "Az Ön metrikaelőtagja"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "A szabályok megjelenítése/elrejtése nem fog működni",
@@ -7185,6 +7210,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7503,6 +7534,7 @@
     "sharing": {
       "save-before-share": {
         "text": "Nem mentett módosításai vannak ezen az irányítópulton. A megosztás előtt menteni kell őket.",
+        "text-no-save": "",
         "title": "Nem mentett módosítások"
       }
     },
@@ -7636,6 +7668,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Változószerkesztő űrlap",
       "back-to-list": "Vissza a listához",
@@ -7665,6 +7702,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Biztosan törölni kívánja ezt: {{variable}}?",
       "confirmText-delete-variable": "Változó törlése",
+      "drag-handle-label": "",
       "title-delete-variable": "Változó törlése",
       "tooltip-duplicate-variable": "Duplikált változó",
       "tooltip-remove-variable": "Változó eltávolítása"
@@ -8234,6 +8272,7 @@
       "label-preview": "Előnézet"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Érték-hozzárendelés duplikálása",
       "duplicate-value-mapping-tooltip-duplicate": "Duplikálás",
       "placeholder-exact-value-to-match": "Várt pontos érték",
@@ -10052,6 +10091,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Hivatkozás hozzáadása",
+      "drag-handle-label": "",
       "edit-link": "Hivatkozás szerkesztése",
       "one-click": "Egy kattintás",
       "one-click-enabled": "Egy kattintás engedélyezve",
@@ -12596,7 +12636,7 @@
       "name-required": "A név megadása kötelező",
       "save": "Mentés",
       "table-delete": "Lejátszásilista-elem törlése",
-      "table-drag": "Húzza át az átrendezéshez",
+      "table-drag": "",
       "table-empty": "A lejátszási lista üres. Az alábbiakban vehet fel irányítópultokat.",
       "table-heading": "Irányítópultok"
     },
@@ -14730,6 +14770,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14737,9 +14778,11 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14755,7 +14798,7 @@
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -15577,6 +15620,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Kattintson a szerkesztéshez",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Felsorolt sor törlése",
       "remove-enum-row-tooltip-delete": "Törlés"
     },
@@ -16490,6 +16534,7 @@
       "variable": "Változó"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Duplikált változó",
       "tooltip-remove-variable": "Változó eltávolítása"
     },
@@ -16532,6 +16577,10 @@
   },
   "xychart": {
     "category-xychart": "XY diagram",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Kitöltési átlátszóság",
     "name-line-style": "Vonal stílusa",
     "name-line-width": "Vonal szélessége",

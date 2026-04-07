@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, type SceneObject, type SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, type SceneObject, sceneUtils, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -24,6 +24,7 @@ import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
+import { getEditableElementForSelection } from './shared';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -34,26 +35,21 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { openPane, selectionContext, isNewElement, openPaneTempHack } = useSceneObjectState(editPane, {
+    shouldActivateOrKeepAlive: true,
+  });
   const { isEditing, meta, uid } = dashboard.useState();
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
-  const selectedObject = selection?.getFirstObject();
-  const isNewElement = selection?.isNewElement() ?? false;
+  const selectedObject = editPane.getSelectedObject();
   // the layout element that was selected when opening the 'add' pane
   // used when adding new panel from the sidebar
-  const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
-    dashboard
-  );
+  const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject>(dashboard);
 
   const editableElement = useMemo(() => {
-    if (selection) {
-      return selection.createSelectionElement();
-    }
-
-    return undefined;
-  }, [selection]);
+    return getEditableElementForSelection(editPane, selectionContext.selected, openPaneTempHack);
+  }, [editPane, selectionContext.selected, openPaneTempHack]);
 
   const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
@@ -70,12 +66,22 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     [sidebarContext]
   );
 
+  /**
+   * Clear selection if the object no longer exists
+   */
+  useEffect(() => {
+    if (!selectedObject && selectionContext.selected.length > 0) {
+      editPane.clearSelection();
+      return;
+    }
+  }, [selectedObject, selectionContext.selected, editPane]);
+
   return (
     <>
       {editableElement && isEditing && (
         <Sidebar.OpenPane>
           <ElementEditPane
-            key={selectedObject?.state.key}
+            key={selectionContext.selected.map((s) => s.id).join(',')} // force remount when selection changes
             editPane={editPane}
             element={editableElement}
             isNewElement={isNewElement}
@@ -133,7 +139,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
             <Sidebar.Button
               icon="cog"
-              onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
+              onClick={() => editPane.selectObject(dashboard)}
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}

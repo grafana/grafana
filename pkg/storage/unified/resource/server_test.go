@@ -614,7 +614,6 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
-		ctx:                            ctx,
 	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
