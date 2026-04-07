@@ -141,17 +141,18 @@ To add a URL link to your dashboard, follow these steps:
 
 {{< /docs/list >}}
 
-## Add filters and groupings
+<!-- ## Add filters
 
-To add a filter or grouping, follow these steps:
+To add a filter, follow these steps:
+
+<!-- vale Grafana.Spelling = NO
 
 {{< docs/list >}}
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the **Add new element** icon (blue plus sign) and select **Filters and Group by**.
-
-<!-- shared snippet here -->
+1. Click the **Add new element** icon (blue plus sign) and select **Filter**.
+1. Choose a filter type from the list.
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -159,12 +160,6 @@ To add a filter or grouping, follow these steps:
 1. Click **Exit edit**.
 
 {{< /docs/list >}}
-
-<!-- vale Grafana.Spelling = NO -->
-
-{{< admonition type="note" >}}
-In the dashboard schema, the **Filter and Group by** control is still referred to as `"kind": "AdhocVariable"`.
-{{< /admonition >}}
 
 <!-- vale Grafana.Spelling = YES -->
 
