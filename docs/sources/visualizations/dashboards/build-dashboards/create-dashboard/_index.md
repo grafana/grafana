@@ -77,8 +77,12 @@ To create a dashboard, follow these steps:
 1. On the new panel, select one of the following options:
 
    - **Configure visualization**: Opens panel edit mode with the default data source for your instance preselected. Configure a query and set panel and visualization options.
-   - **Use saved query**: Opens the **Saved queries** drawer. When you select a query, Grafana adds the panel with suggested visualization applied. Then, go to step 12.
-   - **Use library panel**: Opens a drawer with a list of library panels from which to choose. Then, go to step 12.
+   - **Use saved query**: Opens the **Saved queries** drawer. Select a query, and Grafana adds the panel with suggested visualization applied.
+
+      Then, go to step 12.
+   - **Use library panel**: Opens a drawer with a list of library panels. Select a library panel, and Grafana adds the panel.
+
+      Then, go to step 12.
 
    {{< admonition type="note" >}}
    [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
@@ -98,7 +102,7 @@ To create a dashboard, follow these steps:
 1. Click **Refresh** to query the data source.
 1. Select a suggested visualization or click **All visualizations** and select one from the full list.
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestion-2-v13.0.png" max-width="350px" alt="Visualization selector" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestion-2-v13.0.png" max-width="300px" alt="Visualization selector" >}}
 
    Grafana displays a preview of your query results with the visualization applied.
 
@@ -122,23 +126,11 @@ To create a dashboard, follow these steps:
    - [Configure thresholds](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-thresholds/)
    - [Override field values](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-overrides/)
   
-1. Under **Panel options**, enter a title and description for the panel or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
-1. When you've finished editing the panel, click **Save**.
-1. Enter a title and description for the dashboard if you haven't already or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+1. Enter a title and description for the panel or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+1. Click **Save**.
+1. Enter a title and description for the dashboard or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Select a folder, if applicable.
 1. Click **Save**
-1. Click **Back to dashboard**.
-1. (Optional) Continue building the dashboard by doing one or more of the following:
-
-   - Select the panel and click **Configure** to continue making changes.
-   - Click the **Add new element** icon and select **Panel**. You can also hover your mouse on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.
-   - Click the **Add new element** icon and select [Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables), [Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries), or [Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links).
-   - Click **Group panels** on the dashboard and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
-   - Click the **Dashboard options** icon to open the sidebar and access [panel layout options](#panel-layouts).
-
-1. When you've finished making changes, click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
 1. Click **Exit edit**.
 
 ## Dashboard edit
@@ -230,6 +222,24 @@ To edit a dashboard, follow these steps:
 1. Click **Save**.
 1. Click **Back to dashboard**, if needed.
 1. Click **Exit edit**
+
+<!-- TO DO: Roll content below into edit task -->
+
+To continue building the dashboard you've created, follow these steps:
+
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Do one of the following:
+
+   - Select the panel you created and click **Configure** to continue making changes.
+   - Click the **Add new element** icon and select **Panel**. You can also hover your mouse on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.
+   - Click the **Add new element** icon and select [Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables), [Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries), or [Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links).
+   - Click **Group panels** on the dashboard and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
+   - Click the **Dashboard options** icon to open the sidebar and access [panel layout options](#panel-layouts).
+
+1. When you've finished making changes, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ## Panel layouts
 
