@@ -1417,20 +1417,6 @@
     },
     {
       "metadata": {
-        "name": "dashboardAdHocAndGroupByWrapper",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-18T18:58:21Z"
-      },
-      "spec": {
-        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1773181791824",
         "creationTimestamp": "2026-03-10T22:29:51Z"
