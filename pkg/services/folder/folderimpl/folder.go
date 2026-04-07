@@ -45,11 +45,9 @@ var (
 )
 
 type Service struct {
-	store                  folder.Store
 	unifiedStore           folder.Store
 	db                     db.DB
 	log                    *slog.Logger
-	dashboardFolderStore   *DashboardFolderStoreImpl
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
 	k8sclient              client.K8sHandler
@@ -67,7 +65,6 @@ type Service struct {
 }
 
 func ProvideService(
-	store *FolderStoreImpl,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 	userService user.Service,
@@ -85,8 +82,6 @@ func ProvideService(
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),
-		dashboardFolderStore:   newDashboardFolderStore(db, cfg.MaxNestedFolderDepth),
-		store:                  store,
 		features:               features,
 		accessControl:          ac,
 		bus:                    bus,
@@ -179,7 +174,7 @@ func (s *Service) DBMigration(db db.DB) {
 }
 
 func (s *Service) getUIDFromLegacyID(ctx context.Context, orgID int64, id int64) (string, error) {
-	f, err := s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
+	f, err := s.getFolderByIDFromApiServer(ctx, id, orgID)
 	if err != nil {
 		return "", err
 	}

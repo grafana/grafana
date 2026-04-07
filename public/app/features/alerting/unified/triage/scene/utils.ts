@@ -113,6 +113,15 @@ export function useFilterValue(key: string): string | undefined {
 }
 
 /**
+ * Returns the current regex-match (=~) value of a filter by key, or undefined if not set.
+ */
+export function useRegexFilterValue(key: string): string | undefined {
+  const filters = useAdHocFilters();
+  const filter = filters.find((f) => f.key === key && f.operator === '=~');
+  return filter?.value;
+}
+
+/**
  * Returns true if the key has an "any value" regex filter (key=~".+").
  */
 export function useIsAnyFilter(key: string): boolean {

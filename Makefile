@@ -526,7 +526,7 @@ test-go-unit-pretty: check-tparse
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -count=1 -run "^TestIntegration" -covermode=atomic -coverprofile=$(GO_INTEGRATION_COVER_PROFILE) -timeout=5m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
@@ -549,28 +549,28 @@ test-go-integration-postgres: devenv-postgres ## Run integration tests for postg
 	$(GO) clean -testcache
 	GRAFANA_TEST_DB=postgres \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-mysql
 test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
 	GRAFANA_TEST_DB=mysql \
 	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-redis
 test-go-integration-redis: ## Run integration tests for redis cache.
 	@echo "test backend integration redis tests"
 	$(GO) clean -testcache
 	REDIS_URL=localhost:6379 $(GO) test $(GO_TEST_FLAGS) -run IntegrationRedis -covermode=atomic -timeout=2m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-go-integration-memcached
 test-go-integration-memcached: ## Run integration tests for memcached cache.
 	@echo "test backend integration memcached tests"
 	$(GO) clean -testcache
 	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -run IntegrationMemcached -covermode=atomic -timeout=2m \
-		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
+		$(shell ./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -d - -s)
 
 .PHONY: test-js
 test-js: ## Run tests for frontend.
@@ -770,3 +770,29 @@ help: ## Display this help.
 # container/check-licenses target)
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
+
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+define generate-policy-yml
+	docker run -u "$(shell id -u):$(shell id -g)" \
+	--quiet \
+	--rm \
+	--volume "$(shell git rev-parse --show-toplevel)":/work \
+	--workdir /work \
+	ghcr.io/grafana/generate-policy-bot-config@${GENERATE_POLICY_BOT_CONFIG_SHA} \
+		--output $(1) \
+		--log-level=debug \
+		--merge-with=.policy.yml.tmpl \
+		.
+endef
+
+.PHONY: .policy.yml
+.policy.yml:
+	@$(call generate-policy-yml,$@)
+
+check-policy.yml:
+	# We redirect stderr to stdout because the tool logs to stderr using proper
+	# Actions log levels (to avoid interfering with `diff`), but those log
+	# commands only work on stdout.
+	@bash -c 'diff -u .policy.yml <($(call generate-policy-yml,-))' 2>&1 && \
+		( echo "No drift detected: .policy.yml is up-to-date." >&2; exit 0 ) || \
+		( echo "Drift detected: .policy.yml is out-of-date. Run \`make .policy.yml\` to update it, and then commit the result." >&2; exit 1 )

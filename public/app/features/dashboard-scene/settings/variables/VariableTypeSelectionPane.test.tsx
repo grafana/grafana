@@ -14,6 +14,7 @@ import {
 import { Sidebar, useSidebar } from '@grafana/ui';
 
 import { ElementEditPane } from '../../edit-pane/ElementEditPane';
+import { getEditableElementForSelection } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -121,7 +122,7 @@ describe('VariableTypeChangeEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
+    expect(dashboard.state.editPane.getSelectedObject()).toBeInstanceOf(VariableTypeChange);
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('constant'))).getByRole(
@@ -136,7 +137,7 @@ describe('VariableTypeChangeEditableElement', () => {
     expect(updatedVariable.state.type).toBe('constant');
     expect(updatedVariable.state.name).toBe('service');
     expect(updatedVariable.state.label).toBe('Service');
-    expect(dashboard.state.editPane.getSelection()).toBe(updatedVariable);
+    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
     expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableNameInput)).toHaveValue(
       'service'
     );
@@ -153,7 +154,7 @@ describe('VariableTypeChangeEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
+    expect(dashboard.state.editPane.getSelectedObject()).toBeInstanceOf(VariableTypeChange);
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('textbox'))).getByRole(
@@ -169,7 +170,7 @@ describe('VariableTypeChangeEditableElement', () => {
     expect(updatedVariable.state.name).toBe('shared');
     expect(updatedVariable.state.label).toBe('Section variable');
     expect(dashboardVariable.state.name).toBe('shared');
-    expect(dashboard.state.editPane.getSelection()).toBe(updatedVariable);
+    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
   });
 });
 
@@ -216,10 +217,14 @@ describe('collectDescendantVariables', () => {
 
 function VariableEditPaneHarness({ dashboard }: { dashboard: DashboardScene }) {
   const editPane = dashboard.state.editPane;
-  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
-  const selectedObject = selection?.getFirstObject();
-  const editableElement = useMemo(() => selection?.createSelectionElement(), [selection]);
-  const isNewElement = selection?.isNewElement() ?? false;
+  const { selectionContext, isNewElement, openPaneTempHack } = useSceneObjectState(editPane, {
+    shouldActivateOrKeepAlive: true,
+  });
+  const selectedObject = editPane.getSelectedObject();
+  const editableElement = useMemo(
+    () => getEditableElementForSelection(editPane, selectionContext.selected, openPaneTempHack),
+    [editPane, selectionContext.selected, openPaneTempHack]
+  );
 
   if (!editableElement) {
     return null;
@@ -274,7 +279,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, variable.state.key!, { force: true });
+  dashboard.state.editPane.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }
@@ -304,7 +309,7 @@ function buildSectionVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(sectionVariable, sectionVariable.state.key!, { force: true });
+  dashboard.state.editPane.selectObject(sectionVariable, { force: true });
 
   return { dashboard, dashboardVariable, sectionVariableSet };
 }

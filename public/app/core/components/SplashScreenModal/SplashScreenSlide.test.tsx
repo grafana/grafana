@@ -11,8 +11,6 @@ const mockFeature: SplashFeature = {
   title: 'Test Feature Title',
   subtitle: 'Test subtitle text',
   bullets: ['Bullet one', 'Bullet two', 'Bullet three'],
-  ctaText: 'Try it',
-  ctaUrl: '/test',
   heroImageUrl: 'https://placehold.co/400x400',
 };
 

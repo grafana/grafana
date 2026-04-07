@@ -115,8 +115,8 @@ func (s *ResourcePermSqlBackend) latestUpdate(ctx context.Context, dbHelper *leg
 }
 
 // getRbacAssignmentsWithTx queries resource permissions based on the provided ListResourcePermissionsQuery and groups them by resource (e.g. {folder.grafana.app, folders, fold1})
-func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
-	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(sql, query)
+func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
+	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(dbHelper, query, true)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +125,9 @@ func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, s
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
+		}
+		if isDatasourceTypeColumnMissing(err) {
+			return s.getRbacAssignmentsNoDsTypeWithTx(ctx, dbHelper, tx, query)
 		}
 		return nil, fmt.Errorf("querying resource permissions: %w", err)
 	}
@@ -145,6 +148,53 @@ func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, s
 	}
 
 	return permissions, nil
+}
+
+// getRbacAssignmentsNoDsTypeWithTx is a fallback for databases where the datasource_type
+// column does not yet exist in the permission table (e.g. before the migration runs).
+func (s *ResourcePermSqlBackend) getRbacAssignmentsNoDsTypeWithTx(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, query *ListResourcePermissionsQuery) ([]rbacAssignment, error) {
+	rawQuery, args, err := buildListResourcePermissionsQueryFromTemplate(dbHelper, query, false)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.Query(ctx, rawQuery, args...)
+	if err != nil {
+		if rows != nil {
+			_ = rows.Close()
+		}
+		return nil, fmt.Errorf("querying resource permissions: %w", err)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	permissions := make([]rbacAssignment, 0, 8)
+	for rows.Next() {
+		var perm rbacAssignment
+		if err := rows.Scan(
+			&perm.ID, &perm.Action, &perm.Scope, &perm.Created, &perm.Updated, &perm.RoleName,
+			&perm.SubjectUID, &perm.SubjectType, &perm.IsServiceAccount,
+		); err != nil {
+			return nil, fmt.Errorf("scanning resource permission: %w", err)
+		}
+		permissions = append(permissions, perm)
+	}
+
+	return permissions, nil
+}
+
+// isDatasourceTypeColumnMissing returns true when the error indicates that the
+// datasource_type column does not exist in the database (pre-migration state).
+func isDatasourceTypeColumnMissing(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "datasource_type") &&
+		(strings.Contains(msg, "unknown column") ||
+			strings.Contains(msg, "does not exist") ||
+			strings.Contains(msg, "no such column"))
 }
 
 // getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
