@@ -83,7 +83,7 @@ export function ExploreLogsTable(props: {
     (options: Options) => {
       if (options.wrapText !== undefined && options.wrapText !== wrapText) {
         setWrapText(options.wrapText);
-        store.set(`${SETTING_KEY_ROOT}.wrapText`, options.wrapText)
+        store.set(`${SETTING_KEY_ROOT}.wrapText`, options.wrapText);
       }
       props.onOptionsChange(options);
     },

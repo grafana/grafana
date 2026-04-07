@@ -54,7 +54,8 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         category: logsTableCategory,
         description: t('logstable.description-show-controls', 'Display table controls'),
         defaultValue: defaultOptions.showControls ?? false,
-      }).addBooleanSwitch({
+      })
+      .addBooleanSwitch({
         path: 'wrapText',
         name: t('logs.name-enable-text-wrapping', 'Enable text wrapping'),
         category: logsTableCategory,
