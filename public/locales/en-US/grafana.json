@@ -3609,6 +3609,7 @@
           "folder-only": "Grouped by folder"
         }
       },
+      "severity-filter-title": "Severity",
       "show-all-labels_one": "Show all ({{ count }})",
       "show-all-labels_other": "Show all ({{ count }})",
       "show-all-values_one": "Show all ({{ count }})",
