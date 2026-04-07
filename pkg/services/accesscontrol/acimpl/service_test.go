@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -35,6 +36,8 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
 
+	sql := db.InitTestDB(t)
+
 	ac := &Service{
 		cache:          localcache.ProvideService(),
 		cfg:            cfg,
@@ -42,7 +45,8 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 		log:            log.New("accesscontrol"),
 		registrations:  accesscontrol.RegistrationList{},
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          database.ProvideService(db.InitTestDB(t)),
+		store:          database.ProvideService(sql),
+		sql:            sql,
 		permRegistry:   permreg.ProvidePermissionRegistry(),
 		actionResolver: resourcepermissions.NewActionSetService(),
 	}
@@ -1408,6 +1412,10 @@ func TestIntegrationCleanupPluginRoles(t *testing.T) {
 
 	ctx := context.Background()
 	svc := setupTestEnv(t, false)
+
+	backend := svc.store.(*database.AccessControlStore)
+	// Setup seeder to write roles to the DB
+	svc.seeder = seeding.New(log.New("test"), backend, backend)
 
 	pluginID := "test-plugin"
 	otherPluginID := "other-plugin"

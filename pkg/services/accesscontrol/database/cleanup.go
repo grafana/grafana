@@ -2,21 +2,16 @@ package database
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// escapeLike replaces LIKE special characters in s so it can be safely used
-// inside a LIKE pattern. Plugin IDs are normally [a-z0-9-], but we protect
-// against any edge case at no meaningful cost.
-func escapeLike(s string) string {
-	s = strings.ReplaceAll(s, `\`, `\\`)
-	s = strings.ReplaceAll(s, `%`, `\%`)
-	s = strings.ReplaceAll(s, `_`, `\_`)
-	return s
-}
+// validPluginID matches the allowed plugin ID format: lowercase alphanumerics and hyphens.
+var validPluginID = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 // CleanupPluginRBAC removes all RBAC data associated with the given plugin IDs:
 //   - permissions on any role whose action starts with "<pluginID>." or "<pluginID>:"
@@ -25,6 +20,9 @@ func escapeLike(s string) string {
 //     their permission, user_role, and team_role rows
 func (s *AccessControlStore) CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error {
 	for _, pluginID := range pluginIDs {
+		if !validPluginID.MatchString(pluginID) {
+			return fmt.Errorf("invalid plugin ID %q: must match [a-z0-9-]+", pluginID)
+		}
 		if err := cleanupPlugin(ctx, s.sql, pluginID); err != nil {
 			return err
 		}
@@ -33,7 +31,6 @@ func (s *AccessControlStore) CleanupPluginRBAC(ctx context.Context, pluginIDs []
 }
 
 func cleanupPlugin(ctx context.Context, sql db.DB, pluginID string) error {
-	escaped := escapeLike(pluginID)
 	pluginScope := accesscontrol.Scope("plugins", "id", pluginID)
 
 	return sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -41,9 +38,9 @@ func cleanupPlugin(ctx context.Context, sql db.DB, pluginID string) error {
 		//    Covers plugin-defined actions (e.g. "myPlugin.dashboards:read") and
 		//    namespace-style actions (e.g. "myPlugin:read").
 		if _, err := sess.Exec(
-			`DELETE FROM permission WHERE action LIKE ? ESCAPE '\' OR action LIKE ? ESCAPE '\'`,
-			escaped+".%",
-			escaped+":%",
+			`DELETE FROM permission WHERE action LIKE ? OR action LIKE ?`,
+			pluginID+".%",
+			pluginID+":%",
 		); err != nil {
 			return err
 		}
@@ -63,9 +60,9 @@ func cleanupPlugin(ctx context.Context, sql db.DB, pluginID string) error {
 		}
 		var rows []roleRow
 		if err := sess.SQL(
-			`SELECT id FROM role WHERE org_id = ? AND name LIKE ? ESCAPE '\'`,
+			`SELECT id FROM role WHERE org_id = ? AND name LIKE ?`,
 			accesscontrol.GlobalOrgID,
-			"plugins:"+escaped+":%",
+			"plugins:"+pluginID+":%",
 		).Find(&rows); err != nil {
 			return err
 		}
