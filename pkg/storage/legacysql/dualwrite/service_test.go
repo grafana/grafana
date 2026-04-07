@@ -256,7 +256,6 @@ func TestProvideService(t *testing.T) {
 		_, isStorageService := svc.(*storageService)
 		require.True(t, isStorageService)
 	})
-
 }
 
 // failingMigrator returns an error from Run.

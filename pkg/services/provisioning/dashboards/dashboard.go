@@ -70,7 +70,6 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 				reader.foldersInUnified = true
 			}
 		}
-
 	}
 
 	d := &Provisioner{
