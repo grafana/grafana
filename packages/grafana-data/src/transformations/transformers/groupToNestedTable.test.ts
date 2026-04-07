@@ -11,7 +11,7 @@ import {
   type GroupToNestedTableTransformerOptions,
   type GroupToNestedTableTransformerOptionsV2,
   groupToNestedTable,
-  isV1Options,
+  isV1GroupToNestedTableOptions,
   migrateGroupToNestedTableOptions,
 } from './groupToNestedTable';
 import { DataTransformerID } from './ids';
@@ -384,7 +384,7 @@ describe('GroupToSubframe transformer - V2 migration', () => {
     expect(calcRule!.aggregations).toEqual([ReducerID.sum, ReducerID.mean]);
   });
 
-  it('isV1Options should return true for V1 config and false for V2 config', () => {
+  it('isV1GroupToNestedTableOptions should return true for V1 config and false for V2 config', () => {
     const v1: GroupToNestedTableTransformerOptions = {
       fields: { message: { operation: GroupByOperationID.groupBy, aggregations: [] } },
     };
@@ -398,8 +398,8 @@ describe('GroupToSubframe transformer - V2 migration', () => {
       ],
     };
 
-    expect(isV1Options(v1)).toBe(true);
-    expect(isV1Options(v2)).toBe(false);
+    expect(isV1GroupToNestedTableOptions(v1)).toBe(true);
+    expect(isV1GroupToNestedTableOptions(v2)).toBe(false);
   });
 });
 
