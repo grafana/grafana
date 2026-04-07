@@ -7,9 +7,11 @@ type CardMetadata = {
   text?: string;
 };
 
-// Visual metadata for well-known connections nav items that don't carry
-// icon/subTitle through the nav tree (e.g. plugin standalone pages).
-// Keyed by the nav item URL. isOnPrem mirrors config.pluginAdminExternalManageEnabled.
+// Visual metadata for connections nav items keyed by URL. This map intentionally
+// overrides both plugin standalone pages (which carry no icon/subTitle through
+// the nav tree) and some core nav items (Add new connection, Data sources) so the
+// landing-page cards use the correct icon and copy per edition.
+// isOnPrem mirrors !config.pluginAdminExternalManageEnabled.
 export function getConnectionsCardMetadata(isOnPrem: boolean): Record<string, CardMetadata> {
   return {
     '/connections/add-new-connection': {

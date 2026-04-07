@@ -288,7 +288,7 @@ export const navIndex: NavIndex = {
   },
   'standalone-plugin-page-/connections/infrastructure': {
     id: 'standalone-plugin-page-/connections/infrastructure',
-    text: 'Infrastructure',
+    text: 'Integrations',
     url: '/connections/infrastructure',
     pluginId: 'grafana-easystart-app',
   },

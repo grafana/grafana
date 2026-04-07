@@ -4993,24 +4993,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connect data to Grafana through data sources, integrations and apps",
-          "title": "Add new connection"
+          "subtitle": "Connect data to Grafana through data sources, integrations and apps"
         },
         "collector": {
-          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
-          "title": "Collector"
+          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": "Configure and manage your telemetry collectors"
         },
         "data-sources": {
-          "subtitle": "Manage your existing data source connections",
-          "title": "Data sources"
+          "subtitle": "Manage your existing data source connections"
+        },
+        "fleet-management": {
+          "subtitle": "Manage your collector inventory and remotely configure your fleet"
+        },
+        "instrumentation-hub": {
+          "subtitle": "Instrument all your services with a single click using ongoing instrumentation and Kubernetes monitoring."
         },
         "integrations": {
-          "subtitle": "Manage your active integrations",
-          "title": "Integrations"
+          "subtitle": "Manage your active integrations"
         },
         "private-data-source-connections": {
-          "subtitle": "Manage your private network connections for data sources",
-          "title": "Private data source connect"
+          "subtitle": "Manage your private network connections for data sources"
         },
         "subtitle": "Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines."
       }
@@ -5070,8 +5074,7 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connect to a new data source",
-          "title": "Add new connection"
+          "subtitle": "Connect to a new data source"
         },
         "data-sources": {
           "subtitle": "Manage your existing data source connections",
