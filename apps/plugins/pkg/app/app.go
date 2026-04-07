@@ -38,9 +38,10 @@ func New(cfg app.Config) (app.App, error) {
 	logger := logging.DefaultLogger.With("app", "plugins.app")
 
 	if specificConfig.EnableChildReconciler {
+		reconcilerLogger := logger.With("component", "reconciler.children")
 		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
-		registrar := install.NewInstallRegistrar(logger, clientGenerator)
-		pluginKind.Reconciler = install.NewChildPluginReconciler(logger, specificConfig.MetaProviderManager, registrar)
+		registrar := install.NewInstallRegistrar(reconcilerLogger, clientGenerator)
+		pluginKind.Reconciler = install.NewChildPluginReconciler(reconcilerLogger, specificConfig.MetaProviderManager, registrar)
 	}
 
 	simpleConfig := simple.AppConfig{
