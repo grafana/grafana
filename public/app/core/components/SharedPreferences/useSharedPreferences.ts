@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
 import {
@@ -19,15 +20,14 @@ import { type Props } from './utils';
 export const useSharedPreferences = (preferenceType: Props['preferenceType'], resourceUri: Props['resourceUri']) => {
   const teamId = preferenceType === 'team' ? resourceUri.split('/')[1] : undefined;
 
-  const { data: userPrefs, isLoading: isLoadingUser } = useGetUserPreferencesQuery(undefined, {
-    skip: preferenceType !== 'user',
-  });
-  const { data: orgPrefs, isLoading: isLoadingOrg } = useGetOrgPreferencesQuery(undefined, {
-    skip: preferenceType !== 'org',
-  });
+  const { data: userPrefs, isLoading: isLoadingUser } = useGetUserPreferencesQuery(
+    preferenceType !== 'user' ? skipToken : undefined
+  );
+  const { data: orgPrefs, isLoading: isLoadingOrg } = useGetOrgPreferencesQuery(
+    preferenceType !== 'org' ? skipToken : undefined
+  );
   const { data: teamPrefs, isLoading: isLoadingTeam } = useGetTeamPreferencesQuery(
-    { teamId: teamId! },
-    { skip: preferenceType !== 'team' }
+    preferenceType !== 'team' ? skipToken : { teamId: teamId! }
   );
 
   const [updateUserPreferences, { isLoading: isSubmittingUser }] = useUpdateUserPreferencesMutation();
