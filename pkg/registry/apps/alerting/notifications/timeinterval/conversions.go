@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -56,6 +56,10 @@ func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 
 func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
 	i := model.TimeInterval{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(interval.UID), // TODO This is needed to make PATCH work
 			Name:            interval.UID,            // TODO replace to stable UID when we switch to normal storage
@@ -84,7 +88,13 @@ func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInt
 	}
 	result.Version = interval.ResourceVersion
 	result.UID = interval.Name
-	result.Provenance = definitions.Provenance(ngmodels.ProvenanceNone)
+
+	prov, err := ngmodels.ProvenanceFromString(interval.GetProvenanceStatus())
+	if err != nil {
+		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
+	}
+	result.Provenance = definitions.Provenance(prov)
+
 	err = result.Validate()
 	if err != nil {
 		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)

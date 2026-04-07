@@ -37,7 +37,7 @@ func TestDryRun_Create(t *testing.T) {
 			// Only unified storage should be called
 			us.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, nil)
 
-			dw, err := NewStaticStorage(kind, m.mode, ls, us)
+			dw, err := newStaticStorage(kind, m.mode, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.Create(context.Background(), exampleObj, createFn, &metav1.CreateOptions{DryRun: dryRunAll})
@@ -73,7 +73,7 @@ func TestDryRun_Delete(t *testing.T) {
 			// Only unified storage should be called
 			us.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 
-			dw, err := NewStaticStorage(kind, m.mode, ls, us)
+			dw, err := newStaticStorage(kind, m.mode, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Delete(context.Background(), "foo", func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{DryRun: dryRunAll})
@@ -109,7 +109,7 @@ func TestDryRun_Update(t *testing.T) {
 			// Only unified storage should be called
 			us.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 
-			dw, err := NewStaticStorage(kind, m.mode, ls, us)
+			dw, err := newStaticStorage(kind, m.mode, ls, us)
 			require.NoError(t, err)
 
 			obj, _, err := dw.Update(context.Background(), "foo", updatedObjInfoObj{},
@@ -137,7 +137,7 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 
 		us.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 
-		dw, err := NewStaticStorage(kind, rest.Mode1, ls, us)
+		dw, err := newStaticStorage(kind, rest.Mode1, ls, us)
 		require.NoError(t, err)
 
 		_, _, err = dw.Update(context.Background(), "foo", updatedObjInfoObj{},
@@ -164,7 +164,7 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 
 		us.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 
-		dw, err := NewStaticStorage(kind, rest.Mode2, ls, us)
+		dw, err := newStaticStorage(kind, rest.Mode2, ls, us)
 		require.NoError(t, err)
 
 		_, _, err = dw.Update(context.Background(), "foo", updatedObjInfoObj{},
@@ -182,7 +182,7 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 		require.True(t, forceCreate, "Mode2 dry-run should set forceAllowCreate=true")
 	})
 
-	t.Run("Mode3 should pass original objInfo unchanged", func(t *testing.T) {
+	t.Run("Mode3 should wrap objInfo and set forceAllowCreate=true (same as Mode1)", func(t *testing.T) {
 		l := (rest.Storage)(nil)
 		s := (rest.Storage)(nil)
 
@@ -191,23 +191,22 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 
 		us.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 
-		dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
+		dw, err := newStaticStorage(kind, rest.Mode3, ls, us)
 		require.NoError(t, err)
 
-		originalInfo := updatedObjInfoObj{}
-		_, _, err = dw.Update(context.Background(), "foo", originalInfo,
+		_, _, err = dw.Update(context.Background(), "foo", updatedObjInfoObj{},
 			func(ctx context.Context, obj runtime.Object) error { return nil },
 			func(ctx context.Context, obj, old runtime.Object) error { return nil },
 			false, &metav1.UpdateOptions{DryRun: dryRunAll})
 		require.NoError(t, err)
 
-		// Verify unified was called with original objInfo (not wrapped)
+		// Mode3 now maps to DualWrite (same as Mode1), so objInfo should be wrapped
 		require.Len(t, us.Calls, 1)
 		call := us.Calls[0]
 		_, isWrapped := call.Arguments[2].(*wrappedUpdateInfo)
-		require.False(t, isWrapped, "Mode3 dry-run should NOT wrap objInfo")
+		require.True(t, isWrapped, "Mode3 dry-run should wrap objInfo with wrappedUpdateInfo")
 		forceCreate := call.Arguments[5].(bool)
-		require.False(t, forceCreate, "Mode3 dry-run should preserve original forceAllowCreate=false")
+		require.True(t, forceCreate, "Mode3 dry-run should set forceAllowCreate=true")
 	})
 }
 
@@ -232,7 +231,7 @@ func TestDryRun_DeleteCollection(t *testing.T) {
 			// Only unified storage should be called
 			us.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleList, nil)
 
-			dw, err := NewStaticStorage(kind, m.mode, ls, us)
+			dw, err := newStaticStorage(kind, m.mode, ls, us)
 			require.NoError(t, err)
 
 			obj, err := dw.DeleteCollection(context.Background(),

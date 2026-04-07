@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { SegmentedToggle, SegmentedToggleProps } from '../../SegmentedToggle';
-import { QueryEditorType, SidebarSize } from '../../constants';
+import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
+import { QueryEditorType, type SidebarSize } from '../../constants';
+import { trackSidebarViewChange } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { EMPTY_ALERT } from '../types';
 
@@ -26,6 +27,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   const { alertRules, loading } = useAlertingContext();
 
   const handleViewChange = (view: QueryEditorType) => {
+    trackSidebarViewChange(view);
     setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
   };
 

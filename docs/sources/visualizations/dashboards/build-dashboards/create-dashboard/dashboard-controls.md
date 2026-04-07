@@ -19,7 +19,7 @@ weight: 200
 
 In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
 
-<!-- screenshot here? -->
+<!-- TODO: Add screenshot after filters work is done -->
 
 ## Add variables
 
@@ -38,14 +38,18 @@ To add a variable, follow these steps:
 
 1. Complete the variable configuration. For more detailed configuration information, click the one of the following links to complete the steps for adding your selected variable type:
 
-   - [Query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-query-variable)
-   - [Custom](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-custom-variable)
-   - [Textbox](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-text-box-variable)
-   - [Constant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-constant-variable)
-   - [Data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-data-source-variable)
-   - [Interval](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-an-interval-variable)
-   - [Ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-ad-hoc-filters)
-   - [Switch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-switch-variable)
+{{< column-list >}}
+
+- [Query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-query-variable)
+- [Custom](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-custom-variable)
+- [Textbox](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-text-box-variable)
+- [Constant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-constant-variable)
+- [Data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-data-source-variable)
+- [Interval](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-an-interval-variable)
+- [Ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-ad-hoc-filters)
+- [Switch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-switch-variable)
+
+{{< /column-list >}}
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -154,8 +158,6 @@ To add a filter, follow these steps:
 1. Click the **Add new element** icon (blue plus sign) and select **Filter**.
 1. Choose a filter type from the list.
 
-<!-- {{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/..." id="add-filter" >}} 
-
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -170,17 +172,16 @@ To add a filter, follow these steps:
 After you add dashboard controls, you can manage them from the dashboard options.
 The sidebar includes collapsible sections for variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
 
-<!-- screenshot here -->
+<!-- TODO: Add screenshot here after filters work is done -->
 
 To manage dashboard controls, follow these steps:
 
 1. Click the **Dashboard options** icon in the sidebar.
 1. In the sidebar, expand the appropriate collapsible section.
 1. Do one or more of the following:
-
    - **Edit**: Click **Select** on the control to open the sidebar so you can make updates.
    - **Reorder**: Drag and drop controls to reorder them.
-   - **Change display**: Drag and drop controls between sub-sections **Above dashboard**, **Controls menu**, and **Hidden** to update the control display option.
+   - **Change display**: Drag and drop controls between sub-sections **Above dashboard**, **Controls menu**, and **Hidden** to update the control display option. Note that links can't be hidden.
 
    {{< admonition type="tip" >}}
    To get back to controls management from configuration, click the **Dashboard options** icon.

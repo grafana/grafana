@@ -1,8 +1,8 @@
-import { Page, Response } from '@playwright/test';
+import { expect, type Page, type Response } from '@playwright/test';
 
-import { ScopeDashboardBindingSpec, ScopeDashboardBindingStatus } from '@grafana/data';
+import { type ScopeDashboardBindingSpec, type ScopeDashboardBindingStatus } from '@grafana/data';
 
-import { Resource } from '../../public/app/features/apiserver/types';
+import { type Resource } from '../../public/app/features/apiserver/types';
 
 import { testScopes } from './scopes';
 
@@ -289,6 +289,7 @@ export async function selectScope(page: Page, scopeName: string, selectedScope?:
       `[data-testid="scopes-tree-${scopeName}-checkbox"], [data-testid="scopes-tree-${scopeName}-radio"], [data-testid="scopes-tree-${scopeName}-link"]`
     );
     await element.scrollIntoViewIfNeeded();
+    await expect(element).toBeInViewport();
     await element.click({ force: true });
   };
 

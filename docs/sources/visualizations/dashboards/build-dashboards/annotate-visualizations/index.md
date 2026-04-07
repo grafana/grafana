@@ -135,13 +135,11 @@ To add a new annotation query to a dashboard, follow these steps:
 1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
 1. Select a color for the event markers.
 1. Select one of the following options in the **Show annotation controls in** drop-down list to control where annotations are displayed:
-
    - **Above dashboard** - The annotation toggle is displayed above the dashboard. This is the default.
    - **Controls menu** - The annotation toggle is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
    - **Hidden** - The annotation toggle is not displayed on the dashboard.
 
 1. In the **Show in** drop-down, choose one of the following options:
-
    - **All panels** - The annotations are displayed on all panels that support annotations.
    - **Selected panels** - The annotations are displayed on all the panels you select.
    - **All panels except** - The annotations are displayed on all panels except the ones you select.
@@ -210,6 +208,10 @@ You can create new queries to fetch annotations from the built-in annotation que
 Grafana also supports typeahead of existing tags, provide at least one tag.
 
 For example, create an annotation query name `outages` and specify a tag `outage`. This query shows all annotations (from any dashboard or via API) with the `outage` tag. If multiple tags are defined in an annotation query, then Grafana only shows annotations matching all the tags. To modify the behavior, enable `Match any`, and Grafana shows annotations that contain any one of the tags you provided.
+
+{{< admonition type="warning" >}}
+If you enable **Display annotations** on an externally shared dashboard that uses tag-based annotation queries, those queries return matching annotations from _all dashboards_ in the organization. This means annotations from dashboards that are not shared externally are visible to anyone with access to the shared dashboard. This is by design. Review which annotations might match your tags before enabling this option on a shared dashboard.
+{{< /admonition >}}
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-annotations-typeahead-support-10.0.png" max-width="600px" alt="Annotation query options" >}}
 

@@ -216,7 +216,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 			// When folder metadata is enabled and the parent folder has a _folder.json,
 			// use the stable UID from that file instead of the hash-derived one.
 			if r.folderMetadataEnabled && r.reader != nil {
-				if meta, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
 					folderID = meta.Name
 				}
 			}
@@ -240,6 +240,30 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	return parsed, nil
+}
+
+// SameIdentity reports whether f and other refer to the same Kubernetes
+// resource: same metadata.name, API group, and kind.
+func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
+	if f == nil || other == nil {
+		return false
+	}
+	return f.Obj.GetName() == other.Obj.GetName() &&
+		f.GVK.Group == other.GVK.Group &&
+		f.GVK.Kind == other.GVK.Kind
+}
+
+// ExistingFolder returns the grafana.app/folder annotation from the existing
+// Grafana object, or "" if Existing is nil or has no folder annotation.
+func (f *ParsedResource) ExistingFolder() string {
+	if f.Existing == nil {
+		return ""
+	}
+	meta, err := utils.MetaAccessor(f.Existing)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
@@ -280,7 +304,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 			Kind:     utils.ManagerKindRepo,
 			Identity: f.Repo.Name,
 		}
-		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 			return err
 		}
 
@@ -301,7 +325,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	// Check for ownership conflicts after fetching existing resource
-	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+	if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
 
@@ -375,7 +399,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		}
 
 		// Check ownership with the existing resource
-		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 			deleteSpan.RecordError(err)
 			deleteSpan.End()
 			return err
@@ -405,7 +429,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	}
 
 	// Check ownership with the existing resource (if any)
-	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+	if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
-import { AlertLabel, LabelMatchDetails } from '@grafana/alerting/unstable';
-import { GrafanaTheme2 } from '@grafana/data';
+import { AlertLabel, type LabelMatchDetails } from '@grafana/alerting/unstable';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Box, Text, useStyles2 } from '@grafana/ui';
 

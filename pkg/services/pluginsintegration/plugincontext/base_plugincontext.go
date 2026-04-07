@@ -4,6 +4,8 @@ import (
 	"context"
 	"runtime"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
 
@@ -40,13 +42,18 @@ type BaseProvider struct {
 }
 
 func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginstore.Plugin, user identity.Requester) backend.PluginContext {
+	ns, _ := request.NamespaceFrom(ctx)
 	pCtx := backend.PluginContext{
 		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
+		Namespace:     ns,
 	}
 	if user != nil && !user.IsNil() {
-		pCtx.OrgID = user.GetOrgID()
+		pCtx.OrgID = user.GetOrgID() // nolint:staticcheck
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
+		if ns == "" {
+			pCtx.Namespace = user.GetNamespace()
+		}
 	}
 
 	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, plugin.ID, plugin.ExternalService)

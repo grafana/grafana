@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -186,7 +186,11 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		return nil, false, fmt.Errorf("expected inhibition-rule but got %s", old.GetObjectKind().GroupVersionKind())
 	}
 
-	err = s.service.DeleteInhibitionRule(ctx, p.Name, info.OrgID, ngmodels.ProvenanceNone, version)
+	prov, err := ngmodels.ProvenanceFromString(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteInhibitionRule(ctx, p.Name, info.OrgID, prov, version)
 	return old, false, err // false - will be deleted async
 }
 

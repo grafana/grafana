@@ -13,18 +13,17 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import * as React from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { withTheme2, stylesFactory } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import TNil from '../../types/TNil';
 import { getRgbColorByKey } from '../../utils/color-generator';
 
 import renderIntoCanvas from './render-into-canvas';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     CanvasSpanGraph: css({
       label: 'CanvasSpanGraph',
@@ -35,52 +34,33 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       imageRendering: 'crisp-edges',
     }),
   };
-});
+};
 
 type CanvasSpanGraphProps = {
   items: Array<{ valueWidth: number; valueOffset: number; serviceName: string }>;
   valueWidth: number;
-  theme: GrafanaTheme2;
 };
 
-export class UnthemedCanvasSpanGraph extends React.PureComponent<CanvasSpanGraphProps> {
-  _canvasElm: HTMLCanvasElement | TNil;
+export const CanvasSpanGraph = memo(function CanvasSpanGraph({
+  items,
+  valueWidth: totalValueWidth,
+}: CanvasSpanGraphProps) {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  constructor(props: CanvasSpanGraphProps) {
-    super(props);
-    this._canvasElm = undefined;
-  }
-
-  getColor = (key: string) => getRgbColorByKey(key, this.props.theme);
-
-  componentDidMount() {
-    this._draw();
-  }
-
-  componentDidUpdate() {
-    this._draw();
-  }
-
-  _setCanvasRef = (elm: HTMLCanvasElement | TNil) => {
-    this._canvasElm = elm;
-  };
-
-  _draw() {
-    if (this._canvasElm) {
-      const { valueWidth: totalValueWidth, items } = this.props;
-      renderIntoCanvas(this._canvasElm, items, totalValueWidth, this.getColor, autoColor(this.props.theme, '#fff'));
+  const draw = useCallback(() => {
+    if (canvasRef.current) {
+      const getColor = (key: string) => getRgbColorByKey(key, theme);
+      renderIntoCanvas(canvasRef.current, items, totalValueWidth, getColor, autoColor(theme, '#fff'));
     }
-  }
+  }, [items, totalValueWidth, theme]);
 
-  render() {
-    return (
-      <canvas
-        className={getStyles(this.props.theme).CanvasSpanGraph}
-        ref={this._setCanvasRef}
-        data-testid="CanvasSpanGraph"
-      />
-    );
-  }
-}
+  useEffect(() => {
+    draw();
+  });
 
-export default withTheme2(UnthemedCanvasSpanGraph);
+  return <canvas className={styles.CanvasSpanGraph} ref={canvasRef} data-testid="CanvasSpanGraph" />;
+});
+
+export default CanvasSpanGraph;

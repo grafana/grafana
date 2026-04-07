@@ -1,49 +1,56 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
-import { Sidebar, useStyles2 } from '@grafana/ui';
-import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { config } from '@grafana/runtime';
+import { type SceneObject } from '@grafana/scenes';
+import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
 import addPanelImg from 'img/dashboards/add-panel.png';
 
-import { DashboardInteractions } from '../../utils/interactions';
+import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
+import { AddButton } from './AddButton';
+import { AddFilters } from './AddFilters';
+import { AddLink } from './AddLink';
 import { AddNewSection } from './AddNewSection';
+import { AddRow } from './AddRow';
+import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
 
 interface AddNewEditPaneProps {
   dashboard: SceneObject;
   selectedElement: SceneObject | undefined;
   onAddPanel: () => void;
+  onPastePanel: () => void;
 }
 
-export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNewEditPaneProps) {
+export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedElement }: AddNewEditPaneProps) {
+  const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneFor(dashboard);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
 
-  const onAddPanelClick = () => {
-    onAddPanel();
-    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(selectedElement));
+  const onStartDragging = (result: { draggableId: string }) => {
+    const mode = result.draggableId === 'paste-panel-drag' ? 'paste' : 'newPanel';
+    orchestrator.startDraggingNewPanel(mode);
   };
 
   return (
-    <>
+    <div className={styles.wrapper}>
       <Sidebar.PaneHeader title={t('dashboard.add.pane-header', 'Add')} />
-      <AddNewSection
-        title={t('dashboard.add.new-panel.title', 'Panel')}
-        description={t('dashboard.add.new-panel.description', 'Drag or click to add a panel')}
-      >
-        <DragDropContext onDragStart={() => orchestrator?.startDraggingNewPanel()} onDragEnd={() => {}}>
-          <Droppable droppableId="side-drop-id" isDropDisabled>
-            {(dropProvided) => (
-              <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
-                <div className={styles.dragContainer}>
+      <ScrollContainer showScrollIndicators={true}>
+        <AddNewSection
+          title={t('dashboard.add.new-panel.title', 'Panel')}
+          description={t('dashboard.add.new-panel.description', 'Drag or click to add a panel')}
+        >
+          <DragDropContext onDragStart={onStartDragging} onDragEnd={() => {}}>
+            <Droppable droppableId="side-drop-id" isDropDisabled>
+              {(dropProvided) => (
+                <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
                   <Draggable draggableId="new-panel-drag" index={0}>
                     {(dragProvided, dragSnapshot) => {
                       return (
@@ -55,11 +62,11 @@ export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNe
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
                           className={cx(styles.imageContainer, dragSnapshot.isDragging && styles.dragging)}
-                          onClick={onAddPanelClick}
+                          onClick={onAddPanel}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              onAddPanelClick();
+                              onAddPanel();
                             }
                           }}
                           aria-label={t('dashboard.add.new-panel.title', 'Panel')}
@@ -73,27 +80,72 @@ export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNe
                       );
                     }}
                   </Draggable>
+                  {hasCopiedPanel && (
+                    <Draggable
+                      draggableId="paste-panel-drag"
+                      index={1}
+                      isDragDisabled={!hasCopiedPanel}
+                      disableInteractiveElementBlocking={true}
+                    >
+                      {(dragProvided, _) => (
+                        <div
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          {...dragProvided.dragHandleProps}
+                        >
+                          <AddButton
+                            className={styles.pasteButton}
+                            icon="clipboard-alt"
+                            tabIndex={0}
+                            onClick={onPastePanel}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                onPastePanel();
+                              }
+                            }}
+                            aria-label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
+                            label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
+                            tooltip={t(
+                              'dashboard.canvas-actions.add.paste.description',
+                              'Click or drag to paste panel'
+                            )}
+                          ></AddButton>
+                        </div>
+                      )}
+                    </Draggable>
+                  )}
+                  {dropProvided.placeholder}
                 </div>
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </AddNewSection>
-      <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
-        <AddVariable dashboardScene={dashboardScene} />
-        <AddAnnotationQuery dashboardScene={dashboardScene} />
-      </AddNewSection>
-    </>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </AddNewSection>
+        <AddNewSection title={t('dashboard-scene.add-new-edit-pane.group-layouts', 'Group layouts')}>
+          <AddRow dashboardScene={dashboardScene} selectedElement={selectedElement} />
+          <AddTab dashboardScene={dashboardScene} selectedElement={selectedElement} />
+        </AddNewSection>
+        <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
+          {config.featureToggles.dashboardUnifiedDrilldownControls && <AddFilters dashboardScene={dashboardScene} />}
+          <AddVariable dashboardScene={dashboardScene} selectedElement={selectedElement} />
+          <AddAnnotationQuery dashboardScene={dashboardScene} />
+          <AddLink dashboardScene={dashboardScene} />
+        </AddNewSection>
+      </ScrollContainer>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 0',
+      height: '100%',
+    }),
     dragging: css({
       cursor: 'move',
-    }),
-    dragContainer: css({
-      height: 120,
     }),
     imageContainer: css({
       cursor: 'pointer',
@@ -104,6 +156,10 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         opacity: 1,
       },
+    }),
+    pasteButton: css({
+      width: '100%',
+      marginTop: theme.spacing(2),
     }),
   };
 }

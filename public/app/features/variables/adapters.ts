@@ -1,11 +1,17 @@
-import { ComponentType } from 'react';
-import { Reducer } from 'redux';
+import { type ComponentType } from 'react';
+import { type Reducer } from 'redux';
 
-import { Registry, TypedVariableModel, UrlQueryValue, VariableOption, VariableType } from '@grafana/data';
+import {
+  Registry,
+  type TypedVariableModel,
+  type UrlQueryValue,
+  type VariableOption,
+  type VariableType,
+} from '@grafana/data';
 
-import { VariableEditorProps } from './editor/types';
-import { VariablePickerProps } from './pickers/types';
-import { VariablesState } from './state/types';
+import { type VariableEditorProps } from './editor/types';
+import { type VariablePickerProps } from './pickers/types';
+import { type VariablesState } from './state/types';
 
 export interface VariableAdapter<Model extends TypedVariableModel> {
   id: VariableType;

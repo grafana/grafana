@@ -1,12 +1,10 @@
-import { Labels } from '@grafana/data';
+import { type Labels, dateTimeFormat } from '@grafana/data';
 
-export const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
+const TIMELINE_DATE_FORMAT = 'MMM DD, HH:mm:ss';
+
+export function formatTimelineDate(timestamp: number | string): string {
+  return dateTimeFormat(timestamp, { format: TIMELINE_DATE_FORMAT });
+}
 
 export function labelsToMatchers(labels: Labels) {
   return Object.entries(labels).map(([label, value]) => ({

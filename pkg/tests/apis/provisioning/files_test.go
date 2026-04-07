@@ -9,14 +9,12 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"sync"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -25,9 +23,7 @@ import (
 )
 
 func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	const repo = "empty-files-repo"
 	helper.CreateRepo(t, common.TestRepo{
@@ -53,9 +49,7 @@ func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "delete-test-repo"
@@ -169,9 +163,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	repo := "move-test-repo"
 	helper.CreateRepo(t, common.TestRepo{
@@ -401,45 +393,30 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
-	// create both repos concurrently to reduce duration of this test
-	// Create first repository targeting "folder-1" with its own subdirectory
 	const repo1 = "ownership-repo-1"
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo1,
-			Path:   path.Join(helper.ProvisioningPath, "repo1"),
-			Target: "folder",
-			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
-			},
-			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
-		})
-	}()
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo1,
+		Path:   path.Join(helper.ProvisioningPath, "repo1"),
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "dashboard1.json",
+		},
+		SkipResourceAssertions: true, // will check both at the same time below
+	})
 
-	// Create second repository targeting "folder-2" with its own subdirectory
 	const repo2 = "ownership-repo-2"
-	path2 := path.Join(helper.ProvisioningPath, "repo2")
-	go func() {
-		defer wg.Done()
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo2,
-			Path:   path2,
-			Target: "folder",
-			Copies: map[string]string{
-				"testdata/timeline-demo.json": "dashboard2.json",
-			},
-			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
-		})
-	}()
-	wg.Wait()
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo2,
+		Path:   path.Join(helper.ProvisioningPath, "repo2"),
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/timeline-demo.json": "dashboard2.json",
+		},
+		SkipResourceAssertions: true, // will check both at the same time below
+	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
@@ -625,9 +602,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "auth-test-repo"
@@ -1009,108 +984,92 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			defer deleteResp.Body.Close()
 		})
 	})
-}
 
-func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	t.Run("security: folder claim bypass prevention", func(t *testing.T) {
+		// Test that users cannot bypass folder permissions by claiming a different folder in file metadata
+		// This validates the security fix where we check the actual resource location, not the claimed folder
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
-	ctx := context.Background()
+		// Create a dashboard in a restricted location (as admin)
+		dashboardContent := `{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind": "Dashboard",
+			"metadata": {
+				"name": "security-test-dashboard",
+				"annotations": {
+					"grafana.app/folder": "restricted-folder"
+				}
+			},
+			"spec": {
+				"title": "Security Test Dashboard"
+			}
+		}`
 
-	const repo = "folder-metadata-test-repo"
-	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
+		var statusCode int
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "security-test.json").
+			Body([]byte(dashboardContent)).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&statusCode)
 
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		require.NoError(t, result.Error(), "admin should be able to create dashboard")
+		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
-	postFolder := func(t *testing.T, path string) *http.Response {
-		t.Helper()
-		u := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s", addr, repo, path)
-		req, err := http.NewRequest(http.MethodPost, u, nil)
-		require.NoError(t, err)
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		return resp
-	}
+		// Wait for dashboard to be created
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+			require.NoError(collect, err, "should list dashboards")
+			found := false
+			for _, dash := range dashboards.Items {
+				if dash.GetName() == "security-test-dashboard" {
+					found = true
+					break
+				}
+			}
+			assert.True(collect, found, "security-test-dashboard should exist")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be created")
 
-	t.Run("simple folder creation writes _folder.json with stable UID", func(t *testing.T) {
-		resp := postFolder(t, "meta-test-folder/")
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
+		// Now try to update the dashboard as Editor, but claim it's in a different folder
+		// The file is at path "security-test.json" (root level, no folder)
+		// The file content claims "public-folder" in metadata
+		// Authorization should check the ACTUAL path location (root), not the claimed folder
+		maliciousDashboard := `{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind": "Dashboard",
+			"metadata": {
+				"name": "security-test-dashboard",
+				"annotations": {
+					"grafana.app/folder": "public-folder"
+				}
+			},
+			"spec": {
+				"title": "Maliciously Modified Dashboard"
+			}
+		}`
 
-		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/_folder.json")
-		require.NoError(t, err, "_folder.json should be readable via the files endpoint")
+		result = helper.EditorREST.Put().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "security-test.json").
+			Body([]byte(maliciousDashboard)).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&statusCode)
 
-		apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
-		require.Equal(t, "folder.grafana.app/v1beta1", apiVersion)
-		kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
-		require.Equal(t, "Folder", kind)
-		folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, folderUID, "_folder.json should contain a non-empty stable UID")
-		title, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
-		require.Equal(t, "meta-test-folder", title)
+		// The request should succeed because editor has permissions
+		// The key validation is that authorization checks the ACTUAL path location (root folder)
+		// and not the claimed folder from the file content ("public-folder" in metadata)
+		require.NoError(t, result.Error(), "editor should be able to update dashboard")
+		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
-		require.Error(t, err, ".keep should not exist when flag is enabled")
-
-		_, err = helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
-		require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
-	})
-
-	t.Run("nested creation writes _folder.json only for the leaf", func(t *testing.T) {
-		resp := postFolder(t, "parent-folder/child-folder/")
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
-
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
-		require.Error(t, err, "parent _folder.json should not exist — only the directly-created folder gets one")
-
-		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/child-folder/_folder.json")
-		require.NoError(t, err, "child _folder.json should be readable via the files endpoint")
-
-		childAPIVersion, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "apiVersion")
-		require.Equal(t, "folder.grafana.app/v1beta1", childAPIVersion)
-		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, childUID, "child _folder.json should contain a non-empty stable UID")
-		childTitle, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "spec", "title")
-		require.Equal(t, "child-folder", childTitle)
-
-		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
-		require.NoError(t, err, "child Grafana folder should exist with the stable UID from _folder.json")
-	})
-
-	t.Run("child created inside existing managed folder gets its own _folder.json", func(t *testing.T) {
-		resp := postFolder(t, "managed-parent/")
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "creating parent folder should succeed")
-
-		parentWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
-		require.NoError(t, err, "parent _folder.json should exist")
-		parentUID, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, parentUID, "parent should have a non-empty stable UID")
-
-		resp2 := postFolder(t, "managed-parent/child-folder/")
-		// nolint:errcheck
-		defer resp2.Body.Close()
-		require.Equal(t, http.StatusOK, resp2.StatusCode, "creating child folder should succeed")
-
-		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/child-folder/_folder.json")
-		require.NoError(t, err, "child _folder.json should exist")
-		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, childUID, "child should have a non-empty stable UID")
-		require.NotEqual(t, parentUID, childUID, "child and parent UIDs must differ")
-
-		// Parent _folder.json must be unchanged.
-		parentWrap2, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
-		require.NoError(t, err, "parent _folder.json should still exist after child creation")
-		parentUID2, _, _ := unstructured.NestedString(parentWrap2.Object, "resource", "file", "metadata", "name")
-		require.Equal(t, parentUID, parentUID2, "parent UID must be unchanged after child creation")
-
-		_, err = helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
-		require.NoError(t, err, "parent Grafana folder should exist")
-		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
-		require.NoError(t, err, "child Grafana folder should exist")
+		// Clean up
+		helper.AdminREST.Delete().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "security-test.json").
+			Do(ctx)
 	})
 }

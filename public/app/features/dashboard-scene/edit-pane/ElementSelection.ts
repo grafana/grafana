@@ -1,8 +1,8 @@
-import { SceneObject, SceneObjectRef } from '@grafana/scenes';
-import { ElementSelectionContextItem } from '@grafana/ui';
+import { type SceneObject, type SceneObjectRef } from '@grafana/scenes';
+import { type ElementSelectionContextItem } from '@grafana/ui';
 
 import { isBulkActionElement } from '../scene/types/BulkActionElement';
-import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { getEditableElementFor } from './shared';

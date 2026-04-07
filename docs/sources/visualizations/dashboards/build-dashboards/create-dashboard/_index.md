@@ -97,11 +97,19 @@ To create a dashboard, follow these steps:
 1. Click **Refresh** to query the data source.
 1. Select a suggested visualization or click **All visualizations** and select one from the full list.
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestion-v13.0.png" max-width="350px" alt="Visualization selector" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestion-2-v13.0.png" max-width="350px" alt="Visualization selector" >}}
 
    Grafana displays a preview of your query results with the visualization applied.
 
    For more information about configuring individual visualizations, refer to [Visualizations options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/).
+
+1. (Optional) If the panel supports it, choose an option from the **Panel styles** section in the panel editor sidebar. Each style shows a live preview of how it changes the visualization. Clicking a style applies it to the panel.
+
+   {{< admonition type="note" >}}
+   Panel styles is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `vizPresets` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) to use this feature.
+   {{< /admonition >}}
+
+   For more information about Panel styles, refer to the [Panel editor documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-editor-overview/#panel-styles).
 
 1. Click **Refresh** to query the data source.
 1. Under **Panel options**, enter a title and description for the panel or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
@@ -120,8 +128,12 @@ To create a dashboard, follow these steps:
 1. Click **Save**
 1. Click **Back to dashboard**.
 1. (Optional) Continue building the dashboard by doing one or more of the following:
+<<<<<<< HEAD
 
    - Select the panel you just created and click **Configure** in the sidebar to continue panel setup.
+=======
+   - Select the panel you just created and click **Configure** in the edit pane to continue panel setup.
+>>>>>>> ihm/260306-dashboard-edit-updates
    - Click the **Add new element** icon and select **Panel**. You can also hover your mouse on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.
    - Click the **Add new element** icon and select [Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables), [Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries), or [Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links).
    - Click **Group panels** on the dashboard and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).

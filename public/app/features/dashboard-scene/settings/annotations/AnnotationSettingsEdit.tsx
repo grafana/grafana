@@ -1,21 +1,21 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  AnnotationQuery,
-  DataSourceInstanceSettings,
+  type AnnotationQuery,
+  type DataSourceInstanceSettings,
   getDataSourceRef,
-  GrafanaTheme2,
-  SelectableValue,
+  type GrafanaTheme2,
+  type SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
-import { AnnotationPanelFilter } from '@grafana/schema';
+import { type VizPanel } from '@grafana/scenes';
+import { type AnnotationPanelFilter } from '@grafana/schema';
 import {
   Button,
   Checkbox,
@@ -27,7 +27,7 @@ import {
   useStyles2,
   Stack,
   Alert,
-  ComboboxOption,
+  type ComboboxOption,
   Combobox,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
@@ -56,6 +56,7 @@ enum AnnotationControlsDisplay {
 
 export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate, onBackToList, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
+  const showInId = useId();
 
   const panelFilter = useMemo(() => {
     if (!annotation.filter) {
@@ -338,11 +339,13 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           {/* Show in */}
           <Field
             noMargin
+            htmlFor={showInId}
             label={t('dashboard-scene.annotation-settings-edit.label-show-in', 'Show in')}
             data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}
           >
             <>
               <Select
+                inputId={showInId}
                 isLoading={loading}
                 options={getPanelFilters()}
                 value={panelFilter}

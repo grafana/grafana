@@ -8,6 +8,7 @@ export const usePullRequestParam = () => {
   const repoUrl = params.get('repo_url');
   const repoType = params.get('repo_type');
   const resourcePushedTo = params.get('resource_pushed_to');
+  const actionParam = params.get('action');
 
   return {
     prURL: prParam ? textUtil.sanitizeUrl(decodeURIComponent(prParam)) : undefined,
@@ -16,5 +17,6 @@ export const usePullRequestParam = () => {
     repoType: repoType ? textUtil.sanitizeUrl(decodeURIComponent(repoType)) : undefined,
     // Repository name the resource was pushed to, used to link to its status overview page
     resourcePushedTo: resourcePushedTo ? textUtil.sanitizeUrl(decodeURIComponent(resourcePushedTo)) : undefined,
+    action: actionParam === 'create' || actionParam === 'delete' || actionParam === 'update' ? actionParam : undefined,
   };
 };
