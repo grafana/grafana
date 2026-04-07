@@ -770,3 +770,29 @@ help: ## Display this help.
 # container/check-licenses target)
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
+
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+define generate-policy-yml
+	docker run -u "$(shell id -u):$(shell id -g)" \
+	--quiet \
+	--rm \
+	--volume "$(shell git rev-parse --show-toplevel)":/work \
+	--workdir /work \
+	ghcr.io/grafana/generate-policy-bot-config@${GENERATE_POLICY_BOT_CONFIG_SHA} \
+		--output $(1) \
+		--log-level=debug \
+		--merge-with=.policy.yml.tmpl \
+		.
+endef
+
+.PHONY: .policy.yml
+.policy.yml:
+	@$(call generate-policy-yml,$@)
+
+check-policy.yml:
+	# We redirect stderr to stdout because the tool logs to stderr using proper
+	# Actions log levels (to avoid interfering with `diff`), but those log
+	# commands only work on stdout.
+	@bash -c 'diff -u .policy.yml <($(call generate-policy-yml,-))' 2>&1 && \
+		( echo "No drift detected: .policy.yml is up-to-date." >&2; exit 0 ) || \
+		( echo "Drift detected: .policy.yml is out-of-date. Run \`make .policy.yml\` to update it, and then commit the result." >&2; exit 1 )

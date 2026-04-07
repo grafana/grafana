@@ -2811,6 +2811,14 @@ var (
 			FrontendOnly: false,
 			Expression:   "false",
 		},
+		{
+			Name:            "cacheConfigUnifiedStorageMigration",
+			Description:     "Enables cache configs data migration to unified storage",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
 	}
 )
 

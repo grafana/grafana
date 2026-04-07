@@ -1771,4 +1771,9 @@ export interface FeatureToggles {
   * @default false
   */
   postgresqlSuperuserWarning?: boolean;
+  /**
+  * Enables cache configs data migration to unified storage
+  * @default false
+  */
+  cacheConfigUnifiedStorageMigration?: boolean;
 }
