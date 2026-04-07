@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import { Fragment, useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2, type Labels } from '@grafana/data';
@@ -10,6 +10,7 @@ import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import {
   Alert,
   Box,
+  Button,
   Drawer,
   Icon,
   LoadingBar,
@@ -58,12 +59,22 @@ interface InstanceDetailsDrawerProps {
   onClose: () => void;
 }
 
+type DrawerView =
+  | { type: 'instance-details' }
+  | { type: 'contact-point-list'; receiverName: string }
+  | { type: 'notification-history-details'; notificationUuid: string; timestampMs?: number }
+  | { type: 'silence' }
+  | { type: 'declare-incident' };
+
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
   const { rightColumnWidth } = useWorkbenchContext();
+  const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
+  const activeView = viewStack[viewStack.length - 1];
+  const canGoBack = viewStack.length > 1;
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
@@ -106,55 +117,75 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     return isDrawerRangeShorterThanQuery(rule.grafana_alert, timeRange);
   }, [rule, timeRange]);
 
-  if (error) {
-    return (
-      <Drawer
-        title={
-          <InstanceDetailsDrawerTitle
-            instanceLabels={instanceLabels}
-            commonLabels={commonLabels}
-            alertState={instanceState}
-          />
-        }
-        onClose={onClose}
-        width={drawerWidth}
-      >
-        <ErrorContent error={error} />
-      </Drawer>
-    );
-  }
+  const handleDrawerClose = () => {
+    setViewStack([{ type: 'instance-details' }]);
+    onClose();
+  };
 
-  if (loading || !rule) {
-    return (
-      <Drawer
-        title={
-          <InstanceDetailsDrawerTitle
-            instanceLabels={instanceLabels}
-            commonLabels={commonLabels}
-            alertState={instanceState}
-          />
-        }
-        onClose={onClose}
-        width={drawerWidth}
-      >
-        <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />
-      </Drawer>
-    );
-  }
+  const handleBack = () => {
+    setViewStack((current) => {
+      if (current.length <= 1) {
+        return current;
+      }
+      return current.slice(0, -1);
+    });
+  };
 
-  return (
-    <Drawer
-      title={
+  const getDrawerTitle = () => {
+    if (activeView.type === 'instance-details') {
+      return (
         <InstanceDetailsDrawerTitle
           instanceLabels={instanceLabels}
           commonLabels={commonLabels}
           alertState={instanceState}
-          rule={rule.grafana_alert}
+          rule={rule?.grafana_alert}
         />
-      }
-      onClose={onClose}
-      width={drawerWidth}
-    >
+      );
+    }
+
+    if (activeView.type === 'contact-point-list') {
+      return t('alerting.triage.instance-details-drawer.contact-point-list-title', 'Contact point list');
+    }
+
+    if (activeView.type === 'notification-history-details') {
+      return t('alerting.triage.instance-details-drawer.notification-history-details-title', 'Notification details');
+    }
+
+    if (activeView.type === 'silence') {
+      return t('alerting.triage.instance-details-drawer.silence-title', 'Silence');
+    }
+
+    if (activeView.type === 'declare-incident') {
+      return t('alerting.triage.instance-details-drawer.declare-incident-title', 'Declare incident');
+    }
+
+    return t('alerting.triage.instance-details-drawer.declare-incident-title', 'Declare incident');
+  };
+
+  const getDrawerBody = () => {
+    if (activeView.type !== 'instance-details') {
+      return (
+        <Alert
+          severity="info"
+          title={t('alerting.triage.instance-details-drawer.drilldown-coming-soon', 'Coming soon')}
+        >
+          {t(
+            'alerting.triage.instance-details-drawer.drilldown-coming-soon-description',
+            'This drawer drilldown step will be added in a follow-up change.'
+          )}
+        </Alert>
+      );
+    }
+
+    if (error) {
+      return <ErrorContent error={error} />;
+    }
+
+    if (loading || !rule) {
+      return <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />;
+    }
+
+    return (
       <Stack direction="column" gap={3}>
         <Stack justifyContent="flex-end">
           <TimeRangePicker />
@@ -216,6 +247,50 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
           </Box>
         )}
       </Stack>
+    );
+  };
+
+  if (error) {
+    return (
+      <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
+        {getDrawerBody()}
+      </Drawer>
+    );
+  }
+
+  if (loading || !rule) {
+    return (
+      <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
+        {getDrawerBody()}
+      </Drawer>
+    );
+  }
+
+  return (
+    <Drawer
+      title={
+        <Stack direction="column" gap={1}>
+          {canGoBack && (
+            <Stack direction="row" alignItems="center">
+              <Button
+                variant="secondary"
+                size="sm"
+                fill="text"
+                icon="arrow-left"
+                onClick={handleBack}
+                aria-label={t('alerting.triage.instance-details-drawer.back', 'Back')}
+              >
+                {t('alerting.triage.instance-details-drawer.back', 'Back')}
+              </Button>
+            </Stack>
+          )}
+          {getDrawerTitle()}
+        </Stack>
+      }
+      onClose={handleDrawerClose}
+      width={drawerWidth}
+    >
+      {getDrawerBody()}
     </Drawer>
   );
 }
