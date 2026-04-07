@@ -68,8 +68,11 @@ describe('useIsConditionallyHidden', () => {
     const group = buildConditionalRenderingGroup({ renderHidden: true });
 
     const { result } = renderHook(() => useIsConditionallyHidden(group));
-    const [, , , renderHidden] = result.current;
+    const [isHidden, className, overlay, renderHidden] = result.current;
 
+    expect(isHidden).toBe(false);
+    expect(className).toBeUndefined();
+    expect(overlay).toBeNull();
     expect(renderHidden).toBe(true);
   });
 
