@@ -60,6 +60,7 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
           config: {
             field: item.spec.config.field,
             target: item.spec.config.target,
+            timeRange: item.spec.config.timeRange,
             transformations: transformationsFmt,
           },
         };

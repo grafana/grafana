@@ -179,6 +179,14 @@ export const generatePartialEditSpec = (data: EditFormDTO, correlation: Correlat
       return { expression: t.expression, field: t.field, mapValue: t.mapValue, type: t.type };
     });
   }
+  if (
+    data.type === 'query' &&
+    correlation.type === 'query' &&
+    data.config.timeRange !== undefined &&
+    !isEqual(data.config.timeRange, correlation.config.timeRange)
+  ) {
+    partialSpec.config.timeRange = { ...data.config.timeRange };
+  }
   return partialSpec;
 };
 
@@ -199,6 +207,7 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
     config: {
       field: data.config.field,
       target: { ...data.config.target },
+      timeRange: data.type === 'query' ? { ...data.config.timeRange } : undefined,
       transformations: data.config.transformations,
     },
   };

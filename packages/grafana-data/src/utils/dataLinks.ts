@@ -66,6 +66,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     link.meta?.timeRange !== undefined &&
     (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined)
   ) {
+    // TODO , do not replace if variable is not interpolsted
     let timeRangeField = link.meta.timeRange.field;
     if (timeRangeField !== undefined && !isCustomVariableValue(timeRangeField)) {
       timeRangeField = `\$\{${timeRangeField}\}`;
