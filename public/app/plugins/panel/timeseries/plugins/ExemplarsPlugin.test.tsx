@@ -1,7 +1,103 @@
-import { createDataFrame } from '@grafana/data';
+import { act, render, screen } from '@testing-library/react';
+import uPlot from 'uplot';
+
+import { applyFieldOverrides, createDataFrame, createTheme, FieldConfigOptionsRegistry } from '@grafana/data';
 import { type UPlotConfigBuilder } from '@grafana/ui';
 
-import { getVisibleLabels, type VisibleExemplarLabels } from './ExemplarsPlugin';
+import { ExemplarsPlugin, getVisibleLabels, type VisibleExemplarLabels } from './ExemplarsPlugin';
+import { mockAnnotationFrame } from './mocks/mockAnnotationFrames';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  EventsCanvas: ({ id }: { id: string }) => <div data-testid="exemplars-events-canvas" data-canvas-id={id} />,
+}));
+
+describe('ExemplarsPlugin', () => {
+  let hooks: Record<string, (u: uPlot) => {}> = {};
+  let config: Partial<UPlotConfigBuilder>;
+
+  beforeEach(() => {
+    hooks = {};
+    config = {
+      addHook: jest.fn((type, hook) => {
+        hooks[type] = hook;
+      }),
+      scales: [{ props: { scaleKey: 'x' } }, { props: { scaleKey: 'y' } }],
+    } as unknown as UPlotConfigBuilder;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  const setUp = (
+    props?: Partial<React.ComponentProps<typeof ExemplarsPlugin>>,
+    configOverride?: Partial<UPlotConfigBuilder>,
+    uPlotProps?: Partial<uPlot.Options>,
+    callInit = true
+  ) => {
+    function uPlotInit() {
+      act(() => {
+        hooks.init(
+          new uPlot({
+            width: 0,
+            height: 0,
+            series: [],
+            ...uPlotProps,
+          })
+        );
+      });
+    }
+
+    const exemplars = props?.exemplars ?? [mockAnnotationFrame];
+    const frames = exemplars.map((fr) => createDataFrame(fr));
+    const exemplarsWithOverrides = applyFieldOverrides({
+      data: frames,
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+      fieldConfigRegistry: new FieldConfigOptionsRegistry(),
+    });
+
+    const configWithDefaults = {
+      ...configOverride,
+      ...config,
+    } as UPlotConfigBuilder;
+
+    const result = render(
+      <div>
+        <ExemplarsPlugin
+          config={configWithDefaults}
+          timeZone={'browser'}
+          {...props}
+          exemplars={exemplarsWithOverrides}
+        />
+      </div>
+    );
+
+    if (callInit) {
+      uPlotInit();
+    }
+    return result;
+  };
+
+  it('renders empty exemplars', () => {
+    const config = {
+      addHook: jest.fn((type, hook) => {
+        hooks[type] = hook;
+      }),
+    } as unknown as UPlotConfigBuilder;
+
+    setUp({ config, exemplars: [] });
+
+    const canvas = screen.getByTestId('exemplars-events-canvas');
+    expect(canvas).toBeInTheDocument();
+    expect(canvas).toHaveAttribute('data-canvas-id', 'exemplars');
+  });
+});
 
 describe('getVisibleLabels()', () => {
   const dataFrameSeries1 = createDataFrame({

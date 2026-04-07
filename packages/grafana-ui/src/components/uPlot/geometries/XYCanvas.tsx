@@ -21,5 +21,10 @@ export const XYCanvas = ({ children, left, top }: React.PropsWithChildren<XYCanv
     });
   }, [left, top]);
 
-  return <div className={className}>{children}</div>;
+  // @todo add to e2e selectors
+  return (
+    <div data-testid={'xy-canvas'} className={className}>
+      {children}
+    </div>
+  );
 };
