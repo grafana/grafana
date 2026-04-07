@@ -234,9 +234,9 @@ export const LogsTable = ({
       sortBy: [{ displayName: timeFieldName, desc: true }],
       fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
       ...options,
-      wrapText: options.wrapText ?? fieldConfigProp.defaults?.custom?.wrapText ?? false,
+      wrapText,
     }),
-    [fieldConfigProp.defaults?.custom?.wrapText, options, timeFieldName]
+    [options, timeFieldName, wrapText]
   );
 
   const noSeries = data.series.length === 0;
