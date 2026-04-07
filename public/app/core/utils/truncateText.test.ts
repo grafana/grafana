@@ -5,6 +5,10 @@ describe('truncateText', () => {
     expect(truncateText('hello', 10)).toBe('hello');
   });
 
+  it('returns the original string when equal to maxLength', () => {
+    expect(truncateText('hello', 5)).toBe('hello');
+  });
+
   it('truncates and appends ellipsis when longer than maxLength', () => {
     expect(truncateText('hello world', 8)).toBe('hello w…');
   });
