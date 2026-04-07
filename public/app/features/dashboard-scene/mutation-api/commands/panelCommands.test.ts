@@ -583,6 +583,64 @@ describe('Panel mutation commands', () => {
       expect(body.getVizPanels()[0].state.displayMode).toBe('transparent');
     });
 
+    it('updates options on a text panel (no fieldConfig)', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const elementName = await addPanel(client, 'Text Panel', 'text', { content: 'Hello', mode: 'markdown' });
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: {
+            kind: 'Panel',
+            spec: {
+              vizConfig: { kind: 'VizConfig', spec: { options: { content: 'Updated text' } } },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opts = body.getVizPanels()[0].state.options as Record<string, any>;
+      expect(opts.content).toBe('Updated text');
+    });
+
+    it('updates fieldConfig on a panel with existing overrides', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const elementName = await addPanel(client, 'Override Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: {
+            kind: 'Panel',
+            spec: {
+              vizConfig: {
+                kind: 'VizConfig',
+                spec: {
+                  fieldConfig: {
+                    defaults: { unit: 'percent' },
+                    overrides: [
+                      { matcher: { id: 'byName', options: 'cpu' }, properties: [{ id: 'unit', value: 'short' }] },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
     it('changes plugin type via vizConfig.group', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);

@@ -125,6 +125,8 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
       if (vizConfig) {
         const isPluginChange = vizConfig.group && vizConfig.group !== vizPanel.state.pluginId;
 
+        const emptyFieldConfig: FieldConfigSource = { defaults: {}, overrides: [] };
+
         // Zod parsed types and VizPanel state types don't overlap, so casts are needed.
         /* eslint-disable @typescript-eslint/consistent-type-assertions */
         if (isPluginChange) {
@@ -141,8 +143,9 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
           }
 
           if (vizConfig.spec?.fieldConfig) {
+            const existingFieldConfig = vizPanel.state.fieldConfig ?? emptyFieldConfig;
             const merged = mergeReplacingArrays(
-              vizPanel.state.fieldConfig as unknown as Record<string, unknown>,
+              existingFieldConfig as unknown as Record<string, unknown>,
               vizConfig.spec.fieldConfig as unknown as Record<string, unknown>
             );
             vizPanel.onFieldConfigChange(merged as unknown as FieldConfigSource, true);
