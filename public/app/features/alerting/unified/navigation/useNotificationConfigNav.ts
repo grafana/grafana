@@ -37,8 +37,7 @@ function canViewContactPoints(): boolean {
 function canViewNotificationPolicies(): boolean {
   return (
     contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead) ||
-    contextSrv.hasPermission(AccessControlAction.ActionAlertingManagedRoutesRead)
+    contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead)
   );
 }
 
