@@ -769,7 +769,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		Name:               repo,
 		Template:           common.TestdataPath("github.json.tmpl"),
 		Target:             "folder",
-		Values:             map[string]any{"Path": "grafana/"},
+		Values:             map[string]any{"Path": "grafana/", "Workflows": "[]"},
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3, // Folder sync creates an additional folder for the repository itself
 	}
@@ -1384,7 +1384,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 		Name:               repo,
 		Template:           common.TestdataPath("github.json.tmpl"),
 		Target:             "folder",
-		Values:             map[string]any{"Path": "grafana/"},
+		Values:             map[string]any{"Path": "grafana/", "Workflows": "[]"},
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3,
 	}
@@ -1639,7 +1639,7 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 		Name:               repo,
 		Template:           common.TestdataPath("github.json.tmpl"),
 		Target:             "folder",
-		Values:             map[string]any{"Path": "grafana/"},
+		Values:             map[string]any{"Path": "grafana/", "Workflows": "[]"},
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3, // Repository creates folders
 	}
@@ -1704,6 +1704,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 			Target:   "folder",
 			Values: map[string]any{
 				"SyncEnabled": true,
+				"Workflows":   "[]",
 			},
 			ExpectedDashboards: 3, // Syncs 3 dashboards from grafana/ directory
 			ExpectedFolders:    6, // Creates 6 folders: repo root, assets, gifs, grafana, DemoFolder, DemoDeeperFolder
@@ -1732,6 +1733,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 			Target:   "folder",
 			Values: map[string]any{
 				"SyncEnabled": true,
+				"Workflows":   "[]",
 			},
 			ExpectedDashboards: 3, // Successfully syncs 3 dashboards
 			ExpectedFolders:    6, // Successfully creates 6 folders
@@ -1747,6 +1749,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 			Target:   "folder",
 			Values: map[string]any{
 				"SyncEnabled": true,
+				"Workflows":   "[]",
 			},
 			SkipResourceAssertions: true, // Skip because we can't easily count per-repo resources
 		}
