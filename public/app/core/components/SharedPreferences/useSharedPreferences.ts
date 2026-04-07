@@ -51,5 +51,5 @@ export const useSharedPreferences = (preferenceType: Props['preferenceType'], re
     [preferenceType, teamId, updateUserPreferences, updateOrgPreferences, updateTeamPreferences]
   );
 
-  return [updatePreferences, { preferences: prefs, isLoading, isSubmitting }];
+  return [updatePreferences, { preferences: prefs, isLoading, isSubmitting }] as const;
 };
