@@ -17,7 +17,6 @@ import {
   SceneObjectUrlSyncConfig,
   type SceneObjectUrlValues,
   type CancelActivationHandler,
-  sceneUtils,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -32,7 +31,6 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { type DashboardScene } from './DashboardScene';
-import { DrilldownControls } from './DrilldownControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
@@ -179,13 +177,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
 
-  // Get adhoc and groupby variables for drilldown controls
-  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
-  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
-  const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
-  const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
-  const useUnifiedDrilldownUI = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
-
   if (!model.hasControls()) {
     // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
     // However we shouldn't do it if we're in edit panel view
@@ -213,63 +204,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     );
   }
 
-  // When dashboardAdHocAndGroupByWrapper is enabled, use the new layout with topRow
-  if (useUnifiedDrilldownUI) {
-    return (
-      <div
-        data-testid={selectors.pages.Dashboard.Controls}
-        className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
-      >
-        <div className={styles.topRow}>
-          {config.featureToggles.scopeFilters && !editPanel && (
-            <ContextualNavigationPaneToggle className={styles.contextualNavToggleNewLayout} hideWhenOpen={true} />
-          )}
-          {!hideVariableControls && (
-            <div className={styles.drilldownControlsContainer}>
-              <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} isEditing={isEditing} />
-            </div>
-          )}
-          <div className={cx(styles.rightControlsNewLayout, editPanel && styles.rightControlsWrap)}>
-            {!hideTimeControls && (
-              <div className={styles.fixedControlsNewLayout}>
-                <timePicker.Component model={timePicker} />
-                <refreshPicker.Component model={refreshPicker} />
-              </div>
-            )}
-            {config.featureToggles.dashboardNewLayouts && (
-              <div className={styles.fixedControlsNewLayout}>
-                <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
-              </div>
-            )}
-            {(config.featureToggles.dashboardFiltersOverview ||
-              config.featureToggles.dashboardUnifiedDrilldownControls) &&
-              !config.featureToggles.dashboardNewLayouts && (
-                <div className={styles.fixedControls}>
-                  <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
-                </div>
-              )}
-          </div>
-        </div>
-        {!hideVariableControls && (
-          <>
-            <VariableControls dashboard={dashboard} />
-            <DashboardDataLayerControls dashboard={dashboard} />
-          </>
-        )}
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-        {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
-        <DefaultControlsLoadingSkeleton
-          dashboard={dashboard}
-          hideVariableControls={hideVariableControls}
-          hideLinksControls={hideLinksControls}
-        />
-        {editPanel && <PanelEditControls panelEditor={editPanel} />}
-        {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
-      </div>
-    );
-  }
-
-  // Original layout when feature toggle is off
   return (
     <div
       data-testid={selectors.pages.Dashboard.Controls}
@@ -462,26 +396,6 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       }),
       paddingRight: 0,
     }),
-    // New layout styles (used when feature toggle is on)
-    topRow: css({
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: theme.spacing(1),
-      width: '100%',
-      marginBottom: theme.spacing(1),
-      [theme.breakpoints.down('sm')]: {
-        flexWrap: 'wrap',
-      },
-    }),
-    drilldownControlsContainer: css({
-      flex: 1,
-      minWidth: 0,
-      display: 'flex',
-      [theme.breakpoints.down('sm')]: {
-        order: 1, // Move below the time controls
-        flex: '1 1 100%', // Take full width to force new line
-      },
-    }),
     embedded: css({
       background: 'unset',
       position: 'unset',
@@ -496,15 +410,6 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       maxWidth: '100%',
       minWidth: 0,
     }),
-    // Modified rightControls for new layout
-    rightControlsNewLayout: css({
-      display: 'flex',
-      gap: theme.spacing(1),
-      alignItems: 'flex-start',
-      flexWrap: 'wrap',
-      flexShrink: 0,
-    }),
-    // Original fixedControls style
     fixedControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
@@ -512,14 +417,6 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       marginBottom: theme.spacing(1),
       order: 2,
       marginLeft: 'auto',
-      flexShrink: 0,
-      alignSelf: 'flex-start',
-    }),
-    // Fixed controls for new layout (no margin/order)
-    fixedControlsNewLayout: css({
-      display: 'flex',
-      justifyContent: 'flex-end',
-      gap: theme.spacing(1),
       flexShrink: 0,
       alignSelf: 'flex-start',
     }),
@@ -534,10 +431,6 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     contextualNavToggle: css({
       display: 'inline-flex',
       margin: theme.spacing(0, 1, 1, 0),
-    }),
-    contextualNavToggleNewLayout: css({
-      display: 'inline-flex',
-      flexShrink: 0,
     }),
   };
 }
