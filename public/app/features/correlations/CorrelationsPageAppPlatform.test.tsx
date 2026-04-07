@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { type DataSourceSrv, type reportInteraction, setAppEvents, setDataSourceSrv, config } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { type createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
