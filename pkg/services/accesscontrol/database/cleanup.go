@@ -3,15 +3,11 @@ package database
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
-
-// validPluginID matches the allowed plugin ID format: lowercase alphanumerics and hyphens.
-var validPluginID = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 // CleanupPluginRBAC removes all RBAC data associated with the given plugin IDs:
 //   - permissions on any role whose action starts with "<pluginID>." or "<pluginID>:"
@@ -20,8 +16,8 @@ var validPluginID = regexp.MustCompile(`^[a-z0-9-]+$`)
 //     their permission, user_role, and team_role rows
 func (s *AccessControlStore) CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error {
 	for _, pluginID := range pluginIDs {
-		if !validPluginID.MatchString(pluginID) {
-			return fmt.Errorf("invalid plugin ID %q: must match [a-z0-9-]+", pluginID)
+		if pluginID == "" || strings.ContainsAny(pluginID, `%_\`) {
+			return fmt.Errorf("invalid plugin ID %q: must be non-empty and must not contain '%%', '_', or '\\'", pluginID)
 		}
 		if err := cleanupPlugin(ctx, s.sql, pluginID); err != nil {
 			return err
@@ -54,7 +50,7 @@ func cleanupPlugin(ctx context.Context, sql db.DB, pluginID string) error {
 			return err
 		}
 
-		// 3. Find the plugin's own fixed role IDs (org_id = -1, name LIKE 'plugins:<pluginID>:%').
+		// 3. Find the plugin's fixed role IDs.
 		type roleRow struct {
 			ID int64 `xorm:"id"`
 		}
