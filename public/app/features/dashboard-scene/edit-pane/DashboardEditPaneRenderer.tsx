@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, SceneVariable, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 

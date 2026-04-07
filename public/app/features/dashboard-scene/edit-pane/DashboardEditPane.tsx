@@ -30,6 +30,10 @@ export interface DashboardEditPaneState extends SceneObjectState {
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
   openPane?: DashboardSidebarPane;
+  /**
+   * Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now
+   */
+  selectedDisconnectedObject?: SceneObject;
   /** True when a new element is being added and selected */
   isNewElement: boolean;
   isDocked?: boolean;
@@ -252,6 +256,16 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
+    // Temp solution for EditLink and DashboardLinksSet which are not part of the scene graph
+    if (obj.getRoot() !== this.getRoot() || obj.parent === this) {
+      this.setState({
+        selectedDisconnectedObject: obj,
+        selectionContext: { ...this.state.selectionContext, selected: [{ id: obj.state.key! }] },
+        openPane: new ElementEditPane({}),
+      });
+      return;
+    }
+
     if (multi) {
       if (hasItem) {
         // Remove item unless force is true
@@ -281,6 +295,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selected.length ? new ElementEditPane({}) : undefined,
       isNewElement: false,
+      selectedDisconnectedObject: undefined,
     });
   }
 
@@ -293,6 +308,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     if (key) {
       // Not using findByKey here as it requires try catch in case object is not found
       return sceneGraph.findObject(this, (obj) => obj.state.key === key) ?? undefined;
+    }
+
+    if (this.state.selectedDisconnectedObject) {
+      return this.state.selectedDisconnectedObject;
     }
 
     if (this.state.selectionContext.selected.length === 0) {
@@ -369,7 +388,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       dashboard.addPanel(panel);
     }
 
-    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(target ?? undefined));
+    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(target));
   }
 
   public pastePanel(target: SceneObject | undefined, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
@@ -382,7 +401,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       dashboard.pastePanel();
     }
 
-    DashboardInteractions.trackPastePanelClick(source, getLayoutType(target ?? undefined), 'click');
+    DashboardInteractions.trackPastePanelClick(source, getLayoutType(target), 'click');
   }
 }
 
