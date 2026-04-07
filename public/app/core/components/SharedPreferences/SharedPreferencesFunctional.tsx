@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useState, useEffect } from 'react';
 
 import {
@@ -39,6 +40,7 @@ import { useAppNotification } from '../../../core/copy/appNotification';
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
+import { languageChanged, regionalFormatChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import {
   getLanguageOptions,
   getRegionalFormatOptions,
@@ -75,6 +77,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   const notify = useAppNotification();
 
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const [state, setState] = useState<PrefsState>({
     theme: undefined,
     timezone: '',
@@ -124,11 +127,19 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     if (!confirmationResult) {
       return;
     }
-    reportInteraction('grafana_preferences_save_button_clicked', {
-      preferenceType: props.preferenceType,
-      theme: state.theme,
-      language: state.language,
-    });
+    if (isAnalyticsFrameworkEnabled) {
+      saveButtonClicked({
+        preferenceType: props.preferenceType,
+        theme: state.theme,
+        language: state.language,
+      });
+    } else {
+      reportInteraction('grafana_preferences_save_button_clicked', {
+        preferenceType: props.preferenceType,
+        theme: state.theme,
+        language: state.language,
+      });
+    }
 
     const prefsData = toUpdatePrefsCmd(state);
 
@@ -148,10 +159,19 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {
     setState((prev) => ({ ...prev, theme: value.value }));
-    reportInteraction('grafana_preferences_theme_changed', {
-      toTheme: value.value,
-      preferenceType: props.preferenceType,
-    });
+    if (isAnalyticsFrameworkEnabled) {
+      themeChanged({
+        toTheme: value.value,
+        preferenceType: props.preferenceType,
+      });
+    } else {
+      // eslint-disable-next-line no-restricted-syntax
+      reportInteraction('grafana_preferences_theme_changed', {
+        toTheme: value.value,
+        preferenceType: props.preferenceType,
+      });
+    }
+
     if (value.value) {
       changeTheme(value.value, true);
     }
@@ -174,18 +194,32 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   const handleLanguageChanged = (language: string) => {
     setState((prev) => ({ ...prev, language }));
-    reportInteraction('grafana_preferences_language_changed', {
-      toLanguage: language,
-      preferenceType: props.preferenceType,
-    });
+    if (isAnalyticsFrameworkEnabled) {
+      languageChanged({
+        toLanguage: language,
+        preferenceType: props.preferenceType,
+      });
+    } else {
+      reportInteraction('grafana_preferences_language_changed', {
+        toLanguage: language,
+        preferenceType: props.preferenceType,
+      });
+    }
   };
 
   const handleRegionalFormatChanged = (regionalFormat: string) => {
     setState((prev) => ({ ...prev, regionalFormat }));
-    reportInteraction('grafana_preferences_regional_format_changed', {
-      toRegionalFormat: regionalFormat,
-      preferenceType: props.preferenceType,
-    });
+    if (isAnalyticsFrameworkEnabled) {
+      regionalFormatChanged({
+        toRegionalFormat: regionalFormat,
+        preferenceType: props.preferenceType,
+      });
+    } else {
+      reportInteraction('grafana_preferences_regional_format_changed', {
+        toRegionalFormat: regionalFormat,
+        preferenceType: props.preferenceType,
+      });
+    }
   };
 
   const currentThemeOption = themeOptions.find((x) => x.value === state.theme) ?? themeOptions[0];

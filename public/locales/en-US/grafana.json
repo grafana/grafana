@@ -14787,6 +14787,7 @@
       "bullet-1": "Split content into tabs for quick switching",
       "bullet-2": "Show or hide panels based on template variables and other conditions",
       "bullet-3": "Auto-arrange panels into a grid for an efficient layout",
+      "cta": "Show me",
       "subtitle": "Make your dashboards more impactful and easier to explore",
       "title": "Add tabs and panel conditions to your dashboards"
     },
@@ -14794,6 +14795,7 @@
       "bullet-1": "Store your dashboard configuration safely in any git repository",
       "bullet-2": "keep track of the changes - and who made them",
       "bullet-3": "Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams",
+      "cta": "Show me",
       "subtitle": "Bring version control, collaboration, and reliability to your dashboards",
       "title": "Sync your dashboards to Git"
     },
@@ -14801,6 +14803,7 @@
       "bullet-1": "Start from a clean layout instead of building from scratch",
       "bullet-2": "Load a template and customize it to your needs",
       "bullet-3": "Explore and use community dashboards tailored to your data source",
+      "cta": "Show me",
       "subtitle": "Get to a useful dashboard sooner by starting from a proven design",
       "title": "Kickstart dashboards with suggestions and templates"
     },
@@ -16575,6 +16578,10 @@
   },
   "xychart": {
     "category-xychart": "XY Chart",
+    "errors": {
+      "nodata": "No data",
+      "unknown": "Unknown error"
+    },
     "name-fill-opacity": "Fill opacity",
     "name-line-style": "Line style",
     "name-line-width": "Line width",
