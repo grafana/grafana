@@ -1,28 +1,28 @@
 import { map } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
   FieldType,
   incrRoundUp,
   incrRoundDn,
-  SynchronousDataTransformerInfo,
+  type SynchronousDataTransformerInfo,
   DataFrameType,
   getFieldDisplayName,
-  Field,
+  type Field,
   getValueFormat,
   formattedValueToString,
   TransformationApplicabilityLevels,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
   ScaleDistribution,
-  ScaleDistributionConfig,
+  type ScaleDistributionConfig,
   HeatmapCellLayout,
   HeatmapCalculationMode,
-  HeatmapCalculationOptions,
+  type HeatmapCalculationOptions,
 } from '@grafana/schema';
 
 import { convertDurationToMilliseconds, niceLinearIncrs, niceTimeIncrs } from './utils';

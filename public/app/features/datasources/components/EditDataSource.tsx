@@ -1,19 +1,19 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { type AnyAction } from '@reduxjs/toolkit';
 import { useMemo } from 'react';
 import * as React from 'react';
 
 import {
   DataSourcePluginContextProvider,
-  DataSourcePluginMeta,
-  DataSourceSettings as DataSourceSettingsType,
+  type DataSourcePluginMeta,
+  type DataSourceSettings as DataSourceSettingsType,
   PluginExtensionPoints,
-  PluginExtensionDataSourceConfigContext,
+  type PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, usePluginComponents, UsePluginComponentsResult } from '@grafana/runtime';
+import { getDataSourceSrv, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { DataSourceSettingsState } from 'app/types/datasources';
+import { type DataSourceSettingsState } from 'app/types/datasources';
 import { useDispatch } from 'app/types/store';
 
 import {
@@ -29,7 +29,7 @@ import {
 } from '../state/hooks';
 import { setIsDefault, setDataSourceName, dataSourceLoaded } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
-import { DataSourceRights } from '../types';
+import { type DataSourceRights } from '../types';
 
 import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';

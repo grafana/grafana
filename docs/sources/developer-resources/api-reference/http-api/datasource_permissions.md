@@ -33,11 +33,17 @@ This API can be used to list, add and remove permissions for a data source.
 
 Permissions can be set for a user, team, service account or a basic role (Admin, Editor, Viewer).
 
+### Optional `ds_type` query parameter {#ds-type}
+
+Every endpoint in this API accepts an optional query parameter `ds_type`. Set it to the data source **plugin type** (for example `prometheus` or `loki`). Use `ds_type` when more than one data source in the organization shares the same UID so Grafana can resolve the correct instance. If the UID is unique in the organization, you can omit `ds_type`.
+
 ## Get permissions for a data source
 
 `GET /api/access-control/datasources/:uid`
 
 Gets all existing permissions for the data source with the given `uid`.
+
+Append `?ds_type=<TYPE>` when you need to disambiguate the UID; refer to [Optional `ds_type` query parameter](#ds-type).
 
 **Required permissions**
 
@@ -53,6 +59,15 @@ See note in the [introduction](#data-source-permissions-api) for an explanation.
 
 ```http
 GET /api/access-control/datasources/my_datasource HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example request (with `ds_type` when the UID is not unique):**
+
+```http
+GET /api/access-control/datasources/my_datasource?ds_type=prometheus HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -131,6 +146,8 @@ Status codes:
 
 Sets user permission for the data source with the given `uid`.
 
+Append `?ds_type=<TYPE>` when you need to disambiguate the UID; refer to [Optional `ds_type` query parameter](#ds-type).
+
 To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
 To remove a permission, set the `permission` field to an empty string.
 
@@ -203,6 +220,8 @@ Status codes:
 
 Sets team permission for the data source with the given `uid`.
 
+Append `?ds_type=<TYPE>` when you need to disambiguate the UID; refer to [Optional `ds_type` query parameter](#ds-type).
+
 To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
 To remove a permission, set the `permission` field to an empty string.
 
@@ -274,6 +293,8 @@ Status codes:
 `POST /api/access-control/datasources/:uid/builtInRoles/:builtinRoleName`
 
 Sets permission for the data source with the given `uid` to all users who have the specified basic role.
+
+Append `?ds_type=<TYPE>` when you need to disambiguate the UID; refer to [Optional `ds_type` query parameter](#ds-type).
 
 You can set permissions for the following basic roles: `Admin`, `Editor`, `Viewer`.
 

@@ -1,6 +1,6 @@
-import { isIconName, SelectableValue } from '@grafana/data';
+import { isIconName, type SelectableValue } from '@grafana/data';
 
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 export const isNewGroup = <T extends string | number>(option: ComboboxOption<T>, prevOption?: ComboboxOption<T>) => {
   const currentGroup = option.group;

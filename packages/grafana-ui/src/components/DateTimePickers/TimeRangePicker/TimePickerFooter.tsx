@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
 import { useCallback, useId, useState } from 'react';
 import * as React from 'react';
 
-import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { getTimeZoneInfo, type GrafanaTheme2, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -56,7 +55,7 @@ export const TimePickerFooter = (props: Props) => {
 
   const style = useStyles2(getStyle);
 
-  if (!isString(timeZone)) {
+  if (typeof timeZone !== 'string') {
     return null;
   }
 
@@ -126,7 +125,7 @@ export const TimePickerFooter = (props: Props) => {
                   onChange={(timeZone) => {
                     onToggleChangeTimeSettings();
 
-                    if (isString(timeZone)) {
+                    if (typeof timeZone === 'string') {
                       onChangeTimeZone(timeZone);
                     }
                   }}

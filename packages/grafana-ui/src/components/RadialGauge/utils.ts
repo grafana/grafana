@@ -1,18 +1,18 @@
 import {
-  FieldConfig,
-  FieldDisplay,
+  type FieldConfig,
+  type FieldDisplay,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   getActiveThreshold,
   getDisplayProcessor,
-  GrafanaTheme,
-  GrafanaTheme2,
-  Threshold,
-  ThresholdsConfig,
+  type GrafanaTheme,
+  type GrafanaTheme2,
+  type Threshold,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 
-import { RadialGaugeDimensions } from './types';
+import { type RadialGaugeDimensions } from './types';
 
 const DEFAULT_THRESHOLDS: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,

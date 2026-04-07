@@ -5,11 +5,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   defaultSpec,
   defaultGridLayoutKind,
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
-import { DashboardInputs, DashboardSource, InputType } from '../../types';
+import { type DashboardInputs, DashboardSource, InputType } from '../../types';
 
 import { ImportOverviewV2 } from './ImportOverviewV2';
 

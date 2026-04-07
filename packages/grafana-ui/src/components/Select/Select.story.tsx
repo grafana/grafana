@@ -1,10 +1,10 @@
 import { auto } from '@popperjs/core';
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import Chance from 'chance';
 import { useId, useState } from 'react';
 
-import { SelectableValue, toIconName } from '@grafana/data';
+import { type SelectableValue, toIconName } from '@grafana/data';
 
 import { getAvailableIcons } from '../../types/icon';
 import { Alert } from '../Alert/Alert';
@@ -14,7 +14,7 @@ import { Icon } from '../Icon/Icon';
 import { AsyncMultiSelect, AsyncSelect, MultiSelect, Select } from './Select';
 import mdx from './Select.mdx';
 import { generateOptions, generateThousandsOfOptions } from './mockOptions';
-import { SelectCommonProps } from './types';
+import { type SelectCommonProps } from './types';
 
 const chance = new Chance();
 

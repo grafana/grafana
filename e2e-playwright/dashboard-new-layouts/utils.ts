@@ -1,7 +1,7 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
@@ -127,7 +127,12 @@ export async function saveDashboard(
     await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
   }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
-  await expect(page.getByText('Dashboard saved')).toBeVisible();
+
+  // wait for the toast
+  const toast = page.getByRole('status', { name: 'Dashboard saved' });
+  await expect(toast).toBeVisible();
+  // close toast, we do this to prevent any incorrect assertion when several saves occur fast. i.e. the 1st toast is still visible but the 2nd save has not occurred yet
+  await toast.getByRole('button', { name: 'Close alert' }).click();
 }
 
 export async function checkRepeatedPanelTitles(
@@ -402,4 +407,22 @@ export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelect
 export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
   await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+}
+
+export async function fillVariableValue(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  varName: string,
+  text: string
+) {
+  const variable = dashboardPage
+    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
+    .locator('..')
+    .locator('input');
+  await variable.click();
+  await variable.clear();
+  await variable.fill(text);
+  await variable.press('Enter');
+  await page.waitForLoadState('networkidle');
 }
