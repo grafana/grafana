@@ -85,6 +85,29 @@ func ResolveUIDScopesForWrite(ctx context.Context, store ScopeResolverStore, ns 
 	return out, nil
 }
 
+// ResolveUIDScopesForRead is the read-path equivalent of ResolveUIDScopesForWrite.
+// Orphaned permissions (referencing deleted entities) are omitted with a warning
+// instead of causing an error, so read responses stay stable.
+func ResolveUIDScopesForRead(ctx context.Context, store ScopeResolverStore, ns claims.NamespaceInfo, permissions []accesscontrol.Permission, logger log.Logger) ([]accesscontrol.Permission, error) {
+	out := make([]accesscontrol.Permission, 0, len(permissions))
+	for _, p := range permissions {
+		resolved, err := ResolveUIDScopeForWrite(ctx, store, ns, p.Scope)
+		if err != nil {
+			if IsNotFoundError(err) {
+				logger.Warn("Omitting permission with orphaned uid scope", "scope", p.Scope)
+				continue
+			}
+			return nil, err
+		}
+		if resolved != p.Scope {
+			p.Scope = resolved
+			p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(resolved)
+		}
+		out = append(out, p)
+	}
+	return out, nil
+}
+
 // ResolveIDScopeToUIDName resolves an id-based scope to just the uid name.
 // e.g. "teams:id:1" → "teamuid1". Returns an error if the entity is not found
 // or the scope doesn't match a known id prefix.
@@ -210,6 +233,32 @@ func ResolveIDScopesToUID(
 		}
 		if drop {
 			continue
+		}
+		p.Scope = resolved
+		p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(resolved)
+		out = append(out, p)
+	}
+	return out, nil
+}
+
+// ResolveIDScopesToUIDStrict is the write-path variant of ResolveIDScopesToUID.
+// It returns an error when an id-based scope references a deleted entity instead
+// of silently omitting it, so the caller can reject the request.
+func ResolveIDScopesToUIDStrict(
+	ctx context.Context,
+	store ScopeResolverStore,
+	ns claims.NamespaceInfo,
+	perms []accesscontrol.Permission,
+	logger log.Logger,
+) ([]accesscontrol.Permission, error) {
+	out := make([]accesscontrol.Permission, 0, len(perms))
+	for _, p := range perms {
+		resolved, drop, err := ResolveIDScopeToUID(ctx, store, ns, p.Scope, logger)
+		if err != nil {
+			return nil, err
+		}
+		if drop {
+			return nil, fmt.Errorf("scope %q references a deleted entity", p.Scope)
 		}
 		p.Scope = resolved
 		p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(resolved)
