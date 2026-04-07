@@ -119,7 +119,7 @@ function findMatchingRule(
 /**
  * Returns true if a field should be grouped on according to V2 rules.
  */
-function shouldGroupOnFieldV2(
+function shouldGroupOnField(
   field: Field,
   frame: DataFrame,
   allFrames: DataFrame[],
@@ -188,7 +188,7 @@ export const groupToNestedTable: DataTransformerInfo<
         for (const frame of data) {
           // Identify fields to group on
           const groupByFields: Field[] = frame.fields.filter((field) =>
-            shouldGroupOnFieldV2(field, frame, data, options.rules)
+            shouldGroupOnField(field, frame, data, options.rules)
           );
           if (groupByFields.length === 0) {
             continue;

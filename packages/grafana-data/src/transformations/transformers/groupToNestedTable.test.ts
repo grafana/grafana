@@ -435,7 +435,7 @@ describe('GroupToSubframe transformer - V2 native config', () => {
       expect(result[0].fields[0].name).toBe('message');
       expect(result[0].fields[0].values).toEqual(['one', 'two']);
       // Last field is nested frames
-      const nestedField = result[0].fields.find((f: Field) => f.name === '__nestedFrames');
+      const nestedField = result[0].fields.find((f: Field) => f.type === FieldType.nestedFrames);
       expect(nestedField).toBeDefined();
       expect(nestedField!.values).toHaveLength(2);
     });
@@ -562,7 +562,7 @@ describe('GroupToSubframe transformer - V2 native config', () => {
       expect(sumField!.values).toEqual([1, 2]);
 
       // Subframes should contain no fields: 'message' is grouped, 'values' is aggregated
-      const nestedField = result[0].fields.find((f: Field) => f.name === '__nestedFrames');
+      const nestedField = result[0].fields.find((f: Field) => f.type === FieldType.nestedFrames);
       for (const subframeGroup of nestedField!.values) {
         expect(subframeGroup[0].fields).toHaveLength(0);
       }
