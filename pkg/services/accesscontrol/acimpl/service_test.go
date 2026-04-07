@@ -1407,7 +1407,7 @@ func TestIntegrationService_GetRoleByName(t *testing.T) {
 	})
 }
 
-func TestIntegrationCleanupPluginRoles(t *testing.T) {
+func TestIntegrationCleanupPluginRBAC(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
