@@ -102,6 +102,8 @@ jobs:
         TEST_SHARD_TOTAL: ${{ matrix.total }}
 
   frontend-decoupled-plugin-tests:
+    permissions:
+      contents: read
     needs:
       - detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -123,6 +125,8 @@ jobs:
     - run: yarn run plugin:test:ci
 
   frontend-packages-unit-tests:
+    permissions:
+      contents: read
     needs:
       - detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -157,6 +161,8 @@ jobs:
     # success() || failure() will skip this function if any need is also skipped.
     # That means conditional test suites will fail the entire requirement check.
     if: always()
+    permissions:
+      contents: read
 
     name: All frontend unit tests complete
     runs-on: ubuntu-x64-small
@@ -172,6 +178,8 @@ jobs:
           success-message: "All unit tests completed successfully"
 
   devenv:
+    permissions:
+      contents: read
     needs:
       - detect-changes
     if: needs.detect-changes.outputs.devenv-changed == 'true'
