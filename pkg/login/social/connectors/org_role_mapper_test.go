@@ -2,10 +2,10 @@ package connectors
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -198,6 +198,27 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			directlyMappedRole: org.RoleAdmin,
 			expected:           nil,
 		},
+		{
+			name:               "should fill the org and role templates from a regexp match on the external org",
+			externalOrgs:       []string{"First_Editor"},
+			orgMappingSettings: []string{"(.*)_(.*):$1:$2"},
+			directlyMappedRole: "",
+			expected:           map[int64]org.RoleType{1: org.RoleEditor},
+		},
+		{
+			name:               "should not confuse the special case '*' for a regexp pattern",
+			externalOrgs:       []string{"First_Editor"},
+			orgMappingSettings: []string{"(.*)_(.*):$1:$2", "*:1:Admin"},
+			directlyMappedRole: "",
+			expected:           map[int64]org.RoleType{1: org.RoleAdmin},
+		},
+		{
+			name:               "should treat invalid regexps as regular strings with no match or expansion",
+			externalOrgs:       []string{"First_Editor"},
+			orgMappingSettings: []string{"*invalid(.*)_(.*):$1:$2"},
+			directlyMappedRole: "",
+			expected:           map[int64]org.RoleType{2: org.RoleViewer},
+		},
 	}
 	orgService := orgtest.NewOrgServiceFake()
 	cfg := setting.NewCfg()
@@ -218,7 +239,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 				}
 			}
 			mappingCfg := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMappingSettings, tc.strictRoleMapping)
-			actual := mapper.MapOrgRoles(mappingCfg, tc.externalOrgs, tc.directlyMappedRole)
+			actual := mapper.MapOrgRoles(context.Background(), mappingCfg, tc.externalOrgs, tc.directlyMappedRole)
 
 			assert.EqualValues(t, tc.expected, actual)
 		})
@@ -233,7 +254,7 @@ func TestOrgRoleMapper_MapOrgRoles_ReturnsDefaultOnNilMapping(t *testing.T) {
 	cfg.AutoAssignOrgRole = string(org.RoleViewer)
 	mapper := ProvideOrgRoleMapper(cfg, orgService)
 
-	actual := mapper.MapOrgRoles(NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), []string{"First"}, org.RoleNone)
+	actual := mapper.MapOrgRoles(context.Background(), NewMappingConfiguration([]MappingEntry{}, false), []string{"First"}, org.RoleNone)
 
 	assert.EqualValues(t, map[int64]org.RoleType{2: org.RoleNone}, actual)
 }
@@ -247,96 +268,90 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 		expected   MappingConfiguration
 	}{
 		{
-			name:       "should return empty mapping when no org mapping settings are provided",
+			name:       "should return an empty configuration when no org mapping settings are provided",
 			rawMapping: []string{},
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false),
+			expected:   NewMappingConfiguration([]MappingEntry{}, false),
 		},
 		{
-			name:       "should return empty mapping when role is invalid and role strict is enabled",
-			rawMapping: []string{"Second:1:SuperEditor"},
-			roleStrict: true,
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, true),
-		},
-		{
-			name:       "should return correct mapping when org mapping part is missing from a mapping and role strict is disabled",
-			rawMapping: []string{"Second:1", "First:"},
-			roleStrict: false,
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}}, false),
-		},
-		{
-			name:       "should return default mapping when role is invalid and strict role mapping is disabled",
-			rawMapping: []string{"Second:1:SuperEditor"},
-			roleStrict: false,
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}}, false),
-		},
-		{
-			name:       "should return empty mapping when org mapping doesn't contain any role and strict role mapping is enabled",
-			rawMapping: []string{"Second:1"},
-			roleStrict: true,
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, true),
-		},
-		{
-			name:       "should return default mapping when org mapping doesn't contain any role and strict is disabled",
-			rawMapping: []string{"Second:1"},
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}}, false),
-		},
-		{
-			name:       "should return correct mapping when the first part contains multiple colons",
-			rawMapping: []string{"Groups\\:IT\\:ops:1:Viewer"},
-			roleStrict: false,
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Groups:IT:ops": {1: org.RoleViewer}}, false),
-		},
-		{
-			name:       "should return correct mapping when the org name contains multiple colons",
-			rawMapping: []string{`Group1:Org\:1:Viewer`},
-			roleStrict: false,
-			setupMock: func(orgService *orgtest.MockService) {
-				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
-					return query.Name == "Org:1"
-				})).Return(&org.Org{ID: 1}, nil)
-			},
-			expected: NewMappingConfiguration(map[string]map[int64]org.RoleType{"Group1": {1: org.RoleViewer}}, false),
-		},
-		{
-			name:       "should return empty mapping when org mapping is nil",
+			name:       "should return an empty configuration when org mapping is nil",
 			rawMapping: nil,
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false),
+			expected:   NewMappingConfiguration([]MappingEntry{}, false),
 		},
 		{
-			name:       "should return empty mapping when one of the org mappings are not in the correct format and strict role mapping is enabled",
-			rawMapping: []string{"Second:Group:1:SuperEditor", "Second:1:Viewer"},
+			name:       "should return an entry for each valid mapping",
+			rawMapping: []string{"First:1:Editor", "(.*)_(.*):$1:$2"},
+			expected: NewMappingConfiguration([]MappingEntry{
+				NewMappingEntry("First", regexp.MustCompile("First"), "1", "Editor"),
+				NewMappingEntry("(.*)_(.*)", regexp.MustCompile("(.*)_(.*)"), "$1", "$2"),
+			}, false),
+		},
+		{
+			name:       "should filter out malformed mappings",
+			rawMapping: []string{"First:1:Editor", "Second:2:Viewer", "Third", "F:o:u:r:t:h"},
+			expected: NewMappingConfiguration([]MappingEntry{
+				NewMappingEntry("First", regexp.MustCompile("First"), "1", "Editor"),
+				NewMappingEntry("Second", regexp.MustCompile("Second"), "2", "Viewer"),
+			}, false),
+		},
+		{
+			name:       "should return an empty configuration if one mapping was malformed and role strict is enabled",
+			rawMapping: []string{"First:1:Editor", "Second:2:Viewer", "Third", "Fourth:Group:3:Viewer"},
 			roleStrict: true,
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{}, true),
+			expected:   NewMappingConfiguration([]MappingEntry{}, true),
 		},
 		{
-			name:       "should skip org mapping when one of the org mappings are not in the correct format and strict role mapping is enabled",
-			rawMapping: []string{"Second:Group:1:SuperEditor", "Second:1:Admin"},
-			roleStrict: false,
-			expected:   NewMappingConfiguration(map[string]map[int64]org.RoleType{"Second": {1: org.RoleAdmin}}, false),
+			name:       "should replace missing roles with Viewer if role strict is disabled",
+			rawMapping: []string{"First:1:Editor", "Second:2:Viewer", "Third:3"},
+			expected: NewMappingConfiguration([]MappingEntry{
+				NewMappingEntry("First", regexp.MustCompile("First"), "1", "Editor"),
+				NewMappingEntry("Second", regexp.MustCompile("Second"), "2", "Viewer"),
+				NewMappingEntry("Third", regexp.MustCompile("Third"), "3", "Viewer"),
+			}, false),
 		},
 		{
-			name:       "should return empty mapping if at least one org was not found or the resolution failed and strict role mapping is enabled",
-			rawMapping: []string{"ExternalOrg1:First:Editor", "ExternalOrg1:NonExistent:Viewer"},
+			name:       "should return an empty configuration when a role is missing and role strict is enabled",
+			rawMapping: []string{"First:1:Editor", "Second:2:Viewer", "Third:3"},
 			roleStrict: true,
-			setupMock: func(orgService *orgtest.MockService) {
-				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
-					return query.Name == "First"
-				})).Return(&org.Org{ID: 1}, nil)
-				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
-			},
-			expected: NewMappingConfiguration(map[string]map[int64]org.RoleType{}, true),
+			expected:   NewMappingConfiguration([]MappingEntry{}, true),
 		},
 		{
-			name:       "should skip org mapping if org was not found or the resolution fails and strict role mapping is disabled",
-			rawMapping: []string{"ExternalOrg1:First:Editor", "ExternalOrg1:NonExistent:Viewer"},
+			name:       "should not set a regexp if its compilation failed",
+			rawMapping: []string{"First:1:Editor", "*invalid:2:Viewer", "Third:3"},
+			expected: NewMappingConfiguration([]MappingEntry{
+				NewMappingEntry("First", regexp.MustCompile("First"), "1", "Editor"),
+				NewMappingEntry("*invalid", nil, "2", "Viewer"),
+				NewMappingEntry("Third", regexp.MustCompile("Third"), "3", "Viewer"),
+			}, false),
+		},
+		// Technically just a specific case of the previous test, but made explicit to confirm non-regression
+		{
+			name:       "should not set a regexp if the pattern is a single star",
+			rawMapping: []string{"First:1:Editor", "*:2:Viewer", "Third:3"},
+			expected: NewMappingConfiguration([]MappingEntry{
+				NewMappingEntry("First", regexp.MustCompile("First"), "1", "Editor"),
+				NewMappingEntry("*", nil, "2", "Viewer"),
+				NewMappingEntry("Third", regexp.MustCompile("Third"), "3", "Viewer"),
+			}, false),
+		},
+
+		// Since the role is a template that will be filled on login, we can't validate it yet
+		{
+			name:       "should not enforce validity of role",
+			rawMapping: []string{"First:1:Editor", "Second:2:Viewer", "Third:3:SuperEditor"},
+			expected: NewMappingConfiguration([]MappingEntry{
+				NewMappingEntry("First", regexp.MustCompile("First"), "1", "Editor"),
+				NewMappingEntry("Second", regexp.MustCompile("Second"), "2", "Viewer"),
+				NewMappingEntry("Third", regexp.MustCompile("Third"), "3", "SuperEditor"),
+			}, false),
+		},
+
+		{
+			name:       "should correctly escape colons",
+			rawMapping: []string{"Groups\\:IT\\:ops:Org\\:1:Viewer"},
 			roleStrict: false,
-			setupMock: func(orgService *orgtest.MockService) {
-				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
-					return query.Name == "First"
-				})).Return(&org.Org{ID: 1}, nil)
-				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
-			},
-			expected: NewMappingConfiguration(map[string]map[int64]org.RoleType{"ExternalOrg1": {1: org.RoleEditor}}, false),
+			expected: NewMappingConfiguration([]MappingEntry{
+				NewMappingEntry("Groups:IT:ops", regexp.MustCompile("Groups:IT:ops"), "Org:1", "Viewer"),
+			}, false),
 		},
 	}
 	for _, tc := range testCases {
