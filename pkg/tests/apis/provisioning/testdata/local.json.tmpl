@@ -7,7 +7,7 @@
     "spec": {
         "title": "{{ or .Title .Name "Local repository" }}",
         "description": "{{ or .Description .Name "Load grafana dashboard from local repository" }}",
-        "workflows": [],
+        "workflows": {{ or .Workflows "[]" }},
         "sync": {
             "enabled": {{ if .SyncEnabled }} true {{ else }} false {{ end }},
             "target": "{{ or .SyncTarget "folder" }}",

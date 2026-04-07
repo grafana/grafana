@@ -2,7 +2,7 @@
     "apiVersion": "provisioning.grafana.app/v0alpha1",
     "kind": "Repository",
     "metadata": {
-        "name": "{{ or .Name "github-repository" }}"
+        {{ if .GenerateName }}"generateName": "{{ .GenerateName }}"{{ else }}"name": "{{ or .Name "github-repository" }}"{{ end }}
     },
     "spec": {
         "title": "{{ or .Title .Name "GitHub repository" }}",
@@ -12,16 +12,17 @@
             "url": "{{ or .URL "https://github.com/grafana/grafana-git-sync-demo" }}",
             "branch": "{{ or .Branch "integration-test" }}",
             "generateDashboardPreviews": {{ if .GenerateDashboardPreviews }} true {{ else }} false {{ end }},
-            "path": ""
+            "path": "{{ or .Path "" }}"
         },
         "sync": {
             "enabled": {{ if .SyncEnabled }} true {{ else }} false {{ end }},
             "target": "{{ or .SyncTarget "folder" }}",
             "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
         },
-        "workflows": []
+        "workflows": {{ or .Workflows "[]" }}
     },
     "secure": {
-        "token": { "create": "{{ or .Token "" }}" }
+        "token": { "create": "{{ or .Token "" }}" },
+        "webhookSecret": { "create": "{{ or .WebhookSecret "" }}" }
     }
 }

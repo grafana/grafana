@@ -31,10 +31,11 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	helper.CreateRepo(t, originalRepo)
 
 	t.Run("folder sync is rejected when instance sync exists", func(t *testing.T) {
-		folderRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
+		folderRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 			"Name":        "folder-blocked-by-instance",
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
+			"Workflows":   `["write"]`,
 		})
 
 		_, err := helper.Repositories.Resource.Create(ctx, folderRepo, metav1.CreateOptions{FieldValidation: "Strict"})
@@ -74,10 +75,11 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	})
 
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
-		instanceRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
+		instanceRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 			"Name":        "instance-repo-blocked",
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
+			"Workflows":   `["write"]`,
 		})
 
 		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, metav1.CreateOptions{FieldValidation: "Strict"})
@@ -118,10 +120,11 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 		}
 
 		eleventhRepoName := "limit-test-repo-11"
-		eleventhRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
+		eleventhRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 			"Name":        eleventhRepoName,
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
+			"Workflows":   `["write"]`,
 		})
 
 		_, createErr := helper.Repositories.Resource.Create(ctx, eleventhRepo, metav1.CreateOptions{FieldValidation: "Strict"})

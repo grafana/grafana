@@ -404,6 +404,12 @@ func getNameBeforeLastDash(name string) string {
 	return name[:lastDashIndex]
 }
 
+// TestdataPath returns the absolute path to a file in the shared testdata directory.
+func TestdataPath(filename string) string {
+	_, thisFile, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(thisFile), "../testdata", filename)
+}
+
 // RenderObject reads the filePath and renders it as a template with the given values.
 // The template is expected to be a YAML or JSON file.
 //
@@ -671,20 +677,16 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		"Name":        repo.Name,
 		"SyncEnabled": !repo.SkipSync,
 		"SyncTarget":  repo.Target,
+		"Workflows":   `["write"]`,
 	}
 	if repo.Path != "" {
 		templateVars["Path"] = repoPath
 	}
-	// Add custom values from TestRepo
 	for key, value := range repo.Values {
 		templateVars[key] = value
 	}
 
-	var thisFile string
-	if _, file, _, ok := runtime.Caller(0); ok {
-		thisFile = file
-	}
-	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
+	tmpl := TestdataPath("local.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
 	}
@@ -2379,49 +2381,22 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 	if len(workflows) == 0 {
 		workflows = []string{"write"}
 	}
-
-	repoSpec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title":       fmt.Sprintf("Test Repository %s", repoName),
-			"description": fmt.Sprintf("Integration test repository for %s", repoName),
-			"type":        "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"path":      "",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled":         false,
-				"target":          syncTarget,
-				"intervalSeconds": 60,
-			},
-			"workflows": workflows,
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
-
-	repoJSON, err := json.Marshal(repoSpec)
+	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
 
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(repoJSON).
-		SetHeader("Content-Type", "application/json").
-		Do(context.Background())
+	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+		"Name":       repoName,
+		"Title":      fmt.Sprintf("Test Repository %s", repoName),
+		"URL":        remote.URL,
+		"Branch":     "main",
+		"TokenUser":  user.Username,
+		"SyncTarget": syncTarget,
+		"Token":      user.Password,
+		"Workflows":  string(workflowsJSON),
+	})
 
-	require.NoError(t, result.Error(), "failed to create repository")
+	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
 
 	h.waitForReadyRepository(t, repoName)
 
@@ -2623,44 +2598,19 @@ func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string) {
 	_, err = local.InitWithRemote(user, remote)
 	require.NoError(t, err, "failed to initialize local repo with remote")
 
-	spec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title": repoName,
-			"type":  "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled": false,
-				"target":  "instance",
-			},
-			"workflows": []string{"write"},
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
+	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+		"Name":       repoName,
+		"Title":      repoName,
+		"URL":        remote.URL,
+		"Branch":     "main",
+		"TokenUser":  user.Username,
+		"SyncTarget": "instance",
+		"Token":      user.Password,
+		"Workflows":  `["write"]`,
+	})
 
-	body, err := json.Marshal(spec)
-	require.NoError(t, err)
-
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error(), "failed to register export git repository %q with Grafana", repoName)
+	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to register export git repository %q with Grafana", repoName)
 
 	h.waitForReadyRepository(t, repoName)
 }

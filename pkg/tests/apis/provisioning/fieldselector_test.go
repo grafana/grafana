@@ -25,27 +25,30 @@ func TestIntegrationProvisioning_RepositoryFieldSelector(t *testing.T) {
 	repo3Name := "repo-selector-test-3"
 
 	// Create first repository
-	repo1 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+	repo1 := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 		"Name":        repo1Name,
-		"SyncEnabled": false, // Disable sync to speed up test
+		"SyncEnabled": false,
+		"Workflows":   `["write"]`,
 	})
 	_, err := helper.Repositories.Resource.Create(ctx, repo1, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create first repository")
 	helper.WaitForHealthyRepository(t, repo1Name)
 
 	// Create second repository
-	repo2 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+	repo2 := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 		"Name":        repo2Name,
 		"SyncEnabled": false,
+		"Workflows":   `["write"]`,
 	})
 	_, err = helper.Repositories.Resource.Create(ctx, repo2, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create second repository")
 	helper.WaitForHealthyRepository(t, repo2Name)
 
 	// Create third repository
-	repo3 := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+	repo3 := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 		"Name":        repo3Name,
 		"SyncEnabled": false,
+		"Workflows":   `["write"]`,
 	})
 	_, err = helper.Repositories.Resource.Create(ctx, repo3, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create third repository")
@@ -107,9 +110,10 @@ func TestIntegrationProvisioning_JobFieldSelector(t *testing.T) {
 
 	// Create a repository to trigger jobs
 	repoName := "job-selector-test-repo"
-	repo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+	repo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 		"Name":        repoName,
 		"SyncEnabled": false,
+		"Workflows":   `["write"]`,
 	})
 	_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")

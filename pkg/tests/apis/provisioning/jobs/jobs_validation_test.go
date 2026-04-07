@@ -19,8 +19,8 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	const repoReadOnly = "job-validation-readonly"
 	testRepo := common.TestRepo{
 		Name:               repoReadOnly,
-		Template:           "../testdata/local-readonly.json.tmpl",
 		Target:             "folder",
+		Values:             map[string]any{"Workflows": "[]"},
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,

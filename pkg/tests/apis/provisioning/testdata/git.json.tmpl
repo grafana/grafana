@@ -11,14 +11,15 @@
         "git": {
             "url": "{{ or .URL "https://github.com/grafana/grafana-git-sync-demo" }}",
             "branch": "{{ or .Branch "integration-test" }}",
-            "path": "{{ or .Path "grafana/" }}"
+            "path": "{{ or .Path "" }}"{{ if .TokenUser }},
+            "tokenUser": "{{ .TokenUser }}"{{ end }}
         },
         "sync": {
             "enabled": {{ if .SyncEnabled }} true {{ else }} false {{ end }},
             "target": "{{ or .SyncTarget "folder" }}",
             "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
         },
-        "workflows": []
+        "workflows": {{ or .Workflows "[]" }}
     },
     "secure": {
         "token": { "create": "{{ or .Token "" }}" }
