@@ -2,19 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { LogsSortOrder } from '@grafana/data';
-import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { DownloadFormat, downloadLogs } from '../../utils';
 
 import { LogTableControls } from './LogTableControls';
 
 const DOWNLOAD_LOGS_LABEL_COPY = 'Download logs';
-
-const defaultOptions: Options = {
-  wrapText: false,
-  frameIndex: 0,
-  showHeader: true,
-};
 
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
@@ -33,8 +26,8 @@ describe('LogTableControls', () => {
           sortOrder={sortOrder}
           setSortOrder={jest.fn()}
           downloadLogs={jest.fn()}
-          options={defaultOptions}
-          onOptionsChange={jest.fn()}
+          wrapText={false}
+          onWrapTextClick={jest.fn()}
         />
       );
       expect(screen.getByLabelText('Expand')).toBeInTheDocument();
@@ -59,8 +52,8 @@ describe('LogTableControls', () => {
         sortOrder={LogsSortOrder.Ascending}
         setSortOrder={jest.fn()}
         downloadLogs={jest.fn()}
-        options={defaultOptions}
-        onOptionsChange={jest.fn()}
+        wrapText={false}
+        onWrapTextClick={jest.fn()}
       />
     );
     expect(screen.getByLabelText(expandedText)).toBeInTheDocument();
@@ -83,8 +76,8 @@ describe('LogTableControls', () => {
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
           downloadLogs={jest.fn()}
-          options={defaultOptions}
-          onOptionsChange={jest.fn()}
+          wrapText={false}
+          onWrapTextClick={jest.fn()}
         />
       );
 
@@ -99,35 +92,30 @@ describe('LogTableControls', () => {
   );
 
   it.each([
-    { wrapText: false as const, tooltip: 'Enable text wrapping', nextWrapText: true },
-    { wrapText: true as const, tooltip: 'Disable text wrapping', nextWrapText: false },
-  ])(
-    'should toggle line wrapping via onOptionsChange when wrapText is $wrapText',
-    async ({ wrapText, tooltip, nextWrapText }) => {
-      const options: Options = { ...defaultOptions, wrapText };
-      const onOptionsChange = jest.fn();
-      render(
-        <LogTableControls
-          logOptionsStorageKey={''}
-          controlsExpanded={false}
-          setControlsExpanded={jest.fn()}
-          sortOrder={LogsSortOrder.Ascending}
-          setSortOrder={jest.fn()}
-          downloadLogs={jest.fn()}
-          options={options}
-          onOptionsChange={onOptionsChange}
-        />
-      );
+    { wrapText: false as const, tooltip: 'Enable text wrapping' },
+    { wrapText: true as const, tooltip: 'Disable text wrapping' },
+  ])('should call onWrapTextClick when toggling wrap from wrapText=$wrapText', async ({ wrapText, tooltip }) => {
+    const onWrapTextClick = jest.fn();
+    render(
+      <LogTableControls
+        logOptionsStorageKey={''}
+        controlsExpanded={false}
+        setControlsExpanded={jest.fn()}
+        sortOrder={LogsSortOrder.Ascending}
+        setSortOrder={jest.fn()}
+        downloadLogs={jest.fn()}
+        wrapText={wrapText}
+        onWrapTextClick={onWrapTextClick}
+      />
+    );
 
-      const wrapButton = screen.getByLabelText(tooltip);
-      expect(wrapButton).toHaveAttribute('aria-pressed', wrapText ? 'true' : 'false');
+    const wrapButton = screen.getByLabelText(tooltip);
+    expect(wrapButton).toHaveAttribute('aria-pressed', wrapText ? 'true' : 'false');
 
-      await userEvent.click(wrapButton);
+    await userEvent.click(wrapButton);
 
-      expect(onOptionsChange).toHaveBeenCalledTimes(1);
-      expect(onOptionsChange).toHaveBeenCalledWith({ ...options, wrapText: nextWrapText });
-    }
-  );
+    expect(onWrapTextClick).toHaveBeenCalledTimes(1);
+  });
 
   test.each([
     ['txt', DownloadFormat.Text],
@@ -142,9 +130,9 @@ describe('LogTableControls', () => {
         setControlsExpanded={jest.fn()}
         sortOrder={LogsSortOrder.Ascending}
         setSortOrder={jest.fn()}
-        downloadLogs={downloadLogs as unknown as (format: DownloadFormat) => void}
-        options={defaultOptions}
-        onOptionsChange={jest.fn()}
+        downloadLogs={downloadLogs as (f: DownloadFormat) => void}
+        wrapText={false}
+        onWrapTextClick={jest.fn()}
       />
     );
     await userEvent.click(screen.getByLabelText(DOWNLOAD_LOGS_LABEL_COPY));

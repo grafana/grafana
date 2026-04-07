@@ -5,7 +5,6 @@ import { type GrafanaTheme2, LogsSortOrder, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
-import { type Options } from 'app/plugins/panel/logstable/options/types';
 
 import { DownloadFormat } from '../../utils';
 
