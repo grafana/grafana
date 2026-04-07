@@ -17,8 +17,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
 	folder2 "github.com/grafana/grafana/pkg/services/folder"
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -420,8 +420,8 @@ func TestExportRules(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			rc := createRequestContextWithPerms(orgID, map[int64]map[string][]string{
 				orgID: {
-					dashboards.ActionFoldersRead:         []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
-					accesscontrol.ActionAlertingRuleRead: []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+					folder.ActionFoldersRead:             []string{folder.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), folder.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
+					accesscontrol.ActionAlertingRuleRead: []string{folder.ScopeFoldersProvider.GetResourceScopeUID(f1.UID), folder.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)},
 					datasources.ActionQuery:              []string{datasources.ScopeProvider.GetResourceScopeUID(accessQuery.DatasourceUID)},
 				},
 			}, nil)

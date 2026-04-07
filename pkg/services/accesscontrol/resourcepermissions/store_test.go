@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -583,7 +584,7 @@ func TestStore_IsInherited(t *testing.T) {
 		{
 			description: "specific folder scope for dashboards is inherited",
 			permission: &flatResourcePermission{
-				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				Scope:    folder.ScopeFoldersProvider.GetResourceScopeUID("parent"),
 				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
 			},
 			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
@@ -601,10 +602,10 @@ func TestStore_IsInherited(t *testing.T) {
 		{
 			description: "parent folder scope for nested folders is inherited",
 			permission: &flatResourcePermission{
-				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				Scope:    folder.ScopeFoldersProvider.GetResourceScopeUID("parent"),
 				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
 			},
-			requiredScope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
+			requiredScope: folder.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
 			expected:      true,
 		},
 	}
