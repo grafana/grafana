@@ -5,11 +5,6 @@ keywords:
   - dashboard
   - create
   - dynamic dashboard
-  - filters and group-by
-  - filters and groupings
-  - annotations
-  - variables
-  - dashboard links
 labels:
   products:
     - cloud
@@ -22,36 +17,9 @@ weight: 200
 
 # Dashboard controls
 
-In the **Dashboard controls** section of the sidebar, you can add filters and groupings, variables, annotation queries, and dashboard links without leaving the dashboard.
+In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
 
 <!-- screenshot here? -->
-
-## Add filters and groupings
-
-To add a filter or grouping, follow these steps:
-
-{{< docs/list >}}
-
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Click the **Add new element** icon (blue plus sign) and select **Filters and Group by**.
-
-<!-- shared snippet here -->
-
-1. Click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**.
-
-{{< /docs/list >}}
-
-<!-- vale Grafana.Spelling = NO -->
-
-{{< admonition type="note" >}}
-In the dashboard schema, the **Filter and Group by** control is still referred to as `"kind": "AdhocVariable"`.
-{{< /admonition >}}
-
-<!-- vale Grafana.Spelling = YES -->
 
 ## Add variables
 
@@ -173,12 +141,37 @@ To add a URL link to your dashboard, follow these steps:
 
 {{< /docs/list >}}
 
+## Add filters and groupings
 
+To add a filter or grouping, follow these steps:
+
+{{< docs/list >}}
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click the **Add new element** icon (blue plus sign) and select **Filters and Group by**.
+
+<!-- shared snippet here -->
+
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
+
+{{< /docs/list >}}
+
+<!-- vale Grafana.Spelling = NO -->
+
+{{< admonition type="note" >}}
+In the dashboard schema, the **Filter and Group by** control is still referred to as `"kind": "AdhocVariable"`.
+{{< /admonition >}}
+
+<!-- vale Grafana.Spelling = YES -->
 
 ## Manage dashboard controls
 
 After you add dashboard controls, you can manage them from the dashboard options.
-The sidebar includes collapsible sections for variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard. The **Variables** section includes filters and groupings:
+The sidebar includes collapsible sections for variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
 
 <!-- screenshot here -->
 
