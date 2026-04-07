@@ -96,7 +96,7 @@ type CorrelationConfig struct {
 	Transformations Transformations `json:"transformations,omitempty"`
 	// Target time range
 	// required:false
-	// example: {"field":"time","range":{"from":"5m","to":"5m"}}
+	// example: {"field":"time","range":{"from":300,"to":-300}}
 	TimeRange TimeRange `json:"timeRange,omitempty"`
 }
 

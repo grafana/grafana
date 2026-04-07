@@ -161,7 +161,6 @@ export const ConfigureCorrelationTargetForm = () => {
                 />
 
                 <Label
-                  htmlFor={'timeRange'}
                   description={t(
                     'correlations.target-form.target-time-range-description',
                     'Use a custom time range window when running this query. If not specified, the time range will be the same as the source query.'
@@ -171,10 +170,12 @@ export const ConfigureCorrelationTargetForm = () => {
                 </Label>
                 <InlineFieldRow>
                   <InlineField
+                    htmlFor="timerange-enable"
                     labelWidth={LABEL_WIDTH}
                     label={t('correlations.target-form.target-time-range-enable', 'Enable')}
                   >
                     <InlineSwitch
+                      id="timerange-enable"
                       value={enableTimeRange}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setEnableTimeRange(e.target.checked)}
                     />
@@ -188,7 +189,7 @@ export const ConfigureCorrelationTargetForm = () => {
                         label={t('correlations.target-form.target-time-range-field-label', 'Field')}
                         tooltip={t(
                           'correlations.target-form.target-time-range-field-tooltip',
-                          'Specify a field to use as the base for the range offsets. If not specified while a custom range is enabled, the base will be the current time.'
+                          'Specify a field to use as the base for the range offsets. If not specified while a custom range is specified, the base will be the current time.'
                         )}
                         htmlFor="timerange-field"
                       >
@@ -201,7 +202,7 @@ export const ConfigureCorrelationTargetForm = () => {
                         label={t('correlations.target-form.target-time-range-range-label', 'Range')}
                         tooltip={t(
                           'correlations.target-form.target-time-range-range-tooltip',
-                          'Specify the offset to use against the range. If not specified while a custom range is enabled, the range will be +- 24 hours'
+                          'Specify the offset to use against the range. If not specified while a custom field is specified, the range will be ± 24 hours'
                         )}
                       >
                         <Controller
