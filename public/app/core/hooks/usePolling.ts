@@ -43,7 +43,7 @@ export function usePolling<T>(fetchFn: () => Promise<T>, intervalMs: number): Po
       cancelled = true;
       clearInterval(intervalId);
     };
-  }, [fetchFn]); // intervalMs intentionally omitted — changing interval has no effect at runtime
+  }, [fetchFn]);
 
   return state;
 }
