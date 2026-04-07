@@ -23,7 +23,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
 
       const titleInput = dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Title'))
+        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Title'))
         .locator('input');
       await expect(titleInput).toHaveValue('Annotation filtering');
       await titleInput.fill('New dashboard title');
@@ -35,9 +35,9 @@ test.describe(
       ).toBeVisible();
 
       // Check that we can successfully change the dashboard description
-      const descriptionTextArea = page.locator(
-        '[aria-label="dashboard-options Description field property editor"] textarea'
-      );
+      const descriptionTextArea = dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Description'))
+        .locator('textarea');
       await descriptionTextArea.fill('Dashboard description');
       await expect(descriptionTextArea).toHaveValue('Dashboard description');
     });

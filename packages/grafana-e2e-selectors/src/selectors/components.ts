@@ -690,18 +690,23 @@ export const versionedComponents = {
 
     // [Geomap] Map controls
     showZoomField: {
+      '13.0.0': 'data-testid Map controls Show zoom control field property editor',
       '10.2.0': 'Map controls Show zoom control field property editor',
     },
     showAttributionField: {
+      '13.0.0': 'data-testid Map controls Show attribution field property editor',
       '10.2.0': 'Map controls Show attribution field property editor',
     },
     showScaleField: {
+      '13.0.0': 'data-testid Map controls Show scale field property editor',
       '10.2.0': 'Map controls Show scale field property editor',
     },
     showMeasureField: {
+      '13.0.0': 'data-testid Map controls Show measure tools field property editor',
       '10.2.0': 'Map controls Show measure tools field property editor',
     },
     showDebugField: {
+      '13.0.0': 'data-testid Map controls Show debug field property editor',
       '10.2.0': 'Map controls Show debug field property editor',
     },
 
@@ -967,9 +972,11 @@ export const versionedComponents = {
     },
     SpatialOperations: {
       actionLabel: {
+        '13.0.0': 'data-testid root Action field property editor',
         '9.1.2': 'root Action field property editor',
       },
       locationLabel: {
+        '13.0.0': 'data-testid root Location Mode field property editor',
         '10.2.0': 'root Location Mode field property editor',
       },
       location: {
@@ -981,9 +988,11 @@ export const versionedComponents = {
             '9.1.2': 'Coords location option',
           },
           latitudeFieldLabel: {
+            '13.0.0': 'data-testid root Latitude field field property editor',
             '9.1.2': 'root Latitude field field property editor',
           },
           longitudeFieldLabel: {
+            '13.0.0': 'data-testid root Longitude field field property editor',
             '9.1.2': 'root Longitude field field property editor',
           },
         },
@@ -992,6 +1001,7 @@ export const versionedComponents = {
             '9.1.2': 'Geohash location option',
           },
           geohashFieldLabel: {
+            '13.0.0': 'data-testid root Geohash field field property editor',
             '9.1.2': 'root Geohash field field property editor',
           },
         },
@@ -1000,9 +1010,11 @@ export const versionedComponents = {
             '9.1.2': 'Lookup location option',
           },
           lookupFieldLabel: {
+            '13.0.0': 'data-testid root Lookup field field property editor',
             '9.1.2': 'root Lookup field field property editor',
           },
           gazetteerFieldLabel: {
+            '13.0.0': 'data-testid root Gazetteer field property editor',
             '9.1.2': 'root Gazetteer field property editor',
           },
         },
