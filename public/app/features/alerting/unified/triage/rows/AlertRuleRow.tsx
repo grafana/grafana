@@ -52,6 +52,7 @@ export const AlertRuleRow = ({
               <OpenDrawerButton
                 aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
                 onClick={handleDrawerOpen}
+                text={t('alerting.open-drawer-icon-button.rule-details', 'Rule details')}
               />
             }
           />
