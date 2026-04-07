@@ -289,18 +289,20 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
    * @param key of the object
    * @returns
    */
-  public getSelectedObject(key?: string): SceneObject | null {
+  public getSelectedObject(key?: string): SceneObject | undefined {
     if (key) {
       // Not using findByKey here as it requires try catch in case object is not found
-      return sceneGraph.findObject(this, (obj) => obj.state.key === key);
+      return sceneGraph.findObject(this, (obj) => obj.state.key === key) ?? undefined;
     }
 
     if (this.state.selectionContext.selected.length === 0) {
-      return null;
+      return undefined;
     }
 
     // Not using findByKey here as it requires try catch in case object is not found
-    return sceneGraph.findObject(this, (obj) => obj.state.key === this.state.selectionContext.selected[0].id);
+    return (
+      sceneGraph.findObject(this, (obj) => obj.state.key === this.state.selectionContext.selected[0].id) ?? undefined
+    );
   }
 
   /**
@@ -326,6 +328,13 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   public openPane(openPane: DashboardSidebarPane) {
+    const dashboard = getDashboardSceneFor(this);
+
+    // Some special logic for dashboard as it's the only sidebar pane toggle button that uses element selection
+    if (this.getSelectedObject() === dashboard) {
+      this.clearSelection(true);
+    }
+
     if (this.state.openPane?.getId() === openPane.getId()) {
       this.setState({ openPane: undefined });
       return;
@@ -349,7 +358,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.setState({ isNewElement: true });
   }
 
-  public addNewPanel(target: SceneObject | null | undefined) {
+  public addNewPanel(target: SceneObject | undefined) {
     const panel = getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
 
@@ -363,7 +372,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(target ?? undefined));
   }
 
-  public pastePanel(target: SceneObject | null | undefined, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
+  public pastePanel(target: SceneObject | undefined, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
     const dashboard = getDashboardSceneFor(this);
 
     if (target) {

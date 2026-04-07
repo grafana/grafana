@@ -39,13 +39,8 @@ export function useEditPaneCollapsed() {
 
 export function getEditableElementForSelection(
   editPane: DashboardEditPane,
-  selected: ElementSelectionContextItem[],
-  openPaneTempHack?: SceneObject
+  selected: ElementSelectionContextItem[]
 ): EditableDashboardElement | undefined {
-  if (openPaneTempHack) {
-    return getEditableElementFor(openPaneTempHack);
-  }
-
   if (selected.length === 1) {
     const obj = editPane.getSelectedObject(selected[0].id);
     if (obj) {

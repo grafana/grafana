@@ -14,7 +14,7 @@ import { AddButton } from './AddButton';
 
 interface AddTabProps {
   dashboardScene: DashboardScene;
-  selectedElement: SceneObject | null;
+  selectedElement: SceneObject | undefined;
 }
 
 export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {

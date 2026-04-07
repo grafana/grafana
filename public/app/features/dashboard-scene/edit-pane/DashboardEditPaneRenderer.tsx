@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -22,6 +22,7 @@ import { DashboardOutline } from './DashboardOutline';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { DashboardCodePane } from './DashboardCodePane';
 import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
+import { DashboardSidebarPane } from './types';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -134,13 +135,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           {config.featureToggles.dashboardNewLayouts &&
             (config.featureToggles.dashboardFiltersOverview ||
               config.featureToggles.dashboardUnifiedDrilldownControls) && (
-              <Sidebar.Button
-                icon="filter"
-                onClick={() => editPane.openPane(new DashboardFiltersOverviewPane({}))}
-                title={t('dashboards.filters-overview.filters', 'Filters')}
-                tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
-                active={openPane?.getId() === 'filters'}
-              />
+              <FiltersOverviewButton editPane={editPane} openPane={openPane} />
             )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
@@ -167,6 +162,31 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         </div>
       </Sidebar.Toolbar>
     </>
+  );
+}
+
+function FiltersOverviewButton({
+  editPane,
+  openPane,
+}: {
+  editPane: DashboardEditPane;
+  openPane: DashboardSidebarPane | undefined;
+}) {
+  const variables: SceneVariable[] = sceneGraph.getVariables(editPane)?.useState().variables ?? [];
+  const hasFilters = variables.some((v) => v.state.type === 'adhoc');
+
+  if (!hasFilters) {
+    return null;
+  }
+
+  return (
+    <Sidebar.Button
+      icon="filter"
+      onClick={() => editPane.openPane(new DashboardFiltersOverviewPane({}))}
+      title={t('dashboards.filters-overview.filters', 'Filters')}
+      tooltip={t('dashboards.filters-overview.open', 'Filters overview')}
+      active={openPane?.getId() === 'filters'}
+    />
   );
 }
 

@@ -59,7 +59,7 @@ describe('DashboardEditPane', () => {
       // Selecting same object should clear selection
       editPane.selectObject(panel1);
 
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       const panel2 = scene.onCreateNewPanel();
       editPane.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
@@ -80,7 +80,7 @@ describe('DashboardEditPane', () => {
       const panel = scene.onCreateNewPanel();
       editPane.clearSelection();
 
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
 
       editPane.setState({ isDocked: true });
       editPane.selectObject(panel);
@@ -126,7 +126,7 @@ describe('DashboardEditPane', () => {
     expect(editPane.state.undoStack).toHaveLength(0);
 
     // should clear selection
-    expect(editPane.getSelectedObject()).toBeNull();
+    expect(editPane.getSelectedObject()).toBeUndefined();
   });
 
   it('when new action comes in clears redo stack', () => {
