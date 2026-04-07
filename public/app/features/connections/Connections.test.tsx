@@ -69,7 +69,7 @@ describe('Connections', () => {
     ).toBeVisible();
   });
 
-  test('shows OSS subtitle when edition is OpenSource', async () => {
+  test('shows OSS subtitle and OSS card descriptions when edition is OpenSource', async () => {
     config.pluginAdminExternalManageEnabled = false;
     renderPage();
 
@@ -79,6 +79,9 @@ describe('Connections', () => {
         'Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections.'
       )
     ).toBeVisible();
+
+    // OSS-specific card subtitle for "Add new connection"
+    expect(await screen.findByText('Connect to a new data source')).toBeVisible();
   });
 
   test('only shows cards for nav items present in the connections nav section', async () => {

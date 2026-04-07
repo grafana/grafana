@@ -8,16 +8,17 @@ type CardMetadata = {
 
 // Visual metadata for well-known connections nav items that don't carry
 // icon/subTitle through the nav tree (e.g. plugin standalone pages).
-// Keyed by the nav item URL. Core items (Add new connection, Data sources)
-// already have subTitle from the backend so they don't need entries here.
-export function getConnectionsCardMetadata(): Record<string, CardMetadata> {
+// Keyed by the nav item URL. isOnPrem mirrors config.pluginAdminExternalManageEnabled.
+export function getConnectionsCardMetadata(isOnPrem: boolean): Record<string, CardMetadata> {
   return {
     '/connections/add-new-connection': {
       icon: 'plus-circle',
-      subTitle: t(
-        'connections.cloud.connections-home-page.add-new-connection.subtitle',
-        'Connect data to Grafana through data sources, integrations and apps'
-      ),
+      subTitle: isOnPrem
+        ? t('connections.oss.connections-home-page.add-new-connection.subtitle', 'Connect to a new data source')
+        : t(
+            'connections.cloud.connections-home-page.add-new-connection.subtitle',
+            'Connect data to Grafana through data sources, integrations and apps'
+          ),
     },
     '/connections/datasources': {
       icon: 'database',

@@ -10,7 +10,6 @@ import { useSelector } from 'app/types/store';
 import { getConnectionsCardMetadata } from '../components/PageCard/CardMetadata';
 import PageCard from '../components/PageCard/PageCard';
 
-const cardMetadata = getConnectionsCardMetadata();
 const FALLBACK_ICON: IconName = 'plug';
 
 function resolveIcon(metaIcon: IconName | undefined, navIcon: string | undefined): IconName {
@@ -27,6 +26,7 @@ export default function ConnectionsHomePage() {
   const styles = useStyles2(getStyles);
 
   const isOnPrem = !config.pluginAdminExternalManageEnabled;
+  const cardMetadata = getConnectionsCardMetadata(isOnPrem);
   const navIndex = useSelector((state) => state.navIndex);
   const cardsData = (navIndex['connections']?.children ?? [])
     .filter((item) => item.url)
