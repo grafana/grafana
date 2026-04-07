@@ -39,17 +39,17 @@ func TestMode1_Create(t *testing.T) {
 				name:  "creating an object only in the legacy store",
 				input: exampleObj,
 				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
+					s.onCreate(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObjNoRV})
+					s.onCreate(exampleObjNoRV, nil)
 				},
 			},
 			{
 				name:  "error when creating object in the legacy store fails",
 				input: failingObj,
 				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{err: errors.New("error")})
+					s.onCreate(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
@@ -57,10 +57,10 @@ func TestMode1_Create(t *testing.T) {
 				name:  "should not error when unified create fails in background",
 				input: exampleObj,
 				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
+					s.onCreate(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.createReturns = append(s.createReturns, returnVal{err: errors.New("unified error")})
+					s.onCreate(nil, errors.New("unified error"))
 				},
 			},
 		}
@@ -107,35 +107,35 @@ func TestMode1_Get(t *testing.T) {
 			{
 				name: "should succeed when getting an object from LegacyStorage",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
+					s.onGet(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: anotherObj})
+					s.onGet(anotherObj, nil)
 				},
 			},
 			{
 				name: "should error when getting an object from LegacyStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{err: errors.New("error")})
+					s.onGet(nil, errors.New("error"))
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
+					s.onGet(exampleObj, nil)
 				},
 				wantErr: true,
 			},
 			{
 				name: "should not error when getting an object from UnifiedStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
+					s.onGet(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{err: errors.New("error")})
+					s.onGet(nil, errors.New("error"))
 				},
 			},
 			{
 				name: "should not block for unified storage",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
+					s.onGet(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
 					s.blockGet = true
@@ -183,20 +183,20 @@ func TestMode1_List(t *testing.T) {
 			{
 				name: "should error when listing from LegacyStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.listReturns = append(s.listReturns, returnVal{err: errors.New("error")})
+					s.onList(nil, errors.New("error"))
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.listReturns = append(s.listReturns, returnVal{obj: &example.PodList{}})
+					s.onList(&example.PodList{}, nil)
 				},
 				wantErr: true,
 			},
 			{
 				name: "should not error when listing from UnifiedStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.listReturns = append(s.listReturns, returnVal{obj: &example.PodList{}})
+					s.onList(&example.PodList{}, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.listReturns = append(s.listReturns, returnVal{err: errors.New("error")})
+					s.onList(nil, errors.New("error"))
 				},
 			},
 		}
@@ -238,29 +238,29 @@ func TestMode1_Delete(t *testing.T) {
 			{
 				name: "should succeed when deleting an object from LegacyStorage",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.deleteReturns = append(s.deleteReturns, returnVal{obj: exampleObj})
+					s.onDelete(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.deleteReturns = append(s.deleteReturns, returnVal{obj: exampleObj})
+					s.onDelete(exampleObj, nil)
 				},
 			},
 			{
 				name: "should error when deleting an object from LegacyStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.deleteReturns = append(s.deleteReturns, returnVal{err: errors.New("error")})
+					s.onDelete(nil, errors.New("error"))
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.deleteReturns = append(s.deleteReturns, returnVal{obj: exampleObj})
+					s.onDelete(exampleObj, nil)
 				},
 				wantErr: true,
 			},
 			{
 				name: "should not error when deleting an object from UnifiedStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.deleteReturns = append(s.deleteReturns, returnVal{obj: exampleObj})
+					s.onDelete(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.deleteReturns = append(s.deleteReturns, returnVal{err: errors.New("error")})
+					s.onDelete(nil, errors.New("error"))
 				},
 			},
 		}
@@ -307,20 +307,20 @@ func TestMode1_DeleteCollection(t *testing.T) {
 				name:  "should succeed when deleting a collection from LegacyStorage",
 				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
 				setupLegacyFn: func(s *fakeStorage) {
-					s.deleteCollectionReturns = append(s.deleteCollectionReturns, returnVal{obj: exampleObj})
+					s.onDeleteCollection(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.deleteCollectionReturns = append(s.deleteCollectionReturns, returnVal{obj: exampleObj})
+					s.onDeleteCollection(exampleObj, nil)
 				},
 			},
 			{
 				name:  "should error when deleting a collection from LegacyStorage fails",
 				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
 				setupLegacyFn: func(s *fakeStorage) {
-					s.deleteCollectionReturns = append(s.deleteCollectionReturns, returnVal{err: errors.New("error")})
+					s.onDeleteCollection(nil, errors.New("error"))
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.deleteCollectionReturns = append(s.deleteCollectionReturns, returnVal{obj: exampleObj})
+					s.onDeleteCollection(exampleObj, nil)
 				},
 				wantErr: true,
 			},
@@ -328,10 +328,10 @@ func TestMode1_DeleteCollection(t *testing.T) {
 				name:  "should not error when deleting a collection from UnifiedStorage fails",
 				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
 				setupLegacyFn: func(s *fakeStorage) {
-					s.deleteCollectionReturns = append(s.deleteCollectionReturns, returnVal{obj: exampleObj})
+					s.onDeleteCollection(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.deleteCollectionReturns = append(s.deleteCollectionReturns, returnVal{err: errors.New("error")})
+					s.onDeleteCollection(nil, errors.New("error"))
 				},
 			},
 		}
@@ -376,29 +376,29 @@ func TestMode1_Update(t *testing.T) {
 			{
 				name: "should succeed when updating an object in LegacyStorage",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.updateReturns = append(s.updateReturns, returnVal{obj: exampleObj})
+					s.onUpdate(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.updateReturns = append(s.updateReturns, returnVal{obj: anotherObj})
+					s.onUpdate(anotherObj, nil)
 				},
 			},
 			{
 				name: "should error when updating an object in LegacyStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.updateReturns = append(s.updateReturns, returnVal{err: errors.New("error")})
+					s.onUpdate(nil, errors.New("error"))
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.updateReturns = append(s.updateReturns, returnVal{obj: anotherObj})
+					s.onUpdate(anotherObj, nil)
 				},
 				wantErr: true,
 			},
 			{
 				name: "should not error when updating an object in UnifiedStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.updateReturns = append(s.updateReturns, returnVal{obj: exampleObj})
+					s.onUpdate(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.updateReturns = append(s.updateReturns, returnVal{err: errors.New("error")})
+					s.onUpdate(nil, errors.New("error"))
 				},
 			},
 		}

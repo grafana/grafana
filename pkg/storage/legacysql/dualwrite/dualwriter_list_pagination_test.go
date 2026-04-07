@@ -40,7 +40,7 @@ func TestDualWriter_List_UnifiedDonePaging(t *testing.T) {
 	ls := &fakeStorage{}
 	us := &fakeStorage{}
 
-	ls.listReturns = append(ls.listReturns, returnVal{obj: exampleList})
+	ls.onList(exampleList, nil)
 
 	dw, err := newStorage(kind, rest.Mode1, ls, us)
 	require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestDualWriter_List_UnifiedTimeoutDoesNotBlock(t *testing.T) {
 	ls := &fakeStorage{}
 	us := &fakeStorage{}
 
-	ls.listReturns = append(ls.listReturns, returnVal{obj: exampleList})
+	ls.onList(exampleList, nil)
 	// unified deliberately blocks until ctx is canceled (simulates slow response)
 	us.blockList = true
 

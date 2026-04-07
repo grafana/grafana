@@ -31,7 +31,7 @@ func TestDryRun_Create(t *testing.T) {
 			us := &fakeStorage{}
 
 			// Only unified storage should be called
-			us.createReturns = append(us.createReturns, returnVal{obj: exampleObj})
+			us.onCreate(exampleObj, nil)
 
 			dw, err := newStorage(kind, m.mode, ls, us)
 			require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestDryRun_Delete(t *testing.T) {
 			us := &fakeStorage{}
 
 			// Only unified storage should be called
-			us.deleteReturns = append(us.deleteReturns, returnVal{obj: exampleObj})
+			us.onDelete(exampleObj, nil)
 
 			dw, err := newStorage(kind, m.mode, ls, us)
 			require.NoError(t, err)
@@ -97,7 +97,7 @@ func TestDryRun_Update(t *testing.T) {
 			us := &fakeStorage{}
 
 			// Only unified storage should be called
-			us.updateReturns = append(us.updateReturns, returnVal{obj: exampleObj})
+			us.onUpdate(exampleObj, nil)
 
 			dw, err := newStorage(kind, m.mode, ls, us)
 			require.NoError(t, err)
@@ -122,7 +122,7 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 		ls := &fakeStorage{}
 		us := &fakeStorage{}
 
-		us.updateReturns = append(us.updateReturns, returnVal{obj: exampleObj})
+		us.onUpdate(exampleObj, nil)
 
 		dw, err := newStorage(kind, rest.Mode1, ls, us)
 		require.NoError(t, err)
@@ -146,7 +146,7 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 		ls := &fakeStorage{}
 		us := &fakeStorage{}
 
-		us.updateReturns = append(us.updateReturns, returnVal{obj: exampleObj})
+		us.onUpdate(exampleObj, nil)
 
 		dw, err := newStorage(kind, rest.Mode2, ls, us)
 		require.NoError(t, err)
@@ -170,7 +170,7 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 		ls := &fakeStorage{}
 		us := &fakeStorage{}
 
-		us.updateReturns = append(us.updateReturns, returnVal{obj: exampleObj})
+		us.onUpdate(exampleObj, nil)
 
 		dw, err := newStorage(kind, rest.Mode3, ls, us)
 		require.NoError(t, err)
@@ -207,7 +207,7 @@ func TestDryRun_DeleteCollection(t *testing.T) {
 			us := &fakeStorage{}
 
 			// Only unified storage should be called
-			us.deleteCollectionReturns = append(us.deleteCollectionReturns, returnVal{obj: exampleList})
+			us.onDeleteCollection(exampleList, nil)
 
 			dw, err := newStorage(kind, m.mode, ls, us)
 			require.NoError(t, err)

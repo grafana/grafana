@@ -30,17 +30,17 @@ func TestRuntime_Create(t *testing.T) {
 				name:  "should succeed when creating an object in both the LegacyStorage and Storage",
 				input: exampleObj,
 				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
+					s.onCreate(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage, _ runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
+					s.onCreate(exampleObj, nil)
 				},
 			},
 			{
 				name:  "should return an error when creating an object in the legacy store fails",
 				input: failingObj,
 				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{err: errors.New("error")})
+					s.onCreate(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
@@ -96,8 +96,8 @@ func TestDualWriter_RuntimeModeSwitch(t *testing.T) {
 
 	// DualWrite phase: Get returns the legacy result.
 	// Background unified.Get may also fire.
-	ls.getReturns = append(ls.getReturns, returnVal{obj: exampleObj})
-	us.getReturns = append(us.getReturns, returnVal{obj: anotherObj})
+	ls.onGet(exampleObj, nil)
+	us.onGet(anotherObj, nil)
 
 	obj, err := dw.Get(context.Background(), "foo", &metav1.GetOptions{})
 	require.NoError(t, err)
@@ -134,7 +134,7 @@ func TestDualWriter_UnifiedModeSkipsLegacyMutations(t *testing.T) {
 	reader.setMode(unifiedmigrations.StorageModeUnified)
 
 	t.Run("Create routes only to unified", func(t *testing.T) {
-		us.createReturns = append(us.createReturns, returnVal{obj: exampleObj})
+		us.onCreate(exampleObj, nil)
 		obj, err := dw.Create(context.Background(), exampleObj, createFn, &metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, exampleObj, obj)
@@ -142,7 +142,7 @@ func TestDualWriter_UnifiedModeSkipsLegacyMutations(t *testing.T) {
 	})
 
 	t.Run("Delete routes only to unified", func(t *testing.T) {
-		us.deleteReturns = append(us.deleteReturns, returnVal{obj: exampleObj})
+		us.onDelete(exampleObj, nil)
 		obj, _, err := dw.Delete(context.Background(), "foo", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.Equal(t, exampleObj, obj)
@@ -150,7 +150,7 @@ func TestDualWriter_UnifiedModeSkipsLegacyMutations(t *testing.T) {
 	})
 
 	t.Run("Update routes only to unified", func(t *testing.T) {
-		us.updateReturns = append(us.updateReturns, returnVal{obj: exampleObj})
+		us.onUpdate(exampleObj, nil)
 		obj, _, err := dw.Update(context.Background(), "foo", updatedObjInfoObj{}, createFn, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, exampleObj, obj)
@@ -172,29 +172,29 @@ func TestRuntime_Get(t *testing.T) {
 			{
 				name: "should succeed when getting an object from both stores",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
+					s.onGet(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
+					s.onGet(exampleObj, nil)
 				},
 			},
 			{
 				name: "should return an error when getting an object in the unified store fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
+					s.onGet(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{err: errors.New("error")})
+					s.onGet(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
 			{
 				name: "should succeed when getting an object in the LegacyStorage fails",
 				setupLegacyFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{err: errors.New("error")})
+					s.onGet(nil, errors.New("error"))
 				},
 				setupStorageFn: func(s *fakeStorage) {
-					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
+					s.onGet(exampleObj, nil)
 				},
 			},
 		}
@@ -254,10 +254,10 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 				name:  "should succeed when not migrated",
 				input: exampleObj,
 				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
+					s.onCreate(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage, _ runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
+					s.onCreate(exampleObj, nil)
 				},
 				prepare: func(dual Service) (StorageStatus, error) {
 					status, err := dual.Status(context.Background(), kind)
@@ -271,10 +271,10 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 				name:  "should succeed after migration",
 				input: exampleObj,
 				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
+					s.onCreate(exampleObj, nil)
 				},
 				setupStorageFn: func(s *fakeStorage, _ runtime.Object) {
-					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
+					s.onCreate(exampleObj, nil)
 				},
 				prepare: func(dual Service) (StorageStatus, error) {
 					status, err := dual.Status(context.Background(), kind)

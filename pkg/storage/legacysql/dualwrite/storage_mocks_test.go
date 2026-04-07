@@ -83,6 +83,26 @@ type fakeStorage struct {
 	deleteCollectionCalls   []callRecord
 }
 
+// Helper methods to configure return values. Each pushes onto the method's return queue.
+func (f *fakeStorage) onCreate(obj runtime.Object, err error) {
+	f.createReturns = append(f.createReturns, returnVal{obj: obj, err: err})
+}
+func (f *fakeStorage) onGet(obj runtime.Object, err error) {
+	f.getReturns = append(f.getReturns, returnVal{obj: obj, err: err})
+}
+func (f *fakeStorage) onList(obj runtime.Object, err error) {
+	f.listReturns = append(f.listReturns, returnVal{obj: obj, err: err})
+}
+func (f *fakeStorage) onUpdate(obj runtime.Object, err error) {
+	f.updateReturns = append(f.updateReturns, returnVal{obj: obj, err: err})
+}
+func (f *fakeStorage) onDelete(obj runtime.Object, err error) {
+	f.deleteReturns = append(f.deleteReturns, returnVal{obj: obj, err: err})
+}
+func (f *fakeStorage) onDeleteCollection(obj runtime.Object, err error) {
+	f.deleteCollectionReturns = append(f.deleteCollectionReturns, returnVal{obj: obj, err: err})
+}
+
 // pop removes and returns the first element of the slice if there are more than one;
 // otherwise it returns the single remaining element (keeping it for future calls).
 // It panics if the slice is empty, which signals a test misconfiguration.
