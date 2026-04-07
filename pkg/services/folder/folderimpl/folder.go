@@ -15,8 +15,6 @@ import (
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -31,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -58,9 +55,7 @@ type Service struct {
 
 func ProvideService(
 	ac accesscontrol.AccessControl,
-	_ bus.Bus,
 	userService user.Service,
-	_ db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
 	publicDashboardService publicdashboards.ServiceWrapper,
@@ -68,7 +63,6 @@ func ProvideService(
 	r prometheus.Registerer,
 	tracer trace.Tracer,
 	resourceClient resource.ResourceClient,
-	_ dualwrite.Service,
 	sorter sort.Service,
 	restConfig apiserver.RestConfigProvider,
 ) *Service {
