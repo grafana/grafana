@@ -950,8 +950,8 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 	makeListResponse := func(userID int64, lastSeenAtMs int64) func(http.ResponseWriter, *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			switch {
-			case r.Method == http.MethodGet:
+			switch r.Method {
+			case http.MethodGet:
 				resp := map[string]any{
 					"apiVersion": v0alpha1.GroupVersion.Identifier(),
 					"kind":       "UserList",
@@ -970,7 +970,7 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 					},
 				}
 				_ = json.NewEncoder(w).Encode(resp)
-			case r.Method == http.MethodPut:
+			case http.MethodPut:
 				_ = json.NewEncoder(w).Encode(map[string]any{
 					"apiVersion": v0alpha1.GroupVersion.Identifier(),
 					"kind":       "User",
