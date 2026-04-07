@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -104,8 +105,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		errType := httpStatusToErrType(resp.StatusCode)
-		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), errType).Inc()
+		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), strconv.Itoa(resp.StatusCode)).Inc()
 		if resp.StatusCode == http.StatusNotFound {
 			logger.Debug("Plugin metadata not found", "pluginId", lookupID, "version", ref.Version, "url", u.String())
 			return nil, ErrMetaNotFound
@@ -157,16 +157,3 @@ func (p *CatalogProvider) findChildMeta(ctx context.Context, childID string, par
 	return nil, ErrMetaNotFound
 }
 
-func httpStatusToErrType(status int) string {
-	switch status {
-	case http.StatusNotFound:
-		return "not_found"
-	case http.StatusTooManyRequests:
-		return "rate_limited"
-	default:
-		if status >= 500 {
-			return "server_error"
-		}
-		return "client_error"
-	}
-}
