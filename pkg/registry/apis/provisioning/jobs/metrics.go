@@ -175,17 +175,16 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 // result and increments the resource operations counter.
 func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult) {
 	var outcome ResourceOutcome
-	var reason string
+	reason := result.Reason()
+
 	switch {
 	case result.Error() != nil:
 		outcome = OutcomeError
-		reason = result.Reason()
 	case result.Warning() != nil:
 		outcome = OutcomeWarning
 		reason = result.WarningReason()
 	default:
 		outcome = OutcomeSuccess
-		reason = result.Reason()
 	}
 
 	m.resourceOpsTotal.WithLabelValues(string(action), string(fileActionToOperation(result.Action())), string(outcome), reason, result.Group(), result.Kind()).Inc()
