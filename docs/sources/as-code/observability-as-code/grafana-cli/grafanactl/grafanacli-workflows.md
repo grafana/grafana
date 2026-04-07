@@ -22,8 +22,8 @@ aliases:
 
 # Manage resources with `grafanactl`
 
-{{< admonition type="note" >}}
-`grafanactl` is under active development. Command-line flags and subcommands described here may change. This document outlines the target workflows the tool is expected to support. You can find a full list of supported commands [in this page](https://grafana.github.io/grafanactl/reference/cli/grafanactl/).
+{{< admonition type="caution" >}}
+`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new Grafana CLI tool `gcx`. Migrate to [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx) for an improved CLI experience.
 {{< /admonition >}}
 
 ## Migrate resources between environments
