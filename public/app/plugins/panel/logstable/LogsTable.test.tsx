@@ -165,6 +165,55 @@ describe('LogsTable', () => {
     });
   });
 
+  describe('Wrap text', () => {
+    it('with logs controls enabled, when wrap text is set via options only, toggling calls onOptionsChange but not onFieldConfigChange', async () => {
+      const onOptionsChange = jest.fn();
+      const onFieldConfigChange = jest.fn();
+      setUp(
+        { onOptionsChange, onFieldConfigChange },
+        { showControls: true, wrapText: false }
+      );
+      await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
+      expect(onOptionsChange).not.toHaveBeenCalled();
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByLabelText('Enable text wrapping'));
+
+      expect(onOptionsChange).toHaveBeenCalledTimes(1);
+      expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ wrapText: true }));
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+    });
+
+    it('when wrap text is set via field config, toggling calls both onOptionsChange and onFieldConfigChange', async () => {
+      const onOptionsChange = jest.fn();
+      const onFieldConfigChange = jest.fn();
+      const fieldConfigWithWrapText: FieldConfigSource = {
+        defaults: { custom: { wrapText: false } },
+        overrides: [],
+      };
+      setUp(
+        { onOptionsChange, onFieldConfigChange, fieldConfig: fieldConfigWithWrapText },
+        { showControls: true }
+      );
+      await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
+      expect(onOptionsChange).not.toHaveBeenCalled();
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByLabelText('Enable text wrapping'));
+
+      expect(onOptionsChange).toHaveBeenCalledTimes(1);
+      expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ wrapText: true }));
+      expect(onFieldConfigChange).toHaveBeenCalledTimes(1);
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          defaults: expect.objectContaining({
+            custom: expect.objectContaining({ wrapText: true }),
+          }),
+        })
+      );
+    });
+  });
+
   describe('fieldSelector', () => {
     it('should add to displayed fields', async () => {
       const onOptionsChange = jest.fn().mockImplementation((options: Options) => {});
