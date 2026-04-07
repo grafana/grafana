@@ -39,7 +39,7 @@ func TestHTTPServer_GetFolderPermissionList(t *testing.T) {
 		})
 
 		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestHTTPServer_GetFolderPermissionList(t *testing.T) {
 		})
 
 		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
