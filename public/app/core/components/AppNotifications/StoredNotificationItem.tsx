@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNow } from 'date-fns';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Card, Checkbox, useTheme2 } from '@grafana/ui';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';

@@ -1,4 +1,4 @@
-import { Matcher, MatcherOperator, Route } from '../../../../plugins/datasource/alertmanager/types';
+import { type Matcher, MatcherOperator, type Route } from '../../../../plugins/datasource/alertmanager/types';
 
 import {
   encodeMatcher,

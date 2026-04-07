@@ -1,5 +1,5 @@
 import { memo, useEffect } from 'react';
-import { ConnectedProps, connect } from 'react-redux';
+import { type ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
@@ -10,7 +10,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';

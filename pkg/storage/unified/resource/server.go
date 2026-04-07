@@ -598,6 +598,9 @@ func (s *server) Stop(ctx context.Context) error {
 	s.stopping = true
 	s.stopMu.Unlock()
 
+	// Stops streaming (broadcaster, watch events).
+	s.cancel()
+
 	// Wait for in-flight write operations to finish, respecting the context deadline.
 	// After the unlock above, no new Add(1) can happen, so Wait is safe.
 	done := make(chan struct{})
@@ -625,12 +628,12 @@ func (s *server) Stop(ctx context.Context) error {
 		}
 	}
 
-	if kvBackend, ok := s.backend.(KVBackend); ok {
-		kvBackend.Stop()
+	if stoppableBackend, ok := s.backend.(ResourceServerStopper); ok {
+		if err := stoppableBackend.Stop(ctx); err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("backend stop failed: %w", err)
+		}
 	}
-
-	// Stops the streaming
-	s.cancel()
 
 	// mark the value as done
 	if stopFailed {
@@ -881,7 +884,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Create", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Create", req.Key, res, err)
 
 	return res, err
 }
@@ -914,7 +917,7 @@ type responseWithErrorResult interface {
 // Returns boolean indicating whether the sleep was performed or not (used in testing).
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
-func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
+func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
 	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
@@ -941,7 +944,10 @@ func (s *server) sleepAfterSuccessfulWriteOperation(operation string, key *resou
 		"namespace", key.Namespace,
 		"name", key.Name)
 
-	time.Sleep(s.artificialSuccessfulWriteDelay)
+	select {
+	case <-time.After(s.artificialSuccessfulWriteDelay):
+	case <-ctx.Done():
+	}
 	return true
 }
 
@@ -981,7 +987,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Update", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Update", req.Key, res, err)
 
 	return res, err
 }
@@ -1060,7 +1066,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation("Delete", req.Key, res, err)
+	s.sleepAfterSuccessfulWriteOperation(ctx, "Delete", req.Key, res, err)
 
 	return res, err
 }

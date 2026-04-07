@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
@@ -8,6 +8,7 @@ test.use({
     alertingListViewV2: true,
     alertingFilterV2: true,
     alertingSavedSearches: true,
+    dashboardNewLayouts: false,
   },
 });
 

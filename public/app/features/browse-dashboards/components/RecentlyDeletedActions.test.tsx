@@ -6,9 +6,9 @@ import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
-import { DashboardQueryResult } from '../../search/service/types';
-import { SearchLayout, EventTrackingNamespace } from '../../search/types';
-import { TrashStateManager, useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
+import { type DashboardQueryResult } from '../../search/service/types';
+import { SearchLayout, type EventTrackingNamespace } from '../../search/types';
+import { type TrashStateManager, useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { useActionSelectionState } from '../state/hooks';
 
 import { RecentlyDeletedActions } from './RecentlyDeletedActions';

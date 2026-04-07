@@ -2,10 +2,10 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-import { openAddSectionVariablePane, openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
+import { type DashboardScene } from '../../scene/DashboardScene';
+import { openAddSectionVariablePane, openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
 

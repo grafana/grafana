@@ -6,13 +6,19 @@ import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/
 import {
   API_GROUP,
   API_VERSION,
-  RoutingTree,
-  RoutingTreeRoute,
-  RoutingTreeRouteDefaults,
+  type ObjectMeta,
+  type RoutingTree,
+  type RoutingTreeRoute,
+  type RoutingTreeRouteDefaults,
   generatedAPI as routingTreeApi,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { MatcherOperator, ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
+import {
+  MatcherOperator,
+  ROUTES_META_SYMBOL,
+  type Route,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -23,13 +29,13 @@ import {
   deleteRouteAction,
   updateRouteAction,
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
-import { FormAmRoute } from '../../types/amroutes';
+import { type FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
 import {
-  InsertPosition,
+  type InsertPosition,
   addRouteToReferenceRoute,
   cleanKubernetesRouteIDs,
   mergePartialAmRouteWithRouteTree,
@@ -422,7 +428,7 @@ export function k8sRouteToRoute(route: RoutingTree): Route {
   return {
     ...route.spec.defaults,
     name: route.metadata.name,
-    routes: route.spec.routes?.map((subroute) => k8sSubRouteToRoute(subroute, route.metadata.name)),
+    routes: route.spec.routes?.map((subroute) => k8sSubRouteToRoute(subroute, route.metadata.name, route.metadata)),
     // This assumes if a `NAMED_ROOT_LABEL_NAME` label exists, it will NOT go to the default route, which is a fair but
     // not perfect assumption since we don't yet protect the label.
     object_matchers:
@@ -444,11 +450,11 @@ function isValidMatcherOperator(type: string): type is MatcherOperator {
   return Object.values<string>(MatcherOperator).includes(type);
 }
 
-export function k8sSubRouteToRoute(route: RoutingTreeRoute, rootName?: string): Route {
+export function k8sSubRouteToRoute(route: RoutingTreeRoute, rootName?: string, rootMetadata?: ObjectMeta): Route {
   return {
     ...route,
     name: rootName,
-    routes: route.routes?.map((subroute) => k8sSubRouteToRoute(subroute, rootName)),
+    routes: route.routes?.map((subroute) => k8sSubRouteToRoute(subroute, rootName, rootMetadata)),
     matchers: undefined,
     object_matchers: route.matchers?.map(({ label, type, value }) => {
       if (!isValidMatcherOperator(type)) {
@@ -456,6 +462,12 @@ export function k8sSubRouteToRoute(route: RoutingTreeRoute, rootName?: string): 
       }
       return [label, type, value];
     }),
+    // Propagate the root routing tree's metadata so that access-control annotations
+    // are available on sub-routes (the API only attaches them to the root resource).
+    [ROUTES_META_SYMBOL]: {
+      name: rootName,
+      metadata: rootMetadata,
+    },
   };
 }
 

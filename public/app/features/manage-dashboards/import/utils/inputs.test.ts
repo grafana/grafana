@@ -1,15 +1,15 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import {
-  AnnotationQueryKind,
-  PanelKind,
-  QueryVariableKind,
-  Spec as DashboardV2Spec,
+  type AnnotationQueryKind,
+  type PanelKind,
+  type QueryVariableKind,
+  type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
+import { type DashboardInputs, type ImportDashboardDTO, type ImportFormDataV2, InputType } from '../../types';
 
 import {
   applyV1Inputs,
@@ -19,7 +19,7 @@ import {
   extractV2Inputs,
   isVariableRef,
   replaceDatasourcesInDashboard,
-  DatasourceMappings,
+  type DatasourceMappings,
 } from './inputs';
 
 // Mock external dependencies

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneObject, SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -14,15 +14,15 @@ import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/Dashboard
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import {
-  EditableDashboardElement,
-  EditableDashboardElementInfo,
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
-import { openAddVariablePane } from './VariableAddEditableElement';
+import { openAddVariablePane } from './VariableTypeSelectionPane';
 import { isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
@@ -91,7 +91,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
   const onEditVariable = useCallback(
     (variable: SceneVariable) => {
       const { editPane } = getDashboardSceneFor(set).state;
-      editPane.selectObject(variable, variable.state.key!);
+      editPane.selectObject(variable);
     },
     [set]
   );

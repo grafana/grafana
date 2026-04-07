@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { ProviderConfigForm } from './ProviderConfigForm';
 import { UIMap } from './constants';
 import { loadProviders } from './state/actions';
-import { SSOProvider } from './types';
+import { type SSOProvider } from './types';
 
 const getPageNav = (config?: SSOProvider): NavModelItem => {
   if (!config) {

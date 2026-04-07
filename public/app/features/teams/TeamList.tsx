@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { SortingRule } from 'react-table';
+import { type SortingRule } from 'react-table';
 
-import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Avatar,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   EmptyState,
   FilterInput,
   IconButton,
@@ -28,8 +28,8 @@ import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { Role, AccessControlAction } from 'app/types/accessControl';
-import { TeamWithRoles } from 'app/types/teams';
+import { type Role, AccessControlAction } from 'app/types/accessControl';
+import { type TeamWithRoles } from 'app/types/teams';
 
 import { appEvents } from '../../core/app_events';
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
@@ -159,7 +159,6 @@ const TeamList = () => {
           }
           return value;
         },
-        sortType: 'number',
       },
       ...(displayRolePicker
         ? [
@@ -351,7 +350,7 @@ const TeamList = () => {
                 <InteractiveTable
                   columns={columns}
                   data={isLoading ? skeletonData : teams}
-                  getRowId={(team) => String(team.id)}
+                  getRowId={(team) => String(team.uid)}
                   fetchData={({ sortBy }) => {
                     const sortingRule = sortBy.at(0);
                     if (sortingRule) {

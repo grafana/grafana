@@ -26,8 +26,6 @@ var _ ResourceIndex = &MockResourceIndex{}
 
 // Mock implementations
 type MockResourceIndex struct {
-	mock.Mock
-
 	updateIndexError error
 
 	updateIndexMu    sync.Mutex
@@ -40,29 +38,24 @@ func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
 	return m.buildInfo, nil
 }
 
-func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
-	args := m.Called(req)
-	return args.Error(0)
+func (m *MockResourceIndex) BulkIndex(_ *BulkIndexRequest) error {
+	return nil
 }
 
-func (m *MockResourceIndex) Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
-	args := m.Called(ctx, access, req, federate)
-	return args.Get(0).(*resourcepb.ResourceSearchResponse), args.Error(1)
+func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+	return nil, fmt.Errorf("not expected")
 }
 
-func (m *MockResourceIndex) CountManagedObjects(ctx context.Context, stats *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]*resourcepb.CountManagedObjectsResponse_ResourceCount), args.Error(1)
+func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+	return nil, fmt.Errorf("not expected")
 }
 
-func (m *MockResourceIndex) DocCount(ctx context.Context, folder string, stats *SearchStats) (int64, error) {
-	args := m.Called(ctx, folder)
-	return args.Get(0).(int64), args.Error(1)
+func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
+	return 0, nil
 }
 
-func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).(*resourcepb.ListManagedObjectsResponse), args.Error(1)
+func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, fmt.Errorf("not expected")
 }
 
 func (m *MockResourceIndex) UpdateIndex(_ context.Context) (int64, error) {
@@ -113,7 +106,9 @@ func (m *mockStorageBackend) ReadResource(ctx context.Context, req *resourcepb.R
 }
 
 func (m *mockStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
-	return nil, nil
+	ch := make(chan *WrittenEvent)
+	context.AfterFunc(ctx, func() { close(ch) })
+	return ch, nil
 }
 
 func (m *mockStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
@@ -163,8 +158,6 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
-	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
-	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
 
 	// Call the builder function (required by the contract)
 	_, err := builder(index)

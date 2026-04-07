@@ -4,26 +4,32 @@ import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtk
 import {
   API_GROUP as DASHBOARD_API_GROUP,
   BASE_URL as v0alphaBaseURL,
-  ManagedBy,
+  type ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { arrayToDataFrame, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import {
+  arrayToDataFrame,
+  type DataFrame,
+  DataFrameView,
+  getDisplayProcessor,
+  type SelectableValue,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { generatedAPI, ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
+import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
 import { dispatch } from 'app/store/store';
 
 import { deletedDashboardsCache } from './deletedDashboardsCache';
 import {
-  DashboardQueryResult,
-  GrafanaSearcher,
-  LocationInfo,
-  QueryResponse,
-  SearchQuery,
-  SearchResultMeta,
+  type DashboardQueryResult,
+  type GrafanaSearcher,
+  type LocationInfo,
+  type QueryResponse,
+  type SearchQuery,
+  type SearchResultMeta,
 } from './types';
 import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
 
@@ -324,6 +330,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
     if (query.createdBy?.length) {
       uri += '&createdBy=' + encodeURIComponent(query.createdBy);
+    }
+
+    if (query.ownerReference?.length) {
+      uri += '&' + query.ownerReference.map((ref) => `ownerReference=${encodeURIComponent(ref)}`).join('&');
     }
 
     if (query.panelTitleSearch) {

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Label, MultiSelect, Tooltip, useStyles2 } from '@grafana/ui';
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isPrivateLabelKey } from '../../utils/labels';
 

@@ -1,11 +1,11 @@
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '@grafana/prometheus';
-import { AdHocFiltersVariable, SceneDataQuery, SceneObject, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, type SceneDataQuery, type SceneObject, sceneGraph } from '@grafana/scenes';
 import { useSceneContext, useVariableValue } from '@grafana/scenes-react';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { DATASOURCE_UID, VARIABLES } from '../constants';
-import { Domain } from '../types';
+import { type Domain } from '../types';
 
 export function getDataQuery(expression: string, options?: Partial<SceneDataQuery>): SceneDataQuery {
   const datasourceRef: DataSourceRef = {
@@ -109,6 +109,15 @@ function useAdHocFilters() {
 export function useFilterValue(key: string): string | undefined {
   const filters = useAdHocFilters();
   const filter = filters.find((f) => f.key === key && f.operator === '=');
+  return filter?.value;
+}
+
+/**
+ * Returns the current regex-match (=~) value of a filter by key, or undefined if not set.
+ */
+export function useRegexFilterValue(key: string): string | undefined {
+  const filters = useAdHocFilters();
+  const filter = filters.find((f) => f.key === key && f.operator === '=~');
   return filter?.value;
 }
 

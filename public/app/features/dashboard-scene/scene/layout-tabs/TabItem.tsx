@@ -6,15 +6,15 @@ import { logWarning } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
-  SceneObjectState,
+  type SceneObjectState,
   SceneObjectBase,
   sceneGraph,
   VariableDependencyConfig,
-  SceneObject,
-  SceneGridItemLike,
+  type SceneObject,
+  type SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import kbn from 'app/core/utils/kbn';
@@ -25,23 +25,23 @@ import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { removeRepeatLocalVariableFromSet } from '../../utils/clone';
-import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor, interpolateSectionTitle } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { RowItem } from '../layout-rows/RowItem';
+import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
-import { BulkActionElement } from '../types/BulkActionElement';
-import { DashboardDropTarget } from '../types/DashboardDropTarget';
+import { type BulkActionElement } from '../types/BulkActionElement';
+import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
-import { LayoutParent } from '../types/LayoutParent';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
+import { type LayoutParent } from '../types/LayoutParent';
 
 import { useEditOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
@@ -150,13 +150,6 @@ export class TabItem
   }
 
   public onConfirmDelete() {
-    const layout = this.getParentLayout();
-
-    if (layout.shouldUngroup()) {
-      layout.removeTab(this);
-      return;
-    }
-
     if (this.getLayout().getVizPanels().length === 0) {
       this.onDelete();
       return;
