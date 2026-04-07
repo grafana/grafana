@@ -380,6 +380,6 @@ Existing test cases:
 | `NewPlaylistsTestCase` | `testcases/playlists.go` | Playlists with dashboard UID, tag, and mixed items |
 | `NewShortURLTestCase` | `testcases/shorturls.go` | Short URL entries |
 | `NewDataSourceTestCase` | `testcases/datasources.go` | Datasource entries with secure JSON data |
-| `NewQueryCacheConfigsTestCase` | `testcases/querycacheconfigs.go` | Query cache config entries (enterprise) |
+| `QueryCacheConfigsTestCase` | `testcases/querycacheconfigs.go` | Query cache config entries (enterprise) |
 
 Each resource owner is responsible for writing and maintaining a test case for their resource as part of the development process. When adding a new resource migration, create a corresponding test case in `testcases/` that sets up representative data via `Setup` and verifies it via `Verify`. Extend existing test cases to cover additional scenarios as needed (e.g., edge cases, specific field mappings, or error conditions).
