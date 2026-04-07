@@ -991,11 +991,28 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 		name           string
 		cmd            *team.DeleteTeamCommand
 		requesterOrgID int64
+		ctxUID         string
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		nilProvider    bool
 		noReqContext   bool
 		expectErr      bool
 	}{
+		{
+			name:           "successfully deletes a team by UID from context",
+			requesterOrgID: 1,
+			cmd:            &team.DeleteTeamCommand{ID: 1, OrgID: 1},
+			ctxUID:         "team-uid-from-ctx",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodDelete, r.Method)
+				assert.Contains(t, r.URL.Path, "team-uid-from-ctx")
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusSuccess,
+				})
+			},
+		},
 		{
 			name:           "successfully deletes a team",
 			requesterOrgID: 1,
@@ -1133,6 +1150,10 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 
 			if tt.requesterOrgID != 0 {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: tt.requesterOrgID})
+			}
+
+			if tt.ctxUID != "" {
+				ctx = context.WithValue(ctx, team.TeamUIDCtxKey{}, tt.ctxUID)
 			}
 
 			err := svc.DeleteTeam(ctx, tt.cmd)

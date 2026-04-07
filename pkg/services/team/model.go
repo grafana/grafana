@@ -17,7 +17,8 @@ var (
 	ErrNotAllowedToUpdateTeam               = errors.New("user not allowed to update team")
 	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("user not allowed to update team in another org")
 
-	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
+	ErrTeamMemberAlreadyAdded               = errors.New("user is already added to this team")
+	ErrMultipleTeamsFound                   = errors.New("multiple teams found with same deprecated internal ID")
 )
 
 // Team model
