@@ -287,8 +287,8 @@ describe('OptionsPaneOptions', () => {
 
     scenario.setup();
 
-    expect(screen.getByLabelText(dataOverrideTooltipDescription)).toBeInTheDocument();
-    expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+    expect(screen.getByText(dataOverrideTooltipDescription)).toBeInTheDocument();
+    expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
   });
 
   it('should show override rule info dot', async () => {
@@ -306,6 +306,6 @@ describe('OptionsPaneOptions', () => {
     ];
 
     scenario.setup();
-    expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
+    expect(screen.getByText(overrideRuleTooltipDescription)).toBeInTheDocument();
   });
 });

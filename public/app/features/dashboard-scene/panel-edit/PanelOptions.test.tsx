@@ -140,7 +140,7 @@ describe('PanelOptions', () => {
     it('Should be rendered', async () => {
       const {} = setup();
 
-      expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
+      expect(screen.getByText(overrideRuleTooltipDescription)).toBeInTheDocument();
     });
 
     it('Can update', async () => {
@@ -148,7 +148,7 @@ describe('PanelOptions', () => {
 
       await userEvent.click(screen.getByLabelText('Remove property'));
 
-      expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+      expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
 
     it('Can delete rule', async () => {
@@ -156,7 +156,7 @@ describe('PanelOptions', () => {
 
       await userEvent.click(screen.getByLabelText('Remove override'));
 
-      expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+      expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
   });
 

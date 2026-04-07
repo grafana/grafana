@@ -441,6 +441,7 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       allowCustomValue: false,
+      applicabilityEnabled: false,
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -525,6 +526,7 @@ describe('when creating variables objects', () => {
     expect(filterVarState).toEqual({
       key: expect.any(String),
       description: 'Adhoc Description',
+      applicabilityEnabled: false,
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -612,6 +614,7 @@ describe('when creating variables objects', () => {
       expect(groupbyVarState).toEqual({
         key: expect.any(String),
         description: 'GroupBy Description',
+        applicabilityEnabled: false,
         hide: 0,
         defaultOptions: [
           {

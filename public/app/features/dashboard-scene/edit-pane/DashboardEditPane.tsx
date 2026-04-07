@@ -11,7 +11,6 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
-import { ElementSelection } from './ElementSelection';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
@@ -25,12 +24,17 @@ import {
 import { type EditPaneSelectionActions } from './types';
 
 export interface DashboardEditPaneState extends SceneObjectState {
-  selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
 
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
   openPane?: DashboardSidebarPaneName;
+  /**
+   * Temp hack to open pane using element selection
+   */
+  openPaneTempHack?: SceneObject;
+  /** True when a new element is being added and selected */
+  isNewElement: boolean;
   isDocked?: boolean;
 }
 
@@ -45,6 +49,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
         onSelect: (item, options) => this.selectElement(item, options),
         onClear: () => this.clearSelection(),
       },
+      isNewElement: false,
       undoStack: [],
       redoStack: [],
     });
@@ -112,7 +117,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     return () => {
-      if (this.state.selection) {
+      if (this.state.selectionContext.selected.length) {
         this.clearSelection(true);
       }
       this.disableSelection();
@@ -160,19 +165,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     action.undo();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    /**
-     * Some edit actions also require clearing selection or selecting new objects
-     */
-    if (action.selectedObjectOnUndo) {
-      this.selectObject(action.selectedObjectOnUndo, action.selectedObjectOnUndo.state.key!, { force: true });
-    }
-
     if (action.addedObject) {
       this.clearSelection();
     }
 
-    if (!action.selectedObjectOnUndo && action.movedObject) {
-      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
+    if (action.movedObject) {
+      this.selectObject(action.movedObject, { force: true });
     }
 
     if (action.removedObject) {
@@ -189,19 +187,15 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     action.perform();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
-    if (action.selectedObjectOnPerform) {
-      this.selectObject(action.selectedObjectOnPerform, action.selectedObjectOnPerform.state.key!, { force: true });
-    }
-
     if (action.addedObject) {
       this.newObjectAddedToCanvas(action.addedObject);
     }
 
-    if (!action.selectedObjectOnPerform && action.movedObject) {
-      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
+    if (action.movedObject) {
+      this.selectObject(action.movedObject, { force: true });
     }
 
-    if (action.removedObject) {
+    if (action.removedObject && !action.addedObject) {
       this.clearSelection();
     }
   }
@@ -236,7 +230,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
 
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
-      selection: undefined,
       openPane: undefined,
     });
   }
@@ -257,50 +250,41 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       }
     }
 
-    this.selectObject(obj, obj.state.key!, options);
+    this.selectObject(obj, options);
   }
 
-  public getSelection(): SceneObject | SceneObject[] | undefined {
-    return this.state.selection?.getSelection();
-  }
+  public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    const id = obj.state.key!;
+    const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
-  public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
-    if (!force) {
-      if (multi) {
-        if (this.state.selection?.hasValue(id)) {
-          this.removeMultiSelectedObject(id);
-          return;
+    if (obj.getRoot() !== this.getRoot() || obj.parent === this) {
+      this.setState({
+        openPaneTempHack: obj,
+        selectionContext: { ...this.state.selectionContext, selected: [{ id: obj.state.key! }] },
+        openPane: 'element',
+      });
+      return;
+    }
+
+    if (multi) {
+      if (hasItem) {
+        // Remove item unless force is true
+        if (!force) {
+          this.updateSelection(this.state.selectionContext.selected.filter((i) => i.id !== id));
         }
       } else {
-        if (this.state.selection?.getFirstObject() === obj) {
-          this.clearSelection();
-          return;
-        }
+        this.updateSelection([...this.state.selectionContext.selected, { id }]);
+      }
+    } else {
+      if (hasItem && !force) {
+        this.updateSelection([]);
+      } else {
+        this.updateSelection([{ id }]);
       }
     }
-
-    const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
-    const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
-
-    this.updateSelection(new ElementSelection(selection), selected);
   }
 
-  private removeMultiSelectedObject(id: string) {
-    if (!this.state.selection) {
-      return;
-    }
-
-    const { entries, contextItems: selected } = this.state.selection.getStateWithoutValueAt(id);
-
-    if (entries.length === 0) {
-      this.clearSelection();
-      return;
-    }
-
-    this.updateSelection(new ElementSelection([...entries]), selected);
-  }
-
-  private updateSelection(selection: ElementSelection | undefined, selected: ElementSelectionContextItem[]) {
+  private updateSelection(selected: ElementSelectionContextItem[]) {
     // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
     // This make sure they fire before unmounting
     if (document.activeElement instanceof HTMLElement) {
@@ -308,10 +292,34 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     }
 
     this.setState({
-      selection,
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selection ? 'element' : undefined,
+      openPane: selected.length === 0 ? undefined : 'element',
+      isNewElement: false,
+      openPaneTempHack: undefined,
     });
+  }
+
+  /**
+   * Look-up selected object by key. If key is not provided, will return object based on current selection.
+   * @param key of the object
+   * @returns
+   */
+  public getSelectedObject(key?: string): SceneObject | null {
+    if (key) {
+      // Not using findByKey here as it requires try catch in case object is not found
+      return sceneGraph.findObject(this, (obj) => obj.state.key === key);
+    }
+
+    if (this.state.openPaneTempHack) {
+      return this.state.openPaneTempHack;
+    }
+
+    if (this.state.selectionContext.selected.length === 0) {
+      return null;
+    }
+
+    // Not using findByKey here as it requires try catch in case object is not found
+    return sceneGraph.findObject(this, (obj) => obj.state.key === this.state.selectionContext.selected[0].id);
   }
 
   /**
@@ -319,26 +327,25 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
    * @returns
    */
   public clearSelection(force = false) {
-    if (!this.state.selection) {
+    if (!this.state.selectionContext.selected.length) {
       return;
     }
 
     // If we are docked then clearing selection should select dashboard itself
     // Unless the user explicitly closes pane
     if (this.state.isDocked && !force) {
-      const obj = this.state.selection?.getFirstObject();
       const dashboard = getDashboardSceneFor(this);
-      if (obj !== dashboard) {
-        this.selectObject(dashboard, dashboard.state.key!);
+      if (this.getSelectedObject() !== dashboard) {
+        this.selectObject(dashboard);
       }
       return;
     }
 
-    this.updateSelection(undefined, []);
+    this.updateSelection([]);
   }
 
   public openPane(openPane: DashboardSidebarPaneName) {
-    if (this.state.selection) {
+    if (this.state.selectionContext.selected.length) {
       this.clearSelection(true);
     }
 
@@ -350,7 +357,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   public closePane() {
-    if (this.state.selection) {
+    if (this.state.selectionContext.selected.length) {
       this.clearSelection(true);
     }
 
@@ -360,8 +367,8 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
-    this.selectObject(obj, obj.state.key!);
-    this.state.selection?.markAsNewElement();
+    this.selectObject(obj);
+    this.setState({ isNewElement: true });
   }
 
   public addNewPanel(targetElement?: SceneObject) {
