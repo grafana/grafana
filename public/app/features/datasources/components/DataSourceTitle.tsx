@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { DataSourceUpdatedSuccessfully, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Field, IconButton, Input, useStyles2 } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
 import { useDispatch } from 'app/types/store';
 
-import { useDataSource, useDataSourceRights, useUpdateDatasource } from '../state/hooks';
+import * as api from '../api';
+import { useDataSourceRights } from '../state/hooks';
 import { setDataSourceName } from '../state/reducers';
 
 interface EditableProps {
@@ -17,24 +17,22 @@ interface EditableProps {
 
 function DataSourceEditable({ title, uid }: EditableProps) {
   const styles = useStyles2(getStyles);
-  const [initial, setInitial] = useState(title);
+  const [value, setValue] = useState('');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
 
-  const dataSource = useDataSource(uid);
   const rights = useDataSourceRights(uid);
   const dispatch = useDispatch();
-  const onUpdate = useUpdateDatasource();
 
   const onEdit = () => {
-    setInitial(title);
+    setValue(title);
     setError(false);
     setEditing(true);
   };
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setDataSourceName(e.currentTarget.value));
+    setValue(e.currentTarget.value);
     setError(false);
   };
 
@@ -47,8 +45,10 @@ function DataSourceEditable({ title, uid }: EditableProps) {
     setSaving(true);
 
     try {
-      await onUpdate({ ...dataSource });
-      appEvents.publish(new DataSourceUpdatedSuccessfully());
+      // Make manual API calls to avoid pre-emptively saving other changes from the EditDataSource form
+      const ds = await api.getDataSourceByUid(uid);
+      await api.updateDataSource({ ...ds, name: value });
+      dispatch(setDataSourceName(value));
       setEditing(false);
     } catch {
       setError(true);
@@ -62,7 +62,6 @@ function DataSourceEditable({ title, uid }: EditableProps) {
       return;
     }
 
-    dispatch(setDataSourceName(initial));
     setEditing(false);
   };
 
@@ -102,9 +101,9 @@ function DataSourceEditable({ title, uid }: EditableProps) {
         <Input
           id="datasource-editable-title"
           type="text"
-          value={title}
-          placeholder={t('datasources.editable-title.input-placeholder', 'Name')}
+          value={value}
           onChange={onChange}
+          placeholder={t('datasources.editable-title.input-placeholder', 'Name')}
           // eslint-disable-next-line jsx-a11y/no-autofocus -- Once the user has toggled editing on, the input should autofocus to allow immediate editing
           autoFocus
           autoComplete="off"
