@@ -60,8 +60,8 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
   let exploreRange = range ? { ...range } : undefined;
+
   // the time range passed in is the default (from the source pane). if the correlation defined a custom one, override it
-  // todo - tweak this after its working
   if (
     link.meta?.timeRange !== undefined &&
     (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined)
@@ -71,12 +71,14 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       timeRangeField = `\$\{${timeRangeField}\}`;
     }
 
+    // if we need a field and it's not defined, use 'now'
     const interpolatedBaseTimeStr =
       link.meta.timeRange.field !== undefined ? interpolateObject(timeRangeField, scopedVars, replaceVariables) : 'now';
 
     try {
       const interpolatedBaseTime = dateTime(interpolatedBaseTimeStr, 'x');
 
+      // if we need a timerange but to and/or from are not defined, make it an hour (3600 seconds)
       exploreRange = rangeUtil.relativeToTimeRange(
         {
           from: link.meta.timeRange.range?.from ?? 3600,
@@ -85,7 +87,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
         interpolatedBaseTime
       );
     } catch (e) {
-      // silently fail if any part of this interpolation does not succeed
+      // silently fail if any part of this interpolation does not succeed, it will use the left pane range
     }
   }
 

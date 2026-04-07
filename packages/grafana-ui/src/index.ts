@@ -312,10 +312,7 @@ export {
 } from './components/FileDropzone/FileDropzone';
 export { FileListItem, type FileListItemProps } from './components/FileDropzone/FileListItem';
 export { TimeRangeInput } from './components/DateTimePickers/TimeRangeInput';
-export {
-  RelativeTimeRangePicker,
-  PortalledRelativeTimeRangePicker,
-} from './components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
+export { RelativeTimeRangePicker } from './components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, type Props as CardProps, getCardStyles } from './components/Card/Card';
 export { CardContainer, type CardContainerProps } from './components/Card/CardContainer';
 export { FormattedValueDisplay } from './components/FormattedValueDisplay/FormattedValueDisplay';

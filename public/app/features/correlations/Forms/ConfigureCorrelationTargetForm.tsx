@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { type ChangeEvent, useState } from 'react';
 import { Controller, type FieldError, useFormContext, useWatch } from 'react-hook-form';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type CorrelationQueryTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { type CorrelationExternal, type CorrelationQueryTimeRange } from '@grafana/runtime';
+import { type CorrelationExternal } from '@grafana/runtime';
 import {
   Field,
   FieldSet,
@@ -65,6 +65,7 @@ export const ConfigureCorrelationTargetForm = () => {
   const timeRange: CorrelationQueryTimeRange | undefined =
     useWatch({ name: 'timeRange' }) || (correlation?.type === 'query' ? correlation?.config?.timeRange : undefined);
   const styles = useStyles2(getStyles);
+  // this is just used by the UI to show/hide the timerange fields that will save with data and is not mapped to the saved object.
   const [enableTimeRange, setEnableTimeRange] = useState(
     timeRange?.field !== undefined || timeRange?.range !== undefined
   );
@@ -208,7 +209,7 @@ export const ConfigureCorrelationTargetForm = () => {
                           name="config.timeRange.range"
                           render={({ field: { onChange, value } }) => (
                             <RelativeTimeRangePicker
-                              timeRange={{ from: value.from ?? 86400, to: value.to ?? -86400 }}
+                              timeRange={{ from: value?.from ?? 86400, to: value?.to ?? -86400 }}
                               onChange={(e) => {
                                 onChange(e);
                               }}

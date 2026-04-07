@@ -1,10 +1,10 @@
 import {
-  type RelativeTimeRange,
   type DataFrame,
   type DataLinkPostProcessor,
   type DataLinkTransformationConfig,
   type DataSourceInstanceSettings,
   type TimeRange,
+  type CorrelationQueryTimeRange,
 } from '@grafana/data';
 
 export type CorrelationConfigQuery = {
@@ -12,11 +12,6 @@ export type CorrelationConfigQuery = {
   target: object; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic.
   transformations?: DataLinkTransformationConfig[];
   timeRange?: CorrelationQueryTimeRange;
-};
-
-export type CorrelationQueryTimeRange = {
-  field: string;
-  range: RelativeTimeRange;
 };
 
 export type CorrelationConfigExternal = {

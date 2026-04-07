@@ -865,6 +865,7 @@ export {
   type VariableSuggestion,
   VariableSuggestionsScope,
   OneClickMode,
+  type CorrelationQueryTimeRange,
 } from './types/dataLink';
 export { type LinkTarget } from './types/linkTarget';
 export {

@@ -14,9 +14,8 @@ export interface DataLinkClickEvent<T = any> {
   e?: any; // mouse|react event
 }
 
-/** todo is this needed
- *
- * @internal
+/**
+ * A custom timerange used for correlations
  */
 export type CorrelationQueryTimeRange = {
   field?: string;
