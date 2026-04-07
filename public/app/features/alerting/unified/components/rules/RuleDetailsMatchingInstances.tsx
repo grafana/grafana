@@ -85,7 +85,13 @@ function ShowMoreInstances({ stats, onClick, href, enableFiltering, alertState }
 }
 
 export function RuleDetailsMatchingInstances(props: Props) {
-  const { rule, itemsDisplayLimit = Number.POSITIVE_INFINITY, pagination, enableFiltering = false, showPreviewRouting } = props;
+  const {
+    rule,
+    itemsDisplayLimit = Number.POSITIVE_INFINITY,
+    pagination,
+    enableFiltering = false,
+    showPreviewRouting,
+  } = props;
   const { promRule, namespace, instanceTotals } = rule;
 
   const [queryString, setQueryString] = useState<string>();
@@ -172,7 +178,13 @@ export function RuleDetailsMatchingInstances(props: Props) {
         </div>
       )}
       {!enableFiltering && <div className={styles.stats}>{statsComponents}</div>}
-      <AlertInstancesTable rule={rule} instances={visibleInstances} pagination={pagination} footerRow={footerRow} showPreviewRouting={showPreviewRouting} />
+      <AlertInstancesTable
+        rule={rule}
+        instances={visibleInstances}
+        pagination={pagination}
+        footerRow={footerRow}
+        showPreviewRouting={showPreviewRouting}
+      />
     </>
   );
 }

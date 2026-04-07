@@ -11,8 +11,7 @@ interface Props {
 const InstancesList = ({ rule }: Props) => {
   const rulerRule = rule.rulerRule;
   const isGrafanaManagedUsingNotificationPolicies =
-    rulerRuleType.grafana.alertingRule(rulerRule) &&
-    !rulerRule.grafana_alert.notification_settings?.receiver;
+    rulerRuleType.grafana.alertingRule(rulerRule) && !rulerRule.grafana_alert.notification_settings?.receiver;
 
   return (
     <RuleDetailsMatchingInstances
