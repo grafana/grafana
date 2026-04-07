@@ -20,10 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -286,10 +284,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		unifiedStore:           unifiedStore,
 		features:               features,
-		bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
 		accessControl:          acimpl.ProvideAccessControl(features),
 		registry:               make(map[string]folder.RegistryService),
-		metrics:                newFoldersMetrics(nil),
 		tracer:                 tracer,
 		k8sclient:              k8sCli,
 		dashboardK8sClient:     fakeK8sClient,

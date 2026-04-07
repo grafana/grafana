@@ -3018,6 +3018,10 @@ Set the maximum length of a SQL query that can be used in a SQL expression. Defa
 
 The duration a SQL expression will run before being cancelled. The default is `10s`. A setting of `0s` means no limit.
 
+#### `math_expression_memory_limit`
+
+Set the maximum estimated memory in bytes that a single math expression binary operation can allocate. Default is `1073741824` (1 GiB). A setting of `0` means no limit.
+
 ### `[geomap]`
 
 This section controls the defaults settings for **Geomap Plugin**.

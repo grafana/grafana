@@ -128,12 +128,8 @@ To create a dashboard, follow these steps:
 1. Click **Save**
 1. Click **Back to dashboard**.
 1. (Optional) Continue building the dashboard by doing one or more of the following:
-<<<<<<< HEAD
 
    - Select the panel you just created and click **Configure** in the sidebar to continue panel setup.
-=======
-   - Select the panel you just created and click **Configure** in the edit pane to continue panel setup.
->>>>>>> ihm/260306-dashboard-edit-updates
    - Click the **Add new element** icon and select **Panel**. You can also hover your mouse on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.
    - Click the **Add new element** icon and select [Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables), [Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries), or [Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links).
    - Click **Group panels** on the dashboard and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
