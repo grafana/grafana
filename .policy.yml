@@ -25,6 +25,7 @@ policy:
             - Workflow .github/workflows/go-lint.yml succeeded or skipped
             - Workflow .github/workflows/i18n-verify.yml succeeded or skipped
             - Workflow .github/workflows/lint-build-docs.yml succeeded or skipped
+            - Workflow .github/workflows/policybot.yml succeeded or skipped
             - Workflow .github/workflows/pr-build-grafana.yml succeeded or skipped
             - Workflow .github/workflows/pr-checks.yml succeeded or skipped
             - Workflow .github/workflows/pr-codeql-analysis-javascript.yml succeeded or skipped
@@ -321,6 +322,26 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/lint-build-docs.yml
+  - name: Workflow .github/workflows/policybot.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^\.policy\.yml$
+          - ^\.policy\.yml\.tmpl$
+          - ^justfile$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/policybot\.yml$
+      targets_branch:
+        pattern: (^main$)
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/policybot.yml
   - name: Workflow .github/workflows/pr-build-grafana.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -669,7 +690,7 @@ approval_rules:
     requires:
       conditions:
         has_successful_status:
-          - Validate policy bot config
+          - Check .policy.yml is valid
   - name: override policies
     description: |
       Policy-bot can be overridden in emergency situations.
