@@ -637,8 +637,10 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 
+	// TODO: return a NewBadRequestErorr in this case once the resource server is
+	// only interfacing with storage backends for K8s resources.
 	if obj.GetUID() == "" {
-		return nil, NewBadRequestError("object is missing UID")
+		s.log.FromContext(ctx).Warn("object is missing UID", "key", key)
 	}
 
 	if obj.GetResourceVersion() != "" {
@@ -648,7 +650,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
 		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
-			return nil, NewBadRequestError("can not save label: " + k)
+			return nil, NewBadRequestError("cannot save label: " + k)
 		}
 	}
 
