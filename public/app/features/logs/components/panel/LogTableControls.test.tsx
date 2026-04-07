@@ -130,7 +130,7 @@ describe('LogTableControls', () => {
         setControlsExpanded={jest.fn()}
         sortOrder={LogsSortOrder.Ascending}
         setSortOrder={jest.fn()}
-        downloadLogs={downloadLogs as (f: DownloadFormat) => void}
+        downloadLogs={downloadLogs as unknown as (f: DownloadFormat) => void}
         wrapText={false}
         onWrapTextClick={jest.fn()}
       />

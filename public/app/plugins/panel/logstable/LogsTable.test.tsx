@@ -169,10 +169,7 @@ describe('LogsTable', () => {
     it('with logs controls enabled, when wrap text is set via options only, toggling calls onOptionsChange but not onFieldConfigChange', async () => {
       const onOptionsChange = jest.fn();
       const onFieldConfigChange = jest.fn();
-      setUp(
-        { onOptionsChange, onFieldConfigChange },
-        { showControls: true, wrapText: false }
-      );
+      setUp({ onOptionsChange, onFieldConfigChange }, { showControls: true, wrapText: false });
       await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
       expect(onOptionsChange).not.toHaveBeenCalled();
       expect(onFieldConfigChange).not.toHaveBeenCalled();
@@ -191,10 +188,7 @@ describe('LogsTable', () => {
         defaults: { custom: { wrapText: false } },
         overrides: [],
       };
-      setUp(
-        { onOptionsChange, onFieldConfigChange, fieldConfig: fieldConfigWithWrapText },
-        { showControls: true }
-      );
+      setUp({ onOptionsChange, onFieldConfigChange, fieldConfig: fieldConfigWithWrapText }, { showControls: true });
       await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
       expect(onOptionsChange).not.toHaveBeenCalled();
       expect(onFieldConfigChange).not.toHaveBeenCalled();
