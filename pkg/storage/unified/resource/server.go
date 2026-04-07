@@ -577,7 +577,7 @@ func (s *server) Stop(ctx context.Context) error {
 	s.stopping = true
 	s.stopMu.Unlock()
 
-	// Stops streaming and unblocks artificialSuccessfulWriteDelay.
+	// Stops streaming (broadcaster, watch events).
 	s.cancel()
 
 	// Wait for in-flight write operations to finish, respecting the context deadline.
@@ -925,7 +925,6 @@ func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operati
 
 	select {
 	case <-time.After(s.artificialSuccessfulWriteDelay):
-	case <-s.ctx.Done():
 	case <-ctx.Done():
 	}
 	return true
