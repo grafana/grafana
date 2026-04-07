@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -47,8 +46,8 @@ const (
 )
 
 var SharedWithMeFolderPermission = accesscontrol.Permission{
-	Action: dashboards.ActionFoldersRead,
-	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
+	Action: folder.ActionFoldersRead,
+	Scope:  folder.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
 }
 
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}

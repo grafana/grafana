@@ -79,13 +79,12 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 	))
 	defer span.End()
 
-	requester, err := identity.GetRequester(ctx)
+	orgID, err := s.getOrgID(ctx)
 	if err != nil {
-		s.logger.Error("failed to get requester from context", "err", err)
+		s.logger.Error("failed to get orgID from context", "err", err)
 		return nil, err
 	}
 
-	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
@@ -170,6 +169,10 @@ func (s *UserK8sService) ListByIdOrUID(ctx context.Context, ids []string, intIDs
 	return nil, errors.New("not implemented")
 }
 
+func (s *UserK8sService) GetByLoginWithPassword(_ context.Context, _ *user.GetUserByLoginQuery) (*user.User, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.getByLogin", trace.WithAttributes(
 		attribute.String("loginOrEmail", cmd.LoginOrEmail),
@@ -178,13 +181,12 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 
 	loginOrEmail := strings.ToLower(cmd.LoginOrEmail)
 
-	requester, err := identity.GetRequester(ctx)
+	orgID, err := s.getOrgID(ctx)
 	if err != nil {
-		s.logger.Error("failed to get requester from context", "err", err)
+		s.logger.Error("failed to get orgID from context", "err", err)
 		return nil, err
 	}
 
-	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
@@ -221,13 +223,12 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 	))
 	defer span.End()
 
-	requester, err := identity.GetRequester(ctx)
+	orgID, err := s.getOrgID(ctx)
 	if err != nil {
-		s.logger.Error("failed to get requester from context", "err", err)
+		s.logger.Error("failed to get orgID from context", "err", err)
 		return nil, err
 	}
 
-	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
@@ -257,15 +258,14 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 
 	ctxLogger := s.logger.FromContext(ctx)
 
-	requester, err := identity.GetRequester(ctx)
+	orgID, err := s.getOrgID(ctx)
 	if err != nil {
-		ctxLogger.Error("failed to get requester from context", "err", err)
+		ctxLogger.Error("failed to get orgID from context", "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
-	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
 	span.SetAttributes(attribute.Int64("orgID", orgID))
 
@@ -376,6 +376,21 @@ func getUserID(u *iamv0alpha1.User) int64 {
 		return meta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
 	return 0
+}
+
+func (s *UserK8sService) getOrgID(ctx context.Context) (int64, error) {
+	requester, err := identity.GetRequester(ctx)
+	if err == nil {
+		return requester.GetOrgID(), nil
+	}
+
+	s.logger.Debug("failed to get requester from context, falling back to orgID", "error", err)
+	orgID, ok := identity.OrgIDFrom(ctx)
+	if ok {
+		return orgID, nil
+	}
+
+	return 0, errors.New("failed to get orgID: no requester or orgID in context")
 }
 
 func (s *UserK8sService) getByFieldSelector(ctx context.Context, client dynamic.ResourceInterface, field, value string, orgID int64) (*user.User, error) {

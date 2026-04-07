@@ -2,8 +2,12 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -25,6 +29,8 @@ type Service struct {
 	legacyService     user.Service
 	k8sService        user.Service
 	openFeatureClient *openfeature.Client
+	logger            log.Logger
+	tracer            tracing.Tracer
 }
 
 var _ user.Service = (*Service)(nil)
@@ -47,6 +53,8 @@ func ProvideService(db db.DB,
 		legacyService:     legacyService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		logger:            log.New("user"),
+		tracer:            tracer,
 	}, nil
 }
 
@@ -78,15 +86,26 @@ func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64)
 	return s.legacyService.ListByIdOrUID(ctx, uids, ids)
 }
 
+func (s *Service) GetByLoginWithPassword(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
+	// Redirect to legacy service as support for passwords is not implemented in the k8s service
+	return s.legacyService.GetByLoginWithPassword(ctx, cmd)
+}
+
 func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		// UserK8sService.GetByLogin resolves the k8s namespace from the requester's org ID.
-		// During password authentication the requester has not been established yet, so we
-		// fall back to the legacy service for that call. All other callers carry a requester
-		// and are correctly routed to the k8s service.
-		if _, err := identity.GetRequester(ctx); err == nil {
+		ctx, span := s.tracer.Start(ctx, "user.GetByLogin", trace.WithAttributes(
+			attribute.String("loginOrEmail", cmd.LoginOrEmail),
+		))
+		defer span.End()
+
+		if hasOrgID(ctx) {
 			return s.k8sService.GetByLogin(ctx, cmd)
 		}
+
+		err := errors.New("kubernetesUsersRedirect is enabled but no orgID found in context")
+		s.logger.Warn(err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 	}
 
 	return s.legacyService.GetByLogin(ctx, cmd)
@@ -94,10 +113,19 @@ func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery)
 
 func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
-		// Same as GetByLogin: fall back to legacy when there is no requester in the context.
-		if _, err := identity.GetRequester(ctx); err == nil {
+		ctx, span := s.tracer.Start(ctx, "user.GetByEmail", trace.WithAttributes(
+			attribute.String("email", cmd.Email),
+		))
+		defer span.End()
+
+		if hasOrgID(ctx) {
 			return s.k8sService.GetByEmail(ctx, cmd)
 		}
+
+		err := errors.New("kubernetesUsersRedirect is enabled but no orgID found in context")
+		s.logger.Warn(err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 	}
 
 	return s.legacyService.GetByEmail(ctx, cmd)
@@ -141,4 +169,13 @@ func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
 	}
 
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+func hasOrgID(ctx context.Context) bool {
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		return requester.GetOrgID() != 0
+	}
+
+	orgID, ok := identity.OrgIDFrom(ctx)
+	return ok && orgID != 0
 }

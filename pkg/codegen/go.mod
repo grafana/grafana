@@ -6,7 +6,7 @@ require (
 	cuelang.org/go v0.11.1
 	github.com/dave/dst v0.27.3
 	github.com/grafana/codejen v0.0.4-0.20250428224353-8764ced07770
-	github.com/grafana/cog v0.0.57
+	github.com/grafana/cog v0.0.60
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
 	golang.org/x/tools v0.42.0
@@ -56,9 +56,6 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// Pin kin-openapi to avoid maps.Copy incompatibility with openapi3.StringMap
-replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.133.0
 
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
 

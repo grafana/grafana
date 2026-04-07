@@ -349,13 +349,13 @@ var errEmptyResults = fmt.Errorf("empty results")
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
 	switch p {
 	case dashboardaccess.PERMISSION_EDIT:
-		return dashboards.ActionDashboardsWrite, dashboards.ActionFoldersWrite
+		return dashboards.ActionDashboardsWrite, foldermodel.ActionFoldersWrite
 	case dashboardaccess.PERMISSION_ADMIN:
-		return dashboards.ActionDashboardsPermissionsWrite, dashboards.ActionFoldersPermissionsWrite
+		return dashboards.ActionDashboardsPermissionsWrite, foldermodel.ActionFoldersPermissionsWrite
 	case dashboardaccess.PERMISSION_VIEW:
 		fallthrough
 	default:
-		return dashboards.ActionDashboardsRead, dashboards.ActionFoldersRead
+		return dashboards.ActionDashboardsRead, foldermodel.ActionFoldersRead
 	}
 }
 
@@ -681,7 +681,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 	for _, folderPermission := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(folderPermission, dashboards.ScopeFoldersPrefix); found {
+		if folderUid, found := strings.CutPrefix(folderPermission, foldermodel.ScopeFoldersPrefix); found {
 			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
 				dashboardUids = append(dashboardUids, folderUid)
 			}
