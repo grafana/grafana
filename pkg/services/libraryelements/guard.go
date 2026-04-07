@@ -2,7 +2,6 @@ package libraryelements
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -45,22 +44,6 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 		return err
 	}
 	if !canEdit {
-		return dashboards.ErrFolderAccessDenied
-	}
-
-	return nil
-}
-
-func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user identity.Requester, folderID int64) error {
-	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(folderID, 10)))
-	if isGeneralFolder(folderID) {
-		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID))
-	}
-	canView, err := l.AccessControl.Evaluate(ctx, user, evaluator)
-	if err != nil {
-		return err
-	}
-	if !canView {
 		return dashboards.ErrFolderAccessDenied
 	}
 
