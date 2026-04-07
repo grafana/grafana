@@ -463,7 +463,7 @@ export class TabsLayoutManager
     }
 
     const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(tab!, tabKey, { force: true, multi: false });
+    editPane.selectObject(tab!, { force: true, multi: false });
     this.setState({ currentTabSlug: tab.getSlug() });
   }
 

@@ -6,6 +6,7 @@ import {
   SceneControlsSpacer,
   SceneFlexLayout,
   type SceneObject,
+  SceneReactObject,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -14,6 +15,7 @@ import {
   behaviors,
 } from '@grafana/scenes';
 import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
+import { useTheme2 } from '@grafana/ui';
 
 import { DATASOURCE_UID } from '../constants';
 
@@ -26,11 +28,16 @@ import { defaultTimeRange } from './utils';
 
 const cursorSync = new behaviors.CursorSync({ key: 'triage-cursor-sync', sync: DashboardCursorSync.Crosshair });
 
+function TimePickerSpacer() {
+  const theme = useTheme2();
+  return <div style={{ width: theme.spacing(20) }} />;
+}
+
 function getTimeControls(): SceneObject[] {
   if (config.featureToggles.alertingTriageLiveMode) {
     return [new TriageTimeModeControl({})];
   }
-  return [new SceneTimePicker({}), new SceneRefreshPicker({})];
+  return [new SceneReactObject({ component: TimePickerSpacer }), new SceneTimePicker({}), new SceneRefreshPicker({})];
 }
 
 export const triageScene = new EmbeddedSceneWithContext({
@@ -45,17 +52,6 @@ export const triageScene = new EmbeddedSceneWithContext({
   $timeRange: new SceneTimeRange(defaultTimeRange),
   $variables: new SceneVariableSet({
     variables: [
-      new GroupByVariable({
-        name: 'groupBy',
-        label: 'Group by',
-        datasource: {
-          type: 'prometheus',
-          uid: DATASOURCE_UID,
-        },
-        allowCustomValue: true,
-        applyMode: 'manual',
-        getTagKeysProvider: getGroupByTagKeysProvider,
-      }),
       new AdHocFiltersVariable({
         name: 'filters',
         label: 'Filters',
@@ -73,6 +69,17 @@ export const triageScene = new EmbeddedSceneWithContext({
         expressionBuilder: prometheusExpressionBuilder,
         getTagKeysProvider: getAdHocTagKeysProvider,
         getTagValuesProvider: getAdHocTagValuesProvider,
+      }),
+      new GroupByVariable({
+        name: 'groupBy',
+        label: 'Group by',
+        datasource: {
+          type: 'prometheus',
+          uid: DATASOURCE_UID,
+        },
+        allowCustomValue: true,
+        applyMode: 'manual',
+        getTagKeysProvider: getGroupByTagKeysProvider,
       }),
     ],
   }),

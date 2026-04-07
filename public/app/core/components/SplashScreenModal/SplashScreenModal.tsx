@@ -22,10 +22,6 @@ function resolveCtaUrl(cta: SplashFeatureCta): string {
   return cta.url;
 }
 
-function isExternalUrl(url: string): boolean {
-  return url.startsWith('http');
-}
-
 export function SplashScreenModal() {
   const [activeIndex, setActiveIndex] = useState(0);
   const styles = useStyles2(getStyles);
@@ -54,7 +50,6 @@ export function SplashScreenModal() {
   const activeFeature = config.features[activeIndex];
   const cta = activeFeature.cta;
   const ctaUrl = cta ? resolveCtaUrl(cta) : '';
-  const isCtaExternal = isExternalUrl(ctaUrl);
 
   const footer = (
     <>
@@ -68,10 +63,9 @@ export function SplashScreenModal() {
       {cta && (
         <LinkButton
           href={ctaUrl}
-          onClick={isCtaExternal ? undefined : dismiss}
-          target={isCtaExternal ? '_blank' : undefined}
-          rel={isCtaExternal ? 'noopener noreferrer' : undefined}
-          icon={isCtaExternal ? 'external-link-alt' : 'arrow-right'}
+          target="_blank"
+          rel="noopener noreferrer"
+          icon="external-link-alt"
           variant="secondary"
           fill="outline"
           size="md"
