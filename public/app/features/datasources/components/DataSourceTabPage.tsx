@@ -27,7 +27,7 @@ export function DataSourceTabPage({ uid, pageId }: Props) {
     <Page
       navId={navId}
       pageNav={pageNav}
-      renderTitle={(title) => <DataSourceTitle title={title} />}
+      renderTitle={(title) => <DataSourceTitle title={title} uid={uid} />}
       info={info}
       actions={<EditDataSourceActions uid={uid} />}
     >

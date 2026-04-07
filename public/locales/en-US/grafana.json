@@ -8091,6 +8091,14 @@
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
     },
+    "editable-title": {
+      "error-saving": "Error saving data source name",
+      "input-label": "Data source name",
+      "input-placeholder": "Name",
+      "tooltip-cancel-button": "Cancel",
+      "tooltip-edit-button": "Edit",
+      "tooltip-save-button": "Save"
+    },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
     },
