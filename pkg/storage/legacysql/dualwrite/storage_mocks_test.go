@@ -3,15 +3,44 @@ package dualwrite
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/stretchr/testify/mock"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
+
+// mutableStatusReader is a test helper that allows changing the storage mode at
+// runtime, simulating a migration completing after the dualWriter was created.
+type mutableStatusReader struct {
+	mu   sync.Mutex
+	mode unifiedmigrations.StorageMode
+}
+
+func (r *mutableStatusReader) GetStorageMode(_ context.Context, _ schema.GroupResource) (unifiedmigrations.StorageMode, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.mode, nil
+}
+
+func (r *mutableStatusReader) setMode(m unifiedmigrations.StorageMode) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.mode = m
+}
+
+func newStorage(gr schema.GroupResource, mode grafanarest.DualWriterMode, legacy grafanarest.Storage, unified grafanarest.Storage) (grafanarest.Storage, error) {
+	cfg := NewFakeConfig()
+	cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{DualWriterMode: mode}
+	return ProvideServiceForTests(cfg).NewStorage(gr, legacy, unified)
+}
 
 type storageMock struct {
 	*mock.Mock

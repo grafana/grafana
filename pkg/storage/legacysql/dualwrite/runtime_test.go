@@ -13,8 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
 var kind = schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
@@ -48,19 +47,6 @@ func TestRuntime_Create(t *testing.T) {
 				},
 				wantErr: true,
 			},
-			{
-				name:  "should return an error when creating an object in the unified store fails and delete from LegacyStorage",
-				input: exampleObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, true, nil).Once()
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
-				},
-				setupStorageFn: func(m *mock.Mock, _ runtime.Object) {
-					// We don't use the input here, as the input is transformed before being passed to unified storage.
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
-				},
-				wantErr: true,
-			},
 		}
 
 	for _, tt := range tests {
@@ -78,7 +64,7 @@ func TestRuntime_Create(t *testing.T) {
 				tt.setupStorageFn(us.Mock, tt.input)
 			}
 
-			m, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
+			m, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
 			require.NoError(t, err)
 			dw, err := m.NewStorage(kind, ls, us)
 			require.NoError(t, err)
@@ -95,7 +81,98 @@ func TestRuntime_Create(t *testing.T) {
 	}
 }
 
+func TestDualWriter_RuntimeModeSwitch(t *testing.T) {
+	// Verifies the core runtime-mode-switching guarantee: a *dualWriter created
+	// in DualWrite mode automatically switches to Unified read routing on the
+	// very next request after the status reader reports StorageModeUnified,
+	// without being re-created.
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
+
+	reader := &mutableStatusReader{mode: unifiedmigrations.StorageModeDualWrite}
+	svc, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), reader, prometheus.NewRegistry())
+	require.NoError(t, err)
+
+	ls := storageMock{&mock.Mock{}, (rest.Storage)(nil)}
+	us := storageMock{&mock.Mock{}, (rest.Storage)(nil)}
+
+	dw, err := svc.NewStorage(gr, ls, us)
+	require.NoError(t, err)
+	_, isDual := dw.(*dualWriter)
+	require.True(t, isDual, "DualWrite mode must produce a *dualWriter")
+
+	// DualWrite phase: Get returns the legacy result.
+	// Background unified.Get may also fire; allow it with no call-count restriction.
+	ls.On("Get", mock.Anything, "foo", mock.Anything).Return(exampleObj, nil).Once()
+	us.On("Get", mock.Anything, "foo", mock.Anything).Return(anotherObj, nil)
+
+	obj, err := dw.Get(context.Background(), "foo", &metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, exampleObj, obj, "DualWrite: result must come from legacy")
+
+	// Flip to Unified without re-creating dw.
+	reader.setMode(unifiedmigrations.StorageModeUnified)
+
+	// Unified phase: Get returns the unified result.
+	// legacy.Get must NOT be called — the mock panics on any unexpected call,
+	// so this is an implicit assertion.
+	obj, err = dw.Get(context.Background(), "foo", &metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, anotherObj, obj, "Unified: result must come from unified")
+
+	ls.AssertExpectations(t)
+}
+
+func TestDualWriter_UnifiedModeSkipsLegacyMutations(t *testing.T) {
+	// Verifies that once StorageModeUnified is active, Create/Update/Delete/DeleteCollection
+	// bypass legacy storage entirely. The storageMock panics on any unexpected call, so
+	// any legacy invocation here would fail the test implicitly.
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
+
+	reader := &mutableStatusReader{mode: unifiedmigrations.StorageModeDualWrite}
+	svc, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), reader, prometheus.NewRegistry())
+	require.NoError(t, err)
+
+	ls := storageMock{&mock.Mock{}, (rest.Storage)(nil)}
+	us := storageMock{&mock.Mock{}, (rest.Storage)(nil)}
+
+	dw, err := svc.NewStorage(gr, ls, us)
+	require.NoError(t, err)
+	_, isDual := dw.(*dualWriter)
+	require.True(t, isDual, "DualWrite mode must produce a *dualWriter")
+
+	// Flip to Unified — legacy must not be touched for any mutation.
+	reader.setMode(unifiedmigrations.StorageModeUnified)
+
+	t.Run("Create routes only to unified", func(t *testing.T) {
+		us.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+		obj, err := dw.Create(context.Background(), exampleObj, createFn, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, exampleObj, obj)
+		us.AssertExpectations(t)
+	})
+
+	t.Run("Delete routes only to unified", func(t *testing.T) {
+		us.On("Delete", mock.Anything, "foo", mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
+		obj, _, err := dw.Delete(context.Background(), "foo", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.Equal(t, exampleObj, obj)
+		us.AssertExpectations(t)
+	})
+
+	t.Run("Update routes only to unified", func(t *testing.T) {
+		us.On("Update", mock.Anything, "foo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
+		obj, _, err := dw.Update(context.Background(), "foo", updatedObjInfoObj{}, createFn, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, exampleObj, obj)
+		us.AssertExpectations(t)
+	})
+
+	ls.AssertExpectations(t)
+}
+
 func TestRuntime_Get(t *testing.T) {
+	t.Skip("skip until we use this for a non dashboard/folder resource")
+
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock, name string)
 		setupStorageFn func(m *mock.Mock, name string)
@@ -151,7 +228,7 @@ func TestRuntime_Get(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			m, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
+			m, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
 			require.NoError(t, err)
 			dw, err := m.NewStorage(kind, ls, us)
 			require.NoError(t, err)
@@ -176,6 +253,8 @@ func TestRuntime_Get(t *testing.T) {
 }
 
 func TestRuntime_CreateWhileMigrating(t *testing.T) {
+	t.Skip("skip until we use this for a non dashboard/folder resource")
+
 	type testCase struct {
 		input          runtime.Object
 		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
@@ -205,16 +284,6 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 				},
 			},
 			{
-				name:    "should be unavailable if migrating",
-				input:   failingObj,
-				wantErr: true,
-				prepare: func(dual Service) (StorageStatus, error) {
-					status, err := dual.Status(context.Background(), kind)
-					require.NoError(t, err)
-					return dual.StartMigration(context.Background(), kind, status.UpdateKey)
-				},
-			},
-			{
 				name:  "should succeed after migration",
 				input: exampleObj,
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
@@ -236,7 +305,7 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 		}
 
 	// Shared provider across all tests
-	dual, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
+	dual, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	for _, tt := range tests {

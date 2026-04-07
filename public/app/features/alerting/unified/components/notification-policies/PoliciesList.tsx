@@ -1,11 +1,16 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, EmptyState, LoadingPlaceholder, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { MetadataRow } from 'app/features/alerting/unified/components/notification-policies/Policy';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
-import { AlertmanagerGroup, ROUTES_META_SYMBOL, Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertmanagerGroup,
+  ROUTES_META_SYMBOL,
+  type Receiver,
+  type Route,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';

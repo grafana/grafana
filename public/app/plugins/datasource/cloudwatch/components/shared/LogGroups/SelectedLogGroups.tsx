@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 
-import { LogGroup } from '../../../dataquery.gen';
+import { type LogGroup } from '../../../dataquery.gen';
 import getStyles from '../../styles';
 
 type CrossAccountLogsQueryProps = {
@@ -78,7 +78,6 @@ export const SelectedLogGroups = ({
         body="Are you sure you want to clear all log groups?"
         confirmText="Yes"
         dismissText="No"
-        icon="exclamation-triangle"
         onConfirm={() => {
           setShowConfirm(false);
           onChange([]);

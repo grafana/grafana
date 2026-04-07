@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode } from 'react';
+import { type PropsWithChildren, type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useToggle } from 'react-use';
 
 import { base64UrlEncode } from '@grafana/alerting';
 import { getContactPointDescription, notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 

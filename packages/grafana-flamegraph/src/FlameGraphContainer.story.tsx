@@ -4,7 +4,7 @@ import { createDataFrame } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { data } from './FlameGraph/testData/dataNestedSet';
-import FlameGraphContainer, { Props } from './FlameGraphContainer';
+import FlameGraphContainer, { type Props } from './FlameGraphContainer';
 
 const WrappedFlameGraph = (props: Omit<Props, 'getTheme'>) => {
   const theme = useTheme2();

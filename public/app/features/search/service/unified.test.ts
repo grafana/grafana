@@ -1,10 +1,10 @@
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { GrafanaSearcher, SearchQuery } from './types';
-import { toDashboardResults, SearchHit, SearchAPIResponse, UnifiedSearcher } from './unified';
+import { type GrafanaSearcher, type SearchQuery } from './types';
+import { toDashboardResults, type SearchHit, type SearchAPIResponse, UnifiedSearcher } from './unified';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -101,6 +101,41 @@ describe('Unified Storage Searcher', () => {
     // expect(response.view.get(0).description).toBe(null);
     // expect(response.view.get(1).description).toBe('foobar');
   });
+
+  it('should filter search results by ownerReference', async () => {
+    server.use(
+      getCustomSearchHandler([
+        {
+          name: 'team-owned-dashboard',
+          title: 'Team owned dashboard',
+          resource: 'dashboard',
+          ownerReferences: ['iam.grafana.app/Team/team-a'],
+        },
+        {
+          name: 'other-team-dashboard',
+          title: 'Other team dashboard',
+          resource: 'dashboard',
+          ownerReferences: ['iam.grafana.app/Team/team-b'],
+        },
+        {
+          name: 'unowned-dashboard',
+          title: 'Unowned dashboard',
+          resource: 'dashboard',
+        },
+      ])
+    );
+
+    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+
+    const response = await searcher.search({
+      query: '*',
+      ownerReference: ['iam.grafana.app/Team/team-a', 'iam.grafana.app/Team/test-team'],
+    });
+
+    expect(response.view.length).toBe(1);
+    expect(response.view.get(0).name).toBe('Team owned dashboard');
+    expect(response.view.get(0).uid).toBe('team-owned-dashboard');
+  });
 });
 
 describe('toDashboardResults', () => {
@@ -165,5 +200,49 @@ describe('toDashboardResults', () => {
     const results = toDashboardResults(mockResponse, '-errors_today');
 
     expect(results.meta?.custom?.sortBy).toBe('errors_today');
+  });
+
+  describe('respects appSubUrl in search result URLs', () => {
+    const originalAppSubUrl = config.appSubUrl;
+
+    afterEach(() => {
+      config.appSubUrl = originalAppSubUrl;
+    });
+
+    it('should prepend appSubUrl to folder and dashboard URLs in locationInfo', async () => {
+      config.appSubUrl = '/grafana';
+
+      server.use(
+        getCustomSearchHandler([
+          { name: 'folder1', title: 'Folder 1', resource: 'folder' },
+          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+        ])
+      );
+
+      const searcher = new UnifiedSearcher(mockFallbackSearcher);
+      const response = await searcher.search({ query: 'test', limit: 50 });
+
+      const locationInfo = response.view.dataFrame.meta?.custom?.locationInfo;
+      expect(locationInfo?.general.url).toBe('/grafana/dashboards');
+      expect(locationInfo?.folder1.url).toBe('/grafana/dashboards/f/folder1');
+    });
+
+    it('should work with empty appSubUrl', async () => {
+      config.appSubUrl = '';
+
+      server.use(
+        getCustomSearchHandler([
+          { name: 'folder1', title: 'Folder 1', resource: 'folder' },
+          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+        ])
+      );
+
+      const searcher = new UnifiedSearcher(mockFallbackSearcher);
+      const response = await searcher.search({ query: 'test', limit: 50 });
+
+      const locationInfo = response.view.dataFrame.meta?.custom?.locationInfo;
+      expect(locationInfo?.general.url).toBe('/dashboards');
+      expect(locationInfo?.folder1.url).toBe('/dashboards/f/folder1');
+    });
   });
 });

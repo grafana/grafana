@@ -3,8 +3,8 @@ package notifier
 import (
 	"context"
 	"encoding/json"
-
-	"golang.org/x/exp/maps"
+	"maps"
+	"slices"
 
 	alertingModels "github.com/grafana/alerting/models"
 
@@ -217,7 +217,7 @@ func (s *SilenceService) WithRuleMetadata(ctx context.Context, user identity.Req
 	}
 
 	q := models.ListAlertRulesQuery{
-		RuleUIDs: maps.Keys(byRuleUID),
+		RuleUIDs: slices.Collect(maps.Keys(byRuleUID)),
 		OrgID:    user.GetOrgID(),
 	}
 

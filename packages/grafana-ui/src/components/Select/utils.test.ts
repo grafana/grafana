@@ -1,6 +1,6 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
-import { SelectableOptGroup } from './types';
+import { type SelectableOptGroup } from './types';
 import { cleanValue, findSelectedValue } from './utils';
 
 const optGroup: SelectableOptGroup[] = [

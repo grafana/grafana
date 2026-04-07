@@ -1,4 +1,4 @@
-import { Action } from 'kbar';
+import { type Action } from 'kbar';
 
 type NotNullable<T> = Exclude<T, null | undefined>;
 

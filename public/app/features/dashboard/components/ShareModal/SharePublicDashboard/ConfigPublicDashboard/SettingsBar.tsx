@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { SettingsBarHeader, Props as SettingsBarHeaderProps } from './SettingsBarHeader';
+import { SettingsBarHeader, type Props as SettingsBarHeaderProps } from './SettingsBarHeader';
 
 export interface Props extends Pick<SettingsBarHeaderProps, 'headerElement' | 'title'> {
   children: React.ReactNode;

@@ -115,7 +115,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 	})
 
 	t.Run("move job blocked for folder resource in file", func(t *testing.T) {
-		folderJSON := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"sneaky-folder"},"spec":{"title":"Sneaky"}}`
+		folderJSON := `{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":"sneaky-folder"},"spec":{"title":"Sneaky"}}`
 		helper.WriteToProvisioningPath(t, "folder-as-file-move.json", []byte(folderJSON))
 
 		body := common.AsJSON(provisioning.JobSpec{

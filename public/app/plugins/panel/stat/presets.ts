@@ -1,8 +1,9 @@
 import {
   FieldColorModeId,
-  FieldConfigSource,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
+  type FieldConfigSource,
+  FieldType,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,11 +12,28 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   PercentChangeColorMode,
 } from '@grafana/schema';
 
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
+
+const MAX_PREVIEW_SERIES = 6;
+
+const PRESET_CARD_OPTIONS: VisualizationSuggestion<Options, GraphFieldConfig>['cardOptions'] = {
+  maxSeries: MAX_PREVIEW_SERIES,
+  previewModifier: (s) => {
+    if (s.options?.reduceOptions?.values) {
+      s.options.reduceOptions.limit = MAX_PREVIEW_SERIES;
+    }
+  },
+};
+
+const makePreset = (
+  preset: Omit<VisualizationSuggestion<Options, GraphFieldConfig>, 'cardOptions'>
+): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  return { ...preset, cardOptions: PRESET_CARD_OPTIONS };
+};
 
 const BASE_OPTIONS = {
   ...defaultOptions,
@@ -55,8 +73,8 @@ const FIXED_BLUE_FIELD_CONFIG: FieldConfigSource<Partial<GraphFieldConfig>> = {
 /**
  * Threshold value preset - color from thresholds, no sparkline
  */
-const thresholdValuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
+const thresholdValuePreset = () =>
+  makePreset({
     name: t('stat.presets.threshold-value', 'Threshold value'),
     description: t('stat.presets.threshold-value-desc', 'Value color from thresholds, no sparkline'),
     options: {
@@ -65,14 +83,13 @@ const thresholdValuePreset = (): VisualizationSuggestion<Options, GraphFieldConf
       graphMode: BigValueGraphMode.None,
     },
     fieldConfig: THRESHOLD_FIELD_CONFIG,
-  };
-};
+  });
 
 /**
  * Threshold value with sparkline preset - color from thresholds, area sparkline
  */
-const thresholdValueSparklinePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
+const thresholdValueSparklinePreset = () =>
+  makePreset({
     name: t('stat.presets.threshold-value-sparkline', 'Threshold value with sparkline'),
     description: t('stat.presets.threshold-value-sparkline-desc', 'Value color from thresholds, area sparkline'),
     options: {
@@ -81,14 +98,13 @@ const thresholdValueSparklinePreset = (): VisualizationSuggestion<Options, Graph
       graphMode: BigValueGraphMode.Area,
     },
     fieldConfig: THRESHOLD_FIELD_CONFIG,
-  };
-};
+  });
 
 /**
  * Threshold background preset - background colored from thresholds, no sparkline
  */
-const thresholdBackgroundPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
+const thresholdBackgroundPreset = () =>
+  makePreset({
     name: t('stat.presets.threshold-background', 'Threshold background'),
     description: t('stat.presets.threshold-background-desc', 'Background color from thresholds, no sparkline'),
     options: {
@@ -97,14 +113,13 @@ const thresholdBackgroundPreset = (): VisualizationSuggestion<Options, GraphFiel
       graphMode: BigValueGraphMode.None,
     },
     fieldConfig: THRESHOLD_FIELD_CONFIG,
-  };
-};
+  });
 
 /**
  * Threshold background with sparkline preset - background colored from thresholds, area sparkline
  */
-const thresholdBackgroundSparklinePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
+const thresholdBackgroundSparklinePreset = () =>
+  makePreset({
     name: t('stat.presets.threshold-background-sparkline', 'Threshold background with sparkline'),
     description: t(
       'stat.presets.threshold-background-sparkline-desc',
@@ -116,14 +131,13 @@ const thresholdBackgroundSparklinePreset = (): VisualizationSuggestion<Options, 
       graphMode: BigValueGraphMode.Area,
     },
     fieldConfig: THRESHOLD_FIELD_CONFIG,
-  };
-};
+  });
 
 /**
  * Wide list preset - horizontal layout, name and value, wide layout, fixed color, area sparkline
  */
-const wideListPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
+const wideListPreset = () =>
+  makePreset({
     name: t('stat.presets.wide-list', 'Wide list'),
     description: t('stat.presets.wide-list-desc', 'Horizontal, name and value, area sparkline, single color'),
     options: {
@@ -133,14 +147,13 @@ const wideListPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =>
       graphMode: BigValueGraphMode.Area,
     },
     fieldConfig: FIXED_BLUE_FIELD_CONFIG,
-  };
-};
+  });
 
 /**
  * List preset - horizontal layout, name and value, fixed color, area sparkline
  */
-const listPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
+const listPreset = () =>
+  makePreset({
     name: t('stat.presets.list', 'List'),
     description: t('stat.presets.list_desc', 'Compact horizontal list, centered, name and value, sparkline'),
     options: {
@@ -152,16 +165,15 @@ const listPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
       justifyMode: BigValueJustifyMode.Center,
     },
     fieldConfig: FIXED_BLUE_FIELD_CONFIG,
-  };
-};
+  });
 
 // --- Few series presets ---
 
 /**
  * Horizontal threshold value preset - horizontal layout, color from thresholds, no sparkline
  */
-const horizontalThresholdValuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
+const horizontalThresholdValuePreset = () =>
+  makePreset({
     name: t('stat.presets.horizontal-threshold-value', 'Horizontal threshold value'),
     description: t(
       'stat.presets.horizontal-threshold-value-desc',
@@ -173,14 +185,13 @@ const horizontalThresholdValuePreset = (): VisualizationSuggestion<Options, Grap
       graphMode: BigValueGraphMode.None,
     },
     fieldConfig: THRESHOLD_FIELD_CONFIG,
-  };
-};
+  });
 
 /**
  * Horizontal threshold value with sparkline preset - horizontal layout, color from thresholds, area sparkline
  */
-const horizontalThresholdValueSparklinePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
+const horizontalThresholdValueSparklinePreset = () =>
+  makePreset({
     name: t('stat.presets.horizontal-threshold-value-sparkline', 'Horizontal threshold value with sparkline'),
     description: t(
       'stat.presets.horizontal-threshold-value-sparkline-desc',
@@ -192,13 +203,16 @@ const horizontalThresholdValueSparklinePreset = (): VisualizationSuggestion<Opti
       graphMode: BigValueGraphMode.Area,
     },
     fieldConfig: THRESHOLD_FIELD_CONFIG,
-  };
-};
+  });
 
 const FEW_SERIES_THRESHOLD = 5;
 
 export const statPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
-  const frameCount = dataSummary?.frameCount ?? 0;
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
+  const frameCount = dataSummary.frameCount;
   const hasSingleSeries = frameCount === 1;
   const hasFewSeries = frameCount > 1 && frameCount < FEW_SERIES_THRESHOLD;
   const hasMultiSeries = frameCount >= FEW_SERIES_THRESHOLD;

@@ -1,11 +1,11 @@
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '@grafana/prometheus';
-import { AdHocFiltersVariable, SceneDataQuery, SceneObject, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, type SceneDataQuery, type SceneObject, sceneGraph } from '@grafana/scenes';
 import { useSceneContext, useVariableValue } from '@grafana/scenes-react';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { DATASOURCE_UID, VARIABLES } from '../constants';
-import { Domain } from '../types';
+import { type Domain } from '../types';
 
 export function getDataQuery(expression: string, options?: Partial<SceneDataQuery>): SceneDataQuery {
   const datasourceRef: DataSourceRef = {
@@ -49,6 +49,19 @@ export function useQueryFilter(): string {
   return filters;
 }
 
+/**
+ * Strips `alertstate` matchers from a Prometheus filter string.
+ *
+ * Queries that already group or filter by `alertstate` internally (e.g. `count by (alertstate)`)
+ * must not also receive an `alertstate` matcher from the user-facing AdHoc filter.
+ */
+export function cleanAlertStateFilter(filter: string): string {
+  return filter
+    .replace(/alertstate\s*=~?\s*"[^"]*"[,\s]*/g, '')
+    .replace(/,\s*$/, '')
+    .replace(/^\s*,/, '');
+}
+
 type AdHocFilterOperator = '=' | '!=' | '=~' | '!~' | '=|' | '!=|';
 
 /**
@@ -90,6 +103,13 @@ export function removeFilter(sceneContext: SceneObject, key: string) {
   }
 }
 
+export function clearAllFilters(sceneContext: SceneObject) {
+  const filtersVariable = sceneGraph.lookupVariable(VARIABLES.filters, sceneContext);
+  if (filtersVariable instanceof AdHocFiltersVariable) {
+    filtersVariable.setState({ filters: [] });
+  }
+}
+
 /**
  * Returns the structured filters array from the AdHocFiltersVariable, reactively.
  */
@@ -104,11 +124,32 @@ function useAdHocFilters() {
 }
 
 /**
+ * Returns whether any filters are active, and a function to clear all of them.
+ */
+export function useClearAllFilters(): { hasActiveFilters: boolean; clearAllFilters: () => void } {
+  const sceneContext = useSceneContext();
+  const filters = useAdHocFilters();
+  return {
+    hasActiveFilters: filters.length > 0,
+    clearAllFilters: () => clearAllFilters(sceneContext),
+  };
+}
+
+/**
  * Returns the current exact-match (=) value of a filter by key, or undefined if not set or not an exact match.
  */
 export function useFilterValue(key: string): string | undefined {
   const filters = useAdHocFilters();
   const filter = filters.find((f) => f.key === key && f.operator === '=');
+  return filter?.value;
+}
+
+/**
+ * Returns the current regex-match (=~) value of a filter by key, or undefined if not set.
+ */
+export function useRegexFilterValue(key: string): string | undefined {
+  const filters = useAdHocFilters();
+  const filter = filters.find((f) => f.key === key && f.operator === '=~');
   return filter?.value;
 }
 

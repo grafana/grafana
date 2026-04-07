@@ -1,8 +1,8 @@
 // Core grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/completions.ts
 import UFuzzy from '@leeoniya/ufuzzy';
-import { languages } from 'monaco-editor';
+import { type languages } from 'monaco-editor';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { DEFAULT_COMPLETION_LIMIT } from '../../../constants';
@@ -10,8 +10,8 @@ import { escapeLabelValueInExactSelector, prometheusRegularEscape } from '../../
 import { getFunctions } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
 
-import { DataProvider } from './data_provider';
-import { TriggerType } from './monaco-completion-provider';
+import { type DataProvider } from './data_provider';
+import { type TriggerType } from './monaco-completion-provider';
 import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too

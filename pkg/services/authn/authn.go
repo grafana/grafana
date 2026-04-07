@@ -29,7 +29,6 @@ const (
 	ClientForm         = "auth.client.form"
 	ClientProxy        = "auth.client.proxy"
 	ClientSAML         = "auth.client.saml"
-	ClientPasswordless = "auth.client.passwordless"
 	ClientLDAP         = "ldap"
 	ClientProvisioning = "auth.client.apiserver.provisioning"
 )

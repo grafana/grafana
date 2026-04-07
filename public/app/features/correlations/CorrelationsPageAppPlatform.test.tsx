@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within, Matcher, getByRole } from '@testing-library/react';
+import { render, waitFor, screen, within, type Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { openMenu } from 'react-select-event';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -6,8 +6,8 @@ import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourceSrv, reportInteraction, setAppEvents, setDataSourceSrv, config } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceSrv, type reportInteraction, setAppEvents, setDataSourceSrv, config } from '@grafana/runtime';
+import { type DataSourceRef } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';

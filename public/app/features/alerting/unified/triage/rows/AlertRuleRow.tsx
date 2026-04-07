@@ -7,7 +7,7 @@ import { MetaText } from '../../components/MetaText';
 import { RuleDetailsDrawer } from '../rule-details/RuleDetailsDrawer';
 import { AlertRuleInstances } from '../scene/AlertRuleInstances';
 import { AlertRuleSummary } from '../scene/AlertRuleSummary';
-import { AlertRuleRow as AlertRuleRowType } from '../types';
+import { type AlertRuleRow as AlertRuleRowType } from '../types';
 
 import { GenericRow } from './GenericRow';
 import { RowActions } from './InstanceCountBadges';
@@ -52,6 +52,7 @@ export const AlertRuleRow = ({
               <OpenDrawerButton
                 aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
                 onClick={handleDrawerOpen}
+                text={t('alerting.open-drawer-icon-button.rule-details', 'Rule details')}
               />
             }
           />
