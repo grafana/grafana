@@ -14699,6 +14699,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14706,6 +14707,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14713,6 +14715,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -16486,6 +16489,10 @@
   },
   "xychart": {
     "category-xychart": "XY 图表",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "填充不透明度",
     "name-line-style": "线样式",
     "name-line-width": "线宽度",

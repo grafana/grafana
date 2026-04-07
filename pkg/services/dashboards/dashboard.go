@@ -37,6 +37,7 @@ type DashboardService interface {
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	CleanUpDashboard(ctx context.Context, dashboardUID string, dashboardId int64, orgId int64) error
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
+	CountProvisionedDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
 	SetDefaultPermissions(ctx context.Context, dto *SaveDashboardDTO, dash *Dashboard, provisioned bool)
 	UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*Dashboard, error)
 	ValidateDashboardRefreshInterval(minRefreshInterval string, targetRefreshInterval string) error
