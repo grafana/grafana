@@ -6,13 +6,11 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
@@ -21,8 +19,8 @@ var kind = schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"
 func TestRuntime_Create(t *testing.T) {
 	type testCase struct {
 		input          runtime.Object
-		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
-		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		setupLegacyFn  func(s *fakeStorage, input runtime.Object)
+		setupStorageFn func(s *fakeStorage, input runtime.Object)
 		name           string
 		wantErr        bool
 	}
@@ -31,19 +29,18 @@ func TestRuntime_Create(t *testing.T) {
 			{
 				name:  "should succeed when creating an object in both the LegacyStorage and Storage",
 				input: exampleObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
+					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
 				},
-				setupStorageFn: func(m *mock.Mock, _ runtime.Object) {
-					// We don't use the input here, as the input is transformed before being passed to unified storage.
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupStorageFn: func(s *fakeStorage, _ runtime.Object) {
+					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
 				},
 			},
 			{
 				name:  "should return an error when creating an object in the legacy store fails",
 				input: failingObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
+				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
+					s.createReturns = append(s.createReturns, returnVal{err: errors.New("error")})
 				},
 				wantErr: true,
 			},
@@ -51,17 +48,14 @@ func TestRuntime_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, tt.input)
+				tt.setupLegacyFn(ls, tt.input)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, tt.input)
+				tt.setupStorageFn(us, tt.input)
 			}
 
 			m, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
@@ -92,8 +86,8 @@ func TestDualWriter_RuntimeModeSwitch(t *testing.T) {
 	svc, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), reader, prometheus.NewRegistry())
 	require.NoError(t, err)
 
-	ls := storageMock{&mock.Mock{}, (rest.Storage)(nil)}
-	us := storageMock{&mock.Mock{}, (rest.Storage)(nil)}
+	ls := &fakeStorage{}
+	us := &fakeStorage{}
 
 	dw, err := svc.NewStorage(gr, ls, us)
 	require.NoError(t, err)
@@ -101,9 +95,9 @@ func TestDualWriter_RuntimeModeSwitch(t *testing.T) {
 	require.True(t, isDual, "DualWrite mode must produce a *dualWriter")
 
 	// DualWrite phase: Get returns the legacy result.
-	// Background unified.Get may also fire; allow it with no call-count restriction.
-	ls.On("Get", mock.Anything, "foo", mock.Anything).Return(exampleObj, nil).Once()
-	us.On("Get", mock.Anything, "foo", mock.Anything).Return(anotherObj, nil)
+	// Background unified.Get may also fire.
+	ls.getReturns = append(ls.getReturns, returnVal{obj: exampleObj})
+	us.getReturns = append(us.getReturns, returnVal{obj: anotherObj})
 
 	obj, err := dw.Get(context.Background(), "foo", &metav1.GetOptions{})
 	require.NoError(t, err)
@@ -113,27 +107,23 @@ func TestDualWriter_RuntimeModeSwitch(t *testing.T) {
 	reader.setMode(unifiedmigrations.StorageModeUnified)
 
 	// Unified phase: Get returns the unified result.
-	// legacy.Get must NOT be called — the mock panics on any unexpected call,
-	// so this is an implicit assertion.
 	obj, err = dw.Get(context.Background(), "foo", &metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, anotherObj, obj, "Unified: result must come from unified")
-
-	ls.AssertExpectations(t)
 }
 
 func TestDualWriter_UnifiedModeSkipsLegacyMutations(t *testing.T) {
 	// Verifies that once StorageModeUnified is active, Create/Update/Delete/DeleteCollection
-	// bypass legacy storage entirely. The storageMock panics on any unexpected call, so
-	// any legacy invocation here would fail the test implicitly.
+	// bypass legacy storage entirely. The fakeStorage returns zero values by default, so
+	// any legacy invocation would return unexpected results and fail assertions.
 	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
 
 	reader := &mutableStatusReader{mode: unifiedmigrations.StorageModeDualWrite}
 	svc, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), reader, prometheus.NewRegistry())
 	require.NoError(t, err)
 
-	ls := storageMock{&mock.Mock{}, (rest.Storage)(nil)}
-	us := storageMock{&mock.Mock{}, (rest.Storage)(nil)}
+	ls := &fakeStorage{}
+	us := &fakeStorage{}
 
 	dw, err := svc.NewStorage(gr, ls, us)
 	require.NoError(t, err)
@@ -144,38 +134,36 @@ func TestDualWriter_UnifiedModeSkipsLegacyMutations(t *testing.T) {
 	reader.setMode(unifiedmigrations.StorageModeUnified)
 
 	t.Run("Create routes only to unified", func(t *testing.T) {
-		us.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+		us.createReturns = append(us.createReturns, returnVal{obj: exampleObj})
 		obj, err := dw.Create(context.Background(), exampleObj, createFn, &metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, exampleObj, obj)
-		us.AssertExpectations(t)
+		require.Empty(t, ls.createCalls, "legacy Create should not have been called")
 	})
 
 	t.Run("Delete routes only to unified", func(t *testing.T) {
-		us.On("Delete", mock.Anything, "foo", mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
+		us.deleteReturns = append(us.deleteReturns, returnVal{obj: exampleObj})
 		obj, _, err := dw.Delete(context.Background(), "foo", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.Equal(t, exampleObj, obj)
-		us.AssertExpectations(t)
+		require.Empty(t, ls.deleteCalls, "legacy Delete should not have been called")
 	})
 
 	t.Run("Update routes only to unified", func(t *testing.T) {
-		us.On("Update", mock.Anything, "foo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
+		us.updateReturns = append(us.updateReturns, returnVal{obj: exampleObj})
 		obj, _, err := dw.Update(context.Background(), "foo", updatedObjInfoObj{}, createFn, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, exampleObj, obj)
-		us.AssertExpectations(t)
+		require.Empty(t, ls.updateCalls, "legacy Update should not have been called")
 	})
-
-	ls.AssertExpectations(t)
 }
 
 func TestRuntime_Get(t *testing.T) {
 	t.Skip("skip until we use this for a non dashboard/folder resource")
 
 	type testCase struct {
-		setupLegacyFn  func(m *mock.Mock, name string)
-		setupStorageFn func(m *mock.Mock, name string)
+		setupLegacyFn  func(s *fakeStorage)
+		setupStorageFn func(s *fakeStorage)
 		name           string
 		wantErr        bool
 	}
@@ -183,30 +171,30 @@ func TestRuntime_Get(t *testing.T) {
 		[]testCase{
 			{
 				name: "should succeed when getting an object from both stores",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
 				},
-				setupStorageFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				setupStorageFn: func(s *fakeStorage) {
+					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
 				},
 			},
 			{
 				name: "should return an error when getting an object in the unified store fails",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				setupLegacyFn: func(s *fakeStorage) {
+					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
 				},
-				setupStorageFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
+				setupStorageFn: func(s *fakeStorage) {
+					s.getReturns = append(s.getReturns, returnVal{err: errors.New("error")})
 				},
 				wantErr: true,
 			},
 			{
 				name: "should succeed when getting an object in the LegacyStorage fails",
-				setupLegacyFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
+				setupLegacyFn: func(s *fakeStorage) {
+					s.getReturns = append(s.getReturns, returnVal{err: errors.New("error")})
 				},
-				setupStorageFn: func(m *mock.Mock, name string) {
-					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				setupStorageFn: func(s *fakeStorage) {
+					s.getReturns = append(s.getReturns, returnVal{obj: exampleObj})
 				},
 			},
 		}
@@ -215,17 +203,14 @@ func TestRuntime_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, name)
+				tt.setupLegacyFn(ls)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, name)
+				tt.setupStorageFn(us)
 			}
 
 			m, err := ProvideService(NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
@@ -257,8 +242,8 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 
 	type testCase struct {
 		input          runtime.Object
-		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
-		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		setupLegacyFn  func(s *fakeStorage, input runtime.Object)
+		setupStorageFn func(s *fakeStorage, input runtime.Object)
 		prepare        func(dual Service) (StorageStatus, error)
 		name           string
 		wantErr        bool
@@ -268,12 +253,11 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 			{
 				name:  "should succeed when not migrated",
 				input: exampleObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
+					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
 				},
-				setupStorageFn: func(m *mock.Mock, _ runtime.Object) {
-					// We don't use the input here, as the input is transformed before being passed to unified storage.
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupStorageFn: func(s *fakeStorage, _ runtime.Object) {
+					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
 				},
 				prepare: func(dual Service) (StorageStatus, error) {
 					status, err := dual.Status(context.Background(), kind)
@@ -286,12 +270,11 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 			{
 				name:  "should succeed after migration",
 				input: exampleObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupLegacyFn: func(s *fakeStorage, input runtime.Object) {
+					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
 				},
-				setupStorageFn: func(m *mock.Mock, _ runtime.Object) {
-					// We don't use the input here, as the input is transformed before being passed to unified storage.
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				setupStorageFn: func(s *fakeStorage, _ runtime.Object) {
+					s.createReturns = append(s.createReturns, returnVal{obj: exampleObj})
 				},
 				prepare: func(dual Service) (StorageStatus, error) {
 					status, err := dual.Status(context.Background(), kind)
@@ -310,17 +293,14 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := (rest.Storage)(nil)
-			s := (rest.Storage)(nil)
-
-			ls := storageMock{&mock.Mock{}, l}
-			us := storageMock{&mock.Mock{}, s}
+			ls := &fakeStorage{}
+			us := &fakeStorage{}
 
 			if tt.setupLegacyFn != nil {
-				tt.setupLegacyFn(ls.Mock, tt.input)
+				tt.setupLegacyFn(ls, tt.input)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(us.Mock, tt.input)
+				tt.setupStorageFn(us, tt.input)
 			}
 
 			dw, err := dual.NewStorage(kind, ls, us)
