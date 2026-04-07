@@ -49,6 +49,8 @@ import {
   deleteRoutingTree,
   getRoutingTree,
   resetRoutingTreeMap,
+  routingTreeFromSpec,
+  setAllRoutingTreePermissions,
   setRoutingTree,
 } from './mocks/server/entities/k8s/routingtrees';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
@@ -295,13 +297,8 @@ describe.each([
   });
 
   it('can edit root route if one is not defined yet', async () => {
-    setRoutingTree(
-      routeName,
-      createKubernetesRoutingTreeSpec({
-        name: routeName,
-        routes: [],
-      })
-    );
+    const emptyTree = createKubernetesRoutingTreeSpec({ name: routeName, routes: [] });
+    setRoutingTree(routeName, routingTreeFromSpec(routeName, emptyTree.spec));
     const { user } = renderPage();
 
     // Sanity check to make sure we actually have an undefined root route.
@@ -335,6 +332,7 @@ describe.each([
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsExternalRead,
     ]);
+    setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
 
     const { user } = renderPage();
 
@@ -382,13 +380,8 @@ describe.each([
   });
 
   it('Should be able to delete an empty route', async () => {
-    setRoutingTree(
-      routeName,
-      createKubernetesRoutingTreeSpec({
-        name: routeName,
-        routes: [{}],
-      })
-    );
+    const tree = createKubernetesRoutingTreeSpec({ name: routeName, routes: [{}] });
+    setRoutingTree(routeName, routingTreeFromSpec(routeName, tree.spec));
 
     const { user } = renderPage();
 

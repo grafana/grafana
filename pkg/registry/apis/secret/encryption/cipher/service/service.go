@@ -98,6 +98,9 @@ func (s *cipherService) deriveEncryptionAlgorithm(payload []byte) (string, []byt
 
 	payload = payload[1:]
 	algorithmDelimiterIdx := bytes.Index(payload, []byte{encryptionAlgorithmDelimiter})
+	if algorithmDelimiterIdx == -1 {
+		return "", nil, fmt.Errorf("unable to derive encryption algorithm: missing algorithm delimiter")
+	}
 
 	algorithmB64 := payload[:algorithmDelimiterIdx]
 	payload = payload[algorithmDelimiterIdx+1:]

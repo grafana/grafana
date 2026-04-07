@@ -3,7 +3,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 
-import { setLogger } from './logging';
+import { setPluginMetaLogger } from './logging';
 import {
   getListedPanelPluginIds,
   getListedPanelPluginMetas,
@@ -41,7 +41,7 @@ describe('when useMTPlugins flag is enabled', () => {
       logMeasurement: jest.fn(),
       logWarning: jest.fn(),
     };
-    setLogger(logger);
+    setPluginMetaLogger(logger);
   });
 
   afterAll(() => {

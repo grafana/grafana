@@ -58,6 +58,10 @@ type dataStore struct {
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 }
 
+type dataImportBatchWriter interface {
+	InsertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) error
+}
+
 func newDataStore(kv KV) *dataStore {
 	ds := &dataStore{
 		kv:    kv,
@@ -547,6 +551,15 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 	return writer.Close()
 }
 
+func (d *dataStore) insertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) (bool, error) {
+	writer, ok := d.kv.(dataImportBatchWriter)
+	if !ok {
+		return false, nil
+	}
+
+	return true, writer.InsertDataImportBatch(ctx, rows)
+}
+
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	if err := validateDataKey(key); err != nil {
 		return fmt.Errorf("invalid data key: %w", err)
@@ -781,7 +794,6 @@ var (
 	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
 
 	// Bulk backwards compatibility templates
-	sqlKVUpdateLegacyResourceHistoryBulk = mustTemplate("sqlkv_update_legacy_resource_history_bulk.sql")
 	sqlKVDeleteLegacyResourceCollection  = mustTemplate("sqlkv_delete_legacy_resource_collection.sql")
 	sqlKVInsertLegacyResourceFromHistory = mustTemplate("sqlkv_insert_legacy_resource_from_history.sql")
 )
@@ -812,25 +824,6 @@ type sqlKVLegacyUpdateHistoryRequest struct {
 }
 
 func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
-	return nil
-}
-
-// TODO: remove when backwards compatibility is no longer needed.
-type sqlKVLegacyUpdateHistoryBulkRequest struct {
-	sqltemplate.SQLTemplate
-	KeyPath         string
-	Group           string
-	Resource        string
-	Namespace       string
-	Name            string
-	Action          int64
-	Folder          string
-	ResourceVersion int64
-	PreviousRV      int64
-	Generation      int64
-}
-
-func (req sqlKVLegacyUpdateHistoryBulkRequest) Validate() error {
 	return nil
 }
 
@@ -883,14 +876,9 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
 	}
 
-	var action int64
-	switch key.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
+	action, err := kvpkg.LegacyActionValue(key.Action)
+	if err != nil {
+		return err
 	}
 
 	switch key.Action {
@@ -1017,47 +1005,6 @@ func (d *dataStore) deleteLegacyResourceCollection(ctx context.Context, execer d
 	})
 	if err != nil {
 		return fmt.Errorf("compatibility layer: failed to delete legacy resource collection: %w", err)
-	}
-	return nil
-}
-
-// updateLegacyResourceHistoryBulk fills in all legacy columns on a resource_history row identified by key_path.
-// During non Backwards Compatible bulk import, the row is inserted with only key_path and value set; this UPDATE fills in
-// group, resource, namespace, name, action, folder, resource_version, previous_resource_version, and generation.
-// TODO: remove when backwards compatibility is no longer needed.
-func (d *dataStore) updateLegacyResourceHistoryBulk(ctx context.Context, execer db.ContextExecer, dataKey DataKey, microRV int64, previousRV int64, generation int64) error {
-	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
-	if !isSQLKV {
-		return nil
-	}
-
-	keyPath := kvpkg.DataSection + "/" + dataKey.String()
-
-	var action int64
-	switch dataKey.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
-	}
-
-	_, err := dbutil.Exec(ctx, execer, sqlKVUpdateLegacyResourceHistoryBulk, sqlKVLegacyUpdateHistoryBulkRequest{
-		SQLTemplate:     sqltemplate.New(d.legacyDialect),
-		KeyPath:         keyPath,
-		Group:           dataKey.Group,
-		Resource:        dataKey.Resource,
-		Namespace:       dataKey.Namespace,
-		Name:            dataKey.Name,
-		Action:          action,
-		Folder:          dataKey.Folder,
-		ResourceVersion: microRV,
-		PreviousRV:      previousRV,
-		Generation:      generation,
-	})
-	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to update legacy resource_history for bulk: %w", err)
 	}
 	return nil
 }

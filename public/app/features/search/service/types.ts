@@ -27,11 +27,18 @@ export interface SearchQuery {
   ds_uid?: string;
   ds_type?: string;
   tags?: string[];
+  // Owner of the folder only supported with unified search. Currently, there can be only teams, so the format of each
+  // ref is "iam.grafana.app/Team/{teamUID}"
+  ownerReference?: string[];
+  // Equates to resource type.
   kind?: string[];
   panel_type?: string;
   createdBy?: string;
+
+  // Both name and UID translate to resource.name in k8s world
   name?: string[];
   uid?: string[];
+
   facet?: FacetField[];
   explain?: boolean;
   panelTitleSearch?: boolean;

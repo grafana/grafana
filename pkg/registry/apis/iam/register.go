@@ -152,7 +152,7 @@ func RegisterAPIService(
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
-		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService, tracing), unified, features, accessClient),
+		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
 		cfgProvider:                      cfgProvider,
@@ -1052,4 +1052,15 @@ func mergeAPIRoutes(routes ...*builder.APIRoutes) *builder.APIRoutes {
 		merged.Namespace = append(merged.Namespace, r.Namespace...)
 	}
 	return merged
+}
+
+type legacySearchServiceProvider interface {
+	LegacySearchService() teamservice.Service
+}
+
+func legacyTeamSearchService(svc teamservice.Service) teamservice.Service {
+	if p, ok := svc.(legacySearchServiceProvider); ok {
+		return p.LegacySearchService()
+	}
+	return svc
 }

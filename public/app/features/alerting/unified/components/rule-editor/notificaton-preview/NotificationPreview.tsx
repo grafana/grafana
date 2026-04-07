@@ -182,7 +182,9 @@ export const NotificationPreview = ({
  */
 function NotificationPreviewGrafanaPermissionCheck({ children }: React.PropsWithChildren) {
   const hasLegacyNotificationPermission = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
-  const hasNotificationPolicyTreePermission = contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead);
+  const hasNotificationPolicyTreePermission =
+    contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead) ||
+    contextSrv.hasPermission(AccessControlAction.ActionAlertingManagedRoutesRead);
 
   if (hasLegacyNotificationPermission || hasNotificationPolicyTreePermission) {
     return <>{children}</>;
