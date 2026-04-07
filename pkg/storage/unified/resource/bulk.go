@@ -375,28 +375,24 @@ func (b *batchRunner) NextBatch() bool {
 
 	if opts.MaxIdle <= 0 {
 		for {
-			select {
-			case result, ok := <-b.recvChannel():
-				if !ok {
-					return true
-				}
-				switch {
-				case result.eof || result.err != nil:
-					b.pending = &result
-					return true
-				case result.request == nil:
-					b.pending = &batchStreamResult{
-						err:      fmt.Errorf("missing request"),
-						rollback: true,
-					}
-					return true
-				default:
-					if appendRequest(result.request) {
-						return true
-					}
-				}
-			default:
+			result, ok := <-b.recvChannel()
+			if !ok {
 				return true
+			}
+			switch {
+			case result.eof || result.err != nil:
+				b.pending = &result
+				return true
+			case result.request == nil:
+				b.pending = &batchStreamResult{
+					err:      fmt.Errorf("missing request"),
+					rollback: true,
+				}
+				return true
+			default:
+				if appendRequest(result.request) {
+					return true
+				}
 			}
 		}
 	}
