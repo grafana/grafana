@@ -679,6 +679,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, apierrors.NewBadRequest(err.Error())
 	}
 
+	// If an RV was passed in the old (microsecond) format, convert it to snowflake.
+	// TODO: remove this once the KV backend has been deployed everywhere.
+	if event.PreviousRV > 0 && !isSnowflake(event.PreviousRV) {
+		event.PreviousRV = rvmanager.SnowflakeFromRV(event.PreviousRV)
+	}
+
 	rv := k.snowflake.Generate().Int64()
 
 	namespace := event.Key.Namespace
