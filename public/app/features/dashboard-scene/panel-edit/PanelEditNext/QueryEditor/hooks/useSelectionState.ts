@@ -71,7 +71,10 @@ export function useSelectionState({
   transformations,
   onClearSideEffects,
 }: UseSelectionStateOptions): UseSelectionStateResult {
-  const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>([]);
+  // Initialize with first query selected so Shift+Click works immediately on load.
+  const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>(() =>
+    queries[0]?.refId ? [queries[0].refId] : []
+  );
   const [selectedTransformationIds, setSelectedTransformationIds] = useState<string[]>([]);
 
   // Store in refs so toggle callbacks stay stable without listing these as deps.
@@ -103,24 +106,19 @@ export function useSelectionState({
       // Query selection always clears transformations (cross-type exclusivity).
       setSelectedTransformationIds([]);
 
-      if (modifiers?.range) {
+      const currentSelection = selectedQueryRefIdsRef.current;
+      if (modifiers?.range && currentSelection.length > 0) {
         // Shift+Click: range-select from the anchor to this query (inclusive).
-        // When nothing has been explicitly clicked yet, anchor defaults to queries[0]
-        // so Shift+Click works immediately on page load.
-        const currentSelection = selectedQueryRefIdsRef.current;
-        const anchorRefId = currentSelection.at(-1) ?? queries[0]?.refId ?? null;
-
-        if (anchorRefId) {
-          const rangeSelection = computeRangeSelection(
-            queries.map(({ refId }) => refId),
-            currentSelection,
-            anchorRefId,
-            query.refId
-          );
-          if (rangeSelection) {
-            setSelectedQueryRefIds(rangeSelection);
-            return;
-          }
+        const anchorRefId = currentSelection.at(-1)!;
+        const rangeSelection = computeRangeSelection(
+          queries.map(({ refId }) => refId),
+          currentSelection,
+          anchorRefId,
+          query.refId
+        );
+        if (rangeSelection) {
+          setSelectedQueryRefIds(rangeSelection);
+          return;
         }
       }
 

@@ -107,9 +107,9 @@ describe('useSelectionState', () => {
       expect(result.current.selectedQueryRefIds).toEqual(['B', 'C', 'D']);
     });
 
-    it('anchors to the first query when nothing is selected yet', () => {
+    it('anchors to the first query on initial load', () => {
       const { result } = setup();
-      // No prior selection — Shift+Click C anchors to A (first query) and selects A-C
+      // First query is selected by default, so Shift+Click C range-selects A-C
       act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['A', 'B', 'C']);
     });
@@ -120,6 +120,16 @@ describe('useSelectionState', () => {
       act(() => result.current.toggleQuerySelection({ refId: 'A' }));
       act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
       expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+
+    it('does not range-select when shift-clicking a query after selecting a transformation', () => {
+      const { result } = setup();
+      // Select a transformation (this clears query selection)
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      // Shift+Click a query — should NOT range-select from first query, just plain select
+      act(() => result.current.toggleQuerySelection({ refId: 'C' }, { range: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['C']);
     });
   });
 
