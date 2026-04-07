@@ -3,7 +3,10 @@ import { type ActionId, type ActionImpl } from 'kbar';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Badge, useStyles2 } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 export const ResultItem = React.forwardRef(
   (
@@ -32,6 +35,10 @@ export const ResultItem = React.forwardRef(
     }, [action.ancestors, currentRootActionId]);
 
     const styles = useStyles2(getResultItemStyles);
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
+    const showProvisionedBadge = config.featureToggles.provisioning && managedBy === ManagerKind.Repo;
 
     let name = action.name;
 
@@ -62,6 +69,14 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
+          {showProvisionedBadge && (
+            <Badge
+              color="purple"
+              icon="exchange-alt"
+              aria-label={t('command-palette.badge.provisioned', 'Provisioned')}
+              tooltip={t('command-palette.badge.provisioned', 'Provisioned')}
+            />
+          )}
         </div>
       </div>
     );
