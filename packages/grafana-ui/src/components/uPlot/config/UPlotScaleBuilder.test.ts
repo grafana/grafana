@@ -21,8 +21,7 @@ describe('UPlotScaleBuilder', () => {
       direction: ScaleDirection.Up,
       isTime: false,
     });
-    //@ts-expect-error
-    const scale: uPlot.Scales = builder.getConfig();
+    const scale = builder.getConfig();
     const rangeFn = scale[scaleKey].range as uPlot.Range.Function;
 
     // This is just asserting that the previous behavior is unchanged by https://github.com/grafana/grafana/pull/122057

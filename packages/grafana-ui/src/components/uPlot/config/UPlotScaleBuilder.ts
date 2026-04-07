@@ -26,13 +26,15 @@ export interface ScaleProps {
   padMaxBy?: number;
 }
 
+const isValidLogBase = (v: number | undefined): v is Scale.LogBase => v === 2 || v === 10;
+
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   merge(props: ScaleProps) {
     this.props.min = optMinMax('min', this.props.min, props.min);
     this.props.max = optMinMax('max', this.props.max, props.max);
   }
 
-  getConfig(): Scale {
+  getConfig(): uPlot.Scales {
     let {
       isTime,
       auto,
@@ -62,6 +64,10 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     }
 
     const distr = this.props.distribution;
+    let safeLog = this.props.log;
+    if (!isValidLogBase(safeLog)) {
+      safeLog = undefined;
+    }
 
     const distribution = !isTime
       ? {
@@ -73,15 +79,14 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
                 : distr === ScaleDistribution.Ordinal
                   ? 2
                   : 1,
-          log:
-            distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? (this.props.log ?? 2) : undefined,
+          log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? (safeLog ?? 2) : undefined,
           asinh: distr === ScaleDistribution.Symlog ? (this.props.linearThreshold ?? 1) : undefined,
         }
       : {};
 
     // guard against invalid log scale limits <= 0, or snap to log boundaries
     if (distr === ScaleDistribution.Log) {
-      let logBase = this.props.log!;
+      let logBase = safeLog!; // FIXME: why do we assert this is non-null without just checking?
       let logFn = logBase === 2 ? Math.log2 : Math.log10;
 
       if (hardMin != null) {
@@ -119,7 +124,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     /*
     // snap to symlog boundaries
     else if (distr === ScaleDistribution.Symlog) {
-      let logBase = this.props.log!;
+      let logBase = safeLog!; // FIXME: why do we assert this is non-null without just checking?
       let logFn = logBase === 2 ? Math.log2 : Math.log10;
 
       let sign = Math.sign(hardMin);
