@@ -1,4 +1,4 @@
-import { CustomVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { CustomVariable, QueryVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -16,6 +16,10 @@ jest.mock('../serialization/sceneVariablesSetToVariables', () => ({
 
 function makeVar(name: string) {
   return new CustomVariable({ name, query: name, value: name, text: name });
+}
+
+function makeQueryVar(name: string) {
+  return new QueryVariable({ name, query: '', value: '', text: '' });
 }
 
 describe('getVariablesCompatibility', () => {
@@ -62,9 +66,9 @@ describe('getVariablesCompatibility', () => {
 
   describe('edit pane selection', () => {
     it('scopes to the selected object ancestry', () => {
-      const dashVar = makeVar('dashVar');
-      const sectionVar = makeVar('sectionVar');
-      const otherSectionVar = makeVar('otherVar');
+      const dashVar = makeQueryVar('dashVar');
+      const sectionVar = makeQueryVar('sectionVar');
+      const otherSectionVar = makeQueryVar('otherVar');
 
       const row1 = new RowItem({
         title: 'Row 1',
@@ -86,12 +90,12 @@ describe('getVariablesCompatibility', () => {
       const result = getVariablesCompatibility(dashboard);
       const names = result.map((v) => v.name);
 
-      expect(names).toContain('sectionVar');
       expect(names).toContain('dashVar');
+      expect(names).not.toContain('sectionVar');
       expect(names).not.toContain('otherVar');
     });
 
-    it('falls back to all variables when nothing is selected', () => {
+    it('falls back to global variables when nothing is selected', () => {
       const dashVar = makeVar('dashVar');
       const sectionVar = makeVar('sectionVar');
 
@@ -109,12 +113,35 @@ describe('getVariablesCompatibility', () => {
       const names = result.map((v) => v.name);
 
       expect(names).toContain('dashVar');
-      expect(names).toContain('sectionVar');
+      expect(names).not.toContain('sectionVar');
+    });
+
+    it('excludes the currently selected query variable from ancestry results', () => {
+      const dashVar = makeVar('dashVar');
+      const queryVar = makeQueryVar('queryVar');
+
+      const row = new RowItem({
+        title: 'Row 1',
+        $variables: new SceneVariableSet({ variables: [queryVar] }),
+      });
+
+      const dashboard = new DashboardScene({
+        $variables: new SceneVariableSet({ variables: [dashVar] }),
+        body: new RowsLayoutManager({ rows: [row] }),
+      });
+
+      dashboard.state.editPane.selectObject(queryVar);
+
+      const result = getVariablesCompatibility(dashboard);
+      const names = result.map((v) => v.name);
+
+      expect(names).toContain('dashVar');
+      expect(names).not.toContain('queryVar');
     });
   });
 
   describe('dashboard view mode (no editPanel, no selection)', () => {
-    it('returns all variables from dashboard and all sections', () => {
+    it('returns global variables from dashboard', () => {
       const dashVar = makeVar('dashVar');
       const sectionVar1 = makeVar('sectionVar1');
       const sectionVar2 = makeVar('sectionVar2');
@@ -138,8 +165,8 @@ describe('getVariablesCompatibility', () => {
       const names = result.map((v) => v.name);
 
       expect(names).toContain('dashVar');
-      expect(names).toContain('sectionVar1');
-      expect(names).toContain('sectionVar2');
+      expect(names).not.toContain('sectionVar1');
+      expect(names).not.toContain('sectionVar2');
     });
 
     it('deduplicates: dashboard variables take precedence over section variables with the same name', () => {
@@ -164,33 +191,6 @@ describe('getVariablesCompatibility', () => {
   });
 
   describe('called with a child scene object (not the DashboardScene root)', () => {
-    it('walks up ancestry and collects variables from all ancestor levels', () => {
-      const dashVar = makeVar('dashVar');
-      const sectionVar = makeVar('sectionVar');
-
-      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
-      const gridItem = new DashboardGridItem({ body: panel });
-
-      const row = new RowItem({
-        title: 'Row 1',
-        $variables: new SceneVariableSet({ variables: [sectionVar] }),
-        layout: new DefaultGridLayoutManager({
-          grid: new SceneGridLayout({ children: [gridItem] }),
-        }),
-      });
-
-      new DashboardScene({
-        $variables: new SceneVariableSet({ variables: [dashVar] }),
-        body: new RowsLayoutManager({ rows: [row] }),
-      });
-
-      const result = getVariablesCompatibility(panel);
-      const names = result.map((v) => v.name);
-
-      expect(names).toContain('sectionVar');
-      expect(names).toContain('dashVar');
-    });
-
     it('gives precedence to closer ancestor variables on name collision', () => {
       const sectionVar = makeVar('sharedName');
 
