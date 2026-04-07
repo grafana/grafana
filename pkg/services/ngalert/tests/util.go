@@ -121,8 +121,8 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		IsGrafanaAdmin: true,
 		Permissions: map[int64]map[string][]string{
 			orgID: {
-				dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
-				dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+				folder.ActionFoldersCreate: {folder.ScopeFoldersAll},
+				folder.ActionFoldersRead:   {folder.ScopeFoldersAll},
 			},
 		},
 	}

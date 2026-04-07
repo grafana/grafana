@@ -76,7 +76,7 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 				}
 			}
 
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersRead] = []string{folder.ScopeFoldersAll}
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
@@ -102,8 +102,8 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 			b, err := json.Marshal(map[string]string{"test": "test"})
 			require.NoError(t, err)
 			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersRead] = []string{folder.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][folder.ActionFoldersDelete] = []string{folder.ScopeFoldersAll}
 			result, err := sc.service.CreateElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,

@@ -39,7 +39,7 @@ func TestHTTPServer_GetFolderPermissionList(t *testing.T) {
 		})
 
 		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestHTTPServer_GetFolderPermissionList(t *testing.T) {
 		})
 
 		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -96,7 +96,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 
 		body := `{"items": []}`
 		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 
 		body := `{"items": [{ userId:1, teamId: 2 }]}`
 		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -128,7 +128,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 
 		body := `{"items": [{ teamId:1, role: "Admin" }]}`
 		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 
 		body := `{"items": [{ userId:1, role: "Admin" }]}`
 		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -169,7 +169,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 
 		body := `{"items": [{"role": "Viewer", "permission": 1}]}`
 		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -199,7 +199,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 
 		body := `{"items": [{"role": "Viewer", "permission": 1}]}`
 		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)
@@ -224,7 +224,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 
 		body := `{"items": [{"role": "Viewer", "permission": 1}]}`
 		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+			{Action: folder.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
 		})))
 
 		require.NoError(t, err)

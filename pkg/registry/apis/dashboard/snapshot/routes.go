@@ -117,7 +117,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					}
 
 					// RBAC check for snapshot creation
-					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsCreate)); !ok || err != nil {
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboardsnapshots.ActionSnapshotsCreate)); !ok || err != nil {
 						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
 						return
 					}
@@ -263,7 +263,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						errhttp.Write(ctx, err, w)
 						return
 					}
-					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsDelete)); !ok || err != nil {
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboardsnapshots.ActionSnapshotsDelete)); !ok || err != nil {
 						w.WriteHeader(http.StatusForbidden)
 						_ = json.NewEncoder(w).Encode(&util.DynMap{"message": "access denied"})
 						return
@@ -348,7 +348,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					}
 
 					// RBAC check for reading snapshot settings
-					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsRead)); !ok || err != nil {
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)); !ok || err != nil {
 						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
 						return
 					}
