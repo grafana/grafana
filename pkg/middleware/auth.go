@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -246,7 +246,7 @@ func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Hand
 			return
 		}
 
-		ac.Middleware(ac2)(ac.EvalPermission(dashboards.ActionSnapshotsCreate))
+		ac.Middleware(ac2)(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsCreate))
 	}
 }
 
@@ -263,7 +263,7 @@ func SnapshotPublicModeOrDelete(cfg *setting.Cfg, ac2 ac.AccessControl) web.Hand
 			return
 		}
 
-		ac.Middleware(ac2)(ac.EvalPermission(dashboards.ActionSnapshotsDelete))
+		ac.Middleware(ac2)(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsDelete))
 	}
 }
 

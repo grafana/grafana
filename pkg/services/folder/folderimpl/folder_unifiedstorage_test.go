@@ -251,12 +251,12 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		1: accesscontrol.GroupScopesByActionContext(
 			ctx,
 			[]accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
-				{Action: accesscontrol.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersAll},
+				{Action: folder.ActionFoldersCreate, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersWrite, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersDelete, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
+				{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
+				{Action: accesscontrol.ActionLibraryPanelsDelete, Scope: folder.ScopeFoldersAll},
 			}),
 	}}
 
