@@ -1,9 +1,12 @@
 package testcases
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -91,11 +94,6 @@ func (tc *queryCacheConfigsTestCase) Setup(t *testing.T, helper *apis.K8sTestHel
 func (tc *queryCacheConfigsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
 	t.Helper()
 
-	expectedCount := 0
-	if shouldExist {
-		expectedCount = len(tc.names)
-	}
-
 	orgID := helper.Org1.OrgID
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
@@ -108,6 +106,20 @@ func (tc *queryCacheConfigsTestCase) Verify(t *testing.T, helper *apis.K8sTestHe
 			Resource: "querycacheconfigs",
 		},
 	})
+
+	// The querycaching API group requires an enterprise license to register.
+	// If the API isn't available, a List returns "not found". When we don't
+	// expect data to exist, that's an acceptable outcome.
+	_, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+	if err != nil && !shouldExist && k8serrors.IsNotFound(err) {
+		return
+	}
+	require.NoError(t, err)
+
+	expectedCount := 0
+	if shouldExist {
+		expectedCount = len(tc.names)
+	}
 
 	verifyResourceCount(t, client, expectedCount)
 	for _, name := range tc.names {
