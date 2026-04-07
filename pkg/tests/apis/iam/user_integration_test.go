@@ -47,10 +47,10 @@ func TestIntegrationUsers(t *testing.T) {
 			doUserCRUDTestsUsingTheNewAPIs(t, helper)
 			doHiddenUsersTests(t, helper)
 			doUserFieldSelectorTests(t, helper)
+			doUserStatusUpdateTests(t, helper)
 
 			if mode < 3 {
 				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
-				doUserStatusUpdateTests(t, helper)
 			}
 		})
 	}

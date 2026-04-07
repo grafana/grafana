@@ -569,6 +569,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		if b.userLegacyStore != nil && b.useStatusDualWriter(userResource) {
 			storage[userResource.StoragePath("status")] = user.NewStatusDualWriter(
 				userResource.GroupVersion(),
+				b.tracing,
 				statusStore,
 				b.userLegacyStore,
 				b.store,

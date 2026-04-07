@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,10 +23,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-var logger = log.New("iam.user.status")
-
 type statusDualWriter struct {
 	gv     schema.GroupVersion
+	logger log.Logger
+	tracer trace.Tracer
 	status *grafanaregistry.StatusREST
 	legacy *LegacyStore
 	store  legacy.LegacyIdentityStore
@@ -35,9 +38,11 @@ var (
 	_ rest.ResetFieldsStrategy = (*statusDualWriter)(nil)
 )
 
-func NewStatusDualWriter(gv schema.GroupVersion, status *grafanaregistry.StatusREST, legacyStore *LegacyStore, store legacy.LegacyIdentityStore) rest.Storage {
+func NewStatusDualWriter(gv schema.GroupVersion, tracer trace.Tracer, status *grafanaregistry.StatusREST, legacyStore *LegacyStore, store legacy.LegacyIdentityStore) *statusDualWriter {
 	return &statusDualWriter{
 		gv:     gv,
+		logger: log.New("grafana-apiserver.users.legacy.status"),
+		tracer: tracer,
 		status: status,
 		legacy: legacyStore,
 		store:  store,
@@ -54,30 +59,56 @@ func (s *statusDualWriter) New() runtime.Object {
 
 // Get implements rest.Patcher.
 func (s *statusDualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.legacy.Get(ctx, name, options)
+	ctx, span := s.tracer.Start(ctx, "user.status.get", trace.WithAttributes(
+		attribute.String("name", name),
+	))
+	defer span.End()
+
+	obj, err := s.legacy.Get(ctx, name, options)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "user status get failed")
+	}
+	return obj, err
 }
 
 // Update implements rest.Patcher.
 func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "user.status.update", trace.WithAttributes(
+		attribute.String("name", name),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to get namespace info")
 		return nil, false, err
 	}
 
 	// Resolve the incoming object to extract the lastSeenAt value from the request
 	oldObj, err := s.legacy.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to get user from legacy store")
 		return nil, false, err
 	}
 
 	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to resolve updated object")
 		return nil, false, err
 	}
 
 	updatedUser, ok := newObj.(*iamv0alpha1.User)
 	if !ok {
-		return nil, false, fmt.Errorf("expected User but got %T", newObj)
+		err := fmt.Errorf("expected User but got %T", newObj)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "unexpected object type")
+		return nil, false, err
 	}
 
 	lastSeenAt := time.Unix(updatedUser.Status.LastSeenAt, 0).UTC()
@@ -88,37 +119,44 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		LastSeenAt: legacysql.NewDBTime(lastSeenAt),
 	})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to update lastSeenAt in legacy store")
 		return nil, false, err
 	}
 
 	// Re-fetch from legacy to get the authoritative state after the update
 	legacyObj, err := s.legacy.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to re-fetch user from legacy store")
 		return nil, false, err
 	}
 	legacyUser, ok := legacyObj.(*iamv0alpha1.User)
 	if !ok {
-		return nil, false, fmt.Errorf("expected User but got %T", legacyObj)
+		err := fmt.Errorf("expected User but got %T", legacyObj)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "unexpected object type after re-fetch")
+		return nil, false, err
 	}
 
 	// Sync the status to unified store
 	unifiedObj, err := s.status.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		logger.Warn("unable to read unified status", "error", err)
+		ctxLogger.Warn("unable to read unified status", "error", err)
 		return legacyUser, false, nil
 	}
 	unified, ok := unifiedObj.(*iamv0alpha1.User)
 	if !ok {
-		logger.Warn("unexpected type from unified status", "type", fmt.Sprintf("%T", unifiedObj))
+		ctxLogger.Warn("unexpected type from unified status", "type", fmt.Sprintf("%T", unifiedObj))
 		return legacyUser, false, nil
 	}
 
-	// FIXME: merge correctly instead of overwriting the whole status. This will cause issues if there are other fields in the status that are not managed by legacy store.
-	unified.Status = legacyUser.Status
+	// Only sync the field managed by the legacy store; preserve other status fields (e.g. TeamSync).
+	unified.Status.LastSeenAt = legacyUser.Status.LastSeenAt
 
 	_, _, err = s.status.Update(ctx, name, rest.DefaultUpdatedObjectInfo(unified), createValidation, updateValidation, false, options)
 	if err != nil {
-		logger.Warn("error updating unified status", "error", err)
+		ctxLogger.Warn("error updating unified status", "error", err)
 	}
 
 	return legacyUser, false, nil

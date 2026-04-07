@@ -821,6 +821,16 @@ func (s *legacySQLStore) UpdateLastSeenAt(ctx context.Context, ns claims.Namespa
 		return fmt.Errorf("execute template %q: %w", sqlUpdateUserLastSeenAtTemplate.Name(), err)
 	}
 
-	_, err = sql.DB.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
-	return err
+	result, err := sql.DB.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("user not found: %s", cmd.UID)
+	}
+	return nil
 }
