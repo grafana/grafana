@@ -53,6 +53,7 @@ export const BatchAPIToggle = (props: Props) => {
 
   return (
     <Field
+      noMargin
       description={description}
       label={t('components.batch-api-toggle.label-enable-batch-api', 'Enable Batch API')}
     >
