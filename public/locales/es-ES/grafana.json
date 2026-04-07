@@ -4364,6 +4364,17 @@
       "title": "Aún no has creado ningún panel de control",
       "title-folder": "Esta carpeta aún no contiene ningún panel de control"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Eliminar esta carpeta",
       "delete-folder-error": "Error al eliminar la carpeta. Inténtalo de nuevo más tarde.",
@@ -5436,9 +5447,6 @@
         "title": {
           "proceed-to-external-site": "¿Dirigirse a un sitio externo?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Ver como escena"
       }
     },
     "dashboard-links-menu": {
@@ -5985,12 +5993,20 @@
       "not-found": "No se ha encontrado la fuente de datos el UID «{{datasourceUid}}»."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Configurar",
       "configure-button-menu": "Activar o desactivar menú",
+      "configure-visualization": "",
       "empty-state-message": "Ejecuta una consulta para visualizarla aquí o ve a todas las visualizaciones para añadir otros tipos de panel",
       "menu-open-panel-editor": "Configurar",
       "menu-use-library-panel": "Usar panel de la librería",
-      "missing-config": "Falta la configuración del panel"
+      "menu-use-saved-query": "",
+      "missing-config": "Falta la configuración del panel",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Nuevo panel",
     "on-create-new-row": {
@@ -6769,6 +6785,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6855,6 +6876,10 @@
       "constant-options": "Opciones permanentes",
       "label-value": "Valor",
       "placeholder-your-metric-prefix": "Tu prefijo métrico"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Las reglas de mostrar/ocultar no funcionarán",
@@ -7185,6 +7210,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7503,6 +7534,7 @@
     "sharing": {
       "save-before-share": {
         "text": "Hay cambios no guardados en este dashboard. Debes guardarlos antes de poder compartirlo.",
+        "text-no-save": "",
         "title": "Cambios sin guardar"
       }
     },
@@ -7636,6 +7668,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulario del editor de variables",
       "back-to-list": "Regresar a la lista",
@@ -7665,6 +7702,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "¿Seguro que quieres eliminar: {{variable}}?",
       "confirmText-delete-variable": "Eliminar variable",
+      "drag-handle-label": "",
       "title-delete-variable": "Eliminar variable",
       "tooltip-duplicate-variable": "Duplicar variable",
       "tooltip-remove-variable": "Quitar variable"
@@ -8234,6 +8272,7 @@
       "label-preview": "Vista previa"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Duplicar asignación de valor",
       "duplicate-value-mapping-tooltip-duplicate": "Duplicar",
       "placeholder-exact-value-to-match": "Valor exacto que debe coincidir",
@@ -10052,6 +10091,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Añadir enlace",
+      "drag-handle-label": "",
       "edit-link": "Editar enlace",
       "one-click": "Un clic",
       "one-click-enabled": "Un clic habilitado",
@@ -12596,7 +12636,7 @@
       "name-required": "El nombre es obligatorio",
       "save": "Guardar",
       "table-delete": "Eliminar elemento de la lista de reproducción",
-      "table-drag": "Arrastrar y soltar para reordenar",
+      "table-drag": "",
       "table-empty": "La lista de reproducción está vacía. Añadir tableros a continuación.",
       "table-heading": "Paneles de control"
     },
@@ -14730,6 +14770,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14737,9 +14778,11 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14755,7 +14798,7 @@
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -15577,6 +15620,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Haz clic para editar ",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Eliminar fila de enumeración",
       "remove-enum-row-tooltip-delete": "Eliminar"
     },
@@ -16490,6 +16534,7 @@
       "variable": "Variable"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Duplicar variable",
       "tooltip-remove-variable": "Quitar variable"
     },
@@ -16532,6 +16577,10 @@
   },
   "xychart": {
     "category-xychart": "Gráfico XY",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Opacidad de relleno",
     "name-line-style": "Estilo de línea",
     "name-line-width": "Espesor de la línea",

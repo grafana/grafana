@@ -78,6 +78,11 @@ func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64)
 	return s.legacyService.ListByIdOrUID(ctx, uids, ids)
 }
 
+func (s *Service) GetByLoginWithPassword(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
+	// Redirect to legacy service as support for passwords is not implemented in the k8s service
+	return s.legacyService.GetByLoginWithPassword(ctx, cmd)
+}
+
 func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
 		// UserK8sService.GetByLogin resolves the k8s namespace from the requester's org ID.

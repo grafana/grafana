@@ -1862,17 +1862,23 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 	rsp := &resourcepb.BulkResponse{}
 
+	reportError := func(err error, format string, args ...any) {
+		msg := fmt.Sprintf(format, args...)
+		b.log.Error(msg, "error", err)
+		rsp.Error = AsErrorResult(fmt.Errorf("%s: %w", msg, err))
+	}
+
 	for _, key := range setting.Collection {
 		events := make([]string, 0)
 		for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
 			if err != nil {
-				b.log.Error("failed to list event: %s", err)
+				reportError(err, "failed to list event")
 				return rsp
 			}
 
 			evtKey, err := ParseEventKey(evtKeyStr)
 			if err != nil {
-				b.log.Error("error parsing event key: %s", err)
+				reportError(err, "error parsing event key")
 				return rsp
 			}
 
@@ -1884,7 +1890,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		if err := b.eventStore.batchDelete(ctx, events); err != nil {
-			b.log.Error("failed to delete events: %s", err)
+			reportError(err, "failed to delete events")
 			return rsp
 		}
 
@@ -1896,7 +1902,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Resource:  key.Resource,
 		}, SortOrderAsc) {
 			if err != nil {
-				b.log.Error("failed to list collection before delete: %s", err)
+				reportError(err, "failed to list collection before delete")
 				return rsp
 			}
 
@@ -1905,14 +1911,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 		previousCount := int64(len(historyKeys))
 		if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
-			b.log.Error("failed to delete collection: %s", err)
+			reportError(err, "failed to delete collection")
 			return rsp
 		}
 
 		// Delete legacy resource rows for this collection so they can be re-synced after import.
 		if rvManagerDB != nil {
 			if err := b.dataStore.deleteLegacyResourceCollection(ctx, rvManagerDB, key.Namespace, key.Group, key.Resource); err != nil {
-				b.log.Error("failed to delete legacy resource collection", "error", err)
+				reportError(err, "failed to delete legacy resource collection")
 				return rsp
 			}
 		}
@@ -1937,23 +1943,13 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	updatedResources := make(map[NamespacedResource]bool)
 	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
 	lastMicroRV := make(map[string]int64)
-	recordSavedItem := func(item kvBulkImportItem) error {
+	recordSavedItem := func(item kvBulkImportItem) {
 		saved = append(saved, item.dataKey)
 		updatedResources[NamespacedResource{
 			Namespace: item.dataKey.Namespace,
 			Group:     item.dataKey.Group,
 			Resource:  item.dataKey.Resource,
 		}] = true
-
-		if rvManagerDB == nil {
-			return nil
-		}
-
-		if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, rvManagerDB, item.dataKey, item.microRV, item.previousRV, item.generation); err != nil {
-			return fmt.Errorf("failed to update legacy resource_history for bulk: %w", err)
-		}
-
-		return nil
 	}
 
 	batchIter, ok := iter.(BulkRequestBatchIterator)
@@ -2061,11 +2057,31 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			}
 
 			batchItems = append(batchItems, item)
-			batchRows = append(batchRows, kv.DataImportRow{
+			importRow := kv.DataImportRow{
 				GUID:    uuid.New().String(),
 				KeyPath: kv.DataSection + "/" + dataKey.String(),
 				Value:   req.Value,
-			})
+			}
+			if rvManagerDB != nil {
+				legacyAction, err := kv.LegacyActionValue(action)
+				if err != nil {
+					rollback()
+					rsp.Error = AsErrorResult(fmt.Errorf("failed to map legacy action: %w", err))
+					return rsp
+				}
+				importRow.Legacy = &kv.DataImportLegacyFields{
+					Group:           dataKey.Group,
+					Resource:        dataKey.Resource,
+					Namespace:       dataKey.Namespace,
+					Name:            dataKey.Name,
+					Action:          legacyAction,
+					Folder:          dataKey.Folder,
+					ResourceVersion: item.microRV,
+					PreviousRV:      item.previousRV,
+					Generation:      item.generation,
+				}
+			}
+			batchRows = append(batchRows, importRow)
 		}
 
 		usedBatchWriter, err := b.dataStore.insertDataImportBatch(ctx, batchRows)
@@ -2087,10 +2103,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 					continue
 				}
 
-				if err := recordSavedItem(item); err != nil {
-					b.log.Error("failed to update legacy resource_history for bulk", "error", err)
-					return rsp
-				}
+				recordSavedItem(item)
 				if item.nameKey != "" {
 					lastMicroRV[item.nameKey] = item.microRV
 				}
@@ -2099,10 +2112,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		for _, item := range batchItems {
-			if err := recordSavedItem(item); err != nil {
-				b.log.Error("failed to update legacy resource_history for bulk", "error", err)
-				return rsp
-			}
+			recordSavedItem(item)
 			if item.nameKey != "" {
 				lastMicroRV[item.nameKey] = item.microRV
 			}
@@ -2114,7 +2124,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		// Check whether we're using the migration tx (no ExecWithRV — it uses its own connection).
 		for _, key := range setting.Collection {
 			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, rvManagerDB, key.Namespace, key.Group, key.Resource); err != nil {
-				b.log.Error("failed to sync legacy resource from history", "error", err)
+				reportError(err, "failed to sync legacy resource from history")
 				return rsp
 			}
 
@@ -2150,7 +2160,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				LastImportTime:     now,
 			})
 			if err != nil {
-				rsp.Error = AsErrorResult(fmt.Errorf("failed to save last import time for resource %s: %s", nsr.String(), err))
+				reportError(err, "failed to save last import time for resource %s", nsr.String())
 			}
 		}
 	}

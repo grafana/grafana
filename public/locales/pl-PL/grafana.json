@@ -4418,6 +4418,17 @@
       "title": "Nie utworzono jeszcze żadnych pulpitów",
       "title-folder": "Ten folder nie zawiera jeszcze żadnych pulpitów"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Usuń ten folder",
       "delete-folder-error": "Błąd podczas usuwania folderu. Spróbuj ponownie później.",
@@ -5496,9 +5507,6 @@
         "title": {
           "proceed-to-external-site": "Przejść do witryny zewnętrznej?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Wyświetl jako scenę"
       }
     },
     "dashboard-links-menu": {
@@ -6045,12 +6053,20 @@
       "not-found": "Nie znaleziono źródła danych o identyfikatorze UID „{{datasourceUid}}”."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Konfiguruj",
       "configure-button-menu": "Przełącz menu",
+      "configure-visualization": "",
       "empty-state-message": "Uruchom zapytanie, aby je tutaj zwizualizować, lub przejdź do wszystkich wizualizacji, aby dodać inne typy paneli",
       "menu-open-panel-editor": "Konfiguruj",
       "menu-use-library-panel": "Użyj panelu biblioteki",
-      "missing-config": "Brak konfiguracji panelu"
+      "menu-use-saved-query": "",
+      "missing-config": "Brak konfiguracji panelu",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Nowy panel",
     "on-create-new-row": {
@@ -6833,6 +6849,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6919,6 +6940,10 @@
       "constant-options": "Opcje stałe",
       "label-value": "Wartość",
       "placeholder-your-metric-prefix": "Prefiks metryki"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Reguły pokazywania/ukrywania nie będą działać",
@@ -7257,6 +7282,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7581,6 +7612,7 @@
     "sharing": {
       "save-before-share": {
         "text": "Masz niezapisane zmiany dotyczące tego pulpitu. Musisz je zapisać, zanim będzie można udostępnić pulpit.",
+        "text-no-save": "",
         "title": "Niezapisane zmiany"
       }
     },
@@ -7714,6 +7746,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formularz edytora zmiennych",
       "back-to-list": "Powrót do listy",
@@ -7743,6 +7780,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Czy na pewno chcesz usunąć zmienną {{variable}}?",
       "confirmText-delete-variable": "Usuń zmienną",
+      "drag-handle-label": "",
       "title-delete-variable": "Usuń zmienną",
       "tooltip-duplicate-variable": "Duplikuj zmienną",
       "tooltip-remove-variable": "Usuń zmienną"
@@ -8320,6 +8358,7 @@
       "label-preview": "Podgląd"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Duplikuj mapowanie wartości",
       "duplicate-value-mapping-tooltip-duplicate": "Duplikuj",
       "placeholder-exact-value-to-match": "Dokładna wartość do dopasowania",
@@ -10162,6 +10201,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Dodaj link",
+      "drag-handle-label": "",
       "edit-link": "Edytuj link",
       "one-click": "Jedno kliknięcie",
       "one-click-enabled": "Jedno kliknięcie włączone",
@@ -12728,7 +12768,7 @@
       "name-required": "Nazwa jest wymagana",
       "save": "Zapisz",
       "table-delete": "Usuń element z listy autoodtwarzania",
-      "table-drag": "Przeciągnij i upuść, aby zmienić kolejność",
+      "table-drag": "",
       "table-empty": "Lista autoodtwarzania jest pusta. Dodaj pulpity poniżej.",
       "table-heading": "Pulpity"
     },
@@ -14904,6 +14944,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14911,9 +14952,11 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14929,7 +14972,7 @@
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -15753,6 +15796,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Kliknij, aby edytować",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Usuń wiersz enum",
       "remove-enum-row-tooltip-delete": "Usuń"
     },
@@ -16666,6 +16710,7 @@
       "variable": "Zmienna"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Duplikuj zmienną",
       "tooltip-remove-variable": "Usuń zmienną"
     },
@@ -16708,6 +16753,10 @@
   },
   "xychart": {
     "category-xychart": "Wykres XY",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Nieprzezroczystość wypełnienia",
     "name-line-style": "Styl linii",
     "name-line-width": "Szerokość linii",

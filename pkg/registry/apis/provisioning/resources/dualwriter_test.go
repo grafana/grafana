@@ -456,7 +456,7 @@ func TestCreateFolder(t *testing.T) {
 			errContains: "failed to read folder metadata",
 		},
 		{
-			name: "flag enabled: ref not found is treated as file not found (new branch)",
+			name: "flag enabled: ref not found falls back to configured branch, file not found → creates on new branch",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
@@ -468,7 +468,10 @@ func TestCreateFolder(t *testing.T) {
 				}
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				// First read targets the new branch → branch doesn't exist
 				rw.On("Read", mock.Anything, "newfolder/_folder.json", "new-branch").Return(nil, repository.ErrRefNotFound)
+				// Fallback read targets the configured branch → file not found either
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, repository.ErrFileNotFound)
 				rw.On("Create", mock.Anything, "newfolder/_folder.json", "new-branch", mock.MatchedBy(func(b []byte) bool {
 					var res folders.Folder
 					if err := json.Unmarshal(b, &res); err != nil {
@@ -488,6 +491,78 @@ func TestCreateFolder(t *testing.T) {
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
 				assert.Equal(t, "newfolder/", result.Path)
 				assert.Equal(t, "new-branch", result.Ref)
+			},
+		},
+		{
+			name: "flag enabled: ref not found falls back to configured branch, file exists → reuses UID for ancestor",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.GitRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+						Sync:      provisioning.SyncOptions{Enabled: false},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+
+				// Parent: branch doesn't exist → fallback to configured branch → found
+				existingParent := NewFolderManifest("parent-uid-on-main", "parent", FolderKind)
+				existingData, _ := json.Marshal(existingParent)
+				rw.On("Read", mock.Anything, "parent/_folder.json", "new-branch").Return(nil, repository.ErrRefNotFound)
+				rw.On("Read", mock.Anything, "parent/_folder.json", "").
+					Return(&repository.FileInfo{Data: existingData}, nil)
+
+				// Child (leaf): branch doesn't exist → fallback → not found → create
+				rw.On("Read", mock.Anything, "parent/child/_folder.json", "new-branch").Return(nil, repository.ErrRefNotFound)
+				rw.On("Read", mock.Anything, "parent/child/_folder.json", "").Return(nil, repository.ErrFileNotFound)
+				rw.On("Create", mock.Anything, "parent/child/_folder.json", "new-branch", mock.MatchedBy(func(b []byte) bool {
+					var f folders.Folder
+					return json.Unmarshal(b, &f) == nil && f.Name != "" && f.Spec.Title == "child"
+				}), "").Return(nil)
+
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, false), folderMetadataEnabled: true, folders: fm}
+				return dw, DualWriteOptions{Path: "parent/child/", Ref: "new-branch"}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.Equal(t, "parent/child/", result.Path)
+				assert.Equal(t, "new-branch", result.Ref)
+			},
+		},
+		{
+			name: "flag enabled: ref not found falls back to configured branch, leaf exists → AlreadyExists",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.GitRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+						Sync:      provisioning.SyncOptions{Enabled: false},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+
+				// Leaf: branch doesn't exist → fallback to configured branch → found
+				existingLeaf := NewFolderManifest("leaf-uid-on-main", "newfolder", FolderKind)
+				existingData, _ := json.Marshal(existingLeaf)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "new-branch").Return(nil, repository.ErrRefNotFound)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").
+					Return(&repository.FileInfo{Data: existingData}, nil)
+
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, false), folderMetadataEnabled: true, folders: fm}
+				return dw, DualWriteOptions{Path: "newfolder/", Ref: "new-branch"}
+			},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.True(t, apierrors.IsAlreadyExists(err), "expected AlreadyExists, got: %v", err)
 			},
 		},
 		{

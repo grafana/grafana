@@ -4364,6 +4364,17 @@
       "title": "Henüz bir pano oluşturmadınız",
       "title-folder": "Bu klasörde henüz bir pano yok"
     },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
+    },
     "folder-actions-button": {
       "delete": "Bu klasörü sil",
       "delete-folder-error": "Klasör silinirken hata oluştu. Lütfen daha sonra tekrar deneyin.",
@@ -5436,9 +5447,6 @@
         "title": {
           "proceed-to-external-site": "Haricî siteye geçilsin mi?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Sahne olarak görüntüle"
       }
     },
     "dashboard-links-menu": {
@@ -5985,12 +5993,20 @@
       "not-found": "\"{{datasourceUid}}\" UID'sine sahip veri kaynağı bulunamadı."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Yapılandır",
       "configure-button-menu": "Menüyü aç/kapat",
+      "configure-visualization": "",
       "empty-state-message": "Burada görselleştirmek için bir sorgu çalıştırın ya da diğer panel türlerini eklemek için tüm görselleştirmelere gidin.",
       "menu-open-panel-editor": "Yapılandır",
       "menu-use-library-panel": "Kütüphane panelini kullan",
-      "missing-config": "Eksik panel yapılandırması"
+      "menu-use-saved-query": "",
+      "missing-config": "Eksik panel yapılandırması",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Yeni panel",
     "on-create-new-row": {
@@ -6769,6 +6785,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6855,6 +6876,10 @@
       "constant-options": "Sabit seçenekler",
       "label-value": "Değer",
       "placeholder-your-metric-prefix": "Metrik ön ekiniz"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Göster/gizle kuralları çalışmayacaktır",
@@ -7185,6 +7210,12 @@
       "remove-link": "",
       "update-link": ""
     },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
+    },
     "link-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7503,6 +7534,7 @@
     "sharing": {
       "save-before-share": {
         "text": "Bu panoda kaydedilmemiş değişiklikleriniz var. Paylaşmadan önce onları kaydetmeniz gerekir.",
+        "text-no-save": "",
         "title": "Kaydedilmemiş değişiklikler"
       }
     },
@@ -7636,6 +7668,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Değişken düzenleyici formu",
       "back-to-list": "Listeye geri dön",
@@ -7665,6 +7702,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Şunu silmek istediğinizden emin misiniz: {{variable}}?",
       "confirmText-delete-variable": "Değişkeni sil",
+      "drag-handle-label": "",
       "title-delete-variable": "Değişkeni sil",
       "tooltip-duplicate-variable": "Değişkeni çoğalt",
       "tooltip-remove-variable": "Değişkeni kaldır"
@@ -8234,6 +8272,7 @@
       "label-preview": "Ön izleme"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Değer eşlemesini çoğalt",
       "duplicate-value-mapping-tooltip-duplicate": "Çoğalt",
       "placeholder-exact-value-to-match": "Eşleşmesi gereken kesin değer",
@@ -10052,6 +10091,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Bağlantı ekle",
+      "drag-handle-label": "",
       "edit-link": "Bağlantıyı düzenle",
       "one-click": "Tek tıklama",
       "one-click-enabled": "Tek tıklama etkin",
@@ -12596,7 +12636,7 @@
       "name-required": "Ad gereklidir",
       "save": "Kaydet",
       "table-delete": "Oynatma listesi ögesini sil",
-      "table-drag": "Yeniden düzenlemek için sürükleyip bırakın",
+      "table-drag": "",
       "table-empty": "Oynatma listesi boş. Aşağıya pano ekleyin.",
       "table-heading": "Panolar"
     },
@@ -14730,6 +14770,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14737,9 +14778,11 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14755,7 +14798,7 @@
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -15577,6 +15620,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Düzenlemek için tıklayın",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Sıralı dizi satırını sil",
       "remove-enum-row-tooltip-delete": "Sil"
     },
@@ -16490,6 +16534,7 @@
       "variable": "Değişken"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Değişkeni çoğalt",
       "tooltip-remove-variable": "Değişkeni kaldır"
     },
@@ -16532,6 +16577,10 @@
   },
   "xychart": {
     "category-xychart": "XY Grafiği",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Dolgu opaklığı",
     "name-line-style": "Çizgi stili",
     "name-line-width": "Çizgi genişliği",

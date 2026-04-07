@@ -16,14 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -48,14 +48,14 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 	logger := log.New("test.logger")
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures()
-	fStore := folderimpl.ProvideStore(sql, cfgT)
-	tagService := tagimpl.ProvideService(sql)
-	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
-	require.NoError(t, err)
-	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), grafanasort.ProvideService(), apiserver.WithoutRestConfig)
+	searchMock := resource.NewMockResourceClient(t)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
+	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
+		nil, sql, featuremgmt.WithFeatures(),
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), searchMock, dualwrite.ProvideTestService(), grafanasort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
