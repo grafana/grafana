@@ -13,16 +13,16 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
+import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
+import { DashboardCodePane } from './DashboardCodePane';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
-import { DashboardCodePane } from './DashboardCodePane';
-import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
-import { DashboardSidebarPane } from './types';
+import { type DashboardSidebarPane } from './types';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -183,8 +183,8 @@ function FiltersOverviewButton({
     <Sidebar.Button
       icon="filter"
       onClick={() => editPane.openPane(new DashboardFiltersOverviewPane({}))}
-      title={t('dashboards.filters-overview.filters', 'Filters')}
-      tooltip={t('dashboards.filters-overview.open', 'Filters overview')}
+      title={t('dashboard.sidebar.filters', 'Filters')}
+      tooltip={t('dashboard.sidebar.open', 'Filters overview')}
       active={openPane?.getId() === 'filters'}
     />
   );
