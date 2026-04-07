@@ -651,7 +651,7 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "treats AlreadyExists as success (concurrent create race)",
+			name: "treats AlreadyExists as conflict (concurrent create race)",
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",

@@ -35,7 +35,7 @@ var (
 			Namespace: namespace,
 			Name:      "plugin_children_count_per_reconcile",
 			Help:      "Number of child plugins found per reconciliation cycle. Useful for validating batch size assumptions and understanding work distribution across plugins.",
-			Buckets:   []float64{0, 1, 2, 3, 5, 7, 10, 20, 50},
+			Buckets:   []float64{0, 1, 2, 3, 5, 7, 10},
 		},
 	)
 

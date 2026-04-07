@@ -169,7 +169,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 	if err != nil {
 		if errorsK8s.IsAlreadyExists(err) {
 			// Another replica created it concurrently — desired state is achieved
-			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+			metrics.RegistrationOperationsTotal.WithLabelValues("register", "conflict").Inc()
 			return nil
 		}
 		logger.Error("Failed to create plugin", "error", err)
