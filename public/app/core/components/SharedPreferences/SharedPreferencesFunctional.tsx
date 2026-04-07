@@ -113,6 +113,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
     const prefsData = toUpdatePrefsCmd(state);
     await updatePreferences(prefsData);
+    window.location.reload();
   };
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {

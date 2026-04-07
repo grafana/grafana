@@ -36,16 +36,17 @@ const setup = async () => {
 };
 
 const mockReload = jest.fn();
+const originalLocation = window.location;
+
+testWithFeatureToggles({ enable: ['grafanaconThemes'] });
 
 beforeAll(() => {
-  jest.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, reload: mockReload });
+  jest.spyOn(window, 'location', 'get').mockReturnValue({ ...originalLocation, reload: mockReload });
   comboboxTestSetup();
-  testWithFeatureToggles({ enable: ['grafanaconThemes'] });
 });
 
 afterAll(() => {
   jest.restoreAllMocks();
-  testWithFeatureToggles({ disable: ['grafanaconThemes'] });
 });
 
 describe('SharedPreferencesFunctional', () => {
