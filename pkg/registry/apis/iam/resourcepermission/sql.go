@@ -243,7 +243,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
-	if resourcePermission == nil {
+	if len(resourcePermission) == 0 {
 		return nil, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), name)
 	}
 
