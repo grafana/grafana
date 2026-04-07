@@ -59,6 +59,11 @@
 /docs/sources/visualizations/panels-visualizations/query-transform-data/sql-expressions/index.md  @lwandz13 @irenerl24
 # END Technical documentation
 
+# Policy bot
+/.policy.yml @grafana/grafana-backend-group
+/.policy.yml.tmpl @grafana/grafana-backend-group
+/.github/workflows/policybot.yml @grafana/grafana-backend-group
+
 # Backend code
 /go.mod @grafana/grafana-backend-group
 /go.sum @grafana/grafana-backend-group
