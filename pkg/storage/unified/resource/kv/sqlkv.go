@@ -16,7 +16,8 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
@@ -29,7 +30,7 @@ const (
 
 var _ KV = &SqlKV{}
 
-var sqlKVLog = log.New("resource-sqlkv")
+var sqlKVLog = logging.DefaultLogger.With("logger", "resource-sqlkv")
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
