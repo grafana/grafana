@@ -199,13 +199,14 @@ i18n-extract: i18n-extract-enterprise
 .PHONY: gen-cue
 gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
-	go generate ./kinds/gen.go
-	go generate ./public/app/plugins/gen.go
-	@echo "// This file is managed by Grafana - DO NOT EDIT MANUALLY" > apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
-	@echo "// Source: kinds/dashboard/dashboard_kind.cue" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
-	@echo "// To sync changes, run: make gen-cue" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
-	@echo "" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
-	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	GOOS=$(GO_HOST_OS) GOARCH=$(GO_HOST_ARCH) go generate ./kinds/gen.go
+	GOOS=$(GO_HOST_OS) GOARCH=$(GO_HOST_ARCH) go generate ./public/app/plugins/gen.go
+	@echo "// This file is managed by Grafana - DO NOT EDIT MANUALLY" > apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@echo "// Source: kinds/dashboard/dashboard_kind.cue" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@echo "// To sync changes, run: make gen-cue" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@echo "" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@cp apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
 
 
 .PHONY: gen-cuev2
