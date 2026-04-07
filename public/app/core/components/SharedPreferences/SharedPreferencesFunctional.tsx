@@ -1,18 +1,6 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useState, useEffect } from 'react';
 
-import {
-  useGetOrgPreferencesQuery,
-  useUpdateOrgPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/org';
-import {
-  useGetTeamPreferencesQuery,
-  useUpdateTeamPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/team';
-import {
-  useGetUserPreferencesQuery,
-  useUpdateUserPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -36,11 +24,11 @@ import {
 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
 
-import { useAppNotification } from '../../../core/copy/appNotification';
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { languageChanged, regionalFormatChanged, saveButtonClicked, themeChanged } from './analytics/main';
+import { useSharedPreferences } from './useSharedPreferences';
 import {
   getLanguageOptions,
   getRegionalFormatOptions,
@@ -53,29 +41,11 @@ import {
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const { preferenceType, resourceUri } = props;
-  const teamId = preferenceType === 'team' ? resourceUri.split('/')[1] : undefined;
 
-  const { data: userPrefs, isLoading: isLoadingUser } = useGetUserPreferencesQuery(undefined, {
-    skip: preferenceType !== 'user',
-  });
-  const { data: orgPrefs, isLoading: isLoadingOrg } = useGetOrgPreferencesQuery(undefined, {
-    skip: preferenceType !== 'org',
-  });
-  const { data: teamPrefs, isLoading: isLoadingTeam } = useGetTeamPreferencesQuery(
-    { teamId: teamId! },
-    { skip: preferenceType !== 'team' }
+  const [updatePreferences, { preferences: prefs, isLoading, isSubmitting }] = useSharedPreferences(
+    preferenceType,
+    resourceUri
   );
-
-  const prefs = userPrefs ?? orgPrefs ?? teamPrefs;
-  const isLoading = isLoadingUser || isLoadingOrg || isLoadingTeam;
-
-  const [updateUserPreferences, { isLoading: isSubmittingUser }] = useUpdateUserPreferencesMutation();
-  const [updateOrgPreferences, { isLoading: isSubmittingOrg }] = useUpdateOrgPreferencesMutation();
-  const [updateTeamPreferences, { isLoading: isSubmittingTeam }] = useUpdateTeamPreferencesMutation();
-
-  const isSubmitting = isSubmittingUser || isSubmittingOrg || isSubmittingTeam;
-
-  const notify = useAppNotification();
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const [state, setState] = useState<PrefsState>({
@@ -142,19 +112,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     }
 
     const prefsData = toUpdatePrefsCmd(state);
-
-    try {
-      if (preferenceType === 'user') {
-        await updateUserPreferences({ updatePrefsCmd: prefsData }).unwrap();
-      } else if (preferenceType === 'org') {
-        await updateOrgPreferences({ updatePrefsCmd: prefsData }).unwrap();
-      } else {
-        await updateTeamPreferences({ teamId: teamId!, updatePrefsCmd: prefsData }).unwrap();
-      }
-      window.location.reload();
-    } catch {
-      notify.error(t('shared-preferences.save-error', 'Failed to save preferences'));
-    }
+    await updatePreferences(prefsData);
   };
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {
