@@ -24,6 +24,10 @@ type SecretsManagerSettings struct {
 	// If empty, a random key will be generated for each Grafana process at startup.
 	// If running in HA mode (i.e. with Redis cache enabled), this value must be set to the same value for all Grafana processes.
 	DataKeysCacheEncryptionKey string
+	// DataKeysRedisURL is the Redis connection URL for the data key cache only (not shared with [caching.redis]).
+	DataKeysRedisURL string
+	// DataKeysRedisPrefix is the key prefix for DEK entries in that Redis.
+	DataKeysRedisPrefix string
 
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
@@ -90,6 +94,9 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.DataKeysCacheCleanupInterval = secretsMgmt.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
 	// If empty, a random key will be generated at startup for encrypting cached data keys.
 	cfg.SecretsManagement.DataKeysCacheEncryptionKey = secretsMgmt.Key("data_keys_cache_encryption_key").MustString("")
+
+	cfg.SecretsManagement.DataKeysRedisURL = secretsMgmt.Key("data_keys_redis_url").MustString("redis://127.0.0.1:6379/0")
+	cfg.SecretsManagement.DataKeysRedisPrefix = secretsMgmt.Key("data_keys_redis_prefix").MustString("gsm")
 
 	if cfg.SecretsManagement.DataKeysCacheUseRedis && cfg.SecretsManagement.DataKeysCacheEncryptionKey == "" {
 		cfg.Logger.Error("DataKeysCacheEncryptionKey must be set when using Redis cache for data keys. Falling back to the OSS cache.")
