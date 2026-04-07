@@ -38,6 +38,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -76,6 +77,7 @@ var (
 	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupMutation         = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupValidation       = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupAuditor          = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -1076,6 +1078,11 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	return &builder.APIRoutes{
 		Namespace: append(searchAPIRoutes.Namespace, snapshotAPIRoutes.Namespace...),
 	}
+}
+
+// GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.
+func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvaluator {
+	return auditing.NewDefaultGrafanaPolicyRuleEvaluator()
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.

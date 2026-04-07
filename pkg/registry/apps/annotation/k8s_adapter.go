@@ -140,13 +140,13 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	}
 
 	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
+	allowed, err := canAccessAnnotations(ctx, s.accessClient, namespace, result.Items, utils.VerbList)
+	if err != nil {
+		return nil, err
+	}
 	filtered := make([]annotationV0.Annotation, 0, len(result.Items))
-	for _, anno := range result.Items {
-		allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, &anno, utils.VerbList)
-		if err != nil {
-			return nil, err
-		}
-		if allowed {
+	for i, anno := range result.Items {
+		if allowed[i] {
 			filtered = append(filtered, anno)
 		}
 	}
