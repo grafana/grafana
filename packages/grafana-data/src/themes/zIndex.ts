@@ -1,7 +1,7 @@
 // We need to centralize the zIndex definitions as they work
 // like global values in the browser.
 export const zIndex = {
-  sideBar: 998,
+  sidebarRight: 998,
   activePanel: 999,
   navbarFixed: 1000,
   sidemenu: 1020,
