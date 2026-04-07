@@ -158,7 +158,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
       borderRadius: theme.shape.radius.default,
-      zIndex: theme.zIndex.navbarFixed,
+      zIndex: theme.zIndex.sideBar,
       bottom: 0,
       top: 0,
       right: 0,
@@ -224,7 +224,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     showButton: css({
       position: 'fixed',
       top: '50%',
-      zIndex: theme.zIndex.navbarFixed,
+      zIndex: theme.zIndex.sideBar,
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.strong}`,
