@@ -169,6 +169,10 @@ func (s *UserK8sService) ListByIdOrUID(ctx context.Context, ids []string, intIDs
 	return nil, errors.New("not implemented")
 }
 
+func (s *UserK8sService) GetByLoginWithPassword(_ context.Context, _ *user.GetUserByLoginQuery) (*user.User, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.getByLogin", trace.WithAttributes(
 		attribute.String("loginOrEmail", cmd.LoginOrEmail),
