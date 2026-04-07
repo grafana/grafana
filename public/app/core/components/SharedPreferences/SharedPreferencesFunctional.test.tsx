@@ -35,26 +35,16 @@ const setup = async () => {
   return view;
 };
 
-const original = window.location;
 const mockReload = jest.fn();
 
 beforeAll(() => {
-  Object.defineProperty(window, 'location', {
-    writable: true,
-    value: {
-      ...original,
-      reload: mockReload,
-    },
-  });
+  jest.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, reload: mockReload });
   comboboxTestSetup();
   testWithFeatureToggles({ enable: ['grafanaconThemes'] });
 });
 
 afterAll(() => {
-  Object.defineProperty(window, 'location', {
-    writable: true,
-    value: original,
-  });
+  jest.restoreAllMocks();
   testWithFeatureToggles({ disable: ['grafanaconThemes'] });
 });
 
