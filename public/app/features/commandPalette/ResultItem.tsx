@@ -36,6 +36,9 @@ export const ResultItem = React.forwardRef(
 
     const styles = useStyles2(getResultItemStyles);
 
+    // type assertion needed because kbar's ActionImpl copies all properties from the input Action object at runtime,
+    // but itsTypeScript type doesn't reflect custom properties like managedBy or url.
+    // See the same pattern for `url` in KBarResults.tsx and below command url
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
     const showProvisionedBadge = config.featureToggles.provisioning && managedBy === ManagerKind.Repo;
