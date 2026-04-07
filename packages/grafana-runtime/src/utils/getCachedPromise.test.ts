@@ -1,5 +1,6 @@
-import { getCachedPromise, invalidateCache, MAX_CACHE_SIZE, setLogger } from './getCachedPromise';
-import { type MonitoringLogger } from './logging';
+import { getLogger, setLogger } from '../services/logging/registry';
+
+import { getCachedPromise, invalidateCache, MAX_CACHE_SIZE } from './getCachedPromise';
 
 const TEST_ASYNC_DELAY = 10;
 
@@ -15,19 +16,16 @@ function simulateErrorRequest(): Promise<{ ok: boolean; status: number; statusTe
   });
 }
 
-let logger: MonitoringLogger;
-
 beforeEach(() => {
   jest.clearAllMocks();
   invalidateCache();
-  logger = {
+  setLogger('grafana/runtime.utils.getCachedPromise', {
     logDebug: jest.fn(),
     logError: jest.fn(),
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
     logWarning: jest.fn(),
-  };
-  setLogger(logger);
+  });
 });
 
 // heads up that all jest.fn(any function) will get the name 'mockConstructor'
@@ -223,12 +221,15 @@ describe('getCachedPromise', () => {
 
       expect(actual).toStrictEqual({ ok: false, status: 500, statusText: 'Internal Server Error' });
       expect(promise).toHaveBeenCalledTimes(1);
-      expect(logger.logError).toHaveBeenCalledTimes(1);
-      expect(logger.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
-        stack: expect.any(String),
-        message: 'Network Error',
-        key: 'mockConstructor',
-      });
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
+        new Error(`Something failed while resolving a cached promise`),
+        {
+          stack: expect.any(String),
+          message: 'Network Error',
+          key: 'mockConstructor',
+        }
+      );
     });
 
     test('should invalidate cache when something errors', async () => {
