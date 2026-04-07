@@ -60,13 +60,16 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
   let exploreRange = range ? { ...range } : undefined;
+  // only do custom range if the field is not specified or if it's a defined variable
+  const noTimeRangeFieldOrExistsAsVar =
+    link.meta?.timeRange?.field === undefined ? true : Object.keys(scopedVars).includes(link.meta.timeRange.field);
 
   // the time range passed in is the default (from the source pane). if the correlation defined a custom one, override it
   if (
     link.meta?.timeRange !== undefined &&
-    (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined)
+    (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined) &&
+    noTimeRangeFieldOrExistsAsVar
   ) {
-    // TODO , do not replace if variable is not interpolsted
     let timeRangeField = link.meta.timeRange.field;
     if (timeRangeField !== undefined && !isCustomVariableValue(timeRangeField)) {
       timeRangeField = `\$\{${timeRangeField}\}`;
