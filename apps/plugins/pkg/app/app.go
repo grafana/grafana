@@ -52,10 +52,12 @@ func New(cfg app.Config) (app.App, error) {
 				ErrorHandler: func(ctx context.Context, err error) {
 					logger.Error("Child plugin informer failed", "error", err)
 				},
-				// Bound concurrent reconciliations to limit peak memory when many Plugin
-				// resources are processed simultaneously. Each reconciliation allocates
-				// API response objects for every child plugin it processes.
+				// Limit the number of plugin objects being reconciled concurrently.
+				// Each worker processes events for a distinct set of plugins sequentially.
 				MaxConcurrentWorkers: 5,
+				// Use watch-list streaming instead of paginated LIST to reduce API server
+				// memory usage. Requires Kubernetes 1.27+.
+				UseWatchList: true,
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{metaKind, pluginKind},

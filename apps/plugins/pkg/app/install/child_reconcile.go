@@ -120,7 +120,6 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 			RequeueAfter: &d,
 		}, nil
 	}
-
 	metrics.ChildrenCountPerReconcile.Observe(float64(len(result.Meta.Children)))
 
 	if len(result.Meta.Children) == 0 || startIdx >= len(result.Meta.Children) {
@@ -151,8 +150,8 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
 	}
 
-	// A zero RequeueAfter with no error means we're continuing to the next batch — count as success.
-	// A positive RequeueAfter means an error retry is queued — count as error.
+	// A zero RequeueAfter with no error means we're continuing to the next batch; count as success.
+	// A positive RequeueAfter means an error retry is queued; count as error.
 	status := "success"
 	if reconcileErr != nil || (reconcileResult.RequeueAfter != nil && *reconcileResult.RequeueAfter > 0) {
 		status = "error"
