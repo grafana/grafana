@@ -34,6 +34,7 @@ export default function ConnectionsHomePage() {
       const meta = cardMetadata[item.url!];
       return {
         ...item,
+        text: meta?.text || item.text,
         icon: resolveIcon(meta?.icon, item.icon),
         subTitle: meta?.subTitle || item.subTitle || '',
       };

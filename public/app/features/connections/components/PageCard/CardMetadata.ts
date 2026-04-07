@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 type CardMetadata = {
   icon: IconName;
   subTitle: string;
+  text?: string;
 };
 
 // Visual metadata for well-known connections nav items that don't carry
@@ -22,6 +23,9 @@ export function getConnectionsCardMetadata(isOnPrem: boolean): Record<string, Ca
     },
     '/connections/datasources': {
       icon: 'database',
+      text: isOnPrem
+        ? t('connections.oss.connections-home-page.data-sources.title', 'View configured data sources')
+        : undefined,
       subTitle: t(
         'connections.cloud.connections-home-page.data-sources.subtitle',
         'Manage your existing data source connections'

@@ -40,6 +40,7 @@ describe('Connections', () => {
   const mockDatasources = getMockDataSources(3);
 
   beforeEach(() => {
+    config.pluginAdminExternalManageEnabled = true;
     (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
@@ -82,6 +83,8 @@ describe('Connections', () => {
 
     // OSS-specific card subtitle for "Add new connection"
     expect(await screen.findByText('Connect to a new data source')).toBeVisible();
+    // OSS-specific title for "Data sources"
+    expect(await screen.findByText('View configured data sources')).toBeVisible();
   });
 
   test('only shows cards for nav items present in the connections nav section', async () => {
