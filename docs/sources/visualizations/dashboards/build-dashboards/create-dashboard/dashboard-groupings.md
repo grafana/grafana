@@ -29,7 +29,7 @@ image_maps:
       - x_coord: 26
         y_coord: 22.5
         content: |
-           Also, you can have different panel layouts in within a row or tab. In this dashboard, one tab contains two rows that have two different layouts.
+          Also, you can have different panel layouts in within a row or tab. In this dashboard, one tab contains two rows that have two different layouts.
   - key: ungrouping
     src: /media/docs/grafana/dashboards/screenshot-ungrouping-v13.0.png
     alt: Dashboard with ungrouping behavior annotated
@@ -45,7 +45,7 @@ image_maps:
       - x_coord: 22
         y_coord: 95
         content: |
-           Removes all groupings on the dashboard, leaving just the panels on the dashboard.
+          Removes all groupings on the dashboard, leaving just the panels on the dashboard.
 ---
 
 # Panel groupings
@@ -76,7 +76,7 @@ The following screenshot demonstrates how groupings work:
 
 {{< image-map key="panel-groupings" >}}
 
-In addition to the option to add groupings from the sidebar, when you hover your cursor over relevant parts of the dashboard, **+ Add panel**,  **+ New row**, **+ New tab**, **Group panels**, and ungroup buttons are visible.
+In addition to the option to add groupings from the sidebar, when you hover your cursor over relevant parts of the dashboard, **+ Add panel**, **+ New row**, **+ New tab**, **Group panels**, and ungroup buttons are visible.
 
 The following sections describe:
 
@@ -123,7 +123,6 @@ To group panels already on a dashboard, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Do one of the following:
-
    - Click the **Add new element** icon (blue plus sign) and select **Group into rows** or **Group into tabs**.
    - Under a panel or group of panels, hover your mouse to reveal the **Group panels** button, click it and select **Group into row** or **Group into tab**.
 
