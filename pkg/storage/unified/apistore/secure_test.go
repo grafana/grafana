@@ -14,18 +14,32 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+type createInlineResult struct {
+	name string
+	err  error
+}
+
 // fakeSecureValueSupport is a hand-written fake for contracts.InlineSecureValueSupport.
 type fakeSecureValueSupport struct {
-	// createInlineResults maps RawSecureValue to the return value.
-	createInlineResults map[common.RawSecureValue]struct {
-		name string
-		err  error
-	}
-	createInlineCalls int
+	createInlineResults map[common.RawSecureValue]createInlineResult
+	createInlineCalls   int
 
-	// deleteResults is a queue of errors to return from DeleteWhenOwnedByResource.
 	deleteResults []error
 	deleteCalls   int
+}
+
+func newFakeSecureValueSupport() *fakeSecureValueSupport {
+	return &fakeSecureValueSupport{
+		createInlineResults: make(map[common.RawSecureValue]createInlineResult),
+	}
+}
+
+func (f *fakeSecureValueSupport) onCreateInline(secret common.RawSecureValue, name string, err error) {
+	f.createInlineResults[secret] = createInlineResult{name: name, err: err}
+}
+
+func (f *fakeSecureValueSupport) onDelete(err error) {
+	f.deleteResults = append(f.deleteResults, err)
 }
 
 func (f *fakeSecureValueSupport) CanReference(_ context.Context, _ common.ObjectReference, _ ...string) error {
@@ -75,15 +89,9 @@ func TestSecureLifecycle(t *testing.T) {
 	}
 
 	t.Run("create secure values", func(t *testing.T) {
-		secureStore := &fakeSecureValueSupport{
-			createInlineResults: map[common.RawSecureValue]struct {
-				name string
-				err  error
-			}{
-				"SecretAAA": {name: "NameForA"},
-				"SecretBBB": {name: "NameForB"},
-			},
-		}
+		secureStore := newFakeSecureValueSupport()
+		secureStore.onCreateInline("SecretAAA", "NameForA", nil)
+		secureStore.onCreateInline("SecretBBB", "NameForB", nil)
 
 		info := &objectForStorage{}
 		obj := resourceWithSecureValues(common.InlineSecureValues{
@@ -117,15 +125,9 @@ func TestSecureLifecycle(t *testing.T) {
 
 		info := &objectForStorage{}
 		expectError := fmt.Errorf("expected error")
-		secureStore := &fakeSecureValueSupport{
-			createInlineResults: map[common.RawSecureValue]struct {
-				name string
-				err  error
-			}{
-				"SecretAAA": {err: expectError},
-				"SecretBBB": {err: expectError},
-			},
-		}
+		secureStore := newFakeSecureValueSupport()
+		secureStore.onCreateInline("SecretAAA", "", expectError)
+		secureStore.onCreateInline("SecretBBB", "", expectError)
 
 		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
 		require.Error(t, err, "should error when secure value creation fails")
@@ -133,7 +135,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("change name manually", func(t *testing.T) {
-		secureStore := &fakeSecureValueSupport{}
+		secureStore := newFakeSecureValueSupport()
 
 		info := &objectForStorage{}
 		previous := resourceWithSecureValues(common.InlineSecureValues{
@@ -162,7 +164,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("update without secrets", func(t *testing.T) {
-		secureStore := &fakeSecureValueSupport{}
+		secureStore := newFakeSecureValueSupport()
 
 		info := &objectForStorage{}
 		previousObject := resourceWithSecureValues(common.InlineSecureValues{
@@ -184,9 +186,8 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove secure values", func(t *testing.T) {
-		secureStore := &fakeSecureValueSupport{
-			deleteResults: []error{nil},
-		}
+		secureStore := newFakeSecureValueSupport()
+		secureStore.onDelete(nil)
 		previous := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 			"b": common.InlineSecureValue{Name: "NameForB"},
@@ -231,7 +232,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove invalid secure values", func(t *testing.T) {
-		secureStore := &fakeSecureValueSupport{}
+		secureStore := newFakeSecureValueSupport()
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"b": common.InlineSecureValue{Remove: true}, // b does not exist in previous value
 		})
@@ -249,14 +250,8 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove invalid secure values while creating others", func(t *testing.T) {
-		secureStore := &fakeSecureValueSupport{
-			createInlineResults: map[common.RawSecureValue]struct {
-				name string
-				err  error
-			}{
-				"SecretAAA": {name: "NameForA"},
-			},
-		}
+		secureStore := newFakeSecureValueSupport()
+		secureStore.onCreateInline("SecretAAA", "NameForA", nil)
 
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Create: "SecretAAA"},
@@ -276,9 +271,8 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("delete resource", func(t *testing.T) {
-		secureStore := &fakeSecureValueSupport{
-			deleteResults: []error{nil},
-		}
+		secureStore := newFakeSecureValueSupport()
+		secureStore.onDelete(nil)
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 		})
@@ -298,16 +292,15 @@ func TestSecureLifecycle(t *testing.T) {
 			"a": common.InlineSecureValue{Name: "NameForA"},
 		})
 		expectError := fmt.Errorf("expected error")
-		secureStore = &fakeSecureValueSupport{
-			deleteResults: []error{expectError},
-		}
+		secureStore = newFakeSecureValueSupport()
+		secureStore.onDelete(expectError)
 		err = handleSecureValuesDelete(context.Background(), secureStore, obj)
 		require.Equal(t, expectError, err, "error should be passed through")
 		require.Equal(t, 1, secureStore.deleteCalls)
 	})
 
 	t.Run("invalid states", func(t *testing.T) {
-		secureStore := &fakeSecureValueSupport{}
+		secureStore := newFakeSecureValueSupport()
 
 		info := &objectForStorage{}
 		err := prepareSecureValues(context.Background(), secureStore, resourceWithSecureValues(common.InlineSecureValues{
