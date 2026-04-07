@@ -179,7 +179,6 @@ To manage dashboard controls, follow these steps:
 1. Click the **Dashboard options** icon in the sidebar.
 1. In the sidebar, expand the appropriate collapsible section.
 1. Do one or more of the following:
-
    - **Edit**: Click **Select** on the control to open the sidebar so you can make updates.
    - **Reorder**: Drag and drop controls to reorder them.
    - **Change display**: Drag and drop controls between sub-sections **Above dashboard**, **Controls menu**, and **Hidden** to update the control display option. Note that links can't be hidden.

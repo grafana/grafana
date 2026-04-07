@@ -77,7 +77,7 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 
 {{< shared id="add-dashboard-link" >}}
 
-   The default link type is **Dashboards**.
+The default link type is **Dashboards**.
 
 1. In the **With tags** drop-down list, enter tags to limit the linked dashboards to only the ones with the tags you enter.
 

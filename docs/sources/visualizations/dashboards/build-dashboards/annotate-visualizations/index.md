@@ -135,13 +135,11 @@ To add a new annotation query to a dashboard, follow these steps:
 1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
 1. Select a color for the event markers.
 1. Select one of the following options in the **Show annotation controls in** drop-down list to control where annotations are displayed:
-
    - **Above dashboard** - The annotation toggle is displayed above the dashboard. This is the default.
    - **Controls menu** - The annotation toggle is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
    - **Hidden** - The annotation toggle is not displayed on the dashboard.
 
 1. In the **Show in** drop-down, choose one of the following options:
-
    - **All panels** - The annotations are displayed on all panels that support annotations.
    - **Selected panels** - The annotations are displayed on all the panels you select.
    - **All panels except** - The annotations are displayed on all panels except the ones you select.
