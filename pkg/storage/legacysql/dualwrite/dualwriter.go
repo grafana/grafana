@@ -219,6 +219,11 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return d.unified.Create(ctx, in, createValidation, options)
 	}
 
+	// In unified mode, legacy may be unavailable post-migration — skip it entirely.
+	if readUnified {
+		return d.unified.Create(ctx, in, createValidation, options)
+	}
+
 	log := logging.FromContext(ctx).With("method", "Create", "resource", d.gr.String())
 
 	accIn, err := utils.MetaAccessor(in)
@@ -237,17 +242,6 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	secure, err := accIn.GetSecureValues()
 	if err != nil {
 		return nil, fmt.Errorf("unable to read secure values %w", err)
-	}
-
-	readFromUnifiedWriteToBothStorages := readUnified && d.legacy != nil && d.unified != nil
-
-	permissions := ""
-	if readFromUnifiedWriteToBothStorages {
-		// keep permissions, we will set it back after the object is created
-		permissions = accIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
-		if permissions != "" {
-			accIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation for now
-		}
 	}
 
 	// create in legacy first, and then unistore. if unistore fails, but legacy succeeds,
@@ -271,42 +265,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		}
 	}
 
-	if readFromUnifiedWriteToBothStorages {
-		// restore the permissions annotation, as we removed it before creating in legacy
-		if permissions != "" {
-			accCreated.SetAnnotation(utils.AnnoKeyGrantPermissions, permissions)
-		}
-
-		// Propagate annotations and labels to the object saved in
-		// unified storage, making sure the `deprecatedID` is saved
-		// as well as provisioning metadata, when present.
-		for name, val := range accIn.GetAnnotations() {
-			accCreated.SetAnnotation(name, val)
-		}
-
-		legacyAcc, err := meta.Accessor(createdFromLegacy)
-		if err != nil {
-			return nil, err
-		}
-		accCreated.SetLabels(legacyAcc.GetLabels())
-	}
-
-	// If unified storage is the primary storage, let's just create it in the foreground and return it.
-	if readUnified {
-		storageObj, errObjectSt := d.unified.Create(ctx, createdCopy, createValidation, options)
-		if errObjectSt != nil {
-			log.With("objectInfo", objectInfo(createdCopy)).Error("failed to CREATE object in unified storage", "err", errObjectSt)
-			// If we cannot create in unified storage, attempt to clean up legacy.
-			go func(ctxBg context.Context, cancel context.CancelFunc) {
-				defer cancel()
-				if _, asyncDelete, err := d.legacy.Delete(ctxBg, accCreated.GetName(), nil, &metav1.DeleteOptions{}); err != nil {
-					log.With("name", accCreated.GetName()).Error("failed to CLEANUP object in legacy storage", "err", err, "asyncDelete", asyncDelete)
-				}
-			}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
-			return nil, errObjectSt
-		}
-		return storageObj, nil
-	} else if errorIsOK {
+	if errorIsOK {
 		// If we don't use unified as the primary store and errors are okay, let's create it in the background.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
@@ -359,11 +318,16 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 		return d.unified.Delete(ctx, name, deleteValidation, options)
 	}
 
+	// In unified mode, legacy may be unavailable post-migration — skip it entirely.
+	if readUnified {
+		return d.unified.Delete(ctx, name, deleteValidation, options)
+	}
+
 	log := logging.FromContext(ctx).With("method", "Delete", "name", name, "resource", d.gr.String())
 	ctx = utils.SetFolderRemovePermissions(ctx, false)
 
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
-	if err != nil && (!readUnified || !errorIsOK && !apierrors.IsNotFound(err)) {
+	if err != nil {
 		log.Error("failed to DELETE object in legacy storage", "err", err)
 		return nil, false, err
 	}
@@ -371,15 +335,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// We can now flip it again.
 	ctx = utils.SetFolderRemovePermissions(ctx, true)
 
-	// If unified storage is our primary store, just delete it and return
-	if readUnified {
-		objFromStorage, asyncStorage, err := d.unified.Delete(ctx, name, deleteValidation, options)
-		if err != nil && !apierrors.IsNotFound(err) && !errorIsOK {
-			log.Error("failed to DELETE object in unified storage", "err", err)
-			return nil, false, err
-		}
-		return objFromStorage, asyncStorage, nil
-	} else if errorIsOK {
+	if errorIsOK {
 		// If errors are okay and unified is not primary, we can just run it as background operation.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
@@ -392,7 +348,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	}
 	// Otherwise we just run it in the foreground and return an error if any might happen.
 	_, _, err = d.unified.Delete(ctx, name, deleteValidation, options)
-	if err != nil && !apierrors.IsNotFound(err) && !errorIsOK {
+	if err != nil && !apierrors.IsNotFound(err) {
 		log.Error("failed to DELETE object in unified storage", "err", err)
 		return nil, false, err
 	}
@@ -411,13 +367,15 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	// During dry-run, skip legacy storage and delegate directly to unified storage
 	// which already handles dry-run correctly via DryRunnableStorage.
 	if dryrun.IsDryRun(options.DryRun) {
-		dryRunInfo := objInfo
-		dryRunForceCreate := forceAllowCreate
-		if !readUnified {
-			dryRunInfo = &wrappedUpdateInfo{objInfo: objInfo}
-			dryRunForceCreate = true
+		if readUnified {
+			return d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 		}
-		return d.unified.Update(ctx, name, dryRunInfo, createValidation, updateValidation, dryRunForceCreate, options)
+		return d.unified.Update(ctx, name, &wrappedUpdateInfo{objInfo: objInfo}, createValidation, updateValidation, true, options)
+	}
+
+	// In unified mode, legacy may be unavailable post-migration — skip it entirely.
+	if readUnified {
+		return d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	}
 
 	log := logging.FromContext(ctx).With("method", "Update", "name", name, "resource", d.gr.String())
@@ -428,19 +386,10 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	// of truth, and be less likely to retry to save (and get the stores in sync again)
 
 	ctx = addToContext(ctx)
-	legacyInfo := objInfo
-	legacyForceCreate := forceAllowCreate
-	unifiedInfo := objInfo
-	unifiedForceCreate := forceAllowCreate
-	if readUnified {
-		legacyInfo = &wrappedUpdateInfo{objInfo: objInfo}
-		legacyForceCreate = true
-	} else {
-		unifiedInfo = &wrappedUpdateInfo{objInfo: objInfo}
-		unifiedForceCreate = true
-	}
+	unifiedInfo := &wrappedUpdateInfo{objInfo: objInfo}
+	unifiedForceCreate := true
 
-	objFromLegacy, createdLegacy, err := d.legacy.Update(ctx, name, legacyInfo, createValidation, updateValidation, legacyForceCreate, options)
+	objFromLegacy, createdLegacy, err := d.legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		log.Error("failed to UPDATE in legacy storage", "err", err)
 		return nil, false, err
@@ -463,15 +412,10 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 
 	// Propagate secure values from the update request to the unified storage update.
 	if secure := getUpdatedSecureValues(ctx); secure != nil {
-		wrapped, ok := unifiedInfo.(*wrappedUpdateInfo)
-		if ok {
-			wrapped.updatedSecureValues = secure
-		}
+		unifiedInfo.updatedSecureValues = secure
 	}
 
-	if readUnified {
-		return d.unified.Update(ctx, name, unifiedInfo, createValidation, updateValidation, unifiedForceCreate, options)
-	} else if errorIsOK {
+	if errorIsOK {
 		// If unified is not primary, but errors are okay, we can just run in the background.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
@@ -514,6 +458,11 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	}
 
+	// In unified mode, legacy may be unavailable post-migration — skip it entirely.
+	if readUnified {
+		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	}
+
 	log := logging.FromContext(ctx).With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion, "resource", d.gr.String())
 
 	// delete from legacy first, and anything that is successful can be deleted in unistore too.
@@ -528,10 +477,7 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 		return nil, err
 	}
 
-	// If unified is the primary store, we can just delete it there and return.
-	if readUnified {
-		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	} else if errorIsOK {
+	if errorIsOK {
 		// If unified storage is not the primary store and errors are okay, we can just run it in the background.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
