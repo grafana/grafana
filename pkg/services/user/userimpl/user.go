@@ -2,8 +2,12 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -26,6 +30,7 @@ type Service struct {
 	k8sService        user.Service
 	openFeatureClient *openfeature.Client
 	logger            log.Logger
+	tracer            tracing.Tracer
 }
 
 var _ user.Service = (*Service)(nil)
@@ -49,6 +54,7 @@ func ProvideService(db db.DB,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
 		logger:            log.New("user"),
+		tracer:            tracer,
 	}, nil
 }
 
@@ -87,10 +93,19 @@ func (s *Service) GetByLoginWithPassword(ctx context.Context, cmd *user.GetUserB
 
 func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
+		ctx, span := s.tracer.Start(ctx, "user.GetByLogin", trace.WithAttributes(
+			attribute.String("loginOrEmail", cmd.LoginOrEmail),
+		))
+		defer span.End()
+
 		if hasOrgID(ctx) {
 			return s.k8sService.GetByLogin(ctx, cmd)
 		}
-		s.logger.Warn("kubernetesUsersRedirect is enabled but no orgID found in context, falling back to legacy service")
+
+		err := errors.New("kubernetesUsersRedirect is enabled but no orgID found in context")
+		s.logger.Warn(err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 	}
 
 	return s.legacyService.GetByLogin(ctx, cmd)
@@ -98,10 +113,19 @@ func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery)
 
 func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery) (*user.User, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) {
+		ctx, span := s.tracer.Start(ctx, "user.GetByEmail", trace.WithAttributes(
+			attribute.String("email", cmd.Email),
+		))
+		defer span.End()
+
 		if hasOrgID(ctx) {
 			return s.k8sService.GetByEmail(ctx, cmd)
 		}
-		s.logger.Warn("kubernetesUsersRedirect is enabled but no orgID found in context, falling back to legacy service")
+
+		err := errors.New("kubernetesUsersRedirect is enabled but no orgID found in context")
+		s.logger.Warn(err.Error())
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 	}
 
 	return s.legacyService.GetByEmail(ctx, cmd)
@@ -148,9 +172,10 @@ func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
 }
 
 func hasOrgID(ctx context.Context) bool {
-	if _, err := identity.GetRequester(ctx); err == nil {
-		return true
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		return requester.GetOrgID() != 0
 	}
-	_, ok := identity.OrgIDFrom(ctx)
-	return ok
+
+	orgID, ok := identity.OrgIDFrom(ctx)
+	return ok && orgID != 0
 }
