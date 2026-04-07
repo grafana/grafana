@@ -51,10 +51,14 @@ jobs:
 
       - name: Generate a GitHub app installation token
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
         with:
-          app_id: ${{ env.APP_ID }}
-          private_key: ${{ env.APP_PEM }}
+          app-id: ${{ env.APP_ID }}
+          private-key: ${{ env.APP_PEM }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            ${{ github.event.repository.name }}
+            ephemeral-grafana-instances-github-action
 
       - name: Checkout ephemeral instances repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8

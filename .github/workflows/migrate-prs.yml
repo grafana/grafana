@@ -47,10 +47,11 @@ jobs:
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: "Generate token"
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
         with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          app-id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private-key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          owner: ${{ github.repository_owner }}
       - name: Migrate PRs
         uses: grafana/grafana-github-actions-go/migrate-open-prs@main
         with:

@@ -110,12 +110,17 @@ jobs:
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: Generate token
         id: generate_changelog_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
         with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: "[\"grafana\", \"grafana-enterprise\"]"
-          permissions: "{\"contents\": \"write\", \"pull_requests\": \"write\", \"workflows\":\"write\"}"
+          app-id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private-key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            grafana
+            grafana-enterprise
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
       - run: echo "RELEASE_BRANCH=release-${VERSION}" >> "$GITHUB_ENV"
       - name: Checkout Grafana
         uses: actions/checkout@v5

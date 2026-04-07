@@ -152,12 +152,13 @@ jobs:
       - name: Generate token for plugin-tools
         if: steps.check-e2e-changes.outputs.changes > 0
         id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
         with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["plugin-tools"]'
-          permissions: '{"actions": "write"}'
+          app-id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private-key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          owner: ${{ github.repository_owner }}
+          repositories: plugin-tools
+          permission-actions: write
 
       - name: Dispatch to plugin-tools
         if: steps.check-e2e-changes.outputs.changes > 0
