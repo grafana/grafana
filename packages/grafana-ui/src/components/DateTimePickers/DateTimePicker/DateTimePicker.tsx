@@ -30,7 +30,7 @@ import { Input } from '../../Input/Input';
 import { Stack } from '../../Layout/Stack/Stack';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { Portal } from '../../Portal/Portal';
-import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
+import { TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
@@ -87,8 +87,8 @@ export const DateTimePicker = ({
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
-        const popupElement = document.getElementsByClassName(POPUP_CLASS_NAME)[0];
-        return !(popupElement && popupElement.contains(element));
+        const popupElement = document.querySelector('[class$=combobox-menu]');
+        return !popupElement?.contains(element);
       },
     },
     ref
