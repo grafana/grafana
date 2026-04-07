@@ -1543,7 +1543,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		}, "")
 
 		client := &fakeDynamicResourceClient{}
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 
 		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/file.json", "test-ref")
 
@@ -1591,7 +1591,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		parent, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
 
 		require.NoError(t, err)
@@ -1643,7 +1643,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
 
 		require.NoError(t, err)
@@ -1672,7 +1672,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 			MetadataHash: "hash-b",
 		}, "")
 
-		fm := NewFolderManager(rw, &fakeDynamicResourceClient{}, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, &fakeDynamicResourceClient{}, tree, FolderKind, WithFolderMetadataEnabled(true))
 		_, err := fm.EnsureFolderPathExist(ctx, "team-a/dashboard.json", "test-ref")
 
 		require.Error(t, err)
@@ -1977,7 +1977,7 @@ func TestRenameFolderPath(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
 		require.NoError(t, err)
 		require.Empty(t, oldID)
@@ -2014,7 +2014,7 @@ func TestRenameFolderPath(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
 		require.NoError(t, err)
 		require.Equal(t, "old-uid", oldID)
@@ -2145,7 +2145,7 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 		}, "")
 
 		client := &fakeDynamicResourceClient{}
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 
 		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 
@@ -2179,7 +2179,7 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 		}, "")
 
 		client := &fakeDynamicResourceClient{}
-		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 
