@@ -219,7 +219,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for shorturl not implemented")
+	return nil, fmt.Errorf("DeleteCollection for correlation not implemented")
 }
 
 type continueToken struct {
