@@ -12,10 +12,12 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { type ElementSelectionContextItem } from '@grafana/ui';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
+import { type BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
 import { type EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
@@ -33,6 +35,8 @@ import {
 } from '../settings/variables/VariableTypeSelectionPane';
 import { isSceneVariable } from '../settings/variables/utils';
 
+import { type DashboardEditPane } from './DashboardEditPane';
+import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
@@ -41,7 +45,46 @@ export function useEditPaneCollapsed() {
   return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
 }
 
-export function getEditableElementFor(sceneObj: SceneObject | undefined): EditableDashboardElement | undefined {
+export function getEditableElementForSelection(
+  editPane: DashboardEditPane,
+  selected: ElementSelectionContextItem[],
+  openPaneTempHack?: SceneObject
+): EditableDashboardElement | undefined {
+  if (openPaneTempHack) {
+    return getEditableElementFor(openPaneTempHack);
+  }
+
+  if (selected.length === 1) {
+    const obj = editPane.getSelectedObject(selected[0].id);
+    if (obj) {
+      return getEditableElementFor(obj);
+    }
+  }
+
+  if (selected.length > 1) {
+    const objects = selected.map((s) => editPane.getSelectedObject(s.id));
+    const elements: BulkActionElement[] = objects
+      .map((obj) => getEditableElementFor(obj))
+      .filter((e): e is BulkActionElement => Boolean(e) && isBulkActionElement(e!));
+
+    if (elements.length === 0) {
+      return undefined;
+    }
+
+    const first = elements[0];
+    const allSameType = elements.every((e) => e.constructor.name === first.constructor.name);
+
+    if (allSameType && first.createMultiSelectedElement) {
+      return first.createMultiSelectedElement(elements);
+    }
+
+    return new MultiSelectedObjectsEditableElement(elements);
+  }
+
+  return undefined;
+}
+
+export function getEditableElementFor(sceneObj: SceneObject | undefined | null): EditableDashboardElement | undefined {
   if (!sceneObj) {
     return undefined;
   }
