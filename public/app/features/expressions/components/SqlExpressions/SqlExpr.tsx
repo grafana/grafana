@@ -10,7 +10,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
-import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';
+import { quoteIdentifierIfNecessary, unquoteIdentifier } from 'app/plugins/datasource/mysql/sqlUtil';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
@@ -78,7 +78,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const initialQuery = `SELECT
   *
 FROM
-  ${quoteIdentifierIfNecessary(vars[0])}
+  ${vars[0] ? quoteIdentifierIfNecessary(unquoteIdentifier(vars[0])) : 'table'}
 LIMIT
   10`;
 

@@ -64,4 +64,19 @@ describe('fetchSQLFields', () => {
     expect(fields).toHaveLength(1);
     expect(fields[0].value).toBe('`field with spaces`');
   });
+
+  it('should not double-quote already quoted table names in the schema query', async () => {
+    const query = { table: '`already quoted`' };
+    const queries = [{ refId: '`already quoted`' }];
+    
+    await fetchSQLFields(query as any, queries as any);
+    
+    expect(dataSource.runMetaSQLExprQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rawSql: 'SELECT * FROM `already quoted` LIMIT 1',
+      }),
+      expect.anything(),
+      expect.anything()
+    );
+  });
 });

@@ -15,7 +15,7 @@ describe('getSqlCompletionProvider', () => {
     expect(resolveFunc).toBeDefined();
     
     if (resolveFunc) {
-      const tables = await resolveFunc();
+      const tables = await resolveFunc(null);
       expect(tables).toHaveLength(2);
       expect(tables[0]).toEqual(expect.objectContaining({
         name: 'gdp per capita',
@@ -40,9 +40,23 @@ describe('getSqlCompletionProvider', () => {
     const resolveFunc = provider.tables?.resolve;
     
     if (resolveFunc) {
-      const tables = await resolveFunc();
+      const tables = await resolveFunc(null);
       expect(tables[0].name).toBe('value_only');
       expect(tables[1].name).toBe('Label A');
+    }
+  });
+
+  it('should not double-quote already quoted table completions', async () => {
+    const getFields = jest.fn();
+    const refIds = [{ value: '`already quoted`' }];
+    
+    const providerGetter = getSqlCompletionProvider({ getFields, refIds } as any);
+    const provider = providerGetter({} as any, { id: 'sql' } as any);
+    const resolveFunc = provider.tables?.resolve;
+    
+    if (resolveFunc) {
+      const tables = await resolveFunc(null);
+      expect(tables[0].completion).toBe('`already quoted`');
     }
   });
 });

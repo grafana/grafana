@@ -6,7 +6,7 @@ import {
   type TableIdentifier,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';
+import { quoteIdentifierIfNecessary, unquoteIdentifier } from 'app/plugins/datasource/mysql/sqlUtil';
 
 import { ALLOWED_FUNCTIONS } from '../../../utils/metaSqlExpr';
 
@@ -24,7 +24,7 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
         const refIdsToTableDefs = args.refIds.map((refId) => {
           const tableDef: TableDefinition = {
             name: refId.label || refId.value || '',
-            completion: quoteIdentifierIfNecessary(refId.label || refId.value || ''),
+            completion: quoteIdentifierIfNecessary(unquoteIdentifier(refId.label || refId.value || '')),
           };
           return tableDef;
         });
