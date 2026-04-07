@@ -257,9 +257,8 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
-    // Special logic for tabs when undocked, to prevent edit pane from showing when switching tabs
-    if (obj instanceof TabItem && !this.state.isDocked && !obj.isCurrentTab()) {
-      this.clearSelection();
+    // Special logic for tabs only select tab of open pane is not already open or tab is already active
+    if (obj instanceof TabItem && !obj.isCurrentTab() && !this.state.openPane) {
       return;
     }
 
