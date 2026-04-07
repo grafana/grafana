@@ -22,11 +22,11 @@ cards:
       title: gcx CLI (recommended)
     - description: Learn how to install, set up and use the Grafana CLI `grafanactl`
       height: 24
-      href: ./grafanactl (deprecated)
-      title: grafanactl CLI
+      href: ./grafanactl
+      title: grafanactl CLI (deprecated)
   title_class: pt-0 lh-1
-title: Introduction to the Grafana CLIs
-menuTitle: Grafana CLIs
+title: Introduction to the Grafana CLI
+menuTitle: Grafana CLI
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/
 aliases:
