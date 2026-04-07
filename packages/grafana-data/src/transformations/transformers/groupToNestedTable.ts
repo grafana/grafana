@@ -132,7 +132,7 @@ function shouldGroupOnFieldV2(
 /**
  * Returns true if aggregations should be calculated for a field according to V2 rules.
  */
-function shouldCalculateFieldV2(
+function shouldCalculateField(
   field: Field,
   frame: DataFrame,
   allFrames: DataFrame[],
@@ -201,11 +201,11 @@ export const groupToNestedTable: DataTransformerInfo<
           const fields: Field[] = createGroupedFields(groupByFields, valuesByGroupKey);
 
           // Build sub-frames for rows that are neither grouped nor aggregated
-          const subFrames: DataFrame[][] = groupToSubframesV2(valuesByGroupKey, frame, data, options);
+          const subFrames: DataFrame[][] = groupToSubframes(valuesByGroupKey, frame, data, options);
 
           // For each field that should be calculated, compute aggregations
           for (const field of frame.fields) {
-            if (!shouldCalculateFieldV2(field, frame, data, options.rules)) {
+            if (!shouldCalculateField(field, frame, data, options.rules)) {
               continue;
             }
 
@@ -267,7 +267,11 @@ export const groupToNestedTable: DataTransformerInfo<
  * Given the appropriate data, create a sub-frame
  * which can then be displayed in a sub-table.
  */
-function createSubframe(fields: Field[], frameLength: number, showSubframeHeaders: boolean) {
+function createSubframe(
+  fields: Field[],
+  frameLength: number,
+  { showSubframeHeaders = SHOW_NESTED_HEADERS_DEFAULT }: GroupToNestedTableTransformerOptionsV2
+) {
   return {
     meta: { custom: { noHeader: !showSubframeHeaders } },
     length: frameLength,
@@ -296,21 +300,19 @@ const detectFieldType = (aggregation: string, sourceField: Field, targetField: F
  * Group values into sub-frames for fields that are not grouped or aggregated (V2 version).
  * Fields without a matching rule, or with a rule that has no operation, fall into the nested table.
  */
-function groupToSubframesV2(
+function groupToSubframes(
   valuesByGroupKey: Map<string, FieldMap>,
   frame: DataFrame,
   allFrames: DataFrame[],
   options: GroupToNestedTableTransformerOptionsV2
 ): DataFrame[][] {
-  const showHeaders =
-    options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
-
   const subFrames: DataFrame[][] = [];
 
   for (const [, value] of valuesByGroupKey) {
     const nestedFields: Field[] = [];
 
-    for (const [fieldName, field] of Object.entries(value)) {
+    for (const fieldName in value) {
+      const field = value[fieldName];
       // Find the source field in the original frame to test against matchers
       const sourceField = frame.fields.find((f) => getFieldDisplayName(f) === fieldName) ?? field;
       const rule = findMatchingRule(sourceField, frame, allFrames, options.rules);
@@ -319,10 +321,9 @@ function groupToSubframesV2(
         // No rule matched — include in nested table
         nestedFields.push(field);
       } else if (
-        rule.aggregations === undefined ||
-        (rule.operation === GroupByOperationID.aggregate && rule.aggregations.length === 0) ||
-        rule.operation === null ||
-        rule.operation === undefined
+        rule.aggregations == null ||
+        rule.operation == null ||
+        (rule.operation === GroupByOperationID.aggregate && rule.aggregations.length === 0)
       ) {
         // Rule exists but is unconfigured — include in nested table
         nestedFields.push(field);
@@ -331,9 +332,9 @@ function groupToSubframesV2(
     }
 
     if (nestedFields.length > 0) {
-      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length, showHeaders)]);
+      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length, options)]);
     } else {
-      subFrames.push([createSubframe([], 0, showHeaders)]);
+      subFrames.push([createSubframe([], 0, options)]);
     }
   }
 

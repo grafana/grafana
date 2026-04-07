@@ -514,6 +514,61 @@ describe('GroupToSubframe transformer - V2 native config', () => {
     });
   });
 
+  it('should apply the first matching rule when multiple rules match the same field', async () => {
+    // findMatchingRule iterates rules in order and returns on the first match.
+    // Here byName (rule index 1) and byRegexp (rule index 2) both match 'values'.
+    // The byName rule comes first and has operation=aggregate, so the field is
+    // aggregated and excluded from subframes. If first-match semantics were broken
+    // the byRegexp rule (operation=null) would win and put the field in the subframe.
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['one', 'two'] },
+        { name: 'values', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> = {
+      id: DataTransformerID.groupToNestedTable,
+      options: {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          {
+            // First to match 'values' — wins
+            matcher: { id: FieldMatcherID.byName, options: 'values' },
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+          {
+            // Also matches 'values' via regexp — but comes second, so it loses
+            matcher: { id: FieldMatcherID.byRegexp, options: '/values/' },
+            operation: null,
+            aggregations: [],
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+
+      // byName rule won — 'values' is aggregated into the outer frame
+      const sumField = result[0].fields.find((f: Field) => f.name === 'values (sum)');
+      expect(sumField).toBeDefined();
+      expect(sumField!.values).toEqual([1, 2]);
+
+      // Subframes should contain no fields: 'message' is grouped, 'values' is aggregated
+      const nestedField = result[0].fields.find((f: Field) => f.name === '__nestedFrames');
+      for (const subframeGroup of nestedField!.values) {
+        expect(subframeGroup[0].fields).toHaveLength(0);
+      }
+    });
+  });
+
   it('should not process frames when no group-by rule exists in V2 config', async () => {
     const testSeries = toDataFrame({
       name: 'A',
