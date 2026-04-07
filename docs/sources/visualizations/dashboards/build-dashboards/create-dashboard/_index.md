@@ -241,7 +241,7 @@ To edit a dashboard, follow these steps:
    | ------ | ----- |
    | Edit existing elements | <p>Click the element to open the sidebar showing the relevant options. Click the **Dashboard options** icon to access dashboard settings.</p><p>If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.</p> |
    | Add more panels | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p> |
-   | Group panels | <p>Click **Add new element** and select **Group into row** or **Group into tab**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option.</p><p>For more information on groupings, refer to [Panel groupings](#panel-groupings).</p> |
+   | Group panels | <p>Click **Add new element** and select **Group into row** or **Group into tab**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p> |
    | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links)</li></ul> |
    | Change layouts | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts). |
 
@@ -270,7 +270,7 @@ There are default parameters to constrain the layout, and you can update these t
 - **Min column width**: Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
 - **Max columns**: Set a number up to 10.
 - **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
-- **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](#grouping-configuration-options)).
+- **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options).
 
 ### Update panel layout
 
@@ -435,6 +435,7 @@ To move a panel, follow these steps:
 
    If the dashboard has groupings, you can only move the panel to another grouping.
 
+1. When the new position is highlighted in a solid blue line, drop the panel.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.

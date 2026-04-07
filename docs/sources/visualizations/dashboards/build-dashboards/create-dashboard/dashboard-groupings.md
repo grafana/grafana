@@ -13,11 +13,44 @@ labels:
 title: Dashboard groupings
 description: Group dashboard panels
 weight: 300
+image_maps:
+  - key: panel-groupings
+    src: /media/docs/grafana/dashboards/screenshot-dashboard-groupings-v13.0.png
+    alt: Dashboard with nested groupings
+    points:
+      - x_coord: 15
+        y_coord: 11
+        content: |
+          You can only have one type of grouping at the first level. In this case, that's two rows: **Row with tabs** and **Another row, collapsed**.
+      - x_coord: 21
+        y_coord: 93
+        content: |
+          Inside of those first-level groupings however, you have the freedom to add different dashboard elements. There are tabs nested in **Row with tabs**, but you could nest rows, tabs, or panels inside **Another row, collapsed**.
+      - x_coord: 26
+        y_coord: 22.5
+        content: |
+           Also, you can have different panel layouts in within a row or tab. In this dashboard, one tab contains two rows that have two different layouts.
+  - key: ungrouping
+    src: /media/docs/grafana/dashboards/screenshot-ungrouping-v13.0.png
+    alt: Dashboard with ungrouping behavior annotated
+    points:
+      - x_coord: 24
+        y_coord: 63
+        content: |
+          Ungroups all the rows inside **Nested tab with rows** leaving the panels in that tab.
+      - x_coord: 55.5
+        y_coord: 9.5
+        content: |
+          Ungroups all the tabs inside **Row with tabs**, leaving the panels in that row.
+      - x_coord: 22
+        y_coord: 95
+        content: |
+           Removes all groupings on the dashboard, leaving just the panels on the dashboard.
 ---
 
 # Panel groupings
 
-<!--should this be dashboard groupings -->
+<!-- TODO: should the menu title be Panel groupings, Create groupings, or Group panels? Maybe dashboard panel groupings? -->
 
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
@@ -39,12 +72,9 @@ You can nest up to three levels deep, which means a dashboard can have a maximum
 - Grouping 3 - Row or tab
 - Panels
 
-You can only have one type of grouping at each level.
-Inside of those groupings however, you have the freedom to add different dashboard elements.
-Also, you can have different panel layouts in within a row or tab. 
-For example, in a dashboard with two rows, one row can have a custom layout and the other can have an auto layout.
+The following screenshot demonstrates how groupings work:
 
-<!-- {{< figure src="/media/docs/grafana/dashboards/screenshot-groupings-v12.4.png" alt="Dashboard with nested groupings" max-width="750px" >}} -->
+{{< image-map key="panel-groupings" >}}
 
 In addition to the option to add groupings from the sidebar, when you hover your cursor over relevant parts of the dashboard, **+ Add panel**,  **+ New row**, **+ New tab**, **Group panels**, and ungroup buttons are visible.
 
@@ -120,11 +150,7 @@ You can also start a grouping by adding a row or tab from the sidebar and then a
 
 To add more groupings at the same level, follow these steps:
 
-1. Click the dashboard or grouping level where you want to more groupings, and click **+ New row** or **+ New tab** (only one option will be available).
-
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-group-v12.4.png" alt="Adding a nested grouping" max-width="500px" >}}
-   <!-- new screenshot -->
-
+1. Click the dashboard or grouping where you want to more groupings, and click **+ New row** or **+ New tab** (only one option will be available).
 1. Set the configuration options for the new grouping.
 1. Click **+ Add panel** to begin adding panels to the new grouping.
 1. Click **Save**.
@@ -136,14 +162,10 @@ To add more groupings at the same level, follow these steps:
 
 To add a nested grouping, follow these steps:
 
-1. Click the grouping level where you want to add the nested grouping.
-1. Do one of the following:
+1. Click the grouping where you want to add the nested grouping.
+1. Under a panel or group of panels in the grouping, click **Group panels** and select **Group into row** or **Group into tab** (**Group into tab** is only available if the parent grouping is a row).
 
-   - Click the **Add new element** icon (blue plus sign) and select **Group into rows** or **Group into tabs**.
-   - Under a panel or group of panels in the grouping, click **Group panels** and select **Group into row** or **Group into tab** (**Group into tab** is only available if the parent grouping is a row).
-
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-nest-group-v12.4.png" alt="Adding a nested grouping" max-width="500px" >}}
-   <!-- new screenshot here -->
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-nest-group-v13.0.png" alt="Adding a nested grouping" max-width="500px" >}}
 
    The new grouping is added inside the first grouping, and the panels are moved into the nested grouping.
    The sidebar opens displaying the relevant configuration options.
@@ -163,7 +185,7 @@ You can ungroup some or all of the dashboard groupings without losing your panel
 When you ungroup a row or tab, all the groupings inside it are ungrouped and the panels are moved into the next higher-level grouping.
 If there are no more groupings left, the panels are moved onto the dashboard.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-ungrouping-v12.4.png" alt="Dashboard with ungrouping behavior annotated" max-width="750px" >}}
+{{< image-map key="ungrouping" >}}
 
 The **Ungroup rows** and **Ungroup tabs** buttons are only visible when you hover your mouse over the relevant part of the dashboard
 
@@ -202,6 +224,6 @@ If you have a panel that includes grouped panels already and you want some panel
 In view mode, the row header is hidden, so that the panels in that row appear ungrouped.
 In the following image, the panels are grouped into two rows, but the header of the second row is hidden:
 
-{{< figure src="../placeholder-1.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.0.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
 
 When you hide the header of a row, you can't collapse the row.
