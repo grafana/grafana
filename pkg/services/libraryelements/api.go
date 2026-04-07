@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -244,7 +245,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		} else {
 			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
-				if errors.Is(err, dashboards.ErrFolderAccessDenied) {
+				if errors.Is(err, foldermodel.ErrFolderAccessDenied) {
 					return response.Error(http.StatusForbidden, "access denied to folder", err)
 				}
 
@@ -406,8 +407,8 @@ func (l *LibraryElementService) toLibraryElementError(err error, message string)
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
 		return response.Error(http.StatusNotFound, dashboards.ErrFolderNotFound.Error(), err)
 	}
-	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
-		return response.Error(http.StatusForbidden, dashboards.ErrFolderAccessDenied.Error(), err)
+	if errors.Is(err, foldermodel.ErrFolderAccessDenied) {
+		return response.Error(http.StatusForbidden, foldermodel.ErrFolderAccessDenied.Error(), err)
 	}
 	if errors.Is(err, model.ErrLibraryElementHasConnections) {
 		return response.Error(http.StatusForbidden, model.ErrLibraryElementHasConnections.Error(), err)

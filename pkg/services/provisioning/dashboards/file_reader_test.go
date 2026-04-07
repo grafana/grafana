@@ -437,7 +437,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		ctx := context.Background()
 		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 		_, _, err = r.getOrCreateFolder(ctx, cfg, fakeService, cfg.Folder)
-		require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
+		require.ErrorIs(t, err, folder.ErrFolderInvalidUID)
 	})
 
 	t.Run("Walking the folder with dashboards", func(t *testing.T) {

@@ -25,7 +25,7 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	// --- 400 Bad Request ---
-	if errors.Is(err, dashboards.ErrFolderTitleEmpty) ||
+	if errors.Is(err, folder.ErrFolderTitleEmpty) ||
 		errors.Is(err, dashboards.ErrDashboardTypeMismatch) ||
 		errors.Is(err, dashboards.ErrDashboardInvalidUid) ||
 		errors.Is(err, dashboards.ErrDashboardUidTooLong) ||
@@ -35,24 +35,24 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	// --- 403 Forbidden ---
-	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
+	if errors.Is(err, folder.ErrFolderAccessDenied) {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
 	// --- 404 Not Found ---
-	if errors.Is(err, dashboards.ErrFolderNotFound) {
+	if errors.Is(err, folder.ErrFolderNotFound) {
 		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
 	}
 
 	// --- 409 Conflict ---
-	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
+	if errors.Is(err, folder.ErrFolderWithSameUIDExists) {
 		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
 	// --- 412 Precondition Failed ---
-	if errors.Is(err, dashboards.ErrFolderVersionMismatch) ||
+	if errors.Is(err, folder.ErrFolderVersionMismatch) ||
 		k8sErrors.IsAlreadyExists(err) {
-		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
+		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrFolderVersionMismatch.Error()})
 	}
 
 	// --- Kubernetes status errors ---
@@ -119,5 +119,5 @@ func getDefaultMessageForStatus(statusCode int) string {
 }
 
 func IsForbidden(err error) bool {
-	return k8sErrors.IsForbidden(err) || errors.Is(err, dashboards.ErrFolderAccessDenied)
+	return k8sErrors.IsForbidden(err) || errors.Is(err, folder.ErrFolderAccessDenied)
 }

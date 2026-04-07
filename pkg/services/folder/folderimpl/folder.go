@@ -359,19 +359,19 @@ func SplitFullpath(s string) []string {
 
 func toFolderError(err error) error {
 	if errors.Is(err, dashboards.ErrDashboardTitleEmpty) {
-		return dashboards.ErrFolderTitleEmpty
+		return folder.ErrFolderTitleEmpty
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardUpdateAccessDenied) {
-		return dashboards.ErrFolderAccessDenied
+		return folder.ErrFolderAccessDenied
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardWithSameUIDExists) {
-		return dashboards.ErrFolderWithSameUIDExists
+		return folder.ErrFolderWithSameUIDExists
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardVersionMismatch) {
-		return dashboards.ErrFolderVersionMismatch
+		return folder.ErrFolderVersionMismatch
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
