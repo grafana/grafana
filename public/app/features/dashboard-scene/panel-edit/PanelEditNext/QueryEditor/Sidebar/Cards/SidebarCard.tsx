@@ -74,7 +74,7 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSelect?.({});
+      onSelect({});
     }
   };
 
@@ -212,6 +212,11 @@ function getStyles(
 
   const selectionTintBg = `color-mix(in srgb, ${borderColor} 5%, ${theme.colors.background.primary})`;
 
+  // Selection-based styling
+  const cardBackground = isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg;
+  const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
+  const indicatorWidth = isSelected ? 3 : 2;
+
   return {
     cardContentIcons: css({
       display: 'flex',
@@ -271,22 +276,20 @@ function getStyles(
       justifyContent: 'space-between',
 
       width: '100%',
-      // TODO: Consider extracting selection-based styling (background, boxShadow, width)
-      // into a helper or computed variable to avoid nested ternaries.
-      background: isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg,
+      background: cardBackground,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
 
       overflow: 'hidden',
       border: cardBorder,
-      boxShadow: isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none',
+      boxShadow: cardBoxShadow,
       '&::before': {
         content: '""',
         position: 'absolute',
         left: 0,
         top: 0,
         bottom: 0,
-        width: isSelected ? 3 : 2,
+        width: indicatorWidth,
         background: borderColor,
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transition: theme.transitions.create(['width'], {
