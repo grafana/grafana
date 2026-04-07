@@ -194,16 +194,6 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 				},
 			},
 			{
-				name:    "should be unavailable if migrating",
-				input:   failingObj,
-				wantErr: true,
-				prepare: func(dual Service) (StorageStatus, error) {
-					status, err := dual.Status(context.Background(), kind)
-					require.NoError(t, err)
-					return dual.StartMigration(context.Background(), kind, status.UpdateKey)
-				},
-			},
-			{
 				name:  "should succeed after migration",
 				input: exampleObj,
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
