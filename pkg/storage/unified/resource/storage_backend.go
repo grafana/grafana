@@ -41,10 +41,6 @@ const (
 	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
-
-	// Messages used when optimistic lock checks fail
-	outdatedRVMessage       = "requested RV does not match current RV"
-	concurrentCreateMessage = "concurrent create detected"
 )
 
 type GarbageCollectionConfig struct {
@@ -698,14 +694,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if err != nil {
 			if errors.Is(err, ErrNotFound) {
 				// Resource doesn't exist, but PreviousRV was provided
-				return 0, conflictError(event, outdatedRVMessage)
+				return 0, conflictError(event, "resource not found")
 			}
 			return 0, fmt.Errorf("failed to fetch latest resource: %w", err)
 		}
 
 		// Verify the current RV matches the PreviousRV
 		if latestKey.ResourceVersion != event.PreviousRV {
-			return 0, conflictError(event, outdatedRVMessage)
+			return 0, conflictError(event, "requested RV does not match current RV")
 		}
 	}
 
@@ -814,13 +810,13 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, conflictError(event, outdatedRVMessage)
+			return 0, conflictError(event, "concurrent modification detected")
 		}
 
 		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, conflictError(event, outdatedRVMessage)
+			return 0, conflictError(event, "resource was modified concurrently")
 		}
 	} else if event.Type == resourcepb.WatchEvent_ADDED {
 		// Create operations: verify our write is the latest version
@@ -840,14 +836,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, conflictError(event, concurrentCreateMessage)
+			return 0, conflictError(event, "concurrent create detected")
 		}
 
 		// Verify that the immediate predecessor is not a create
 		if prevKey.Action == DataActionCreated {
 			// Another concurrent create happened - delete our write and return error
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, conflictError(event, concurrentCreateMessage)
+			return 0, conflictError(event, "concurrent create attempts detected")
 		}
 	}
 

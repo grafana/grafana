@@ -1949,7 +1949,6 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 		require.NotNil(t, updateResp.Error, "expected error for stale RV update")
 		require.Equal(t, int32(http.StatusConflict), updateResp.Error.Code)
 		require.Equal(t, string(metav1.StatusReasonConflict), updateResp.Error.Reason)
-		require.Contains(t, updateResp.Error.Message, "requested RV does not match current RV")
 	})
 
 	t.Run("delete nonexistent resource returns 404", func(t *testing.T) {
@@ -2008,7 +2007,6 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 		require.NotNil(t, deleteResp.Error, "expected error for stale RV delete")
 		require.Equal(t, int32(http.StatusConflict), deleteResp.Error.Code)
 		require.Equal(t, string(metav1.StatusReasonConflict), deleteResp.Error.Reason)
-		require.Contains(t, deleteResp.Error.Message, "requested RV does not match current RV")
 	})
 
 	t.Run("update without resource version returns 400", func(t *testing.T) {

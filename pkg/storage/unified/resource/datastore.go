@@ -898,7 +898,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 				// This can only happen if a concurrent write was attempted: the validation in
 				// WriteEvent guarantees that we return early when the resource already exists
 				// before entering the transaction.
-				return conflictError(event, concurrentCreateMessage)
+				return conflictError(event, "concurrent create attempts detected")
 			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}
@@ -954,7 +954,7 @@ func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) error 
 		return fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
 	}
 
-	return conflictError(event, outdatedRVMessage)
+	return conflictError(event, "requested RV does not match current RV")
 }
 
 func isRowAlreadyExistsError(err error) bool {
