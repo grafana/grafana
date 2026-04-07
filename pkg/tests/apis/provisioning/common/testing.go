@@ -406,6 +406,7 @@ func getNameBeforeLastDash(name string) string {
 
 // TestdataPath returns the absolute path to a file in the shared testdata directory.
 func TestdataPath(filename string) string {
+	//nolint:dogsled
 	_, thisFile, _, _ := runtime.Caller(0)
 	return filepath.Join(filepath.Dir(thisFile), "../testdata", filename)
 }
