@@ -28,7 +28,7 @@ The Grafana CLI `gcx` is available in [public preview](https://grafana.com/docs/
 
 {{< /admonition >}}
 
-The Grafana Cloud CLI `gcx` is a single CLI that allows you to manage both Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, K6, Fleet Management, Incidents, or Adaptive Telemetry. `gcx` natively supports agentic workflows and is integrated with Grafana Assistant, to combine the previously fragmented user experience in one tool 
+The Grafana Cloud CLI `gcx` is a single CLI that allows you to manage both Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, K6, Fleet Management, Incidents, or Adaptive Telemetry. `gcx` natively supports agentic workflows and it's integrated with Grafana Assistant, combining the previously fragmented user experience into one single tool. 
 
 It provides the following benefits:
 
