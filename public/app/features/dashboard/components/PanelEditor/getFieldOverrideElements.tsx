@@ -98,13 +98,17 @@ export function getFieldOverrideCategories(
     });
     const overrideId = `panel-options-override-${idx}`;
     const matcherUi = fieldMatchersUI.get(override.matcher.id);
-    const configPropertiesOptions = registry.selectOptions(undefined, undefined, (item) => {
-      let label = item.name;
-      if (item.category) {
-        label = [...item.category, item.name].join(' > ');
+    const configPropertiesOptions = registry.selectOptions(
+      undefined,
+      (item) => !item.hideFromOverrides,
+      (item) => {
+        let label = item.name;
+        if (item.category) {
+          label = [...item.category, item.name].join(' > ');
+        }
+        return label;
       }
-      return label;
-    }).options;
+    ).options;
     const isSystemOverride = isSystemOverrideGuard(override);
     // A way to force open new override categories
     const forceOpen = override.properties.length === 0;
