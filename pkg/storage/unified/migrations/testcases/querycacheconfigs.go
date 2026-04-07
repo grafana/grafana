@@ -39,7 +39,21 @@ func (tc *QueryCacheConfigsTestCase) RenameTables() []string {
 }
 
 func (tc *QueryCacheConfigsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
-	// data_source_cache table is created by the standard database migrations (snapshot)
+	dataSourceCacheTable := migrator.Table{
+		Name: "data_source_cache",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "data_source_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "data_source_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "enabled", Type: migrator.DB_Bool},
+			{Name: "ttl_ms", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "ttl_resources_ms", Type: migrator.DB_BigInt, Nullable: false, Default: "300000"},
+			{Name: "use_default_ttl", Type: migrator.DB_Bool, Nullable: false, Default: "true"},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+	}
+	mg.AddMigration("create data_source_cache table for test", migrator.NewAddTableMigration(dataSourceCacheTable))
 }
 
 func (tc *QueryCacheConfigsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
@@ -49,13 +63,13 @@ func (tc *QueryCacheConfigsTestCase) Setup(t *testing.T, helper *apis.K8sTestHel
 	orgID := helper.Org1.OrgID
 
 	_, err := engine.Exec(
-		"INSERT INTO data_source (org_id, version, type, name, access, url, uid, created, updated) VALUES (?, 1, 'prometheus', 'Prometheus', 'proxy', 'http://localhost:9090', 'ds-prom-uid', '2024-01-01 00:00:00', '2024-01-01 00:00:00')",
+		"INSERT INTO data_source (org_id, version, type, name, access, url, uid, basic_auth, is_default, json_data, secure_json_data, created, updated) VALUES (?, 1, 'prometheus', 'Prometheus', 'proxy', 'http://localhost:9090', 'ds-prom-uid', 0, 0, '{}', '{}', '2024-01-01 00:00:00', '2024-01-01 00:00:00')",
 		orgID,
 	)
 	require.NoError(t, err)
 
 	_, err = engine.Exec(
-		"INSERT INTO data_source (org_id, version, type, name, access, url, uid, created, updated) VALUES (?, 1, 'loki', 'Loki', 'proxy', 'http://localhost:3100', 'ds-loki-uid', '2024-01-01 00:00:00', '2024-01-01 00:00:00')",
+		"INSERT INTO data_source (org_id, version, type, name, access, url, uid, basic_auth, is_default, json_data, secure_json_data, created, updated) VALUES (?, 1, 'loki', 'Loki', 'proxy', 'http://localhost:3100', 'ds-loki-uid', 0, 0, '{}', '{}', '2024-01-01 00:00:00', '2024-01-01 00:00:00')",
 		orgID,
 	)
 	require.NoError(t, err)

@@ -70,16 +70,17 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 			n++
 
 			name := fmt.Sprintf("%s.%s", row.pluginID, row.dataSourceUID)
+			created, _ := time.Parse("2006-01-02 15:04:05", row.created)
 			body, err := json.Marshal(queryCacheConfigObject{
 				TypeMeta:   typeMeta{APIVersion: apiGroup + "/" + apiVersion, Kind: "QueryCacheConfig"},
-				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(row.created)},
+				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(created)},
 				Spec: queryCacheConfigSpec{
 					DatasourceUID:  row.dataSourceUID,
 					PluginID:       row.pluginID,
-					Enabled:        row.enabled,
+					Enabled:        row.enabled != 0,
 					TtlQueriesMs:   row.ttlMS,
 					TtlResourcesMs: row.ttlResourcesMS,
-					UseDefaultTtl:  row.useDefaultTTL,
+					UseDefaultTtl:  row.useDefaultTTL != 0,
 				},
 			})
 			if err != nil {
@@ -108,7 +109,6 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 			return err
 		}
 		_ = rows.Close()
-
 		if int64(n) < limit {
 			break
 		}
@@ -151,12 +151,12 @@ type queryCacheConfigObject struct {
 type cacheConfigRow struct {
 	id             int64
 	dataSourceUID  string
-	enabled        bool
+	enabled        int64
 	ttlMS          int64
 	ttlResourcesMS int64
-	useDefaultTTL  bool
-	created        time.Time
-	updated        time.Time
+	useDefaultTTL  int64
+	created        string
+	updated        string
 	pluginID       string
 	orgID          int64
 }
