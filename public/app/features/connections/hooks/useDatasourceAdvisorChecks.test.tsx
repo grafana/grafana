@@ -7,6 +7,7 @@ import {
   type CheckType,
   useGetCheckTypeQuery,
 } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import { PluginExtensionPoints } from '@grafana/data';
 import { config, usePluginFunctions } from '@grafana/runtime';
 
 import {
@@ -107,16 +108,16 @@ function mockPluginFunctions(options: {
   const retryResult = { retryCheck: stableRetryCheck };
 
   usePluginFunctionsMock.mockImplementation(({ extensionPointId }: { extensionPointId: string }) => {
-    if (extensionPointId === 'grafana-advisor-app/completed-checks/v1') {
+    if (extensionPointId === PluginExtensionPoints.AdvisorCompletedChecks) {
       return {
         isLoading: pluginLoading,
-        functions: pluginLoading ? [] : [{ fn: () => completedResult }],
+        functions: pluginLoading ? [] : [{ pluginId: 'grafana-advisor-app', fn: () => completedResult }],
       };
     }
-    if (extensionPointId === 'grafana-advisor-app/retry-check/v1') {
+    if (extensionPointId === PluginExtensionPoints.AdvisorRetryCheck) {
       return {
         isLoading: pluginLoading,
-        functions: pluginLoading ? [] : [{ fn: () => retryResult }],
+        functions: pluginLoading ? [] : [{ pluginId: 'grafana-advisor-app', fn: () => retryResult }],
       };
     }
     return { isLoading: false, functions: [] };

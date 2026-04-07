@@ -6,6 +6,7 @@ import {
   type CheckType,
   useGetCheckTypeQuery,
 } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import { PluginExtensionPoints } from '@grafana/data';
 import { config, usePluginFunctions } from '@grafana/runtime';
 
 export type FailureSeverity = 'high' | 'low';
@@ -16,8 +17,7 @@ export type DatasourceFailureDetails = {
 };
 
 const EMPTY_MAP = new Map<string, DatasourceFailureDetails>();
-const COMPLETED_CHECKS_EXTENSION_POINT_ID = 'grafana-advisor-app/completed-checks/v1';
-const RETRY_CHECK_EXTENSION_POINT_ID = 'grafana-advisor-app/retry-check/v1';
+const ADVISOR_PLUGIN_ID = 'grafana-advisor-app';
 
 type CompletedChecksFn = (context?: { names?: string[]; checkType?: string }) => {
   isCompleted: boolean;
@@ -51,14 +51,14 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
   const [advisorData, setAdvisorData] = useState<AdvisorCheckContextValue | null>(null);
 
   const { functions: completedChecksFns, isLoading: isLoadingCompletedChecks } = usePluginFunctions<CompletedChecksFn>({
-    extensionPointId: COMPLETED_CHECKS_EXTENSION_POINT_ID,
+    extensionPointId: PluginExtensionPoints.AdvisorCompletedChecks,
   });
   const { functions: retryCheckFns, isLoading: isLoadingRetryChecks } = usePluginFunctions<RetryCheckFn>({
-    extensionPointId: RETRY_CHECK_EXTENSION_POINT_ID,
+    extensionPointId: PluginExtensionPoints.AdvisorRetryCheck,
   });
 
-  const completedChecksFn = completedChecksFns[0]?.fn;
-  const retryCheckFn = retryCheckFns[0]?.fn;
+  const completedChecksFn = completedChecksFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
+  const retryCheckFn = retryCheckFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const isPluginReady =
     enabled && !isLoadingCompletedChecks && !isLoadingRetryChecks && !!completedChecksFn && !!retryCheckFn;
 
