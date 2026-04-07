@@ -1,15 +1,33 @@
 package folderimpl
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/apimachinery/pkg/selection"
 
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 var orgID = int64(1)
 var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
@@ -126,4 +144,71 @@ func TestSplitFullpath(t *testing.T) {
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
+}
+
+func TestGetUIDFromLegacyID(t *testing.T) {
+	const orgID int64 = 1
+
+	user := &user.SignedInUser{OrgID: orgID, UserID: 1}
+	ctx := identity.WithRequester(context.Background(), user)
+
+	fakeK8s := new(client.MockK8sHandler)
+	store := folder.NewFakeStore()
+	store.ExpectedFolder = &folder.Folder{
+		UID:   "resolved-uid",
+		OrgID: orgID,
+		Title: "Resolved",
+	}
+
+	svc := &Service{
+		k8sclient:     fakeK8s,
+		unifiedStore:  store,
+		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
+		tracer:        noop.NewTracerProvider().Tracer("test"),
+	}
+
+	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
+	searchReq := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     gvr.Group,
+				Resource:  gvr.Resource,
+			},
+			Fields: []*resourcepb.Requirement{},
+			Labels: []*resourcepb.Requirement{
+				{
+					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+					Operator: string(selection.In),
+					Values:   []string{"42"},
+				},
+			},
+		},
+		Limit: folderSearchLimit,
+	}
+	searchRes := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: []*resourcepb.ResourceTableRow{
+				{
+					Key: &resourcepb.ResourceKey{
+						Name:     "resolved-uid",
+						Resource: "folders",
+					},
+					Cells: [][]byte{[]byte("")},
+				},
+			},
+		},
+		TotalHits: 1,
+	}
+
+	fakeK8s.On("GetNamespace", orgID).Return("default").Maybe()
+	fakeK8s.On("Search", mock.Anything, orgID, searchReq).Return(searchRes, nil).Once()
+
+	uid, err := svc.getUIDFromLegacyID(ctx, orgID, 42)
+	require.NoError(t, err)
+	require.Equal(t, "resolved-uid", uid)
+	fakeK8s.AssertExpectations(t)
 }

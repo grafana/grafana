@@ -26,4 +26,5 @@ jobs:
       patch_repo: "grafana/grafana-security-patches"
       patch_prefix: "${{ github.event.pull_request.number }}"
       sender: "${{ github.event.pull_request.user.login }}"
+      comment: "Closes: ${{ github.repository }}#${{ github.event.pull_request.number }}"
     secrets: inherit # zizmor: ignore[secrets-inherit]

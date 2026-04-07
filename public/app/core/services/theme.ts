@@ -9,10 +9,6 @@ import { PreferencesService } from './PreferencesService';
 export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
   const oldTheme = config.theme2;
 
-  if (!runtimeOnly && contextSrv.isSignedIn) {
-    contextSrv.user.theme = themeId;
-  }
-
   const newTheme = getThemeById(themeId);
 
   appEvents.publish(new ThemeChangedEvent(newTheme));
