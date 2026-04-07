@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 
-import { highlightMatch } from '../../utils/highlightMatch';
-
 export interface SearchableItem {
   id: string;
   label: string;
@@ -12,11 +10,35 @@ interface Props {
   placeholder?: string;
 }
 
+interface HighlightedLabelProps {
+  text: string;
+  query: string;
+}
+
+function HighlightedLabel({ text, query }: HighlightedLabelProps) {
+  const trimmedQuery = query.trim().toLowerCase();
+  if (!trimmedQuery) {
+    return <>{text}</>;
+  }
+  const index = text.toLowerCase().indexOf(trimmedQuery);
+  if (index === -1) {
+    return <>{text}</>;
+  }
+  return (
+    <>
+      {text.slice(0, index)}
+      <mark>{text.slice(index, index + trimmedQuery.length)}</mark>
+      {text.slice(index + trimmedQuery.length)}
+    </>
+  );
+}
+
 export function SearchableList({ items, placeholder = 'Search...' }: Props) {
   const [query, setQuery] = useState('');
+  const trimmedQuery = query.trim();
 
-  const filteredItems = query
-    ? items.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()))
+  const filteredItems = trimmedQuery
+    ? items.filter((item) => item.label.toLowerCase().includes(trimmedQuery.toLowerCase()))
     : items;
 
   return (
@@ -30,7 +52,9 @@ export function SearchableList({ items, placeholder = 'Search...' }: Props) {
       <ul>
         {filteredItems.length === 0 && <li>No results found.</li>}
         {filteredItems.map((item) => (
-          <li key={item.id} dangerouslySetInnerHTML={{ __html: highlightMatch(item.label, query) }} />
+          <li key={item.id}>
+            <HighlightedLabel text={item.label} query={query} />
+          </li>
         ))}
       </ul>
     </div>

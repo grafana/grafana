@@ -30,4 +30,21 @@ describe('SearchableList', () => {
     await userEvent.type(screen.getByRole('textbox'), 'zzz');
     expect(screen.getByText('No results found.')).toBeInTheDocument();
   });
+
+  it('highlights matched text with a mark element', async () => {
+    render(<SearchableList items={items} />);
+    await userEvent.type(screen.getByRole('textbox'), 'loki');
+    const mark = document.querySelector('mark');
+    expect(mark).toBeInTheDocument();
+    expect(mark?.textContent).toBe('Loki');
+  });
+
+  it('filters correctly when query has surrounding whitespace', async () => {
+    render(<SearchableList items={items} />);
+    await userEvent.type(screen.getByRole('textbox'), ' loki ');
+    expect(screen.queryByText('Prometheus metrics')).not.toBeInTheDocument();
+    const mark = document.querySelector('mark');
+    expect(mark).toBeInTheDocument();
+    expect(mark?.textContent).toBe('Loki');
+  });
 });

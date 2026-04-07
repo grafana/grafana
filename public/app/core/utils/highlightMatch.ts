@@ -1,6 +1,10 @@
 /**
  * Wraps the first occurrence of query in text with <mark> tags for highlighting.
- * Matching is case-insensitive. Returns the original text if query is empty or not found.
+ * Only the first match is highlighted. Matching is case-insensitive.
+ * Returns the original text if query is empty or not found.
+ *
+ * Note: Returns a raw HTML string — callers are responsible for safe rendering.
+ * For React rendering, use HighlightedLabel in SearchableList instead.
  */
 export function highlightMatch(text: string, query: string): string {
   if (!query.trim()) {
