@@ -48,9 +48,7 @@ image_maps:
           Removes all groupings on the dashboard, leaving just the panels on the dashboard.
 ---
 
-# Panel groupings
-
-<!-- TODO: should the menu title be Panel groupings, Create groupings, or Group panels? Maybe dashboard panel groupings? -->
+# Dashboard panel groupings
 
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
