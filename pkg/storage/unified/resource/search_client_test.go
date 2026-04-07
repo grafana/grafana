@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,95 +31,82 @@ func (f *fakeDualWriter) Status(_ context.Context, _ schema.GroupResource) (dual
 	return f.status, nil
 }
 
-// Mock ResourceIndexClient with enhanced timeout testing capabilities
-type MockResourceIndexClient struct {
-	mock.Mock
-	searchCalled    chan struct{}
-	statsCalled     chan struct{}
-	searchDelay     time.Duration
-	statsDelay      time.Duration
+// fakeResourceIndexClient is a hand-written fake for resourcepb.ResourceIndexClient.
+type fakeResourceIndexClient struct {
+	searchResponse *resourcepb.ResourceSearchResponse
+	searchErr      error
+	searchDelay    time.Duration
+	searchCalled   chan struct{}
+
+	statsResponse *resourcepb.ResourceStatsResponse
+	statsErr      error
+	statsDelay    time.Duration
+	statsCalled   chan struct{}
+
+	rebuildResponse *resourcepb.RebuildIndexesResponse
+	rebuildErr      error
+
 	contextCanceled chan context.Context
 }
 
-func NewMockResourceIndexClient() *MockResourceIndexClient {
-	return &MockResourceIndexClient{
-		searchCalled:    make(chan struct{}, 1),
-		statsCalled:     make(chan struct{}, 1),
-		contextCanceled: make(chan context.Context, 10), // Buffer for multiple calls
+func newFakeResourceIndexClient() *fakeResourceIndexClient {
+	return &fakeResourceIndexClient{
+		searchCalled:    make(chan struct{}, 10),
+		statsCalled:     make(chan struct{}, 10),
+		contextCanceled: make(chan context.Context, 10),
 	}
 }
 
-func (m *MockResourceIndexClient) SetSearchDelay(delay time.Duration) {
-	m.searchDelay = delay
-}
-
-func (m *MockResourceIndexClient) SetStatsDelay(delay time.Duration) {
-	m.statsDelay = delay
-}
-
-func (m *MockResourceIndexClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	args := m.Called(ctx, in, opts)
-
-	// Simulate delay if configured
-	if m.searchDelay > 0 {
+func (f *fakeResourceIndexClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if f.searchDelay > 0 {
 		select {
-		case <-time.After(m.searchDelay):
-			// Delay completed normally
+		case <-time.After(f.searchDelay):
 		case <-ctx.Done():
-			// Context was canceled during delay
-			m.contextCanceled <- ctx
+			f.contextCanceled <- ctx
 			return nil, ctx.Err()
 		}
 	}
 
-	// Signal that Search was called
 	select {
-	case m.searchCalled <- struct{}{}:
+	case f.searchCalled <- struct{}{}:
 	default:
 	}
 
-	return args.Get(0).(*resourcepb.ResourceSearchResponse), args.Error(1)
+	return f.searchResponse, f.searchErr
 }
 
-func (m *MockResourceIndexClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	args := m.Called(ctx, in, opts)
-
-	// Simulate delay if configured
-	if m.statsDelay > 0 {
+func (f *fakeResourceIndexClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	if f.statsDelay > 0 {
 		select {
-		case <-time.After(m.statsDelay):
-			// Delay completed normally
+		case <-time.After(f.statsDelay):
 		case <-ctx.Done():
-			// Context was canceled during delay
-			m.contextCanceled <- ctx
+			f.contextCanceled <- ctx
 			return nil, ctx.Err()
 		}
 	}
 
-	// Signal that GetStats was called
 	select {
-	case m.statsCalled <- struct{}{}:
+	case f.statsCalled <- struct{}{}:
 	default:
 	}
 
-	return args.Get(0).(*resourcepb.ResourceStatsResponse), args.Error(1)
+	return f.statsResponse, f.statsErr
 }
 
-func (m *MockResourceIndexClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
-	args := m.Called(ctx, in, opts)
-	return args.Get(0).(*resourcepb.RebuildIndexesResponse), args.Error(1)
+func (f *fakeResourceIndexClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	return f.rebuildResponse, f.rebuildErr
 }
 
-func setupTestSearchClient(t *testing.T) (schema.GroupResource, *MockResourceIndexClient, *MockResourceIndexClient, featuremgmt.FeatureToggles) {
+func setupTestSearchClient(t *testing.T) (schema.GroupResource, *fakeResourceIndexClient, *fakeResourceIndexClient, featuremgmt.FeatureToggles) {
 	t.Helper()
 	gr := schema.GroupResource{Group: "test", Resource: "items"}
-	unifiedClient := NewMockResourceIndexClient()
-	legacyClient := NewMockResourceIndexClient()
+	unifiedClient := newFakeResourceIndexClient()
+	legacyClient := newFakeResourceIndexClient()
 	features := featuremgmt.WithFeatures()
 	return gr, unifiedClient, legacyClient, features
 }
 
-func setupTestSearchWrapper(t *testing.T, dual *fakeDualWriter, unifiedClient, legacyClient *MockResourceIndexClient, features featuremgmt.FeatureToggles, gr schema.GroupResource) *searchWrapper {
+func setupTestSearchWrapper(t *testing.T, dual *fakeDualWriter, unifiedClient, legacyClient *fakeResourceIndexClient, features featuremgmt.FeatureToggles, gr schema.GroupResource) *searchWrapper {
 	t.Helper()
 	return &searchWrapper{
 		dual:          dual,
@@ -160,7 +146,7 @@ func TestSearchWrapper_Search(t *testing.T) {
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: true, status: dualwrite.StorageStatus{ReadUnified: true, WriteUnified: true}}
 
-		unifiedClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		unifiedClient.searchResponse = expectedResponse
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, features, gr)
 
@@ -169,8 +155,7 @@ func TestSearchWrapper_Search(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedResponse, resp)
 
-		unifiedClient.AssertExpectations(t)
-		legacyClient.AssertNotCalled(t, "Search")
+		assert.Empty(t, legacyClient.searchCalled, "legacy Search should not have been called")
 	})
 
 	t.Run("uses legacy client when not reading from unified", func(t *testing.T) {
@@ -179,7 +164,7 @@ func TestSearchWrapper_Search(t *testing.T) {
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
 
-		legacyClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.searchResponse = expectedResponse
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, features, gr)
 
@@ -188,8 +173,7 @@ func TestSearchWrapper_Search(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedResponse, resp)
 
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertNotCalled(t, "Search")
+		assert.Empty(t, unifiedClient.searchCalled, "unified Search should not have been called")
 	})
 
 	t.Run("do not make a background call to unified when feature flag enabled and using legacy with mode 0", func(t *testing.T) {
@@ -199,7 +183,7 @@ func TestSearchWrapper_Search(t *testing.T) {
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: false}}
 		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
-		legacyClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.searchResponse = expectedResponse
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
 
@@ -208,14 +192,11 @@ func TestSearchWrapper_Search(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedResponse, resp)
 
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertExpectations(t)
-
 		// Expect call to legacy client
-		legacyClient.AssertCalled(t, "Search", mock.Anything, req, mock.Anything)
+		assert.Len(t, legacyClient.searchCalled, 1, "legacy Search should have been called")
 
 		// Do not expect background call to unified client
-		unifiedClient.AssertNotCalled(t, "Search", mock.Anything, req, mock.Anything)
+		assert.Empty(t, unifiedClient.searchCalled, "unified Search should not have been called")
 	})
 
 	t.Run("makes background call to unified when feature flag enabled and using legacy", func(t *testing.T) {
@@ -225,11 +206,10 @@ func TestSearchWrapper_Search(t *testing.T) {
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
 		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
-		legacyClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.searchResponse = expectedResponse
 
-		// Expect background call to unified client
-		unifiedBgResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
-		unifiedClient.On("Search", mock.Anything, req, mock.Anything).Return(unifiedBgResponse, nil)
+		// Configure background call to unified client
+		unifiedClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 0}
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
 
@@ -245,9 +225,6 @@ func TestSearchWrapper_Search(t *testing.T) {
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("Background unified client call was not made within timeout")
 		}
-
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertExpectations(t)
 	})
 
 	t.Run("handles background call error gracefully", func(t *testing.T) {
@@ -257,10 +234,10 @@ func TestSearchWrapper_Search(t *testing.T) {
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
 		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
-		legacyClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.searchResponse = expectedResponse
 
 		// Background call returns error - should be handled gracefully
-		unifiedClient.On("Search", mock.Anything, req, mock.Anything).Return((*resourcepb.ResourceSearchResponse)(nil), assert.AnError)
+		unifiedClient.searchErr = assert.AnError
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
 
@@ -277,9 +254,6 @@ func TestSearchWrapper_Search(t *testing.T) {
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("Background unified client call was not made within timeout")
 		}
-
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertExpectations(t)
 	})
 
 	t.Run("background request times out after 500ms", func(t *testing.T) {
@@ -289,11 +263,10 @@ func TestSearchWrapper_Search(t *testing.T) {
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
 		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
-		legacyClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.searchResponse = expectedResponse
 
 		// Configure unified client to take longer than the 500ms timeout
-		unifiedClient.SetSearchDelay(600 * time.Millisecond) // Longer than 500ms timeout
-		unifiedClient.On("Search", mock.Anything, req, mock.Anything).Return((*resourcepb.ResourceSearchResponse)(nil), context.DeadlineExceeded)
+		unifiedClient.searchDelay = 600 * time.Millisecond // Longer than 500ms timeout
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
 
@@ -314,9 +287,6 @@ func TestSearchWrapper_Search(t *testing.T) {
 		case <-time.After(700 * time.Millisecond):
 			t.Fatal("Background request should have been canceled due to timeout")
 		}
-
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertExpectations(t)
 	})
 
 	t.Run("background request completes successfully when within timeout", func(t *testing.T) {
@@ -326,11 +296,11 @@ func TestSearchWrapper_Search(t *testing.T) {
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
 		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
-		legacyClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.searchResponse = expectedResponse
 
 		// Configure unified client to respond within the 500ms timeout
-		unifiedClient.SetSearchDelay(100 * time.Millisecond) // Well within 500ms timeout
-		unifiedClient.On("Search", mock.Anything, req, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil)
+		unifiedClient.searchDelay = 100 * time.Millisecond // Well within 500ms timeout
+		unifiedClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 0}
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
 
@@ -350,9 +320,6 @@ func TestSearchWrapper_Search(t *testing.T) {
 		case <-time.After(200 * time.Millisecond):
 			t.Fatal("Expected successful background call")
 		}
-
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertExpectations(t)
 	})
 }
 
@@ -367,7 +334,7 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		ctx := testutil.NewDefaultTestContext(t)
 		dual := &fakeDualWriter{readFromUnified: true, status: dualwrite.StorageStatus{ReadUnified: true, WriteUnified: true}}
 
-		unifiedClient.On("GetStats", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		unifiedClient.statsResponse = expectedResponse
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, features, gr)
 
@@ -376,8 +343,7 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedResponse, resp)
 
-		unifiedClient.AssertExpectations(t)
-		legacyClient.AssertNotCalled(t, "GetStats")
+		assert.Empty(t, legacyClient.statsCalled, "legacy GetStats should not have been called")
 	})
 
 	t.Run("Do not make background call to unified when feature flag enabled and using legacy with mode 0", func(t *testing.T) {
@@ -387,7 +353,7 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: false}}
 		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
-		legacyClient.On("GetStats", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.statsResponse = expectedResponse
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
 
@@ -396,14 +362,11 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expectedResponse, resp)
 
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertExpectations(t)
-
 		// Expect call to legacy client
-		legacyClient.AssertCalled(t, "GetStats", mock.Anything, req, mock.Anything)
+		assert.Len(t, legacyClient.statsCalled, 1, "legacy GetStats should have been called")
 
 		// Do not expect background call to unified client
-		unifiedClient.AssertNotCalled(t, "GetStats", mock.Anything, req, mock.Anything)
+		assert.Empty(t, unifiedClient.statsCalled, "unified GetStats should not have been called")
 	})
 
 	t.Run("makes background call to unified when feature flag enabled and using legacy", func(t *testing.T) {
@@ -413,11 +376,10 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
 		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
-		legacyClient.On("GetStats", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.statsResponse = expectedResponse
 
-		// Expect background call to unified client
-		unifiedBgResponse := &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 50}}}
-		unifiedClient.On("GetStats", mock.Anything, req, mock.Anything).Return(unifiedBgResponse, nil)
+		// Configure background call to unified client
+		unifiedClient.statsResponse = &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 50}}}
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
 
@@ -433,9 +395,6 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("Background unified client GetStats call was not made within timeout")
 		}
-
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertExpectations(t)
 	})
 
 	t.Run("background GetStats request times out after 500ms", func(t *testing.T) {
@@ -445,11 +404,10 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
 		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
 
-		legacyClient.On("GetStats", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+		legacyClient.statsResponse = expectedResponse
 
 		// Configure unified client to take longer than the 500ms timeout
-		unifiedClient.SetStatsDelay(600 * time.Millisecond) // Longer than 500ms timeout
-		unifiedClient.On("GetStats", mock.Anything, req, mock.Anything).Return((*resourcepb.ResourceStatsResponse)(nil), context.DeadlineExceeded)
+		unifiedClient.statsDelay = 600 * time.Millisecond // Longer than 500ms timeout
 
 		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
 
@@ -470,9 +428,6 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 		case <-time.After(700 * time.Millisecond):
 			t.Fatal("Background request should have been canceled due to timeout")
 		}
-
-		legacyClient.AssertExpectations(t)
-		unifiedClient.AssertExpectations(t)
 	})
 }
 
