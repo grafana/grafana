@@ -167,8 +167,17 @@ export const LogsTable = ({
   const handleWrapTextClick = useCallback(() => {
     const nextWrapText = !wrapText;
     if (fieldConfigProp.defaults.custom?.wrapText !== undefined) {
-      fieldConfigProp.defaults.custom.wrapText = nextWrapText;
-      onFieldConfigChange(fieldConfigProp);
+      const nextFieldConfig: FieldConfigSource = {
+        ...fieldConfigProp,
+        defaults: {
+          ...fieldConfigProp.defaults,
+          custom: {
+            ...fieldConfigProp.defaults.custom,
+            wrapText: nextWrapText,
+          },
+        },
+      };
+      onFieldConfigChange(nextFieldConfig);
     }
     onOptionsChange({
       ...options,
