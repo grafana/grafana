@@ -179,6 +179,7 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 	switch {
 	case result.Error() != nil:
 		outcome = OutcomeError
+		reason = result.Reason()
 	case result.Warning() != nil:
 		outcome = OutcomeWarning
 		reason = result.WarningReason()
