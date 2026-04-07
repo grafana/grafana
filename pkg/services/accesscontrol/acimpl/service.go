@@ -82,7 +82,7 @@ func ProvideService(
 
 	// Clean up plugin RBAC data for configured plugins
 	if len(cfg.RBAC.PluginsCleanup) > 0 {
-		if err := service.CleanupPluginRoles(context.Background(), cfg.RBAC.PluginsCleanup); err != nil {
+		if err := service.CleanupPluginRBAC(context.Background(), cfg.RBAC.PluginsCleanup); err != nil {
 			return nil, err
 		}
 	}
@@ -896,8 +896,8 @@ func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscont
 	return nil
 }
 
-// CleanupPluginRoles removes all RBAC data (roles, permissions, assignments) for the given plugin IDs.
-func (s *Service) CleanupPluginRoles(ctx context.Context, pluginIDs []string) error {
+// CleanupPluginRBAC removes all RBAC data (roles, permissions, assignments) for the given plugin IDs.
+func (s *Service) CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error {
 	return s.store.CleanupPluginRBAC(ctx, pluginIDs)
 }
 
