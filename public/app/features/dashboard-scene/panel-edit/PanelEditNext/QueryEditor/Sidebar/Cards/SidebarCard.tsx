@@ -114,9 +114,7 @@ export const SidebarCard = ({
           <div>
             <div className={styles.cardContentIcons}>
               {item.isHidden && <Icon name="eye-slash" size="sm" />}
-              {!!item.error && (
-                <Icon name="exclamation-triangle" size="sm" color={queryEditorColors.error} />
-              )}
+              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={queryEditorColors.error} />}
             </div>
             <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
               <Actions
