@@ -15,3 +15,29 @@ export function loadingStrategyMapper(spec: v0alpha1Spec): PluginLoadingStrategy
 
   return PluginLoadingStrategy.fetch;
 }
+
+export function isCorePlugin(spec: v0alpha1Spec): boolean {
+  return spec.class === 'core';
+}
+
+export function isDecoupledCorePlugin(spec: v0alpha1Spec): boolean {
+  return isCorePlugin(spec) && !spec.module?.path?.startsWith('core:');
+}
+
+export function normalizeEnd(url: string): string {
+  if (url.endsWith('/')) {
+    return url;
+  }
+
+  return `${url}/`;
+}
+
+export function combinePathAndUrl(url: string, path: string): string {
+  const normalized = normalizeEnd(url);
+  try {
+    const returnUrl = new URL(path, normalized);
+    return returnUrl.toString();
+  } catch (error) {
+    return `${normalized}${path}`;
+  }
+}
