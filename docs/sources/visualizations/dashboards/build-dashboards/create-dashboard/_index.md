@@ -19,39 +19,63 @@ description: Create and edit a dashboard
 weight: 1
 image_maps:
   - key: sidebar-toolbar
-    src: /media/docs/grafana/dashboards/screenshot-edit-sidebar-v12.4.png
+    src: /media/docs/grafana/dashboards/screenshot-edit-mode-toolbar-v13.0.png
     alt: An annotated image of the sidebar and toolbar
     points:
-      - x_coord: 96
-        y_coord: 17
+      - x_coord: 101
+        y_coord: 13
+        content: |
+          **Add new element icon**
+
+          Click the icon to open the sidebar. Edit mode only.
+      - x_coord: 101
+        y_coord: 20
         content: |
           **Dashboard options**
 
-          Click the icon to open the side bar. Edit mode only.
-      - x_coord: 96
-        y_coord: 25
+          Click the icon to open the sidebar and access dashboard options. Edit mode only.
+      - x_coord: 101
+        y_coord: 27
         content: |
           **Feedback**
 
           Submit feedback on the new editing experience. Edit mode only.
-      - x_coord: 96
-        y_coord: 33
+      - x_coord: 101
+        y_coord: 34
+        content: |
+          **Edit as code**
+
+          Edit the dashboard JSON. Edit mode only.
+      - x_coord: 101
+        y_coord: 43
         content: |
           **Export**
 
           Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
-      - x_coord: 96
-        y_coord: 41
+      - x_coord: 101
+        y_coord: 50
         content: |
           **Content outline**
 
           Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
-      - x_coord: 96
-        y_coord: 49
+      - x_coord: 101
+        y_coord: 57
+        content: |
+          **Filters overview**
+
+          Open the filters overview drawer.
+      - x_coord: 101
+        y_coord: 64
         content: |
           **Dashboard insights**
 
           View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
+      - x_coord: 101
+        y_coord: 93
+        content: |
+          **Dock/Undock**
+
+          Click to dock or undock the sidebar.
 ---
 
 # Create dashboards
@@ -135,8 +159,11 @@ To create a dashboard, follow these steps:
 
 ## Dashboard edit
 
-Now that you've created a basic dashboard, you can augment it with more options.
-You can make several updates without leaving the dashboard by using the sidebar, which is explained in the next section.
+Now that you've created a basic dashboard, you can augment it with more options, which is explained in the following sections:
+
+- [The sidebar and toolbar](#the-sidebar-and-toolbar): Learn about editing without leaving the dashboard.
+- [Navigate using the content outline](#navigate-using-the-content-outline): Learn how to quickly navigate to any dashboard element with the content outline.
+- [Edit a dashboard](#edit-a-dashboard): Learn how to edit a dashboard.
 
 ### The sidebar and toolbar
 
@@ -243,15 +270,14 @@ To continue building the dashboard you've created, follow these steps:
 
 ## Panel layouts
 
-<!---should this be called dashboard layouts-->
-
 Panel layouts control the size and arrangement of panels in the dashboard.
 There are two panel layout options:
 
 - **Custom**: You can position and size panels individually. This is the default selection for a new dashboard. **Show/hide rules** are not supported.
 - **Auto grid**: Panels resize and fit automatically to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
 
-You can use both layouts in row or tab groupings.
+When you first create a dashboard, you select a layout and that selection becomes your the default for rows and tabs that you add to the dashboard.
+However, you can change this default in the dashboard settings.
 
 ### Auto grid layout
 
