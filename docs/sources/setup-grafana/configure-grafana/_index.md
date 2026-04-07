@@ -3049,6 +3049,18 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 
 Refer to [Role-based access control](../../administration/roles-and-permissions/access-control/) for more information.
 
+#### `plugin_cleanup`
+
+Comma-separated list of plugin IDs whose RBAC data (roles, permissions, and seed assignments) will be purged from the database at startup.
+Use this to clean up leftover data from plugins that have been uninstalled or renamed.
+
+The cleanup runs once at startup and is a no-op when the list is empty.
+
+```ini
+# Example
+plugin_cleanup = grafana-slo-app, grafana-irm-app
+```
+
 ### `[navigation.app_sections]`
 
 Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: `<pluginId> = <sectionId> <sortWeight>`
