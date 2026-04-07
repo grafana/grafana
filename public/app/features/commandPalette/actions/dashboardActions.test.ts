@@ -211,11 +211,6 @@ describe('dashboardActions', () => {
           }),
         ]);
       });
-
-      it('returns undefined managedBy when not present in search data', async () => {
-        const results = await getSearchResultActions('mySearchQuery');
-        expect(results[0].managedBy).toBeUndefined();
-      });
     });
   });
 

@@ -23,5 +23,4 @@ type ChildCommandPaletteAction = Action & {
   priority: NotNullable<Action['priority']>;
   target?: React.HTMLAttributeAnchorTarget;
   url?: string | URLCallback;
-  managedBy?: ManagerKind;
 };
