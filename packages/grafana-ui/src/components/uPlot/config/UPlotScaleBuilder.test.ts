@@ -9,7 +9,7 @@ function mockUPlot(scaleKey: string, distr: number): uPlot {
     scales: {
       [scaleKey]: { distr, log: 10 },
     },
-  } as unknown as uPlot;
+  } as uPlot;
 }
 
 describe('UPlotScaleBuilder', () => {
