@@ -358,13 +358,6 @@ func (d *folderMetadataIncrementalDiffBuilder) readMetadata(
 	return nil, nil, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
 }
 
-// replacementsForMetadataChange determines which existing folder identities at
-// a path are superseded by the new metadata.
-//
-// Every managed folder whose UID differs from the UID resolved from
-// `_folder.json` is scheduled for deletion. When multiple orphans share the
-// same path (from prior metadata.name changes) all of them are returned.
-// The new UID is also returned so callers can track it as active.
 // reasonForMetadataAction maps a file action on a _folder.json entry to the
 // replacement reason recorded on the deleted old folder.
 func reasonForMetadataAction(action repository.FileAction) string {
@@ -378,6 +371,13 @@ func reasonForMetadataAction(action repository.FileAction) string {
 	}
 }
 
+// replacementsForMetadataChange determines which existing folder identities at
+// a path are superseded by the new metadata.
+//
+// Every managed folder whose UID differs from the UID resolved from
+// `_folder.json` is scheduled for deletion. When multiple orphans share the
+// same path (from prior metadata.name changes) all of them are returned.
+// The new UID is also returned so callers can track it as active.
 func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 	index managedResourceIndex,
 	folderPath string,
