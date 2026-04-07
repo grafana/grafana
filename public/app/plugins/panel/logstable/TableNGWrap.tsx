@@ -12,7 +12,6 @@ import {
 import { getAppEvents } from '@grafana/runtime';
 import { type TableOptions } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
@@ -106,7 +105,7 @@ export function TableNGWrap({
       {showControls && (
         <div className={styles.listControlsWrapper}>
           <LogTableControls
-            logOptionsStorageKey={SETTING_KEY_ROOT}
+            logOptionsStorageKey={logOptionsStorageKey}
             controlsExpanded={controlsExpanded}
             setControlsExpanded={setControlsExpanded}
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
