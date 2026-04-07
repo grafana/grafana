@@ -212,7 +212,7 @@ export function InstallControlsButton({
         rel="noopener noreferrer"
         icon="external-link-alt"
       >
-        <Trans i18nKey="plugins.install-controls.install">Install</Trans>
+        <Trans i18nKey="plugins.install-controls.contact-us">Contact us</Trans>
       </LinkButton>
     );
   }

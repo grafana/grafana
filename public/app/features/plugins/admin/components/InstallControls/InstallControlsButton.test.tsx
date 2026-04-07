@@ -255,7 +255,7 @@ describe('InstallControlsButton', () => {
         </TestProvider>
       );
       const link = screen.getByRole('link');
-      expect(link).toHaveTextContent(/install/i);
+      expect(link).toHaveTextContent(/contact us/i);
       expect(link).toHaveAttribute('href', expect.stringContaining('/plugins/test-plugin?tab=installation'));
       expect(link).toHaveAttribute('target', '_blank');
     });
