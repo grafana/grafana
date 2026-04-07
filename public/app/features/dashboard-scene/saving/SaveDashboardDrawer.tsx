@@ -7,10 +7,10 @@ import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisi
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { SaveAsTemplateForm } from './SaveAsTemplateForm';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
+import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -106,7 +106,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     }
 
     if (saveAsTemplate) {
-      return <SaveAsTemplateForm dashboard={dashboard} changeInfo={changeInfo} />;
+      const SaveAsTemplateForm = getSaveAsTemplateForm();
+      if (SaveAsTemplateForm) {
+        return <SaveAsTemplateForm dashboard={dashboard} changeInfo={changeInfo} />;
+      }
     }
 
     if (isProvisionedNG) {

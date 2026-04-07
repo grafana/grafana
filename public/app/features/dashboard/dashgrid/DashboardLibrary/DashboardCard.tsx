@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, Card, ConfirmModal, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -43,6 +43,8 @@ interface Props {
   onCompatibilityCheck?: () => void;
   /** Whether to show the "Customize with assistant" button (caller must check relevant feature flags) */
   showAssistantButton?: boolean;
+  /** Handler called when the user confirms deletion of the template */
+  onDelete?: () => void;
 }
 
 function DashboardCardComponent({
@@ -61,9 +63,11 @@ function DashboardCardComponent({
   compatibilityState,
   onCompatibilityCheck,
   showAssistantButton,
+  onDelete,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const detailsButton = details && (
     <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
@@ -102,102 +106,140 @@ function DashboardCardComponent({
   const hasCompatActions = isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck;
 
   return (
-    <Card className={styles.card} noMargin>
-      <Card.Heading className={styles.title}>
-        <span className={styles.titleWithInfo} role="group" aria-label={title}>
-          <span className={styles.titleText}>{title}</span>
-          {detailsButton}
-        </span>
-      </Card.Heading>
-      <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={title}
-            className={cx(
-              isLogo ? styles.logo : styles.thumbnail,
-              dimThumbnail && showDatasourceProvidedBadge && styles.dimmedImage,
-              kind === 'suggested_dashboard' ? styles.thumbnailCoverImage : styles.thumbnailContainImage
-            )}
-            onError={(e) => {
-              console.error('Failed to load image for:', title, 'URL:', imageUrl);
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        ) : (
-          <div className={styles.noImage}>
-            <Trans i18nKey="dashboard-library.card.no-preview">No preview available </Trans>
-          </div>
-        )}
-        {showDatasourceProvidedBadge && (
-          <div className={styles.badgeContainer}>
-            <Badge
-              text={t('dashboard-library.card.datasource-provided-badge', 'Data source provided')}
-              color="orange"
+    <>
+      <Card className={styles.card} noMargin>
+        <Card.Heading className={styles.title}>
+          <span className={styles.titleWithInfo} role="group" aria-label={title}>
+            <span className={styles.titleText}>{title}</span>
+            {detailsButton}
+          </span>
+        </Card.Heading>
+        <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={title}
+              className={cx(
+                isLogo ? styles.logo : styles.thumbnail,
+                dimThumbnail && showDatasourceProvidedBadge && styles.dimmedImage,
+                kind === 'suggested_dashboard' ? styles.thumbnailCoverImage : styles.thumbnailContainImage
+              )}
+              onError={(e) => {
+                console.error('Failed to load image for:', title, 'URL:', imageUrl);
+                e.currentTarget.style.display = 'none';
+              }}
             />
-          </div>
-        )}
-        {showCommunityBadge && (
-          <div className={styles.badgeContainer}>
-            <Badge text={t('dashboard-library.card.community-badge', 'Community')} color="blue" />
-          </div>
-        )}
-        <div className={styles.thumbnailOverlay}>
-          <Button
-            variant="secondary"
-            className={styles.overlayButton}
-            onClick={() => onClick()}
-            aria-label={
-              kind === 'template_dashboard'
-                ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
-                : t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
-            }
-          >
-            {kind === 'template_dashboard' ? (
-              <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
-            ) : (
-              <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
-            )}
-          </Button>
-          {assistantAvailable && showAssistantButton && (
+          ) : (
+            <div className={styles.noImage}>
+              <Trans i18nKey="dashboard-library.card.no-preview">No preview available </Trans>
+            </div>
+          )}
+          {showDatasourceProvidedBadge && (
+            <div className={styles.badgeContainer}>
+              <Badge
+                text={t('dashboard-library.card.datasource-provided-badge', 'Data source provided')}
+                color="orange"
+              />
+            </div>
+          )}
+          {showCommunityBadge && (
+            <div className={styles.badgeContainer}>
+              <Badge text={t('dashboard-library.card.community-badge', 'Community')} color="blue" />
+            </div>
+          )}
+          <div className={styles.thumbnailOverlay}>
             <Button
               variant="secondary"
               className={styles.overlayButton}
-              onClick={onUseAssistantClick}
-              icon="ai-sparkle"
-              aria-label={t(
-                'dashboard-library.card.customize-with-assistant-button-label',
-                'Customize with assistant: {{title}}',
-                { title }
-              )}
+              onClick={() => onClick()}
+              aria-label={
+                kind === 'template_dashboard'
+                  ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
+                  : t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
+              }
             >
-              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with assistant</Trans>
+              {kind === 'template_dashboard' ? (
+                <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
+              ) : (
+                <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
+              )}
             </Button>
-          )}
-        </div>
-      </div>
-      <div className={styles.bottomSection}>
-        <div title={dashboard.description}>
-          <Card.Description
-            data-testid="dashboard-card-description"
-            className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
-          >
-            {dashboard.description || t('dashboard-library.dashboard-card.no-description', 'No description available')}
-          </Card.Description>
-        </div>
-        {hasCompatActions && (
-          <div className={styles.actionsContainer}>
-            {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
-              <CompatibilityBadge
-                state={compatibilityState ?? { status: 'idle' }}
-                onCheck={onCompatibilityCheck}
-                onRetry={onCompatibilityCheck}
-              />
+            {assistantAvailable && showAssistantButton && (
+              <Button
+                variant="secondary"
+                className={styles.overlayButton}
+                onClick={onUseAssistantClick}
+                icon="ai-sparkle"
+                aria-label={t(
+                  'dashboard-library.card.customize-with-assistant-button-label',
+                  'Customize with assistant: {{title}}',
+                  { title }
+                )}
+              >
+                <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with assistant</Trans>
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="destructive"
+                className={styles.overlayButton}
+                icon="trash-alt"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteConfirm(true);
+                }}
+                aria-label={t('dashboard-library.card.delete-template-button-label', 'Delete template: {{title}}', {
+                  title,
+                })}
+              >
+                <Trans i18nKey="dashboard-library.card.delete-template-button">Delete</Trans>
+              </Button>
             )}
           </div>
-        )}
-      </div>
-    </Card>
+        </div>
+        <div className={styles.bottomSection}>
+          <div title={dashboard.description}>
+            <Card.Description
+              data-testid="dashboard-card-description"
+              className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
+            >
+              {dashboard.description ||
+                t('dashboard-library.dashboard-card.no-description', 'No description available')}
+            </Card.Description>
+          </div>
+          {hasCompatActions && (
+            <div className={styles.actionsContainer}>
+              {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
+                <CompatibilityBadge
+                  state={compatibilityState ?? { status: 'idle' }}
+                  onCheck={onCompatibilityCheck}
+                  onRetry={onCompatibilityCheck}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </Card>
+      {onDelete && (
+        <ConfirmModal
+          isOpen={showDeleteConfirm}
+          title={t('dashboard-library.card.delete-confirm-title', 'Delete template')}
+          body={t(
+            'dashboard-library.card.delete-confirm-body',
+            'Are you sure you want to delete the template "{{title}}"?',
+            {
+              title,
+            }
+          )}
+          confirmText={t('dashboard-library.card.delete-confirm-button', 'Delete')}
+          onConfirm={() => {
+            onDelete();
+            setShowDeleteConfirm(false);
+          }}
+          onDismiss={() => setShowDeleteConfirm(false)}
+        />
+      )}
+    </>
   );
 }
 

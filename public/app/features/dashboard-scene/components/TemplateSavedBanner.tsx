@@ -10,7 +10,7 @@ interface TemplateSavedBannerProps {
 export function TemplateSavedBanner({ templateName, onDismiss, onOpenGallery }: TemplateSavedBannerProps) {
   return (
     <Alert
-      title={t('dashboard-scene.template-saved-banner.title', 'Template saved')}
+      title={t('dashboard-scene.template-saved-banner.title', 'Template created')}
       severity="success"
       style={{ flex: 0 }}
       onRemove={onDismiss}
