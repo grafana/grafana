@@ -575,7 +575,7 @@ describe('DashboardScene', () => {
         scene.state.editPane.activate();
 
         const row = scene.onCreateNewRow();
-        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(row);
+        expect(scene.state.editPane.getSelectedObject()).toBe(row);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
