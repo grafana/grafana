@@ -30,6 +30,7 @@ interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
   initialRowIndex?: number;
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
+  onWrapTextClick: () => void;
 }
 
 export function TableNGWrap({
@@ -51,6 +52,7 @@ export function TableNGWrap({
   initialRowIndex,
   logOptionsStorageKey,
   containerElement,
+  onWrapTextClick,
 }: Props) {
   const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const showControls = options.showControls ?? defaultOptions.showControls ?? true;
@@ -110,8 +112,8 @@ export function TableNGWrap({
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
             downloadLogs={downloadLogs}
-            onOptionsChange={onTableOptionsChange}
-            options={options}
+            onWrapTextClick={onWrapTextClick}
+            wrapText={Boolean(options.wrapText)}
           />
         </div>
       )}

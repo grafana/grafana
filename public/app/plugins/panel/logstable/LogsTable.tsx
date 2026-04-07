@@ -49,7 +49,7 @@ export const LogsTable = ({
   data,
   width,
   height,
-  fieldConfig,
+  fieldConfig: fieldConfigProp,
   options,
   eventBus,
   onOptionsChange,
@@ -159,6 +159,38 @@ export const LogsTable = ({
     [data.timeRange]
   );
 
+  const wrapText = useMemo(
+    () => fieldConfigProp.defaults.custom?.wrapText ?? options.wrapText ?? false,
+    [fieldConfigProp.defaults.custom?.wrapText, options.wrapText]
+  );
+
+  const handleWrapTextClick = useCallback(() => {
+    const nextWrapText = !wrapText;
+    if (fieldConfigProp.defaults.custom?.wrapText !== undefined) {
+      fieldConfigProp.defaults.custom.wrapText = nextWrapText;
+      onFieldConfigChange(fieldConfigProp);
+    }
+    onOptionsChange({
+      ...options,
+      wrapText: nextWrapText,
+    });
+  }, [fieldConfigProp, onFieldConfigChange, onOptionsChange, options, wrapText]);
+
+  const fieldConfig = useMemo(
+    () => ({
+      ...fieldConfigProp,
+      defaults: {
+        ...fieldConfigProp.defaults,
+        custom: {
+          ...fieldConfigProp.defaults?.custom,
+          filterable: true,
+          wrapText,
+        },
+      },
+    }),
+    [fieldConfigProp, wrapText]
+  );
+
   // Extract fields transform
   const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone });
 
@@ -192,8 +224,9 @@ export const LogsTable = ({
       sortBy: [{ displayName: timeFieldName, desc: true }],
       fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
       ...options,
+      wrapText: options.wrapText ?? fieldConfigProp.defaults?.custom?.wrapText ?? false,
     }),
-    [options, timeFieldName]
+    [fieldConfigProp.defaults?.custom?.wrapText, options, timeFieldName]
   );
 
   const noSeries = data.series.length === 0;
@@ -248,6 +281,7 @@ export const LogsTable = ({
             onFieldConfigChange={handleTableOnFieldConfigChange}
             replaceVariables={replaceVariables}
             onChangeTimeRange={onChangeTimeRange}
+            onWrapTextClick={handleWrapTextClick}
             logOptionsStorageKey={SETTING_KEY_ROOT}
           />
         </>

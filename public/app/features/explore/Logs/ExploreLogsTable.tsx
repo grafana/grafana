@@ -109,12 +109,11 @@ export function ExploreLogsTable(props: {
       defaults: {
         custom: {
           filterable: true,
-          wrapText,
         },
       },
       overrides: [],
     }),
-    [wrapText]
+    []
   );
 
   return (

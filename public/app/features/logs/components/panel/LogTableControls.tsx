@@ -20,8 +20,8 @@ type Props = {
   logOptionsStorageKey: string;
   sortOrder: LogsSortOrder;
   downloadLogs: (format: DownloadFormat) => void;
-  onOptionsChange: (options: Options) => void;
-  options: Options;
+  onWrapTextClick: () => void;
+  wrapText: boolean;
 };
 
 export const LogTableControls = ({
@@ -31,8 +31,8 @@ export const LogTableControls = ({
   setSortOrder,
   sortOrder,
   downloadLogs,
-  options,
-  onOptionsChange,
+  onWrapTextClick,
+  wrapText,
 }: Props) => {
   const styles = useStyles2(getStyles, controlsExpanded);
 
@@ -48,13 +48,6 @@ export const LogTableControls = ({
     });
     setSortOrder(sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending);
   }, [setSortOrder, sortOrder]);
-
-  const onWrapTextClick = useCallback(() => {
-    onOptionsChange({
-      ...options,
-      wrapText: !options.wrapText,
-    });
-  }, [onOptionsChange, options]);
 
   const downloadMenu = useMemo(
     () => (
@@ -131,16 +124,16 @@ export const LogTableControls = ({
       <LogListControlsOption
         expanded={controlsExpanded}
         name="wrap-text"
-        className={options.wrapText ? styles.controlButtonActive : styles.controlButton}
-        aria-pressed={options.wrapText}
+        className={wrapText ? styles.controlButtonActive : styles.controlButton}
+        aria-pressed={wrapText}
         onClick={onWrapTextClick}
         tooltip={
-          options.wrapText
+          wrapText
             ? t('logs.logs-controls.table-wrap-text.disable', 'Disable text wrapping')
             : t('logs.logs-controls.table-wrap-text.enable', 'Enable text wrapping')
         }
         label={
-          options.wrapText
+          wrapText
             ? t('logs.logs-controls.table-wrap-text.enabled', 'Wrapping enabled')
             : t('logs.logs-controls.table-wrap-text.disabled', 'Wrapping disabled')
         }
