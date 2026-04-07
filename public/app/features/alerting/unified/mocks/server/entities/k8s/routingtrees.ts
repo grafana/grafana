@@ -67,7 +67,7 @@ export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig) => Ro
   return routingTreeFromSpec(ROOT_ROUTE_NAME, spec);
 };
 
-export const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, provenance?: string) => RoutingTree = (
+const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, provenance?: string) => RoutingTree = (
   routeName,
   spec,
   provenance = KnownProvenance.None
@@ -79,9 +79,6 @@ export const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, pro
     namespace: 'default',
     annotations: {
       [K8sAnnotations.Provenance]: provenance,
-      [K8sAnnotations.AccessWrite]: 'true',
-      [K8sAnnotations.AccessDelete]: 'true',
-      [K8sAnnotations.AccessAdmin]: 'true',
     },
     // Resource versions are much shorter than this in reality, but this is an easy way
     // for us to mock the concurrency logic and check if the policies have updated since the last fetch
@@ -203,31 +200,6 @@ const getDefaultRoutingTreeMap = () =>
   ]);
 
 let ROUTING_TREE_MAP = getDefaultRoutingTreeMap();
-
-export const setAllRoutingTreePermissions = ({
-  canWrite,
-  canDelete,
-  canAdmin,
-}: {
-  canWrite: boolean;
-  canDelete: boolean;
-  canAdmin: boolean;
-}) => {
-  ROUTING_TREE_MAP.forEach((tree, name) => {
-    ROUTING_TREE_MAP.set(name, {
-      ...tree,
-      metadata: {
-        ...tree.metadata,
-        annotations: {
-          ...tree.metadata.annotations,
-          [K8sAnnotations.AccessWrite]: String(canWrite),
-          [K8sAnnotations.AccessDelete]: String(canDelete),
-          [K8sAnnotations.AccessAdmin]: String(canAdmin),
-        },
-      },
-    });
-  });
-};
 
 export const getRoutingTreeList = () => {
   return Array.from(ROUTING_TREE_MAP.values());
