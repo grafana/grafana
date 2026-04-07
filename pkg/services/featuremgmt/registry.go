@@ -1251,6 +1251,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "groupToNestedTableV2",
+			Description:  "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingQueryAndExpressionsStepMode",
 			Description:  "Enables step mode for alerting queries and expressions",
 			Stage:        FeatureStageGeneralAvailability,

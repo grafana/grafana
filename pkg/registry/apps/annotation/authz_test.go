@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
@@ -30,8 +31,20 @@ func (c *fakeAccessClient) Compile(_ context.Context, _ authtypes.AuthInfo, _ au
 	return nil, nil, nil
 }
 
-func (c *fakeAccessClient) BatchCheck(_ context.Context, _ authtypes.AuthInfo, _ authtypes.BatchCheckRequest) (authtypes.BatchCheckResponse, error) {
-	return authtypes.BatchCheckResponse{}, nil
+func (c *fakeAccessClient) BatchCheck(_ context.Context, _ authtypes.AuthInfo, req authtypes.BatchCheckRequest) (authtypes.BatchCheckResponse, error) {
+	results := make(map[string]authtypes.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		results[item.CorrelationID] = authtypes.BatchCheckResult{
+			Allowed: c.fn(authtypes.CheckRequest{
+				Verb:      item.Verb,
+				Group:     item.Group,
+				Resource:  item.Resource,
+				Namespace: req.Namespace,
+				Name:      item.Name,
+			}),
+		}
+	}
+	return authtypes.BatchCheckResponse{Results: results}, nil
 }
 
 func TestCanAccessAnnotation(t *testing.T) {
@@ -88,6 +101,75 @@ func TestCanAccessAnnotation(t *testing.T) {
 	}
 }
 
+func TestCanAccessAnnotations(t *testing.T) {
+	ns := "org-1"
+	dashUID := "dash-abc"
+
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+	orgAnno := annotationV0.Annotation{
+		ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
+	}
+	dashAnno := annotationV0.Annotation{
+		ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
+		Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+	}
+
+	t.Run("empty items returns nil", func(t *testing.T) {
+		client := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
+		allowed, err := canAccessAnnotations(ctx, client, ns, nil, utils.VerbList)
+		require.NoError(t, err)
+		assert.Nil(t, allowed)
+	})
+
+	t.Run("all allowed", func(t *testing.T) {
+		client := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
+		allowed, err := canAccessAnnotations(ctx, client, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
+		require.NoError(t, err)
+		assert.Equal(t, []bool{true, true}, allowed)
+	})
+
+	t.Run("all denied", func(t *testing.T) {
+		client := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return false }}
+		allowed, err := canAccessAnnotations(ctx, client, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
+		require.NoError(t, err)
+		assert.Equal(t, []bool{false, false}, allowed)
+	})
+
+	t.Run("mixed - allow org deny dashboard", func(t *testing.T) {
+		client := &fakeAccessClient{fn: func(req authtypes.CheckRequest) bool {
+			return req.Group == "annotation.grafana.app"
+		}}
+		allowed, err := canAccessAnnotations(ctx, client, ns, []annotationV0.Annotation{orgAnno, dashAnno}, utils.VerbList)
+		require.NoError(t, err)
+		assert.Equal(t, []bool{true, false}, allowed)
+	})
+
+	t.Run("correct check fields for dashboard annotation", func(t *testing.T) {
+		var captured []authtypes.CheckRequest
+		client := &fakeAccessClient{fn: func(req authtypes.CheckRequest) bool {
+			captured = append(captured, req)
+			return true
+		}}
+		_, err := canAccessAnnotations(ctx, client, ns, []annotationV0.Annotation{dashAnno}, utils.VerbList)
+		require.NoError(t, err)
+		require.Len(t, captured, 1)
+		assert.Equal(t, "dashboard.grafana.app", captured[0].Group)
+		assert.Equal(t, "annotations", captured[0].Resource)
+		assert.Equal(t, dashUID, captured[0].Name)
+		assert.Equal(t, ns, captured[0].Namespace)
+		assert.Equal(t, utils.VerbList, captured[0].Verb)
+	})
+
+	t.Run("no auth info returns error", func(t *testing.T) {
+		ctxNoAuth := k8srequest.WithNamespace(context.Background(), ns)
+		client := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
+		_, err := canAccessAnnotations(ctxNoAuth, client, ns, []annotationV0.Annotation{orgAnno}, utils.VerbList)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsUnauthorized(err))
+	})
+}
+
 func TestK8sRESTAdapter_UpdateScopeEscalation(t *testing.T) {
 	const ns = "org-1"
 	dashUID := "dash-abc"
@@ -115,4 +197,66 @@ func TestK8sRESTAdapter_UpdateScopeEscalation(t *testing.T) {
 	_, _, err = adapter.Update(ctx, orgAnno.Name, registryrest.DefaultUpdatedObjectInfo(orgAnno), nil, nil, false, nil)
 	require.Error(t, err)
 	assert.True(t, apierrors.IsForbidden(err))
+}
+
+func TestK8sRESTAdapter_ListFiltersUnauthorized(t *testing.T) {
+	const ns = "org-1"
+	dashUID := "dash-abc"
+
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+	store := NewMemoryStore()
+	orgAnno := &annotationV0.Annotation{
+		ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
+	}
+	dashAnno := &annotationV0.Annotation{
+		ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
+		Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+	}
+	_, err := store.Create(ctx, orgAnno)
+	require.NoError(t, err)
+	_, err = store.Create(ctx, dashAnno)
+	require.NoError(t, err)
+
+	t.Run("filters out denied annotations", func(t *testing.T) {
+		adapter := &k8sRESTAdapter{
+			store: store,
+			accessClient: &fakeAccessClient{fn: func(req authtypes.CheckRequest) bool {
+				return req.Group == "annotation.grafana.app"
+			}},
+		}
+
+		obj, err := adapter.List(ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		list := obj.(*annotationV0.AnnotationList)
+		require.Len(t, list.Items, 1)
+		assert.Equal(t, "org-anno", list.Items[0].Name)
+	})
+
+	t.Run("returns all when all allowed", func(t *testing.T) {
+		adapter := &k8sRESTAdapter{
+			store:        store,
+			accessClient: &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }},
+		}
+
+		obj, err := adapter.List(ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		list := obj.(*annotationV0.AnnotationList)
+		assert.Len(t, list.Items, 2)
+	})
+
+	t.Run("returns empty when all denied", func(t *testing.T) {
+		adapter := &k8sRESTAdapter{
+			store:        store,
+			accessClient: &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return false }},
+		}
+
+		obj, err := adapter.List(ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+
+		list := obj.(*annotationV0.AnnotationList)
+		assert.Empty(t, list.Items)
+	})
 }
