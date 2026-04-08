@@ -552,7 +552,10 @@ interface SetupWithPreExistingStyleChangesOptions {
  * is disabled even though the panel has unsaved changes.
  */
 async function setupWithPreExistingStyleChanges(options: SetupWithPreExistingStyleChangesOptions = {}) {
-  const originalFieldConfig = options.originalFieldConfig ?? { defaults: { color: { mode: 'palette-classic' } }, overrides: [] };
+  const originalFieldConfig = options.originalFieldConfig ?? {
+    defaults: { color: { mode: 'palette-classic' } },
+    overrides: [],
+  };
   const pastedFieldConfig = { defaults: { color: { mode: 'fixed' }, custom: { lineWidth: 3 } }, overrides: [] };
 
   const pluginToLoad = getPanelPlugin({ id: 'timeseries', skipDataQuery: false });
@@ -563,7 +566,7 @@ async function setupWithPreExistingStyleChanges(options: SetupWithPreExistingSty
     key: 'panel-1',
     pluginId: 'timeseries',
     title: 'original title',
-    fieldConfig: originalFieldConfig,
+    fieldConfig: originalFieldConfig as any,
     $data: new SceneDataTransformer({
       transformations: [],
       $data: new SceneQueryRunner({
@@ -595,7 +598,7 @@ async function setupWithPreExistingStyleChanges(options: SetupWithPreExistingSty
         id: 1,
         type: 'timeseries',
         title: 'original title',
-        fieldConfig: originalFieldConfig as Dashboard['panels'][0]['fieldConfig'],
+        fieldConfig: originalFieldConfig as any,
         options: {},
         targets: [{ refId: 'A', datasource: { uid: 'ds1' } }],
         datasource: { uid: 'ds1' },
