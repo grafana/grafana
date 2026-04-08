@@ -31,13 +31,6 @@ export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-nex
 export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
 export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-next.v2-preference';
 
-export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
-  return {
-    background: colorManipulator.alpha(theme.colors.primary.main, 0.15),
-    border: colorManipulator.alpha(theme.colors.primary.main, 0.25),
-  };
-}
-
 export interface QueryEditorTypeConfig {
   icon: IconName;
   color: string;
