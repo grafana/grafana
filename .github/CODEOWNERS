@@ -206,8 +206,9 @@
 /pkg/tests/apis/iam @grafana/identity-access-team
 /pkg/tests/apis/shorturl @grafana/sharing-squad
 /pkg/tests/api/correlations/ @grafana/datapro
+/pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
-/pkg/tsdb/opentsdb/ @grafana/data-sources-plguins
+/pkg/tsdb/opentsdb/ @grafana/data-sources-plugins
 /pkg/util/ @grafana/grafana-backend-group
 /pkg/web/ @grafana/grafana-backend-group
 
@@ -219,9 +220,9 @@
 /devenv/docker/blocks/auth/ @grafana/identity-access-team
 
 # Logs code, developers environment
-/devenv/docker/blocks/loki* @grafana/data-sources-plguins
+/devenv/docker/blocks/loki* @grafana/data-sources-plugins
 /devenv/docker/blocks/elastic* @grafana/partner-datasources
-/devenv/docker/blocks/self-instrumentation* @grafana/data-sources-plguins
+/devenv/docker/blocks/self-instrumentation* @grafana/data-sources-plugins
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
@@ -260,13 +261,13 @@
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/partner-datasources
-/devenv/dev-dashboards/datasource-opentsdb/ @grafana/data-sources-plguins
+/devenv/dev-dashboards/datasource-opentsdb/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-mssql/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-loki/ @grafana/plugins-platform-frontend
 /devenv/dev-dashboards/datasource-testdata/ @grafana/plugins-platform-frontend
-/devenv/dev-dashboards/datasource-mysql/ @grafana/data-sources-plguins
-/devenv/dev-dashboards/datasource-postgres/ @grafana/data-sources-plguins
+/devenv/dev-dashboards/datasource-mysql/ @grafana/data-sources-plugins
+/devenv/dev-dashboards/datasource-postgres/ @grafana/data-sources-plugins
 
 /devenv/dev-dashboards/e2e-repeats/ @grafana/grafana-frontend-platform
 /devenv/dev-dashboards/panel-text @grafana/grafana-frontend-platform
@@ -293,10 +294,10 @@
 /devenv/docker/blocks/graphite1/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb1/ @grafana/partner-datasources
-/devenv/docker/blocks/jaeger/ @grafana/data-sources-plguins
+/devenv/docker/blocks/jaeger/ @grafana/data-sources-plugins
 /devenv/docker/blocks/jaegeronly/ @grafana/grafana-operator-experience-squad
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
-/devenv/docker/blocks/mariadb/ @grafana/data-sources-plguins
+/devenv/docker/blocks/mariadb/ @grafana/data-sources-plugins
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
 /devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend
 /devenv/docker/blocks/mqtt/ @grafana/alerting-backend
@@ -304,25 +305,25 @@
 /devenv/docker/blocks/mssql_arm64/ @grafana/partner-datasources
 /devenv/docker/blocks/mssql_tests/ @grafana/partner-datasources
 /devenv/docker/blocks/mssql_tls/ @grafana/partner-datasources
-/devenv/docker/blocks/mysql/ @grafana/data-sources-plguins
-/devenv/docker/blocks/mysql_exporter/ @grafana/data-sources-plguins
-/devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plguins
-/devenv/docker/blocks/mysql_tests/ @grafana/data-sources-plguins
-/devenv/docker/blocks/opentsdb/ @grafana/data-sources-plguins
-/devenv/docker/blocks/postgres/ @grafana/data-sources-plguins
-/devenv/docker/blocks/postgres_tests/ @grafana/data-sources-plguins
-/devenv/docker/blocks/prometheus/ @grafana/data-sources-plguins
-/devenv/docker/blocks/prometheus_random_data/ @grafana/data-sources-plguins
-/devenv/docker/blocks/prometheus_high_card/ @grafana/data-sources-plguins
-/devenv/docker/blocks/prometheus_utf8/ @grafana/data-sources-plguins
-/devenv/docker/blocks/pyroscope/ @grafana/data-sources-plguins
+/devenv/docker/blocks/mysql/ @grafana/data-sources-plugins
+/devenv/docker/blocks/mysql_exporter/ @grafana/data-sources-plugins
+/devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plugins
+/devenv/docker/blocks/mysql_tests/ @grafana/data-sources-plugins
+/devenv/docker/blocks/opentsdb/ @grafana/data-sources-plugins
+/devenv/docker/blocks/postgres/ @grafana/data-sources-plugins
+/devenv/docker/blocks/postgres_tests/ @grafana/data-sources-plugins
+/devenv/docker/blocks/prometheus/ @grafana/data-sources-plugins
+/devenv/docker/blocks/prometheus_random_data/ @grafana/data-sources-plugins
+/devenv/docker/blocks/prometheus_high_card/ @grafana/data-sources-plugins
+/devenv/docker/blocks/prometheus_utf8/ @grafana/data-sources-plugins
+/devenv/docker/blocks/pyroscope/ @grafana/data-sources-plugins
 /devenv/docker/blocks/redis/ @bergquist
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
 /devenv/docker/blocks/slow_proxy/ @bergquist
 /devenv/docker/blocks/smtp/ @bergquist
 /devenv/docker/blocks/tempo/ @grafana/data-sources-plugins
 /devenv/docker/blocks/traefik/ @mckn
-/devenv/docker/blocks/zipkin/ @grafana/data-sources-plguins
+/devenv/docker/blocks/zipkin/ @grafana/data-sources-plugins
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/grafana-backend-services-squad
@@ -362,17 +363,17 @@
 /pkg/tsdb/cloud-monitoring/ @grafana/partner-datasources
 
 # Observability backend code
-/pkg/tsdb/prometheus/ @grafana/data-sources-plguins
-/pkg/tsdb/loki/ @grafana/data-sources-plguins
-/pkg/tsdb/tempo/ @grafana/data-sources-plguins
-/pkg/tsdb/grafana-pyroscope-datasource/ @grafana/data-sources-plguins
-/pkg/tsdb/parca/ @grafana/data-sources-plguins
+/pkg/tsdb/prometheus/ @grafana/data-sources-plugins
+/pkg/tsdb/loki/ @grafana/data-sources-plugins
+/pkg/tsdb/tempo/ @grafana/data-sources-plugins
+/pkg/tsdb/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
+/pkg/tsdb/parca/ @grafana/data-sources-plugins
 
 # OSS Big Tent backend code
-/pkg/tsdb/mysql/ @grafana/data-sources-plguins
-/pkg/tsdb/grafana-postgresql-datasource/ @grafana/data-sources-plguins
-/pkg/tsdb/zipkin/ @grafana/data-sources-plguins
-/pkg/tsdb/jaeger/ @grafana/data-sources-plguins
+/pkg/tsdb/mysql/ @grafana/data-sources-plugins
+/pkg/tsdb/grafana-postgresql-datasource/ @grafana/data-sources-plugins
+/pkg/tsdb/zipkin/ @grafana/data-sources-plugins
+/pkg/tsdb/jaeger/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
 /pkg/tsdb/mssql/ @grafana/partner-datasources
@@ -482,7 +483,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/fixtures/exemplars-query-response.json @grafana/data-sources-plugins
 /e2e-playwright/fixtures/long-trace-response.json @grafana/observability-traces-and-profiling
-/e2e-playwright/fixtures/tempo-response.json @grafana/data-sources-plguins
+/e2e-playwright/fixtures/tempo-response.json @grafana/data-sources-plugins
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
 /e2e-playwright/panels-suite/ @grafana/dataviz-squad
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-frontend-navigation
@@ -491,7 +492,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/panels-suite/panelEdit_queries.spec.ts @grafana/dashboards-squad
 /e2e-playwright/panels-suite/panelEdit_transforms.spec.ts @grafana/datapro
 /e2e-playwright/panels-suite/logstable.spec.ts @grafana/observability-logs
-/e2e-playwright/plugin-e2e/ @grafana/data-sources-plguins @grafana/partner-datasources
+/e2e-playwright/plugin-e2e/ @grafana/data-sources-plugins @grafana/partner-datasources
 /e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /e2e-playwright/smoke-tests-suite/ @grafana/grafana-frontend-platform
 /e2e-playwright/start-server @grafana/grafana-frontend-platform
@@ -511,21 +512,22 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/graph-auto-migrate.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/inspect-drawer.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/keybinds.spec.ts @grafana/grafana-frontend-platform
-/e2e-playwright/various-suite/loki-query-builder.spec.ts @grafana/data-sources-plguins
-/e2e-playwright/various-suite/loki-table-explore-to-dash.spec.ts @grafana/data-sources-plguins
+/e2e-playwright/various-suite/loki-query-builder.spec.ts @grafana/data-sources-plugins
+/e2e-playwright/various-suite/loki-table-explore-to-dash.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/migrate-to-cloud.spec.ts @grafana/grafana-operator-experience-squad
 /e2e-playwright/various-suite/navigation.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/pie-chart.spec.ts @grafana/dataviz-squad
-/e2e-playwright/various-suite/prometheus-annotations.spec.ts @grafana/data-sources-plguins
-/e2e-playwright/various-suite/prometheus-config.spec.ts @grafana/data-sources-plguins
-/e2e-playwright/various-suite/prometheus-editor.spec.ts @grafana/data-sources-plguins
-/e2e-playwright/various-suite/prometheus-variable-editor.spec.ts @grafana/data-sources-plguins
+/e2e-playwright/various-suite/prometheus-annotations.spec.ts @grafana/data-sources-plugins
+/e2e-playwright/various-suite/prometheus-config.spec.ts @grafana/data-sources-plugins
+/e2e-playwright/various-suite/prometheus-editor.spec.ts @grafana/data-sources-plugins
+/e2e-playwright/various-suite/prometheus-variable-editor.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/query-editor.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/return-to-previous.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/trace-view-scrolling.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/visualization-suggestions*.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/panel-presets.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/perf-test.spec.ts @grafana/grafana-frontend-platform
 
 # Packages
@@ -584,7 +586,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/flotPairs* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/fuzzySearch* @grafana/grafana-frontend-navigation
 /packages/grafana-data/src/utils/labels* @grafana/observability-logs
-/packages/grafana-data/src/utils/legend* @grafana/data-sources-plguins
+/packages/grafana-data/src/utils/legend* @grafana/data-sources-plugins
 /packages/grafana-data/src/utils/location* @grafana/grafana-frontend-navigation
 /packages/grafana-data/src/utils/LocalStorageValueProvider.tsx @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/makeClassES5Compatible.ts @grafana/grafana-frontend-platform
@@ -632,7 +634,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
 
 # @grafana/prometheus
-/packages/grafana-prometheus/ @grafana/data-sources-plguins
+/packages/grafana-prometheus/ @grafana/data-sources-plugins
 
 # @grafana/runtime
 /packages/grafana-runtime/CHANGELOG.md @grafana/grafana-frontend-platform
@@ -700,15 +702,15 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/gauge @grafana/dataviz-squad
 /packages/grafana-schema/src/**/geomap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/googlecloudmonitoring @grafana/partner-datasources
-/packages/grafana-schema/src/**/grafanapyroscope @grafana/data-sources-plguins
+/packages/grafana-schema/src/**/grafanapyroscope @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/heatmap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/histogram @grafana/dataviz-squad
 /packages/grafana-schema/src/**/logs @grafana/observability-logs
 /packages/grafana-schema/src/**/logsnew @grafana/observability-logs
-/packages/grafana-schema/src/**/loki @grafana/data-sources-plguins @grafana/observability-logs
+/packages/grafana-schema/src/**/loki @grafana/data-sources-plugins @grafana/observability-logs
 /packages/grafana-schema/src/**/news @grafana/dataviz-squad
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
-/packages/grafana-schema/src/**/parca @grafana/data-sources-plguins
+/packages/grafana-schema/src/**/parca @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
@@ -722,7 +724,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/xychart2 @grafana/dataviz-squad
 
 # @grafana/sql
-/packages/grafana-sql/ @grafana/partner-datasources @grafana/data-sources-plguins
+/packages/grafana-sql/ @grafana/partner-datasources @grafana/data-sources-plugins
 
 # @grafana/ui
 /packages/grafana-ui/ @grafana/grafana-frontend-platform
@@ -871,7 +873,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-frontend-navigation
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
-public/app/core/hooks/useSystemThemeWatcher* @grafana/grafana-frontend-platform
 /public/app/core/icons/ @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/log_events.ts @grafana/dashboards-squad
@@ -1052,7 +1053,7 @@ public/app/core/hooks/useSystemThemeWatcher* @grafana/grafana-frontend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
 
-/public/app/features/explore/RawPrometheus/ @grafana/data-sources-plguins
+/public/app/features/explore/RawPrometheus/ @grafana/data-sources-plugins
 
 /public/app/features/explore/NodeGraph/ @grafana/observability-traces-and-profiling
 /public/app/features/explore/FlameGraph/ @grafana/observability-traces-and-profiling
@@ -1121,19 +1122,19 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
 /public/app/plugins/datasource/graphite/ @grafana/partner-datasources
 /public/app/plugins/datasource/influxdb/ @grafana/partner-datasources
-/public/app/plugins/datasource/jaeger/ @grafana/data-sources-plguins
-/public/app/plugins/datasource/loki/ @grafana/data-sources-plguins @grafana/observability-logs
+/public/app/plugins/datasource/jaeger/ @grafana/data-sources-plugins
+/public/app/plugins/datasource/loki/ @grafana/data-sources-plugins @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/partner-datasources
-/public/app/plugins/datasource/mysql/ @grafana/data-sources-plguins
-/public/app/plugins/datasource/opentsdb/ @grafana/data-sources-plguins
-/public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plguins
-/public/app/plugins/datasource/prometheus/ @grafana/data-sources-plguins
+/public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
+/public/app/plugins/datasource/opentsdb/ @grafana/data-sources-plugins
+/public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
+/public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
-/public/app/plugins/datasource/zipkin/ @grafana/data-sources-plguins
-/public/app/plugins/datasource/tempo/ @grafana/data-sources-plguins
-/public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plguins
-/public/app/plugins/datasource/parca/ @grafana/data-sources-plguins
+/public/app/plugins/datasource/zipkin/ @grafana/data-sources-plugins
+/public/app/plugins/datasource/tempo/ @grafana/data-sources-plugins
+/public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
+/public/app/plugins/datasource/parca/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
