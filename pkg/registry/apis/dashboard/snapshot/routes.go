@@ -14,15 +14,21 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+var logger = log.New("snapshot.routes")
+
+func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -97,9 +103,14 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					user, err := identity.GetRequester(r.Context())
+					requester, err := identity.GetRequester(r.Context())
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
+						return
+					}
+					signedInUser, ok := requester.(*user.SignedInUser)
+					if !ok {
+						errhttp.Write(r.Context(), fmt.Errorf("expected SignedInUser identity, got %T", requester), w)
 						return
 					}
 					wrap := &contextmodel.ReqContext{
@@ -107,7 +118,14 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
-						// SignedInUser: user, ????????????
+						SignedInUser: signedInUser,
+						Logger:       logger,
+					}
+
+					// RBAC check for snapshot creation
+					if ok, err := accessControl.Evaluate(r.Context(), signedInUser, ac.EvalPermission(dashboards.ActionSnapshotsCreate)); !ok || err != nil {
+						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
+						return
 					}
 
 					vars := mux.Vars(r)
@@ -116,9 +134,9 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 						return
 					}
-					if info.OrgID != user.GetOrgID() {
+					if info.OrgID != signedInUser.GetOrgID() {
 						wrap.JsonApiErr(http.StatusBadRequest,
-							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.GetOrgID()), nil)
+							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, signedInUser.GetOrgID()), nil)
 						return
 					}
 
@@ -221,9 +239,14 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					user, err := identity.GetRequester(r.Context())
+					requester, err := identity.GetRequester(r.Context())
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
+						return
+					}
+					signedInUser, ok := requester.(*user.SignedInUser)
+					if !ok {
+						errhttp.Write(r.Context(), fmt.Errorf("expected SignedInUser identity, got %T", requester), w)
 						return
 					}
 					wrap := &contextmodel.ReqContext{
@@ -231,6 +254,14 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
+						SignedInUser: signedInUser,
+						Logger:       logger,
+					}
+
+					// RBAC check for reading snapshot settings
+					if ok, err := accessControl.Evaluate(r.Context(), signedInUser, ac.EvalPermission(dashboards.ActionSnapshotsRead)); !ok || err != nil {
+						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
+						return
 					}
 
 					vars := mux.Vars(r)
@@ -239,9 +270,9 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
 						return
 					}
-					if info.OrgID != user.GetOrgID() {
+					if info.OrgID != signedInUser.GetOrgID() {
 						wrap.JsonApiErr(http.StatusBadRequest,
-							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.GetOrgID()), nil)
+							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, signedInUser.GetOrgID()), nil)
 						return
 					}
 
