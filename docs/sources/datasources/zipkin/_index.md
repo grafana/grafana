@@ -42,6 +42,7 @@ The following pages help you get started with the Zipkin data source:
 - [Configure the Zipkin data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/configure/)
 - [Zipkin query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/query-editor/)
 - [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/template-variables/)
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/troubleshooting/)
 
 ## Additional features
 
