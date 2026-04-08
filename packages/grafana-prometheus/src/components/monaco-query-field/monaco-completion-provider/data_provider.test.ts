@@ -1,4 +1,4 @@
-import { PrometheusLanguageProvider } from '../../../language_provider';
+import type { PrometheusLanguageProvider } from '../../../language_provider';
 
 import { DataProvider, type DataProviderParams } from './data_provider';
 
