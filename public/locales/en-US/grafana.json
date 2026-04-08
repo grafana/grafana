@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
     "open-drawer-icon-button": {
-      "details": "Details"
+      "details": "Details",
+      "instance-details": "Instance details",
+      "rule-details": "Rule details"
     },
     "option-customfield": {
       "label-custom-template": "Custom template",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "Clear filters",
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
       "collapse-sidebar": "Collapse sidebar",
@@ -3581,6 +3584,7 @@
         "no-label": "No {{label}}"
       },
       "instance-details-drawer": {
+        "alert-instance-label": "Alert Instance",
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",

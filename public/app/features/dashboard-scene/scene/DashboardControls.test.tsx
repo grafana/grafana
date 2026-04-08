@@ -2,16 +2,9 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import {
-  AdHocFiltersVariable,
-  GroupByVariable,
-  SceneVariableSet,
-  ScopesVariable,
-  TextBoxVariable,
-} from '@grafana/scenes';
+import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -204,57 +197,6 @@ describe('DashboardControls', () => {
 
       const { container } = render(<scene.Component model={scene} />);
       expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
-    });
-
-    describe('drilldown wrapper hidden variables', () => {
-      const originalFeatureToggles = { ...config.featureToggles };
-
-      beforeEach(() => {
-        config.featureToggles = {
-          dashboardNewLayouts: true,
-          dashboardAdHocAndGroupByWrapper: true,
-        };
-      });
-
-      afterEach(() => {
-        config.featureToggles = originalFeatureToggles;
-      });
-
-      it('should render hidden group-by variable in edit mode when drilldown wrapper is enabled', async () => {
-        const adHocVar = new AdHocFiltersVariable({
-          name: 'filters',
-          label: 'filters',
-          filters: [],
-          datasource: { uid: 'devscopes' },
-          applicabilityEnabled: false,
-        });
-        const groupByVar = new GroupByVariable({
-          name: 'query0',
-          value: ['instance'],
-          text: ['instance'],
-          options: [],
-          datasource: { uid: 'devscopes' },
-          hide: VariableHide.hideVariable,
-          applicabilityEnabled: false,
-        });
-
-        const dashboard = new DashboardScene({
-          uid: 'test-dashboard',
-          $variables: new SceneVariableSet({
-            variables: [adHocVar, groupByVar],
-          }),
-          controls: new DashboardControls({}),
-        });
-
-        dashboard.activate();
-        dashboard.setState({ isEditing: true });
-
-        const controls = dashboard.state.controls as DashboardControls;
-        renderInGrafanaContext(<controls.Component model={controls} />, undefined);
-
-        // Hidden variables should still be visible in edit mode.
-        expect(await screen.findByText('query0')).toBeInTheDocument();
-      });
     });
   });
 

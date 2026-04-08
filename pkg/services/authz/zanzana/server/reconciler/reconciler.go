@@ -88,6 +88,7 @@ var reconcileGVRs = []schema.GroupVersionResource{
 	iamv0.ResourcePermissionInfo.GroupVersionResource(),
 	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
 	iamv0.UserResourceInfo.GroupVersionResource(),
+	iamv0.ServiceAccountResourceInfo.GroupVersionResource(),
 }
 
 // NewReconciler creates a new reconciler instance.
