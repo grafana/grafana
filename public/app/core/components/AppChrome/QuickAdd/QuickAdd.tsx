@@ -12,7 +12,7 @@ import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-import { GROUP_DISPLAY, ITEM_DISPLAY, findCreateActionGroups } from './utils';
+import { ITEM_ICONS, findCreateActionGroups } from './utils';
 
 export interface Props {}
 
@@ -74,20 +74,22 @@ export const QuickAdd = ({}: Props) => {
   const MenuActions = () => (
     <Menu>
       {actionGroups.map((group, groupIdx) => {
-        const groupDisplay = GROUP_DISPLAY[group.parentId];
-        const iconColor = groupDisplay?.iconColor(theme);
+        const groupColors: Record<string, string> = {
+          'dashboards/browse': theme.visualization.getColorByName('green'),
+          alerting: theme.visualization.getColorByName('purple'),
+        };
+        const iconColor = groupColors[group.parentId];
         return (
           <Fragment key={group.parentId}>
             {groupIdx > 0 && <Menu.Divider />}
-            <Menu.Group label={groupDisplay?.label() ?? group.parentText}>
+            <Menu.Group label={group.parentText}>
               {group.items.map((item) => {
-                const itemDisplay = item.id ? ITEM_DISPLAY[item.id] : undefined;
                 return (
                   <Menu.Item
                     key={item.id}
                     url={item.url}
-                    label={itemDisplay?.label() ?? item.text}
-                    icon={itemDisplay?.icon}
+                    label={item.text}
+                    icon={item.id ? ITEM_ICONS[item.id] : undefined}
                     iconColor={iconColor}
                     onClick={() => {
                       reportInteraction('grafana_menu_item_clicked', { url: item.url, from: 'quickadd' });

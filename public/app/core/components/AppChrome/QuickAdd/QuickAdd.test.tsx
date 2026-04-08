@@ -61,16 +61,16 @@ describe('QuickAdd', () => {
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
   });
 
-  it('renders grouped menu items with correct labels', async () => {
+  it('renders grouped menu items with labels from the nav tree', async () => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
 
-    const dashboardGroup = screen.getByRole('group', { name: 'New dashboard' });
-    expect(within(dashboardGroup).getByRole('menuitem', { name: 'Blank' })).toBeInTheDocument();
-    expect(within(dashboardGroup).getByRole('menuitem', { name: 'Import' })).toBeInTheDocument();
+    const dashboardGroup = screen.getByRole('group', { name: 'Dashboards' });
+    expect(within(dashboardGroup).getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(within(dashboardGroup).getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
 
-    const alertGroup = screen.getByRole('group', { name: 'New alert rule' });
-    expect(within(alertGroup).getByRole('menuitem', { name: 'Create' })).toBeInTheDocument();
+    const alertGroup = screen.getByRole('group', { name: 'Alerting' });
+    expect(within(alertGroup).getByRole('menuitem', { name: 'Create alert rule' })).toBeInTheDocument();
   });
 
   it('renders both groups inside the menu', async () => {
@@ -85,7 +85,7 @@ describe('QuickAdd', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Blank' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'New dashboard' }));
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_menu_item_clicked', {
       url: '/dashboard/new',
@@ -115,20 +115,20 @@ describe('QuickAdd', () => {
     it('shows when the feature flag is enabled', async () => {
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.getByRole('menuitem', { name: 'From template' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Dashboard from template' })).toBeInTheDocument();
     });
 
     it('is hidden when the feature flag is disabled', async () => {
       config.featureToggles.dashboardTemplates = false;
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.queryByRole('menuitem', { name: 'From template' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Dashboard from template' })).not.toBeInTheDocument();
     });
 
     it('links to the template dashboards page', async () => {
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      const link = screen.getByRole('menuitem', { name: 'From template' });
+      const link = screen.getByRole('menuitem', { name: 'Dashboard from template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
     });
 
@@ -136,8 +136,8 @@ describe('QuickAdd', () => {
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
 
-      const dashboardGroup = screen.getByRole('group', { name: 'New dashboard' });
-      expect(within(dashboardGroup).getByRole('menuitem', { name: 'From template' })).toBeInTheDocument();
+      const dashboardGroup = screen.getByRole('group', { name: 'Dashboards' });
+      expect(within(dashboardGroup).getByRole('menuitem', { name: 'Dashboard from template' })).toBeInTheDocument();
     });
   });
 });

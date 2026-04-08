@@ -12180,13 +12180,7 @@
       "aria-label": "Profile"
     },
     "quick-add": {
-      "aria-label": "New",
-      "blank": "Blank",
-      "create": "Create",
-      "from-template": "From template",
-      "group-alert-rule": "New alert rule",
-      "group-dashboard": "New dashboard",
-      "import": "Import"
+      "aria-label": "New"
     },
     "rss-button": "Latest from the blog"
   },
