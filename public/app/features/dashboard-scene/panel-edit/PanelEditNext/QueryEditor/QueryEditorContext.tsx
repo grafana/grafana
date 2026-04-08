@@ -70,23 +70,25 @@ interface TransformationToggles extends TransformationToggleState {
   toggleDebug: () => void;
 }
 
+export interface SelectionModifiers {
+  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
+  multi?: boolean;
+  /** True when Shift is held — range-selects from the last selected card to this one. */
+  range?: boolean;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
-  /**
-   * Ordered selection array. The last element is the primary (editor-visible) item.
-   * Single-select is always a single-element array; multi-select adds to the end.
-   */
   selectedQueryRefIds: readonly string[];
-  /**
-   * Ordered selection array. The last element is the primary (editor-visible) item.
-   * Single-select is always a single-element array; multi-select adds to the end.
-   */
   selectedTransformationIds: readonly string[];
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
+  toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
+  toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
+  clearSelection: () => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;

@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { t } from '@grafana/i18n';
 import { appEvents } from 'app/core/app_events';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
@@ -25,12 +25,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const header = new OptionsPaneCategoryDescriptor({
-      title: ``,
-      id: '',
-    });
-
-    return [header];
+    return [];
   }
 
   public onConfirmDelete() {

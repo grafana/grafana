@@ -877,11 +877,11 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 func (dr *DashboardServiceImpl) canSaveDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
 	action := dashboards.ActionDashboardsWrite
 	if dash.IsFolder {
-		action = dashboards.ActionFoldersWrite
+		action = folder.ActionFoldersWrite
 	}
 	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)
 	if dash.IsFolder {
-		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.UID)
+		scope = folder.ScopeFoldersProvider.GetResourceScopeUID(dash.UID)
 	}
 	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
 }
@@ -889,11 +889,11 @@ func (dr *DashboardServiceImpl) canSaveDashboard(ctx context.Context, user ident
 func (dr *DashboardServiceImpl) canCreateDashboard(ctx context.Context, user identity.Requester, dash *dashboards.Dashboard) (bool, error) {
 	action := dashboards.ActionDashboardsCreate
 	if dash.IsFolder {
-		action = dashboards.ActionFoldersCreate
+		action = folder.ActionFoldersCreate
 	}
-	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(dash.FolderUID)
+	scope := folder.ScopeFoldersProvider.GetResourceScopeUID(dash.FolderUID)
 	if dash.FolderUID == "" {
-		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+		scope = folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 	}
 	return dr.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
 }

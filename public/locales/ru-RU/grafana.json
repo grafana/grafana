@@ -2445,7 +2445,9 @@
       "recipient-notification-fires": "Выберите, кто должен получать уведомление при активации правила оповещения."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Пользовательский шаблон",
@@ -3603,6 +3605,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3619,6 +3622,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Сведения об экземпляре",
@@ -3647,6 +3651,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -14960,6 +14965,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14967,6 +14973,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14974,6 +14981,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -16750,6 +16758,10 @@
   },
   "xychart": {
     "category-xychart": "График XY",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Прозрачность заливки",
     "name-line-style": "Стиль линии",
     "name-line-width": "Ширина линии",

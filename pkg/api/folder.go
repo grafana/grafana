@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -25,25 +24,25 @@ const REDACTED = "redacted"
 func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authorize func(accesscontrol.Evaluator) web.Handler) {
 	// #TODO add back auth part
 	apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-		idScope := dashboards.ScopeFoldersProvider.GetResourceScope(accesscontrol.Parameter(":id"))
-		uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
+		idScope := folder.ScopeFoldersProvider.GetResourceScope(accesscontrol.Parameter(":id"))
+		uidScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
+		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(folder.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 			folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-				folderPermissionRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
-				folderPermissionRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
+				folderPermissionRoute.Get("/", authorize(accesscontrol.EvalPermission(folder.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
+				folderPermissionRoute.Post("/", authorize(accesscontrol.EvalPermission(folder.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
 			})
 		})
 
-		folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
-		folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+		folderRoute.Post("/", authorize(accesscontrol.EvalPermission(folder.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
+		folderRoute.Get("/", authorize(accesscontrol.EvalPermission(folder.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-			folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
-			folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
-			folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
-			folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
-			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
+			folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(folder.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
+			folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(folder.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
+			folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(folder.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
+			folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(folder.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
+			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(folder.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
 		})
 	})
 }
@@ -328,15 +327,15 @@ func (hs *HTTPServer) GetFolderDescendantCounts(c *contextmodel.ReqContext) resp
 func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder) (dtos.Folder, error) {
 	ctx := c.Req.Context()
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
-		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+		canEditEvaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 		canEdit, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canEditEvaluator)
 		canSave := canEdit
 		canAdminEvaluator := accesscontrol.EvalAll(
-			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
-			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
+			accesscontrol.EvalPermission(folder.ActionFoldersPermissionsRead, folder.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
+			accesscontrol.EvalPermission(folder.ActionFoldersPermissionsWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
 		)
 		canAdmin, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canAdminEvaluator)
-		canDeleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+		canDeleteEvaluator := accesscontrol.EvalPermission(folder.ActionFoldersDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 		canDelete, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canDeleteEvaluator)
 
 		// Finding creator and last updater of the folder
@@ -351,7 +350,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 		acMetadata, _ := hs.getFolderACMetadata(c, f)
 
 		if checkCanView {
-			canViewEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+			canViewEvaluator := accesscontrol.EvalPermission(folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 			canView, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canViewEvaluator)
 			if !canView {
 				return dtos.Folder{
@@ -423,7 +422,7 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 		folderIDs[p.UID] = true
 	}
 
-	allMetadata := getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
+	allMetadata := getMultiAccessControlMetadata(c, folder.ScopeFoldersPrefix, folderIDs)
 	metadata := map[string]bool{}
 	// Flatten metadata - if any parent has a permission, the child folder inherits it
 	for _, md := range allMetadata {

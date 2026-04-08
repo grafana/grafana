@@ -328,7 +328,7 @@ export class RowsLayoutManager
     }
 
     const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(row!, rowKey, { force: true, multi: false });
+    editPane.selectObject(row!, { force: true, multi: false });
   }
 
   public static createEmpty(): RowsLayoutManager {
