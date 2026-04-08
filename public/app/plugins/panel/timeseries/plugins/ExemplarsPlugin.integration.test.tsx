@@ -15,13 +15,19 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { FIXED_UNIT, type UPlotConfigBuilder } from '@grafana/ui';
 
-import { ExemplarsPlugin } from './ExemplarsPlugin';
+import { ExemplarsPlugin, type VisibleExemplarLabels } from './ExemplarsPlugin';
 
 const defaultExemplarFrame = createDataFrame({
   name: 'exemplars',
   fields: [
     { name: 'Time', values: [1670418750000, 1670418800000] },
     { name: 'Value', values: [0.5, 1.1] },
+    { name: 'env', type: FieldType.string, values: ['prod', 'prod'] },
+    {
+      name: 'job',
+      type: FieldType.string,
+      values: ['tns/app', 'tns/db'],
+    },
     {
       name: 'Field Action',
       type: FieldType.string,
@@ -219,6 +225,88 @@ describe('ExemplarsPlugin', () => {
     it('renders', () => {
       setUp();
       expect(getMarker()).toBeVisible();
+    });
+
+    describe('visibleSeries', () => {
+      it('sets marker fill', () => {
+        const seriesColor1 = '#CA95E5';
+        const seriesColor2 = '#5794F2';
+
+        setUp({
+          visibleSeries: {
+            totalSeriesCount: 2,
+            labels: [
+              { labels: { job: 'tns/app' }, color: seriesColor1 },
+              { labels: { job: 'tns/db' }, color: seriesColor2 },
+            ],
+          },
+        });
+
+        const [marker0, marker1] = getMarkers();
+        expect(marker0.querySelector('rect')).toHaveAttribute('fill', seriesColor1);
+        expect(marker1.querySelector('rect')).toHaveAttribute('fill', seriesColor2);
+      });
+
+      it('uses legend color when every exemplar that maps to legend keys matches that legend row', () => {
+        const visibleSeries: VisibleExemplarLabels = {
+          totalSeriesCount: 1,
+          labels: [
+            {
+              labels: { job: 'tns/app', env: 'prod' },
+              color: '#FF9830',
+            },
+          ],
+        };
+
+        setUp({ visibleSeries });
+
+        expect(getMarker().querySelector('rect')).toHaveAttribute('fill', '#FF9830');
+      });
+
+      it('uses the first matching label', () => {
+        const frame = createDataFrame({
+          name: 'exemplars',
+          fields: [
+            { name: 'Time', values: [1670418750000] },
+            { name: 'Value', values: [0.5] },
+            { name: 'job', type: FieldType.string, values: ['shared'] },
+          ],
+        });
+
+        const visibleSeries: VisibleExemplarLabels = {
+          totalSeriesCount: 2,
+          labels: [
+            { labels: { job: 'shared' }, color: '#first' },
+            { labels: { job: 'shared' }, color: '#second' },
+          ],
+        };
+
+        setUp({ exemplars: [frame], visibleSeries });
+
+        expect(getMarker().querySelector('rect')).toHaveAttribute('fill', '#first');
+      });
+
+      it('does not use legend color for fill when labels do not match', () => {
+        const frame = createDataFrame({
+          name: 'exemplars',
+          fields: [
+            { name: 'Time', values: [1670418750000] },
+            { name: 'Value', values: [0.5] },
+            { name: 'job', type: FieldType.string, values: ['other'] },
+          ],
+        });
+
+        const visibleSeries: VisibleExemplarLabels = {
+          totalSeriesCount: 1,
+          labels: [{ labels: { job: 'tns/app' }, color: '#5794F2' }],
+        };
+
+        setUp({ exemplars: [frame], visibleSeries });
+
+        const rect = getMarker().querySelector('rect');
+        expect(rect).toBeVisible();
+        expect(rect).not.toHaveAttribute('fill', '#5794F2');
+      });
     });
 
     it.each(['click', 'hover'])('renders tooltip on %s', async (userAction) => {
