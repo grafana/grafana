@@ -5,8 +5,7 @@ SELECT
     c.ttl_ms,
     c.ttl_resources_ms,
     c.use_default_ttl,
-    c.created,
-    c.updated,
+    UNIX_TIMESTAMP(c.created) AS created_epoch,
     d.type AS plugin_id,
     d.org_id
 FROM

@@ -186,7 +186,6 @@ type sqlQueryCacheConfig struct {
 
 	CacheTable      string
 	DataSourceTable string
-	Dialect         string
 }
 
 func (r sqlQueryCacheConfig) Validate() error {
@@ -194,11 +193,9 @@ func (r sqlQueryCacheConfig) Validate() error {
 }
 
 func newQueryReq(sql *legacysql.LegacyDatabaseHelper, query *queryCacheConfigQuery) sqlQueryCacheConfig {
-	dialect := sql.DialectForDriver()
 	return sqlQueryCacheConfig{
-		SQLTemplate:     sqltemplate.New(dialect),
+		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
 		Query:           query,
-		Dialect:         dialect.DialectName(),
 		CacheTable:      sql.Table("data_source_cache"),
 		DataSourceTable: sql.Table("data_source"),
 	}
