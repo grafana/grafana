@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
+import { readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
 import { variableAdapters } from 'app/features/variables/adapters';
