@@ -48,7 +48,7 @@ To create a library panel, follow these steps:
 1. In the **Library panel name** field, enter the name.
 1. In the **Save in folder** drop-down list, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
-1. Click **Save dashboard**.
+1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
