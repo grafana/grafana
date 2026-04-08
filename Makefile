@@ -301,22 +301,10 @@ install-cue:
 	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
 
 .PHONY: fix-cue
-fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
-	@set -e; \
-	root_dir="."; \
-	if [ -n "$(app)" ]; then \
-		root_dir="./apps/$(app)"; \
-		if [ ! -d "$$root_dir" ]; then \
-			echo "Error: App '$(app)' not found at $$root_dir"; \
-			exit 1; \
-		fi; \
-	fi; \
-	for mod_dir in $$(find "$$root_dir" -type d -name 'cue.mod'); do \
-		project_dir="$$(dirname $$mod_dir)"; \
-		echo "Fixing: $$project_dir"; \
-		(cd "$$project_dir" && $(CUE) fmt ./...); \
-		(cd "$$project_dir" && $(CUE) fix ./...); \
-	done
+fix-cue:
+	@echo "formatting cue files"
+	$(cue) fix kinds/**/*.cue
+	$(cue) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
