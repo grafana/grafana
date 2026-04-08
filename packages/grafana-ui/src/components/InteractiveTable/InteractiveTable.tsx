@@ -279,11 +279,11 @@ export function InteractiveTable<TableData extends object>({
                   return (
                     <th
                       key={key}
-                      className={cx(styles.header, {
+                      {...headerCellProps}
+                      className={cx(styles.header, column.widthClass, {
                         [styles.disableGrow]: column.width === 0,
                         [styles.sortableHeader]: column.canSort,
                       })}
-                      {...headerCellProps}
                       {...(column.isSorted && { 'aria-sort': column.isSortedDesc ? 'descending' : 'ascending' })}
                     >
                       <ColumnHeader column={column} headerTooltip={headerTooltip} />
@@ -309,8 +309,9 @@ export function InteractiveTable<TableData extends object>({
                 <tr {...otherRowProps} className={cx(styles.row, isExpanded && styles.expandedRow)}>
                   {row.cells.map((cell) => {
                     const { key, ...otherCellProps } = cell.getCellProps();
+
                     return (
-                      <td className={styles.cell} key={key} {...otherCellProps}>
+                      <td key={key} {...otherCellProps} className={cx(styles.cell, cell.column.widthClass)}>
                         {cell.render('Cell', { __rowID: rowId })}
                       </td>
                     );

@@ -724,7 +724,7 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 		}
 
 		if leaseTokenDB != leaseToken {
-			return nil, fmt.Errorf("bug: expected to list secure values with lease token %+v but got a secure value with another lease token %+v", leaseToken, leaseToken)
+			return nil, fmt.Errorf("bug: expected to list secure values with lease token %+v but got a secure value with another lease token %+v", leaseToken, leaseTokenDB)
 		}
 
 		secureValue, err := row.toKubernetes()

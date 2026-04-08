@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
@@ -458,7 +459,7 @@ describe('QueryEditorRow', () => {
       render(<QueryEditorRow {...props(testData)} />);
 
       await waitFor(() => {
-        expect(screen.getByTestId('query-editor-row')).toBeInTheDocument();
+        expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
       });
 
       expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();

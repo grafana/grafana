@@ -3,7 +3,6 @@ package legacy
 import (
 	"context"
 	stdsql "database/sql"
-	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -21,6 +20,85 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
+
+type GetUserUIDByIDQuery struct {
+	OrgID            int64
+	ID               int64
+	IsServiceAccount bool
+}
+
+type GetUserUIDByIDResult struct {
+	UID string
+}
+
+var sqlQueryUserUIDByIDTemplate = mustTemplate("user_uid_by_id.sql")
+
+func newGetUserUIDByID(sqlHelper *legacysql.LegacyDatabaseHelper, q *GetUserUIDByIDQuery) getUserUIDByIDQuery {
+	return getUserUIDByIDQuery{
+		SQLTemplate:  sqltemplate.New(sqlHelper.DialectForDriver()),
+		UserTable:    sqlHelper.Table("user"),
+		OrgUserTable: sqlHelper.Table("org_user"),
+		Query:        q,
+	}
+}
+
+type getUserUIDByIDQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable    string
+	OrgUserTable string
+	Query        *GetUserUIDByIDQuery
+}
+
+func (r getUserUIDByIDQuery) Validate() error { return nil }
+
+func (s *legacySQLStore) getUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sqlConn, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetUserUIDByID(sqlConn, &query)
+	q, err := sqltemplate.Execute(sqlQueryUserUIDByIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryUserUIDByIDTemplate.Name(), err)
+	}
+
+	rows, err := sqlConn.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, user.ErrUserNotFound
+	}
+
+	var uid string
+	if err := rows.Scan(&uid); err != nil {
+		return nil, err
+	}
+
+	return &GetUserUIDByIDResult{UID: uid}, nil
+}
+
+func (s *legacySQLStore) GetUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.IsServiceAccount = false
+	return s.getUserUIDByID(ctx, ns, query)
+}
+
+func (s *legacySQLStore) GetServiceAccountUIDByID(ctx context.Context, ns claims.NamespaceInfo, query GetUserUIDByIDQuery) (*GetUserUIDByIDResult, error) {
+	query.IsServiceAccount = true
+	return s.getUserUIDByID(ctx, ns, query)
+}
 
 type GetUserInternalIDQuery struct {
 	OrgID int64
@@ -82,7 +160,7 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 	}
 
 	if !rows.Next() {
-		return nil, errors.New("user not found")
+		return nil, user.ErrUserNotFound
 	}
 
 	var id int64
@@ -98,6 +176,7 @@ func (s *legacySQLStore) GetUserInternalID(ctx context.Context, ns claims.Namesp
 type ListUserQuery struct {
 	OrgID int64
 	UID   string
+	ID    int64
 	Email string
 	Login string
 
@@ -134,6 +213,9 @@ func (r listUsersQuery) Validate() error {
 
 // ListUsers implements LegacyIdentityStore.
 func (s *legacySQLStore) ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
 	// for continue
 	limit := int(query.Pagination.Limit)
 	query.Pagination.Limit += 1
@@ -599,8 +681,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 			if err := rows.Err(); err != nil {
 				return fmt.Errorf("failed to read user lookup rows: %w", err)
 			}
-			// User not found, nothing to delete
-			return fmt.Errorf("user not found")
+			return user.ErrUserNotFound
 		}
 		if err := rows.Scan(&userID); err != nil {
 			return fmt.Errorf("failed to scan user ID: %w", err)
@@ -643,7 +724,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		}
 
 		if rowsAffected == 0 {
-			return fmt.Errorf("user not found")
+			return user.ErrUserNotFound
 		}
 
 		return nil

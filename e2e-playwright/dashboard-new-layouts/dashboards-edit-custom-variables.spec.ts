@@ -165,6 +165,7 @@ test.describe(
 
       // check that variable deletion works
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
       await expect(variableLabel).toBeHidden();
     });
 
