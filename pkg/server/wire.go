@@ -599,6 +599,7 @@ func provideMigrationRegistry(
 	dataSourceMigrator dsmigrator.DataSourceMigrator,
 	starsMigrator legacystars.StarsMigrator,
 	queryCacheConfigMigrator querycachingmigrator.QueryCacheConfigMigrator,
+	features featuremgmt.FeatureToggles,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
@@ -606,6 +607,9 @@ func provideMigrationRegistry(
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
 	r.Register(legacystars.StarsMigrationDefinition(starsMigrator))
-	r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagCacheConfigUnifiedStorageMigration) {
+		r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
+	}
 	return r
 }
