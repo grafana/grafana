@@ -5,6 +5,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -92,7 +93,10 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 
 func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
 	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.GetTeamIDsByUser(ctx, query)
+		// Fall back to legacy during auth flows where no requester exists yet.
+		if _, err := identity.GetRequester(ctx); err == nil {
+			return s.k8sService.GetTeamIDsByUser(ctx, query)
+		}
 	}
 
 	return s.legacyService.GetTeamIDsByUser(ctx, query)
