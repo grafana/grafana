@@ -11,11 +11,21 @@ import (
 )
 
 // NewSnapshotAuthorizer returns an authorizer that maps k8s verbs to snapshot RBAC actions.
-func NewSnapshotAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
+// When publicMode is true, anonymous GET requests for snapshots and the dashboard subresource
+// are allowed without RBAC checks (mirroring legacy SnapshotPublicMode behavior).
+func NewSnapshotAuthorizer(accessControl ac.AccessControl, publicMode bool) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
 				return authorizer.DecisionNoOpinion, "", nil
+			}
+
+			// In public mode, allow anonymous read access to snapshots and the dashboard subresource
+			if publicMode && attr.GetVerb() == "get" {
+				sub := attr.GetSubresource()
+				if sub == "" || sub == "dashboard" {
+					return authorizer.DecisionAllow, "", nil
+				}
 			}
 
 			user, err := identity.GetRequester(ctx)
@@ -31,6 +41,12 @@ func NewSnapshotAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 					action = dashboards.ActionSnapshotsRead
 				case "deletekey":
 					action = dashboards.ActionSnapshotsDelete
+				case "delete":
+					action = dashboards.ActionSnapshotsDelete
+				case "create":
+					action = dashboards.ActionSnapshotsCreate
+				case "settings":
+					action = dashboards.ActionSnapshotsRead
 				default:
 					return authorizer.DecisionDeny, "unsupported subresource", nil
 				}

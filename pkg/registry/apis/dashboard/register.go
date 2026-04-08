@@ -840,8 +840,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
-		storage[snapshots.StoragePath()] = snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
-		b.snapshotStorage = snapshotDualWrite // store for use in routes (needs rest.Creater)
+		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
+		storage[snapshots.StoragePath()] = snapshotWrapper
+		b.snapshotStorage = snapshotDualWrite // for use in routes (needs rest.Creater)
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite)
 		if err != nil {
 			return err
@@ -1085,7 +1086,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 // Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
-	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
+	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl, b.snapshotOptions.PublicMode)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {

@@ -204,6 +204,11 @@ func ProvideService(
 			s.handler.ServeHTTP(resp, req)
 		}
 		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
+		if cfg.SnapshotPublicMode {
+			// In public mode, allow unauthenticated GET access to snapshots.
+			// Authorization is enforced by the snapshot authorizer.
+			k8sRoute.Get("/dashboard.grafana.app/v0alpha1/namespaces/*/snapshots/*", handler)
+		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
@@ -668,6 +673,11 @@ func useNamespaceFromPath(path string, user *user.SignedInUser) {
 			if err == nil {
 				user.Namespace = ns.Value
 				user.OrgID = ns.OrgID
+				// Anonymous users may have org 0; use 'default' namespace (public mode)
+				if user.OrgID == 0 {
+					user.OrgID = 1
+					user.Namespace = "default"
+				}
 			}
 		}
 	}
