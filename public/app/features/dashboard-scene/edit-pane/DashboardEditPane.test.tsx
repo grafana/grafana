@@ -108,6 +108,30 @@ describe('DashboardEditPane', () => {
       // Still only 1 item selected
       expect(editPane.state.selectionContext.selected).toHaveLength(1);
     });
+
+    it('Selecting tab with closed edit pane should not select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBeNull();
+    });
+
+    it('Selecting tab with open edit pane should select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.openPane('code');
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
+
+    it('Force selecting tab should always select it', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      editPane.selectObject(tab1, { force: true });
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
   });
 
   it('Handles edit action events that adds objects', () => {

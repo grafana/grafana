@@ -258,7 +258,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
     // Special logic for tabs only select tab of open pane is not already open or tab is already active
-    if (obj instanceof TabItem && !obj.isCurrentTab() && !this.state.openPane) {
+    if (!force && obj instanceof TabItem && !obj.isCurrentTab() && !this.state.openPane) {
       return;
     }
 
@@ -372,7 +372,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
-    this.selectObject(obj);
+    this.selectObject(obj, { force: true });
     this.setState({ isNewElement: true });
   }
 
