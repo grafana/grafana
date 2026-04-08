@@ -24,7 +24,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 | Feature toggle name                   | Description                                                                                                                                                   | Enabled by default |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `publicDashboardsScene`               | Enables public dashboard rendering using scenes                                                                                                               | Yes                |
 | `featureHighlights`                   | Highlight Grafana Enterprise features                                                                                                                         |                    |
 | `cloudWatchCrossAccountQuerying`      | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
 | `lokiQuerySplitting`                  | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
@@ -37,7 +36,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashgpt`                             | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`          | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
-| `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
 | `dashboardNewLayouts`                 | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`      | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |

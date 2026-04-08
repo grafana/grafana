@@ -1,11 +1,12 @@
 module github.com/grafana/grafana/pkg/storage/unified/resource/kv
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/dgraph-io/badger/v4 v4.9.1
 	github.com/google/uuid v1.6.0
+	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/stretchr/testify v1.11.1
 )
 
@@ -27,4 +28,5 @@ require (
 	golang.org/x/sys v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	k8s.io/klog/v2 v2.130.1 // indirect
 )

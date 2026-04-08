@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
     "open-drawer-icon-button": {
-      "details": "Details"
+      "details": "Details",
+      "instance-details": "Instance details",
+      "rule-details": "Rule details"
     },
     "option-customfield": {
       "label-custom-template": "Custom template",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "Clear filters",
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
       "collapse-sidebar": "Collapse sidebar",
@@ -3581,6 +3584,7 @@
         "no-label": "No {{label}}"
       },
       "instance-details-drawer": {
+        "alert-instance-label": "Alert Instance",
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
@@ -3609,6 +3613,7 @@
           "folder-only": "Grouped by folder"
         }
       },
+      "severity-filter-title": "Severity",
       "show-all-labels_one": "Show all ({{ count }})",
       "show-all-labels_other": "Show all ({{ count }})",
       "show-all-values_one": "Show all ({{ count }})",
@@ -4993,24 +4998,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connect data to Grafana through data sources, integrations and apps",
-          "title": "Add new connection"
+          "subtitle": "Connect data to Grafana through data sources, integrations and apps"
         },
         "collector": {
-          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
-          "title": "Collector"
+          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": "Configure and manage your telemetry collectors"
         },
         "data-sources": {
-          "subtitle": "Manage your existing data source connections",
-          "title": "Data sources"
+          "subtitle": "Manage your existing data source connections"
+        },
+        "fleet-management": {
+          "subtitle": "Manage your collector inventory and remotely configure your fleet"
+        },
+        "instrumentation-hub": {
+          "subtitle": "Instrument all your services with a single click using ongoing instrumentation and Kubernetes monitoring."
         },
         "integrations": {
-          "subtitle": "Manage your active integrations",
-          "title": "Integrations"
+          "subtitle": "Manage your active integrations"
         },
         "private-data-source-connections": {
-          "subtitle": "Manage your private network connections for data sources",
-          "title": "Private data source connect"
+          "subtitle": "Manage your private network connections for data sources"
         },
         "subtitle": "Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines."
       }
@@ -5070,11 +5079,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connect to a new data source",
-          "title": "Add new connection"
+          "subtitle": "Connect to a new data source"
         },
         "data-sources": {
-          "subtitle": "Manage your existing data source connections",
           "title": "View configured data sources"
         },
         "subtitle": "Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections."
@@ -12312,6 +12319,8 @@
       "description": "Notifications you have received will appear here",
       "title": "You're all caught up!"
     },
+    "select-all": "Select all notifications",
+    "select-notification": "Select {{title}}",
     "stored-notifications": {
       "dismiss-notifications": "Dismiss notifications",
       "title-alert": "This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
@@ -14786,6 +14795,7 @@
       "bullet-1": "Split content into tabs for quick switching",
       "bullet-2": "Show or hide panels based on template variables and other conditions",
       "bullet-3": "Auto-arrange panels into a grid for an efficient layout",
+      "cta": "Show me",
       "subtitle": "Make your dashboards more impactful and easier to explore",
       "title": "Add tabs and panel conditions to your dashboards"
     },
@@ -14793,6 +14803,7 @@
       "bullet-1": "Store your dashboard configuration safely in any git repository",
       "bullet-2": "keep track of the changes - and who made them",
       "bullet-3": "Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams",
+      "cta": "Show me",
       "subtitle": "Bring version control, collaboration, and reliability to your dashboards",
       "title": "Sync your dashboards to Git"
     },
@@ -14800,6 +14811,7 @@
       "bullet-1": "Start from a clean layout instead of building from scratch",
       "bullet-2": "Load a template and customize it to your needs",
       "bullet-3": "Explore and use community dashboards tailored to your data source",
+      "cta": "Show me",
       "subtitle": "Get to a useful dashboard sooner by starting from a proven design",
       "title": "Kickstart dashboards with suggestions and templates"
     },
@@ -16574,6 +16586,10 @@
   },
   "xychart": {
     "category-xychart": "XY Chart",
+    "errors": {
+      "nodata": "No data",
+      "unknown": "Unknown error"
+    },
     "name-fill-opacity": "Fill opacity",
     "name-line-style": "Line style",
     "name-line-width": "Line width",
