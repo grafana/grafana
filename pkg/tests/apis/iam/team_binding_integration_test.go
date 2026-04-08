@@ -3,6 +3,7 @@ package identity
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -46,7 +47,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 						featuremgmt.FlagKubernetesUsersApi,
 					},
 				},
-				HTTPClientTimeout: 60 * time.Second,
+				CustomHTTPClient: &http.Client{Timeout: 60 * time.Second},
 			})
 
 			ctx := context.Background()

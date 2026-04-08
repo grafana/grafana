@@ -109,9 +109,9 @@ type K8sTestHelperOpts struct {
 	// If provided, these users will be used instead of creating new ones
 	Org1Users *OrgUsers
 	OrgBUsers *OrgUsers
-	// HTTPClientTimeout overrides the default 30s timeout for this helper only.
-	// Zero means use the shared default.
-	HTTPClientTimeout time.Duration
+	// CustomHTTPClient replaces the shared HTTP client for this helper only.
+	// When nil, the shared default client is used.
+	CustomHTTPClient *http.Client
 }
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
@@ -181,10 +181,8 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	t.Helper()
 
 	httpClient := sharedHTTPClient
-	if opts.HTTPClientTimeout > 0 {
-		clone := *sharedHTTPClient
-		clone.Timeout = opts.HTTPClientTimeout
-		httpClient = &clone
+	if opts.CustomHTTPClient != nil {
+		httpClient = opts.CustomHTTPClient
 	}
 	c := &K8sTestHelper{
 		env:             *env,
