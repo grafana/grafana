@@ -410,6 +410,13 @@ export type ObjectMeta = {
 export type CorrelationTargetSpec = {
   [key: string]: any;
 };
+export type CorrelationTimeRangeSpec = {
+  field?: string;
+  range?: {
+    from: number;
+    to: number;
+  };
+};
 export type CorrelationTransformationSpec = {
   expression?: string;
   field?: string;
@@ -419,6 +426,7 @@ export type CorrelationTransformationSpec = {
 export type CorrelationConfigSpec = {
   field: string;
   target: CorrelationTargetSpec;
+  timeRange?: CorrelationTimeRangeSpec;
   transformations?: CorrelationTransformationSpec[];
 };
 export type CorrelationDataSourceRef = {
