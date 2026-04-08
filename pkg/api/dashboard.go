@@ -77,6 +77,10 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashU
 //
 // Will return the dashboard given the dashboard unique identifier (uid).
 //
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
+//
+// Deprecated: true
+//
 // Responses:
 // 200: dashboardResponse
 // 401: unauthorisedError
@@ -159,7 +163,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	annotationPermissions := &dashboardsV1.AnnotationPermission{}
 	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
-	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 	meta := dtos.DashboardMeta{
 		IsStarred:              isStarred,
@@ -328,6 +331,10 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid s
 //
 // Will delete the dashboard given the specified unique identifier (uid).
 //
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
+//
+// Deprecated: true
+//
 // Responses:
 // 200: deleteDashboardResponse
 // 401: unauthorisedError
@@ -354,17 +361,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for deleting folders.", nil)
 	}
 
-	// disconnect all library elements for this dashboard
-	err := hs.LibraryElementService.DisconnectElementsFromDashboard(c.Req.Context(), dash.ID)
-	if err != nil {
-		hs.log.Error(
-			"Failed to disconnect library elements",
-			"dashboard", dash.ID,
-			"identity", c.GetID(),
-			"error", err)
-	}
-
-	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
+	err := hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
 	if err != nil {
 		return dashboardErrResponse(err, "Failed to delete dashboard")
 	}
@@ -382,6 +379,10 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 //
 // Creates a new dashboard or updates an existing dashboard.
 // Note: This endpoint is not intended for creating folders, use `POST /api/folders` for that.
+//
+// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards
+//
+// Deprecated: true
 //
 // Responses:
 // 200: postDashboardResponse
@@ -778,6 +779,8 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 //
 // Gets all existing versions for the dashboard using UID.
 //
+// Deprecated: true
+//
 // Responses:
 // 200: dashboardVersionsResponse
 // 401: unauthorisedError
@@ -865,6 +868,8 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 // swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByUID
 //
 // Get a specific dashboard version using UID.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: dashboardVersionResponse
@@ -992,7 +997,9 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 
 // swagger:route GET /dashboards/tags dashboards getDashboardTags
 //
-// Get all dashboards tags of an organisation.
+// Get all dashboards tags of an organization.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDashboardsTagsResponse

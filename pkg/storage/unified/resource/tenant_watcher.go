@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -247,12 +249,17 @@ func (tw *TenantWatcher) reconcileTenantPendingDelete(name string, deleteAfter s
 	if err == nil && record.LabelingComplete {
 		return
 	}
+	if err != nil && !errors.Is(err, kvpkg.ErrNotFound) {
+		tw.log.Error("failed to read pending delete record, skipping reconcile to avoid overwriting existing state", "tenant", name, "error", err)
+		return
+	}
 
 	// Write the intent record BEFORE labelling so that clearTenantPendingDelete
 	// can clean up orphaned labels if labelling fails partway through.
 	record = PendingDeleteRecord{
 		DeleteAfter:      deleteAfter,
 		LabelingComplete: false,
+		Force:            record.Force,
 	}
 	if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
 		tw.log.Error("failed to save pending delete record", "tenant", name, "error", err)
@@ -358,7 +365,7 @@ func (tw *TenantWatcher) editResourceLabel(dataKey DataKey, addLabel bool) error
 	}
 
 	if _, err := tw.writeEvent(tw.ctx, event); err != nil {
-		if !isConflictError(err) {
+		if !apierrors.IsConflict(err) {
 			return fmt.Errorf("writing event: %w", err)
 		}
 		// Another pod may have already modified this resource. Re-read the
@@ -408,12 +415,6 @@ func (tw *TenantWatcher) verifyLabelState(dataKey DataKey, wantLabel bool) error
 	return nil
 }
 
-// isConflictError returns true if the error indicates an optimistic locking /
-// resource version conflict.
-func isConflictError(err error) bool {
-	return apierrors.IsConflict(err) || strings.Contains(err.Error(), "optimistic locking failed")
-}
-
 // clearTenantPendingDelete removes the pending-delete record for a tenant from the
 // KV store, but only if the tenant is in the local cache (i.e. actually has a
 // record). For the vast majority of tenants this is a no-op map lookup.
@@ -422,11 +423,21 @@ func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
 		return
 	}
 
+	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
+	if err != nil {
+		tw.log.Warn("failed to get pending delete record for clearing", "tenant", name, "error", err)
+		return
+	}
+
+	if record.Force {
+		tw.log.Warn("tenant has force pending-delete record, skipping clear", "tenant", name)
+		return
+	}
+
 	// Mark labelling as incomplete before unlabelling. If unlabelling fails
 	// partway and the tenant is re-marked as pending-delete before we retry,
 	// reconcileTenantPendingDelete will see LabelingComplete=false and re-label.
-	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
-	if err == nil && record.LabelingComplete {
+	if record.LabelingComplete {
 		record.LabelingComplete = false
 		if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
 			tw.log.Error("failed to mark labeling incomplete before unlabelling", "tenant", name, "error", err)

@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, ReducerID, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Combobox,
-  ComboboxOption,
+  type ComboboxOption,
   Icon,
   InlineField,
   InlineFieldRow,
@@ -22,7 +22,7 @@ import { ExpressionDatasourceUID, reducerTypes, thresholdFunctions } from 'app/f
 import { isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
 
 import { createSimpleConditionExpressions } from '../rule-editor/formProcessing';
-import { RuleFormValues, SimpleCondition } from '../types/rule-form';
+import { type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 
 import { EvaluationGroupFieldRow } from './rule-editor/EvaluationGroupFieldRow';
 

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { useMemo, useState, MouseEvent } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { PluginType, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { PluginType, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';

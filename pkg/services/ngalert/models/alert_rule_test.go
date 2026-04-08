@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math/rand"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -17,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -1109,7 +1110,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		}
 	}
 
-	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", slices.Collect(maps.Keys(fields)))
 }
 
 func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
@@ -1152,7 +1153,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		}
 	}
 
-	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", slices.Collect(maps.Keys(fields)))
 }
 
 func TestValidateAlertRule(t *testing.T) {

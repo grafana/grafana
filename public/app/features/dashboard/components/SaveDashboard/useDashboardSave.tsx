@@ -4,12 +4,12 @@ import { useAsyncFn } from 'react-use';
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DashboardSavedEvent } from 'app/types/events';
 import { useDispatch } from 'app/types/store';
@@ -17,7 +17,7 @@ import { useDispatch } from 'app/types/store';
 import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
 import { trackDashboardCreatedOrSaved } from '../../utils/tracking';
 
-import { SaveDashboardOptions } from './types';
+import { type SaveDashboardOptions } from './types';
 
 const saveDashboard = async (
   saveModel: any,

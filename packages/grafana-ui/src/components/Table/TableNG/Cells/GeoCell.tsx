@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import WKT from 'ol/format/WKT';
 import { Geometry } from 'ol/geom';
 
-import { GeoCellProps, TableCellStyles } from '../types';
+import { type GeoCellProps, type TableCellStyles } from '../types';
 
 export function GeoCell({ value }: GeoCellProps) {
   let disp = null;

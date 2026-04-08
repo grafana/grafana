@@ -11,7 +11,7 @@ import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandboxPluginLoade
 import { pluginsLogger } from '../utils';
 
 import { addTranslationsToI18n } from './addTranslationsToI18n';
-import { PluginImportInfo } from './types';
+import { type PluginImportInfo } from './types';
 
 export async function importPluginModule({
   path,
