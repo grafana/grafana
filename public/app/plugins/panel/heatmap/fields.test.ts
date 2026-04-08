@@ -416,13 +416,40 @@ describe('Heatmap data', () => {
     });
 
     it('returns getSparseHeatmapData for sparse HeatmapCells frame', () => {
-      expect(
-        prepareHeatmapData({
-          ...tpl,
-          frames: [createSparseHeatmapCellsFrame()],
-          palette: ['#000', '#888', '#fff'],
-        })
-      ).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [createSparseHeatmapCellsFrame()],
+        palette: ['#000', '#888', '#fff'],
+      });
+
+      expect(heatmap.heatmap?.meta?.type).toEqual('heatmap-cells');
+      expect(heatmap.heatmap?.length).toEqual(4);
+      expect(heatmap.heatmap?.fields[0]).toMatchObject({
+        name: 'xMax',
+        type: 'time',
+        values: [1000, 1000, 2000, 2000],
+      });
+      expect(heatmap.heatmap?.fields[1]).toMatchObject({
+        name: 'yMin',
+        type: 'number',
+        values: [1, 4, 1, 4],
+      });
+      expect(heatmap.heatmap?.fields[2]).toMatchObject({
+        name: 'yMax',
+        type: 'number',
+        values: [4, 16, 4, 16],
+      });
+      expect(heatmap.heatmap?.fields[3]).toMatchObject({
+        name: 'count',
+        type: 'number',
+        values: [5, 10, 15, 20],
+      });
+      expect(heatmap.heatmapColors).toEqual({
+        maxValue: 20,
+        minValue: 5,
+        palette: ['#000', '#888', '#fff'],
+        values: [0, 1, 2, 2],
+      });
     });
   });
 
@@ -441,7 +468,31 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(prepareHeatmapData({ ...tpl, frames: [frame1, frame2] })).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({ ...tpl, frames: [frame1, frame2] });
+
+      expect(heatmap.heatmap?.meta?.custom?.yOrdinalDisplay).toEqual(['value 1', 'value 2']);
+      expect(heatmap.heatmap?.fields[0]).toMatchObject({
+        name: 'xMax',
+        values: [1000, 1000, 2000, 2000],
+      });
+      expect(heatmap.heatmap?.fields[1]).toMatchObject({
+        name: 'y',
+        values: [0, 1, 0, 1],
+      });
+      expect(heatmap.heatmap?.fields[2]).toMatchObject({
+        name: 'Value',
+        values: [10, 30, 20, 40],
+      });
+      expect(heatmap.series?.length).toEqual(2);
+      expect(heatmap.series?.fields[1].state?.displayName).toEqual('value 1');
+      expect(heatmap.series?.fields[2].state?.displayName).toEqual('value 2');
+      expect(heatmap.heatmapColors).toMatchObject({
+        maxValue: 40,
+        minValue: 10,
+        values: [-1, -1, -1, -1],
+      });
+      expect(heatmap.xBucketCount).toEqual(2);
+      expect(heatmap.yBucketCount).toEqual(2);
     });
 
     it('outerJoins multiple frames without sorting when displayNames are non-numeric', () => {
@@ -458,7 +509,15 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(prepareHeatmapData({ ...tpl, frames: [frame1, frame2] })).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({ ...tpl, frames: [frame1, frame2] });
+
+      expect(heatmap.heatmap?.meta?.custom?.yOrdinalDisplay).toEqual(['value 1', 'value 2']);
+      expect(heatmap.heatmap?.fields[2]).toMatchObject({
+        name: 'Value',
+        values: [10, 30, 20, 40],
+      });
+      expect(heatmap.series?.fields[1].state?.displayName).toEqual('value 1');
+      expect(heatmap.series?.fields[2].state?.displayName).toEqual('value 2');
     });
 
     it('sorts frames by label when all numeric', () => {
@@ -475,7 +534,15 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(prepareHeatmapData({ ...tpl, frames: [frame1, frame2] })).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({ ...tpl, frames: [frame1, frame2] });
+
+      expect(heatmap.heatmap?.meta?.custom?.yOrdinalDisplay).toEqual(['value 1', 'value 2']);
+      expect(heatmap.heatmap?.fields[2]).toMatchObject({
+        name: 'Value',
+        values: [10, 30, 20, 40],
+      });
+      expect(heatmap.series?.fields[1].state?.displayName).toEqual('value 1');
+      expect(heatmap.series?.fields[2].state?.displayName).toEqual('value 2');
     });
 
     it('uses single frame as-is when number fields have non-numeric displayNames', () => {
@@ -487,7 +554,16 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(prepareHeatmapData({ ...tpl, frames: [frame] })).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({ ...tpl, frames: [frame] });
+
+      expect(heatmap.heatmap?.meta?.custom?.yOrdinalDisplay).toEqual(['bucket_a', 'bucket_b']);
+      expect(heatmap.heatmap?.length).toEqual(6);
+      expect(heatmap.heatmap?.fields[2]).toMatchObject({
+        name: 'Value',
+        values: [5, 20, 10, 25, 15, 30],
+      });
+      expect(heatmap.series?.fields[1].name).toEqual('bucket_a');
+      expect(heatmap.series?.fields[2].name).toEqual('bucket_b');
     });
 
     it('sorts and reorders number fields when displayNames are numeric', () => {
@@ -499,7 +575,17 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(prepareHeatmapData({ ...tpl, frames: [frame] })).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({ ...tpl, frames: [frame] });
+
+      expect(heatmap.heatmap?.meta?.custom?.yOrdinalDisplay).toEqual(['2', '10']);
+      expect(heatmap.heatmap?.fields[2]).toMatchObject({
+        name: 'Value',
+        values: [15, 5, 20, 10],
+      });
+      expect(heatmap.series?.fields[1].name).toEqual('2');
+      expect(heatmap.series?.fields[1].values).toEqual([15, 20]);
+      expect(heatmap.series?.fields[2].name).toEqual('10');
+      expect(heatmap.series?.fields[2].values).toEqual([5, 10]);
     });
   });
 
@@ -511,23 +597,35 @@ describe('Heatmap data', () => {
         links: [{ url: 'http://example.com', title: 'Link' }],
       };
 
-      expect(prepareHeatmapData({ ...tpl, frames: [frame] })).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({ ...tpl, frames: [frame] });
+
+      expect(heatmap.heatmap?.fields[2].config?.links).toEqual([{ url: 'http://example.com', title: 'Link' }]);
+      expect(heatmap.series?.fields[1].getLinks).toEqual(expect.any(Function));
     });
   });
 
   describe('display options', () => {
     it('applies cellValues unit and decimals to display', () => {
-      expect(
-        prepareHeatmapData({
-          ...tpl,
-          frames: [createDenseHeatmapCellsFrame()],
-          options: {
-            ...options,
-            cellValues: { unit: 'short', decimals: 2 },
-          },
-          palette: ['#000', '#fff'],
-        })
-      ).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [createDenseHeatmapCellsFrame()],
+        options: {
+          ...options,
+          cellValues: { unit: 'short', decimals: 2 },
+        },
+        palette: ['#000', '#fff'],
+      });
+
+      expect(heatmap.heatmap?.fields[2]).toMatchObject({
+        name: 'count',
+        config: { unit: 'short', decimals: 2 },
+      });
+      expect(heatmap.heatmapColors).toEqual({
+        maxValue: 20,
+        minValue: 5,
+        palette: ['#000', '#fff'],
+        values: [0, 0, 1, 1],
+      });
     });
 
     it('applies yAxis unit and decimals for dense heatmap', () => {
@@ -540,17 +638,23 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(
-        prepareHeatmapData({
-          ...tpl,
-          frames: [frame],
-          options: {
-            ...options,
-            yAxis: { unit: 'short', decimals: 1 },
-          },
-          palette: ['#000', '#fff'],
-        })
-      ).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        options: {
+          ...options,
+          yAxis: { unit: 'short', decimals: 1 },
+        },
+        palette: ['#000', '#fff'],
+      });
+
+      expect(heatmap.heatmap?.fields[1]).toMatchObject({
+        name: 'yMin',
+        config: { unit: 'short', decimals: 1 },
+      });
+      expect(heatmap.xLayout).toEqual('ge');
+      expect(heatmap.yLayout).toEqual('ge');
+      expect(heatmap.heatmapColors?.values).toEqual([0, 0, 1, 1]);
     });
   });
 
@@ -564,13 +668,15 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(
-        prepareHeatmapData({
-          ...tpl,
-          frames: [frame],
-          palette: ['#000', '#fff'],
-        })
-      ).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        palette: ['#000', '#fff'],
+      });
+
+      expect(heatmap.warning).toEqual('Missing value field');
+      expect(heatmap.heatmap?.fields.map((f) => f.name)).toEqual(['x', 'y']);
+      expect(heatmap.heatmap?.length).toEqual(2);
     });
 
     it('returns non-broken heatmap when frame is too small', () => {
@@ -582,29 +688,36 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(
-        prepareHeatmapData({
-          ...tpl,
-          frames: [frame],
-          palette: ['#000', '#fff'],
-        })
-      ).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        palette: ['#000', '#fff'],
+      });
+
+      expect(heatmap.warning).toBeUndefined();
+      expect(heatmap.heatmap?.fields.map((f) => f.name)).toEqual(['x', 'y']);
+      expect(heatmap.heatmap?.length).toEqual(1);
     });
   });
 
   describe('filter values', () => {
     it('respects filterValues le and ge', () => {
-      expect(
-        prepareHeatmapData({
-          ...tpl,
-          frames: [createDenseHeatmapCellsFrame()],
-          options: {
-            ...options,
-            filterValues: { le: 12, ge: 8 },
-          },
-          palette: ['#000', '#fff'],
-        })
-      ).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [createDenseHeatmapCellsFrame()],
+        options: {
+          ...options,
+          filterValues: { le: 12, ge: 8 },
+        },
+        palette: ['#000', '#fff'],
+      });
+
+      expect(heatmap.heatmapColors).toMatchObject({
+        maxValue: -Infinity,
+        minValue: Infinity,
+        palette: ['#000', '#fff'],
+        values: [0, 0, 0, 0],
+      });
     });
   });
 });
