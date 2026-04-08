@@ -198,8 +198,13 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 	}
 
 	installedMap := make(map[string]struct{})
+	apiPluginsByID := make(map[string]*pluginsv0alpha1.Plugin, len(apiPlugins.Items))
 	for _, p := range installedPlugins {
 		installedMap[p.ID] = struct{}{}
+	}
+	for i := range apiPlugins.Items {
+		apiPlugin := &apiPlugins.Items[i]
+		apiPluginsByID[apiPlugin.Spec.Id] = apiPlugin
 	}
 
 	// unregister plugins that are not installed
@@ -218,12 +223,16 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 		if p.Parent != nil {
 			parentID = p.Parent.ID
 		}
-		err := s.installRegistrar.Register(ctx, namespace, &install.PluginInstall{
+		desiredInstall := &install.PluginInstall{
 			ID:       p.ID,
 			Version:  p.Info.Version,
 			Source:   source,
 			ParentID: parentID,
-		})
+		}
+		if existing, ok := apiPluginsByID[p.ID]; ok && !desiredInstall.ShouldUpdate(existing) {
+			continue
+		}
+		err := s.installRegistrar.Register(ctx, namespace, desiredInstall)
 		if err != nil {
 			return err
 		}

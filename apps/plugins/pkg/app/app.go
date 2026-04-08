@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -49,6 +50,7 @@ func New(cfg app.Config) (app.App, error) {
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			InformerSupplier: simple.OptimizedInformerSupplier,
+			RetryPolicy:      operator.ExponentialBackoffRetryPolicy(5*time.Second, 5),
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
 					logger.Error("Child plugin informer failed", "error", err)

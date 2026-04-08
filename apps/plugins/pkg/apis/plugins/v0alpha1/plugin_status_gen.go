@@ -27,9 +27,11 @@ func (PluginstatusOperatorState) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type PluginStatus struct {
+	ChildAppliedChildren []string `json:"childAppliedChildren,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
-	OperatorStates map[string]PluginstatusOperatorState `json:"operatorStates,omitempty"`
+	OperatorStates          map[string]PluginstatusOperatorState `json:"operatorStates,omitempty"`
+	ChildObservedGeneration *int64                               `json:"childObservedGeneration,omitempty"`
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }
