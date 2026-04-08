@@ -7,6 +7,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
+// DefaultListLimit is the default number of items to fetch per page
+// when no explicit limit is provided.
+const DefaultListLimit = 500
+
 type Pagination struct {
 	Limit    int64
 	Continue int64

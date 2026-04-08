@@ -4,10 +4,10 @@ import { getBackendSrv } from '@grafana/runtime';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types/serviceaccount';
-import { ThunkResult } from 'app/types/store';
+import { type ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types/serviceaccount';
+import { type ThunkResult } from 'app/types/store';
 
-import { ServiceAccountToken } from '../components/CreateTokenModal';
+import { type ServiceAccountToken } from '../components/CreateTokenModal';
 
 import {
   acOptionsLoaded,

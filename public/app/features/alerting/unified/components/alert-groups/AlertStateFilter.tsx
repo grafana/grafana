@@ -1,6 +1,8 @@
-import { SelectableValue } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, Label, RadioButtonGroup, Tooltip } from '@grafana/ui';
+import { Icon, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) => {
+  const styles = useStyles2(getStyles);
   const alertStateOptions: SelectableValue[] = Object.entries(AlertState)
     .sort(([labelA], [labelB]) => (labelA < labelB ? -1 : 1))
     .map(([label, state]) => ({
@@ -17,7 +20,7 @@ export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) =>
     }));
 
   return (
-    <div>
+    <div className={styles.wrapper}>
       <Label>
         <span>
           <Trans i18nKey="alerting.alert-state-filter.notification-state">Notification state</Trans>&nbsp;
@@ -53,3 +56,10 @@ export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) =>
     </div>
   );
 };
+
+const getStyles = () => ({
+  wrapper: css({
+    minWidth: 0,
+    flex: '0 0 auto',
+  }),
+});

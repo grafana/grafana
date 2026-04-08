@@ -1,10 +1,44 @@
 import { Meta, ArgTypes } from '@storybook/blocks';
 import { Badge } from './Badge';
+import { Stack } from '../Layout/Stack/Stack';
+import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 <Meta title="MDX|Badge" component={Badge} />
 
 ## Badge
 
 The badge component adds meta information to other content, for example about release status or new elements. You can add any `Icon` component or use the badge without an icon.
+
+## Options
+
+### Color
+
+Badge accepts the named visualisation colors to change the appearance. Note that these colors are not the same as the design system tokens such as success or error.
+
+<ExampleFrame>
+  <Stack direction="row">
+    <Badge color="blue" text="Blue" />
+    <Badge color="red" text="Red" />
+    <Badge color="green" text="Green" />
+    <Badge color="orange" text="Orange" />
+    <Badge color="purple" text="Purple" />
+  </Stack>
+</ExampleFrame>
+
+### Icon
+
+You can specify an icon name to show at the beginning of the badge.
+
+<ExampleFrame>
+  <Badge icon="rocket" color="blue" text="New!" />
+</ExampleFrame>
+
+### Tooltip
+
+Specify a tooltip to show additional information on hover. Avoid putting lengthy content in the tooltip.
+
+<ExampleFrame>
+  <Badge icon="rocket" color="blue" text="New!" tooltip="Check out this new feature!" />
+</ExampleFrame>
 
 <ArgTypes of={Badge} />

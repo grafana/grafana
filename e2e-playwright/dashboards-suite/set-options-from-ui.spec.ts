@@ -4,7 +4,6 @@ const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

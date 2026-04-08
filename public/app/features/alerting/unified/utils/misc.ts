@@ -1,10 +1,10 @@
 import { isString, sortBy } from 'lodash';
 
-import { Labels, UrlQueryMap } from '@grafana/data';
+import { type Labels, type UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
@@ -16,26 +16,26 @@ import {
 } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
-  Alert,
-  CombinedRule,
-  DataSourceRuleGroupIdentifier,
-  FilterState,
-  RuleIdentifier,
-  RuleWithLocation,
-  RulesSource,
-  SilenceFilterState,
+  type Alert,
+  type CombinedRule,
+  type DataSourceRuleGroupIdentifier,
+  type FilterState,
+  type RuleIdentifier,
+  type RuleWithLocation,
+  type RulesSource,
+  type SilenceFilterState,
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
-  PromRuleDTO,
+  type PromRuleDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
 import {
-  KnownErrorCodes,
+  type KnownErrorCodes,
   getErrorMessageFromApiMachineryErrorResponse,
   getErrorMessageFromCode,
   isApiMachineryError,

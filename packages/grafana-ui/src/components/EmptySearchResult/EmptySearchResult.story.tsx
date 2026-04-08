@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/react';
+import { type Meta } from '@storybook/react';
 
 import { EmptySearchResult } from './EmptySearchResult';
 import mdx from './EmptySearchResult.mdx';

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { uniqueId } from '../../../utils/uniqueId';

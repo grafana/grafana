@@ -13,6 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -51,7 +54,7 @@ func TestTeamSearchFallback(t *testing.T) {
 					"teams.iam.grafana.app": {DualWriterMode: testCase.mode},
 				},
 			}
-			dual := dualwrite.ProvideStaticServiceForTests(cfg)
+			dual := dualwrite.ProvideServiceForTests(cfg)
 			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
@@ -188,7 +191,7 @@ func TestTeamSearchHandler(t *testing.T) {
 					"teams.iam.grafana.app": {DualWriterMode: rest.Mode0},
 				},
 			}
-			dual := dualwrite.ProvideStaticServiceForTests(cfg)
+			dual := dualwrite.ProvideServiceForTests(cfg)
 			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
@@ -214,101 +217,53 @@ func TestTeamSearchHandler(t *testing.T) {
 			require.Equal(t, tt.expectedPage, int(mockClient.LastSearchRequest.Page), fmt.Sprintf("mismatch page in test %d", i))
 		}
 	})
-}
 
-type MockClient struct {
-	resourcepb.ResourceIndexClient
-	resource.ResourceIndex
+	t.Run("returns 400 for invalid sort field", func(t *testing.T) {
+		mockClient := &MockClient{}
 
-	// Capture the last SearchRequest for assertions
-	LastSearchRequest *resourcepb.ResourceSearchRequest
+		searchHandler := &TeamSearchHandler{
+			log:      log.New("grafana-apiserver.teams.search"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(),
+		}
 
-	MockResponses []*resourcepb.ResourceSearchResponse
-	MockError     error
-	MockCalls     []*resourcepb.ResourceSearchRequest
-	CallCount     int
-}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?sort=invalid", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 
-func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	if m.MockError != nil {
-		return nil, m.MockError
-	}
+		searchHandler.DoTeamSearch(rr, req)
 
-	m.LastSearchRequest = in
-	m.MockCalls = append(m.MockCalls, in)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		assert.Nil(t, mockClient.LastSearchRequest, "Search should not be called for invalid sort field")
+	})
 
-	var response *resourcepb.ResourceSearchResponse
-	if m.CallCount < len(m.MockResponses) {
-		response = m.MockResponses[m.CallCount]
-	}
+	t.Run("accepts valid sort fields", func(t *testing.T) {
+		for _, sortParam := range []string{"title", "-title", "email", "-email"} {
+			t.Run(sortParam, func(t *testing.T) {
+				mockClient := &MockClient{}
 
-	m.CallCount = m.CallCount + 1
+				searchHandler := &TeamSearchHandler{
+					log:      log.New("grafana-apiserver.teams.search"),
+					client:   mockClient,
+					tracer:   tracing.NewNoopTracerService(),
+					features: featuremgmt.WithFeatures(),
+				}
 
-	return response, nil
-}
-func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) Watch(ctx context.Context, in *resourcepb.WatchRequest, opts ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
-	return nil, nil
-}
-func (m *MockClient) Delete(ctx context.Context, in *resourcepb.DeleteRequest, opts ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) Create(ctx context.Context, in *resourcepb.CreateRequest, opts ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, opts ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) Read(ctx context.Context, in *resourcepb.ReadRequest, opts ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) GetBlob(ctx context.Context, in *resourcepb.GetBlobRequest, opts ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) PutBlob(ctx context.Context, in *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts ...grpc.CallOption) (*resourcepb.ListResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
-	return nil, nil
-}
-func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
-	return nil
-}
-func (m *MockClient) GetQuotaUsage(ctx context.Context, in *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
-	return nil, nil
-}
+				rr := httptest.NewRecorder()
+				req := httptest.NewRequest("GET", "/teams/search?sort="+sortParam, nil)
+				req.Header.Add("content-type", "application/json")
+				req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 
-func mockTeamClientWithHits() *MockClient {
-	return &MockClient{
-		MockResponses: []*resourcepb.ResourceSearchResponse{
-			{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: "title"},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "team-1"}, Cells: [][]byte{[]byte("Team One")}},
-						{Key: &resourcepb.ResourceKey{Name: "team-2"}, Cells: [][]byte{[]byte("Team Two")}},
-					},
-				},
-				TotalHits: 2,
-			},
-		},
-	}
+				searchHandler.DoTeamSearch(rr, req)
+
+				assert.NotEqual(t, http.StatusBadRequest, rr.Code)
+				require.NotNil(t, mockClient.LastSearchRequest)
+				require.Len(t, mockClient.LastSearchRequest.SortBy, 1)
+			})
+		}
+	})
 }
 
 func TestTeamAccessControl(t *testing.T) {
@@ -486,6 +441,220 @@ func TestTeamAccessControl(t *testing.T) {
 	}
 }
 
+func TestTeamSearchMemberCount(t *testing.T) {
+	mockLister := &mockTeamBindingLister{
+		listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+			return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 3)}, nil
+		},
+	}
+
+	t.Run("membercount absent - no member counts on hits", func(t *testing.T) {
+		searchHandler := &TeamSearchHandler{
+			log:              log.New("grafana-apiserver.teams.search"),
+			client:           mockTeamClientWithHits(),
+			tracer:           tracing.NewNoopTracerService(),
+			features:         featuremgmt.WithFeatures(),
+			teamBindingStore: mockLister,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		require.Equal(t, 200, rr.Code)
+
+		var resp iamv0alpha1.GetSearchTeamsResponse
+		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+		require.Len(t, resp.Hits, 2)
+		for _, hit := range resp.Hits {
+			assert.Nil(t, hit.MemberCount, "member count should be nil when membercount param is absent")
+		}
+	})
+
+	t.Run("membercount=false - no member counts on hits", func(t *testing.T) {
+		searchHandler := &TeamSearchHandler{
+			log:              log.New("grafana-apiserver.teams.search"),
+			client:           mockTeamClientWithHits(),
+			tracer:           tracing.NewNoopTracerService(),
+			features:         featuremgmt.WithFeatures(),
+			teamBindingStore: mockLister,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?membercount=false", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		require.Equal(t, 200, rr.Code)
+
+		var resp iamv0alpha1.GetSearchTeamsResponse
+		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+		require.Len(t, resp.Hits, 2)
+		for _, hit := range resp.Hits {
+			assert.Nil(t, hit.MemberCount, "member count should be nil when membercount=false")
+		}
+	})
+
+	t.Run("membercount=true - member counts populated", func(t *testing.T) {
+		searchHandler := &TeamSearchHandler{
+			log:              log.New("grafana-apiserver.teams.search"),
+			client:           mockTeamClientWithHits(),
+			tracer:           tracing.NewNoopTracerService(),
+			features:         featuremgmt.WithFeatures(),
+			teamBindingStore: mockLister,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?membercount=true", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		require.Equal(t, 200, rr.Code)
+
+		var resp iamv0alpha1.GetSearchTeamsResponse
+		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+		require.Len(t, resp.Hits, 2)
+		for _, hit := range resp.Hits {
+			require.NotNil(t, hit.MemberCount, "member count should be populated when membercount=true")
+			assert.Equal(t, int64(3), *hit.MemberCount, "member count should be populated when membercount=true")
+		}
+	})
+
+	t.Run("membercount=true - lister error returns 500", func(t *testing.T) {
+		errorLister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+				return nil, fmt.Errorf("store unavailable")
+			},
+		}
+
+		searchHandler := &TeamSearchHandler{
+			log:              log.New("grafana-apiserver.teams.search"),
+			client:           mockTeamClientWithHits(),
+			tracer:           tracing.NewNoopTracerService(),
+			features:         featuremgmt.WithFeatures(),
+			teamBindingStore: errorLister,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?membercount=true", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+}
+
+func TestEnrichWithMemberCounts(t *testing.T) {
+	t.Run("all succeed - sets correct member counts", func(t *testing.T) {
+		mockLister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+				teamName, _ := options.FieldSelector.RequiresExactMatch("spec.teamRef.name")
+				switch teamName {
+				case "team-1":
+					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 3)}, nil
+				case "team-2":
+					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 0)}, nil
+				default:
+					return &iamv0alpha1.TeamBindingList{}, nil
+				}
+			},
+		}
+
+		handler := &TeamSearchHandler{
+			log:              log.New("test"),
+			tracer:           tracing.NewNoopTracerService(),
+			teamBindingStore: mockLister,
+		}
+
+		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
+			{Name: "team-1"},
+			{Name: "team-2"},
+		}
+
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.NoError(t, err)
+		require.NotNil(t, hits[0].MemberCount)
+		assert.Equal(t, int64(3), *hits[0].MemberCount)
+		require.NotNil(t, hits[1].MemberCount)
+		assert.Equal(t, int64(0), *hits[1].MemberCount)
+	})
+
+	t.Run("one fails - returns error", func(t *testing.T) {
+		mockLister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+				teamName, _ := options.FieldSelector.RequiresExactMatch("spec.teamRef.name")
+				if teamName == "team-bad" {
+					return nil, fmt.Errorf("teambinding list failed for team-bad")
+				}
+				return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 2)}, nil
+			},
+		}
+
+		handler := &TeamSearchHandler{
+			log:              log.New("test"),
+			tracer:           tracing.NewNoopTracerService(),
+			teamBindingStore: mockLister,
+		}
+
+		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
+			{Name: "team-ok-1"},
+			{Name: "team-bad"},
+			{Name: "team-ok-2"},
+		}
+
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "team-bad")
+	})
+
+	t.Run("unexpected type - returns error", func(t *testing.T) {
+		mockLister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+				return &iamv0alpha1.TeamList{}, nil
+			},
+		}
+
+		handler := &TeamSearchHandler{
+			log:              log.New("test"),
+			tracer:           tracing.NewNoopTracerService(),
+			teamBindingStore: mockLister,
+		}
+
+		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
+			{Name: "team-1"},
+		}
+
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unexpected type")
+	})
+}
+
+type mockTeamBindingLister struct {
+	listFunc func(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error)
+}
+
+func (m *mockTeamBindingLister) NewList() runtime.Object {
+	return &iamv0alpha1.TeamBindingList{}
+}
+
+func (m *mockTeamBindingLister) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return m.listFunc(ctx, options)
+}
+
+func (m *mockTeamBindingLister) ConvertToTable(_ context.Context, _ runtime.Object, _ runtime.Object) (*metav1.Table, error) {
+	return nil, nil
+}
+
 type mockTeamAccessClient struct {
 	batchCheckFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
 }
@@ -503,4 +672,99 @@ func (m *mockTeamAccessClient) BatchCheck(ctx context.Context, info authlib.Auth
 		return m.batchCheckFunc(ctx, info, req)
 	}
 	return authlib.BatchCheckResponse{}, nil
+}
+
+type MockClient struct {
+	resourcepb.ResourceIndexClient
+	resource.ResourceIndex
+
+	// Capture the last SearchRequest for assertions
+	LastSearchRequest *resourcepb.ResourceSearchRequest
+
+	MockResponses []*resourcepb.ResourceSearchResponse
+	MockError     error
+	MockCalls     []*resourcepb.ResourceSearchRequest
+	CallCount     int
+}
+
+func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if m.MockError != nil {
+		return nil, m.MockError
+	}
+
+	m.LastSearchRequest = in
+	m.MockCalls = append(m.MockCalls, in)
+
+	var response *resourcepb.ResourceSearchResponse
+	if m.CallCount < len(m.MockResponses) {
+		response = m.MockResponses[m.CallCount]
+	}
+
+	m.CallCount = m.CallCount + 1
+
+	return response, nil
+}
+func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Watch(ctx context.Context, in *resourcepb.WatchRequest, opts ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
+	return nil, nil
+}
+func (m *MockClient) Delete(ctx context.Context, in *resourcepb.DeleteRequest, opts ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Create(ctx context.Context, in *resourcepb.CreateRequest, opts ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, opts ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Read(ctx context.Context, in *resourcepb.ReadRequest, opts ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetBlob(ctx context.Context, in *resourcepb.GetBlobRequest, opts ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) PutBlob(ctx context.Context, in *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts ...grpc.CallOption) (*resourcepb.ListResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
+	return nil, nil
+}
+func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
+	return nil
+}
+func (m *MockClient) GetQuotaUsage(ctx context.Context, in *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
+	return nil, nil
+}
+
+func mockTeamClientWithHits() *MockClient {
+	return &MockClient{
+		MockResponses: []*resourcepb.ResourceSearchResponse{
+			{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: "title"},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "team-1"}, Cells: [][]byte{[]byte("Team One")}},
+						{Key: &resourcepb.ResourceKey{Name: "team-2"}, Cells: [][]byte{[]byte("Team Two")}},
+					},
+				},
+				TotalHits: 2,
+			},
+		},
+	}
 }

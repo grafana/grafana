@@ -1,9 +1,16 @@
 import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { TooltipDisplayMode } from '@grafana/schema';
 import { LineInterpolation } from '@grafana/ui';
 
-import { AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
+import { type AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
 
-import { getGroupedFilters, prepareGraphableFields } from './utils';
+import {
+  getGroupedFilters,
+  getTimezones,
+  isTooltipScrollable,
+  prepareGraphableFields,
+  setClassicPaletteIdxs,
+} from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -17,6 +24,21 @@ describe('prepare timeseries graph', () => {
     ];
     const frames = prepareGraphableFields(input, createTheme());
     expect(frames).toBeNull();
+  });
+
+  it('does not needlessly copy clean arrays', () => {
+    const values = [1, 2];
+
+    const df = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'a', values },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme());
+
+    const field = frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values).toBe(values);
   });
 
   it('requires a number or boolean value', () => {
@@ -82,7 +104,7 @@ describe('prepare timeseries graph', () => {
     const df = createDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, values: [995, 9996, 9997, 9998, 9999] },
-        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
+        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity, null] },
       ],
     });
     const frames = prepareGraphableFields([df], createTheme());
@@ -93,6 +115,7 @@ describe('prepare timeseries graph', () => {
         -10,
         null,
         10,
+        null,
         null,
         null,
       ]
@@ -258,5 +281,123 @@ describe('prepare timeseries graph', () => {
         },
       ]);
     });
+  });
+});
+
+describe('getTimezones', () => {
+  it('returns defaultTimezone when timezones is undefined', () => {
+    expect(getTimezones(undefined, 'browser')).toEqual(['browser']);
+  });
+
+  it('returns defaultTimezone when timezones is empty', () => {
+    expect(getTimezones([], 'browser')).toEqual(['browser']);
+  });
+
+  it('replaces empty strings with the default timezone', () => {
+    expect(getTimezones(['', 'UTC', ''], 'browser')).toEqual(['browser', 'UTC', 'browser']);
+  });
+
+  it('returns all provided timezones unchanged when non-empty', () => {
+    expect(getTimezones(['UTC', 'America/New_York'], 'browser')).toEqual(['UTC', 'America/New_York']);
+  });
+});
+
+describe('isTooltipScrollable', () => {
+  it('returns false when mode is Single', () => {
+    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Single, maxHeight: 200 })).toBe(false);
+  });
+
+  it('returns false when mode is Multi but maxHeight is undefined', () => {
+    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi })).toBe(false);
+  });
+
+  it('returns true when mode is Multi and maxHeight is set', () => {
+    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi, maxHeight: 200 })).toBe(true);
+  });
+});
+
+describe('setClassicPaletteIdxs', () => {
+  it('assigns sequential seriesIndex to number and boolean fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.boolean, values: [true, false, true] },
+        ],
+      }),
+    ];
+    setClassicPaletteIdxs(frames, createTheme(), 0);
+    expect(frames[0].fields[1].state?.seriesIndex).toBe(0);
+    expect(frames[0].fields[2].state?.seriesIndex).toBe(1);
+  });
+
+  it('skips the field at skipFieldIdx', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.number, values: [4, 5, 6] },
+        ],
+      }),
+    ];
+    // Skip field index 1 ('a')
+    setClassicPaletteIdxs(frames, createTheme(), 1);
+    expect(frames[0].fields[1].state?.seriesIndex).toBeUndefined();
+    expect(frames[0].fields[2].state?.seriesIndex).toBe(0);
+  });
+
+  it('matches compare frame series indices to the corresponding main frame', () => {
+    const mainFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+
+    setClassicPaletteIdxs([mainFrame, compareFrame], createTheme(), 0);
+
+    // Main frame gets index 0
+    expect(mainFrame.fields[1].state?.seriesIndex).toBe(0);
+    // Compare frame should match the main frame's series index
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+});
+
+describe('prepareGraphableFields with xNumFieldIdx', () => {
+  it('uses numeric x axis when xNumFieldIdx is provided', () => {
+    const df = createDataFrame({
+      fields: [
+        { name: 'x', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'y', type: FieldType.number, values: [10, 20, 30] },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme(), undefined, 0);
+    expect(frames).not.toBeNull();
+    expect(frames![0].fields[0].name).toBe('x');
+  });
+
+  it('reorders fields so the numeric x field is first', () => {
+    const df = createDataFrame({
+      fields: [
+        { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'x', type: FieldType.number, values: [10, 20, 30] },
+        { name: 'b', type: FieldType.number, values: [4, 5, 6] },
+      ],
+    });
+
+    const frames = prepareGraphableFields([df], createTheme(), undefined, 1);
+    expect(frames).not.toBeNull();
+    expect(frames![0].fields[0].name).toBe('x');
   });
 });

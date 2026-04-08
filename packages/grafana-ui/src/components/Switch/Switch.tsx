@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef, HTMLProps, useRef } from 'react';
+import { forwardRef, type HTMLProps, useRef } from 'react';
 
-import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
+import { type GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';

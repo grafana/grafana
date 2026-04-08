@@ -122,6 +122,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
+		resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)

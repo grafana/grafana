@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
@@ -53,11 +53,8 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
           className={'pin-icon'}
           iconType={isPinned ? 'solid' : 'default'}
           onClick={() => onPin(url)}
-          aria-label={
-            isPinned
-              ? t('navigation.item.remove-bookmark', 'Remove {{itemName}} from Bookmarks', { itemName })
-              : t('navigation.item.add-bookmark', 'Add {{itemName}} to Bookmarks', { itemName })
-          }
+          aria-pressed={isPinned}
+          tooltip={t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })}
         />
       )}
     </div>
