@@ -71,12 +71,16 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
+			user, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			if !p.features.IsEnabledGlobally(featuremgmt.FlagPlaylistsRBAC) {
 				// Hotfix: grant None-role users viewer-level access until the toggle is enabled.
 				// All other roles are handled by the default role authorizer.
-				user, err := identity.GetRequester(ctx)
-				if err != nil || user.GetOrgRole() != org.RoleNone {
+				if user.GetOrgRole() != org.RoleNone {
 					return authorizer.DecisionNoOpinion, "", nil
 				}
 				switch attr.GetVerb() {
@@ -85,11 +89,6 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				default:
 					return authorizer.DecisionNoOpinion, "", nil
 				}
-			}
-
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
 			var action string
