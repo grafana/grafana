@@ -371,18 +371,25 @@ describe('useFieldMatchersOptions', () => {
     }
   });
 
-  it('returns ComboboxOptions when called with a boolean variable set to true', () => {
-    const flag = true;
-    const { result } = renderHook(() => useFieldMatchersOptions(flag));
-    expect(result.current).toHaveLength(registeredCount);
-    expect(result.current[0]).toHaveProperty('value');
-  });
-
   it('combobox options have the same values as selectable options', () => {
     const { result: combobox } = renderHook(() => useFieldMatchersOptions(true));
     const { result: selectable } = renderHook(() => useFieldMatchersOptions(false));
     const comboboxValues = combobox.current.map((o) => o.value).sort();
     const selectableValues = selectable.current.map((o) => o.value).sort();
     expect(comboboxValues).toEqual(selectableValues);
+  });
+
+  it('returns the new array when asComboboxOptions changes from true to false, with equal values', () => {
+    const { result, rerender } = renderHook(
+      ({ asComboboxOptions }: { asComboboxOptions: boolean }) => useFieldMatchersOptions(asComboboxOptions),
+      { initialProps: { asComboboxOptions: true } }
+    );
+    const comboboxResult = result.current;
+
+    rerender({ asComboboxOptions: false });
+    const selectableResult = result.current;
+
+    expect(selectableResult).not.toBe(comboboxResult);
+    expect(selectableResult.map((o) => o.value).sort()).toEqual(comboboxResult.map((o) => o.value).sort());
   });
 });
