@@ -111,6 +111,9 @@ export const versionedComponents = {
     },
   },
   UPlotChart: {
+    xyCanvas: {
+      ['13.1.0']: 'data-testid xy-canvas',
+    },
     container: {
       [MIN_GRAFANA_VERSION]: 'uplot-main-div',
     },

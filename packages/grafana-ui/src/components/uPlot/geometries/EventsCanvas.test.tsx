@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import uPlot from 'uplot';
 
 import { createDataFrame, FieldType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -43,7 +44,7 @@ describe('EventsCanvas', () => {
       />
     );
 
-    expect(screen.queryByTestId('xy-canvas')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
   });
 
   it('renders XYCanvas offset by plot bbox (CSS pixels)', () => {
@@ -61,7 +62,7 @@ describe('EventsCanvas', () => {
 
     runPlotHooks({ left: 16, top: 8 });
 
-    const canvas = screen.getByTestId('xy-canvas');
+    const canvas = screen.getByTestId(selectors.components.UPlotChart.xyCanvas);
     expect(canvas).toHaveStyle({
       left: `${16 / dpr}px`,
       top: `${8 / dpr}px`,

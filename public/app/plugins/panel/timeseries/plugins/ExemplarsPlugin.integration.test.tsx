@@ -199,13 +199,13 @@ describe('ExemplarsPlugin (integration, real EventsCanvas)', () => {
   it('renders nothing from EventsCanvas before uPlot init and draw hooks have run', () => {
     setUp(undefined, undefined, undefined, false);
 
-    expect(screen.queryByTestId('xy-canvas')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
   });
 
   it('renders xy-canvas with bbox offset after hooks run', () => {
     setUp();
 
-    const canvas = screen.getByTestId('xy-canvas');
+    const canvas = screen.getByTestId(selectors.components.UPlotChart.xyCanvas);
     expect(canvas).toBeInTheDocument();
     // XYCanvas offset uses `bbox / window.devicePixelRatio` (see EventsCanvas)
     const dpr = window.devicePixelRatio;

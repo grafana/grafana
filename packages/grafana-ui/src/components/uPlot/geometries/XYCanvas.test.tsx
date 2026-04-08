@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { XYCanvas } from './XYCanvas';
 
 /**
@@ -10,7 +12,7 @@ describe('XYCanvas', () => {
   it('renders a single root with a stable test id for overlays', () => {
     render(<XYCanvas left={0} top={0}></XYCanvas>);
 
-    expect(screen.getByTestId('xy-canvas')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.UPlotChart.xyCanvas)).toBeInTheDocument();
   });
 
   it('positions the overlay with absolute left/top in CSS pixels', () => {
@@ -20,7 +22,7 @@ describe('XYCanvas', () => {
       </XYCanvas>
     );
 
-    expect(screen.getByTestId('xy-canvas')).toHaveStyle({
+    expect(screen.getByTestId(selectors.components.UPlotChart.xyCanvas)).toHaveStyle({
       position: 'absolute',
       left: '16px',
       top: '8px',
@@ -45,7 +47,7 @@ describe('XYCanvas', () => {
       </XYCanvas>
     );
 
-    expect(screen.getByTestId('xy-canvas')).toHaveStyle({ left: '10px', top: '20px' });
+    expect(screen.getByTestId(selectors.components.UPlotChart.xyCanvas)).toHaveStyle({ left: '10px', top: '20px' });
 
     rerender(
       <XYCanvas left={30} top={40}>
@@ -53,6 +55,6 @@ describe('XYCanvas', () => {
       </XYCanvas>
     );
 
-    expect(screen.getByTestId('xy-canvas')).toHaveStyle({ left: '30px', top: '40px' });
+    expect(screen.getByTestId(selectors.components.UPlotChart.xyCanvas)).toHaveStyle({ left: '30px', top: '40px' });
   });
 });
