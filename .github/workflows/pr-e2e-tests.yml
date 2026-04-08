@@ -148,7 +148,7 @@ jobs:
           path: e2e-runner
 
   push-docker-image:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && github.repository == 'grafana/grafana'
     permissions:
       contents: read
       id-token: write
@@ -322,7 +322,7 @@ jobs:
           retention-days: 1
 
   run-azure-monitor-e2e:
-    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request'
+    if: needs.detect-changes.outputs.cloud_plugins_changed == 'true' && github.event.pull_request.head.repo.fork == false && github.event_name == 'pull_request' && github.repository == 'grafana/grafana'
     runs-on: ubuntu-x64-large
     needs:
       - build-grafana
@@ -550,6 +550,8 @@ jobs:
   # We want to only require one job instead of all the individual tests.
   # Future work also allows us to start skipping some tests based on changed files.
   required-e2e-tests:
+    permissions:
+      contents: read
     needs:
       - run-e2e-tests
       - build-grafana

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBuildResourceURI(t *testing.T) {
@@ -157,12 +158,8 @@ func TestBuildResourceURI(t *testing.T) {
 			expectedProvider := "provider1"
 
 			uri, err := ub.buildResourceURI()
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-			if uri == nil {
-				t.Fatalf("Expected non-nil uri")
-			}
+			require.NoError(t, err)
+			require.NotNil(t, uri)
 			if !strings.Contains(*uri, expectedProvider) {
 				t.Errorf("Expected provider %v in uri %v", expectedProvider, *uri)
 			}
