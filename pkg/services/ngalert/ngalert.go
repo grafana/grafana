@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	notificationHistorian "github.com/grafana/alerting/notify/historian"
-	"github.com/grafana/alerting/notify/historian/lokiclient"
-	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
+
+	notificationHistorian "github.com/grafana/alerting/notify/historian"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
+	"github.com/grafana/alerting/notify/nfstatus"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
@@ -21,7 +22,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -407,11 +407,6 @@ func (ng *AlertNG) init() error {
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
 
-	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
-	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
-		subscribeToFolderChanges(ng.Log, ng.bus, ng.store)
-	}
-
 	var apiStateManager state.AlertInstanceManager
 	var apiStatusReader apiprometheus.StatusReader
 	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
@@ -646,31 +641,6 @@ func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.Manager
 		logger.Info("Using sync state persister")
 		return state.NewSyncStatePersisiter(logger, cfg)
 	}
-}
-
-func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
-	// if full path to the folder is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
-	// clean up the current state
-	bus.AddEventListener(func(ctx context.Context, evt *events.FolderFullPathUpdated) error {
-		logger.Info("Got folder full path updated event. updating rules in the folders", "folderUIDs", evt.UIDs)
-
-		// Increment version for all rules
-		updatedKeys, err := dbStore.IncreaseVersionForAllRulesInNamespaces(ctx, evt.OrgID, evt.UIDs)
-		if err != nil {
-			logger.Error("Failed to update alert rules in the folders after their full paths were changed", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
-			return err
-		}
-		logger.Info("Updated version for alert rules", "keys", updatedKeys)
-
-		// Update folder fullpaths for all rules
-		if err := dbStore.UpdateFolderFullpathsForFolders(ctx, evt.OrgID, evt.UIDs); err != nil {
-			logger.Error("Failed to update folder fullpaths for alert rules", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
-			return err
-		}
-		logger.Info("Updated folder fullpaths for alert rules", "folderUIDs", evt.UIDs)
-
-		return nil
-	})
 }
 
 // BackfillFolderFullpaths populates folder_fullpath for all existing alert rules.

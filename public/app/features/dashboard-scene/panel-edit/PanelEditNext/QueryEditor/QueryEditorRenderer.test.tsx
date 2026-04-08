@@ -129,6 +129,9 @@ describe('QueryEditorRenderer', () => {
             showVersionBanner: false,
             selectedQueryRefIds: [],
             selectedTransformationIds: [],
+            toggleQuerySelection: jest.fn(),
+            toggleTransformationSelection: jest.fn(),
+            clearSelection: jest.fn(),
           }}
           actions={mockActions}
         >

@@ -33,18 +33,10 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "publicDashboardsScene",
-			Description:  "Enables public dashboard rendering using scenes",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaOperatorExperienceSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:        "lokiExperimentalStreaming",
 			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOSSBigTent,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -159,7 +151,7 @@ var (
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOSSBigTent,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -340,7 +332,7 @@ var (
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaOSSBigTent,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -609,14 +601,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "dashboardScene",
-			Description:  "Enables dashboard rendering using scenes for all roles",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables new dashboard layouts",
 			Stage:        FeatureStageGeneralAvailability,
@@ -862,7 +846,7 @@ var (
 			Name:         "logQLScope",
 			Description:  "In-development feature that will allow injection of labels into loki queries.",
 			Stage:        FeatureStagePrivatePreview,
-			Owner:        grafanaOSSBigTent,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 			HideFromDocs: true,
 		},
@@ -979,7 +963,7 @@ var (
 			Description:     "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
-			Owner:           grafanaOSSBigTent,
+			Owner:           grafanaDataSourcesPlugins,
 			RequiresRestart: true,
 			Expression:      "false",
 		},
@@ -1267,6 +1251,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "groupToNestedTableV2",
+			Description:  "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingQueryAndExpressionsStepMode",
 			Description:  "Enables step mode for alerting queries and expressions",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1360,7 +1352,7 @@ var (
 			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOSSBigTent,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -1486,7 +1478,7 @@ var (
 			Name:        "lokiLabelNamesQueryApi",
 			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true",
 		},
 		{
@@ -1657,7 +1649,7 @@ var (
 			Description:  "Enables running Infinity queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaOSSBigTent,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -2243,7 +2235,7 @@ var (
 			Name:        "jaegerEnableGrpcEndpoint",
 			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOSSBigTent,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -2331,7 +2323,7 @@ var (
 			Name:            "opentsdbBackendMigration",
 			Description:     "Run queries through the data source backend",
 			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaOSSBigTent,
+			Owner:           grafanaDataSourcesPlugins,
 			Expression:      "false",
 			RequiresRestart: true,
 		},
@@ -2433,7 +2425,7 @@ var (
 			Description:  "Enables the Query with Assistant button in the query editor",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaOSSBigTent,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -2745,7 +2737,7 @@ var (
 			Name:         "streamingForwardTeamHeadersTempo",
 			Description:  "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
 			Stage:        FeatureStagePrivatePreview,
-			Owner:        grafanaOSSBigTent,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 			HideFromDocs: true,
 		},
