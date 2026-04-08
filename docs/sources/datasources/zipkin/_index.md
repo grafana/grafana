@@ -26,7 +26,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Zipkin data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](#query-the-data-source) when they [build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) and use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
+After you've added the Zipkin data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](#query-the-data-source) when they [build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) and use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
 You can also [upload a JSON trace file](#upload-a-json-trace-file), [link to a trace ID from logs](#link-to-a-trace-id-from-logs), and [link to a trace ID from metrics](#link-to-a-trace-id-from-metrics).
 
