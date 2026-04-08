@@ -95,7 +95,6 @@ export const ThemeDemo = () => {
   const richColors = [
     t.colors.primary,
     t.colors.secondary,
-    t.colors.tertiary,
     t.colors.success,
     t.colors.error,
     t.colors.warning,
