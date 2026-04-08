@@ -13,6 +13,7 @@ const dataProviderSettings = {
   languageProvider: {
     queryLabelKeys: jest.fn(),
     queryLabelValues: jest.fn(),
+    queryMetricsMetadata: jest.fn().mockResolvedValue({}),
     retrieveLabelKeys: jest.fn(),
     retrieveMetricsMetadata: jest.fn().mockReturnValue({}),
   },
