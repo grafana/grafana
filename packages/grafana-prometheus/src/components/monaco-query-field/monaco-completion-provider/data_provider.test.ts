@@ -12,7 +12,7 @@ const createLanguageProviderMock = (existingMetadata: Record<string, unknown> = 
 
 const createDataProvider = (languageProvider: Partial<PrometheusLanguageProvider>) => {
   return new DataProvider({ languageProvider } as DataProviderParams);
-}
+};
 
 describe('DataProvider', () => {
   describe('metadata fetching', () => {
@@ -23,7 +23,9 @@ describe('DataProvider', () => {
     });
 
     it('does not call queryMetricsMetadata when metadata is already cached', () => {
-      const languageProvider = createLanguageProviderMock({ http_requests_total: { type: 'counter', help: 'Total HTTP requests' } });
+      const languageProvider = createLanguageProviderMock({
+        http_requests_total: { type: 'counter', help: 'Total HTTP requests' },
+      });
       createDataProvider(languageProvider);
       expect(languageProvider.queryMetricsMetadata).not.toHaveBeenCalled();
     });
