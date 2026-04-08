@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/apistore
 
-go 1.25.8
+go 1.25.9
 
 replace (
 	github.com/grafana/grafana => ../../../..
