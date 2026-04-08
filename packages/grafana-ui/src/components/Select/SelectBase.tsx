@@ -164,6 +164,30 @@ export function SelectBase<T, Rest = {}>({
 
   useImperativeHandle(selectRef, () => reactSelectRef.current!, []);
 
+  const menuIsOpenRef = useRef(false);
+
+  const handleMenuOpen = useCallback(() => {
+    menuIsOpenRef.current = true;
+    onOpenMenu?.();
+  }, [onOpenMenu]);
+
+  const handleMenuClose = useCallback(() => {
+    menuIsOpenRef.current = false;
+    onCloseMenu?.();
+  }, [onCloseMenu]);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+      // so that only the dropdown menu closes, not the parent.
+      if (event.key === 'Escape' && menuIsOpenRef.current) {
+        event.stopPropagation();
+      }
+      onKeyDown?.(event);
+    },
+    [onKeyDown]
+  );
+
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
   // We can remove this workaround when the bug in react-select is fixed: https://github.com/JedWatson/react-select/issues/4936
@@ -270,9 +294,9 @@ export function SelectBase<T, Rest = {}>({
 
       return newValue;
     },
-    onKeyDown,
-    onMenuClose: onCloseMenu,
-    onMenuOpen: onOpenMenu,
+    onKeyDown: handleKeyDown,
+    onMenuClose: handleMenuClose,
+    onMenuOpen: handleMenuOpen,
     onMenuScrollToBottom: onMenuScrollToBottom,
     onMenuScrollToTop: onMenuScrollToTop,
     onFocus,
