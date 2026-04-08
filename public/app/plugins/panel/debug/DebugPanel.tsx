@@ -28,7 +28,7 @@ export function DebugPanel(props: Props) {
         }}
       />
 
-      <TimeOfDayPicker onChange={() => {}} />
+      <TimeOfDayPicker allowEmpty={true} onChange={() => {}} />
     </>
   );
 
