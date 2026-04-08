@@ -85,7 +85,7 @@ func (s *Service) Checks() []checks.Check {
 		),
 		authchecks.New(s.ssoSettingsSvc),
 		configchecks.New(s.cfg),
-		instancechecks.New(s.cfg),
+		instancechecks.New(s.cfg, s.pluginStore),
 	}
 }
 
