@@ -72,4 +72,33 @@ describe('SqlQueryActions', () => {
       expect.anything()
     );
   });
+
+  it('does not render suggestions button when there are no refIds and no query', () => {
+    const customProps = {
+      ...defaultProps,
+      currentQuery: '',
+      refIds: [],
+    };
+    render(<SqlQueryActions {...customProps} />);
+    const suggestionsCall = (OpenAssistantButton as jest.Mock).mock.calls.find(
+      (call) => call[0]?.origin === 'grafana/expressions/sql/improve'
+    );
+    expect(suggestionsCall).toBeUndefined();
+  });
+
+  it('renders suggestions button when there are refIds but no query', () => {
+    const customProps = {
+      ...defaultProps,
+      currentQuery: '',
+      refIds: ['A', 'B'],
+    };
+    render(<SqlQueryActions {...customProps} />);
+    expect(OpenAssistantButton).toHaveBeenCalledWith(
+      expect.objectContaining({
+        origin: 'grafana/expressions/sql/improve',
+        title: 'Generate suggestion',
+      }),
+      expect.anything()
+    );
+  });
 });

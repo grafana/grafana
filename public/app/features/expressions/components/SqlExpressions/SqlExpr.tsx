@@ -80,7 +80,7 @@ LIMIT
     refetch: refetchSchemas,
   } = useSQLSchemas({
     queries,
-    enabled: isSchemaInspectorOpen,
+    enabled: true,
     timeRange: metadata?.range,
   });
 
@@ -141,11 +141,8 @@ LIMIT
       onRunQuery();
     }
 
-    // Refetch schemas when query is run (only if inspector is open)
-    if (isSchemaInspectorOpen) {
-      refetchSchemas();
-    }
-  }, [onRunQuery, refetchSchemas, isSchemaInspectorOpen]);
+    refetchSchemas();
+  }, [onRunQuery, refetchSchemas]);
 
   // Call the onChange method once so we have access to the initial query in consuming components
   // But only if expression is empty

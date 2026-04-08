@@ -59,14 +59,20 @@ export const AssistantSQLSuggestionsButton = ({
   schemas,
 }: AssistantSQLSuggestionsButtonProps) => {
   const trimmedQuery = currentQuery.trim();
-  const isImprove = trimmedQuery !== '' && currentQuery !== initialQuery;
+  const hasQuery = trimmedQuery !== '';
+  const isImprove = hasQuery && currentQuery !== initialQuery;
 
   const context = useMemo(
     () => buildSQLContext({ refIds, currentQuery, errorContext, queryContext, schemas }),
     [refIds, currentQuery, errorContext, queryContext, schemas]
   );
 
-  const prompt = trimmedQuery
+  // Cannot generate suggestions without source queries to reference
+  if (!hasQuery && refIds.length === 0) {
+    return null;
+  }
+
+  const prompt = hasQuery
     ? `Improve, fix syntax errors, or optimize this SQL expression query:\n\`\`\`sql\n${trimmedQuery}\n\`\`\``
     : `Generate a SQL expression query using data from ${refIds.join(', ')}. Suggest common patterns like joins, aggregations, filtering, percentiles, or time-based window functions.`;
 
@@ -101,7 +107,7 @@ function buildSQLContext({ refIds, currentQuery, errorContext, queryContext, sch
       title: 'SQL Expression Context',
       data: {
         sqlDialect: 'MySQL dialect based on dolthub go-mysql-server. All tables are in memory.',
-        availableRefIds: refIds.length > 0 ? refIds : ['A'],
+        availableRefIds: refIds,
         refIdExplanation:
           'RefIDs (A, B, C, etc.) represent data from other queries that can be used as table names in SQL',
         columnInfo: 'The value column should always be referenced as __value__',
