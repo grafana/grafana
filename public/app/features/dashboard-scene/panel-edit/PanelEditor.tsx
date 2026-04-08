@@ -218,7 +218,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const body = (this._layoutItemState as Record<string, unknown>)?.body;
     if (body instanceof Object && 'setState' in body) {
       (body as VizPanel).setState({
-        fieldConfig: initialPanel.fieldConfig ?? { defaults: {}, overrides: [] },
+        fieldConfig: (initialPanel.fieldConfig ?? { defaults: {}, overrides: [] }) as any,
       });
     }
 
