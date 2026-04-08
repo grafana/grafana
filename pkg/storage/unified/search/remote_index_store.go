@@ -100,6 +100,15 @@ func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.
 	}
 	pfx := indexPrefix(nsResource, indexKey)
 
+	// Index keys are immutable. Reject uploads to existing keys.
+	_, err := s.bucket.Attributes(ctx, pfx+metaJSONFile)
+	if err == nil {
+		return fmt.Errorf("index %q already exists", indexKey)
+	}
+	if gcerrors.Code(err) != gcerrors.NotFound {
+		return fmt.Errorf("checking index existence: %w", err)
+	}
+
 	absLocalDir, err := filepath.Abs(localDir)
 	if err != nil {
 		return fmt.Errorf("resolving local dir: %w", err)
