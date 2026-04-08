@@ -718,6 +718,49 @@ describe('applyV1Inputs', () => {
     expect(vars[1].current?.value).toBe('http://my-app:7070');
   });
 
+  it('replaces legacy string datasource placeholders in panels and annotations', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      schemaVersion: 39,
+      annotations: {
+        list: [
+          {
+            name: 'anno',
+            datasource: '${DS}',
+            enable: true,
+            iconColor: 'red',
+            target: { limit: 1, matchAny: true, tags: [], type: 'tags' },
+          },
+        ],
+      },
+      panels: [
+        {
+          datasource: '${DS}',
+          targets: [{ datasource: '${DS}' }],
+        },
+      ],
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
+
+    expect(result.annotations?.list?.[0].datasource?.uid).toBe('ds-uid');
+    expect(result.panels?.[0].datasource?.uid).toBe('ds-uid');
+
+    const panelWithTargets = result.panels?.[0] as PanelWithTargets;
+    expect(panelWithTargets.targets?.[0].datasource?.uid).toBe('ds-uid');
+  });
+
   describe('row panels', () => {
     type RowPanel = { type: string; collapsed: boolean; datasource?: { uid: string }; panels: PanelWithTargets[] };
 
@@ -845,6 +888,46 @@ describe('interpolateLibraryPanelDatasources', () => {
 
     expect(result.datasource.uid).toBe('new-influx-uid');
     expect(result.targets[0].datasource.uid).toBe('new-influx-uid');
+    expect(result.targets[1].datasource.uid).toBe('hardcoded-uid');
+  });
+
+  it('replaces legacy string datasource placeholders in panel and targets', () => {
+    const model = {
+      datasource: '${DS_INFLUX}',
+      targets: [
+        { datasource: '${DS_INFLUX}', refId: 'A' },
+        { datasource: { type: 'influxdb', uid: 'hardcoded-uid' }, refId: 'B' },
+      ],
+      type: 'timeseries',
+    };
+
+    const inputs = {
+      dataSources: [
+        {
+          name: 'DS_INFLUX',
+          label: 'InfluxDB',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'influxdb',
+        },
+      ],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'new-influx-uid', type: 'influxdb', name: 'My InfluxDB' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, inputs, form);
+
+    expect(result.datasource).toEqual({ uid: 'new-influx-uid', type: 'influxdb' });
+    expect(result.targets[0].datasource).toEqual({ uid: 'new-influx-uid', type: 'influxdb' });
     expect(result.targets[1].datasource.uid).toBe('hardcoded-uid');
   });
 
