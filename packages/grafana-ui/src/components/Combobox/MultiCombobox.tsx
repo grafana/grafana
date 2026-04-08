@@ -380,7 +380,18 @@ function getSelectedItemsFromValue<T extends string | number>(
   if (isComboboxOptions(value)) {
     return value;
   }
-  const valueMap = new Map(value.map((val, index) => [val, index]));
+  // Deduplicate values before building the map. Without dedup, duplicate keys
+  // cause Map to keep the last index, leaving earlier indices as undefined holes
+  // in resultingItems (sparse array), which crashes when label is accessed.
+  const seen = new Set<T>();
+  const dedupedValues: T[] = [];
+  for (const v of value) {
+    if (!seen.has(v)) {
+      seen.add(v);
+      dedupedValues.push(v);
+    }
+  }
+  const valueMap = new Map(dedupedValues.map((val, index) => [val, index]));
   const resultingItems: Array<ComboboxOption<T>> = [];
 
   for (const option of options) {
