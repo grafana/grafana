@@ -307,6 +307,29 @@ describe('ExemplarsPlugin', () => {
         expect(rect).toBeVisible();
         expect(rect).not.toHaveAttribute('fill', '#5794F2');
       });
+
+      it('hides markers that do not match visible legend series', () => {
+        setUp({
+          visibleSeries: {
+            totalSeriesCount: 2,
+            labels: [{ labels: { job: 'tns/app', env: 'prod' }, color: '#CA95E5' }],
+          },
+        });
+
+        expect(screen.queryAllByTestId(selectors.components.DataSource.Prometheus.exemplarMarker)).toHaveLength(1);
+        expect(getMarker().querySelector('rect')).toHaveAttribute('fill', '#CA95E5');
+      });
+
+      it('shows exemplar markers with a visible legend with empty label', () => {
+        setUp({
+          visibleSeries: {
+            totalSeriesCount: 2,
+            labels: [{ labels: {}, color: '#73BF69' }],
+          },
+        });
+
+        expect(screen.queryAllByTestId(selectors.components.DataSource.Prometheus.exemplarMarker)).toHaveLength(2);
+      });
     });
 
     it.each(['click', 'hover'])('renders tooltip on %s', async (userAction) => {
