@@ -5134,10 +5134,6 @@
       "view-json-diff": "View JSON diff to see all changes"
     }
   },
-  "correlation": {
-    "edit-error": "Error updating correlation",
-    "edit-success": "Correlation updated"
-  },
   "correlations": {
     "add-new": "Add new",
     "alert": {
@@ -5179,6 +5175,14 @@
       "back-button": "Back",
       "next-button": "Next",
       "save-button": "Save"
+    },
+    "notify": {
+      "create-error": "Error creating correlation",
+      "create-success": "Correlation created",
+      "delete-error": "Error deleting correlation",
+      "delete-success": "Correlation deleted",
+      "edit-error": "Error updating correlation",
+      "edit-success": "Correlation updated"
     },
     "query-editor": {
       "control-rules": "The selected target data source must export a query editor.",
@@ -5245,11 +5249,6 @@
       "transform-required": "Please select a transformation type",
       "type-label": "Type",
       "type-tooltip": "The type of transformation that will be applied to the source data."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Run query"
     }
   },
   "dashboard": {
@@ -7699,6 +7698,7 @@
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
+      "run-query": "Run query",
       "text-running-query": "Running query...",
       "title": {
         "delete-variable": "Delete variable"
