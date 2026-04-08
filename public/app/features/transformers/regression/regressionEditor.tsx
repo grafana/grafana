@@ -12,7 +12,6 @@ import { Combobox, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/regression.svg';
 import lightImage from '../images/light/regression.svg';
 
@@ -149,7 +148,6 @@ export const getRegressionTransformerRegistryItem: () => TransformerRegistryItem
     name: regressionTransformer.name,
     description: regressionTransformer.description,
     categories: new Set([TransformerCategory.CalculateNewFields]),
-    help: getTransformationContent(DataTransformerID.regression).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
     tags: new Set([t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis')]),

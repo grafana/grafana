@@ -8,7 +8,7 @@ import { type SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
+import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import { isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -34,7 +34,7 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
 
   const onClickVariable = useCallback((variable: SceneVariable) => {
     const { editPane } = getDashboardSceneFor(variable).state;
-    editPane.selectObject(variable, variable.state.key!);
+    editPane.selectObject(variable);
   }, []);
 
   const onDragEnd = useCallback(

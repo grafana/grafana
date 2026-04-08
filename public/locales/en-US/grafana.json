@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Delivered to <2>{{name}}</2>",
-      "no-grouping": "No grouping"
+      "delivered-to-disabled": "Delivered to {{name}}",
+      "no-grouping": "No grouping",
+      "view-contact-point-no-permission": "You do not have permission to view contact points"
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -1064,6 +1066,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
+      "content-you-do-not-have-permission-to-access-incident": "You do not have permission to access Incident",
       "label-declare-incident": "Declare incident"
     },
     "delete-rule-modal": {
@@ -2250,7 +2253,9 @@
       "menu-analyze": "Analyze alert notification",
       "menu-copy-link": "Copy link",
       "menu-silence": "Silence notifications",
+      "menu-silence-no-permission": "You do not have permission to create silences",
       "menu-view-contact-point": "View contact point",
+      "menu-view-contact-point-no-permission": "You do not have permission to view contact points",
       "menu-view-rule": "View alert rule",
       "menu-view-rule-n": "View alert rule ({{n}})",
       "more-details-heading": "More details",
@@ -2414,7 +2419,9 @@
       "recipient-notification-fires": "Select who should receive a notification when an alert rule fires."
     },
     "open-drawer-icon-button": {
-      "details": "Details"
+      "details": "Details",
+      "instance-details": "Instance details",
+      "rule-details": "Rule details"
     },
     "option-customfield": {
       "label-custom-template": "Custom template",
@@ -3014,7 +3021,7 @@
     },
     "rule-list-v2": {
       "import-to-gma": "Import alert rules",
-      "import-to-gma-tool": "Import to GMA"
+      "import-to-gma-tool": "Import to Grafana Alerting"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
@@ -3559,6 +3566,7 @@
       }
     },
     "triage": {
+      "clear-filters": "Clear filters",
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
       "collapse-sidebar": "Collapse sidebar",
@@ -3575,9 +3583,12 @@
         "no-label": "No {{label}}"
       },
       "instance-details-drawer": {
+        "alert-instance-label": "Alert Instance",
         "declare-incident": "Declare incident",
+        "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
-        "silence-button": "Silence"
+        "silence-button": "Silence",
+        "silence-no-permission": "You do not have permission to create silences"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -3601,6 +3612,7 @@
           "folder-only": "Grouped by folder"
         }
       },
+      "severity-filter-title": "Severity",
       "show-all-labels_one": "Show all ({{ count }})",
       "show-all-labels_other": "Show all ({{ count }})",
       "show-all-values_one": "Show all ({{ count }})",
@@ -4264,6 +4276,7 @@
       "new-folder-as-team-folder-label": "Team",
       "new-folder-name-required-phrase": "Folder name is required.",
       "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
+      "rename-provisioned-folder": "Rename provisioned folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -4355,6 +4368,17 @@
       "title": "You haven't created any dashboards yet",
       "title-folder": "This folder doesn't have any dashboards yet"
     },
+    "filters": {
+      "all-teams": "All teams",
+      "owner-aria-label": "Owner filter",
+      "owner-limit-warning": "Listing only first {{limit}} teams out of {{totalCount}}.",
+      "owner-limit-warning-icon": "Owner filter limit warning",
+      "owner-load-error-icon": "Owner filter load error",
+      "owner-load-error-prefix": "Failed to load teams because of error:",
+      "owner-loading": "Loading teams...",
+      "owner-no-options": "No teams found",
+      "owner-placeholder": "Filter by owner"
+    },
     "folder-actions-button": {
       "delete": "Delete this folder",
       "delete-folder-error": "Error deleting folder. Please try again later.",
@@ -4427,6 +4451,20 @@
       "error": "Recently viewed dashboards couldn’t be loaded.",
       "retry": "Retry",
       "title": "Recently viewed"
+    },
+    "rename-folder": {
+      "read-only-message": "To rename this folder, please update the folder in your repository directly."
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "Cancel",
+      "button-rename": "Rename",
+      "button-renaming": "Renaming...",
+      "commit": "Rename folder",
+      "error-saving": "Failed to rename folder",
+      "label-folder-name": "Folder name",
+      "missing-info": "Missing required fields",
+      "success-message": "Folder renamed successfully",
+      "title-required": "Folder name is required"
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
@@ -5430,9 +5468,6 @@
         "title": {
           "proceed-to-external-site": "Proceed to external site?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "View as Scene"
       }
     },
     "dashboard-links-menu": {
@@ -5625,6 +5660,8 @@
         "title": "Variables"
       },
       "variable": {
+        "change-type": "Change",
+        "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
           "change-value": "Change variable value",
@@ -5678,10 +5715,16 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "auto-grid": "Auto grid",
+      "auto-grid-description": "Panels resize to fit and form uniform grids",
+      "custom-grid": "Custom grid",
+      "custom-grid-description": "Position and size each panel individually",
       "description": "Add a panel to visualize your data",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
+      "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "select-layout-header": "Select layout",
       "title": "New dashboard"
     },
     "errors": {
@@ -5971,12 +6014,20 @@
       "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
     },
     "new-panel": {
+      "aria-label": "Unconfigured panel. Tab to see configuration options.",
       "configure-button": "Configure",
       "configure-button-menu": "Toggle menu",
+      "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
-      "missing-config": "Missing panel configuration"
+      "menu-use-saved-query": "Use saved query",
+      "missing-config": "Missing panel configuration",
+      "no-visualization": "No visualization configured",
+      "saved-query-apply-error": "Failed to apply saved query",
+      "saved-query-apply-error-detail": "An error occurred while applying the saved query. Please try again.",
+      "saved-query-no-suggestion": "No visualization found",
+      "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type."
     },
     "new-panel-title": "New panel",
     "on-create-new-row": {
@@ -6514,6 +6565,9 @@
       },
       "name": {
         "action": "Change variable name"
+      },
+      "type": {
+        "action": "Change variable type"
       }
     },
     "version-history-comparison": {
@@ -6594,8 +6648,8 @@
   "dashboard-library": {
     "card": {
       "community-badge": "Community",
-      "customize-with-assistant-button": "Customize with assistant",
-      "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
+      "customize-with-assistant-button": "Customize with Assistant",
+      "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available ",
@@ -6752,6 +6806,11 @@
         "change-annotation-panel-filter": "Change annotation panel filter"
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "Delete annotation query",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete annotation query"
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6838,6 +6897,10 @@
       "constant-options": "Constant options",
       "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "Delete",
+      "aria-label-edit": "Edit"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -6959,8 +7022,8 @@
     },
     "default-value-editor": {
       "aria-label": "Default value",
-      "description": "Values that are pre-selected by default.",
-      "label": "Default value",
+      "description": "Group by dimensions that are pre-selected by default.",
+      "label": "Default group by",
       "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
@@ -7005,6 +7068,12 @@
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "general-settings-edit-view": {
+      "default_grid_options": {
+        "label": {
+          "auto": "Auto grid",
+          "custom": "Custom grid"
+        }
+      },
       "editable_options": {
         "label": {
           "editable": "Editable",
@@ -7161,6 +7230,12 @@
       "add-link": "Add link",
       "remove-link": "Remove link",
       "update-link": "Update link"
+    },
+    "link-editable-element": {
+      "delete-confirm": "Delete link",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete link",
+      "unnamed": "Unnamed link"
     },
     "link-list": {
       "create-drag-end-handler": {
@@ -7480,6 +7555,7 @@
     "sharing": {
       "save-before-share": {
         "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+        "text-no-save": "You have unsaved changes. You don’t have permission to save. Discard changes and share the original?",
         "title": "Unsaved changes"
       }
     },
@@ -7613,6 +7689,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "Delete variable",
+      "delete-text": "Are you sure you want to delete: {{name}}?",
+      "delete-title": "Delete variable"
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
@@ -7642,6 +7723,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Are you sure you want to delete: {{variable}}?",
       "confirmText-delete-variable": "Delete variable",
+      "drag-handle-label": "Reorder variable {{variableName}}",
       "title-delete-variable": "Delete variable",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
@@ -7756,6 +7838,8 @@
     "general": {
       "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list. Use the format '5s' for seconds, '1m' for minutes, '1h' for hours, and '1d' for days (e.g.: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
       "auto-refresh-label": "Auto refresh",
+      "default-grid-description": "Select layout type to be used for new rows and tabs",
+      "default-grid-label": "Default grid",
       "description-label": "Description",
       "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
       "editable-label": "Editable",
@@ -8209,6 +8293,7 @@
       "label-preview": "Preview"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "Reorder value mapping row",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Duplicate value mapping",
       "duplicate-value-mapping-tooltip-duplicate": "Duplicate",
       "placeholder-exact-value-to-match": "Exact value to match",
@@ -10027,6 +10112,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
+      "drag-handle-label": "Reorder data link {{title}}",
       "edit-link": "Edit link",
       "one-click": "One click",
       "one-click-enabled": "One click enabled",
@@ -10328,6 +10414,8 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
+      "hide": "Hide",
+      "show": "Show",
       "undock": "Undock"
     },
     "slider": {
@@ -12569,7 +12657,7 @@
       "name-required": "Name is required",
       "save": "Save",
       "table-delete": "Delete playlist item",
-      "table-drag": "Drag and drop to reorder",
+      "table-drag": "Reorder playlist item",
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
@@ -12958,12 +13046,14 @@
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "update-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
       "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-deleted-resource-in-branch": "A resource has been deleted in a branch in {{repoType}}.",
-    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you",
+    "title-updated-resource-in-branch": "A resource has been updated in a branch in {{repoType}}."
   },
   "provisioning": {
     "bitbucket": {
@@ -12992,8 +13082,8 @@
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "error-quota-exceeded-message": "This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
-      "error-quota-exceeded-message-onprem": "This repository contains {{resourceCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
+      "error-quota-exceeded-message": "This repository folder contains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
+      "error-quota-exceeded-message-onprem": "This repository folder contains {{fileCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
       "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
@@ -13009,6 +13099,10 @@
       "unmanaged-resources-label": "Unmanaged resources",
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
+    },
+    "cloud-info-box": {
+      "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
+      "title": "You can also use Git Sync on Grafana Cloud"
     },
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
@@ -14689,10 +14783,49 @@
     "select-aria-label": "Sort"
   },
   "splash-screen": {
-    "body": "Splash screen content will go here.",
+    "aria-label": "What's new in Grafana",
+    "assistant": {
+      "badge": "NEW",
+      "bullet-1": "Explore your data by prompting Assistant to generate queries for you",
+      "bullet-2": "Create comprehensive dashboards in minutes",
+      "bullet-3": "Onboard new team members in days, not weeks",
+      "cta": "Show me",
+      "subtitle": "Use AI to handle everything from config to query generation",
+      "title": "Grafana Assistant is now available to OSS users"
+    },
+    "badge": {
+      "new": "NEW IN G13"
+    },
     "close": "Close",
-    "get-started": "Get started",
-    "title": "Welcome to Grafana"
+    "dynamic-dashboards": {
+      "bullet-1": "Split content into tabs for quick switching",
+      "bullet-2": "Show or hide panels based on template variables and other conditions",
+      "bullet-3": "Auto-arrange panels into a grid for an efficient layout",
+      "cta": "Show me",
+      "subtitle": "Make your dashboards more impactful and easier to explore",
+      "title": "Add tabs and panel conditions to your dashboards"
+    },
+    "git-sync": {
+      "bullet-1": "Store your dashboard configuration safely in any git repository",
+      "bullet-2": "keep track of the changes - and who made them",
+      "bullet-3": "Works with many deployment scenarios like dev-prod, HA, and instances shared by multiple teams",
+      "cta": "Show me",
+      "subtitle": "Bring version control, collaboration, and reliability to your dashboards",
+      "title": "Sync your dashboards to Git"
+    },
+    "library-of-things": {
+      "bullet-1": "Start from a clean layout instead of building from scratch",
+      "bullet-2": "Load a template and customize it to your needs",
+      "bullet-3": "Explore and use community dashboards tailored to your data source",
+      "cta": "Show me",
+      "subtitle": "Get to a useful dashboard sooner by starting from a proven design",
+      "title": "Kickstart dashboards with suggestions and templates"
+    },
+    "nav": {
+      "go-to": "Go to slide {{number}}",
+      "next": "Next",
+      "prev": "Previous"
+    }
   },
   "sql-expressions": {
     "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
@@ -15320,8 +15453,7 @@
       "bar": "Bar chart",
       "bar-stacked": "Bar chart - stacked",
       "bar-stacked-percent": "Bar chart - stacked by percentage",
-      "line": "Line chart",
-      "line-smooth": "Line chart - smooth"
+      "line": "Line chart"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
@@ -15503,6 +15635,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Click to edit",
+      "drag-handle-label": "Reorder enum mapping row",
       "remove-enum-row-aria-label-delete-enum-row": "Delete enum row",
       "remove-enum-row-tooltip-delete": "Delete"
     },
@@ -16416,6 +16549,7 @@
       "variable": "Variable"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "Reorder variable {{variableName}}",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
     },
@@ -16458,6 +16592,10 @@
   },
   "xychart": {
     "category-xychart": "XY Chart",
+    "errors": {
+      "nodata": "No data",
+      "unknown": "Unknown error"
+    },
     "name-fill-opacity": "Fill opacity",
     "name-line-style": "Line style",
     "name-line-width": "Line width",

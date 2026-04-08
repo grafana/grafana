@@ -12,15 +12,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -105,7 +107,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
-		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
+		ac.EvalPermission(folder.ActionFoldersRead), ac.EvalPermission(folder.ActionFoldersCreate),
 		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
 	) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c)
@@ -336,7 +338,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		}
 		starredDashboards, err := s.dashboardService.SearchDashboards(c.Req.Context(), &dashboards.FindPersistedDashboardsQuery{
 			DashboardUIDs: uids,
-			Type:          searchstore.TypeDashboard,
+			Type:          model.TypeDashboard,
 			OrgId:         c.GetOrgID(),
 			SignedInUser:  c.SignedInUser,
 		})
@@ -375,7 +377,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
+		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
 				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
@@ -499,6 +501,8 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesWrite),
 	}
 
 	hasContactPointsAccess := hasAccess(ac.EvalAny(contactPointsPerms...))

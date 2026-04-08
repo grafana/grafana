@@ -1,6 +1,7 @@
 import {
   FieldColorModeId,
   type FieldConfigSource,
+  FieldType,
   type VisualizationPresetsSupplier,
   type VisualizationSuggestion,
   VizOrientation,
@@ -207,7 +208,11 @@ const horizontalThresholdValueSparklinePreset = () =>
 const FEW_SERIES_THRESHOLD = 5;
 
 export const statPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
-  const frameCount = dataSummary?.frameCount ?? 0;
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
+  const frameCount = dataSummary.frameCount;
   const hasSingleSeries = frameCount === 1;
   const hasFewSeries = frameCount > 1 && frameCount < FEW_SERIES_THRESHOLD;
   const hasMultiSeries = frameCount >= FEW_SERIES_THRESHOLD;

@@ -59,6 +59,11 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 	backend, err := NewKVStorageBackend(opts)
 	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = kvBackend.Stop(ctx)
+	})
 	return kvBackend
 }
 
@@ -599,7 +604,7 @@ func TestKvStorageBackend_ReadResource_NotFound(t *testing.T) {
 	response := backend.ReadResource(ctx, readReq)
 	require.NotNil(t, response.Error, "ReadResource should return error for nonexistent resource")
 	require.Equal(t, int32(404), response.Error.Code)
-	require.Equal(t, "not found", response.Error.Message)
+	require.Equal(t, "NotFound", response.Error.Reason)
 	require.Nil(t, response.Key)
 	require.Equal(t, int64(0), response.ResourceVersion)
 	require.Nil(t, response.Value)
@@ -648,7 +653,7 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	response := backend.ReadResource(ctx, readReq)
 	require.NotNil(t, response.Error, "ReadResource should return not found for deleted resource")
 	require.Equal(t, int32(404), response.Error.Code)
-	require.Equal(t, "not found", response.Error.Message)
+	require.Equal(t, "NotFound", response.Error.Reason)
 
 	// Try to read the original version (should still work)
 	readReq.ResourceVersion = rv1
@@ -2378,7 +2383,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 }
 
 func testClusterScopedResources(t *testing.T, backend *kvStorageBackend) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Start watching for events before creating resources
 	stream, err := backend.WatchWriteEvents(ctx)

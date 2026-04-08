@@ -5,7 +5,7 @@ import {
   type RoutingTreeMatcher,
   type RoutingTreeRoute,
   type RoutingTreeSpec,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import grafanaAlertmanagerConfig from 'app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';

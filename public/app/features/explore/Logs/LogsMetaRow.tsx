@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo } from 'react';
 
 import {
@@ -57,6 +58,8 @@ export const LogsMetaRow = memo(
     visualisationType,
   }: Props) => {
     const style = useStyles2(getStyles);
+    const logsPanelControlsEnabled = useBooleanFlagValue('logsPanelControls', true);
+    const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
@@ -133,15 +136,13 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!config.featureToggles.logsPanelControls &&
-              !config.featureToggles.newLogsPanel &&
-              !config.exploreHideLogsDownload && (
-                <Dropdown overlay={downloadMenu}>
-                  <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                    <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
-                  </ToolbarButton>
-                </Dropdown>
-              )}
+            {!logsPanelControlsEnabled && !newLogsPanelEnabled && !config.exploreHideLogsDownload && (
+              <Dropdown overlay={downloadMenu}>
+                <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
+                  <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
+                </ToolbarButton>
+              </Dropdown>
+            )}
           </div>
         )}
       </>
