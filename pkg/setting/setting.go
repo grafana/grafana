@@ -38,11 +38,15 @@ import (
 type Scheme string
 
 const (
-	HTTPScheme        Scheme = "http"
-	HTTPSScheme       Scheme = "https"
-	HTTP2Scheme       Scheme = "h2"
-	SocketScheme      Scheme = "socket"
-	SocketHTTP2Scheme Scheme = "socket_h2"
+	HTTPScheme                           Scheme = "http"
+	HTTPSScheme                          Scheme = "https"
+	HTTP2Scheme                          Scheme = "h2"
+	SocketScheme                         Scheme = "socket"
+	SocketHTTP2Scheme                    Scheme = "socket_h2"
+	DefaultSQLExpressionCellLimit               = 100000
+	DefaultSQLExpressionOutputCellLimit         = 100000
+	DefaultSQLExpressionTimeout                 = time.Second * 10
+	DefaultSQLExpressionQueryLengthLimit        = 10000
 )
 
 const (
@@ -485,6 +489,12 @@ type Cfg struct {
 
 	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
 	SQLExpressionTimeout time.Duration
+
+	// MathExpressionMemoryLimit is the maximum estimated memory (in bytes) for a
+	// single math expression binary operation. Memory usage is estimated before
+	// the expression runs. When the estimate exceeds this limit, evaluation fails
+	// with a descriptive error. A value of 0 disables the limit. Default: 1 GiB.
+	MathExpressionMemoryLimit int64
 
 	ImageUploadProvider string
 
@@ -1004,10 +1014,11 @@ func (cfg *Cfg) readAnnotationSettings() error {
 func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
-	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(100000)
-	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(100000)
-	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(time.Second * 10)
-	cfg.SQLExpressionQueryLengthLimit = expressions.Key("sql_expression_query_length_limit").MustInt64(10000)
+	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(DefaultSQLExpressionCellLimit)
+	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(DefaultSQLExpressionOutputCellLimit)
+	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(DefaultSQLExpressionTimeout)
+	cfg.SQLExpressionQueryLengthLimit = expressions.Key("sql_expression_query_length_limit").MustInt64(DefaultSQLExpressionQueryLengthLimit)
+	cfg.MathExpressionMemoryLimit = expressions.Key("math_expression_memory_limit").MustInt64(1 << 30) // 1 GiB
 }
 
 type AnnotationCleanupSettings struct {

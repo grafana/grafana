@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Bir uyarı kuralı tetiklendiğinde bildirimi kimin alacağını seçin."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Özel şablon",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3581,6 +3584,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Örnek ayrıntıları",
@@ -3609,6 +3613,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -14786,6 +14791,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14793,6 +14799,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14800,6 +14807,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -16574,6 +16582,10 @@
   },
   "xychart": {
     "category-xychart": "XY Grafiği",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Dolgu opaklığı",
     "name-line-style": "Çizgi stili",
     "name-line-width": "Çizgi genişliği",

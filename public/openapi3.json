@@ -26004,6 +26004,7 @@
     },
     "/v1/provisioning/contact-points": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetContactpoints",
         "parameters": [
           {
@@ -26043,6 +26044,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostContactpoints",
         "parameters": [
           {
@@ -26216,6 +26218,7 @@
     },
     "/v1/provisioning/contact-points/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteContactpoints",
         "parameters": [
           {
@@ -26249,6 +26252,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutContactpoint",
         "parameters": [
           {
@@ -26612,6 +26616,7 @@
     },
     "/v1/provisioning/mute-timings": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTimings",
         "responses": {
           "200": {
@@ -26641,6 +26646,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostMuteTiming",
         "parameters": [
           {
@@ -26797,6 +26803,7 @@
     },
     "/v1/provisioning/mute-timings/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteMuteTiming",
         "parameters": [
           {
@@ -26855,6 +26862,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTiming",
         "parameters": [
           {
@@ -26898,6 +26906,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutMuteTiming",
         "parameters": [
           {
@@ -27082,6 +27091,7 @@
     },
     "/v1/provisioning/policies": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteResetPolicyTree",
         "responses": {
           "202": {
@@ -27111,6 +27121,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetPolicyTree",
         "responses": {
           "200": {
@@ -27140,6 +27151,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutPolicyTree",
         "parameters": [
           {
@@ -27302,6 +27314,7 @@
     },
     "/v1/provisioning/templates": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
@@ -27333,6 +27346,7 @@
     },
     "/v1/provisioning/templates/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
@@ -27384,6 +27398,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
@@ -27434,6 +27449,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutTemplate",
         "parameters": [
           {

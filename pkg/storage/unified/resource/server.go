@@ -577,7 +577,7 @@ func (s *server) Stop(ctx context.Context) error {
 	s.stopping = true
 	s.stopMu.Unlock()
 
-	// Stops streaming and unblocks artificialSuccessfulWriteDelay.
+	// Stops streaming (broadcaster, watch events).
 	s.cancel()
 
 	// Wait for in-flight write operations to finish, respecting the context deadline.
@@ -626,7 +626,7 @@ func (s *server) Stop(ctx context.Context) error {
 // Old value indicates an update -- otherwise a create
 //
 //nolint:gocyclo
-func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
+func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rv int64, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
 	if err != nil {
@@ -670,6 +670,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		event.Type = resourcepb.WatchEvent_ADDED
 	} else {
 		event.Type = resourcepb.WatchEvent_MODIFIED
+		event.PreviousRV = rv
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -755,6 +756,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 			return nil, AsErrorResult(err)
 		}
 	}
+
 	return event, nil
 }
 
@@ -871,14 +873,14 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	rsp := &resourcepb.CreateResponse{}
 
-	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
+	event, e := s.newEvent(ctx, user, req.Key, 0, req.Value, nil)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
 
-	// If the resource already exists, the create will return an already exists error that is remapped appropriately by AsErrorResult.
-	// This also benefits from ACID behaviours on our databases, so we avoid race conditions.
+	// If the resource already exists, the create will return an already exists or a
+	// conflict error that is remapped appropriately by AsErrorResult.
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
@@ -925,7 +927,6 @@ func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operati
 
 	select {
 	case <-time.After(s.artificialSuccessfulWriteDelay):
-	case <-s.ctx.Done():
 	case <-ctx.Done():
 	}
 	return true
@@ -947,10 +948,6 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		}
-		return rsp, nil
-	}
-	if req.ResourceVersion < 0 {
-		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
 	}
 
@@ -978,6 +975,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		Key: req.Key,
 	})
 	if latest.Error != nil {
+		rsp.Error = latest.Error
 		return rsp, nil
 	}
 	if latest.Value == nil {
@@ -985,22 +983,11 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
-	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
-	// See: https://github.com/grafana/grafana/pull/111866
-	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
-		return &resourcepb.UpdateResponse{
-			Error: &ErrOptimisticLockingFailed,
-		}, nil
-	}
-
-	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
+	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
 	}
-
-	event.Type = resourcepb.WatchEvent_MODIFIED
-	event.PreviousRV = latest.ResourceVersion
 
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
@@ -1020,9 +1007,6 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 	defer s.inflight.Done()
 
 	rsp := &resourcepb.DeleteResponse{}
-	if req.ResourceVersion < 0 {
-		return nil, apierrors.NewBadRequest("update must include the previous version")
-	}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		rsp.Error = &resourcepb.ErrorResult{
@@ -1060,10 +1044,6 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		rsp.Error = latest.Error
 		return rsp, nil
 	}
-	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
-		rsp.Error = &ErrOptimisticLockingFailed
-		return rsp, nil
-	}
 
 	access, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "delete",
@@ -1087,7 +1067,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	event := WriteEvent{
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
-		PreviousRV: latest.ResourceVersion,
+		PreviousRV: req.ResourceVersion,
 		GUID:       uuid.New().String(),
 	}
 	marker := &unstructured.Unstructured{}
