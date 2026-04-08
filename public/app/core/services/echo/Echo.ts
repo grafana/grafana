@@ -1,4 +1,4 @@
-import { type EchoBackend, type EchoMeta, type EchoEvent, type EchoSrv } from '@grafana/runtime';
+import { type EchoBackend, type EchoMeta, type EchoEvent, type EchoSrv, MAX_PAGE_URL_LENGTH } from '@grafana/runtime';
 
 import { contextSrv } from '../context_srv';
 
@@ -10,8 +10,6 @@ interface EchoConfig {
   // Enables debug mode
   debug: boolean;
 }
-
-const MAX_META_URL_LENGTH = 2048;
 
 /**
  * Echo is a service for collecting events from Grafana client-app
@@ -89,8 +87,8 @@ export class Echo implements EchoSrv {
       timeSinceNavigationStart: performance.now(),
       path: window.location.pathname,
       url:
-        window.location.href.length > MAX_META_URL_LENGTH
-          ? window.location.href.substring(0, MAX_META_URL_LENGTH)
+        window.location.href.length > MAX_PAGE_URL_LENGTH
+          ? window.location.href.substring(0, MAX_PAGE_URL_LENGTH)
           : window.location.href,
     };
   };

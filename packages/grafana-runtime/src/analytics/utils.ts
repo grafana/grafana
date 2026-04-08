@@ -22,7 +22,7 @@ export const reportMetaAnalytics = (payload: MetaAnalyticsEventPayload) => {
   });
 };
 
-const MAX_PAGE_URL_LENGTH = 2048;
+export const MAX_PAGE_URL_LENGTH = 2048;
 
 /**
  * Helper function to report pageview events to the {@link EchoSrv}.
