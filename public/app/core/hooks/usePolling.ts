@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface PollingState<T> {
   data: T | null;
@@ -9,9 +9,15 @@ export interface PollingState<T> {
 /**
  * Polls an async function at a fixed interval, returning the latest result.
  *
- * @param fetchFn - Async function to call on each poll. Should be stable (e.g. wrapped
- *   in useCallback) to avoid triggering unnecessary effect re-runs.
- * @param intervalMs - Polling interval in milliseconds.
+ * Note: `loading` is `true` only during the initial fetch. Subsequent polls do
+ * not reset `loading` to `true` — this is intentional to avoid spinner flicker
+ * on every refresh cycle.
+ *
+ * @param fetchFn - Async function to call on each poll. Must be stable (e.g. wrapped
+ *   in `useCallback`). An unstable reference continuously resets the interval,
+ *   effectively preventing polling if the parent re-renders on every tick.
+ * @param intervalMs - Polling interval in milliseconds. Changes take effect on the
+ *   next render cycle.
  */
 export function usePolling<T>(fetchFn: () => Promise<T>, intervalMs: number): PollingState<T> {
   const [state, setState] = useState<PollingState<T>>({
@@ -19,19 +25,25 @@ export function usePolling<T>(fetchFn: () => Promise<T>, intervalMs: number): Po
     loading: true,
     error: null,
   });
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
 
     const poll = async () => {
+      const requestId = ++requestIdRef.current;
       try {
         const data = await fetchFn();
-        if (!cancelled) {
+        if (!cancelled && requestId === requestIdRef.current) {
           setState({ data, loading: false, error: null });
         }
       } catch (err) {
-        if (!cancelled) {
-          setState((prev) => ({ ...prev, loading: false, error: err as Error }));
+        if (!cancelled && requestId === requestIdRef.current) {
+          setState((prev) => ({
+            ...prev,
+            loading: false,
+            error: err instanceof Error ? err : new Error(String(err)),
+          }));
         }
       }
     };
@@ -43,7 +55,7 @@ export function usePolling<T>(fetchFn: () => Promise<T>, intervalMs: number): Po
       cancelled = true;
       clearInterval(intervalId);
     };
-  }, [fetchFn]);
+  }, [fetchFn, intervalMs]);
 
   return state;
 }
