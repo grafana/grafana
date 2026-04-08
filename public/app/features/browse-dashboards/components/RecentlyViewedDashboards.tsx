@@ -59,18 +59,19 @@ export function RecentlyViewedDashboards() {
       headerDataTestId="browseDashboardsRecentlyViewedTitle"
       label={
         <Stack direction="row" justifyContent="space-between" alignItems="baseline" width="100%">
-          <Text variant="h5" element="h3" onClick={handleSectionToggle}>
+          <Text variant="h5" element="h3">
             <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
           </Text>
-          <Button icon="times" size="xs" variant="secondary" fill="text" onClick={handleClearHistory}>
+          <Button icon="times" size="xs" variant="secondary" fill="text" onClick={(e) => {
+            e.stopPropagation();
+            handleClearHistory();
+          }}>
             {t('browse-dashboards.recently-viewed.clear', 'Clear history')}
           </Button>
         </Stack>
       }
       isOpen={isOpen}
-      // passing empty function to disable controlled mode, we only want to control isOpen when click on title
-      // this avoid entire header section being clickable which can be confusing with the Clear history button
-      onToggle={() => {}}
+      onToggle={handleSectionToggle}
       className={styles.title}
       contentClassName={styles.content}
     >
@@ -115,9 +116,17 @@ export function RecentlyViewedDashboards() {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     title: css({
-      cursor: 'default',
-      '& [id^="collapse-button-"] svg': {
-        color: theme.colors.primary.text,
+      cursor: 'pointer',
+      padding: theme.spacing(0.5, 0),
+      '& [id^="collapse-button-"]': {
+        padding: theme.spacing(0, 1),
+        svg: {
+          color: theme.colors.primary.text,
+          transition: theme.transitions.create('color'),
+        },
+        '&:hover svg': {
+          color: theme.colors.text.maxContrast,
+        },
       },
       h3: {
         background: `linear-gradient(90deg, ${theme.colors.primary.shade} 0%, ${theme.colors.primary.text} 100%)`,
@@ -126,7 +135,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: 'transparent',
         cursor: 'pointer',
       },
-      padding: 0,
     }),
     content: css({
       paddingTop: theme.spacing(0),
