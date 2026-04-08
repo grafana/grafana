@@ -681,26 +681,25 @@ func (s *ServiceImpl) hasConnectionsPluginItems(c *contextmodel.ReqContext, tree
 						continue
 					}
 
-					// Find the specific include that matches this navigation item
-					hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
-					foundAccessibleInclude := false
-
-					for _, include := range plugin.Includes {
-						if include.Type == "page" && include.Path != "" {
-							if strings.HasSuffix(child.Url, include.Path) || include.Path == child.Url {
-								if hasAccessToInclude(include) {
-									foundAccessibleInclude = true
-									break
-								}
-							}
-						}
-					}
-
-					if foundAccessibleInclude {
+					if s.hasAccessibleInclude(c, plugin, child.Url) {
 						return true
 					}
 				} else {
 					// Non-plugin item under /connections/, assume accessible
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func (s *ServiceImpl) hasAccessibleInclude(c *contextmodel.ReqContext, plugin pluginstore.Plugin, navURL string) bool {
+	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
+	for _, include := range plugin.Includes {
+		if include.Type == "page" && include.Path != "" {
+			if strings.HasSuffix(navURL, include.Path) || include.Path == navURL {
+				if hasAccessToInclude(include) {
 					return true
 				}
 			}
