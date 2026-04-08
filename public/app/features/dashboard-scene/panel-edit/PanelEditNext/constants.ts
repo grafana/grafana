@@ -31,14 +31,6 @@ export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-nex
 export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
 export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-next.v2-preference';
 
-export function getQueryEditorBannerColors(theme: GrafanaTheme2) {
-  return {
-    background: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',
-    border: theme.isDark ? '#314158' : theme.colors.border.medium,
-    accent: theme.isDark ? '#FF9830' : '#C47B20',
-  };
-}
-
 export const QUERY_EDITOR_COLORS = {
   query: '#FF8904',
   expression: '#C27AFF',

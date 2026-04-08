@@ -4,7 +4,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-import { getQueryEditorBannerColors } from './PanelEditNext/constants';
 import { startIntercomSurvey, trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
 
 interface Props {
@@ -88,8 +87,6 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
 }
 
 function getStyles(theme: GrafanaTheme2) {
-  const bannerColors = getQueryEditorBannerColors(theme);
-
   return {
     banner: css({
       display: 'flex',
@@ -97,8 +94,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'space-between',
       padding: theme.spacing(0, 2),
       height: theme.spacing(5),
-      backgroundColor: bannerColors.background,
-      border: `1px solid ${bannerColors.border}`,
+      backgroundColor: theme.colors.primary.transparent,
       borderRadius: theme.shape.radius.default,
       flexShrink: 0,
     }),
@@ -109,10 +105,10 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 0,
     }),
     accentIcon: css({
-      color: bannerColors.accent,
+      color: theme.colors.warning.text,
     }),
     title: css({
-      color: bannerColors.accent,
+      color: theme.colors.warning.text,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
     }),
