@@ -57,8 +57,6 @@ Once created, you can modify the library panel using any dashboard on which it a
 
 ## Add a library panel to a dashboard
 
-<!-- TODO: Fix steps for new panel creation flow -->
-
 Add a Grafana library panel to a dashboard when you want to provide visualizations to other dashboard users.
 
 To add a library panel, follow these steps:
