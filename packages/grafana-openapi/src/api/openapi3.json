@@ -3980,6 +3980,9 @@
             },
             "type": "object"
           },
+          "timeRange": {
+            "$ref": "#/components/schemas/TimeRange"
+          },
           "transformations": {
             "$ref": "#/components/schemas/Transformations"
           },
@@ -4005,6 +4008,9 @@
               "prop2": "value"
             },
             "type": "object"
+          },
+          "timeRange": {
+            "$ref": "#/components/schemas/TimeRange"
           },
           "transformations": {
             "description": "Source data transformations",
@@ -9685,13 +9691,15 @@
         "type": "object"
       },
       "RelativeTimeRange": {
-        "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
+        "description": "the ints represent time in seconds from the time read from Field",
         "properties": {
           "from": {
-            "$ref": "#/components/schemas/Duration"
+            "format": "int64",
+            "type": "integer"
           },
           "to": {
-            "$ref": "#/components/schemas/Duration"
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
