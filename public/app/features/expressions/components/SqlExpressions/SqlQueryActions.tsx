@@ -29,7 +29,12 @@ export const SqlQueryActions = ({
       <Button icon="play" onClick={executeQuery} size="sm">
         {t('expressions.sql-expr.button-run-query', 'Run query')}
       </Button>
-      <AssistantSQLExplainButton currentQuery={currentQuery} refIds={refIds} queryContext={queryContext} schemas={schemas} />
+      <AssistantSQLExplainButton
+        currentQuery={currentQuery}
+        refIds={refIds}
+        queryContext={queryContext}
+        schemas={schemas}
+      />
       <AssistantSQLSuggestionsButton
         currentQuery={currentQuery}
         refIds={refIds}

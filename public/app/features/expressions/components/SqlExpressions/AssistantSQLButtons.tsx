@@ -13,7 +13,12 @@ interface AssistantSQLExplainButtonProps {
   schemas?: SQLSchemas | null;
 }
 
-export const AssistantSQLExplainButton = ({ currentQuery, refIds, queryContext, schemas }: AssistantSQLExplainButtonProps) => {
+export const AssistantSQLExplainButton = ({
+  currentQuery,
+  refIds,
+  queryContext,
+  schemas,
+}: AssistantSQLExplainButtonProps) => {
   const hasQuery = currentQuery.trim() !== '';
 
   const context = useMemo(
@@ -69,7 +74,15 @@ export const AssistantSQLSuggestionsButton = ({
     ? t('sql-expressions.improve-query', 'Improve query')
     : t('sql-expressions.generate-suggestion', 'Generate suggestion');
 
-  return <OpenAssistantButton origin="grafana/expressions/sql/improve" prompt={prompt} context={context} title={buttonText} size="sm" />;
+  return (
+    <OpenAssistantButton
+      origin="grafana/expressions/sql/improve"
+      prompt={prompt}
+      context={context}
+      title={buttonText}
+      size="sm"
+    />
+  );
 };
 
 interface BuildSQLContextParams {
@@ -89,7 +102,8 @@ function buildSQLContext({ refIds, currentQuery, errorContext, queryContext, sch
       data: {
         sqlDialect: 'MySQL dialect based on dolthub go-mysql-server. All tables are in memory.',
         availableRefIds: refIds.length > 0 ? refIds : ['A'],
-        refIdExplanation: 'RefIDs (A, B, C, etc.) represent data from other queries that can be used as table names in SQL',
+        refIdExplanation:
+          'RefIDs (A, B, C, etc.) represent data from other queries that can be used as table names in SQL',
         columnInfo: 'The value column should always be referenced as __value__',
         currentQuery: currentQuery.trim() || undefined,
         errors: errorContext?.length ? errorContext : undefined,
