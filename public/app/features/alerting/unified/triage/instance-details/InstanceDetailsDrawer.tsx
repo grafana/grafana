@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2, type Labels } from '@grafana/data';
@@ -36,6 +36,7 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
+import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
 import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
@@ -46,6 +47,7 @@ import { formatTimelineDate, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
+const SILENCE_DRAWER_CLOSE_ANIMATION_MS = 180;
 
 function calculateDrawerWidth(rightColumnWidth: number): number {
   const calculatedWidth = rightColumnWidth + 32;
@@ -71,6 +73,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const [timeRange] = useTimeRange();
   const { rightColumnWidth } = useWorkbenchContext();
   const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
+  const closeSilenceTimerRef = useRef<number | undefined>(undefined);
+  const [isClosingSilenceDrawer, setIsClosingSilenceDrawer] = useState(false);
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
   const activeView = viewStack[viewStack.length - 1];
@@ -118,11 +122,24 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   }, [rule, timeRange]);
 
   const handleDrawerClose = () => {
+    if (closeSilenceTimerRef.current !== undefined) {
+      window.clearTimeout(closeSilenceTimerRef.current);
+      closeSilenceTimerRef.current = undefined;
+    }
+    setIsClosingSilenceDrawer(false);
     setViewStack([{ type: 'instance-details' }]);
     onClose();
   };
 
-  const handleBack = () => {
+  useEffect(() => {
+    return () => {
+      if (closeSilenceTimerRef.current !== undefined) {
+        window.clearTimeout(closeSilenceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const popTopView = () => {
     setViewStack((current) => {
       if (current.length <= 1) {
         return current;
@@ -131,52 +148,64 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     });
   };
 
-  const getDrawerTitle = () => {
-    if (activeView.type === 'instance-details') {
-      return (
-        <InstanceDetailsDrawerTitle
-          instanceLabels={instanceLabels}
-          commonLabels={commonLabels}
-          alertState={instanceState}
-          rule={rule?.grafana_alert}
-        />
-      );
+  const animateCloseSilenceDrawer = () => {
+    if (isClosingSilenceDrawer) {
+      return;
     }
 
-    if (activeView.type === 'contact-point-list') {
-      return t('alerting.triage.instance-details-drawer.contact-point-list-title', 'Contact point list');
+    const drawers = document.querySelectorAll('.main-view .rc-drawer');
+    const topDrawer = drawers.item(drawers.length - 1);
+    const wrapper = topDrawer?.querySelector('.rc-drawer-content-wrapper');
+
+    if (wrapper instanceof HTMLElement) {
+      wrapper.style.transition = `transform ${SILENCE_DRAWER_CLOSE_ANIMATION_MS}ms ease-in`;
+      wrapper.style.transform = 'translateX(100%)';
     }
 
-    if (activeView.type === 'notification-history-details') {
-      return t('alerting.triage.instance-details-drawer.notification-history-details-title', 'Notification details');
-    }
-
-    if (activeView.type === 'silence') {
-      return t('alerting.triage.instance-details-drawer.silence-title', 'Silence');
-    }
-
-    if (activeView.type === 'declare-incident') {
-      return t('alerting.triage.instance-details-drawer.declare-incident-title', 'Declare incident');
-    }
-
-    return t('alerting.triage.instance-details-drawer.declare-incident-title', 'Declare incident');
+    setIsClosingSilenceDrawer(true);
+    closeSilenceTimerRef.current = window.setTimeout(() => {
+      popTopView();
+      setIsClosingSilenceDrawer(false);
+      closeSilenceTimerRef.current = undefined;
+    }, SILENCE_DRAWER_CLOSE_ANIMATION_MS);
   };
 
-  const getDrawerBody = () => {
-    if (activeView.type !== 'instance-details') {
-      return (
-        <Alert
-          severity="info"
-          title={t('alerting.triage.instance-details-drawer.drilldown-coming-soon', 'Coming soon')}
-        >
-          {t(
-            'alerting.triage.instance-details-drawer.drilldown-coming-soon-description',
-            'This drawer drilldown step will be added in a follow-up change.'
-          )}
-        </Alert>
-      );
+  const handleBack = () => {
+    if (activeView.type === 'silence') {
+      animateCloseSilenceDrawer();
+      return;
     }
 
+    popTopView();
+  };
+
+  const handleOpenSilence = () => {
+    setViewStack((current) => [...current, { type: 'silence' }]);
+  };
+
+  const sharedTitleProps = {
+    instanceLabels,
+    commonLabels,
+    alertState: instanceState,
+    onOpenSilence: handleOpenSilence,
+  };
+
+  const getDrawerTitle = () => {
+    switch (activeView.type) {
+      case 'instance-details':
+        return <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule?.grafana_alert} />;
+      case 'contact-point-list':
+        return t('alerting.triage.instance-details-drawer.contact-point-list-title', 'Contact point list');
+      case 'notification-history-details':
+        return t('alerting.triage.instance-details-drawer.notification-history-details-title', 'Notification details');
+      case 'silence':
+        return t('alerting.triage.instance-details-drawer.silence-title', 'Silence');
+      case 'declare-incident':
+        return t('alerting.triage.instance-details-drawer.declare-incident-title', 'Declare incident');
+    }
+  };
+
+  const getInstanceDetailsBody = () => {
     if (error) {
       return <ErrorContent error={error} />;
     }
@@ -250,6 +279,28 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     );
   };
 
+  const getDrawerBody = () => {
+    switch (activeView.type) {
+      case 'instance-details':
+        return getInstanceDetailsBody();
+      case 'silence':
+        // Silence is rendered as a second overlaid drawer.
+        return getInstanceDetailsBody();
+      default:
+        return (
+          <Alert
+            severity="info"
+            title={t('alerting.triage.instance-details-drawer.drilldown-coming-soon', 'Coming soon')}
+          >
+            {t(
+              'alerting.triage.instance-details-drawer.drilldown-coming-soon-description',
+              'This drawer drilldown step will be added in a follow-up change.'
+            )}
+          </Alert>
+        );
+    }
+  };
+
   if (error) {
     return (
       <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
@@ -263,6 +314,46 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
         {getDrawerBody()}
       </Drawer>
+    );
+  }
+
+  if (activeView.type === 'silence' || isClosingSilenceDrawer) {
+    return (
+      <>
+        <Drawer
+          title={<InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule.grafana_alert} />}
+          onClose={handleDrawerClose}
+          width={drawerWidth}
+        >
+          {getInstanceDetailsBody()}
+        </Drawer>
+        <Drawer
+          title={
+            <InstanceDetailsDrawerTitle
+              {...sharedTitleProps}
+              rule={rule.grafana_alert}
+              titleText={t('alerting.triage.instance-details-drawer.silence-title', 'Silence')}
+              hideActions
+              titleSection={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  fill="text"
+                  icon="arrow-left"
+                  onClick={handleBack}
+                  aria-label={t('alerting.triage.instance-details-drawer.back', 'Back')}
+                >
+                  {t('alerting.triage.instance-details-drawer.back', 'Back')}
+                </Button>
+              }
+            />
+          }
+          onClose={animateCloseSilenceDrawer}
+          width={drawerWidth}
+        >
+          <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
+        </Drawer>
+      </>
     );
   }
 
