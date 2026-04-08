@@ -168,7 +168,6 @@ To add a panel to an existing dashboard, follow these steps:
    {{< figure src="/media/docs/grafana/dashboards/screenshot-add-element-icon-v13.0.png" max-width="250px" alt="Add element icon" >}}
 
 1. Click or drag a panel onto the dashboard.
-1. Click **Configure**.
 
 ## Panel configuration
 
