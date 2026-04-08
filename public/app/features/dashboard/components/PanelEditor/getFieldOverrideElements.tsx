@@ -286,7 +286,7 @@ export function getFieldOverrideCategories(
     new OptionsPaneCategoryDescriptor({
       title: t('dashboard.get-field-override-categories.title.add-button', 'add button'),
       id: 'add button',
-      customRender: () => <AddButtonWrapper onOverrideAdd={onOverrideAdd} />,
+      customRender: () => <AddButtonWrapper key="Add override" onOverrideAdd={onOverrideAdd} />,
     })
   );
 
