@@ -143,6 +143,9 @@ func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.
 	if err != nil {
 		return fmt.Errorf("walking local dir: %w", err)
 	}
+	if len(relPaths) == 0 {
+		return fmt.Errorf("no files to upload in %s", localDir)
+	}
 
 	// Upload each file using streaming.
 	for _, rel := range relPaths {
@@ -209,6 +212,9 @@ func (s *remoteIndexStore) DownloadIndex(ctx context.Context, nsResource resourc
 	var meta IndexMeta
 	if err := json.Unmarshal(metaBytes, &meta); err != nil {
 		return nil, fmt.Errorf("parsing meta.json: %w", err)
+	}
+	if len(meta.Files) == 0 {
+		return nil, fmt.Errorf("meta.json has empty file manifest for index %q", indexKey)
 	}
 
 	// Ensure the destination directory exists before resolving symlinks,

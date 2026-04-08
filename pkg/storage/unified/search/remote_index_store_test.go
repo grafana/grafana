@@ -394,6 +394,16 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "parsing meta.json")
 	})
+
+	t.Run("empty file manifest", func(t *testing.T) {
+		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{}}
+		metaBytes, err := json.Marshal(meta)
+		require.NoError(t, err)
+		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		_, err = store.DownloadIndex(ctx, ns, "snap-001", t.TempDir())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "empty file manifest")
+	})
 }
 
 func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
@@ -420,6 +430,20 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 	_, err = store.DownloadIndex(ctx, ns, "snap-001", t.TempDir())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "downloading")
+}
+
+func TestRemoteIndexStore_UploadRejectsEmptyDirectory(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := NewRemoteIndexStore(bucket)
+	ns := newTestNsResource()
+
+	emptyDir := t.TempDir()
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	err := store.UploadIndex(ctx, ns, "snap-001", emptyDir, meta)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "no files to upload")
 }
 
 func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
