@@ -311,11 +311,7 @@ export function InteractiveTable<TableData extends object>({
                     const { key, ...otherCellProps } = cell.getCellProps();
 
                     return (
-                      <td
-                        key={key}
-                        {...otherCellProps}
-                        className={cx(styles.cell, cell.column.widthClass)}
-                      >
+                      <td key={key} {...otherCellProps} className={cx(styles.cell, cell.column.widthClass)}>
                         {cell.render('Cell', { __rowID: rowId })}
                       </td>
                     );
