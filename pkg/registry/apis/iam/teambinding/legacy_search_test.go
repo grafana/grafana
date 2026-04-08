@@ -5,7 +5,6 @@ import (
 	"errors"
 	"math"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -657,10 +656,6 @@ func (m *mockLegacyStore) CreateUser(ctx context.Context, ns claims.NamespaceInf
 
 func (m *mockLegacyStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.UpdateUserCommand) (*legacy.UpdateUserResult, error) {
 	return nil, nil
-}
-
-func (m *mockLegacyStore) UpdateUserLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, uid string, lastSeenAt time.Time) error {
-	return nil
 }
 
 func (m *mockLegacyStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.DeleteUserCommand) error {

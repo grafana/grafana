@@ -367,7 +367,6 @@ var sqlDeleteUserTemplate = mustTemplate("delete_user.sql")
 var sqlDeleteOrgUserTemplate = mustTemplate("delete_org_user.sql")
 var sqlUpdateUserTemplate = mustTemplate("update_user.sql")
 var sqlUpdateOrgUserTemplate = mustTemplate("update_org_user.sql")
-var sqlUpdateUserLastSeenAtTemplate = mustTemplate("update_user_last_seen_at.sql")
 
 func newCreateUser(sql *legacysql.LegacyDatabaseHelper, cmd *CreateUserCommand) createUserQuery {
 	return createUserQuery{
@@ -782,42 +781,4 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	return &UpdateUserResult{User: updatedUser}, nil
-}
-
-func newUpdateUserLastSeenAt(sql *legacysql.LegacyDatabaseHelper, uid string, lastSeenAt time.Time) updateUserLastSeenAtQuery {
-	return updateUserLastSeenAtQuery{
-		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
-		UserTable:   sql.Table("user"),
-		UID:         uid,
-		LastSeenAt:  legacysql.NewDBTime(lastSeenAt),
-	}
-}
-
-type updateUserLastSeenAtQuery struct {
-	sqltemplate.SQLTemplate
-	UserTable  string
-	UID        string
-	LastSeenAt legacysql.DBTime
-}
-
-func (r updateUserLastSeenAtQuery) Validate() error {
-	return nil
-}
-
-// UpdateUserLastSeenAt implements LegacyIdentityStore.
-func (s *legacySQLStore) UpdateUserLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, uid string, lastSeenAt time.Time) error {
-	sql, err := s.getDB(ctx)
-	if err != nil {
-		return err
-	}
-
-	query := newUpdateUserLastSeenAt(sql, uid, lastSeenAt)
-
-	q, err := sqltemplate.Execute(sqlUpdateUserLastSeenAtTemplate, query)
-	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlUpdateUserLastSeenAtTemplate.Name(), err)
-	}
-
-	_, err = sql.DB.GetSqlxSession().Exec(ctx, q, query.GetArgs()...)
-	return err
 }
