@@ -195,8 +195,7 @@ describe('ExemplarsPlugin', () => {
     );
 
     if (callHooks) {
-      //@ts-ignore
-      runPlotHooks(new uPlot(uPlotProps));
+      runPlotHooks(new uPlot(uPlotProps as uPlot.Options));
     }
 
     return result;
