@@ -169,7 +169,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 func mergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission {
 	result := make(map[int64][]ac.Permission, len(a))
 	for userID, perms := range a {
-		result[userID] = perms
+		result[userID] = append([]ac.Permission(nil), perms...)
 	}
 
 	for userID, perms := range b {
