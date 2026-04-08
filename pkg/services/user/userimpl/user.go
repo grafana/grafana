@@ -148,6 +148,10 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		return s.k8sService.GetSignedInUser(ctx, cmd)
+	}
+
 	return s.legacyService.GetSignedInUser(ctx, cmd)
 }
 

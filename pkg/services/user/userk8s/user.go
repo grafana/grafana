@@ -278,31 +278,8 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 		return err
 	}
 
-	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(cmd.UserID, 10)
-	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	existing, err := s.getByInternalID(ctx, client, cmd.UserID, namespace)
 	if err != nil {
-		ctxLogger.Error("k8s user list failed", "namespace", namespace, "userID", cmd.UserID, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	if len(list.Items) == 0 {
-		span.RecordError(user.ErrUserNotFound)
-		span.SetStatus(codes.Error, user.ErrUserNotFound.Error())
-		return user.ErrUserNotFound
-	}
-
-	if len(list.Items) > 1 {
-		ctxLogger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", cmd.UserID, "count", len(list.Items))
-		err := errors.New("multiple users found")
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	var existing iamv0alpha1.User
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, &existing); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -330,7 +307,7 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 		existing.Spec.Provisioned = *cmd.IsProvisioned
 	}
 
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&existing)
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(existing)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -367,31 +344,8 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 		return err
 	}
 
-	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(cmd.UserID, 10)
-	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	existing, err := s.getByInternalID(ctx, client, cmd.UserID, namespace)
 	if err != nil {
-		ctxLogger.Error("k8s user list failed", "namespace", namespace, "userID", cmd.UserID, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	if len(list.Items) == 0 {
-		span.RecordError(user.ErrUserNotFound)
-		span.SetStatus(codes.Error, user.ErrUserNotFound.Error())
-		return user.ErrUserNotFound
-	}
-
-	if len(list.Items) > 1 {
-		ctxLogger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", cmd.UserID, "count", len(list.Items))
-		err := errors.New("multiple users found")
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	var existing iamv0alpha1.User
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, &existing); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
@@ -406,7 +360,7 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 
 	existing.Status.LastSeenAt = time.Now().Unix()
 
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&existing)
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(existing)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -425,7 +379,64 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 }
 
 func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.getSignedInUser", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+		attribute.Int64("orgID", cmd.OrgID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID := cmd.OrgID
+	if orgID <= 0 {
+		var err error
+		orgID, err = s.getOrgID(ctx)
+		if err != nil {
+			ctxLogger.Error("failed to get orgID from context", "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	var found *iamv0alpha1.User
+	var lookupErr error
+	switch {
+	case cmd.UserID > 0:
+		found, lookupErr = s.getByInternalID(ctx, client, cmd.UserID, namespace)
+	case cmd.Login != "":
+		found, lookupErr = s.getByFieldSelectorRaw(ctx, client, "spec.login", strings.ToLower(cmd.Login))
+	case cmd.Email != "":
+		found, lookupErr = s.getByFieldSelectorRaw(ctx, client, "spec.email", strings.ToLower(cmd.Email))
+	default:
+		span.RecordError(user.ErrNoUniqueID)
+		span.SetStatus(codes.Error, user.ErrNoUniqueID.Error())
+		return nil, user.ErrNoUniqueID
+	}
+
+	if lookupErr != nil {
+		span.RecordError(lookupErr)
+		span.SetStatus(codes.Error, lookupErr.Error())
+		return nil, lookupErr
+	}
+	if found == nil {
+		span.RecordError(user.ErrUserNotFound)
+		span.SetStatus(codes.Error, user.ErrUserNotFound.Error())
+		return nil, user.ErrUserNotFound
+	}
+
+	return toSignedInUser(found, orgID), nil
 }
 
 func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
@@ -466,12 +477,37 @@ func (s *UserK8sService) getOrgID(ctx context.Context) (int64, error) {
 	return 0, errors.New("failed to get orgID: no requester or orgID in context")
 }
 
-func (s *UserK8sService) getByFieldSelector(ctx context.Context, client dynamic.ResourceInterface, field, value string, orgID int64) (*user.User, error) {
+func (s *UserK8sService) getByInternalID(ctx context.Context, client dynamic.ResourceInterface, userID int64, namespace string) (*iamv0alpha1.User, error) {
+	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(userID, 10)
+	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		s.logger.Error("k8s user list failed", "namespace", namespace, "userID", userID, "err", err)
+		return nil, err
+	}
+
+	if len(list.Items) == 0 {
+		return nil, user.ErrUserNotFound
+	}
+
+	if len(list.Items) > 1 {
+		s.logger.Error("multiple users found with same deprecated internal ID", "namespace", namespace, "userID", userID, "count", len(list.Items))
+		return nil, errors.New("multiple users found")
+	}
+
+	var found iamv0alpha1.User
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, &found); err != nil {
+		return nil, err
+	}
+
+	return &found, nil
+}
+
+func (s *UserK8sService) getByFieldSelectorRaw(ctx context.Context, client dynamic.ResourceInterface, field, value string) (*iamv0alpha1.User, error) {
 	result, err := client.List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(field, value).String(),
 	})
 	if err != nil {
-		s.logger.Error("k8s user list failed", "orgID", orgID, "field", field, "value", value, "err", err)
+		s.logger.Error("k8s user list failed", "field", field, "value", value, "err", err)
 		return nil, err
 	}
 	if len(result.Items) == 0 {
@@ -481,7 +517,44 @@ func (s *UserK8sService) getByFieldSelector(ctx context.Context, client dynamic.
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Items[0].Object, &found); err != nil {
 		return nil, err
 	}
-	return toUser(&found, orgID), nil
+	return &found, nil
+}
+
+func (s *UserK8sService) getByFieldSelector(ctx context.Context, client dynamic.ResourceInterface, field, value string, orgID int64) (*user.User, error) {
+	found, err := s.getByFieldSelectorRaw(ctx, client, field, value)
+	if err != nil {
+		return nil, err
+	}
+	if found == nil {
+		return nil, nil
+	}
+	return toUser(found, orgID), nil
+}
+
+func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {
+	userID := getUserID(u)
+	role := identity.RoleType(u.Spec.Role)
+
+	signedInUser := &user.SignedInUser{
+		UserID:         userID,
+		UserUID:        u.Name,
+		OrgID:          orgID,
+		OrgRole:        role,
+		Login:          u.Spec.Login,
+		Name:           u.Spec.Title,
+		Email:          u.Spec.Email,
+		EmailVerified:  u.Spec.EmailVerified,
+		IsGrafanaAdmin: u.Spec.GrafanaAdmin,
+		IsDisabled:     u.Spec.Disabled,
+		LastSeenAt:     time.Unix(u.Status.LastSeenAt, 0),
+	}
+
+	if signedInUser.OrgRole == "" {
+		signedInUser.OrgID = -1
+		signedInUser.OrgName = "Org missing"
+	}
+
+	return signedInUser
 }
 
 func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
