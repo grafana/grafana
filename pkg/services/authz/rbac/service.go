@@ -650,11 +650,6 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
 	defer span.End()
 
-	// Detach from the request context so that a client disconnect (e.g. HTTP
-	// timeout) cannot cancel the DB lookups required for authorization. These
-	// queries are cheap and must complete for correct authz decisions.
-	ctx = context.WithoutCancel(ctx)
-
 	userIdentifiers, err := s.GetUserIdentifiers(ctx, ns, userID)
 	if err != nil {
 		return nil, err
