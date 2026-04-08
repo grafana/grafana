@@ -5,23 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// fakePluginStore is a minimal plugin store for tests that reports no plugins installed.
-type fakePluginStore struct{}
-
-func (fakePluginStore) Plugin(_ context.Context, _ string) (pluginstore.Plugin, bool) {
-	return pluginstore.Plugin{}, false
-}
-
-func (fakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []pluginstore.Plugin {
-	return nil
-}
 
 func TestCheck_IsCloudInstance_Logic(t *testing.T) {
 	tests := []struct {
@@ -43,12 +30,12 @@ func TestCheck_IsCloudInstance_Logic(t *testing.T) {
 			expectedItemID:  outOfSupportVersion,
 		},
 		{
-			name:            "non-empty stackID should run pinned version and TwinMaker EoS checks",
+			name:            "non-empty stackID should run pinned version check",
 			stackID:         "12345",
 			expectedCloud:   true,
-			expectedSteps:   2,
+			expectedSteps:   1,
 			expectedStepID:  pinnedVersion,
-			expectedItems:   2,
+			expectedItems:   1,
 			expectedItemID:  pinnedVersion,
 		},
 	}
@@ -62,7 +49,7 @@ func TestCheck_IsCloudInstance_Logic(t *testing.T) {
 				BuildStamp:   time.Now().Unix(),
 			}
 
-			check := New(cfg, &fakePluginStore{}).(*check)
+			check := New(cfg).(*check)
 
 			// Verify isCloudInstance field is set correctly
 			assert.Equal(t, tt.expectedCloud, check.isCloudInstance)

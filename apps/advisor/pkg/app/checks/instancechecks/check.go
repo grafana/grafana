@@ -7,7 +7,6 @@ import (
 	"github.com/google/go-github/v82/github"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,14 +14,12 @@ var _ checks.Check = (*check)(nil)
 
 type check struct {
 	cfg             *setting.Cfg
-	pluginStore     pluginstore.Store
 	isCloudInstance bool
 }
 
-func New(cfg *setting.Cfg, pluginStore pluginstore.Store) checks.Check {
+func New(cfg *setting.Cfg) checks.Check {
 	return &check{
 		cfg:             cfg,
-		pluginStore:     pluginStore,
 		isCloudInstance: cfg.StackID != "",
 	}
 }
@@ -38,8 +35,7 @@ func (c *check) Name() string {
 func (c *check) Items(ctx context.Context) ([]any, error) {
 	if c.isCloudInstance {
 		return []any{
-			pinnedVersion,      // pinned version check
-			twinmakerCloudEOS,  // TwinMaker App Grafana Cloud EoS warning
+			pinnedVersion, // pinned version check
 		}, nil
 	}
 
@@ -62,10 +58,6 @@ func (c *check) Steps() []checks.Step {
 		return []checks.Step{
 			&pinnedVersionStep{
 				BuildBranch: c.cfg.BuildBranch,
-			},
-			// We also need to check if the TwinMaker App is installed and warn about end of support
-			&twinmakerCloudEOSStep{
-				pluginStore: c.pluginStore,
 			},
 		}
 	}
