@@ -29,6 +29,7 @@ type ResourceStorageAuthorizer interface {
 	BeforeDelete(ctx context.Context, obj runtime.Object) error
 	AfterGet(ctx context.Context, obj runtime.Object) error
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
+	BeforeWatch(ctx context.Context) error
 }
 
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
@@ -223,6 +224,11 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	// Enforce authorization before allowing watch access
+	if err := w.authorizer.BeforeWatch(ctx); err != nil {
+		return nil, err
+	}
+
 	if watcher, ok := w.inner.(k8srest.Watcher); ok {
 		return watcher.Watch(w.storeCtx(ctx), options)
 	}
@@ -255,6 +261,10 @@ func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return list, nil
 }
 
+func (b *NoopAuthorizer) BeforeWatch(ctx context.Context) error {
+	return nil
+}
+
 // DenyAuthorizer denies all storage operations.
 // Use this as a safe default when no explicit authorizer is provided
 // for cluster-scoped resources. This ensures fail-closed behavior.
@@ -278,4 +288,8 @@ func (d *DenyAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error
 
 func (d *DenyAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	return nil, ErrUnauthorized
+}
+
+func (d *DenyAuthorizer) BeforeWatch(ctx context.Context) error {
+	return ErrUnauthorized
 }

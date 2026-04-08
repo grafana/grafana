@@ -213,3 +213,9 @@ func (f *StoreWrapper) BeforeDelete(ctx context.Context, obj runtime.Object) err
 
 	return nil
 }
+
+// BeforeWatch implements ResourceStorageAuthorizer.
+// TODO: Implement proper authorization for Watch
+func (f *StoreWrapper) BeforeWatch(ctx context.Context) error {
+	return nil // No authorization for now
+}

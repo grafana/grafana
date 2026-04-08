@@ -295,3 +295,38 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 		return nil, k8serrors.NewBadRequest(fmt.Sprintf("expected ResourcePermissionList, got %T", l))
 	}
 }
+
+// BeforeWatch implements ResourceStorageAuthorizer.
+// Watch is a privileged operation for ResourcePermissions that reveals all permission changes
+// across the organization in real-time. Only users with users.permissions:read (typically admins)
+// are allowed to watch.
+func (r *ResourcePermissionsAuthorizer) BeforeWatch(ctx context.Context) error {
+	authInfo, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		return storewrapper.ErrUnauthenticated
+	}
+
+	if isAccessPolicy(authInfo) {
+		return nil
+	}
+
+	namespace := "default"
+	if ns, err := types.ParseNamespace(authInfo.GetNamespace()); err == nil && ns.OrgID > 0 {
+		namespace = ns.Value
+	}
+
+	hasPermission, err := r.hasUsersPermissionsRead(ctx, authInfo, namespace)
+	if err != nil {
+		r.logger.Error("before watch: error checking users.permissions:read", "error", err.Error())
+		return err
+	}
+
+	if !hasPermission {
+		return fmt.Errorf(
+			"watch on ResourcePermissions requires users.permissions:read: %w",
+			storewrapper.ErrUnauthorized,
+		)
+	}
+
+	return nil
+}
