@@ -194,7 +194,6 @@ To export a JSON file, follow these steps:
    The **Export dashboard** drawer opens.
 
 1. (Optional) Click **Advanced options** to expand the section, and then make the following selections:
-
    - **Model**: Choose from **Classic** or **V2 Resource**
    - **Format**: For the V2 Resource only, choose from **JSON** or **YAML**
 
