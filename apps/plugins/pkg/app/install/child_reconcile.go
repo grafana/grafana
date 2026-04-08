@@ -19,15 +19,6 @@ import (
 const (
 	requeueAfter  = 10 * time.Second
 	requeueJitter = 5 * time.Second
-
-	// childProcessingBatchSize is the maximum number of child plugins to register or
-	// unregister in a single reconciliation cycle. Larger child sets are split across
-	// multiple cycles using ReconcileResult.State to track progress, so that each
-	// cycle holds a bounded number of in-flight API objects in memory.
-	childProcessingBatchSize = 20
-
-	// stateKeyChildIndex is the ReconcileResult.State key used to resume a multi-cycle batch.
-	stateKeyChildIndex = "childIndex"
 )
 
 func actionLabel(action operator.ReconcileAction) string {
@@ -51,11 +42,6 @@ func requeueAfterWithJitter() time.Duration {
 		return requeueAfter
 	}
 	return requeueAfter + time.Duration(n.Int64())
-}
-
-// childState returns a ReconcileResult.State map that resumes processing from idx.
-func childState(idx int) map[string]any {
-	return map[string]any{stateKeyChildIndex: idx}
 }
 
 // ChildPluginReconciler reconciles Plugin resources and creates child plugin records.
@@ -100,14 +86,6 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		return operator.ReconcileResult{}, nil
 	}
 
-	// Resume from prior batch cycle if state is present.
-	startIdx := 0
-	if req.State != nil {
-		if v, ok := req.State[stateKeyChildIndex].(int); ok {
-			startIdx = v
-		}
-	}
-
 	result, err := r.metaManager.GetMeta(ctx, meta.PluginRef{
 		ID:      plugin.Spec.Id,
 		Version: plugin.Spec.Version,
@@ -122,17 +100,14 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	}
 	metrics.ChildrenCountPerReconcile.Observe(float64(len(result.Meta.Children)))
 
-	if len(result.Meta.Children) == 0 || startIdx >= len(result.Meta.Children) {
-		if len(result.Meta.Children) == 0 {
-			logger.Debug("Plugin has no children, skipping child plugin reconciliation")
-		}
+	if len(result.Meta.Children) == 0 {
+		logger.Debug("Plugin has no children, skipping child plugin reconciliation")
 		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action)).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 
 	logger.Debug("Plugin has children, reconciling child plugins",
 		"childCount", len(result.Meta.Children),
-		"startIdx", startIdx,
 		"action", req.Action,
 	)
 
@@ -141,19 +116,17 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 
 	switch req.Action {
 	case operator.ReconcileActionCreated, operator.ReconcileActionUpdated, operator.ReconcileActionResynced:
-		reconcileResult, reconcileErr = r.registerChildren(ctx, plugin, result.Meta.Children, startIdx)
+		reconcileResult, reconcileErr = r.registerChildren(ctx, plugin, result.Meta.Children)
 	case operator.ReconcileActionDeleted:
-		reconcileResult, reconcileErr = r.unregisterChildren(ctx, plugin.Namespace, result.Meta.Children, startIdx)
+		reconcileResult, reconcileErr = r.unregisterChildren(ctx, plugin.Namespace, result.Meta.Children)
 	case operator.ReconcileActionUnknown:
 		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
 	default:
 		reconcileErr = fmt.Errorf("invalid action: %d", req.Action)
 	}
 
-	// A zero RequeueAfter with no error means we're continuing to the next batch; count as success.
-	// A positive RequeueAfter means an error retry is queued; count as error.
 	status := "success"
-	if reconcileErr != nil || (reconcileResult.RequeueAfter != nil && *reconcileResult.RequeueAfter > 0) {
+	if reconcileErr != nil || reconcileResult.RequeueAfter != nil {
 		status = "error"
 	}
 	metrics.ChildReconciliationTotal.WithLabelValues(status, actionLabel(req.Action)).Inc()
@@ -161,16 +134,14 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 	return reconcileResult, reconcileErr
 }
 
-func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespace string, children []string, startIdx int) (operator.ReconcileResult, error) {
+func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespace string, children []string) (operator.ReconcileResult, error) {
 	logger := r.logger.WithContext(ctx).With("requestNamespace", namespace)
 
-	end := min(startIdx+childProcessingBatchSize, len(children))
-
 	retry := false
-	for _, childID := range children[startIdx:end] {
+	for _, childID := range children {
 		if ctx.Err() != nil {
 			d := requeueAfterWithJitter()
-			return operator.ReconcileResult{RequeueAfter: &d, State: childState(startIdx)}, nil
+			return operator.ReconcileResult{RequeueAfter: &d}, nil
 		}
 		err := r.registrar.Unregister(ctx, namespace, childID, SourceChildPluginReconciler)
 		if err != nil && !errorsK8s.IsNotFound(err) {
@@ -183,24 +154,18 @@ func (r *ChildPluginReconciler) unregisterChildren(ctx context.Context, namespac
 	if retry {
 		d := requeueAfterWithJitter()
 		result.RequeueAfter = &d
-		result.State = childState(startIdx)
-	} else if end < len(children) {
-		result.RequeueAfter = new(time.Duration)
-		result.State = childState(end)
 	}
 	return result, nil
 }
 
-func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pluginsv0alpha1.Plugin, children []string, startIdx int) (operator.ReconcileResult, error) {
+func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pluginsv0alpha1.Plugin, children []string) (operator.ReconcileResult, error) {
 	logger := r.logger.WithContext(ctx).With("requestNamespace", parent.Namespace)
 
-	end := min(startIdx+childProcessingBatchSize, len(children))
-
 	retry := false
-	for _, childID := range children[startIdx:end] {
+	for _, childID := range children {
 		if ctx.Err() != nil {
 			d := requeueAfterWithJitter()
-			return operator.ReconcileResult{RequeueAfter: &d, State: childState(startIdx)}, nil
+			return operator.ReconcileResult{RequeueAfter: &d}, nil
 		}
 		childInstall := &PluginInstall{
 			ID:       childID,
@@ -219,10 +184,6 @@ func (r *ChildPluginReconciler) registerChildren(ctx context.Context, parent *pl
 	if retry {
 		d := requeueAfterWithJitter()
 		result.RequeueAfter = &d
-		result.State = childState(startIdx)
-	} else if end < len(children) {
-		result.RequeueAfter = new(time.Duration)
-		result.State = childState(end)
 	}
 	return result, nil
 }
