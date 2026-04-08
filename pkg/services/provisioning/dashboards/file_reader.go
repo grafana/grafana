@@ -274,10 +274,12 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, folderUID, fileInfo, dashboardRefs)
-		usageTracker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "file", path, "error", err)
+			continue
 		}
+
+		usageTracker.track(provisioningMetadata)
 	}
 	return nil
 }

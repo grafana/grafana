@@ -385,13 +385,42 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			}), configName).Run(func(args mock.Arguments) {
 				folderCreateCalls = append(folderCreateCalls, args[1].(*folder.CreateFolderCommand))
 			}).Return(&folder.Folder{ID: 4, UID: "folderFour-uid", Title: "folderFour"}, nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
+
+			// Map iteration order is undefined; record FolderUID/FolderID per provisioned file (ExternalID).
+			savedFolderByExternalID := make(map[string]struct {
+				folderUID string
+				folderID  int64
+			})
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					dto := args.Get(1).(*dashboards.SaveDashboardDTO)
+					dp := args.Get(2).(*dashboards.DashboardProvisioning)
+					require.NotNil(t, dto)
+					require.NotNil(t, dto.Dashboard)
+					require.NotNil(t, dp)
+					savedFolderByExternalID[dp.ExternalID] = struct {
+						folderUID string
+						folderID  int64
+					}{folderUID: dto.Dashboard.FolderUID, folderID: dto.Dashboard.FolderID} // nolint:staticcheck
+				}).
+				Return(&dashboards.Dashboard{}, nil).
+				Times(5)
 
 			reader, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderServiceForFoldersFromFilesStructure(), cfgT)
 			require.NoError(t, err)
 
 			err = reader.walkDisk(context.Background())
 			require.NoError(t, err)
+
+			basePath := reader.resolvedPath()
+			dashboard3Path := filepath.Join(basePath, "folderTwo", "folderThree", "dashboard3.json")
+			dashboard4Path := filepath.Join(basePath, "folderTwo", "folderThree", "folderFour", "dashboard4.json")
+			require.Contains(t, savedFolderByExternalID, dashboard3Path)
+			require.Equal(t, folderThreeUID, savedFolderByExternalID[dashboard3Path].folderUID)
+			require.Equal(t, int64(3), savedFolderByExternalID[dashboard3Path].folderID)
+			require.Contains(t, savedFolderByExternalID, dashboard4Path)
+			require.Equal(t, "folderFour-uid", savedFolderByExternalID[dashboard4Path].folderUID)
+			require.Equal(t, int64(4), savedFolderByExternalID[dashboard4Path].folderID)
 
 			require.Len(t, folderCreateCalls, 4, "cache: folderOne, folderTwo, folderThree created; folderFour reuses ancestors")
 			folderByTitle := make(map[string]*folder.CreateFolderCommand)
