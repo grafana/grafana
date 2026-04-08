@@ -5,7 +5,7 @@ SELECT
     c.ttl_ms,
     c.ttl_resources_ms,
     c.use_default_ttl,
-    c.created,
+    {{ if eq .Dialect "mysql" }}UNIX_TIMESTAMP(c.created){{ else if eq .Dialect "postgres" }}EXTRACT(EPOCH FROM c.created)::bigint{{ else }}CAST(strftime('%s', c.created) AS INTEGER){{ end }} AS created_epoch,
     d.type AS plugin_id,
     d.org_id
 FROM

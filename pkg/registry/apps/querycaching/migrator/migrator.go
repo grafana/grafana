@@ -61,7 +61,7 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 		for rows.Next() {
 			var row cacheConfigRow
 			if err = rows.Scan(&row.id, &row.dataSourceUID, &row.enabled, &row.ttlMS,
-				&row.ttlResourcesMS, &row.useDefaultTTL, &row.created,
+				&row.ttlResourcesMS, &row.useDefaultTTL, &row.createdEpoch,
 				&row.pluginID, &row.orgID); err != nil {
 				_ = rows.Close()
 				return err
@@ -70,14 +70,9 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 			n++
 
 			name := fmt.Sprintf("%s.%s", row.pluginID, row.dataSourceUID)
-			created, err := time.Parse("2006-01-02 15:04:05", row.created)
-			if err != nil {
-				_ = rows.Close()
-				return fmt.Errorf("parse created timestamp %q: %w", row.created, err)
-			}
 			body, err := json.Marshal(queryCacheConfigObject{
 				TypeMeta:   metav1.TypeMeta{APIVersion: apiGroup + "/" + apiVersion, Kind: "QueryCacheConfig"},
-				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(created)},
+				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(time.Unix(row.createdEpoch, 0))},
 				Spec: queryCacheConfigSpec{
 					DatasourceUID:  row.dataSourceUID,
 					PluginID:       row.pluginID,
@@ -154,7 +149,7 @@ type cacheConfigRow struct {
 	ttlMS          int64
 	ttlResourcesMS int64
 	useDefaultTTL  int64
-	created        string
+	createdEpoch   int64
 	pluginID       string
 	orgID          int64
 }
@@ -191,6 +186,7 @@ type sqlQueryCacheConfig struct {
 
 	CacheTable      string
 	DataSourceTable string
+	Dialect         string
 }
 
 func (r sqlQueryCacheConfig) Validate() error {
@@ -198,9 +194,11 @@ func (r sqlQueryCacheConfig) Validate() error {
 }
 
 func newQueryReq(sql *legacysql.LegacyDatabaseHelper, query *queryCacheConfigQuery) sqlQueryCacheConfig {
+	dialect := sql.DialectForDriver()
 	return sqlQueryCacheConfig{
-		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
+		SQLTemplate:     sqltemplate.New(dialect),
 		Query:           query,
+		Dialect:         dialect.DialectName(),
 		CacheTable:      sql.Table("data_source_cache"),
 		DataSourceTable: sql.Table("data_source"),
 	}
