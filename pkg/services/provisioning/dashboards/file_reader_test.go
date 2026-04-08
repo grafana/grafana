@@ -46,10 +46,24 @@ const (
 // folderServiceForFoldersFromFilesStructure returns a fake folder service for tests using foldersFromFilesStructure.
 // The real folderimpl requires Kubernetes REST config (apiserver);
 // the test setup uses WithoutRestConfig which causes "rest config will not be available".
-// This fake returns ErrFolderNotFound on Get, so folders are always created via
-// SaveFolderForProvisionedDashboards—the expected behavior for fresh provisioning.
+// Get falls back to ExpectedError (ErrFolderNotFound) when no folder matches title+parent,
+// so folders are created via SaveFolderForProvisionedDashboards—typical for fresh provisioning.
 func folderServiceForFoldersFromFilesStructure() folder.Service {
 	fakeFolder := foldertest.NewFakeService()
+	fakeFolder.ExpectedFolder = nil
+	fakeFolder.ExpectedError = dashboards.ErrFolderNotFound
+	return fakeFolder
+}
+
+// folderServiceWithPreexistingFilesStructureHierarchy seeds folders that mirror testdata/folders-from-files-structure
+// with UIDs that are not derived from any path hash, so tests can assert reuse by title+parent.
+func folderServiceWithPreexistingFilesStructureHierarchy() folder.Service {
+	fakeFolder := foldertest.NewFakeService()
+	const orgID int64 = 1
+	fakeFolder.AddFolder(&folder.Folder{OrgID: orgID, UID: "preexist-folderOne", Title: "folderOne", ParentUID: ""})
+	fakeFolder.AddFolder(&folder.Folder{OrgID: orgID, UID: "preexist-folderTwo", Title: "folderTwo", ParentUID: ""})
+	fakeFolder.AddFolder(&folder.Folder{OrgID: orgID, UID: "preexist-folderThree", Title: "folderThree", ParentUID: "preexist-folderTwo"})
+	fakeFolder.AddFolder(&folder.Folder{OrgID: orgID, UID: "preexist-folderFour", Title: "folderFour", ParentUID: "preexist-folderThree"})
 	fakeFolder.ExpectedFolder = nil
 	fakeFolder.ExpectedError = dashboards.ErrFolderNotFound
 	return fakeFolder
@@ -371,42 +385,13 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			}), configName).Run(func(args mock.Arguments) {
 				folderCreateCalls = append(folderCreateCalls, args[1].(*folder.CreateFolderCommand))
 			}).Return(&folder.Folder{ID: 4, UID: "folderFour-uid", Title: "folderFour"}, nil).Once()
-
-			// Map iteration order is undefined; record FolderUID/FolderID per provisioned file (ExternalID).
-			savedFolderByExternalID := make(map[string]struct {
-				folderUID string
-				folderID  int64
-			})
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).
-				Run(func(args mock.Arguments) {
-					dto := args.Get(1).(*dashboards.SaveDashboardDTO)
-					dp := args.Get(2).(*dashboards.DashboardProvisioning)
-					require.NotNil(t, dto)
-					require.NotNil(t, dto.Dashboard)
-					require.NotNil(t, dp)
-					savedFolderByExternalID[dp.ExternalID] = struct {
-						folderUID string
-						folderID  int64
-					}{folderUID: dto.Dashboard.FolderUID, folderID: dto.Dashboard.FolderID}
-				}).
-				Return(&dashboards.Dashboard{}, nil).
-				Times(5)
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
 
 			reader, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderServiceForFoldersFromFilesStructure(), cfgT)
 			require.NoError(t, err)
 
 			err = reader.walkDisk(context.Background())
 			require.NoError(t, err)
-
-			basePath := reader.resolvedPath()
-			dashboard3Path := filepath.Join(basePath, "folderTwo", "folderThree", "dashboard3.json")
-			dashboard4Path := filepath.Join(basePath, "folderTwo", "folderThree", "folderFour", "dashboard4.json")
-			require.Contains(t, savedFolderByExternalID, dashboard3Path)
-			require.Equal(t, folderThreeUID, savedFolderByExternalID[dashboard3Path].folderUID)
-			require.Equal(t, int64(3), savedFolderByExternalID[dashboard3Path].folderID)
-			require.Contains(t, savedFolderByExternalID, dashboard4Path)
-			require.Equal(t, "folderFour-uid", savedFolderByExternalID[dashboard4Path].folderUID)
-			require.Equal(t, int64(4), savedFolderByExternalID[dashboard4Path].folderID)
 
 			require.Len(t, folderCreateCalls, 4, "cache: folderOne, folderTwo, folderThree created; folderFour reuses ancestors")
 			folderByTitle := make(map[string]*folder.CreateFolderCommand)
@@ -417,73 +402,22 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			require.Equal(t, folderThreeUID, folderByTitle["folderFour"].ParentUID, "folderFour must be nested under folderThree")
 		})
 
-		t.Run("Deterministic folder UID across walks", func(t *testing.T) {
+		t.Run("Reuses existing folders by title and parent across walks", func(t *testing.T) {
 			setup()
 			cfg.Options["path"] = foldersFromFilesStructure
 			cfg.Options["foldersFromFilesStructure"] = true
 
-			// Capture UIDs by folder path (map iteration order varies, so we key by cumulative path).
-			firstWalkUIDsByPath := make(map[string]string)
-			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
-				return cmd.Title == "folderOne"
-			}), configName).Run(func(args mock.Arguments) {
-				firstWalkUIDsByPath["folderOne"] = args[1].(*folder.CreateFolderCommand).UID
-			}).Return(&folder.Folder{ID: 1, UID: "folderOne-uid", Title: "folderOne"}, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
-				return cmd.Title == "folderTwo"
-			}), configName).Run(func(args mock.Arguments) {
-				firstWalkUIDsByPath["folderTwo"] = args[1].(*folder.CreateFolderCommand).UID
-			}).Return(&folder.Folder{ID: 2, UID: "folderTwo-uid", Title: "folderTwo"}, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
-				return cmd.Title == "folderThree"
-			}), configName).Run(func(args mock.Arguments) {
-				firstWalkUIDsByPath["folderTwo/folderThree"] = args[1].(*folder.CreateFolderCommand).UID
-			}).Return(&folder.Folder{ID: 3, UID: "folderThree-uid", Title: "folderThree"}, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
-				return cmd.Title == "folderFour"
-			}), configName).Run(func(args mock.Arguments) {
-				firstWalkUIDsByPath["folderTwo/folderThree/folderFour"] = args[1].(*folder.CreateFolderCommand).UID
-			}).Return(&folder.Folder{ID: 4, UID: "folderFour-uid", Title: "folderFour"}, nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
+			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Twice()
+			// Folders are pre-seeded in the fake with non-hash UIDs; provisioning must not create folders.
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(10)
 
-			reader, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderServiceForFoldersFromFilesStructure(), cfgT)
+			reader, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderServiceWithPreexistingFilesStructureHierarchy(), cfgT)
 			require.NoError(t, err)
 
 			err = reader.walkDisk(context.Background())
 			require.NoError(t, err)
-			require.Len(t, firstWalkUIDsByPath, 4, "folderOne, folderTwo, folderThree and folderFour UIDs captured")
-
-			secondWalkUIDsByPath := make(map[string]string)
-			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
-				return cmd.Title == "folderOne"
-			}), configName).Run(func(args mock.Arguments) {
-				secondWalkUIDsByPath["folderOne"] = args[1].(*folder.CreateFolderCommand).UID
-			}).Return(&folder.Folder{}, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
-				return cmd.Title == "folderTwo"
-			}), configName).Run(func(args mock.Arguments) {
-				secondWalkUIDsByPath["folderTwo"] = args[1].(*folder.CreateFolderCommand).UID
-			}).Return(&folder.Folder{}, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
-				return cmd.Title == "folderThree"
-			}), configName).Run(func(args mock.Arguments) {
-				secondWalkUIDsByPath["folderTwo/folderThree"] = args[1].(*folder.CreateFolderCommand).UID
-			}).Return(&folder.Folder{}, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.MatchedBy(func(cmd *folder.CreateFolderCommand) bool {
-				return cmd.Title == "folderFour"
-			}), configName).Run(func(args mock.Arguments) {
-				secondWalkUIDsByPath["folderTwo/folderThree/folderFour"] = args[1].(*folder.CreateFolderCommand).UID
-			}).Return(&folder.Folder{}, nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
-
 			err = reader.walkDisk(context.Background())
 			require.NoError(t, err)
-			require.Len(t, secondWalkUIDsByPath, 4)
-			for path, firstUID := range firstWalkUIDsByPath {
-				require.Equal(t, firstUID, secondWalkUIDsByPath[path], "UID for %q must be stable across walks", path)
-			}
 		})
 
 		t.Run("Single-level and nested folders from files structure", func(t *testing.T) {
@@ -715,21 +649,6 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
-}
-
-func TestDeterministicFolderUID(t *testing.T) {
-	// Same inputs must produce the same UID.
-	uid1 := deterministicFolderUID(1, "default", "folderOne")
-	uid2 := deterministicFolderUID(1, "default", "folderOne")
-	require.Equal(t, uid1, uid2, "same inputs must yield same UID")
-
-	// Different inputs must produce different UIDs.
-	require.NotEqual(t, deterministicFolderUID(1, "default", "folderOne"), deterministicFolderUID(1, "default", "folderTwo"))
-	require.NotEqual(t, deterministicFolderUID(1, "default", "folderOne"), deterministicFolderUID(2, "default", "folderOne"))
-	require.NotEqual(t, deterministicFolderUID(1, "default", "folderOne"), deterministicFolderUID(1, "other", "folderOne"))
-
-	// UID must be valid length (Grafana max 40).
-	require.LessOrEqual(t, len(uid1), 40)
 }
 
 func TestSplitFolderFullpath(t *testing.T) {

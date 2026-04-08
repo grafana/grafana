@@ -518,9 +518,7 @@ Nested folder structures are supported: the folder hierarchy on disk is recreate
 
 For example, `folderTwo/folderThree/dashboard3.json` creates a folder `folderTwo` containing a folder `folderThree` that contains the dashboard.
 
-Folder depth is limited by the Grafana configuration (default `4` levels, maximum `7`).
-
-You can set `max_nested_folder_depth` in the `[folder]` section of your configuration file.
+The folder depth is limited to `4` levels.
 {{< /admonition >}}
 
 ## Alerting

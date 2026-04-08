@@ -39,15 +39,6 @@ type folderPathCacheEntry struct {
 	uid string
 }
 
-// deterministicFolderUID returns a stable UID for a folder path so that the same path
-// (org + provisioner + fullpath) always yields the same UID across runs and instances.
-func deterministicFolderUID(orgID int64, provisionerName string, folderFullpath string) string {
-	input := fmt.Sprintf("%d:%s:%s", orgID, provisionerName, folderFullpath)
-	hash, _ := util.Md5SumString(input)
-	// MD5 hex is 32 chars, within Grafana UID max length of 40.
-	return hash
-}
-
 // splitFolderFullpath splits folderFullpath by "/" and returns non-empty segments.
 // The path comes from the filesystem (filepath.Rel + ReplaceAll), so no escape handling is needed.
 func splitFolderFullpath(folderFullpath string) []string {
@@ -254,7 +245,9 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 // for shared ancestor paths. It is not thread-safe and must not be shared across provisioning cycles.
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
+	ctx, _ = identity.WithServiceIdentity(ctx, fr.Cfg.OrgID)
 	folderPathCache := make(map[string]folderPathCacheEntry)
+
 	for path, fileInfo := range filesFoundOnDisk {
 		dashboardsFolder := filepath.Dir(path)
 		relPath, err := filepath.Rel(resolvedPath, dashboardsFolder)
@@ -268,7 +261,6 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			folderFullpath = ""
 		}
 
-		ctx, _ = identity.WithServiceIdentity(ctx, fr.Cfg.OrgID)
 		var folderID int64
 		var folderUID string
 		if folderFullpath == "" {
@@ -425,7 +417,10 @@ func (fr *FileReader) getOrCreateFolderInternal(ctx context.Context, orgID int64
 		return 0, "", ErrFolderNameMissing
 	}
 
-	ctx, user := identity.WithServiceIdentity(ctx, orgID)
+	user, reqErr := identity.GetRequester(ctx)
+	if reqErr != nil {
+		return 0, "", reqErr
+	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 	cmd := &folder.GetFolderQuery{
@@ -493,6 +488,8 @@ func (fr *FileReader) getOrCreateFolderInternal(ctx context.Context, orgID int64
 }
 
 func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, folderName string) (int64, string, error) {
+	// Ensures Requester for getOrCreateFolderInternal when callers bypass storeDashboardsInFolder (e.g. tests); redundant if parent already wrapped ctx.
+	ctx, _ = identity.WithServiceIdentity(ctx, cfg.OrgID)
 	var explicitUID *string
 	if cfg.FolderUID != "" {
 		explicitUID = &cfg.FolderUID
@@ -503,6 +500,8 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, folder
 // getOrCreateFolderFullpath creates the nested folder hierarchy for folderFullpath (e.g. "level1/level2"),
 // reusing cached entries when cache is provided to avoid redundant Get/Create for shared ancestors.
 func (fr *FileReader) getOrCreateFolderFullpath(ctx context.Context, folderFullpath string, orgID int64, cache map[string]folderPathCacheEntry) (int64, string, error) {
+	// Same contract as getOrCreateFolder: direct callers/tests need identity; harmless duplicate when storeDashboardsInFoldersFromFileStructure already wrapped ctx.
+	ctx, _ = identity.WithServiceIdentity(ctx, orgID)
 	folderTitles := splitFolderFullpath(folderFullpath)
 	if len(folderTitles) == 0 {
 		return 0, "", fmt.Errorf("invalid folder full path: %s", folderFullpath)
@@ -530,8 +529,7 @@ func (fr *FileReader) getOrCreateFolderFullpath(ctx context.Context, folderFullp
 			}
 		}
 
-		uid := deterministicFolderUID(orgID, fr.Cfg.Name, cumulativePath)
-		id, uid, err := fr.getOrCreateFolderInternal(ctx, orgID, folderTitles[i], parentForNext, &uid)
+		id, uid, err := fr.getOrCreateFolderInternal(ctx, orgID, folderTitles[i], parentForNext, nil)
 		if err != nil {
 			return 0, "", err
 		}
