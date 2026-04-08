@@ -60,49 +60,45 @@ Watch the following video for a quick tutorial on creating annotations:
 To add an annotation, complete the following steps:
 
 1. If you've just saved a dashboard, refresh the page.
-1. Click a data point in the panel to which you're adding the annotation.
-
-   A context menu appears.
-
-1. In the context menu, click **Add annotation**.
+1. Click a data point in a panel to open the tooltip.
+1. In the tooltip, click **Add annotation**.
    ![Add annotation context menu](/static/img/docs/time-series-panel/time-series-annotations-context-menu.png)
 1. Add an annotation description and tags (optional).
 1. Click **Save**.
 
-Alternatively, to add an annotation, press Ctrl/Cmd and click anywhere on the panel, and the **Add annotation** context menu appears.
+Alternatively, to add an annotation, press Ctrl/Cmd and click anywhere on the panel, and the **Add annotation** tooltip appears.
 
 ### Add a region annotation
 
 1. If you've just saved a dashboard, refresh the page.
-1. Press Ctrl/Cmd and click and drag on the panel.
-   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-region-annotation.gif)
+1. Press Ctrl/Cmd and click and drag on the panel to open the **Add annotation** dialog box.
+   ![Add annotation dialog box](/static/img/docs/time-series-panel/time-series-annotations-add-region-annotation.gif)
 1. Add an annotation description and tags (optional).
 1. Click **Save**
 
 ### Edit an annotation
 
-1. Hover over the annotation indicator at the bottom of the panel to open the annotation tooltip.
-1. Click the pencil icon in the tooltip.
+1. Hover over the annotation indicator at the bottom of the panel to open the tooltip.
+1. Click the pencil icon to open the annotation dialog box.
 1. Modify the description and tags.
 1. Click **Save**.
 
 ### Delete an annotation
 
-1. Hover over the annotation indicator at the bottom of the panel to open the annotation tooltip.
-1. Click the trash icon in the tooltip.
-1. Click **Save**.
+1. Hover over the annotation indicator at the bottom of the panel to open the tooltip.
+1. Click the trash icon to open the annotation dialog box.
 
-## Fetch annotations through dashboard settings
+## Annotation queries
 
-In the dashboard settings, under **Annotations**, you can add new queries to fetch annotations using any data source, including the built-in data annotation data source. Annotation queries return events that can be visualized as event markers in graphs across the dashboard.
+You can add new queries to fetch annotations using any data source, including the built-in data annotation data source. Annotation queries return events that can be visualized as event markers in graphs across the dashboard.
 
 Check out the video below for a quick tutorial.
 
 {{< youtube id="2istdJpPj2Y" >}}
 
-### Add new annotation queries
+### Add annotation queries
 
-To add a new annotation query to a dashboard, follow these steps:
+To add an annotation query to a dashboard, follow these steps:
 
 {{< docs/list >}}
 
@@ -175,15 +171,14 @@ To confirm if the built-in query is enabled, take the following steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the **Dashboard options** icon in the toolbar.
-1. Expand the **Annotations** section of the dashboard options and open the **Hidden** sub-section.
+1. In the sidebar, click **Settings**.
+1. On the **Settings** page, go to the **Annotations** tab.
+1. Select the **Annotations & Alerts (Built-in query)**.
+1. Check if the **Enabled** checkbox is selected.
 
-    By default, the built-in query is hidden.
+    If you don't want annotations to be fetched and drawn, clear the checkbox.
 
-1. Confirm the **Enabled** is selected.
-
-    If you want to stop annotations from being fetched and drawn, clear the checkbox.
-
-1. Click **Save dashboard**.
+1. Click **Save**.
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Exit edit**.
 
