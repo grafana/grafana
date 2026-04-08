@@ -94,6 +94,7 @@ The following table describes the options you can set for a row or tab:
 | Title           | Title of the row or tab.                                                    |
 | Fill screen     | Toggle the switch on to make the row fill the screen. Rows only. |
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
+| Variables       | Add variables that apply to only the panels in the grouping. For more information, refer to [Grouping-level variables](#grouping-level-variables). For information configuring variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables). |
 | Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
 | Show / hide rules > [Panel/Row/Tab visibility](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
@@ -222,3 +223,27 @@ In the following image, the panels are grouped into two rows, but the header of 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.0.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
 
 When you hide the header of a row, you can't collapse the row.
+
+## Grouping-level variables
+
+{{< docs/public-preview product="Section level variables" featureFlag="dashboardSectionVariables" >}}
+
+You can add variables to groupings that apply only to the panels in that grouping.
+
+For example, if your dashboard includes both an API gateway and a database, changing something like an `$instance` variable affects all panels at once.
+To avoid this, you might have to split up services across separate dashboards, which defeats the purpose of having a unified view.
+
+Grouping-level variables address this by letting each row or tab have its own independent filters.
+For example, an API gateway row can use one set of instances, while a database row in the same dashboard uses another set.
+However, both rows still share the same time range, and the underlying dashboard remains unchanged.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-grouping-variables-v13.0.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
+
+Panels in the grouping resolve grouping-level variables first, then fall back to dashboard-level variables, while panels in other sections remain unaffected.
+
+The panel query editor's autocomplete is context-aware, showing only the variables available to the panel you're editing.
+Also, section-level variables carry over when converting between row and tab layouts, and work with repeating rows and tabs.
+
+{{< admonition type="note" >}}
+Section-level variables are not supported for Filter and group by.
+{{< /admonition >}}
