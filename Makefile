@@ -301,10 +301,10 @@ install-cue:
 	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
 
 .PHONY: fix-cue
-fix-cue:
+fix-cue: install-cue
 	@echo "formatting cue files"
-	$(cue) fix kinds/**/*.cue
-	$(cue) fix public/app/plugins/**/**/*.cue
+	$(CUE) fix kinds/**/*.cue
+	$(CUE) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
