@@ -947,7 +947,7 @@ func TestUserK8sService_Update(t *testing.T) {
 }
 
 func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
-	makeListResponse := func(userID int64, lastSeenAtMs int64) func(http.ResponseWriter, *http.Request) {
+	makeListResponse := func(userID int64, lastSeenAtSec int64) func(http.ResponseWriter, *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			switch r.Method {
@@ -965,7 +965,7 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 								"labels":    map[string]any{"grafana.app/deprecatedInternalID": strconv.FormatInt(userID, 10)},
 							},
 							"spec":   map[string]any{"login": "jdoe"},
-							"status": map[string]any{"lastSeenAt": lastSeenAtMs},
+							"status": map[string]any{"lastSeenAt": lastSeenAtSec},
 						},
 					},
 				}
@@ -976,7 +976,7 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 					"kind":       "User",
 					"metadata":   map[string]any{"name": "some-uid", "namespace": "org-1"},
 					"spec":       map[string]any{"login": "jdoe"},
-					"status":     map[string]any{"lastSeenAt": time.Now().UnixMilli()},
+					"status":     map[string]any{"lastSeenAt": time.Now().Unix()},
 				})
 			}
 		}
@@ -1002,7 +1002,7 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 			name:        "skips update when last seen is within the interval",
 			cmd:         &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1},
 			cfg:         &setting.Cfg{UserLastSeenUpdateInterval: 1 * time.Hour},
-			serverFn:    makeListResponse(42, time.Now().UnixMilli()), // just seen
+			serverFn:    makeListResponse(42, time.Now().Unix()), // just seen
 			expectErr:   true,
 			expectErrIs: user.ErrLastSeenUpToDate,
 		},

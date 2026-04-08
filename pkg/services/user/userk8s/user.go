@@ -398,13 +398,13 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 	}
 
 	if existing.Status.LastSeenAt != 0 {
-		lastSeen := time.UnixMilli(existing.Status.LastSeenAt)
+		lastSeen := time.Unix(existing.Status.LastSeenAt, 0)
 		if time.Since(lastSeen) <= s.config.UserLastSeenUpdateInterval {
 			return user.ErrLastSeenUpToDate
 		}
 	}
 
-	existing.Status.LastSeenAt = time.Now().UnixMilli()
+	existing.Status.LastSeenAt = time.Now().Unix()
 
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&existing)
 	if err != nil {
