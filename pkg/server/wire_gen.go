@@ -1792,7 +1792,19 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	consolidationService := service6.ProvideConsolidationService(tracer, globalDataKeyStorage, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
-	runner := NewRunner(cfg, sqlStore, ossImpl, serviceService, featureToggles, secretsService, secretsMigrator, userimplService, consolidationService)
+	secretDBMigrator := migrator.NewWithEngine(sqlStore)
+	actionSetService := resourcepermissions.NewActionSetService()
+	permissionRegistry := permreg.ProvidePermissionRegistry()
+	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService)
+	if err != nil {
+		return Runner{}, err
+	}
+	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	if err != nil {
+		return Runner{}, err
+	}
+	runner := NewRunner(cfg, sqlStore, ossImpl, serviceService, featureToggles, secretsService, secretsMigrator, userimplService, consolidationService, dependencyRegisterer)
 	return runner, nil
 }
 

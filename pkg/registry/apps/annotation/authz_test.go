@@ -53,52 +53,44 @@ func TestCanAccessAnnotation(t *testing.T) {
 
 	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
-	tests := []struct {
-		desc              string
-		anno              *annotationV0.Annotation
-		expectedGroup     string
-		expectedName      string
-		expectedNamespace string
-	}{
-		{
-			desc: "org annotation uses annotation.grafana.app/organization scope",
-			anno: &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
-			},
-			expectedGroup:     "annotation.grafana.app",
-			expectedName:      "organization",
-			expectedNamespace: ns,
-		},
-		{
-			desc: "dashboard annotation uses dashboard.grafana.app/<dashUID> scope",
-			anno: &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
-				Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
-			},
-			expectedGroup:     "dashboard.grafana.app",
-			expectedName:      dashUID,
-			expectedNamespace: ns,
-		},
-	}
+	var captured authtypes.CheckRequest
+	accessClient := &fakeAccessClient{fn: func(req authtypes.CheckRequest) bool {
+		captured = req
+		return true
+	}}
 
-	for _, tc := range tests {
-		t.Run(tc.desc, func(t *testing.T) {
-			var captured authtypes.CheckRequest
-			accessClient := &fakeAccessClient{fn: func(req authtypes.CheckRequest) bool {
-				captured = req
-				return true
-			}}
+	t.Run("org annotation", func(t *testing.T) {
+		anno := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
+		}
+		allowed, err := canAccessAnnotation(ctx, accessClient, ns, anno, utils.VerbGet)
+		require.NoError(t, err)
+		require.True(t, allowed)
 
-			allowed, err := canAccessAnnotation(ctx, accessClient, ns, tc.anno, utils.VerbGet)
-			require.NoError(t, err)
-			require.True(t, allowed)
+		assert.Equal(t, "annotation.grafana.app", captured.Group)
+		assert.Equal(t, "annotations", captured.Resource)
+		assert.Equal(t, "organization", captured.Name)
+		assert.Equal(t, ns, captured.Namespace)
+		assert.Equal(t, utils.VerbGet, captured.Verb)
+		assert.Equal(t, "", captured.Subresource)
+	})
 
-			assert.Equal(t, tc.expectedGroup, captured.Group)
-			assert.Equal(t, "annotations", captured.Resource)
-			assert.Equal(t, tc.expectedName, captured.Name)
-			assert.Equal(t, tc.expectedNamespace, captured.Namespace)
-		})
-	}
+	t.Run("dashboard annotation", func(t *testing.T) {
+		anno := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+		}
+		allowed, err := canAccessAnnotation(ctx, accessClient, ns, anno, utils.VerbGet)
+		require.NoError(t, err)
+		require.True(t, allowed)
+
+		assert.Equal(t, "dashboard.grafana.app", captured.Group)
+		assert.Equal(t, "dashboards", captured.Resource)
+		assert.Equal(t, "annotations", captured.Subresource)
+		assert.Equal(t, dashUID, captured.Name)
+		assert.Equal(t, ns, captured.Namespace)
+		assert.Equal(t, utils.VerbGet, captured.Verb)
+	})
 }
 
 func TestCanAccessAnnotations(t *testing.T) {
