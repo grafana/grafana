@@ -1515,7 +1515,8 @@
       "metadata": {
         "name": "dashboardScene",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-11-13T08:51:21Z"
+        "creationTimestamp": "2023-11-13T08:51:21Z",
+        "deletionTimestamp": "2026-04-02T16:02:52Z"
       },
       "spec": {
         "description": "Enables dashboard rendering using scenes for all roles",
@@ -4354,7 +4355,8 @@
       "metadata": {
         "name": "publicDashboardsScene",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-03-22T14:48:21Z"
+        "creationTimestamp": "2024-03-22T14:48:21Z",
+        "deletionTimestamp": "2026-04-02T16:02:52Z"
       },
       "spec": {
         "description": "Enables public dashboard rendering using scenes",

@@ -1,7 +1,6 @@
 Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-02-15,panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
 2023-01-03,publicDashboardsEmailSharing,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2024-03-22,publicDashboardsScene,GA,@grafana/grafana-operator-experience-squad,false,false,true
 2023-06-19,lokiExperimentalStreaming,experimental,@grafana/data-sources-plugins,false,false,false
 2022-02-03,featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 2022-03-17,storage,experimental,@grafana/search-and-storage,false,false,false
@@ -75,7 +74,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2026-03-12,annotationsClustering,preview,@grafana/dataviz-squad,false,false,true
-2023-11-13,dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 2024-10-23,dashboardNewLayouts,GA,@grafana/dashboards-squad,false,false,false
 2026-03-19,dashboardDefaultLayoutSelector,GA,@grafana/dashboards-squad,false,false,true
 2026-03-10,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
@@ -106,11 +104,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-11-27,scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2025-07-31,useScopeSingleNodeEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2025-08-29,useMultipleScopeNodesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-<<<<<<< HEAD
 2024-11-11,logQLScope,privatePreview,@grafana/data-sources-plugins,false,false,false
-=======
-2024-11-11,logQLScope,privatePreview,@grafana/oss-big-tent,false,false,false
->>>>>>> main
 2024-02-27,sqlExpressions,preview,@grafana/grafana-datasources-core-services,false,false,false
 2025-07-23,sqlExpressionsColumnAutoComplete,experimental,@grafana/datapro,false,false,true
 2024-02-12,kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -345,7 +339,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-25,useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-03-24,frontendServiceSSOAutoLogin,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-03-25,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
-2026-03-27,streamingForwardTeamHeadersTempo,privatePreview,@grafana/oss-big-tent,false,false,false
+2026-03-27,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
 2026-03-19,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
 2026-03-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-03-28,queryServiceQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,false,false
