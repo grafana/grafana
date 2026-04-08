@@ -122,9 +122,17 @@ export function RecentlyViewedDashboards() {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     title: css({
-      cursor: 'default',
-      '& [id^="collapse-button-"] svg': {
-        color: theme.colors.primary.text,
+      cursor: 'pointer',
+      padding: theme.spacing(0.5, 0),
+      '& [id^="collapse-button-"]': {
+        padding: theme.spacing(0, 1),
+        svg: {
+          color: theme.colors.primary.text,
+          transition: theme.transitions.create('color'),
+        },
+        '&:hover svg': {
+          color: theme.colors.text.maxContrast,
+        },
       },
       h3: {
         background: `linear-gradient(90deg, ${theme.colors.primary.shade} 0%, ${theme.colors.primary.text} 100%)`,
@@ -133,7 +141,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: 'transparent',
         cursor: 'pointer',
       },
-      padding: 0,
     }),
     content: css({
       paddingTop: theme.spacing(0),
