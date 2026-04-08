@@ -12181,7 +12181,12 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-template-dashboard-button": "Dashboard from template"
+      "blank": "Blank",
+      "create": "Create",
+      "from-template": "From template",
+      "group-alert-rule": "New alert rule",
+      "group-dashboard": "New dashboard",
+      "import": "Import"
     },
     "rss-button": "Latest from the blog"
   },
