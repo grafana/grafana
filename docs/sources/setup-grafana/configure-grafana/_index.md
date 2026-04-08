@@ -710,6 +710,10 @@ to data source settings to re-encode them.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
+#### `gravatar_url`
+
+The base URL to use for fetching Gravatar profile images. Default is `https://secure.gravatar.com/avatar`.
+
 #### `data_source_proxy_whitelist`
 
 Define a allowlist of IP addresses or domains with ports, that can be used in data source URLs with the Grafana data source proxy.
