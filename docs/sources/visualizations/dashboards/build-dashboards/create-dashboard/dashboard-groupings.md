@@ -253,7 +253,3 @@ Also, grouping-level variables carry over when you convert between rows and tabs
 Grouping-level variables are supported for all variable types except **Filter and group by** (formerly ad hoc variables).
 
 <!-- vale Grafana.Spelling = YES -->
-
-{{< admonition type="tip" >}}
-When using Grafana Assistant to help you configure grouping-level variables, you might need to refer to the feature toggle name "section-level variables".
-{{< /admonition >}}
