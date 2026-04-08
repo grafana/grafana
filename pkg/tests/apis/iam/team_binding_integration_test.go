@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -20,98 +21,59 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationTeamBindingsMode0(t *testing.T) {
+func TestIntegrationTeamBindings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:      false,
-		DisableAnonymous:       true,
-		RBACSingleOrganization: true,
-		APIServerStorageType:   "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"teambindings.iam.grafana.app": {
-				DualWriterMode: rest.Mode0,
-			},
-		},
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			featuremgmt.FlagKubernetesTeamsApi,
-			featuremgmt.FlagKubernetesUsersApi,
-		},
-	})
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1} {
+		t.Run(fmt.Sprintf("mode_%d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
+				GrafanaOpts: testinfra.GrafanaOpts{
+					AppModeProduction:      false,
+					DisableAnonymous:       true,
+					RBACSingleOrganization: true,
+					EnableLog:              true,
+					APIServerStorageType:   "unified",
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						"teambindings.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					},
+					EnableFeatureToggles: []string{
+						featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+						featuremgmt.FlagKubernetesTeamsApi,
+						featuremgmt.FlagKubernetesUsersApi,
+					},
+				},
+				HTTPClientTimeout: 60 * time.Second,
+			})
 
-	ctx := context.Background()
+			ctx := context.Background()
 
-	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-		GVR:       gvrTeams,
-	})
+			teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User:      helper.Org1.Admin,
+				Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+				GVR:       gvrTeams,
+			})
 
-	team, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
-	require.NoError(t, err)
-	require.NotNil(t, team)
+			team, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, team)
 
-	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-		GVR:       gvrUsers,
-	})
+			userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User:      helper.Org1.Admin,
+				Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+				GVR:       gvrUsers,
+			})
 
-	user, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
-	require.NoError(t, err)
-	require.NotNil(t, user)
+			user, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, user)
 
-	doTeamBindingCRUDTestsUsingTheNewAPIs(t, helper, team, user)
-	doTeamBindingFieldSelectionTests(t, helper)
-	doTeamBindingCRUDTestsUsingTheLegacyAPIs(t, helper)
-}
-
-func TestIntegrationTeamBindingsMode1(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:      false,
-		DisableAnonymous:       true,
-		RBACSingleOrganization: true,
-		APIServerStorageType:   "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"teambindings.iam.grafana.app": {
-				DualWriterMode: rest.Mode1,
-			},
-		},
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			featuremgmt.FlagKubernetesTeamsApi,
-			featuremgmt.FlagKubernetesUsersApi,
-		},
-	})
-
-	ctx := context.Background()
-
-	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-		GVR:       gvrTeams,
-	})
-
-	team, err := teamClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml"), metav1.CreateOptions{})
-	require.NoError(t, err)
-	require.NotNil(t, team)
-
-	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
-		GVR:       gvrUsers,
-	})
-
-	user, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
-	require.NoError(t, err)
-	require.NotNil(t, user)
-
-	doTeamBindingCRUDTestsUsingTheNewAPIs(t, helper, team, user)
-	doTeamBindingFieldSelectionTests(t, helper)
-	doTeamBindingCRUDTestsUsingTheLegacyAPIs(t, helper)
+			doTeamBindingCRUDTestsUsingTheNewAPIs(t, helper, team, user)
+			doTeamBindingFieldSelectionTests(t, helper)
+			doTeamBindingCRUDTestsUsingTheLegacyAPIs(t, helper)
+		})
+	}
 }
 
 func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper, team *unstructured.Unstructured, user *unstructured.Unstructured) {
