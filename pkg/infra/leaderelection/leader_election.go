@@ -1,0 +1,153 @@
+package leaderelection
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	clientrest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/leaderelection"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+)
+
+// Config holds the common settings every leader-election consumer needs.
+type Config struct {
+	// Enabled activates Kubernetes lease-based leader election.
+	Enabled bool
+	// LeaseName is the name of the Kubernetes Lease object.
+	LeaseName string
+	// Namespace is the Kubernetes namespace for the Lease object.
+	Namespace string
+	// Identity is the unique identity of this replica in the Lease.
+	Identity string
+	// LeaseDuration is how long a lease is held before another candidate can
+	// acquire it.
+	LeaseDuration time.Duration
+	// RenewDeadline is the duration the leader retries refreshing leadership
+	// before giving up.
+	RenewDeadline time.Duration
+	// RetryPeriod is the interval between leader election retries.
+	RetryPeriod time.Duration
+}
+
+// Elector abstracts the leader election mechanism.
+type Elector interface {
+	// Run blocks, calling fn when this instance acquires leadership.
+	// fn receives a context cancelled when leadership is lost.
+	// Run returns when ctx is cancelled.
+	Run(ctx context.Context, fn func(ctx context.Context)) error
+}
+
+// NoopElector always acts as the leader (single-instance / backward compat).
+type NoopElector struct{}
+
+// NewNoopElector returns a NoopElector that always acts as leader.
+func NewNoopElector() *NoopElector {
+	return &NoopElector{}
+}
+
+// Run calls fn immediately and blocks until ctx is cancelled.
+func (n *NoopElector) Run(ctx context.Context, fn func(ctx context.Context)) error {
+	fn(ctx)
+	return ctx.Err()
+}
+
+// KubernetesElector uses coordination.k8s.io/v1 Lease resources.
+type KubernetesElector struct {
+	leaseName     string
+	namespace     string
+	identity      string
+	leaseDuration time.Duration
+	renewDeadline time.Duration
+	retryPeriod   time.Duration
+	kubeClient    kubernetes.Interface
+	logger        log.Logger
+}
+
+// NewKubernetesElector creates a KubernetesElector.
+// cfg.LeaseName, cfg.Namespace, and cfg.Identity must be non-empty.
+func NewKubernetesElector(
+	restCfg *clientrest.Config,
+	cfg Config,
+	logger log.Logger,
+) (*KubernetesElector, error) {
+	if cfg.LeaseName == "" {
+		return nil, fmt.Errorf("leader_election_lease_name must be set")
+	}
+	if cfg.Namespace == "" {
+		return nil, fmt.Errorf("leader_election_namespace must be set")
+	}
+	if cfg.Identity == "" {
+		return nil, fmt.Errorf("leader_election_identity must be set")
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(restCfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
+	}
+
+	return &KubernetesElector{
+		leaseName:     cfg.LeaseName,
+		namespace:     cfg.Namespace,
+		identity:      cfg.Identity,
+		leaseDuration: cfg.LeaseDuration,
+		renewDeadline: cfg.RenewDeadline,
+		retryPeriod:   cfg.RetryPeriod,
+		kubeClient:    kubeClient,
+		logger:        logger,
+	}, nil
+}
+
+// Run participates in leader election and calls fn when leadership is acquired.
+// fn receives a context that is cancelled when leadership is lost.
+// Run blocks until ctx is cancelled.
+func (k *KubernetesElector) Run(ctx context.Context, fn func(ctx context.Context)) error {
+	lock := &resourcelock.LeaseLock{
+		LeaseMeta: metav1.ObjectMeta{
+			Name:      k.leaseName,
+			Namespace: k.namespace,
+		},
+		Client: k.kubeClient.CoordinationV1(),
+		LockConfig: resourcelock.ResourceLockConfig{
+			Identity: k.identity,
+		},
+	}
+
+	le, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
+		Lock:            lock,
+		LeaseDuration:   k.leaseDuration,
+		RenewDeadline:   k.renewDeadline,
+		RetryPeriod:     k.retryPeriod,
+		ReleaseOnCancel: true,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(ctx context.Context) {
+				k.logger.Info("Acquired leader lease, starting leader work",
+					"identity", k.identity,
+					"lease", k.leaseName,
+					"namespace", k.namespace,
+				)
+				fn(ctx)
+			},
+			OnStoppedLeading: func() {
+				k.logger.Info("Lost leader lease, stopping leader work",
+					"identity", k.identity,
+				)
+			},
+			OnNewLeader: func(identity string) {
+				if identity != k.identity {
+					k.logger.Info("New leader elected", "leader", identity)
+				}
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create leader elector: %w", err)
+	}
+
+	le.Run(ctx)
+	return ctx.Err()
+}
