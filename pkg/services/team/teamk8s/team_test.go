@@ -1170,7 +1170,6 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 	}
 }
 
-
 func mustToUnstructured(t *testing.T, obj any) map[string]any {
 	t.Helper()
 	result, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
@@ -1392,14 +1391,14 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 
 func TestTeamK8sService_RemoveUsersMemberships(t *testing.T) {
 	tests := []struct {
-		name            string
-		userID          int64
-		requesterOrgID  int64
-		serverResponse  func(deletedBindings *[]string) func(w http.ResponseWriter, r *http.Request)
-		nilProvider     bool
-		noReqContext    bool
-		expectErr       bool
-		expectDeleted   []string
+		name           string
+		userID         int64
+		requesterOrgID int64
+		serverResponse func(deletedBindings *[]string) func(w http.ResponseWriter, r *http.Request)
+		nilProvider    bool
+		noReqContext   bool
+		expectErr      bool
+		expectDeleted  []string
 	}{
 		{
 			name:           "deletes all bindings for user",
@@ -1536,11 +1535,11 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 			expectMembers:  0,
 		},
 		{
-			name:   "returns memberships with member permission",
-			orgID:  1,
-			userID: 42,
+			name:           "returns memberships with member permission",
+			orgID:          1,
+			userID:         42,
 			serverResponse: membershipServerHandlerWithPermission(t, iamv0alpha1.TeamBindingTeamPermissionMember),
-			expectMembers: 1,
+			expectMembers:  1,
 			validate: func(t *testing.T, result []*team.TeamMemberDTO) {
 				assert.Equal(t, team.PermissionTypeMember, result[0].Permission)
 			},
@@ -1844,7 +1843,6 @@ func membershipServerHandlerWithEmptyBindings(t *testing.T) func(w http.Response
 		}
 	}
 }
-
 
 func teamListResponse(name, namespace, title, email string) map[string]any {
 	return map[string]any{
