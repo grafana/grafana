@@ -5,24 +5,6 @@ import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, store } from '@graf
 
 import { LogsMetaRow } from './LogsMetaRow';
 
-const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
-
-const setBooleanFlags = (flags: Record<string, boolean>) => {
-  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
-    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
-  });
-};
-
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
-}));
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: () => null,
-}));
-
 type LogsMetaRowProps = ComponentProps<typeof LogsMetaRow>;
 const defaultProps: LogsMetaRowProps = {
   meta: [],
@@ -44,13 +26,6 @@ const setup = (propOverrides?: Partial<LogsMetaRowProps>) => {
 };
 
 describe('LogsMetaRow', () => {
-  beforeEach(() => {
-    setBooleanFlags({
-      logsPanelControls: false,
-      newLogsPanel: false,
-    });
-  });
-
   it('renders the dedupe number', async () => {
     setup({ dedupStrategy: LogsDedupStrategy.numbers, dedupCount: 1234 });
     expect(await screen.findByText('1234')).toBeInTheDocument();
