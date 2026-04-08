@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -18,7 +17,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -330,35 +328,18 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
-					log := logging.DefaultLogger.With("handler", "deleteByKey")
 
-					log.Debug("delete by key request received", "method", r.Method, "url", r.URL.String())
-
-					// In public mode, accept the external snapshot token as authorization
-					authorized := false
-					if options.PublicMode && options.ExternalSnapshotToken != "" {
-						authHeader := r.Header.Get("Authorization")
-						log.Debug("checking token auth", "publicMode", options.PublicMode, "hasToken", options.ExternalSnapshotToken != "", "hasAuthHeader", authHeader != "", "authMatch", authHeader == "Bearer "+options.ExternalSnapshotToken)
-						if authHeader == "Bearer "+options.ExternalSnapshotToken {
-							authorized = true
-						}
+					// RBAC check for snapshot deletion
+					// The service account token is validated by Grafana's auth middleware
+					user, err := identity.GetRequester(ctx)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
 					}
-
-					if !authorized {
-						log.Debug("token auth not granted, falling back to RBAC")
-						// RBAC check for snapshot deletion
-						user, err := identity.GetRequester(ctx)
-						if err != nil {
-							log.Debug("failed to get requester", "error", err)
-							errhttp.Write(ctx, err, w)
-							return
-						}
-						if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsDelete)); !ok || err != nil {
-							log.Debug("RBAC denied", "user", user.GetLogin(), "error", err)
-							w.WriteHeader(http.StatusForbidden)
-							_ = json.NewEncoder(w).Encode(&util.DynMap{"message": "access denied"})
-							return
-						}
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsDelete)); !ok || err != nil {
+						w.WriteHeader(http.StatusForbidden)
+						_ = json.NewEncoder(w).Encode(&util.DynMap{"message": "access denied"})
+						return
 					}
 
 					vars := mux.Vars(r)
@@ -367,7 +348,6 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 
 					storage := storageGetter()
 					if storage == nil {
-						log.Debug("snapshot storage not available")
 						errhttp.Write(ctx, fmt.Errorf("snapshot storage not available"), w)
 						return
 					}
@@ -376,37 +356,12 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					ctx = k8srequest.WithNamespace(ctx, namespace)
 
 					// Look up snapshot name by deleteKey
-					// TODO: This needs to be chagned, we can't loop through all snapshots to get the name by deleteKey
-					log.Debug("looking up snapshot by deleteKey", "deleteKey", deleteKey)
-					lister, ok := storage.(rest.Lister)
-					if !ok {
-						errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support list"), w)
-						return
-					}
-					obj, err := lister.List(ctx, &internalversion.ListOptions{})
-					if err != nil {
-						log.Debug("list failed", "error", err)
-						errhttp.Write(ctx, fmt.Errorf("failed to list snapshots: %w", err), w)
-						return
-					}
-					list, ok := obj.(*dashv0.SnapshotList)
-					if !ok {
-						errhttp.Write(ctx, fmt.Errorf("expected SnapshotList, got %T", obj), w)
-						return
-					}
-					var snapshotName string
-					for i := range list.Items {
-						if list.Items[i].Spec.DeleteKey != nil && *list.Items[i].Spec.DeleteKey == deleteKey {
-							snapshotName = list.Items[i].Name
-							break
-						}
-					}
-					if snapshotName == "" {
-						log.Debug("deleteKey not found", "deleteKey", deleteKey)
+					// TODO: replace this to not use the legacy service
+					snap, err := service.GetDashboardSnapshot(ctx, &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: deleteKey})
+					if err != nil || snap == nil {
 						errhttp.Write(ctx, fmt.Errorf("snapshot not found for delete key"), w)
 						return
 					}
-					log.Debug("deleteKey resolved", "deleteKey", deleteKey, "snapshotName", snapshotName)
 
 					deleter, ok := storage.(rest.GracefulDeleter)
 					if !ok {
@@ -414,13 +369,11 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						return
 					}
 
-					_, _, err = deleter.Delete(ctx, snapshotName, nil, &metav1.DeleteOptions{})
+					_, _, err = deleter.Delete(ctx, snap.Key, nil, &metav1.DeleteOptions{})
 					if err != nil {
-						log.Debug("delete failed", "snapshotName", snapshotName, "error", err)
 						errhttp.Write(ctx, fmt.Errorf("failed to delete snapshot: %w", err), w)
 						return
 					}
-					log.Debug("snapshot deleted successfully", "snapshotName", snapshotName)
 					_ = json.NewEncoder(w).Encode(&util.DynMap{
 						"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
 					})

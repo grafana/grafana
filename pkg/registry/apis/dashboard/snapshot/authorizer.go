@@ -20,10 +20,21 @@ func NewSnapshotAuthorizer(accessControl ac.AccessControl, publicMode bool) auth
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
-			// In public mode, allow anonymous read access to snapshots and the dashboard subresource
-			if publicMode && attr.GetVerb() == "get" {
+			// In public mode, allow anonymous access for:
+			// - GET on snapshots and the dashboard subresource (public viewing)
+			// - Custom routes (create, delete/{deleteKey}, settings) which are parsed by
+			//   the K8s request resolver as name={route}, subresource={param}.
+			//   Authentication for these is handled by the route handlers themselves.
+			if publicMode {
 				sub := attr.GetSubresource()
-				if sub == "" || sub == "dashboard" {
+				verb := attr.GetVerb()
+				name := attr.GetName()
+				if verb == "get" && (sub == "" || sub == "dashboard") {
+					return authorizer.DecisionAllow, "", nil
+				}
+				// Custom routes: snapshots/create, snapshots/delete/{deleteKey}, snapshots/settings
+				// are parsed as name="create"|"delete"|"settings" with optional subresource
+				if name == "create" || name == "delete" || name == "settings" {
 					return authorizer.DecisionAllow, "", nil
 				}
 			}
