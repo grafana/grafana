@@ -80,6 +80,13 @@ func ProvideService(
 		return nil, err
 	}
 
+	// Clean up plugin RBAC data for configured plugins
+	if len(cfg.RBAC.PluginsCleanup) > 0 {
+		if err := service.CleanupPluginRBAC(context.Background(), cfg.RBAC.PluginsCleanup); err != nil {
+			return nil, err
+		}
+	}
+
 	return service, nil
 }
 
@@ -887,6 +894,11 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 
 func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
+}
+
+// CleanupPluginRBAC removes all RBAC data (roles, permissions, assignments) for the given plugin IDs.
+func (s *Service) CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error {
+	return s.store.CleanupPluginRBAC(ctx, pluginIDs)
 }
 
 func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {

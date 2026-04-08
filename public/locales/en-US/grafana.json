@@ -4923,6 +4923,9 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
+    "badge": {
+      "provisioned": "Provisioned"
+    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -4998,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connect data to Grafana through data sources, integrations and apps",
-          "title": "Add new connection"
+          "subtitle": "Connect data to Grafana through data sources, integrations and apps"
         },
         "collector": {
-          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector",
-          "title": "Collector"
+          "subtitle": "Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": "Configure and manage your telemetry collectors"
         },
         "data-sources": {
-          "subtitle": "Manage your existing data source connections",
-          "title": "Data sources"
+          "subtitle": "Manage your existing data source connections"
+        },
+        "fleet-management": {
+          "subtitle": "Manage your collector inventory and remotely configure your fleet"
+        },
+        "instrumentation-hub": {
+          "subtitle": "Instrument all your services with a single click using ongoing instrumentation and Kubernetes monitoring."
         },
         "integrations": {
-          "subtitle": "Manage your active integrations",
-          "title": "Integrations"
+          "subtitle": "Manage your active integrations"
         },
         "private-data-source-connections": {
-          "subtitle": "Manage your private network connections for data sources",
-          "title": "Private data source connect"
+          "subtitle": "Manage your private network connections for data sources"
         },
         "subtitle": "Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines."
       }
@@ -5075,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connect to a new data source",
-          "title": "Add new connection"
+          "subtitle": "Connect to a new data source"
         },
         "data-sources": {
-          "subtitle": "Manage your existing data source connections",
           "title": "View configured data sources"
         },
         "subtitle": "Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections."
@@ -5129,10 +5134,6 @@
       "view-json-diff": "View JSON diff to see all changes"
     }
   },
-  "correlation": {
-    "edit-error": "Error updating correlation",
-    "edit-success": "Correlation updated"
-  },
   "correlations": {
     "add-new": "Add new",
     "alert": {
@@ -5174,6 +5175,14 @@
       "back-button": "Back",
       "next-button": "Next",
       "save-button": "Save"
+    },
+    "notify": {
+      "create-error": "Error creating correlation",
+      "create-success": "Correlation created",
+      "delete-error": "Error deleting correlation",
+      "delete-success": "Correlation deleted",
+      "edit-error": "Error updating correlation",
+      "edit-success": "Correlation updated"
     },
     "query-editor": {
       "control-rules": "The selected target data source must export a query editor.",
@@ -5240,11 +5249,6 @@
       "transform-required": "Please select a transformation type",
       "type-label": "Type",
       "type-tooltip": "The type of transformation that will be applied to the source data."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Run query"
     }
   },
   "dashboard": {
@@ -7694,6 +7698,7 @@
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
+      "run-query": "Run query",
       "text-running-query": "Running query...",
       "title": {
         "delete-variable": "Delete variable"
@@ -11404,6 +11409,12 @@
       "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
+      "table-wrap-text": {
+        "disable": "Disable text wrapping",
+        "disabled": "Wrapping disabled",
+        "enable": "Enable text wrapping",
+        "enabled": "Wrapping enabled"
+      },
       "timestamp": {
         "hide": "Hide timestamps",
         "label": "Log timestamps",
@@ -12317,6 +12328,8 @@
       "description": "Notifications you have received will appear here",
       "title": "You're all caught up!"
     },
+    "select-all": "Select all notifications",
+    "select-notification": "Select {{title}}",
     "stored-notifications": {
       "dismiss-notifications": "Dismiss notifications",
       "title-alert": "This page displays past errors and warnings. Once dismissed, they cannot be retrieved."

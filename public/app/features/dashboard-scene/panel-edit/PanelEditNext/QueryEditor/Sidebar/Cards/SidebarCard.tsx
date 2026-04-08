@@ -22,8 +22,9 @@ interface SidebarCardProps {
   children: React.ReactNode;
   id: string;
   isSelected: boolean;
+  isPartOfSelection?: boolean;
   item: ActionItem;
-  onClick: () => void;
+  onSelect: (modifiers?: { multi?: boolean; range?: boolean }) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onToggleHide?: () => void;
@@ -34,8 +35,9 @@ export const SidebarCard = ({
   children,
   id,
   isSelected,
+  isPartOfSelection,
   item,
-  onClick,
+  onSelect,
   onDelete,
   onDuplicate,
   onToggleHide,
@@ -47,7 +49,7 @@ export const SidebarCard = ({
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
 
-  const styles = useStyles2(getStyles, { isSelected, item });
+  const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -73,7 +75,7 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onClick();
+      onSelect({});
     }
   };
 
@@ -97,7 +99,14 @@ export const SidebarCard = ({
     <div className={styles.wrapper}>
       <div
         className={styles.card}
-        onClick={onClick}
+        onClick={(e) => onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey })}
+        onMouseDown={(e) => {
+          // Prevent the browser's native text-selection behaviour when Shift is held
+          // (Shift+Click is used for range-selection of cards, not text).
+          if (e.shiftKey) {
+            e.preventDefault();
+          }
+        }}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
@@ -105,7 +114,7 @@ export const SidebarCard = ({
         tabIndex={0}
         data-query-sidebar-card={id}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-        aria-pressed={isSelected}
+        aria-pressed={isSelected || isPartOfSelection}
       >
         <div className={styles.cardContent}>{children}</div>
         {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
@@ -142,9 +151,11 @@ function getStyles(
   theme: GrafanaTheme2,
   {
     isSelected,
+    isPartOfSelection,
     item,
   }: {
     isSelected?: boolean;
+    isPartOfSelection?: boolean;
     item: ActionItem;
   }
 ) {
@@ -159,6 +170,7 @@ function getStyles(
   const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
   const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+
   const {
     ghostBackgroundColor,
     ghostBorderColor,
@@ -194,9 +206,17 @@ function getStyles(
     },
   });
 
+  const inSelection = isSelected || isPartOfSelection;
   const cardBorder = !!item.error
     ? `1px solid color-mix(in srgb, ${themeColors.error} 50%, transparent)`
-    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
+    : `1px solid ${inSelection ? borderColor : theme.colors.border.medium}`;
+
+  const selectionTintBg = `color-mix(in srgb, ${borderColor} 5%, ${theme.colors.background.primary})`;
+
+  // Selection-based styling
+  const cardBackground = isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg;
+  const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
+  const indicatorWidth = isSelected ? 3 : 2;
 
   return {
     cardContentIcons: css({
@@ -257,20 +277,20 @@ function getStyles(
       justifyContent: 'space-between',
 
       width: '100%',
-      background: isSelected ? selectedBg : themeColors.card.bg,
+      background: cardBackground,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
 
       overflow: 'hidden',
       border: cardBorder,
-      boxShadow: isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none',
+      boxShadow: cardBoxShadow,
       '&::before': {
         content: '""',
         position: 'absolute',
         left: 0,
         top: 0,
         bottom: 0,
-        width: isSelected ? 3 : 2,
+        width: indicatorWidth,
         background: borderColor,
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transition: theme.transitions.create(['width'], {
