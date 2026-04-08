@@ -73,8 +73,9 @@ export const TimeOfDayPicker = ({
       options={opts}
       value={selected}
       isClearable={allowEmpty}
-      width="auto"
-      minWidth={75}
+
+      width={100}
+
       onChange={(option?: ComboboxOption<string> | null) => {
         // console.log(value);
 
