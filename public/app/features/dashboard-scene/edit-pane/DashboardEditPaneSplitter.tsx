@@ -26,7 +26,7 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
-import { DashboardSidebarPaneName } from './types';
+import { type DashboardSidebarPaneName } from './types';
 
 interface Props {
   dashboard: DashboardScene;
