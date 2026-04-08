@@ -278,6 +278,7 @@ const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptions, onC
           matcher: { id: DEFAULT_MATCHER_ID },
           operation: null,
           aggregations: [],
+          keepNestedField: true,
         },
       ],
     });

@@ -84,6 +84,7 @@ export function migrateGroupToNestedTableOptions(
     matcher: { id: FieldMatcherID.byName, options: fieldName },
     operation: fieldOpts.operation,
     aggregations: fieldOpts.aggregations ?? [],
+    keepNestedField: false,
   }));
 
   return {

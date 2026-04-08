@@ -384,6 +384,27 @@ describe('GroupToSubframe transformer - V2 migration', () => {
     expect(calcRule!.aggregations).toEqual([ReducerID.sum, ReducerID.mean]);
   });
 
+  it('migrateGroupToNestedTableOptions should set keepNestedField to false on all migrated rules', () => {
+    const v1Options: GroupToNestedTableTransformerOptions = {
+      fields: {
+        message: {
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+        values: {
+          operation: GroupByOperationID.aggregate,
+          aggregations: [ReducerID.sum],
+        },
+      },
+    };
+
+    const v2 = migrateGroupToNestedTableOptions(v1Options);
+
+    for (const rule of v2.rules) {
+      expect(rule.keepNestedField).toBe(false);
+    }
+  });
+
   it('isV1GroupToNestedTableOptions should return true for V1 config and false for V2 config', () => {
     const v1: GroupToNestedTableTransformerOptions = {
       fields: { message: { operation: GroupByOperationID.groupBy, aggregations: [] } },
