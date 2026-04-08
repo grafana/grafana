@@ -881,7 +881,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 }
                 if (options.sortOrder && options.sortOrder !== logsSortOrder) {
                   onChangeLogsSortOrder(options.sortOrder);
-                  onLogOptionsChange('sortOrder', options.sortOrder);
                 }
                 if (options.fieldSelectorWidth !== undefined && options.fieldSelectorWidth !== fieldSelectorWidth) {
                   store.set(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth, options.fieldSelectorWidth);
