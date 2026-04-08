@@ -626,7 +626,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(service14, inlineSecureValueSupport)
 	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
 	queryCacheConfigMigrator := migrator5.ProvideQueryCacheConfigMigrator(legacyDatabaseProvider)
-	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, dataSourceMigrator, starsMigrator, queryCacheConfigMigrator, featureToggles)
+	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, dataSourceMigrator, starsMigrator, queryCacheConfigMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
 	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
@@ -1313,7 +1313,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	dataSourceMigrator := migrator4.ProvideDataSourceMigrator(service14, inlineSecureValueSupport)
 	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
 	queryCacheConfigMigrator := migrator5.ProvideQueryCacheConfigMigrator(legacyDatabaseProvider)
-	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, dataSourceMigrator, starsMigrator, queryCacheConfigMigrator, featureToggles)
+	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, dataSourceMigrator, starsMigrator, queryCacheConfigMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
 	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
@@ -1925,7 +1925,6 @@ func provideMigrationRegistry(
 	dataSourceMigrator migrator4.DataSourceMigrator,
 	starsMigrator legacy2.StarsMigrator,
 	queryCacheConfigMigrator migrator5.QueryCacheConfigMigrator,
-	features featuremgmt.FeatureToggles,
 ) *migrations2.MigrationRegistry {
 	r := migrations2.NewMigrationRegistry()
 	r.Register(dashboard.FoldersDashboardsMigration(dashMigrator))
@@ -1933,9 +1932,6 @@ func provideMigrationRegistry(
 	r.Register(shorturl.ShortURLMigration(shortURLMigrator))
 	r.Register(migrator4.DataSourceMigration(dataSourceMigrator))
 	r.Register(legacy2.StarsMigrationDefinition(starsMigrator))
-
-	if features.IsEnabledGlobally(featuremgmt.FlagCacheConfigUnifiedStorageMigration) {
-		r.Register(querycaching.QueryCacheConfigMigration(queryCacheConfigMigrator))
-	}
+	r.Register(querycaching.QueryCacheConfigMigration(queryCacheConfigMigrator))
 	return r
 }
