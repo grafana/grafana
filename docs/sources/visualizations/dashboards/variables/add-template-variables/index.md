@@ -106,7 +106,7 @@ The following table lists the types of variables included with Grafana.
 | Data source       | Quickly change the data source for an entire dashboard. [Add a data source variable](#add-a-data-source-variable).                                                                      |
 | Interval          | Interval variables represent time spans. [Add an interval variable](#add-an-interval-variable).                                                                                         |
 | Switch            | Display a switch that allows you to toggle between two configurable values for enabled and disabled states. [Add a switch variable](#add-a-switch-variable).                            |
-| Filters and Group by | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only) with the option to apply further groupings. [Add filter and group by](#add-ad-hoc-filters). |
+| Filter and Group by | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only) with the option to apply further groupings. [Add filter and group by](#add-ad-hoc-filters). <!-- TODO: Add something about grouping here too --> |
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
 
@@ -368,9 +368,10 @@ You can also use switch variables in panel titles and other dashboard elements:
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
 
-## Add filter and group by
+## Add a filter and group by
 
-<!-- Think about how to refer to this in the context of panel/dashboard groupings -->
+<!-- TODO: Think about how to refer to this in the context of panel/dashboard groupings -->
+<!-- TODO: Figure out headings for this section; follow established pattern or no? -->
 
 _Filter and Group by_ is one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
@@ -389,7 +390,9 @@ The following data sources support filters:
 - Elasticsearch
 - OpenSearch
 
-Group by...
+<!-- TODO: Add Group by explanation here -->
+
+<!-- ### Add filter and group by -->
 
 To create a filter and grouping, follow these steps:
 
@@ -444,6 +447,10 @@ Learn more in:
 - [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
 - [Create dashboard URL variables – Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
   {{< /admonition >}}
+
+### Filter and group by examples
+
+<!-- TODO: Show an example of both working together -->
 
 ### Filter any data using the Dashboard data source
 
