@@ -226,24 +226,34 @@ When you hide the header of a row, you can't collapse the row.
 
 ## Grouping-level variables
 
-{{< docs/public-preview product="Section level variables" featureFlag="dashboardSectionVariables" >}}
+{{< admonition type="note" >}}
+Grouping-level variables is currently in [public preview](http://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+To use this feature, enable the `dashboardSectionVariables` feature toggle in your Grafana configuration file.
+{{< /admonition >}}
 
 You can add variables to groupings that apply only to the panels in that grouping.
 
-For example, if your dashboard includes both an API gateway and a database, changing something like an `$instance` variable affects all panels at once.
-To avoid this, you might have to split up services across separate dashboards, which defeats the purpose of having a unified view.
-
+For example, if your dashboard includes both an API gateway and a database, you might want to apply two different `$instance` variables.
 Grouping-level variables address this by letting each row or tab have its own independent filters.
-For example, an API gateway row can use one set of instances, while a database row in the same dashboard uses another set.
-However, both rows still share the same time range, and the underlying dashboard remains unchanged.
+In the API gateway and database scenario, the API gateway grouping can use one set of instances, while a database grouping uses another set.
+However, both groupings still share the same time range, and the underlying dashboard remains unchanged.
+
+The following image shows an example using two rows of panels:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-grouping-variables-v13.0.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
 
-Panels in the grouping resolve grouping-level variables first, then fall back to dashboard-level variables, while panels in other sections remain unaffected.
+Panels in the grouping resolve grouping-level variables first, then fall back to dashboard-level variables.
 
-The panel query editor's autocomplete is context-aware, showing only the variables available to the panel you're editing.
-Also, section-level variables carry over when converting between row and tab layouts, and work with repeating rows and tabs.
+The panel query editor is context-aware, so the autocomplete only shows the variables available to the panel you're editing.
+Also, grouping-level variables carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
 
-{{< admonition type="note" >}}
-Section-level variables are not supported for Filter and group by.
+<!-- vale Grafana.Spelling = NO -->
+
+Grouping-level variables are supported for all variable types except **Filter and group by** (formerly ad hoc variables).
+
+<!-- vale Grafana.Spelling = YES -->
+
+{{< admonition type="tip" >}}
+When using Grafana Assistant to help you configure grouping-level variables, you might need to refer to the feature toggle name "section-level variables".
 {{< /admonition >}}
