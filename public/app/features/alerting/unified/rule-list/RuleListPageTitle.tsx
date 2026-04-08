@@ -11,12 +11,13 @@ import {
 } from '../Analytics';
 import { shouldUseAlertingListViewV2 } from '../featureToggles';
 import { setPreviewToggle } from '../previewToggles';
+import { isOpenSourceEdition } from '../utils/misc';
 import { ALERTING_PATHS } from '../utils/navigation';
 
 import { RevertToOldExperienceModal } from './AlertsActivityOptOutModal';
 
 export function RuleListPageTitle({ title }: { title: string }) {
-  const shouldShowV2Toggle = config.featureToggles.alertingListViewV2PreviewToggle ?? false;
+  const shouldShowV2Toggle = (config.featureToggles.alertingListViewV2PreviewToggle ?? false) && isOpenSourceEdition();
   const listViewV2Enabled = shouldUseAlertingListViewV2();
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -26,16 +27,22 @@ export function RuleListPageTitle({ title }: { title: string }) {
     targetView: listViewV2Enabled ? 'v1' : 'v2',
   });
 
+  const alertingTriageEnabled = config.featureToggles.alertingTriage ?? false;
+
   const handleToggleClick = () => {
     trackViewExperienceToggleClick({
       ...getEventPayload(),
       action: 'clicked',
     });
 
-    // Only show confirmation when switching from NEW to OLD
-    // When switching from OLD to NEW, just do it directly
     if (listViewV2Enabled) {
-      setShowConfirmModal(true);
+      // Only show the "try Alert Activity" confirmation modal if alertingTriage is enabled.
+      // Otherwise just revert directly — no point mentioning a feature that isn't available.
+      if (alertingTriageEnabled) {
+        setShowConfirmModal(true);
+      } else {
+        revertToPreviousExperience();
+      }
     } else {
       // Switching to new experience - no confirmation needed
       switchToNewExperience();
@@ -59,13 +66,7 @@ export function RuleListPageTitle({ title }: { title: string }) {
     }
   };
 
-  const handleRevert = () => {
-    trackViewExperienceToggleClick({
-      ...getEventPayload(),
-      action: 'confirmed',
-    });
-    setShowConfirmModal(false);
-
+  const revertToPreviousExperience = () => {
     try {
       setPreviewToggle('alertingListViewV2', false);
       trackViewExperienceToggleConfirmed({
@@ -79,6 +80,15 @@ export function RuleListPageTitle({ title }: { title: string }) {
         preferenceSaved: false,
       });
     }
+  };
+
+  const handleRevert = () => {
+    trackViewExperienceToggleClick({
+      ...getEventPayload(),
+      action: 'confirmed',
+    });
+    setShowConfirmModal(false);
+    revertToPreviousExperience();
   };
 
   const handleSeeAlertActivity = () => {

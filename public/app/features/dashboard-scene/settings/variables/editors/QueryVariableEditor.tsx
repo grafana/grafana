@@ -268,10 +268,10 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
   return (
     <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}>
+      {/* eslint-disable-next-line @grafana/require-no-margin */}
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-target-data-source', 'Target data source')}
         htmlFor="data-source-picker"
-        noMargin
       >
         <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>

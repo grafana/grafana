@@ -14,7 +14,6 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { Combobox, InlineFieldRow, InlineField } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/joinByField.svg';
 import lightImage from '../images/light/joinByField.svg';
 
@@ -118,7 +117,6 @@ export const getJoinByFieldTransformerRegistryItem: () => TransformerRegistryIte
     'Combine rows from 2+ tables, based on a related field.'
   ),
   categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

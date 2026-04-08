@@ -37,8 +37,8 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 		return nil, nil
 	}
 
-	// Create parent relationship tuple: folder:parent -> parent -> folder:child
-	tuple := common.NewFolderParentTuple(parentFolder, folder.Name)
+	// Create parent relationship tuple: folder:child has parent folder:parent
+	tuple := common.NewFolderParentTuple(folder.Name, parentFolder)
 	return []*openfgav1.TupleKey{tuple}, nil
 }
 
@@ -210,6 +210,31 @@ func TranslateUserToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKe
 
 	tuple := &openfgav1.TupleKey{
 		User:     common.NewTupleEntry(common.TypeUser, user.Name, ""),
+		Relation: common.RelationAssignee,
+		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
+	}
+	return []*openfgav1.TupleKey{tuple}, nil
+}
+
+// TranslateServiceAccountToTuples converts a ServiceAccount CRD to basic role assignment tuples.
+func TranslateServiceAccountToTuples(obj *unstructured.Unstructured) ([]*openfgav1.TupleKey, error) {
+	var sa iamv0.ServiceAccount
+	if err := convertUnstructured(obj, &sa); err != nil {
+		return nil, err
+	}
+
+	role := string(sa.Spec.Role)
+	if sa.Spec.Role == "" {
+		return nil, nil
+	}
+
+	basicRole := common.TranslateBasicRole(role)
+	if basicRole == "" {
+		return nil, fmt.Errorf("invalid basic role: %s", role)
+	}
+
+	tuple := &openfgav1.TupleKey{
+		User:     common.NewTupleEntry(common.TypeServiceAccount, sa.Name, ""),
 		Relation: common.RelationAssignee,
 		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
 	}

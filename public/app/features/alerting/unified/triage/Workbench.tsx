@@ -6,7 +6,17 @@ import { useMeasure } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { type SceneQueryRunner } from '@grafana/scenes';
-import { Box, Button, EmptyState, ScrollContainer, Stack, Text, useSplitter, useStyles2 } from '@grafana/ui';
+import {
+  Box,
+  Button,
+  EmptyState,
+  LoadingBar,
+  ScrollContainer,
+  Stack,
+  Text,
+  useSplitter,
+  useStyles2,
+} from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
@@ -18,7 +28,6 @@ import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
-import { SummaryStatsReact } from './scene/SummaryStats';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
 import { type Domain, type Filter, type WorkbenchRow } from './types';
 
@@ -28,11 +37,12 @@ type WorkbenchProps = {
   groupBy?: string[];
   filterBy?: Filter[];
   queryRunner: SceneQueryRunner;
-  isLoading?: boolean;
+  isInitialLoading?: boolean;
+  isRefreshing?: boolean;
   hasActiveFilters?: boolean;
 };
 
-const initialSize = 1 / 2;
+const initialSize = 2 / 3;
 
 // Helper function to recursively render WorkbenchRow items with children pattern
 function renderWorkbenchRow(
@@ -125,7 +135,8 @@ export function Workbench({
   data,
   queryRunner,
   groupBy,
-  isLoading = false,
+  isInitialLoading = false,
+  isRefreshing = false,
   hasActiveFilters = false,
 }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
@@ -147,13 +158,12 @@ export function Workbench({
   // Calculate once: show folder metadata only if not grouping by grafana_folder
   const enableFolderMeta = !groupBy?.includes('grafana_folder');
 
-  // Determine UI state
-  const showEmptyState = !isLoading && data.length === 0;
-  const showData = !isLoading && data.length > 0;
+  const showEmptyState = !isInitialLoading && data.length === 0;
+  const showData = data.length > 0;
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
-    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
+    // if Grafana Alertmanager, split 2/3 : 1/3, otherwise 100/0 because there is no payload editor
     initialSize: initialSize,
     dragPosition: 'middle',
   });
@@ -213,7 +223,7 @@ export function Workbench({
           ) : (
             <>
               <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-                <SummaryStatsReact />
+                <div />
                 <SummaryChartReact />
               </div>
               {groupBy && groupBy.length > 0 && (
@@ -251,7 +261,12 @@ export function Workbench({
                   collapseGeneration={collapseGeneration}
                 >
                   <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
-                    {isLoading && (
+                    {isRefreshing && (
+                      <div className={styles.loadingBarContainer}>
+                        <LoadingBar width={leftColumnWidth + rightColumnWidth} />
+                      </div>
+                    )}
+                    {isInitialLoading && (
                       <>
                         <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
                         <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
@@ -298,8 +313,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden', // Let AutoSizer handle the overflow
     }),
     summaryContainer: css({
+      height: theme.spacing(20),
       marginBottom: theme.spacing(2),
       alignItems: 'stretch',
+    }),
+    loadingBarContainer: css({
+      position: 'sticky',
+      top: 0,
+      zIndex: 1,
     }),
     headerContainer: css({}),
     expandCollapseToolbar: css({

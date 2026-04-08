@@ -10,7 +10,7 @@ import {
   type RoutingTreeRoute,
   type RoutingTreeRouteDefaults,
   generatedAPI as routingTreeApi,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import {
   MatcherOperator,

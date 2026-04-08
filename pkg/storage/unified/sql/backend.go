@@ -8,7 +8,9 @@ import (
 	"iter"
 	"math"
 	"math/rand"
+	"net/http"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -24,13 +26,13 @@ import (
 	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -47,6 +49,19 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 
 const defaultPollingInterval = 100 * time.Millisecond
+
+// newTenantDeleterGcomClient returns a GCOM client for tenant-deleter verification when
+// [grafana_com] sso_api_token and api_url are configured.
+func newTenantDeleterGcomClient(cfg *setting.Cfg) gcom.Service {
+	token := strings.TrimSpace(cfg.GrafanaComSSOAPIToken)
+	apiURL := strings.TrimSpace(cfg.GrafanaComAPIURL)
+	if token == "" || apiURL == "" {
+		return nil
+	}
+	hc := &http.Client{Timeout: 30 * time.Second}
+	return gcom.New(gcom.Config{ApiURL: apiURL, Token: token}, hc)
+}
+
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultGarbageCollectionBatchWait = 1 * time.Second
 
@@ -70,6 +85,15 @@ func ProvideStorageBackend(
 type Backend interface {
 	resource.StorageBackend
 	resourcepb.DiagnosticsServer //nolint:staticcheck
+}
+
+// tmpDir returns a writable temp directory under dataPath for Parquet bulk
+// migration files. Returns "" (OS default) when dataPath is empty.
+func tmpDir(dataPath string) string {
+	if dataPath == "" {
+		return ""
+	}
+	return filepath.Join(dataPath, "tmp")
 }
 
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
@@ -119,6 +143,7 @@ func NewStorageBackend(
 			},
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
+			TmpDir:                  tmpDir(cfg.DataPath),
 			DisableStorageServices:  disableStorageServices,
 			DisablePruner:           cfg.DisablePruner,
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
@@ -140,6 +165,13 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("error creating sqlkv: %s", err)
 	}
 
+	tenantDeleterCfg := resource.NewTenantDeleterConfig(cfg)
+	if tenantDeleterCfg != nil {
+		if gcomClient := newTenantDeleterGcomClient(cfg); gcomClient != nil {
+			tenantDeleterCfg.Gcom = gcomClient
+		}
+	}
+
 	kvBackendOpts := resource.KVBackendOptions{
 		KvStore:              sqlkv,
 		Tracer:               tracer,
@@ -149,7 +181,7 @@ func NewStorageBackend(
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
 		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
+		TenantDeleterConfig:  tenantDeleterCfg,
 		GarbageCollection: resource.GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,
@@ -216,6 +248,11 @@ type BackendOptions struct {
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	MigrationParquetBuffer bool
 
+	// Directory for temporary Parquet files during bulk migration.
+	// Defaults to the OS temp dir when empty. Set to cfg.DataPath/tmp to
+	// support containers with readonlyRootFilesystem enabled.
+	TmpDir string
+
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 
@@ -255,6 +292,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
+		tmpDir:                  opts.TmpDir,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
 	}
@@ -314,6 +352,9 @@ type backend struct {
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool
+
+	// tmpDir is the directory for temporary Parquet files; empty means OS default.
+	tmpDir string
 
 	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
@@ -595,6 +636,7 @@ func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckReques
 	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
+// Stop cancels the background context to stop the pruner, GC and other goroutines
 func (b *backend) Stop(_ context.Context) error {
 	b.cancel()
 	return nil
@@ -645,6 +687,10 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	if b.disableStorageServices {
 		return 0, fmt.Errorf("storage backend is not enabled")
 	}
+	if err := event.Validate(); err != nil {
+		return 0, apierrors.NewBadRequest(err.Error())
+	}
+
 	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
@@ -866,10 +912,6 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv int64) error {
-	if rv == 0 {
-		return nil
-	}
-
 	// The RV is part of the update request, and it may no longer be the most recent
 	rows, err := res.RowsAffected()
 	if err != nil {
@@ -881,10 +923,7 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 	if rows > 0 {
 		return fmt.Errorf("multiple rows effected (%d)", rows)
 	}
-	return apierrors.NewConflict(schema.GroupResource{
-		Group:    key.Group,
-		Resource: key.Resource,
-	}, key.Name, fmt.Errorf("resource version does not match current value"))
+	return resource.NewConflictStatusError(key.Group, key.Resource, key.Name, "requested RV does not match current RV")
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
