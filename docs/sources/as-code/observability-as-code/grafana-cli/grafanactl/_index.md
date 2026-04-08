@@ -26,7 +26,11 @@ aliases:
 # Install and set up the `grafanactl` CLI
 
 {{< admonition type="caution" >}}
-`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new Grafana CLI tool `gcx`. Migrate to [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx) for an improved CLI experience.
+
+`grafanactl` is being deprecated, and we're bringing all our learnings and experience into the new, improved CLI tool [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx).
+
+To migrate from `grafanctl` to `gcx`, search-and-replace `grafanactl` with `gcx`.
+
 {{< /admonition >}}
 
 The `grafanactl` command-line tool allows you to authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal. It is available for Grafana OSS, Enterprise, and Cloud.

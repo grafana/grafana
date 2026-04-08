@@ -29,9 +29,13 @@ The Grafana CLI `gcx` is available in [public preview](https://grafana.com/docs/
 
 {{< /admonition >}}
 
-The Grafana Cloud CLI `gcx` is a single CLI that allows you to manage both Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, K6, Fleet Management, Incidents, or Adaptive Telemetry. `gcx` is an evolution of `grafanactl`, it natively supports agentic workflows and it's integrated with Grafana Assistant, combining the previously fragmented user experience into one single tool.
+The Grafana Cloud CLI `gcx` is a single CLI that allows you to manage both Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, K6, Fleet Management, Incidents, or Adaptive Telemetry.
 
-Among other, it provides the following benefits:
+`gcx` is an evolution of `grafanactl`, it natively supports agentic workflows and it's integrated with Grafana Assistant, combining the previously fragmented user experience into one single tool.
+
+## Benefits of `gcx`
+
+Among other, the `gcx` CLI provides the following benefits:
 
 - **Manage Grafana on-prem and Grafana Cloud:** Use a single tool for dashboards, alerting, SLOs, on-call, synthetic checks, load testing, and more.
 - **AI agent friendly:** Agent mode auto-detected for Claude Code, Copilot, Cursor, and other.
@@ -39,6 +43,10 @@ Among other, it provides the following benefits:
 - **GitOps**: Pull resources to files, version in Git, or push back with full round-trip fidelity.
 - **Observability as code:** `gcx` can scaffold Go projects, import existing dashboards, lint with Rego rules, or live-reload development servers.
 - **Multi-environment:** Use named contexts to switch between development, staging, and production environments.
+
+## Migrate from `grafanactl`
+
+If you want to migrate from `grafanctl` to `gcx`, search-and-replace `grafanactl` with `gcx`. For `grafanactl resources serve`, use `gcx dev serve` instead.
 
 ## Learn more
 
