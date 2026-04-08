@@ -29,7 +29,7 @@ import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Stack } from '../../Layout/Stack/Stack';
 import { getModalStyles } from '../../Modal/getModalStyles';
-import { Portal } from '../../Portal/Portal';
+import { getPortalContainer, Portal } from '../../Portal/Portal';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
@@ -86,10 +86,7 @@ export const DateTimePicker = ({
       onClose: () => setOpen(false),
       isDismissable: true,
       isOpen,
-      shouldCloseOnInteractOutside: (element) => {
-        const popupElement = document.querySelector('[class$=combobox-menu]');
-        return !popupElement?.contains(element);
-      },
+      shouldCloseOnInteractOutside: (element) => !getPortalContainer().contains(element),
     },
     ref
   );

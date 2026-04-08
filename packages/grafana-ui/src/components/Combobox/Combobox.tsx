@@ -1,7 +1,6 @@
-import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
+import React, { type ComponentProps, useCallback, useId, useLayoutEffect, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -9,7 +8,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, type Props as InputProps } from '../Input/Input';
-import { Portal } from '../Portal/Portal';
+import { getPortalContainer, Portal } from '../Portal/Portal';
 
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
@@ -389,6 +388,34 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     </>
   );
 
+  const [list, setList] = useState<React.ReactNode>();
+
+  useLayoutEffect(() => {
+    isOpen &&
+      setList(
+        <ComboboxList
+          loading={loading}
+          options={filteredOptions}
+          highlightedIndex={highlightedIndex}
+          selectedItems={selectedItem ? [selectedItem] : []}
+          scrollRef={scrollRef}
+          getItemProps={getItemProps}
+          error={asyncError}
+          noOptionsMessage={noOptionsMessage}
+        />
+      );
+  }, [
+    asyncError,
+    filteredOptions,
+    getItemProps,
+    highlightedIndex,
+    isOpen,
+    loading,
+    noOptionsMessage,
+    scrollRef,
+    selectedItem,
+  ]);
+
   const { Wrapper, wrapperProps } = isAutoSize
     ? {
         Wrapper: 'div',
@@ -417,32 +444,23 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'data-testid': dataTestId,
         })}
       />
-      <Portal root={portalContainer}>
-        <div
-          className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={{
-            ...floatStyles,
-            pointerEvents: 'auto', // Override container's pointer-events: none
-          }}
-          {...getMenuProps({
-            ref: floatingRef,
-            'aria-labelledby': ariaLabelledBy,
-          })}
-        >
-          {isOpen && (
-            <ComboboxList
-              loading={loading}
-              options={filteredOptions}
-              highlightedIndex={highlightedIndex}
-              selectedItems={selectedItem ? [selectedItem] : []}
-              scrollRef={scrollRef}
-              getItemProps={getItemProps}
-              error={asyncError}
-              noOptionsMessage={noOptionsMessage}
-            />
-          )}
-        </div>
-      </Portal>
+      {isOpen && (
+        <Portal root={portalContainer}>
+          <div
+            className={styles.menu}
+            style={{
+              ...floatStyles,
+              pointerEvents: 'auto', // Override container's pointer-events: none
+            }}
+            {...getMenuProps({
+              ref: floatingRef,
+              'aria-labelledby': ariaLabelledBy,
+            })}
+          >
+            {list}
+          </div>
+        </Portal>
+      )}
     </Wrapper>
   );
 };
