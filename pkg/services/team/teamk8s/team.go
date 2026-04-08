@@ -89,21 +89,6 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	return s.getDynamicClient(ctx, namespace, teamGVR)
 }
 
-// resolveTeamUID gets team UID from context or falls back to label-selector lookup by deprecated internal ID.
-func (s *TeamK8sService) resolveTeamUID(ctx context.Context, namespace string, teamID int64) (string, error) {
-	if uid, ok := team.TeamUIDFrom(ctx); ok {
-		return uid, nil
-	}
-	client, err := s.getClient(ctx, namespace)
-	if err != nil {
-		return "", err
-	}
-	resolved, err := resolveTeamByLegacyID(ctx, client, teamID)
-	if err != nil {
-		return "", err
-	}
-	return resolved.GetName(), nil
-}
 
 // resolveUserUID finds a user's K8s UID by their deprecated internal ID label.
 func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, userID int64) (string, error) {
@@ -120,6 +105,9 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 
 	if len(result.Items) == 0 {
 		return "", fmt.Errorf("user with ID %d not found", userID)
+	}
+	if len(result.Items) > 1 {
+		return "", fmt.Errorf("multiple users found with ID %d", userID)
 	}
 
 	return result.Items[0].GetName(), nil
@@ -543,13 +531,14 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 		return nil, err
 	}
 
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	ids := make([]int64, 0, len(bindings))
 	for _, b := range bindings {
 		teamUID := b.Spec.TeamRef.Name
-		client, err := s.getClient(ctx, namespace)
-		if err != nil {
-			return nil, err
-		}
 		result, err := client.Get(ctx, teamUID, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -569,10 +558,15 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
 	namespace := s.namespaceMapper(orgId)
 
-	teamUID, err := s.resolveTeamUID(ctx, namespace, teamId)
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return false, err
 	}
+	resolved, err := resolveTeamByLegacyID(ctx, client, teamId)
+	if err != nil {
+		return false, err
+	}
+	teamUID := resolved.GetName()
 
 	userUID, err := s.resolveUserUID(ctx, namespace, userId)
 	if err != nil {
@@ -669,10 +663,12 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 
 		// Resolve team ID from the team resource
 		teamClient, err := s.getClient(ctx, namespace)
-		if err == nil {
-			if teamResult, err := teamClient.Get(ctx, b.Spec.TeamRef.Name, metav1.GetOptions{}); err == nil {
-				dto.TeamID = getResourceID(metav1.ObjectMeta{Labels: teamResult.GetLabels()})
-			}
+		if err != nil {
+			s.logger.Warn("Failed to create team client for team ID lookup", "teamUID", b.Spec.TeamRef.Name, "error", err)
+		} else if teamResult, err := teamClient.Get(ctx, b.Spec.TeamRef.Name, metav1.GetOptions{}); err != nil {
+			s.logger.Warn("Failed to fetch team for team ID lookup", "teamUID", b.Spec.TeamRef.Name, "error", err)
+		} else {
+			dto.TeamID = getResourceID(metav1.ObjectMeta{Labels: teamResult.GetLabels()})
 		}
 
 		members = append(members, dto)
@@ -690,10 +686,23 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 	namespace := s.namespaceMapper(orgID)
 
 	teamUID := query.TeamUID
+	teamID := query.TeamID
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
 	if teamUID == "" {
-		teamUID, err = s.resolveTeamUID(ctx, namespace, query.TeamID)
+		resolved, err := resolveTeamByLegacyID(ctx, client, query.TeamID)
 		if err != nil {
 			return nil, err
+		}
+		teamUID = resolved.GetName()
+	} else if teamID == 0 {
+		// Resolve the legacy team ID when only UID was provided
+		if teamResult, err := client.Get(ctx, teamUID, metav1.GetOptions{}); err == nil {
+			teamID = getResourceID(metav1.ObjectMeta{Labels: teamResult.GetLabels()})
+		} else {
+			s.logger.Warn("Failed to resolve team ID from UID", "teamUID", teamUID, "error", err)
 		}
 	}
 
@@ -713,7 +722,7 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 		dto := &team.TeamMemberDTO{
 			OrgID:      orgID,
-			TeamID:     query.TeamID,
+			TeamID:     teamID,
 			TeamUID:    teamUID,
 			UserUID:    userUID,
 			External:   b.Spec.External,
