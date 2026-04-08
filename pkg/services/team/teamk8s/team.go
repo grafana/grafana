@@ -90,7 +90,6 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	return s.getDynamicClient(ctx, namespace, teamGVR)
 }
 
-// resolveUserUID finds a user's K8s UID by their deprecated internal ID label.
 func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, userID int64) (string, error) {
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {
@@ -115,7 +114,6 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 	return result.Items[0].GetName(), nil
 }
 
-// getUserByUID fetches a K8s user resource by UID and returns identity details.
 func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace string, userUID string) (*iamv0alpha1.User, error) {
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
 	if err != nil {
@@ -134,7 +132,6 @@ func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace string, use
 	return &user, nil
 }
 
-// listTeamBindings lists TeamBinding resources with optional field selectors.
 func (s *TeamK8sService) listTeamBindings(ctx context.Context, namespace string, fieldSelector string) ([]iamv0alpha1.TeamBinding, error) {
 	client, err := s.getDynamicClient(ctx, namespace, teamBindingGVR)
 	if err != nil {
@@ -642,7 +639,6 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		return nil, err
 	}
 
-	// Fetch user details once since all bindings are for the same user
 	var k8sUser *iamv0alpha1.User
 	if len(bindings) > 0 {
 		k8sUser, err = s.getUserByUID(ctx, namespace, userUID)
@@ -674,7 +670,6 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, k8sUser.Spec.Email, k8sUser.Spec.Login)
 		}
 
-		// Resolve team ID from the team resource
 		if teamResult, err := teamClient.Get(ctx, b.Spec.TeamRef.Name, metav1.GetOptions{}); err != nil {
 			s.logger.Warn("Failed to fetch team for team ID lookup", "teamUID", b.Spec.TeamRef.Name, "error", err)
 		} else {
@@ -708,7 +703,6 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 		}
 		teamUID = resolved.GetName()
 	} else if teamID == 0 {
-		// Resolve the legacy team ID when only UID was provided
 		if teamResult, err := client.Get(ctx, teamUID, metav1.GetOptions{}); err == nil {
 			teamID = deprecatedInternalID(teamResult)
 		} else {

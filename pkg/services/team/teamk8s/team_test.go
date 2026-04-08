@@ -1689,13 +1689,11 @@ func TestTeamK8sService_GetTeamMembers(t *testing.T) {
 	}
 }
 
-// membershipServerHandler returns an HTTP handler that serves standard membership test data.
 func membershipServerHandler(t *testing.T) func(w http.ResponseWriter, r *http.Request) {
 	t.Helper()
 	return membershipServerHandlerWithPermission(t, iamv0alpha1.TeamBindingTeamPermissionAdmin)
 }
 
-// membershipServerHandlerWithPermission returns an HTTP handler with a configurable binding permission.
 func membershipServerHandlerWithPermission(t *testing.T, perm iamv0alpha1.TeamBindingTeamPermission) func(w http.ResponseWriter, r *http.Request) {
 	t.Helper()
 
@@ -1782,8 +1780,6 @@ func membershipServerHandlerWithPermission(t *testing.T, perm iamv0alpha1.TeamBi
 	}
 }
 
-// membershipServerHandlerWithEmptyBindings returns an HTTP handler that serves empty binding lists
-// (but still resolves users and teams).
 func membershipServerHandlerWithEmptyBindings(t *testing.T) func(w http.ResponseWriter, r *http.Request) {
 	t.Helper()
 
