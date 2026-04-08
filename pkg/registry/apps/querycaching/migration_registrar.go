@@ -30,7 +30,7 @@ func QueryCacheConfigMigration(m migrator.QueryCacheConfigMigrator) migrations.M
 				Where: "data_source_uid IN (SELECT uid FROM data_source WHERE org_id = ?)",
 			}),
 		},
-		RenameTables:    []string{},
+		RenameTables:    []string{"data_source_cache"},
 		SkipWhenMissing: true,
 	}
 }
