@@ -30,7 +30,7 @@ export const QuickAdd = ({}: Props) => {
       if (testDataSources.length > 0) {
         const templateItem: NavModelItem = {
           id: 'browse-template-dashboard',
-          text: t('navigation.quick-add.new-template-dashboard-button', 'Dashboard from template'),
+          text: 'Dashboard from template',
           url: '/dashboards?templateDashboards=true&source=quickAdd',
           onClick: () => {
             isAnalyticsFrameworkEnabled
@@ -45,6 +45,7 @@ export const QuickAdd = ({}: Props) => {
           },
         };
 
+        // Matches NavIDDashboards ("dashboards/browse") from pkg/services/navtree/models.go
         const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
         if (dashboardGroup) {
           dashboardGroup.items.push(templateItem);
@@ -56,6 +57,10 @@ export const QuickAdd = ({}: Props) => {
   }, [isAnalyticsFrameworkEnabled, navBarTree]);
 
   const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
+
+  if (!showQuickAdd) {
+    return null;
+  }
 
   const handleVisibleChange = () => {
     if (!isOpen) {
@@ -98,7 +103,7 @@ export const QuickAdd = ({}: Props) => {
     </Menu>
   );
 
-  return showQuickAdd ? (
+  return (
     <>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={handleVisibleChange}>
         <ToolbarButton
@@ -110,5 +115,5 @@ export const QuickAdd = ({}: Props) => {
       </Dropdown>
       <NavToolbarSeparator />
     </>
-  ) : null;
+  );
 };
