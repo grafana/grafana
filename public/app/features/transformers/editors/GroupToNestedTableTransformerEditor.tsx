@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { clsx } from 'clsx';
 import { useCallback, useId } from 'react';
+import { is } from 'zod/v4/locales';
 
 import {
   DataTransformerID,
@@ -344,16 +344,14 @@ export const GroupToNestedTableTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<GroupToNestedTableTransformerOptions | GroupToNestedTableTransformerOptionsV2>) => {
-  if (config.featureToggles.groupToNestedTableV2) {
+  // if the config is already saved in v2 format, show the new editor to avoid issues.
+  if (config.featureToggles.groupToNestedTableV2 || !isV1GroupToNestedTableOptions(options)) {
     return <GroupToNestedTableTransformerEditorV2 input={input} options={options} onChange={onChange} />;
   }
 
   // V1 editor: options will be V1 shape when toggle is off (or freshly created panels)
   // Cast is safe because without the toggle, the transformer always produces V1 options.
-  const v1Options = isV1GroupToNestedTableOptions(options)
-    ? options
-    : { showSubframeHeaders: options.showSubframeHeaders, fields: {} };
-  return <GroupToNestedTableTransformerEditorV1 input={input} options={v1Options} onChange={onChange} />;
+  return <GroupToNestedTableTransformerEditorV1 input={input} options={options} onChange={onChange} />;
 };
 
 // ---------------------------------------------------------------------------
