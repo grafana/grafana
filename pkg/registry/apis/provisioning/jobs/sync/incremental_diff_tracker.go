@@ -13,7 +13,7 @@ type rebuiltIncrementalDiffTracker struct {
 }
 
 // newRebuiltIncrementalDiff seeds the rewritten diff with changes
-// and prepares tracking for generated paths and replaced folders.
+// and prepares tracking for generated paths and replaced or relocated folders.
 func newRebuiltIncrementalDiffTracker(changes []repository.VersionedFileChange) *rebuiltIncrementalDiffTracker {
 	return &rebuiltIncrementalDiffTracker{
 		filteredDiff:   changes,
@@ -47,9 +47,7 @@ func (result *rebuiltIncrementalDiffTracker) AppendReplaced(replaced replacedFol
 // TrackRelocation records a UID that is being actively assigned to targetPath
 // by a metadata change in this diff. UIDs in this set must not be deleted
 // even if they appear in the replaced list (the UID moved between paths
-// rather than being removed). The per-path mapping allows callers to pass
-// scoped allowlists to EnsureFolderPathExist so that only the intended target
-// path bypasses the ID conflict check.
+// rather than being removed).
 func (result *rebuiltIncrementalDiffTracker) TrackRelocation(targetPath, uid string) {
 	result.activeUIDs[uid] = struct{}{}
 	result.relocations[targetPath] = append(result.relocations[targetPath], uid)
