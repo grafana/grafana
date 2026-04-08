@@ -20,8 +20,12 @@ type HTTPClientOptions struct {
 	Timeout time.Duration
 	// InsecureSkipVerify skips TLS certificate verification
 	InsecureSkipVerify bool
+	// RootCACertificate is a PEM certificate that verifies the server.
+	RootCACertificate string
 	// Middlewares to apply to the HTTP client
 	Middlewares []sdkhttpclient.Middleware
+	// CacheTTL enables response caching with the given TTL. Zero disables caching.
+	CacheTTL time.Duration
 }
 
 // TokenExchangeConfig holds all authentication configuration for token exchange.
@@ -41,14 +45,22 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 		timeout = 10 * time.Second
 	}
 
+	middlewares := opts.Middlewares
+	if opts.CacheTTL > 0 {
+		middlewares = append([]sdkhttpclient.Middleware{newCacheMiddleware(opts.CacheTTL)}, middlewares...)
+	}
+
+	tlsOptions := &sdkhttpclient.TLSOptions{
+		InsecureSkipVerify: opts.InsecureSkipVerify,
+		CACertificate:      opts.RootCACertificate,
+	}
+
 	options := sdkhttpclient.Options{
-		TLS: &sdkhttpclient.TLSOptions{
-			InsecureSkipVerify: opts.InsecureSkipVerify,
-		},
+		TLS: tlsOptions,
 		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout: timeout,
 		},
-		Middlewares: opts.Middlewares,
+		Middlewares: middlewares,
 	}
 
 	httpcli, err := sdkhttpclient.NewProvider().New(options)

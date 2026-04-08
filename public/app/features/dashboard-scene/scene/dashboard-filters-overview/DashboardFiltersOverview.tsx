@@ -33,11 +33,12 @@ export const DashboardFiltersOverview = ({
   const styles = useStyles2(getStyles);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters } = useFiltersOverviewState({
-    adhocFilters,
-    groupByVariable,
-    searchQuery,
-  });
+  const { state, listItems, operatorConfig, actions, loading, hasKeys, hasAdhocFilters, hasGroupBy } =
+    useFiltersOverviewState({
+      adhocFilters,
+      groupByVariable,
+      searchQuery,
+    });
 
   const virtualizer = useVirtualizer({
     count: listItems.length,
@@ -128,7 +129,7 @@ export const DashboardFiltersOverview = ({
                     (state.isOriginByKey[keyValue] ?? false) &&
                     (state.singleValuesByKey[keyValue] ?? '') !== (state.defaultValuesByKey[keyValue] ?? '')
                   }
-                  hasGroupByVariable={Boolean(groupByVariable)}
+                  hasGroupByVariable={hasGroupBy}
                   operatorOptions={operatorConfig.options}
                   onOperatorChange={actions.setOperator}
                   onSingleValueChange={actions.setSingleValue}

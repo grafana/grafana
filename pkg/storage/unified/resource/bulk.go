@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
@@ -372,36 +373,15 @@ func (b *batchRunner) NextBatch() bool {
 		}
 	}
 
-	if opts.MaxIdle <= 0 {
-		for {
-			select {
-			case result, ok := <-b.recvChannel():
-				if !ok {
-					return true
-				}
-				switch {
-				case result.eof || result.err != nil:
-					b.pending = &result
-					return true
-				case result.request == nil:
-					b.pending = &batchStreamResult{
-						err:      fmt.Errorf("missing request"),
-						rollback: true,
-					}
-					return true
-				default:
-					if appendRequest(result.request) {
-						return true
-					}
-				}
-			default:
-				return true
-			}
-		}
+	var (
+		timer  *time.Timer
+		timerC <-chan time.Time
+	)
+	if opts.MaxIdle > 0 {
+		timer = time.NewTimer(opts.MaxIdle)
+		defer stopAndDrainTimer(timer)
+		timerC = timer.C
 	}
-
-	timer := time.NewTimer(opts.MaxIdle)
-	defer stopAndDrainTimer(timer)
 
 	for {
 		select {
@@ -423,9 +403,11 @@ func (b *batchRunner) NextBatch() bool {
 				if appendRequest(result.request) {
 					return true
 				}
-				resetTimer(timer, opts.MaxIdle)
+				if timer != nil {
+					resetTimer(timer, opts.MaxIdle)
+				}
 			}
-		case <-timer.C:
+		case <-timerC:
 			return true
 		}
 	}
@@ -568,16 +550,17 @@ func stopAndDrainTimer(timer *time.Timer) {
 }
 
 type bulkRV struct {
-	max     int64
-	counter int64
+	max    int64
+	lastRV int64
 }
 
-// Used when executing a bulk import so that we can generate snowflake RVs in the past
+// Used when executing a bulk import so that we can generate snowflake RVs in the past.
+// The 30s offset ensures bulk-imported RVs don't clash with concurrent writes
+// that use the RV manager (both generate node=0 snowflakes in compatibility mode).
 func newBulkRV() *bulkRV {
-	t := snowflakeFromTime(time.Now())
+	t := snowflakeFromTime(time.Now().Add(-30 * time.Second))
 	return &bulkRV{
-		max:     t,
-		counter: 0,
+		max: t,
 	}
 }
 
@@ -595,8 +578,27 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 		ts = x.max
 	}
 
-	x.counter++
-	return ts + x.counter
+	// Use the object's timestamp as the base, but never go below the last
+	// emitted RV so that every value is unique regardless of iterator order.
+	base := ts
+	if base < x.lastRV {
+		base = x.lastRV
+	}
+
+	// Increment, keeping the sub-millisecond portion (low 22 bits) under 1000
+	// so that the snowflake ↔ microRV roundtrip (SnowflakeFromRV / RVFromSnowflake)
+	// is lossless.
+	// TODO: remove when backwards compatibility is no longer needed
+	shift := snowflake.NodeBits + snowflake.StepBits
+	subMs := base & ((1 << shift) - 1)
+	if subMs >= 999 {
+		base = ((base >> shift) + 1) << shift
+	} else {
+		base++
+	}
+
+	x.lastRV = base
+	return base
 }
 
 type BulkLock struct {

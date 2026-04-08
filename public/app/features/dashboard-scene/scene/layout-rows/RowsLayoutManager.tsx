@@ -159,10 +159,6 @@ export class RowsLayoutManager
     this.addNewRow(row);
   }
 
-  public shouldUngroup(): boolean {
-    return this.state.rows.length === 1;
-  }
-
   public getOutlineChildren() {
     const outlineChildren: SceneObject[] = [];
 
@@ -332,7 +328,7 @@ export class RowsLayoutManager
     }
 
     const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(row!, rowKey, { force: true, multi: false });
+    editPane.selectObject(row!, { force: true, multi: false });
   }
 
   public static createEmpty(): RowsLayoutManager {

@@ -26,7 +26,6 @@ import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 
-import { getTransformationContent } from '../../docs/getTransformationContent';
 import darkImage from '../../images/dark/calculateField.svg';
 import lightImage from '../../images/light/calculateField.svg';
 
@@ -275,7 +274,6 @@ export const getCalculateFieldTransformRegistryItem: () => TransformerRegistryIt
       'Use the row values to calculate a new field.'
     ),
     categories: new Set([TransformerCategory.CalculateNewFields]),
-    help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 
-import { type DataSourceApi, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
+import { type DataSourceApi, FeatureState, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, IconButton, InlineField, type PopoverContent, useStyles2 } from '@grafana/ui';
+import { Button, FeatureBadge, IconButton, InlineField, type PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
@@ -31,7 +31,9 @@ type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, stri
  * @param type - The expression type.
  * @returns The configuration for the expression type.
  */
-const getExpressionTypeConfig = (type: ExpressionQueryType): { helperText: PopoverContent } => {
+const getExpressionTypeConfig = (
+  type: ExpressionQueryType
+): { helperText: PopoverContent; featureState: FeatureState | undefined } => {
   const description = expressionTypes.find(({ value }) => value === type)?.description;
 
   switch (type) {
@@ -44,10 +46,12 @@ const getExpressionTypeConfig = (type: ExpressionQueryType): { helperText: Popov
             columns, as returned from the data source.
           </Trans>
         ),
+        featureState: FeatureState.preview,
       };
     default:
       return {
         helperText: description ?? '',
+        featureState: undefined,
       };
   }
 };
@@ -145,7 +149,7 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
     }
   };
 
-  const { helperText } = getExpressionTypeConfig(query.type);
+  const { helperText, featureState } = getExpressionTypeConfig(query.type);
 
   return (
     <div>
@@ -161,6 +165,7 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
           </ExpressionTypeDropdown>
         </InlineField>
         <div className={styles.fieldContainer}>
+          {featureState && <FeatureBadge featureState={featureState} />}
           {helperText && <IconButton name="info-circle" tooltip={helperText} />}
         </div>
       </div>
