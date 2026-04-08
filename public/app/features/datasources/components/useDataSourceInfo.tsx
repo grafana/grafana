@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 import { type PageInfoItem } from 'app/core/components/Page/types';
 
-import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import { isAdvisorEnabled, type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
 
 import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
@@ -40,14 +40,16 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
     ),
   });
 
-  info.push({
-    label: t('datasources.use-data-source-info.label.advisor', 'Advisor'),
-    value: failureSeverity ? (
-      <DataSourceFailureBadge severity={failureSeverity} message={dataSourceInfo.failure?.message} />
-    ) : (
-      <Badge color="green" text={t('datasources.use-data-source-info.badge-text-success', 'Success')} />
-    ),
-  });
+  if (isAdvisorEnabled()) {
+    info.push({
+      label: t('datasources.use-data-source-info.label.advisor', 'Advisor'),
+      value: failureSeverity ? (
+        <DataSourceFailureBadge severity={failureSeverity} message={dataSourceInfo.failure?.message} />
+      ) : (
+        <Badge color="green" text={t('datasources.use-data-source-info.badge-text-success', 'Success')} />
+      ),
+    });
+  }
 
   return info;
 };

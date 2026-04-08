@@ -29,7 +29,7 @@ type RetryCheckFn = () => {
   retryCheck: (checkName: string, itemID: string) => void;
 };
 
-function isAdvisorEnabled(): boolean {
+export function isAdvisorEnabled(): boolean {
   return Boolean(config.featureToggles.grafanaAdvisor && config.featureToggles.advisorDatasourceIntegration);
 }
 
@@ -74,10 +74,10 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
 
   return (
     <AdvisorCheckContext.Provider value={contextValue}>
-      {isPluginReady && (
+      {isPluginReady && completedChecksFn && retryCheckFn && (
         <AdvisorCheckBridge
-          completedChecksFn={completedChecksFn!}
-          retryCheckFn={retryCheckFn!}
+          completedChecksFn={completedChecksFn}
+          retryCheckFn={retryCheckFn}
           onChange={setAdvisorData}
         />
       )}
@@ -103,8 +103,8 @@ function AdvisorCheckBridge({
   const completedChecks = completedChecksFn({ checkType: 'datasource' });
   const retryCheckResult = retryCheckFn();
 
-  const check = completedChecks?.data?.items?.[0];
-  const isLoading = completedChecks?.isLoading ?? true;
+  const check = completedChecks?.data?.items?.[0]; // Given a type, the list of items will contain only the last one for that type
+  const isLoading = completedChecks == null || completedChecks.isLoading || !completedChecks.isCompleted;
   const retryCheck = retryCheckResult?.retryCheck;
 
   useLayoutEffect(() => {
