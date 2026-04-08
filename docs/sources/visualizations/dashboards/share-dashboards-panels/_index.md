@@ -200,6 +200,7 @@ To export a JSON file, follow these steps:
 
 1. (Optional) Toggle the **Share dashboard with another instance** switch to remove details specific to your Grafana instance.
 1. Click **Download file** or **Copy to clipboard**.
+1. Paste the JSON in another location.
 1. Click the **X** at the top-right corner to close the share drawer.
 
 ### Export a dashboard as an image
