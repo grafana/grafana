@@ -27,10 +27,10 @@ func QueryCacheConfigMigration(m migrator.QueryCacheConfigMigrator) migrations.M
 		Validators: []migrations.ValidatorFactory{
 			migrations.CountValidation(gr, migrations.CountValidationOptions{
 				Table: "data_source_cache",
-				Where: "data_source_id IN (SELECT id FROM data_source WHERE org_id = ?)",
+				Where: "data_source_uid IN (SELECT uid FROM data_source WHERE org_id = ?)",
 			}),
 		},
-		RenameTables:    []string{"data_source_cache"},
+		RenameTables:    []string{},
 		SkipWhenMissing: true,
 	}
 }

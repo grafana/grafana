@@ -72,7 +72,7 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 			name := fmt.Sprintf("%s.%s", row.pluginID, row.dataSourceUID)
 			created, _ := time.Parse("2006-01-02 15:04:05", row.created)
 			body, err := json.Marshal(queryCacheConfigObject{
-				TypeMeta:   typeMeta{APIVersion: apiGroup + "/" + apiVersion, Kind: "QueryCacheConfig"},
+				typeMeta:   typeMeta{APIVersion: apiGroup + "/" + apiVersion, Kind: "QueryCacheConfig"},
 				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(created)},
 				Spec: queryCacheConfigSpec{
 					DatasourceUID:  row.dataSourceUID,
@@ -143,7 +143,7 @@ type queryCacheConfigSpec struct {
 
 // queryCacheConfigObject is the full K8s-style object sent to unified storage.
 type queryCacheConfigObject struct {
-	TypeMeta   typeMeta             `json:",inline"`
+	typeMeta   `json:",inline"`
 	ObjectMeta objectMeta           `json:"metadata"`
 	Spec       queryCacheConfigSpec `json:"spec"`
 }

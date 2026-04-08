@@ -12,7 +12,7 @@ SELECT
 FROM
     {{ .Ident .CacheTable }} AS c
 INNER JOIN
-    {{ .Ident .DataSourceTable }} AS d ON c.data_source_id = d.id
+    {{ .Ident .DataSourceTable }} AS d ON c.data_source_uid = d.uid
 WHERE
     d.org_id = {{ .Arg .Query.OrgID }}
     {{ if .Query.LastID }}
