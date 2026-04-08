@@ -587,6 +587,51 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	return nil
 }
 
+func (s *secureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) (err error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetInactiveAllFromGroup", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.String("apiGroup", apiGroup),
+	))
+
+	defer span.End()
+
+	defer func() {
+		success := err == nil
+		args := []any{
+			"namespace", namespace.String(),
+			"apiGroup", apiGroup,
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.SetInactiveAllFromGroup failed")
+			span.RecordError(err)
+			args = append(args, "error", err)
+		}
+
+		logging.FromContext(ctx).Debug("SecureValueMetadataStorage.SetInactiveAllFromGroup", args...)
+		s.metrics.SecureValueSetInactiveAllFromGroupDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
+	req := setInactiveAllFromGroupSecureValue{
+		SQLTemplate:            sqltemplate.New(s.dialect),
+		Namespace:              namespace.String(),
+		OwnerReferenceAPIGroup: apiGroup,
+	}
+
+	q, err := sqltemplate.Execute(sqlSecureValueSetInactiveAllFromGroup, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueSetInactiveAllFromGroup.Name(), err)
+	}
+
+	if _, err := s.db.ExecContext(ctx, q, req.GetArgs()...); err != nil {
+		return fmt.Errorf("setting inactive all secure values from group %q in namespace %q: %w", apiGroup, namespace, err)
+	}
+
+	return nil
+}
+
 func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) (out []secretv1beta1.SecureValue, err error) {
 	start := s.clock.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.LeaseInactiveSecureValues", trace.WithAttributes(
@@ -679,7 +724,7 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 		}
 
 		if leaseTokenDB != leaseToken {
-			return nil, fmt.Errorf("bug: expected to list secure values with lease token %+v but got a secure value with another lease token %+v", leaseToken, leaseToken)
+			return nil, fmt.Errorf("bug: expected to list secure values with lease token %+v but got a secure value with another lease token %+v", leaseToken, leaseTokenDB)
 		}
 
 		secureValue, err := row.toKubernetes()

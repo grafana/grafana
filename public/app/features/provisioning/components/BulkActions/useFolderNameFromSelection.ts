@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { rootItemsSelector, useChildrenByParentUIDState } from 'app/features/browse-dashboards/state/hooks';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
-import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { useSelector } from 'app/types/store';
 
 // This hook retrieves the folder UID from the selection state. Because search endpoint currently does not return resource metadata

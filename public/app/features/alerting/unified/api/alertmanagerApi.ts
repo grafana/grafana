@@ -1,22 +1,22 @@
 import { isEmpty } from 'lodash';
 
 import {
-  NotificationChannelOption,
-  NotifierDTO,
-  ReceiversStateDTO,
+  type NotificationChannelOption,
+  type NotifierDTO,
+  type ReceiversStateDTO,
 } from 'app/features/alerting/unified/types/alerting';
 import { encodeMatcher } from 'app/features/alerting/unified/utils/matchers';
 import { dispatch } from 'app/store/store';
 
 import {
-  AlertManagerCortexConfig,
-  AlertmanagerAlert,
-  AlertmanagerChoice,
-  AlertmanagerGroup,
-  ExternalAlertmanagersConnectionStatus,
-  ExternalAlertmanagersStatusResponse,
-  GrafanaAlertingConfiguration,
-  Matcher,
+  type AlertManagerCortexConfig,
+  type AlertmanagerAlert,
+  type AlertmanagerChoice,
+  type AlertmanagerGroup,
+  type ExternalAlertmanagersConnectionStatus,
+  type ExternalAlertmanagersStatusResponse,
+  type GrafanaAlertingConfiguration,
+  type Matcher,
 } from '../../../../plugins/datasource/alertmanager/types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToMatcherField } from '../utils/alertmanager';
@@ -47,6 +47,19 @@ interface AlertmanagerAlertsFilter {
   inhibited?: boolean;
   unprocessed?: boolean;
   matchers?: Matcher[];
+}
+
+export interface AlertGroupsFilter {
+  /** Label matchers (PromQL-style) to filter alerts by */
+  matchers?: Matcher[];
+  /** Filter alert groups to a specific receiver/contact point name */
+  receiver?: string;
+  /** Include active alerts (default: true when omitted) */
+  active?: boolean;
+  /** Include silenced alerts (default: true when omitted) */
+  silenced?: boolean;
+  /** Include inhibited alerts (default: true when omitted) */
+  inhibited?: boolean;
 }
 
 /**
@@ -101,10 +114,37 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       providesTags: ['AlertmanagerAlerts'],
     }),
 
-    getAlertmanagerAlertGroups: build.query<AlertmanagerGroup[], { amSourceName: string }>({
-      query: ({ amSourceName }) => ({
-        url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts/groups`,
-      }),
+    getAlertmanagerAlertGroups: build.query<AlertmanagerGroup[], { amSourceName: string; filter?: AlertGroupsFilter }>({
+      query: ({ amSourceName, filter }) => {
+        const params: Record<string, unknown> = {};
+
+        if (filter?.matchers?.length) {
+          params.filter = filter.matchers
+            .filter((m) => m.name && m.value)
+            .map((m) => encodeMatcher(matcherToMatcherField(m)));
+        }
+
+        if (filter?.receiver) {
+          params.receiver = filter.receiver;
+        }
+
+        if (filter?.active !== undefined) {
+          params.active = filter.active;
+        }
+
+        if (filter?.silenced !== undefined) {
+          params.silenced = filter.silenced;
+        }
+
+        if (filter?.inhibited !== undefined) {
+          params.inhibited = filter.inhibited;
+        }
+
+        return {
+          url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts/groups`,
+          params,
+        };
+      },
     }),
 
     grafanaNotifiers: build.query<NotifierDTO[], void>({

@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { ActionItem, Actions } from '../../../Actions';
+import { type ActionItem, Actions } from '../../../Actions';
 import {
-  QUERY_EDITOR_COLORS,
   QUERY_EDITOR_TYPE_CONFIG,
   QueryEditorType,
   SIDEBAR_CARD_HEIGHT,
@@ -44,6 +43,8 @@ export const SidebarCard = ({
   onToggleHide,
   variant = 'default',
 }: SidebarCardProps) => {
+  const theme = useTheme2();
+  const queryEditorColors = getQueryEditorColors(theme);
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
@@ -74,7 +75,7 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSelect?.({});
+      onSelect({});
     }
   };
 
@@ -122,7 +123,7 @@ export const SidebarCard = ({
           <div>
             <div className={styles.cardContentIcons}>
               {item.isHidden && <Icon name="eye-slash" size="sm" />}
-              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={QUERY_EDITOR_COLORS.error} />}
+              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={queryEditorColors.error} />}
             </div>
             <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
               <Actions
@@ -169,6 +170,7 @@ function getStyles(
   const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
   const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+
   const {
     ghostBackgroundColor,
     ghostBorderColor,
@@ -206,10 +208,15 @@ function getStyles(
 
   const inSelection = isSelected || isPartOfSelection;
   const cardBorder = !!item.error
-    ? `1px solid color-mix(in srgb, ${QUERY_EDITOR_COLORS.error} 50%, transparent)`
+    ? `1px solid color-mix(in srgb, ${themeColors.error} 50%, transparent)`
     : `1px solid ${inSelection ? borderColor : theme.colors.border.medium}`;
 
   const selectionTintBg = `color-mix(in srgb, ${borderColor} 5%, ${theme.colors.background.primary})`;
+
+  // Selection-based styling
+  const cardBackground = isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg;
+  const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
+  const indicatorWidth = isSelected ? 3 : 2;
 
   return {
     cardContentIcons: css({
@@ -270,20 +277,20 @@ function getStyles(
       justifyContent: 'space-between',
 
       width: '100%',
-      background: isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg,
+      background: cardBackground,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
 
       overflow: 'hidden',
       border: cardBorder,
-      boxShadow: isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none',
+      boxShadow: cardBoxShadow,
       '&::before': {
         content: '""',
         position: 'absolute',
         left: 0,
         top: 0,
         bottom: 0,
-        width: isSelected ? 3 : 2,
+        width: indicatorWidth,
         background: borderColor,
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transition: theme.transitions.create(['width'], {

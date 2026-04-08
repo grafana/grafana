@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 
 import { VizLegendListItem } from './VizLegendListItem';
-import { VizLegendBaseProps, VizLegendItem } from './types';
+import { type VizLegendBaseProps, type VizLegendItem } from './types';
 
 export interface Props<T> extends VizLegendBaseProps<T> {}
 
@@ -25,8 +25,11 @@ export const VizLegendList = <T extends unknown>({
   className,
   readonly,
   limit = 0,
+  filterAction,
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
+
+  const allItemsSelected = useMemo(() => !items.some((item) => item.disabled), [items]);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -37,11 +40,11 @@ export const VizLegendList = <T extends unknown>({
         onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
+        allItemsSelected={allItemsSelected}
       />
     );
   }
 
-  // split into left & right items when bottom/default legend, else everything goes in leftItems
   const leftItems = useMemo(
     () => (placement === 'right' ? items : items.filter((item) => item.yAxis === 1)),
     [placement, items]
@@ -61,6 +64,7 @@ export const VizLegendList = <T extends unknown>({
 
       return (
         <div className={cx(styles.rightWrapper, className)}>
+          {filterAction && <span className={styles.itemRight}>{filterAction}</span>}
           <List items={leftItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
         </div>
       );
@@ -75,11 +79,13 @@ export const VizLegendList = <T extends unknown>({
         <div className={cx(styles.bottomWrapper, className)}>
           {leftItems.length > 0 && (
             <div className={styles.section}>
+              {filterAction && <span className={styles.itemBottom}>{filterAction}</span>}
               <InlineList items={leftItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
             </div>
           )}
           {rightItems.length > 0 && (
             <div className={cx(styles.section, styles.sectionRight)}>
+              {!leftItems.length && filterAction && <span className={styles.itemBottom}>{filterAction}</span>}
               <InlineList items={rightItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
             </div>
           )}
@@ -120,6 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     section: css({
       display: 'flex',
+      flexWrap: 'wrap',
     }),
     sectionRight: css({
       justifyContent: 'flex-end',

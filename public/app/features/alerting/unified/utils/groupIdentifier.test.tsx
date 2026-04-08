@@ -1,4 +1,4 @@
-import { RuleGroupIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type RuleGroupIdentifier, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
 import { ruleGroupIdentifierV2toV1 } from './groupIdentifier';
 

@@ -151,6 +151,10 @@ export interface VariableModel {
    */
   description?: string;
   /**
+   * Whether the group-by operator is enabled in the ad hoc filter combobox.
+   */
+  enableGroupBy?: boolean;
+  /**
    * Visibility configuration for the variable
    */
   hide?: VariableHide;
@@ -219,6 +223,7 @@ export interface VariableModel {
 
 export const defaultVariableModel: Partial<VariableModel> = {
   allowCustomValue: true,
+  enableGroupBy: false,
   includeAll: false,
   multi: false,
   options: [],
@@ -1032,6 +1037,8 @@ export interface LibraryPanelRef {
   uid: string;
 }
 
+export type MatcherScope = ('series' | 'nested' | 'annotation' | 'exemplar');
+
 /**
  * Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
  * It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
@@ -1045,6 +1052,10 @@ export interface MatcherConfig {
    * The matcher options. This is specific to the matcher implementation.
    */
   options?: unknown;
+  /**
+   * If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+   */
+  scope?: MatcherScope;
 }
 
 export const defaultMatcherConfig: Partial<MatcherConfig> = {

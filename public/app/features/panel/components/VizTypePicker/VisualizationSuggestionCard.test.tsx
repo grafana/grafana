@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react';
 import {
   FieldType,
   LoadingState,
-  PanelData,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';

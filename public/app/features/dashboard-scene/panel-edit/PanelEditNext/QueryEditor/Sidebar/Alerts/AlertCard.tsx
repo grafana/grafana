@@ -2,7 +2,7 @@ import { Icon, useTheme2 } from '@grafana/ui';
 
 import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
 import { useQueryEditorUIContext } from '../../QueryEditorContext';
-import { AlertRule } from '../../types';
+import { type AlertRule } from '../../types';
 import { CardTitle } from '../Cards/CardTitle';
 import { SidebarCard } from '../Cards/SidebarCard';
 

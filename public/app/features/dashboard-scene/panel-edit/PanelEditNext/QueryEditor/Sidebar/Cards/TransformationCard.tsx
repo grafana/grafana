@@ -2,7 +2,7 @@ import { Icon } from '@grafana/ui';
 
 import { PENDING_CARD_ID, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../../QueryEditorContext';
-import { Transformation } from '../../types';
+import { type Transformation } from '../../types';
 
 import { CardTitle } from './CardTitle';
 import { GhostSidebarCard } from './GhostSidebarCard';

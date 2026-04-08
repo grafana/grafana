@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
-import { AlertRule, EMPTY_ALERT, Transformation } from '../types';
+import { type AlertRule, EMPTY_ALERT, type Transformation } from '../types';
 
 /**
  * Resolves the primary selected query, transformation, and alert from the current selection state.
  *
  * "Primary" means the last element of the respective selection array — the most recently
- * touched item, which is shown in the editor pane. See useMultiSelection for the ordering rules.
+ * touched item, which is shown in the editor pane. See useSelectionState for the ordering rules.
  *
  * Query selection has an auto-select fallback: when nothing is explicitly selected and no other
  * type or picker is active, it defaults to queries[0] so the editor pane is never empty.
@@ -75,5 +75,5 @@ export function useSelectedCard(
     return null;
   }, [alerts, selectedAlertId]);
 
-  return { selectedQuery, selectedTransformation, selectedAlert };
+  return { selectedQuery, selectedTransformation, selectedAlert, primaryQueryRefId };
 }

@@ -1,11 +1,11 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../../constants';
 import { ds1SettingsMock, renderWithQueryEditorProvider } from '../../testUtils';
-import { Transformation } from '../../types';
+import { type Transformation } from '../../types';
 
 import { QueryCard } from './QueryCard';
 import { SidebarCard } from './SidebarCard';

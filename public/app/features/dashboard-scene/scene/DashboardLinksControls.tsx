@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { sceneGraph } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 
 import { DashboardLinkRenderer } from './DashboardLinkRenderer';
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export interface Props {
   links: DashboardLink[];
@@ -31,6 +31,7 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
           dashboardUID={uid}
           key={`${link.title}-$${index}`}
           linkIndex={links.indexOf(link)}
+          dashboard={dashboard}
         />
       ))}
     </div>
