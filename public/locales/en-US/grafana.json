@@ -12319,6 +12319,8 @@
       "description": "Notifications you have received will appear here",
       "title": "You're all caught up!"
     },
+    "select-all": "Select all notifications",
+    "select-notification": "Select {{title}}",
     "stored-notifications": {
       "dismiss-notifications": "Dismiss notifications",
       "title-alert": "This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
