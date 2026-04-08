@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Slider } from './Slider';
-import { SliderProps } from './types';
+import { type SliderProps } from './types';
 
 import '@testing-library/jest-dom';
 

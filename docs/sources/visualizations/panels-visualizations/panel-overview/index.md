@@ -156,17 +156,18 @@ Time series
 
 ## Add a panel
 
-To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard:
+To add a panel click or drag the panel image in the sidebar:
 
-![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
+![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.0.png)
 
 To add a panel to an existing dashboard, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
-1. Click the **Add new element** icon (blue plus sign) and click or drag a panel onto the dashboard.
+1. Click the **Add new element** icon (blue plus sign).
 
-   ![Add dropdown](/media/docs/grafana/panels-visualizations/screenshot-add-dropdown-11.2.png)
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-element-icon-v13.0.png" max-width="250px" alt="Add element icon" >}}
 
+1. Click or drag a panel onto the dashboard.
 1. Click **Configure**.
 
 ## Panel configuration

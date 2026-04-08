@@ -1,16 +1,16 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricsLabelsSection.tsx
 import { useCallback } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
 
 import { getDebounceTimeInMilliseconds } from '../../caching';
-import { PrometheusDatasource } from '../../datasource';
+import { type PrometheusDatasource } from '../../datasource';
 import { truncateResult } from '../../language_utils';
-import { PromMetricsMetadata } from '../../types';
+import { type PromMetricsMetadata } from '../../types';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { promQueryModeller } from '../shared/modeller_instance';
-import { QueryBuilderLabelFilter } from '../shared/types';
-import { PromVisualQuery } from '../types';
+import { type QueryBuilderLabelFilter } from '../shared/types';
+import { type PromVisualQuery } from '../types';
 
 import { LabelFilters } from './LabelFilters';
 import { MetricCombobox } from './MetricCombobox';

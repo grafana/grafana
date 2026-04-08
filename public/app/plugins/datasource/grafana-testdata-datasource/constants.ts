@@ -1,4 +1,4 @@
-import { CSVWave, PulseWaveQuery, TestDataDataQuery, TestDataQueryType } from './dataquery';
+import { type CSVWave, type PulseWaveQuery, type TestDataDataQuery, TestDataQueryType } from './dataquery';
 
 export const defaultPulseQuery: PulseWaveQuery = {
   timeStep: 60,

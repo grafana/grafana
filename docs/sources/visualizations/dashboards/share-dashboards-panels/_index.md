@@ -172,7 +172,7 @@ To export a dashboard in its current state as a PDF, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down in the sidebar and select **Export as PDF**.
+1. Click the **Export** drop-down in the toolbar and select **Export as PDF**.
 1. In the **Export dashboard PDF** drawer that opens, select either **Landscape** or **Portrait** for the PDF orientation.
 1. Select either **Grid** or **Simple** for the PDF layout.
 1. Set the **Zoom** level; zoom in to enlarge text, or zoom out to see more data (like table columns) per panel.
@@ -189,19 +189,18 @@ To export a JSON file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the sidebar and select **Export as code**.
+1. In the toolbar, click the **Export** icon and select **Export as code**.
 
    The **Export dashboard** drawer opens.
 
-1. (Optional) Click **Advanced options** to expand the section and choose whether the dashboard export is in **JSON** or **YAML**.
+1. (Optional) Click **Advanced options** to expand the section, and then make the following selections:
+   - **Model**: Choose from **Classic** or **V2 Resource**
+   - **Format**: For the V2 Resource only, choose from **JSON** or **YAML**
+
 1. (Optional) Toggle the **Share dashboard with another instance** switch to remove details specific to your Grafana instance.
 1. Click **Download file** or **Copy to clipboard**.
+1. Paste the JSON in another location.
 1. Click the **X** at the top-right corner to close the share drawer.
-
-The generated file uses one of the following schema models:
-
-- **V1 Resource** - For dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/) wrapped in the `spec` property of the [V1 Kubernetes-style resource](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2alpha1).
-- **V2 Resource** - For dashboards created using the [V2 Resource schema](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).
 
 ### Export a dashboard as an image
 
@@ -213,7 +212,7 @@ To export a dashboard in its current state as a PNG image file, follow these ste
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the sidebar and select **Export as image**.
+1. Click the **Export** drop-down list in the toolbar and select **Export as image**.
 
    The **Export as image** drawer opens.
 
@@ -284,7 +283,7 @@ You can also update these parameters in the [image rendering configuration](http
 The following example shows a link to a server-side rendered PNG:
 
 ```bash
-https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&__feature.dashboardScene&width=1000&height=500&tz=UTC
+https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&width=1000&height=500&tz=UTC
 ```
 
 ### Share an embed

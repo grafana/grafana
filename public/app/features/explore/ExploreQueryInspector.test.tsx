@@ -1,10 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ComponentProps } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { type ComponentProps } from 'react';
+import type AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
-import { InspectorStream } from 'app/core/services/backend_srv';
+import { type InspectorStream } from 'app/core/services/backend_srv';
 
 import { ExploreQueryInspector } from './ExploreQueryInspector';
 

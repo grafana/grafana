@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { getPluginsStateMock } from '../../mocks/mockHelpers';
-import { CatalogPlugin, PluginStatus } from '../../types';
+import { type CatalogPlugin, PluginStatus } from '../../types';
 
 import { InstallControlsButton } from './InstallControlsButton';
 
@@ -32,8 +32,11 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 describe('InstallControlsButton', () => {
@@ -245,7 +248,10 @@ describe('InstallControlsButton', () => {
     it('should be hidden when plugin is managed', () => {
       render(
         <TestProvider>
-          <InstallControlsButton plugin={{ ...plugin, isManaged: true }} pluginStatus={PluginStatus.UPDATE} />
+          <InstallControlsButton
+            plugin={{ ...plugin, managed: { enabled: true } }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
         </TestProvider>
       );
       expect(screen.queryByText('Update')).not.toBeInTheDocument();

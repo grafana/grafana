@@ -1,12 +1,12 @@
-import { ChangeEvent, FormEvent, useCallback } from 'react';
+import { type ChangeEvent, type FormEvent, useCallback } from 'react';
 
-import { VariableWithMultiSupport } from '@grafana/data';
+import { type VariableWithMultiSupport } from '@grafana/data';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { VariableEditorProps } from './types';
+import { type VariableEditorProps } from './types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
   extends VariableEditorProps<Model> {
