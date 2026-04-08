@@ -221,8 +221,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
-  const flipOrderTimer = useRef<number | undefined>(undefined);
-  const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
@@ -339,15 +337,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
     store.set(visualisationTypeKey, visualisationType);
   }, [panelState?.logs?.visualisationType]);
-
-  useUnmount(() => {
-    if (flipOrderTimer) {
-      window.clearTimeout(flipOrderTimer.current);
-    }
-    if (cancelFlippingTimer) {
-      window.clearTimeout(cancelFlippingTimer.current);
-    }
-  });
 
   useUnmount(() => {
     // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url

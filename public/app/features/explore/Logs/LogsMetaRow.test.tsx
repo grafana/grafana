@@ -4,7 +4,6 @@ import saveAs from 'file-saver';
 import { type ComponentProps } from 'react';
 
 import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, store } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { LogsMetaRow } from './LogsMetaRow';
 
@@ -26,8 +25,6 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: () => null,
 }));
 
-jest.mock('file-saver', () => jest.fn());
-
 type LogsMetaRowProps = ComponentProps<typeof LogsMetaRow>;
 const defaultProps: LogsMetaRowProps = {
   meta: [],
@@ -39,12 +36,11 @@ const defaultProps: LogsMetaRowProps = {
   visualisationType: 'logs',
 };
 
-const setup = (propOverrides?: Partial<LogsMetaRowProps>, disableDownload = false) => {
+const setup = (propOverrides?: Partial<LogsMetaRowProps>) => {
   const props = {
     ...defaultProps,
     ...propOverrides,
   };
-  config.exploreHideLogsDownload = disableDownload;
 
   return render(<LogsMetaRow {...props} />);
 };
@@ -103,11 +99,6 @@ describe('LogsMetaRow', () => {
   it('renders a button to show the download menu', () => {
     setup();
     expect(screen.getByText('Download').closest('button')).toBeInTheDocument();
-  });
-
-  it('does not render a button to show the download menu if disabled', async () => {
-    setup({}, true);
-    expect(screen.queryByText('Download')).toBeNull();
   });
 
   it('renders a button to show the download menu', async () => {
