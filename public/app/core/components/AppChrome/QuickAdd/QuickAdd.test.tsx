@@ -29,7 +29,7 @@ function setup(navBarTreeOverride?: NavModelItem[]) {
       id: 'dashboards/browse',
       url: '/dashboards',
       children: [
-        { text: 'New dashboard', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true },
+        { text: 'New dashboard', id: 'dashboards/new', url: '#', isCreateAction: true },
         { text: 'Import dashboard', id: 'dashboards/import', url: '/dashboard/import', isCreateAction: true },
       ],
     },
@@ -81,17 +81,14 @@ describe('QuickAdd', () => {
   });
 
   it('reports interaction when a menu item is clicked', async () => {
-    // jsdom doesn't support navigation; suppress the expected error
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'New dashboard' }));
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_menu_item_clicked', {
-      url: '/dashboard/new',
+      url: '#',
       from: 'quickadd',
     });
-    consoleSpy.mockRestore();
   });
 
   it('falls back to nav item text for unknown item IDs', async () => {

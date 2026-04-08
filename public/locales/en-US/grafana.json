@@ -12180,7 +12180,8 @@
       "aria-label": "Profile"
     },
     "quick-add": {
-      "aria-label": "New"
+      "aria-label": "New",
+      "new-template-dashboard-button": "Dashboard from template"
     },
     "rss-button": "Latest from the blog"
   },
