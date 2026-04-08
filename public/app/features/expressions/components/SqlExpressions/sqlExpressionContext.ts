@@ -12,5 +12,4 @@ export interface QueryUsageContext {
   totalRows?: number;
   requestTime?: number;
   numberOfQueries?: number;
-  seriesData?: unknown;
 }
