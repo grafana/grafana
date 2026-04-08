@@ -587,4 +587,101 @@ func TestPluginInstaller_Removal(t *testing.T) {
 		_, err = os.Stat(pluginDir)
 		require.ErrorIs(t, err, os.ErrNotExist)
 	})
+
+	t.Run("CleanupPluginRBAC is called during plugin removal", func(t *testing.T) {
+		pluginDir := filepath.Join(tmpDir, "rbac-cleanup-plugin")
+		err := os.MkdirAll(pluginDir, 0750)
+		require.NoError(t, err)
+
+		pluginJSON := `{
+			"id": "rbac-cleanup-plugin",
+			"name": "RBAC Cleanup Test Plugin",
+			"type": "datasource",
+			"info": {
+				"version": "1.0.0"
+			}
+		}`
+		err = os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644)
+		require.NoError(t, err)
+
+		localFS := plugins.NewLocalFS(pluginDir)
+		pluginV1 := createPlugin(t, "rbac-cleanup-plugin", plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
+			plugin.Info.Version = "1.0.0"
+			plugin.FS = localFS
+		})
+
+		registry := &pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				"rbac-cleanup-plugin": pluginV1,
+			},
+		}
+
+		loader := &pluginfakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
+			},
+		}
+
+		var cleanedUpPluginIDs []string
+		rbacCleaner := &pluginfakes.FakeRBACCleaner{
+			CleanupFunc: func(ctx context.Context, pluginIDs []string) error {
+				cleanedUpPluginIDs = append(cleanedUpPluginIDs, pluginIDs...)
+				return nil
+			},
+		}
+
+		inst := New(&config.PluginManagementCfg{}, registry, loader, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, rbacCleaner)
+		err = inst.Remove(context.Background(), "rbac-cleanup-plugin", "1.0.0")
+		require.NoError(t, err)
+
+		require.Equal(t, []string{"rbac-cleanup-plugin"}, cleanedUpPluginIDs)
+	})
+
+	t.Run("CleanupPluginRBAC error does not fail plugin removal", func(t *testing.T) {
+		pluginDir := filepath.Join(tmpDir, "rbac-cleanup-error-plugin")
+		err := os.MkdirAll(pluginDir, 0750)
+		require.NoError(t, err)
+
+		pluginJSON := `{
+			"id": "rbac-cleanup-error-plugin",
+			"name": "RBAC Cleanup Error Test Plugin",
+			"type": "datasource",
+			"info": {
+				"version": "1.0.0"
+			}
+		}`
+		err = os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(pluginJSON), 0644)
+		require.NoError(t, err)
+
+		localFS := plugins.NewLocalFS(pluginDir)
+		pluginV1 := createPlugin(t, "rbac-cleanup-error-plugin", plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
+			plugin.Info.Version = "1.0.0"
+			plugin.FS = localFS
+		})
+
+		registry := &pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				"rbac-cleanup-error-plugin": pluginV1,
+			},
+		}
+
+		loader := &pluginfakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
+			},
+		}
+
+		rbacCleaner := &pluginfakes.FakeRBACCleaner{
+			CleanupFunc: func(ctx context.Context, pluginIDs []string) error {
+				return errors.New("RBAC cleanup failed")
+			},
+		}
+
+		inst := New(&config.PluginManagementCfg{}, registry, loader, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, rbacCleaner)
+		err = inst.Remove(context.Background(), "rbac-cleanup-error-plugin", "1.0.0")
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginDir)
+		require.True(t, os.IsNotExist(err))
+	})
 }

@@ -215,7 +215,7 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) 
 	}
 
 	if err := m.rbacCleaner.CleanupPluginRBAC(ctx, pluginID); err != nil {
-		m.log.Error("Failed to cleanup plugin RBAC", "pluginId", pluginID, "error", err)
+		m.log.Error("Failed to cleanup plugin RBAC. Stale RBAC data can be cleaned up on next startup by setting the cfg.RBAC.PluginsCleanup config option", "pluginId", pluginID, "error", err)
 	}
 
 	has, err := m.serviceRegistry.HasExternalService(ctx, pluginID)
