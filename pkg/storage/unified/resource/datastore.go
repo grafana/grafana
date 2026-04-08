@@ -22,8 +22,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	gocache "github.com/patrickmn/go-cache"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
@@ -900,10 +898,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 				// This can only happen if a concurrent write was attempted: the validation in
 				// WriteEvent guarantees that we return early when the resource already exists
 				// before entering the transaction.
-				//
-				// TODO: mark this and optimistic locking errors as conflicts (409) so that they
-				// can be identified by callers.
-				return fmt.Errorf("conflict: concurrent creation detected")
+				return conflictError(event, "concurrent create attempts detected")
 			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}
@@ -923,7 +918,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
 		}
-		if err := checkLegacyCASConflict(res, key); err != nil {
+		if err := checkLegacyCASConflict(res, event, key); err != nil {
 			return err
 		}
 	case DataActionDeleted:
@@ -939,7 +934,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
 		}
-		if err := checkLegacyCASConflict(res, key); err != nil {
+		if err := checkLegacyCASConflict(res, event, key); err != nil {
 			return err
 		}
 	}
@@ -947,7 +942,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	return nil
 }
 
-func checkLegacyCASConflict(res db.Result, key DataKey) error {
+func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
@@ -959,10 +954,7 @@ func checkLegacyCASConflict(res db.Result, key DataKey) error {
 		return fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
 	}
 
-	return apierrors.NewConflict(schema.GroupResource{
-		Group:    key.Group,
-		Resource: key.Resource,
-	}, key.Name, fmt.Errorf("resource version does not match current value"))
+	return conflictError(event, "requested RV does not match current RV")
 }
 
 func isRowAlreadyExistsError(err error) bool {
