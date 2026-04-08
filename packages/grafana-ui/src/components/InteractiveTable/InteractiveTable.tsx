@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Fragment, type ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo } from 'react';
 import {
   type HeaderGroup,
   type PluginHook,
@@ -16,7 +16,6 @@ import { type GrafanaTheme2, type IconName, isTruthy } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { uniqueId } from '../../utils/uniqueId';
 import { Icon } from '../Icon/Icon';
 import { Pagination } from '../Pagination/Pagination';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -343,7 +342,7 @@ export function InteractiveTable<TableData extends object>({
 }
 
 const useUniqueId = () => {
-  return useMemo(() => uniqueId('InteractiveTable'), []);
+  return useId();
 };
 
 const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({

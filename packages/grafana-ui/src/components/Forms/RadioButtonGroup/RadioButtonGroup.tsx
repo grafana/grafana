@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { type HTMLAttributes, useCallback, useEffect, useRef } from 'react';
+import { type HTMLAttributes, useCallback, useEffect, useId, useRef } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { uniqueId } from '../../../utils/uniqueId';
 import { Icon } from '../../Icon/Icon';
 
 import { type RadioButtonSize, RadioButton, RADIO_GROUP_PADDING } from './RadioButton';
@@ -66,7 +65,7 @@ export function RadioButtonGroup<T>({
     [onClick]
   );
 
-  const internalId = id ?? uniqueId('radiogroup-');
+  const internalId = id ?? useId();
   const groupName = useRef(internalId);
   const styles = useStyles2(getStyles);
 

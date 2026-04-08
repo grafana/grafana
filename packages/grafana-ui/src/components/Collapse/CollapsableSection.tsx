@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { uniqueId } from '../../utils/uniqueId';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -63,7 +62,7 @@ export const CollapsableSection = ({
       toggleInternalOpenState(!internalOpenState);
     }
   };
-  const { current: id } = useRef(uniqueId());
+  const id = useId();
 
   const buttonLabelId = labelId ?? `collapse-label-${id}`;
 
