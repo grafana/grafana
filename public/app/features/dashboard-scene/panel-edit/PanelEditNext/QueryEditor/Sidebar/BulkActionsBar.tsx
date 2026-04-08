@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isExpressionReference } from '@grafana/runtime';
-import { Button, ConfirmModal, IconName, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, type IconName, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
 import {
@@ -35,7 +35,7 @@ function BulkActionButtons({
   children,
 }: BulkActionButtonsProps) {
   return (
-    <Stack direction="row" gap={0.25}>
+    <Stack direction="row">
       <Button
         size="sm"
         variant="destructive"
@@ -234,7 +234,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(0.25),
       padding: theme.spacing(0.75, 1),
       background: theme.colors.background.canvas,
       borderTop: `1px solid ${theme.colors.border.medium}`,
