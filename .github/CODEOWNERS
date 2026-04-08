@@ -139,6 +139,7 @@
 /pkg/ifaces/ @grafana/grafana-backend-group
 /pkg/infra/db/ @grafana/grafana-backend-group
 /pkg/infra/features/ @grafana/grafana-backend-services-squad
+/pkg/infra/leaderelection/ @grafana/access-squad
 /pkg/infra/localcache/ @grafana/grafana-backend-group
 /pkg/infra/log/ @grafana/grafana-backend-group
 /pkg/infra/metrics/ @grafana/grafana-backend-group
