@@ -81,7 +81,7 @@ var (
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaDataSourcesPlugins,
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -118,7 +118,7 @@ var (
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaPartnerPluginsSquad,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -144,7 +144,7 @@ var (
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -152,7 +152,7 @@ var (
 			Description:  "Enables running InfluxDB Influxql queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaPartnerPluginsSquad,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -204,7 +204,7 @@ var (
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaDataSourcesPlugins,
 		},
 		{
 			Name:         "mlExpressions",
@@ -269,7 +269,7 @@ var (
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaDataSourcesPlugins,
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -535,7 +535,7 @@ var (
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -971,7 +971,7 @@ var (
 			Description:  "Updates CloudWatch label parsing to be more accurate",
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
-			Owner:        awsDatasourcesSquad,
+			Owner:        grafanaDataSourcesPlugins,
 			FrontendOnly: false,
 		},
 		{
@@ -1147,7 +1147,7 @@ var (
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true", // enabled by default
 		},
 		{
@@ -1198,14 +1198,14 @@ var (
 			Name:        "cloudWatchRoundUpEndTime",
 			Description: "Round up end time for metric queries to the next minute to avoid missing data",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true",
 		},
 		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
 			Stage:       FeatureStageDeprecated,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true", // Enabled by default for now
 		},
 
@@ -1352,7 +1352,7 @@ var (
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -1406,7 +1406,7 @@ var (
 			Name:        "azureMonitorEnableUserAuth",
 			Description: "Enables user auth for Azure Monitor datasource only",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true", // Enabled by default for now
 		},
 		{
@@ -1485,7 +1485,7 @@ var (
 			Name:        "elasticsearchCrossClusterSearch",
 			Description: "Enables cross cluster search in the Elasticsearch data source",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -1539,7 +1539,7 @@ var (
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -1696,7 +1696,7 @@ var (
 			Name:        "azureMonitorLogsBuilderEditor",
 			Description: "Enables the logs builder mode for the Azure Monitor data source",
 			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
@@ -1737,7 +1737,7 @@ var (
 			Description:  "use multi-tenant path for awsTempCredentials",
 			Stage:        FeatureStageExperimental,
 			HideFromDocs: true,
-			Owner:        awsDatasourcesSquad,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -1983,7 +1983,7 @@ var (
 			Description:  "Enables new design for the InfluxDB data source configuration page",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaPartnerPluginsSquad,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -2083,7 +2083,7 @@ var (
 			Description:  "Enables new design for the Clickhouse data source configuration page",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaPartnerPluginsSquad,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -2124,7 +2124,7 @@ var (
 			Description:  "Enables the Graphite data source full backend mode",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaPartnerPluginsSquad,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "false",
 		},
 		{
@@ -2132,7 +2132,7 @@ var (
 			Description:  "Enables the updated Azure Monitor resource picker",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaPartnerPluginsSquad,
+			Owner:        grafanaDataSourcesPlugins,
 			Expression:   "true",
 		},
 		{
@@ -2140,7 +2140,7 @@ var (
 			Description:     "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
 			Stage:           FeatureStageDeprecated,
 			RequiresRestart: true,
-			Owner:           grafanaPartnerPluginsSquad,
+			Owner:           grafanaDataSourcesPlugins,
 			Expression:      "true",
 		},
 		{
@@ -2310,21 +2310,21 @@ var (
 			Name:        "elasticsearchRawDSLQuery",
 			Description: "Enables the raw DSL query editor in the Elasticsearch data source",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
 			Name:        "elasticsearchESQLQuery",
 			Description: "Enables the ES|QL query editor in the Elasticsearch data source",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPartnerPluginsSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
 			Name:        "awsDatasourcesHttpProxy",
 			Description: "Enables http proxy settings for aws datasources",
 			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
+			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 		},
 		{
