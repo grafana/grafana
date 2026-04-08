@@ -1,4 +1,4 @@
-import { type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { MatcherOperator, ROUTES_META_SYMBOL, type Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { KnownProvenance } from '../../types/knownProvenance';
@@ -31,8 +31,6 @@ test('k8sSubRouteToRoute', () => {
     ],
   };
 
-  const rootMetadata = { name: 'test-name', annotations: { 'grafana.com/access/canWrite': 'true' } };
-
   const expected: Route = {
     name: 'test-name',
     continue: false,
@@ -52,13 +50,11 @@ test('k8sSubRouteToRoute', () => {
         matchers: undefined,
         object_matchers: [['label2', MatcherOperator.notEqual, 'value2']],
         routes: undefined,
-        [ROUTES_META_SYMBOL]: { name: 'test-name', metadata: rootMetadata },
       },
     ],
-    [ROUTES_META_SYMBOL]: { name: 'test-name', metadata: rootMetadata },
   };
 
-  expect(k8sSubRouteToRoute(input, 'test-name', rootMetadata)).toStrictEqual(expected);
+  expect(k8sSubRouteToRoute(input, 'test-name')).toStrictEqual(expected);
 });
 
 test('routeToK8sSubRoute', () => {

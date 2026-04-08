@@ -12,6 +12,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -75,6 +77,7 @@ func newReconcilerForTest(srv *stubServer, cf resources.ClientFactory) *Reconcil
 		clientFactory: cf,
 		logger:        log.NewNopLogger(),
 		tracer:        tracing.NewNoopTracerService(),
+		metrics:       newReconcilerMetrics(prometheus.NewRegistry()),
 	}
 }
 
@@ -134,7 +137,8 @@ func TestReconcileNamespace_EvictsCacheOnNotFound(t *testing.T) {
 	r := newReconcilerForTest(srv, notFoundClientFactory{})
 	r.ensuredNamespaces.Store("evict-ns", struct{}{})
 
-	require.NoError(t, r.reconcileNamespace(context.Background(), "evict-ns"))
+	_, err := r.reconcileNamespace(context.Background(), "evict-ns")
+	require.NoError(t, err)
 
 	_, cached := r.ensuredNamespaces.Load("evict-ns")
 	assert.False(t, cached)

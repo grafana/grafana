@@ -10,6 +10,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -90,25 +91,18 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 
 // resolveTeamUID gets team UID from context or falls back to label-selector lookup by deprecated internal ID.
 func (s *TeamK8sService) resolveTeamUID(ctx context.Context, namespace string, teamID int64) (string, error) {
-	if uid, ok := ctx.Value(team.TeamUIDCtxKey{}).(string); ok && uid != "" {
+	if uid, ok := team.TeamUIDFrom(ctx); ok {
 		return uid, nil
 	}
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return "", err
 	}
-	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(teamID, 10)
-	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	resolved, err := resolveTeamByLegacyID(ctx, client, teamID)
 	if err != nil {
 		return "", err
 	}
-	if len(list.Items) == 0 {
-		return "", team.ErrTeamNotFound
-	}
-	if len(list.Items) > 1 {
-		return "", errors.New("multiple teams found with same deprecated internal ID")
-	}
-	return list.Items[0].GetName(), nil
+	return resolved.GetName(), nil
 }
 
 // resolveUserUID finds a user's K8s UID by their deprecated internal ID label.
@@ -190,6 +184,23 @@ func getResourceID(obj metav1.ObjectMeta) int64 {
 	return 0
 }
 
+func resolveTeamByLegacyID(ctx context.Context, client dynamic.ResourceInterface, id int64) (*unstructured.Unstructured, error) {
+	selector := labels.SelectorFromSet(labels.Set{
+		utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(id, 10),
+	})
+	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
+	if err != nil {
+		return nil, err
+	}
+	if len(list.Items) == 0 {
+		return nil, team.ErrTeamNotFound
+	}
+	if len(list.Items) > 1 {
+		return nil, team.ErrMultipleTeamsFound
+	}
+	return &list.Items[0], nil
+}
+
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -262,44 +273,23 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 		return err
 	}
 
-	uid, _ := ctx.Value(team.TeamUIDCtxKey{}).(string)
-	if uid != "" {
-		result, err := client.Get(ctx, uid, metav1.GetOptions{})
+	var result *unstructured.Unstructured
+	if uid, ok := team.TeamUIDFrom(ctx); ok {
+		result, err = client.Get(ctx, uid, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				return team.ErrTeamNotFound
 			}
 			return err
 		}
-
-		updated := result.DeepCopy()
-		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+	} else {
+		result, err = resolveTeamByLegacyID(ctx, client, cmd.ID)
+		if err != nil {
 			return err
 		}
-		if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
-			return err
-		}
-		if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
-			return err
-		}
-
-		_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
-		return err
 	}
 
-	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(cmd.ID, 10)
-	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
-	if err != nil {
-		return err
-	}
-	if len(list.Items) == 0 {
-		return team.ErrTeamNotFound
-	}
-	if len(list.Items) > 1 {
-		return errors.New("multiple teams found with same deprecated internal ID")
-	}
-
-	updated := list.Items[0].DeepCopy()
+	updated := result.DeepCopy()
 	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
 		return err
 	}
@@ -322,15 +312,18 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 	orgID := requester.GetOrgID()
 
 	namespace := s.namespaceMapper(orgID)
-
-	uid, err := s.resolveTeamUID(ctx, namespace, cmd.ID)
+	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return err
 	}
 
-	client, err := s.getClient(ctx, namespace)
-	if err != nil {
-		return err
+	uid, ok := team.TeamUIDFrom(ctx)
+	if !ok {
+		resolved, resolveErr := resolveTeamByLegacyID(ctx, client, cmd.ID)
+		if resolveErr != nil {
+			return resolveErr
+		}
+		uid = resolved.GetName()
 	}
 
 	err = client.Delete(ctx, uid, metav1.DeleteOptions{})
@@ -458,50 +451,27 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 
 	uid := query.UID
 	if uid == "" {
-		uid, _ = ctx.Value(team.TeamUIDCtxKey{}).(string)
+		uid, _ = team.TeamUIDFrom(ctx)
 	}
 
-	// Fast path: direct Get by UID when available
+	var result *unstructured.Unstructured
 	if uid != "" {
-		result, err := client.Get(ctx, uid, metav1.GetOptions{})
+		result, err = client.Get(ctx, uid, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				return nil, team.ErrTeamNotFound
 			}
 			return nil, err
 		}
-
-		var fetched iamv0alpha1.Team
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &fetched); err != nil {
+	} else {
+		result, err = resolveTeamByLegacyID(ctx, client, query.ID)
+		if err != nil {
 			return nil, err
 		}
-
-		return &team.TeamDTO{
-			ID:            getResourceID(fetched.ObjectMeta),
-			UID:           fetched.Name,
-			OrgID:         orgID,
-			Name:          fetched.Spec.Title,
-			Email:         fetched.Spec.Email,
-			ExternalUID:   fetched.Spec.ExternalUID,
-			IsProvisioned: fetched.Spec.Provisioned,
-		}, nil
-	}
-
-	// Fallback: look up by deprecated internal ID via label selector
-	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(query.ID, 10)
-	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
-	if err != nil {
-		return nil, err
-	}
-	if len(list.Items) == 0 {
-		return nil, team.ErrTeamNotFound
-	}
-	if len(list.Items) > 1 {
-		return nil, errors.New("multiple teams found with same deprecated internal ID")
 	}
 
 	var fetched iamv0alpha1.Team
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(list.Items[0].Object, &fetched); err != nil {
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &fetched); err != nil {
 		return nil, err
 	}
 
