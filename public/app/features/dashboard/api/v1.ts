@@ -81,6 +81,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // and the api server will throw an error
     delete obj.metadata.resourceVersion;
 
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
+
     // for v1 in g12, we will ignore the schema version validation from all default clients,
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
@@ -89,10 +94,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    obj.metadata.annotations = {
-      ...obj.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
+
     // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
     delete obj.metadata.name;
     // on create, always clear the id to prevent duplicate ids
