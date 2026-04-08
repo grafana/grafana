@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
@@ -554,6 +554,9 @@ describe('MultiCombobox', () => {
         </Modal>
       );
 
+      // Modal auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
       const input = screen.getByRole('combobox');
       await user.click(input);
       expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
@@ -571,6 +574,9 @@ describe('MultiCombobox', () => {
           </Drawer>
         </div>
       );
+
+      // Drawer auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
 
       const input = screen.getByRole('combobox');
       await user.click(input);
