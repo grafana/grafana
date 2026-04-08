@@ -11,7 +11,9 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -22,6 +24,7 @@ import (
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -38,7 +41,7 @@ func New(cfg app.Config) (app.App, error) {
 	}
 	logger := logging.DefaultLogger.With("app", "plugins.app")
 
-	if specificConfig.EnableChildReconciler {
+	if specificConfig.ChildReconciler.Enabled {
 		reconcilerLogger := logger.With("component", "reconciler.children")
 		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
 		registrar := install.NewInstallRegistrar(reconcilerLogger, clientGenerator)
@@ -49,7 +52,7 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "plugins",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			InformerSupplier: simple.OptimizedInformerSupplier,
+			InformerSupplier: childReconcilerInformerSupplier(specificConfig.ChildReconciler.MemcachedAddrs),
 			RetryPolicy:      operator.ExponentialBackoffRetryPolicy(5*time.Second, 5),
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
@@ -83,19 +86,32 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 type PluginAppConfig struct {
-	MetaProviderManager   *meta.ProviderManager
-	EnableChildReconciler bool
+	MetaProviderManager *meta.ProviderManager
+	ChildReconciler     ChildReconcilerConfig
 }
 
-func NewPluginsAppInstaller(
-	logger logging.Logger,
-	authorizer authorizer.Authorizer,
-	metaProviderManager *meta.ProviderManager,
-	enableChildReconciler bool,
-) (*PluginAppInstaller, error) {
+type ChildReconcilerConfig struct {
+	Enabled        bool
+	MemcachedAddrs []string
+}
+
+type PluginAppInstallerConfig struct {
+	Logger               logging.Logger
+	Authorizer           authorizer.Authorizer
+	MetaProviderManager  *meta.ProviderManager
+	PrometheusRegisterer prometheus.Registerer
+	ChildReconciler      ChildReconcilerConfig
+}
+
+func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstaller, error) {
+	metrics.MustRegister(config.PrometheusRegisterer)
+
 	specificConfig := &PluginAppConfig{
-		MetaProviderManager:   metaProviderManager,
-		EnableChildReconciler: enableChildReconciler,
+		MetaProviderManager: config.MetaProviderManager,
+		ChildReconciler: ChildReconcilerConfig{
+			Enabled:        config.ChildReconciler.Enabled,
+			MemcachedAddrs: append([]string(nil), config.ChildReconciler.MemcachedAddrs...),
+		},
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
 	appConfig := app.Config{
@@ -110,12 +126,38 @@ func NewPluginsAppInstaller(
 
 	appInstaller := &PluginAppInstaller{
 		AppInstaller: defaultInstaller,
-		authorizer:   authorizer,
-		metaManager:  metaProviderManager,
-		logger:       logger,
+		authorizer:   config.Authorizer,
+		metaManager:  config.MetaProviderManager,
+		logger:       config.Logger,
 		ready:        make(chan struct{}),
 	}
 	return appInstaller, nil
+}
+
+func childReconcilerInformerSupplier(memcachedAddrs []string) simple.InformerSupplier {
+	if len(memcachedAddrs) == 0 {
+		return simple.OptimizedInformerSupplier
+	}
+
+	serverAddrs := append([]string(nil), memcachedAddrs...)
+	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
+		client, err := clients.ClientFor(kind)
+		if err != nil {
+			return nil, err
+		}
+
+		inf, err := operator.NewMemcachedInformer(kind, client, operator.MemcachedInformerOptions{
+			ServerAddrs: serverAddrs,
+			CustomCacheInformerOptions: operator.CustomCacheInformerOptions{
+				InformerOptions: options,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return operator.NewConcurrentInformerFromOptions(inf, options)
+	}
 }
 
 type PluginAppInstaller struct {
