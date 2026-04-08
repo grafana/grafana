@@ -19,11 +19,11 @@ import (
 //
 // fileblob tests always run (no conditional writes — exercises the unconditional fallback).
 //
-// Set CDK_LOCK_TEST_BUCKET_URL to also run against a real provider:
+// Set CDK_TEST_BUCKET_URL to also run against a real provider:
 //
-//	CDK_LOCK_TEST_BUCKET_URL=s3://my-test-bucket?region=us-east-1 go test ./pkg/storage/unified/search/lock/... -run TestIntegration -v
-//	CDK_LOCK_TEST_BUCKET_URL=gs://my-test-bucket go test ./pkg/storage/unified/search/lock/... -run TestIntegration -v
-//	CDK_LOCK_TEST_BUCKET_URL=azblob://my-test-container go test ./pkg/storage/unified/search/lock/... -run TestIntegration -v
+//	CDK_TEST_BUCKET_URL=s3://my-test-bucket?region=us-east-1 go test ./pkg/storage/unified/search/lock/... -run TestIntegration -v
+//	CDK_TEST_BUCKET_URL=gs://my-test-bucket go test ./pkg/storage/unified/search/lock/... -run TestIntegration -v
+//	CDK_TEST_BUCKET_URL=azblob://my-test-container go test ./pkg/storage/unified/search/lock/... -run TestIntegration -v
 
 type testBucketSetup struct {
 	name    string
@@ -47,8 +47,8 @@ func integrationBuckets(t *testing.T) []testBucketSetup {
 		cleanup: func() { _ = fb.Close() },
 	})
 
-	// Real provider — when CDK_LOCK_TEST_BUCKET_URL is set.
-	if bucketURL := os.Getenv("CDK_LOCK_TEST_BUCKET_URL"); bucketURL != "" {
+	// Real provider — when CDK_TEST_BUCKET_URL is set.
+	if bucketURL := os.Getenv("CDK_TEST_BUCKET_URL"); bucketURL != "" {
 		ctx := context.Background()
 		rb, err := blob.OpenBucket(ctx, bucketURL)
 		require.NoError(t, err)
