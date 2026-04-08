@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/infra/features
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
