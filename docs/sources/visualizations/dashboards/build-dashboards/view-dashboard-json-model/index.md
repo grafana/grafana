@@ -313,7 +313,3 @@ Usage of the above mentioned fields in the templating section is explained below
 | **refresh**     | configures when to refresh a variable                                                                   |
 | **regex**       | extracts part of a series name or metric node segment                                                   |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
-
-
-
-
