@@ -16,6 +16,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { DataTopic, HeatmapCalculationMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { getPanelProps } from '../test-utils';
+import { type AnnotationsPlugin2Cluster } from '../timeseries/plugins/AnnotationsPlugin2Cluster';
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { defaultOptions, type Options } from './panelcfg.gen';
@@ -41,22 +42,15 @@ let tooltipRenderParamsForTest: {
 } | null = null;
 
 /** Captures the last props passed to AnnotationsPlugin for assertion in tests. */
-let lastAnnotationsPluginProps: Record<string, unknown> | null = null;
+let lastAnnotationsPluginProps: React.ComponentProps<typeof AnnotationsPlugin2Cluster> | null = null;
 
 jest.mock('../timeseries/plugins/AnnotationPlugin', () => ({
-  AnnotationsPlugin: (props: Record<string, unknown>) => {
+  AnnotationsPlugin: (props: React.ComponentProps<typeof AnnotationsPlugin2Cluster>) => {
     lastAnnotationsPluginProps = props;
-    const annotations = Array.isArray(props.annotations) ? props.annotations : [];
-    return annotations.length ? <div data-testid="annotations-plugin">{annotations.length} annotation(s)</div> : null;
+    return props.annotations?.length ? (
+      <div data-testid="annotations-plugin">{props.annotations.length} annotation(s)</div>
+    ) : null;
   },
-}));
-
-jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
-  getDashboardSrv: () => ({
-    getCurrent: () => ({
-      formatDate: (v: number) => new Date(v).toISOString(),
-    }),
-  }),
 }));
 
 jest.mock('uplot', () => {
@@ -91,16 +85,10 @@ jest.mock('@grafana/ui', () => {
     children: (w: number, h: number) => React.ReactNode;
   }) => {
     const vizHeight = legend ? height - MOCK_LEGEND_HEIGHT : height;
-    const vizWidth = width;
-
     return (
       <div data-testid={selectors.components.VizLayout.container}>
-        <div>{children(vizWidth, vizHeight)}</div>
-        {legend && (
-          <div data-testid={selectors.components.VizLayout.legend} style={{ height: MOCK_LEGEND_HEIGHT }}>
-            {legend}
-          </div>
-        )}
+        <div>{children(width, vizHeight)}</div>
+        {legend && <div data-testid={selectors.components.VizLayout.legend}>{legend}</div>}
       </div>
     );
   };
@@ -130,10 +118,7 @@ jest.mock('@grafana/ui', () => {
   return {
     ...actual,
     usePanelContext: jest.fn().mockImplementation(() => ({
-      sync: () => 0,
-      eventsScope: 'global',
       canAddAnnotations: () => canAddAnnotationsForTest,
-      onSelectRange: jest.fn(),
       canExecuteActions: () => canExecuteActionsForTest,
     })),
     VizLayout: MockVizLayout,
