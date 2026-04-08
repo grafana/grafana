@@ -1,22 +1,22 @@
-import { cloneDeep, isNumber } from 'lodash';
+import { cloneDeep } from 'lodash';
 
 import {
   convertOldAngularValueMappings,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   fieldReducers,
-  PanelModel,
-  ReduceDataOptions,
+  type PanelModel,
+  type ReduceDataOptions,
   ReducerID,
   sortThresholds,
-  Threshold,
-  ThresholdsConfig,
+  type Threshold,
+  type ThresholdsConfig,
   ThresholdsMode,
   validateFieldConfig,
-  ValueMapping,
+  type ValueMapping,
   VizOrientation,
 } from '@grafana/data';
-import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting } from '@grafana/schema';
+import { LegendDisplayMode, type OptionsWithLegend, type OptionsWithTextFormatting } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
@@ -288,17 +288,17 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     const config = panel.fieldConfig?.defaults;
     let unit = config?.unit;
     if (unit === 'percent') {
-      if (!isNumber(config.min)) {
+      if (typeof config.min !== 'number') {
         config.min = 0;
       }
-      if (!isNumber(config.max)) {
+      if (typeof config.max !== 'number') {
         config.max = 100;
       }
     } else if (unit === 'percentunit') {
-      if (!isNumber(config.min)) {
+      if (typeof config.min !== 'number') {
         config.min = 0;
       }
-      if (!isNumber(config.max)) {
+      if (typeof config.max !== 'number') {
         config.max = 1;
       }
     }

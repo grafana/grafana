@@ -1,5 +1,5 @@
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import { type LibraryPanel } from '@grafana/schema';
 
 import { activateFullSceneTree } from '../utils/test-utils';
 

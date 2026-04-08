@@ -1,25 +1,25 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
-import { QueryGroupOptions } from 'app/types/query';
+import { type DataQuery } from '@grafana/schema';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
 import {
-  AlertingState,
-  DatasourceState,
-  PanelState,
-  QueryEditorActions,
+  type AlertingState,
+  type DatasourceState,
+  type PanelState,
+  type QueryEditorActions,
   QueryEditorProvider,
-  QueryEditorUIState,
-  QueryOptionsState,
-  QueryRunnerState,
+  type QueryEditorUIState,
+  type QueryOptionsState,
+  type QueryRunnerState,
 } from './QueryEditorContext';
-import { Transformation } from './types';
+import { type Transformation } from './types';
 
 export function setup(jsx: React.ReactElement) {
   return {
@@ -42,6 +42,32 @@ export const ds1SettingsMock: DataSourceInstanceSettings = {
       description: '',
       links: [],
       logos: { small: 'test-logo.png', large: '' },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+    module: '',
+    baseUrl: '',
+  },
+  access: 'proxy',
+  readOnly: false,
+  jsonData: {},
+};
+
+export const dashboardDsSettingsMock: DataSourceInstanceSettings = {
+  id: 99,
+  uid: '-- Dashboard --',
+  name: '-- Dashboard --',
+  type: 'datasource',
+  meta: {
+    id: 'dashboard',
+    name: '-- Dashboard --',
+    type: PluginType.datasource,
+    info: {
+      author: { name: '' },
+      description: '',
+      links: [],
+      logos: { small: '', large: '' },
       screenshots: [],
       updated: '',
       version: '',
@@ -104,6 +130,11 @@ export const mockUIStateBase = {
   pendingTransformation: null,
   setPendingTransformation: jest.fn(),
   finalizePendingTransformation: jest.fn(),
+  selectedQueryRefIds: [] satisfies readonly string[],
+  selectedTransformationIds: [] satisfies readonly string[],
+  toggleQuerySelection: jest.fn(),
+  toggleTransformationSelection: jest.fn(),
+  clearSelection: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -177,8 +208,13 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultUiState: QueryEditorUIState = {
     selectedQuery,
     selectedTransformation,
+    selectedQueryRefIds: selectedQuery ? [selectedQuery.refId] : [],
+    selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),
+    toggleQuerySelection: jest.fn(),
+    toggleTransformationSelection: jest.fn(),
+    clearSelection: jest.fn(),
     queryOptions: mockQueryOptionsState,
     selectedQueryDsData: null,
     selectedQueryDsLoading: false,

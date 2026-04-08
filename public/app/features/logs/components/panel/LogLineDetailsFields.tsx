@@ -3,21 +3,29 @@ import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
+import {
+  CoreApp,
+  type Field,
+  fuzzySearch,
+  type GrafanaTheme2,
+  type IconName,
+  type LinkModel,
+  type LogLabelStatsModel,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, IconSize, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, type IconSize, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
-import { FieldDef } from '../logParser';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import { type FieldDef } from '../logParser';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
-import { LogListModel, getNormalizedFieldName } from './processing';
+import { type LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -107,12 +115,12 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
 const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
-    gap: theme.spacing(1),
+    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(10) : theme.spacing(11.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
-    gap: theme.spacing(1),
+    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     gridTemplateColumns: `auto 1fr`,
   }),
 });

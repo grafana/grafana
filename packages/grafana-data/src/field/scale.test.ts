@@ -1,5 +1,5 @@
 import { createTheme } from '../themes/createTheme';
-import { Field, FieldType } from '../types/dataFrame';
+import { type Field, FieldType } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 import { ThresholdsMode } from '../types/thresholds';
 

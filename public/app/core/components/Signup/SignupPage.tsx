@@ -5,7 +5,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';

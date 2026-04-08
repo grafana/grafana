@@ -1,4 +1,4 @@
-import { RepoType, RepoTypeDisplay } from './Wizard/types';
+import { type RepoType, RepoTypeDisplay } from './Wizard/types';
 
 export interface HttpError extends Error {
   status?: number;

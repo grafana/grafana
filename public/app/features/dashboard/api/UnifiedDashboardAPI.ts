@@ -1,17 +1,18 @@
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isResource } from 'app/features/apiserver/guards';
-import { Resource, ResourceList } from 'app/features/apiserver/types';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type Resource, type ResourceList } from 'app/features/apiserver/types';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
 import {
-  DashboardAPI,
+  type DashboardAPI,
   DashboardVersionError,
-  DashboardWithAccessInfo,
-  ListDashboardHistoryOptions,
-  ListDeletedDashboardsOptions,
+  type DashboardWithAccessInfo,
+  type ListDashboardHistoryOptions,
+  type ListDeletedDashboardsOptions,
 } from './types';
 import {
   failedFromVersion,
@@ -22,6 +23,33 @@ import {
 } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
+
+interface CompositeContinueToken {
+  v1?: string;
+  v2?: string;
+}
+
+function encodeCompositeToken(v1?: string, v2?: string): string | undefined {
+  if (!v1 && !v2) {
+    return undefined;
+  }
+  return btoa(JSON.stringify({ v1, v2 }));
+}
+
+function decodeCompositeToken(token?: string): CompositeContinueToken {
+  if (!token) {
+    return {};
+  }
+  try {
+    return JSON.parse(atob(token));
+  } catch {
+    return { v1: token };
+  }
+}
+
+function sortByGenerationDesc<T extends Resource<unknown>>(items: T[]): T[] {
+  return [...items].sort((a, b) => (b.metadata.generation ?? 0) - (a.metadata.generation ?? 0));
+}
 
 export class UnifiedDashboardAPI
   implements DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, Dashboard | DashboardV2Spec>
@@ -34,7 +62,6 @@ export class UnifiedDashboardAPI
     this.v2Client = new K8sDashboardV2API();
   }
 
-  // Get operation depends on the dashboard format to use one of the two clients
   async getDashboardDTO(uid: string) {
     try {
       return await this.v1Client.getDashboardDTO(uid);
@@ -46,7 +73,6 @@ export class UnifiedDashboardAPI
     }
   }
 
-  // Save operation depends on the dashboard format to use one of the two clients
   async saveDashboard(options: SaveDashboardCommand<Dashboard | DashboardV2Spec>) {
     if (isV2DashboardCommand(options)) {
       return await this.v2Client.saveDashboard(options);
@@ -57,26 +83,51 @@ export class UnifiedDashboardAPI
     throw new Error('Invalid dashboard command');
   }
 
-  // Delete operation for any version is supported in the v1 client
   async deleteDashboard(uid: string, showSuccessAlert: boolean) {
     return await this.v1Client.deleteDashboard(uid, showSuccessAlert);
   }
 
   async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
-    const v1Response = await this.v1Client.listDashboardHistory(uid, options);
-    const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
+    const limit = options?.limit ?? VERSIONS_FETCH_LIMIT;
+    const { v1: v1Token, v2: v2Token } = decodeCompositeToken(options?.continueToken);
 
-    if (filteredV1Items.length === v1Response.items.length) {
-      return v1Response;
+    const v1Response = await this.v1Client.listDashboardHistory(uid, { limit, continueToken: v1Token });
+    const v1Valid = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
+
+    if (v1Valid.length === v1Response.items.length && v1Response.items.length > 0) {
+      return {
+        ...v1Response,
+        metadata: {
+          ...v1Response.metadata,
+          continue: encodeCompositeToken(v1Response.metadata.continue, v2Token),
+        },
+      };
     }
 
-    const v2Response = await this.v2Client.listDashboardHistory(uid, options);
-    const filteredV2Items = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
+    const v2Response = await this.v2Client.listDashboardHistory(uid, { limit, continueToken: v2Token });
+    const v2Valid = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
+
+    if (v1Valid.length === 0) {
+      return {
+        ...v2Response,
+        metadata: {
+          ...v2Response.metadata,
+          continue: encodeCompositeToken(v1Response.metadata.continue, v2Response.metadata.continue),
+        },
+      };
+    }
+
+    // Both APIs return the same generation sequence; every generation is valid in
+    // exactly one stream, so v1Valid + v2Valid reconstructs the full range.
+    const merged = sortByGenerationDesc([...v1Valid, ...v2Valid].filter(isResource));
 
     return {
-      ...v2Response,
-      // Make sure we display only valid resources
-      items: [...filteredV1Items, ...filteredV2Items].filter(isResource),
+      ...v1Response,
+      items: merged,
+      metadata: {
+        ...v1Response.metadata,
+        continue: encodeCompositeToken(v1Response.metadata.continue, v2Response.metadata.continue),
+      },
     };
   }
 
@@ -89,41 +140,53 @@ export class UnifiedDashboardAPI
   }
 
   async restoreDashboardVersion(uid: string, version: number) {
-    // Delegate to v1 client - it handles the restore internally
     return await this.v1Client.restoreDashboardVersion(uid, version);
   }
 
-  /**
-   * List deleted dashboards handling mixed v1/v2 versions or pure v2 dashboards.
-   *
-   * Steps:
-   * 1. Call v1 client to get all deleted dashboards
-   * 2. Check if any items have failed conversion from v2 versions
-   * 3. If v2 dashboards are detected, call v2 client
-   * 4. Filter and combine v1 and v2 dashboards into one response
-   */
   async listDeletedDashboards(
     options: ListDeletedDashboardsOptions
   ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
-    const v1Response = await this.v1Client.listDeletedDashboards(options);
-    const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
+    const { v1: v1Token, v2: v2Token } = decodeCompositeToken(options.continue);
 
-    if (filteredV1Items.length === v1Response.items.length) {
-      return v1Response;
+    const v1Response = await this.v1Client.listDeletedDashboards({ ...options, continue: v1Token });
+    const v1Valid = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
+
+    if (v1Valid.length === v1Response.items.length && v1Response.items.length > 0) {
+      return {
+        ...v1Response,
+        metadata: {
+          ...v1Response.metadata,
+          continue: encodeCompositeToken(v1Response.metadata.continue, v2Token),
+        },
+      };
     }
 
-    const v2Response = await this.v2Client.listDeletedDashboards(options);
-    const filteredV2Items = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
+    const v2Response = await this.v2Client.listDeletedDashboards({ ...options, continue: v2Token });
+    const v2Valid = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
+
+    if (v1Valid.length === 0) {
+      return {
+        ...v2Response,
+        metadata: {
+          ...v2Response.metadata,
+          continue: encodeCompositeToken(v1Response.metadata.continue, v2Response.metadata.continue),
+        },
+      };
+    }
+
+    const merged = [...v1Valid, ...v2Valid].filter(isResource);
 
     return {
-      ...v2Response,
-      // Make sure we display only valid resources
-      items: [...filteredV1Items, ...filteredV2Items].filter(isResource),
+      ...v1Response,
+      items: merged,
+      metadata: {
+        ...v1Response.metadata,
+        continue: encodeCompositeToken(v1Response.metadata.continue, v2Response.metadata.continue),
+      },
     };
   }
 
   async restoreDashboard(dashboard: Resource<DashboardDataDTO | DashboardV2Spec>) {
-    // Await returned promise to support proper error handling with try/catch
     if (isDashboardV2Spec(dashboard.spec) && isResource<DashboardV2Spec>(dashboard)) {
       return await this.v2Client.restoreDashboard(dashboard);
     }

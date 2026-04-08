@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -32,7 +31,8 @@ func TestMain(m *testing.M) {
 
 // fakeRepo implements annotations.Repository for testing.
 type fakeRepo struct {
-	items []*annotations.ItemDTO
+	items     []*annotations.ItemDTO
+	lastQuery *annotations.ItemQuery
 }
 
 func newFakeRepo() *fakeRepo {
@@ -46,6 +46,7 @@ func (f *fakeRepo) addItem(item *annotations.ItemDTO) {
 }
 
 func (f *fakeRepo) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	f.lastQuery = query
 	start := int(query.Offset)
 	end := start + int(query.Limit)
 
@@ -84,10 +85,32 @@ func (f *fakeRepo) FindTags(ctx context.Context, query *annotations.TagsQuery) (
 	return annotations.FindTagsResult{}, nil
 }
 
-func TestSQLAdapter_ListPagination(t *testing.T) {
-	cfg := &setting.Cfg{}
-	nsMapper := request.GetNamespaceMapper(cfg)
+func TestSQLAdapter_QueriesExcludeAlertAnnotations(t *testing.T) {
+	repo := newFakeRepo()
+	repo.addItem(&annotations.ItemDTO{ID: 1, Text: "test"})
+	adapter := NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
 
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
+		OrgID: 1,
+	})
+
+	t.Run("List sets Type to annotation", func(t *testing.T) {
+		_, err := adapter.List(ctx, "default", ListOptions{Limit: 10})
+		require.NoError(t, err)
+		require.NotNil(t, repo.lastQuery)
+		assert.Equal(t, "annotation", repo.lastQuery.Type)
+		assert.Zero(t, repo.lastQuery.AlertID)
+	})
+
+	t.Run("Get sets Type to annotation", func(t *testing.T) {
+		_, _ = adapter.Get(ctx, "default", "a-1")
+		require.NotNil(t, repo.lastQuery)
+		assert.Equal(t, "annotation", repo.lastQuery.Type)
+		assert.Zero(t, repo.lastQuery.AlertID)
+	})
+}
+
+func TestSQLAdapter_ListPagination(t *testing.T) {
 	// create 5 test annotations
 	repo := newFakeRepo()
 	for i := 0; i < 5; i++ {
@@ -97,7 +120,7 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 		})
 	}
 
-	adapter := NewSQLAdapter(repo, nil, nsMapper, cfg)
+	adapter := NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgID: 1,
@@ -208,7 +231,7 @@ func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
 		dashSvc,
 		nil,
 	)
-	adapter := NewSQLAdapter(repo, nil, request.GetNamespaceMapper(cfg), cfg)
+	adapter := NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgID: 1,

@@ -23,6 +23,10 @@ type Service struct {
 
 var _ team.Service = (*Service)(nil)
 
+func (s *Service) LegacySearchService() team.Service {
+	return s.legacyService
+}
+
 func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
 	legacyService, err := NewLegacyService(db, cfg, tracer)
 	if err != nil {
@@ -47,37 +51,33 @@ func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	// TODO enable Kubernetes team service for UpdateTeam once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.UpdateTeam(ctx, cmd)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.UpdateTeam(ctx, cmd)
+	}
 
 	return s.legacyService.UpdateTeam(ctx, cmd)
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	// TODO enable Kubernetes team service for DeleteTeam once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.DeleteTeam(ctx, cmd)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.DeleteTeam(ctx, cmd)
+	}
 
 	return s.legacyService.DeleteTeam(ctx, cmd)
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	// TODO enable Kubernetes team service for SearchTeams once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.SearchTeams(ctx, query)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.SearchTeams(ctx, query)
+	}
 
 	return s.legacyService.SearchTeams(ctx, query)
 }
 
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	// TODO enable Kubernetes team service for GetTeamByID once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.GetTeamByID(ctx, query)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.GetTeamByID(ctx, query)
+	}
 
 	return s.legacyService.GetTeamByID(ctx, query)
 }
@@ -151,5 +151,5 @@ func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
 		return false
 	}
 
-	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamService, false, openfeature.TransactionContext(ctx))
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
 }

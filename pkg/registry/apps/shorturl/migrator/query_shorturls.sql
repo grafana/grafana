@@ -10,5 +10,11 @@ FROM
     {{ .Ident .ShortURLTable }} as s
 WHERE
     s.org_id = {{ .Arg .Query.OrgID }}
+    {{ if .Query.LastID }}
+    AND s.id > {{ .Arg .Query.LastID }}
+    {{ end }}
 ORDER BY
     s.id ASC
+{{ if .Query.Limit }}
+LIMIT {{ .Arg .Query.Limit }}
+{{ end }}

@@ -50,7 +50,7 @@ const LogPrefix = "setting.service"
 const DefaultPageSize = int64(500)
 const DefaultQPS = float32(200)
 const DefaultBurst = 300
-const DefaultCacheTTL = 1 * time.Second
+const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
 
 const (

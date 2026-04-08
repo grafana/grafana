@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -53,6 +56,9 @@ func (m *mockServerInternal) GetStore(context.Context, string) (*zanzana.StoreIn
 }
 func (m *mockServerInternal) GetOrCreateStore(context.Context, string) (*zanzana.StoreInfo, error) {
 	return &zanzana.StoreInfo{ID: "test"}, nil
+}
+func (m *mockServerInternal) DeleteStore(context.Context, string) error {
+	return nil
 }
 func (m *mockServerInternal) ListAllStores(context.Context) ([]zanzana.StoreInfo, error) {
 	return nil, nil
@@ -112,8 +118,10 @@ func toTuple(tk *openfgav1.TupleKey) *openfgav1.Tuple {
 
 func newTestReconciler(pages [][]*openfgav1.Tuple) *Reconciler {
 	return &Reconciler{
-		server: &mockServerInternal{fga: &mockOpenFGAServer{pages: pages}},
-		tracer: tracing.NewNoopTracerService(),
+		server:  &mockServerInternal{fga: &mockOpenFGAServer{pages: pages}},
+		logger:  log.NewNopLogger(),
+		tracer:  tracing.NewNoopTracerService(),
+		metrics: newReconcilerMetrics(prometheus.NewRegistry()),
 	}
 }
 

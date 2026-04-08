@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 
-import { ModeOption } from '../types';
+import { type ModeOption } from '../types';
 
 /**
  * Filters available mode options based on system state and allowed targets
