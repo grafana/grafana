@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/playlist
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/grafana/grafana-app-sdk v0.39.2
