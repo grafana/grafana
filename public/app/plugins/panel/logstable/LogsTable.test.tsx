@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
+import { PanelContextProvider } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
@@ -23,7 +24,6 @@ import { LogsTable } from './LogsTable';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
-import { PanelContextProvider } from '@grafana/ui';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
