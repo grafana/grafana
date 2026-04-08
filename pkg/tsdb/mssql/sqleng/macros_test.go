@@ -256,3 +256,92 @@ func TestMacroEngineConcurrency(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestStripSQLComments(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "line comment stripped",
+			input: "SELECT 1 -- a comment",
+			want:  "SELECT 1 ",
+		},
+		{
+			name:  "block comment stripped",
+			input: "SELECT /* a comment */ 1",
+			want:  "SELECT  1",
+		},
+		{
+			name:  "multiline block comment stripped",
+			input: "SELECT /*\n  multiline\n  comment\n*/ 1",
+			want:  "SELECT  1",
+		},
+		{
+			name:  "line comment inside single-quoted string preserved",
+			input: "SELECT '-- not a comment' AS label",
+			want:  "SELECT '-- not a comment' AS label",
+		},
+		{
+			name:  "block comment inside single-quoted string preserved",
+			input: "SELECT '/* not a comment */' AS label",
+			want:  "SELECT '/* not a comment */' AS label",
+		},
+		{
+			name:  "line comment inside double-quoted identifier preserved",
+			input: `SELECT "col -- name" FROM t`,
+			want:  `SELECT "col -- name" FROM t`,
+		},
+		{
+			name:  "block comment inside double-quoted identifier preserved",
+			input: `SELECT "col /* name */" FROM t`,
+			want:  `SELECT "col /* name */" FROM t`,
+		},
+		{
+			name:  "line comment inside bracket-quoted identifier preserved",
+			input: "SELECT [col -- name] FROM t",
+			want:  "SELECT [col -- name] FROM t",
+		},
+		{
+			name:  "block comment inside bracket-quoted identifier preserved",
+			input: "SELECT [col /* name */] FROM t",
+			want:  "SELECT [col /* name */] FROM t",
+		},
+		{
+			name:  "doubled-bracket escape inside bracket identifier",
+			input: "SELECT [col]]name] FROM t",
+			want:  "SELECT [col]]name] FROM t",
+		},
+		{
+			name:  "doubled-quote escape inside single-quoted string",
+			input: "SELECT 'it''s fine -- not a comment' AS v",
+			want:  "SELECT 'it''s fine -- not a comment' AS v",
+		},
+		{
+			name:  "mixed: -- inside string then real -- comment",
+			input: "SELECT '-- in string' AS a -- real comment",
+			want:  "SELECT '-- in string' AS a ",
+		},
+		{
+			name:  "mixed: block comment inside string then real block comment",
+			input: "SELECT '/* in string */' AS a /* real comment */",
+			want:  "SELECT '/* in string */' AS a ",
+		},
+		{
+			name:  "no-op: query with no comments",
+			input: "SELECT col FROM t WHERE col > 1",
+			want:  "SELECT col FROM t WHERE col > 1",
+		},
+		{
+			name:  "newline after line comment is preserved",
+			input: "SELECT 1 -- comment\nFROM t",
+			want:  "SELECT 1 \nFROM t",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, stripSQLComments(tc.input))
+		})
+	}
+}
