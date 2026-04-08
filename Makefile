@@ -43,9 +43,7 @@ GO_BUILD_ARGS = \
 	$(GO_RACE_FLAG) \
 	$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
 	$(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") \
-	-ldflags "$(GO_LDFLAGS)" \
-	-o ./bin/$(OS)/$(ARCH)/grafana \
-	./pkg/cmd/grafana
+	-ldflags "$(GO_LDFLAGS)"
 ifeq ($(filter undefined environment environment\ override,$(origin OS)),)
 else
 OS := $(or $(GOOS),$(shell $(GO) env GOOS))
@@ -309,9 +307,14 @@ update-workspace: gen-go
 .PHONY: build-go
 build-go: pkg/services/preference/themes_generated.go
 	@echo "compiling backend ($(OS)/$(ARCH))"
-	$(GO_BUILD_ENV) \
-	$(GO) build $(GO_BUILD_ARGS)
-	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
+	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana ./pkg/cmd/grafana
+	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana-server ./pkg/cmd/grafana-server
+	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana-cli ./pkg/cmd/grafana-cli
+	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then \
+		cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; \
+		cp ./bin/$(OS)/$(ARCH)/grafana-server ./bin/grafana-server; \
+		cp ./bin/$(OS)/$(ARCH)/grafana-cli ./bin/grafana-cli; \
+	fi
 
 bin/$(OS)/$(ARCH)/grafana:
 	$(MAKE) build-go
