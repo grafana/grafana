@@ -31,7 +31,7 @@ func (tc *queryCacheConfigsTestCase) FeatureToggles() []string {
 }
 
 func (tc *queryCacheConfigsTestCase) RenameTables() []string {
-	return []string{}
+	return []string{"data_source_cache"}
 }
 
 func (tc *queryCacheConfigsTestCase) Resources() []schema.GroupVersionResource {
