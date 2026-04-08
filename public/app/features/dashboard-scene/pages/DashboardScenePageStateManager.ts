@@ -55,8 +55,6 @@ import {
   type SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
-import { loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
-import { getDsRefsFromV1Dashboard, getDsRefsFromV2Dashboard } from '../utils/dashboardDsRefs';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -160,7 +158,6 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
-  abstract getDefaultControls(rsp: T): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }>;
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -419,7 +416,6 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
-          id: dashboard.state.id,
           meta: dashboard.state.meta,
           uid: dashboard.state.uid,
           title: dashboard.state.title,
@@ -454,6 +450,9 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
+    // Resolve API versions before synchronous getV1()/getV2() calls downstream.
+    await dashboardAPIVersionResolver.resolve();
+
     // Home dashboard is not handled through legacy API and is not versioned.
     // Handling home dashboard flow separately from regular dashboard flow.
     if (options.route === DashboardRoutes.Home) {
@@ -466,11 +465,9 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
-    const { defaultVariables, defaultLinks } = await this.getDefaultControls(rsp);
-    options.defaultVariables = defaultVariables;
-    options.defaultLinks = defaultLinks;
+    const scene = this.transformResponseToScene(rsp, options);
 
-    return this.transformResponseToScene(rsp, options);
+    return scene;
   }
 
   public getDashboardFromCache(cacheKey: string): T | null {
@@ -714,14 +711,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
-  public getDefaultControls(
-    rsp: DashboardDTO
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    const datasourceRefs = getDsRefsFromV1Dashboard(rsp);
-
-    return loadDefaultControlsFromDatasources(datasourceRefs);
-  }
-
   public async fetchDashboard({
     type,
     slug,
@@ -952,14 +941,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     throw new Error('Dashboard not found');
-  }
-
-  public async getDefaultControls(
-    rsp: DashboardWithAccessInfo<DashboardV2Spec>
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    const datasourceRefs = getDsRefsFromV2Dashboard(rsp);
-
-    return loadDefaultControlsFromDatasources(datasourceRefs);
   }
 
   public async fetchDashboard({
@@ -1298,15 +1279,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
   public resetActiveManager() {
     this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
-  }
-
-  public async getDefaultControls(
-    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    if (isDashboardV2Resource(rsp)) {
-      return this.v2Manager.getDefaultControls(rsp);
-    }
-    return this.v1Manager.getDefaultControls(rsp);
   }
 }
 

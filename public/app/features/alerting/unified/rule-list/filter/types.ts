@@ -15,4 +15,5 @@ export type AdvancedFilters = {
   plugins?: 'show' | 'hide';
   contactPoint?: string | null;
   ruleSource?: RuleSource | null;
+  policy?: string | null;
 };

@@ -168,9 +168,6 @@ const initHook = (u: uPlot) => {
   (u.hooks.destroy ??= []).push(onDestroy);
 };
 
-/**
- * @alpha
- */
 export const KeyboardPlugin = ({ config }: KeyboardPluginProps) => {
   useLayoutEffect(() => config.addHook('init', initHook), [config]);
 

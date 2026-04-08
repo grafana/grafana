@@ -100,12 +100,20 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite not compatible with HA")
+		}
+
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, true, 0, 0)
 		}, nil)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		if !db.IsTestDbSQLite() {
+			t.Skip("in-process notifier only used with sqlite")
+		}
+
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, false, 0, 0)
 		}, nil)
@@ -125,12 +133,20 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	}
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite not compatible with HA")
+		}
+
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, true, 0, 0)
 		}, newKvBackend, opts)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		if !db.IsTestDbSQLite() {
+			t.Skip("in-process notifier only used with sqlite")
+		}
+
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, false, 0, 0)
 		}, newKvBackend, opts)

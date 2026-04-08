@@ -378,7 +378,6 @@ export class PanelPlugin<
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierDeprecated): this;
   /**
-   * @alpha
    * sets function that can return visualization examples and suggestions.
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>): this;

@@ -131,7 +131,7 @@ export class RowsLayoutManager
   }
 
   public addNewRow(row?: RowItem): RowItem {
-    const newRow = row ?? new RowItem({});
+    const newRow = row ?? new RowItem({ layout: getDashboardSceneFor(this).getDefaultLayout() });
     const existingNames = new Set(this.state.rows.map((row) => row.state.title).filter((title) => title !== undefined));
 
     const newTitle = generateUniqueTitle(newRow.state.title, existingNames);
@@ -157,10 +157,6 @@ export class RowsLayoutManager
     const scene = getDashboardSceneFor(this);
     const row = getRowFromClipboard(scene);
     this.addNewRow(row);
-  }
-
-  public shouldUngroup(): boolean {
-    return this.state.rows.length === 1;
   }
 
   public getOutlineChildren() {
@@ -332,7 +328,7 @@ export class RowsLayoutManager
     }
 
     const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(row!, rowKey, { force: true, multi: false });
+    editPane.selectObject(row!, { force: true, multi: false });
   }
 
   public static createEmpty(): RowsLayoutManager {
