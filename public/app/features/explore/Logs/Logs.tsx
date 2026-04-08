@@ -675,6 +675,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     (option: LogListOptions, value: string | string[] | boolean) => {
       if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
+        setLogsSortOrder(value);
       } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
         setDedupStrategy(value);
       } else if (option === 'filterLevels' && Array.isArray(value) && logsVolumeEnabled) {
