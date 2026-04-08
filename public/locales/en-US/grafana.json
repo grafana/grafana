@@ -11409,6 +11409,12 @@
       "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
+      "table-wrap-text": {
+        "disable": "Disable text wrapping",
+        "disabled": "Wrapping disabled",
+        "enable": "Enable text wrapping",
+        "enabled": "Wrapping enabled"
+      },
       "timestamp": {
         "hide": "Hide timestamps",
         "label": "Log timestamps",
