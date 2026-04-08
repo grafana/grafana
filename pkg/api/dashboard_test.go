@@ -465,7 +465,7 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: folder.ErrFolderNameExists, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: folder.ErrNameExists, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: http.StatusForbidden},
 				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: http.StatusBadRequest},
