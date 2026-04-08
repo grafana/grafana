@@ -17,24 +17,10 @@ import { fetchSQLFields } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
-import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
-import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
-import { type SqlExprContextValue, SqlExprProvider } from './SqlExprContext';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
-const GenAISuggestionsDrawer = lazy(() =>
-  import('./GenAI/GenAISuggestionsDrawer').then((module) => ({
-    default: module.GenAISuggestionsDrawer,
-  }))
-);
-
-const GenAIExplanationDrawer = lazy(() =>
-  import('./GenAI/GenAIExplanationDrawer').then((module) => ({
-    default: module.GenAIExplanationDrawer,
-  }))
-);
 const SQLEditor = lazy(() =>
   import('@grafana/plugin-ui').then((module) => ({
     default: module.SQLEditor,
@@ -85,18 +71,6 @@ LIMIT
   const [isSchemaInspectorOpen = true, setIsSchemaInspectorOpen] = useLocalStorage(SCHEMA_INSPECTOR_OPEN_KEY, true);
 
   const styles = useStyles2((theme) => getStyles(theme));
-  const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
-    useSQLSuggestions();
-
-  const {
-    explanation,
-    handleCloseExplanation,
-    handleOpenExplanation,
-    handleExplain,
-    isExplanationOpen,
-    shouldShowViewExplanation,
-    updatePrevExpression,
-  } = useSQLExplanations(query.expression || '');
 
   const {
     schemas,
@@ -125,7 +99,6 @@ LIMIT
         ? metadata?.data?.request?.endTime - metadata?.data?.request?.startTime
         : -1,
       numberOfQueries: metadata?.data?.request?.targets?.length ?? 0,
-      seriesData: metadata?.data?.series,
     }),
     [alerting, metadata]
   );
@@ -155,12 +128,6 @@ LIMIT
       expression,
       format: alerting ? 'alerting' : undefined,
     });
-    updatePrevExpression(expression);
-  };
-
-  const onApplySuggestion = (suggestion: string) => {
-    onEditorChange(suggestion);
-    handleApplySuggestion(suggestion);
   };
 
   const executeQuery = useCallback(() => {
@@ -180,9 +147,9 @@ LIMIT
     }
   }, [onRunQuery, refetchSchemas, isSchemaInspectorOpen]);
 
+  // Call the onChange method once so we have access to the initial query in consuming components
+  // But only if expression is empty
   useEffect(() => {
-    // Call the onChange method once so we have access to the initial query in consuming components
-    // But only if expression is empty
     if (!query.expression) {
       onEditorChange(initialQuery);
     }
@@ -205,23 +172,6 @@ LIMIT
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [executeQuery]);
-
-  const contextValue: SqlExprContextValue = {
-    // Explanations
-    explanation,
-    isExplanationOpen,
-    shouldShowViewExplanation,
-    handleExplain,
-    handleOpenExplanation,
-    handleCloseExplanation,
-    // Suggestions
-    suggestions,
-    isDrawerOpen,
-    handleHistoryUpdate,
-    handleApplySuggestion,
-    handleOpenDrawer,
-    handleCloseDrawer,
-  };
 
   const renderButtons = () => (
     <Stack direction="row" alignItems="center" justifyContent="space-between" wrap>
@@ -282,34 +232,13 @@ LIMIT
     </div>
   );
 
-  const renderSQLEditor = () => (
-    <Stack direction="column" gap={1}>
-      {renderButtons()}
-      {renderMainContent()}
-    </Stack>
-  );
-
   return (
-    <SqlExprProvider value={contextValue}>
-      <div className={styles.mainContainer}>
-        {renderSQLEditor()}
-        <Suspense fallback={null}>
-          <GenAISuggestionsDrawer
-            isOpen={isDrawerOpen}
-            onApplySuggestion={onApplySuggestion}
-            onClose={handleCloseDrawer}
-            suggestions={suggestions}
-          />
-        </Suspense>
-        <Suspense fallback={null}>
-          <GenAIExplanationDrawer
-            isOpen={isExplanationOpen}
-            onClose={handleCloseExplanation}
-            explanation={explanation}
-          />
-        </Suspense>
-      </div>
-    </SqlExprProvider>
+    <div className={styles.mainContainer}>
+      <Stack direction="column" gap={1}>
+        {renderButtons()}
+        {renderMainContent()}
+      </Stack>
+    </div>
   );
 };
 
