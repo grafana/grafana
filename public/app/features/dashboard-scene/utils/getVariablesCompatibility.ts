@@ -1,5 +1,5 @@
 import { type TypedVariableModel, type VariableModel } from '@grafana/data';
-import { QueryVariable, type SceneObject, SceneVariableSet, sceneGraph } from '@grafana/scenes';
+import { type SceneObject, SceneVariableSet, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSetToVariables';
@@ -19,14 +19,10 @@ export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariab
   // the same section + dashboard globals.
   if (sceneObject instanceof DashboardScene) {
     const selectedObject = sceneObject.state.editPane.getSelectedObject();
-    const isQueryVariable = selectedObject instanceof QueryVariable;
 
-    if (isQueryVariable) {
-      // The selected variable is a child of SceneVariableSet, so exclude it
-      // from ancestor options to avoid self-reference in the query editor.
-      const excludedVariableNames = new Set([selectedObject.state.name]);
+    if (selectedObject) {
       // @ts-expect-error
-      return collectAncestorVariables(selectedObject, excludedVariableNames);
+      return collectAncestorVariables(selectedObject);
     }
   }
 
@@ -34,19 +30,29 @@ export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariab
   return collectGlobalVariables(sceneObject);
 }
 
-function collectAncestorVariables(sceneObject: SceneObject, excludedVariableNames?: Set<string>): VariableModel[] {
+function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
   const allModels: VariableModel[] = [];
   const seenNames = new Set<string>();
   const keepQueryOptions = true;
 
+  // The variable being edited is excluded from its own set
+  // this is to avoid self-reference in that variable's editor
+  const excludeVariable = sceneObject;
   let current: SceneObject | undefined = sceneObject;
   while (current) {
     if (current.state.$variables instanceof SceneVariableSet) {
-      const models = sceneVariablesSetToVariables(current.state.$variables, keepQueryOptions);
-      for (const model of models) {
-        if (excludedVariableNames?.has(model.name)) {
-          continue;
+      const set = current.state.$variables;
+      let models = sceneVariablesSetToVariables(set, keepQueryOptions);
+
+      if (excludeVariable && set.state.variables.some((v) => v === excludeVariable)) {
+        const rawName = Reflect.get(excludeVariable.state, 'name');
+        const excludeName = typeof rawName === 'string' ? rawName : undefined;
+        if (excludeName !== undefined) {
+          models = models.filter((m) => m.name !== excludeName);
         }
+      }
+
+      for (const model of models) {
         if (!seenNames.has(model.name)) {
           allModels.push(model);
           seenNames.add(model.name);
