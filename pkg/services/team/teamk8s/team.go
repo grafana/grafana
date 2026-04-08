@@ -89,7 +89,6 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	return s.getDynamicClient(ctx, namespace, teamGVR)
 }
 
-
 // resolveUserUID finds a user's K8s UID by their deprecated internal ID label.
 func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, userID int64) (string, error) {
 	client, err := s.getDynamicClient(ctx, namespace, userGVR)
@@ -162,12 +161,9 @@ func permissionFromBinding(p iamv0alpha1.TeamBindingTeamPermission) team.Permiss
 	return team.PermissionTypeMember
 }
 
-func getResourceID(obj metav1.ObjectMeta) int64 {
-	if idStr, ok := obj.Labels[utils.LabelKeyDeprecatedInternalID]; ok { // nolint:staticcheck
-		id, err := strconv.ParseInt(idStr, 10, 64)
-		if err == nil {
-			return id
-		}
+func deprecatedInternalID(obj runtime.Object) int64 {
+	if meta, err := utils.MetaAccessor(obj); err == nil {
+		return meta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
 	return 0
 }
@@ -236,7 +232,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 	}
 
 	return team.Team{
-		ID:            getResourceID(created.ObjectMeta),
+		ID:            deprecatedInternalID(&created),
 		UID:           created.Name,
 		OrgID:         orgID,
 		Name:          created.Spec.Title,
@@ -464,7 +460,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 	}
 
 	return &team.TeamDTO{
-		ID:            getResourceID(fetched.ObjectMeta),
+		ID:            deprecatedInternalID(&fetched),
 		UID:           fetched.Name,
 		OrgID:         orgID,
 		Name:          fetched.Spec.Title,
@@ -531,6 +527,10 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 		return nil, err
 	}
 
+	if len(bindings) == 0 {
+		return []int64{}, nil
+	}
+
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
@@ -546,8 +546,7 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 			}
 			return nil, err
 		}
-		id := getResourceID(metav1.ObjectMeta{Labels: result.GetLabels()})
-		if id != 0 {
+		if id := deprecatedInternalID(result); id != 0 {
 			ids = append(ids, id)
 		}
 	}
@@ -643,6 +642,11 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		}
 	}
 
+	teamClient, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	members := make([]*team.TeamMemberDTO, 0, len(bindings))
 	for _, b := range bindings {
 		dto := &team.TeamMemberDTO{
@@ -662,13 +666,10 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		}
 
 		// Resolve team ID from the team resource
-		teamClient, err := s.getClient(ctx, namespace)
-		if err != nil {
-			s.logger.Warn("Failed to create team client for team ID lookup", "teamUID", b.Spec.TeamRef.Name, "error", err)
-		} else if teamResult, err := teamClient.Get(ctx, b.Spec.TeamRef.Name, metav1.GetOptions{}); err != nil {
+		if teamResult, err := teamClient.Get(ctx, b.Spec.TeamRef.Name, metav1.GetOptions{}); err != nil {
 			s.logger.Warn("Failed to fetch team for team ID lookup", "teamUID", b.Spec.TeamRef.Name, "error", err)
 		} else {
-			dto.TeamID = getResourceID(metav1.ObjectMeta{Labels: teamResult.GetLabels()})
+			dto.TeamID = deprecatedInternalID(teamResult)
 		}
 
 		members = append(members, dto)
@@ -700,7 +701,7 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 	} else if teamID == 0 {
 		// Resolve the legacy team ID when only UID was provided
 		if teamResult, err := client.Get(ctx, teamUID, metav1.GetOptions{}); err == nil {
-			teamID = getResourceID(metav1.ObjectMeta{Labels: teamResult.GetLabels()})
+			teamID = deprecatedInternalID(teamResult)
 		} else {
 			s.logger.Warn("Failed to resolve team ID from UID", "teamUID", teamUID, "error", err)
 		}
@@ -729,10 +730,9 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 			Permission: permissionFromBinding(b.Spec.Permission),
 		}
 
-		// Enrich with user details
 		k8sUser, err := s.getUserByUID(ctx, namespace, userUID)
 		if err == nil {
-			dto.UserID = getResourceID(k8sUser.ObjectMeta)
+			dto.UserID = deprecatedInternalID(k8sUser)
 			dto.Email = k8sUser.Spec.Email
 			dto.Name = k8sUser.Spec.Title
 			dto.Login = k8sUser.Spec.Login
