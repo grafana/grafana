@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import { useCallback, useId } from 'react';
 
 import {
@@ -191,26 +192,27 @@ const RuleRow = ({ rule, data, onChange, onDelete }: RuleRowProps) => {
 
       {/* Row 2: aggregation options (only when operation is aggregate) */}
       {rule.operation === GroupByOperationID.aggregate && (
-        <>
-          {/* Col 1: empty */}
-          <div />
+        <div className={styles.calculationSection}>
+          <InlineField
+            className={styles.inlineField}
+            grow
+            label={t('transformers.group-to-nested-table.label-calculations', 'Calculation(s)')}
+          >
+            <StatsPicker
+              placeholder={t(
+                'transformers.group-by-field-configuration.placeholder-calculations',
+                'Select calculation(s)'
+              )}
+              allowMultiple
+              stats={rule.aggregations}
+              onChange={(stats: string[]) => {
+                // StatsPicker should return ReducerID[] but it is typed as string[].
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                onChange({ ...rule, aggregations: stats as ReducerID[] });
+              }}
+            />
+          </InlineField>
 
-          {/* Col 2: stats picker */}
-          <StatsPicker
-            placeholder={t(
-              'transformers.group-by-field-configuration.placeholder-calculations',
-              'Select calculation(s)'
-            )}
-            allowMultiple
-            stats={rule.aggregations}
-            onChange={(stats: string[]) => {
-              // StatsPicker should return ReducerID[] but it is typed as string[].
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              onChange({ ...rule, aggregations: stats as ReducerID[] });
-            }}
-          />
-
-          {/* Col 3: keep nested field toggle */}
           <InlineField
             className={styles.inlineField}
             label={t('transformers.group-to-nested-table.label-keep-nested-field', 'Keep nested field(s)')}
@@ -226,10 +228,7 @@ const RuleRow = ({ rule, data, onChange, onDelete }: RuleRowProps) => {
               }}
             />
           </InlineField>
-
-          {/* Col 4: empty */}
-          <div />
-        </>
+        </div>
       )}
     </div>
   );
@@ -296,7 +295,7 @@ const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptions, onC
   }, [onChange, options.showSubframeHeaders]);
 
   return (
-    <Stack gap={1} direction="column">
+    <Stack gap={1.5} direction="column">
       {showCalcAlert && (
         <Alert
           title={t(
@@ -307,7 +306,7 @@ const GroupToNestedTableTransformerEditorV2 = ({ input, options: rawOptions, onC
         />
       )}
 
-      <Stack gap={1} direction="column">
+      <Stack gap={1.5} direction="column">
         {options.rules.map((rule, index) => (
           <RuleRow key={index} rule={rule} data={input} onChange={onRuleChange(index)} onDelete={onRuleDelete(index)} />
         ))}
@@ -462,16 +461,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: '30% 30% 30% 10%',
     columnGap: theme.spacing(0.5),
     rowGap: theme.spacing(0.5),
-    paddingLeft: theme.spacing(1),
-    borderLeft: `${theme.spacing(0.5)} solid ${theme.colors.border.weak}`,
     alignItems: 'center',
-    '& > *': {
-      minWidth: 0,
+    containerType: 'inline-size',
+  }),
+  calculationSection: css({
+    gridColumn: 'span 3',
+    gridRow: 'span 2',
+    paddingLeft: theme.spacing(1),
+    borderLeft: `${theme.spacing(0.25)} solid ${theme.colors.border.weak}`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+    [theme.breakpoints.container.up(500)]: {
+      gridColumn: 'span 2',
     },
   }),
   inlineField: css({
     display: 'flex',
     alignItems: 'center',
+    margin: 0,
   }),
   deleteCell: css({
     display: 'flex',
