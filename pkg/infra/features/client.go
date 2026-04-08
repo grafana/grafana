@@ -18,6 +18,10 @@ const (
 type HTTPClientOptions struct {
 	// Timeout for HTTP requests
 	Timeout time.Duration
+	// DialTimeout limits TCP connection establishment, separate from the full request Timeout.
+	// Useful to fail fast when the provider is unreachable at network level. If unset, the SDK default applies.
+	// For recurring outages, worth considering implementing a circuit breaker pattern.
+	DialTimeout time.Duration
 	// InsecureSkipVerify skips TLS certificate verification
 	InsecureSkipVerify bool
 	// RootCACertificate is a PEM certificate that verifies the server.
@@ -58,7 +62,8 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 	options := sdkhttpclient.Options{
 		TLS: tlsOptions,
 		Timeouts: &sdkhttpclient.TimeoutOptions{
-			Timeout: timeout,
+			DialTimeout: opts.DialTimeout,
+			Timeout:     timeout,
 		},
 		Middlewares: middlewares,
 	}

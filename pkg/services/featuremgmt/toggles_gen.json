@@ -1327,6 +1327,20 @@
     },
     {
       "metadata": {
+        "name": "compiledBootScript",
+        "resourceVersion": "1775117897717",
+        "creationTimestamp": "2026-04-02T08:18:17Z"
+      },
+      "spec": {
+        "description": "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-07-26T16:44:12Z"
