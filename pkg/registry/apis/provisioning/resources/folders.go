@@ -271,7 +271,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		// there is a potential race here where two syncs can be triggered
 		// if we try to create and there is an error, check if it is from another sync
 		// job for this repo that created it
-		if apierrors.IsAlreadyExists(err) || err.Error() == foldermodel.ErrFolderVersionMismatch.Error() {
+		if apierrors.IsAlreadyExists(err) || err.Error() == foldermodel.ErrVersionMismatch.Error() {
 			obj, err2 := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
 			if err2 != nil {
 				return fmt.Errorf("failed to get folder: %w", err2)

@@ -453,7 +453,7 @@ func createFolder(t *testing.T, ctx context.Context, service *Service, user *use
 		Title:        title,
 		SignedInUser: user,
 	})
-	if err != nil && !errors.Is(err, folder.ErrFolderWithSameUIDExists) {
+	if err != nil && !errors.Is(err, folder.ErrSameUIDExists) {
 		require.NoError(t, err)
 	}
 }

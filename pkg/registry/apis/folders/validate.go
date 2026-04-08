@@ -64,7 +64,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		folder.GeneralFolderUID,
 		folder.SharedWithMeFolderUID,
 	}, id) {
-		return folder.ErrFolderInvalidUID
+		return folder.ErrInvalidUID
 	}
 
 	meta, err := utils.MetaAccessor(f)
@@ -81,7 +81,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	if f.Spec.Title == "" {
-		return folder.ErrFolderTitleEmpty
+		return folder.ErrTitleEmpty
 	}
 
 	parentName := meta.GetFolder()
@@ -126,7 +126,7 @@ func validateOnUpdate(ctx context.Context,
 	}
 
 	if obj.Spec.Title == "" {
-		return folder.ErrFolderTitleEmpty
+		return folder.ErrTitleEmpty
 	}
 
 	if folderObj.GetFolder() == oldFolder.GetFolder() {

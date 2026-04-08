@@ -1115,7 +1115,7 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 				return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderId)
 			}
 			if apierrors.IsForbidden(err) {
-				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrFolderAccessDenied)
+				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
 			}
 			return err
 		}
@@ -1127,7 +1127,7 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		}
 
 		if !accessInfo.CanEdit {
-			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrFolderAccessDenied)
+			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, folder.ErrAccessDenied)
 		}
 	}
 

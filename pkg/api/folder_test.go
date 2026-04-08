@@ -63,14 +63,14 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusConflict,
-			expectedFolderSvcError: folder.ErrFolderWithSameUIDExists,
+			expectedFolderSvcError: folder.ErrSameUIDExists,
 			permissions:            []accesscontrol.Permission{{Action: folder.ActionFoldersCreate}},
 		},
 		{
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusBadRequest,
-			expectedFolderSvcError: folder.ErrFolderTitleEmpty,
+			expectedFolderSvcError: folder.ErrTitleEmpty,
 			permissions:            []accesscontrol.Permission{{Action: folder.ActionFoldersCreate}},
 		},
 		{
@@ -91,7 +91,7 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusForbidden,
-			expectedFolderSvcError: folder.ErrFolderAccessDenied,
+			expectedFolderSvcError: folder.ErrAccessDenied,
 			permissions:            []accesscontrol.Permission{{Action: folder.ActionFoldersCreate}},
 		},
 		{
@@ -105,7 +105,7 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusPreconditionFailed,
-			expectedFolderSvcError: folder.ErrFolderVersionMismatch,
+			expectedFolderSvcError: folder.ErrVersionMismatch,
 			permissions:            []accesscontrol.Permission{{Action: folder.ActionFoldersCreate}},
 		},
 	}
@@ -169,13 +169,13 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 		{
 			description:            "folder updating fails given folder service error %s",
 			expectedCode:           http.StatusConflict,
-			expectedFolderSvcError: folder.ErrFolderWithSameUIDExists,
+			expectedFolderSvcError: folder.ErrSameUIDExists,
 			permissions:            []accesscontrol.Permission{{Action: folder.ActionFoldersWrite, Scope: folder.ScopeFoldersAll}},
 		},
 		{
 			description:            "folder updating fails given folder service error %s",
 			expectedCode:           http.StatusBadRequest,
-			expectedFolderSvcError: folder.ErrFolderTitleEmpty,
+			expectedFolderSvcError: folder.ErrTitleEmpty,
 			permissions:            []accesscontrol.Permission{{Action: folder.ActionFoldersWrite, Scope: folder.ScopeFoldersAll}},
 		},
 		{
@@ -193,7 +193,7 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 		{
 			description:            "folder updating fails given folder service error %s",
 			expectedCode:           http.StatusForbidden,
-			expectedFolderSvcError: folder.ErrFolderAccessDenied,
+			expectedFolderSvcError: folder.ErrAccessDenied,
 			permissions:            []accesscontrol.Permission{{Action: folder.ActionFoldersWrite, Scope: folder.ScopeFoldersAll}},
 		},
 		{
@@ -205,7 +205,7 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 		{
 			description:            "folder updating fails given folder service error %s",
 			expectedCode:           http.StatusPreconditionFailed,
-			expectedFolderSvcError: folder.ErrFolderVersionMismatch,
+			expectedFolderSvcError: folder.ErrVersionMismatch,
 			permissions:            []accesscontrol.Permission{{Action: folder.ActionFoldersWrite, Scope: folder.ScopeFoldersAll}},
 		},
 	}

@@ -308,7 +308,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					OrgID:        orgID,
 					SignedInUser: noPermUsr,
 				})
-				require.Equal(t, folder.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
@@ -317,7 +317,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					OrgID:        orgID,
 					SignedInUser: noPermUsr,
 				})
-				require.Equal(t, folder.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
@@ -339,7 +339,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					SignedInUser: noPermUsr,
 				})
 				require.Error(t, err)
-				require.Equal(t, folder.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
@@ -350,7 +350,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					SignedInUser:     noPermUsr,
 				})
 				require.Error(t, err)
-				require.Equal(t, folder.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 		})
 
@@ -384,7 +384,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					UID:          "general",
 					SignedInUser: usr,
 				})
-				require.ErrorIs(t, err, folder.ErrFolderInvalidUID)
+				require.ErrorIs(t, err, folder.ErrInvalidUID)
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {

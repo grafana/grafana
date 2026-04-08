@@ -122,7 +122,7 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-		return nil, folder.ErrFolderAccessDenied
+		return nil, folder.ErrAccessDenied
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
@@ -299,7 +299,7 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 	defer span.End()
 
 	if title == "" {
-		return nil, folder.ErrFolderTitleEmpty
+		return nil, folder.ErrTitleEmpty
 	}
 
 	folderkey := &resourcepb.ResourceKey{
@@ -375,7 +375,7 @@ func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChi
 		if err != nil {
 			return nil, err
 		}
-		return nil, folder.ErrFolderAccessDenied
+		return nil, folder.ErrAccessDenied
 	}
 
 	children, err := s.unifiedStore.GetChildren(ctx, *q)
@@ -462,7 +462,7 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 			return nil, evalErr
 		}
 		if !hasAccess {
-			return nil, folder.ErrFolderCreationAccessDenied.Errorf("user is missing the permission with action either folders:create or folders:write and scope %s or any of the parent folder scopes", parentUIDScope)
+			return nil, folder.ErrCreationAccessDenied.Errorf("user is missing the permission with action either folders:create or folders:write and scope %s or any of the parent folder scopes", parentUIDScope)
 		}
 	} else {
 		evaluator := accesscontrol.EvalPermission(folder.ActionFoldersCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
@@ -471,7 +471,7 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 			return nil, evalErr
 		}
 		if !hasAccess {
-			return nil, folder.ErrFolderCreationAccessDenied.Errorf("user is missing the permission with action folders:create and scope folders:uid:general, which is required to create a folder under the root level")
+			return nil, folder.ErrCreationAccessDenied.Errorf("user is missing the permission with action folders:create and scope folders:uid:general, which is required to create a folder under the root level")
 		}
 	}
 
@@ -481,7 +481,7 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 
 	trimmedUID := strings.TrimSpace(cmd.UID)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
-		return nil, folder.ErrFolderInvalidUID
+		return nil, folder.ErrInvalidUID
 	}
 
 	cmd = &folder.CreateFolderCommand{
@@ -519,7 +519,7 @@ func (s *Service) updateOnApiServer(ctx context.Context, cmd *folder.UpdateFolde
 		cmd.NewTitle = &title
 
 		if strings.EqualFold(*cmd.NewTitle, dashboards.RootFolderName) {
-			return nil, folder.ErrFolderNameExists
+			return nil, folder.ErrNameExists
 		}
 	}
 
@@ -585,7 +585,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		if err != nil {
 			return toFolderError(err)
 		}
-		return folder.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)
@@ -697,7 +697,7 @@ func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCom
 		return nil, evalErr
 	}
 	if !hasAccess {
-		return nil, folder.ErrFolderAccessDenied
+		return nil, folder.ErrAccessDenied
 	}
 
 	f, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
@@ -758,7 +758,7 @@ func (s *Service) canMoveViaApiServer(ctx context.Context, cmd *folder.MoveFolde
 	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, accesscontrol.EvalAll(evaluators...)); err != nil {
 		return false, err
 	} else if !hasAccess {
-		return false, folder.ErrFolderAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
+		return false, folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
 	}
 	return true, nil
 }

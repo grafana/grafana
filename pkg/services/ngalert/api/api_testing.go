@@ -59,7 +59,7 @@ type TestingApiSrv struct {
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, body apimodels.PostableExtendedRuleNodeExtended) response.Response {
 	folder, err := srv.folderService.GetNamespaceByUID(c.Req.Context(), body.NamespaceUID, c.OrgID, c.SignedInUser)
 	if err != nil {
-		return toNamespaceErrorResponse(foldermodel.ErrFolderAccessDenied)
+		return toNamespaceErrorResponse(foldermodel.ErrAccessDenied)
 	}
 	rule, err := apivalidation.ValidateRuleNode(
 		&body.Rule,

@@ -35,7 +35,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 	}
 
 	if isUIDGeneralFolder(folderUID) && user.HasRole(org.RoleViewer) {
-		return folder.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
@@ -44,7 +44,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 		return err
 	}
 	if !canEdit {
-		return folder.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	return nil
@@ -57,7 +57,7 @@ func (l *LibraryElementService) requireViewPermissionsOnFolderUID(ctx context.Co
 		return err
 	}
 	if !canView {
-		return folder.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	return nil

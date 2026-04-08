@@ -1457,7 +1457,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 		}
 		if !canSave {
 			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
-			return folder.ErrFolderAccessDenied
+			return folder.ErrAccessDenied
 		}
 
 		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{

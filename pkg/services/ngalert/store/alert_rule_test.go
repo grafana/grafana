@@ -577,7 +577,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
 		store.AccessControl = acmock.New()
 		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
-		require.ErrorIs(t, err, folder.ErrFolderAccessDenied)
+		require.ErrorIs(t, err, folder.ErrAccessDenied)
 	})
 
 	t.Run("should be able to delete folder with permissions to delete rules", func(t *testing.T) {

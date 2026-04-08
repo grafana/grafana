@@ -155,7 +155,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 					return nil
 				}
 				if q.Name == "GetNamespaceByUID" {
-					return folder.ErrFolderAccessDenied
+					return folder.ErrAccessDenied
 				}
 				return nil
 			}

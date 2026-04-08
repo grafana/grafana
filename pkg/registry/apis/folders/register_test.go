@@ -44,7 +44,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				},
 				name: "general",
 			},
-			err: folder.ErrFolderInvalidUID,
+			err: folder.ErrInvalidUID,
 		},
 		{
 			name: "should return no error if every validation passes",
@@ -67,7 +67,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				},
 				name: "foo",
 			},
-			err: folder.ErrFolderTitleEmpty,
+			err: folder.ErrTitleEmpty,
 		},
 		{
 			name: "should return error if folder is a parent of itself",
