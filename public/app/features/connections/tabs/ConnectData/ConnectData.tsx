@@ -56,6 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
   }),
   filterButtonWrapper: css({
+    marginTop: theme.spacing(1),
     position: 'relative',
     width: '100%',
   }),
@@ -223,7 +224,7 @@ export function AddNewConnection() {
             <div className={styles.filterButtonWrapper}>
               {hasActiveFilters && <div className={styles.activeFilterDot} />}
               <Sidebar.Button
-                icon="sliders-v-alt"
+                icon="filter"
                 title={t('connections.add-new-connection.filters', 'Filters')}
                 onClick={() => setIsPaneOpen(!isPaneOpen)}
               />
