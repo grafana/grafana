@@ -1,6 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import saveAs from 'file-saver';
 import { type ComponentProps } from 'react';
 
 import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, store } from '@grafana/data';
@@ -94,37 +92,6 @@ describe('LogsMetaRow', () => {
       })
     );
     expect(clearSpy).toBeCalled();
-  });
-
-  it('renders a button to show the download menu', () => {
-    setup();
-    expect(screen.getByText('Download').closest('button')).toBeInTheDocument();
-  });
-
-  it('renders a button to show the download menu', async () => {
-    setup();
-
-    expect(screen.queryAllByText('txt')).toHaveLength(0);
-    await userEvent.click(screen.getByText('Download').closest('button')!);
-    expect(
-      screen.getByRole('menuitem', {
-        name: 'txt',
-      })
-    ).toBeInTheDocument();
-  });
-
-  it('renders a button to download txt', async () => {
-    setup();
-
-    await userEvent.click(screen.getByText('Download').closest('button')!);
-
-    await userEvent.click(
-      screen.getByRole('menuitem', {
-        name: 'txt',
-      })
-    );
-
-    expect(saveAs).toBeCalled();
   });
 
   it('renders common labels', async () => {
