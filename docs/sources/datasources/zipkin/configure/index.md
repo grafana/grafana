@@ -53,15 +53,14 @@ The following table describes the basic configuration settings for the Zipkin da
 
 ## Authentication
 
-The Zipkin data source supports basic authentication and other standard HTTP authentication methods.
+The Zipkin data source supports the following authentication methods:
 
-| Setting        | Description                                                 |
-| -------------- | ----------------------------------------------------------- |
-| **Basic Auth** | Toggle to enable basic authentication.                      |
-| **User**       | The username for basic authentication.                      |
-| **Password**   | The password for basic authentication.                      |
+- **Basic authentication:** Provide a username and password to authenticate with the Zipkin instance.
+- **TLS client authentication:** Configure client certificates for mutual TLS.
+- **Forward OAuth identity:** Forward the user's OAuth token to the Zipkin instance.
+- **With credentials:** Send credentials (cookies, TLS client certificates) with cross-site requests.
 
-You can also configure TLS and custom headers in the **Advanced HTTP settings** section.
+You can also configure custom headers and TLS settings in the **Advanced HTTP settings** section, which is located inside **Additional settings**.
 
 ## Trace to logs
 
@@ -153,27 +152,33 @@ Each linked query consists of:
 - **Link Label:** _(Optional)_ Descriptive label for the linked query.
 - **Query:** The query run when navigating from a trace to the metrics data source. Interpolate tags using the `$__tags` keyword. For example, when you configure the query `requests_total{$__tags}` with the tags `k8s.pod=pod` and `cluster`, the result looks like `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
-## Node graph
+## Additional settings
 
-The **Node graph** setting enables the [Node graph visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/), which is disabled by default.
+The **Additional settings** section is collapsible and contains optional settings for the node graph, span bar, and advanced HTTP configuration.
 
-Once enabled, Grafana displays the node graph after loading the trace view.
+### Node graph
 
-## Span bar
+The **Enable node graph** toggle enables the [Node graph visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/), which is disabled by default.
+
+Once enabled, Grafana displays the node graph above the trace view.
+
+### Span bar
 
 The **Span bar** setting lets you display additional information in the span bar row.
 
-You can choose one of three options:
+The **Label** drop-down has three options:
 
-| Name         | Description                                                                                                                      |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| **None**     | Adds nothing to the span bar row.                                                                                                |
-| **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
-| **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `component`. |
+| Label        | Description                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **None**     | Adds nothing to the span bar row.                                                                                                    |
+| **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                          |
+| **Tag**      | Displays the span tag on the span bar row. Enter the **Tag key** to specify which tag value to display, such as `component`. |
 
 ## Verify the connection
 
 Click **Save & test** to verify the connection. A successful connection displays the message **Data source is working**.
+
+If you encounter errors, refer to [Troubleshoot Zipkin data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/troubleshooting/).
 
 ## Provision the data source
 
