@@ -27,6 +27,5 @@ type ExternalServiceRegistry interface {
 
 // RBACCleanered to clean up RBAC data associated with plugins when they are uninstalled.
 type RBACCleaner interface {
-	// CleanupPluginRBAC removes all RBAC data (roles, permissions, assignments) for the given plugin IDs.
 	CleanupPluginRBAC(ctx context.Context, pluginIDs ...string) error
 }
