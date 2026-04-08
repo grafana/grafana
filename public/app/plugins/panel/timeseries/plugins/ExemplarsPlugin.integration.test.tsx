@@ -1,8 +1,17 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { applyFieldOverrides, createDataFrame, createTheme, FieldConfigOptionsRegistry } from '@grafana/data';
+import {
+  ActionType,
+  applyFieldOverrides,
+  createDataFrame,
+  createTheme,
+  FieldConfigOptionsRegistry,
+  FieldType,
+  HttpRequestMethod,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FIXED_UNIT, type UPlotConfigBuilder } from '@grafana/ui';
 
@@ -11,8 +20,64 @@ import { ExemplarsPlugin } from './ExemplarsPlugin';
 const defaultExemplarFrame = createDataFrame({
   name: 'exemplars',
   fields: [
-    { name: 'Time', values: [1670418750000] },
-    { name: 'Value', values: [0.5] },
+    { name: 'Time', values: [1670418750000, 1670418800000] },
+    { name: 'Value', values: [0.5, 1.1] },
+    {
+      name: 'Field Action',
+      type: FieldType.string,
+      values: [],
+      config: {
+        actions: [
+          {
+            type: ActionType.Fetch,
+            title: 'My action',
+            [ActionType.Fetch]: { method: HttpRequestMethod.GET, url: 'http://example.com' },
+          },
+        ],
+      },
+    },
+    {
+      name: 'Trace Link 1',
+      type: FieldType.string,
+      config: {
+        links: [
+          {
+            internal: {
+              datasourceName: 'tempo',
+              datasourceUid: 'test',
+              query: {
+                query: '${__value.raw}',
+                queryType: 'traceql',
+              },
+            },
+            title: '',
+            url: '',
+          },
+        ],
+      },
+      values: ['2203801e0171aa8b', null],
+    },
+    {
+      name: 'Trace Link 2',
+      type: FieldType.string,
+      config: {
+        links: [
+          {
+            internal: {
+              datasourceName: 'tempo',
+              datasourceUid: 'test',
+              query: {
+                query: '${__value.raw}',
+                queryType: 'traceql',
+              },
+            },
+            title: '',
+            url: '',
+          },
+        ],
+      },
+      values: ['2203801e0171aa8d', '2203801e0171aa8e'],
+    },
   ],
 });
 
@@ -150,9 +215,72 @@ describe('ExemplarsPlugin (integration, real EventsCanvas)', () => {
     });
   });
 
-  it('renders an exemplar marker inside the overlay when exemplar data is present', () => {
-    setUp();
+  describe('marker', () => {
+    it('renders', () => {
+      setUp();
+      expect(getMarker()).toBeVisible();
+    });
 
-    expect(screen.getByTestId(selectors.components.DataSource.Prometheus.exemplarMarker)).toBeInTheDocument();
+    it.each(['click', 'hover'])('renders tooltip on %s', async (userAction) => {
+      setUp();
+
+      //@ts-expect-error
+      await userEvent[userAction](getMarker());
+      const tooltipWrapper = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+
+      if (userAction === 'hover') {
+        expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+      } else {
+        expect(screen.getByLabelText('Close')).toBeVisible();
+      }
+
+      expect(tooltipWrapper).toBeVisible();
+      expect(tooltipWrapper.textContent).toContain('Exemplar');
+      expect(tooltipWrapper.textContent).toContain('2022-12-07 08:12:30');
+      expect(tooltipWrapper.textContent).toContain('Value');
+      expect(tooltipWrapper.textContent).toContain('0.500');
+    });
+
+    it.each(['click', 'hover'])('renders data links on %s', async (userAction) => {
+      setUp();
+      //@ts-expect-error
+      await userEvent[userAction](getMarker());
+      const links = screen.getAllByRole('link');
+      expect(links[0]).toBeVisible();
+      expect(links[1]).toBeVisible();
+      expect(screen.getByText('Trace Link 1')).toBeVisible();
+      expect(screen.getByText('Trace Link 2')).toBeVisible();
+      expect(screen.getByText('2203801e0171aa8b')).toBeVisible();
+      expect(screen.getByText('2203801e0171aa8d')).toBeVisible();
+    });
+
+    it.each(['click', 'hover'])('renders data link on %s', async (userAction) => {
+      setUp();
+      //@ts-expect-error
+      await userEvent[userAction](getMarker(1));
+      const links = screen.getAllByRole('link');
+      expect(links[0]).toBeVisible();
+
+      expect(screen.getByText('2203801e0171aa8e')).toBeVisible();
+      expect(screen.queryByText('2203801e0171aa8b')).not.toBeInTheDocument();
+      expect(screen.queryByText('2203801e0171aa8d')).not.toBeInTheDocument();
+    });
+
+    it.each(['click', 'hover'])('renders link actions on %s', async (userAction) => {
+      setUp();
+      //@ts-expect-error
+      await userEvent[userAction](getMarker());
+
+      // Actions are currently displayed like any other field
+      expect(screen.getByText('Field Action')).toBeVisible();
+      // @todo link actions are not currently passed into the VizTooltipFooter, add test coverage when supported
+    });
   });
 });
+
+const getMarkers = () => {
+  return screen.getAllByTestId(selectors.components.DataSource.Prometheus.exemplarMarker);
+};
+const getMarker = (n = 0) => {
+  return getMarkers()[n];
+};
